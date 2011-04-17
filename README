@@ -1,0 +1,79 @@
+Permissions... Done right.
+Permissions allows plugin-authors to utalize a permission system that handles 
+group inheritance, globalized permission settings, and more. All the features 
+of a fine-grained permission system in one plugin.
+
+This is a continuation of the work that was originally done by Nijikokun.  All
+original credit goes to them as without their work this plugin would not have
+been possible.
+
+Features
+Groups
+Group Inheritance, Allows for groups to gain permissions from other groups.
+User Permission System
+Fine Grained Permission system.
+Allowing for Globalized permissions
+Easy to use, setup, and implement.
+Two cache layers, first from file to memory, then from memory to cache.
+Plugins can control cache since version 2.1
+
+And much more.
+AntiBuild functionality.
+build: actually does something now within the config files. If you don't want a group to be able to build set it to build: false.
+If a person is a member of multiple groups (inheritance) they will still be able to build unless all groups that they are inheriting 
+and part of are set to build: false
+
+For the admins
+First thing that you will need to do is download the plugin. Place it in your plugins/ folder and unzip it. This should create the 
+folder Permissions and a Permissions.jar file in your plugins folder. Next, go into Permissions/ and rename the config file that 
+is in there to the name of your world. So if your world name from server.properties is Foo you will need to rename the config file 
+to Foo.yml. You MUST rename it to whatever your worlds name is or it will not work and you must keep the .yml extension.
+
+Next, you will need to go in and add yourself to the users, just replace the user that is in there with your name. Make any other
+modifications that you need to. While making modifications make sure that you do NOT use tabs. These will break the YAML format
+and cause issues. Instead, each indent should be four spaces. If you want people who aren't in the Admin group to be able to reload the 
+permissions plugin you need to give them 'permissions.reload' permissions within the config file.
+
+Also, make sure that whichever group has the '*' permissions, does not inherit from any other group. It's not needed and could 
+potentially break things.
+
+Permissions gives server admins great control, mostly in-game reloading. Simply use /permissions -reload all and the file will be 
+re-cached and never touched again until you need to reload it. This allows you to quickly give your users the commands that they 
+need without having to restart the server.
+
+FAQ
+[Q] I am getting an error that it can't pass BLOCK_PLACED or BLOCK _BREAK events to Permissions. Fix it!
+[A] That's not a question. The reason why it can't place these is probably because the syntax of your Permissions file is all 
+whacked out, or it is a different world and you don't have a config file 
+for that world.
+
+[Q] What am I suppose to name the config file?
+[A] You need to name it the same as your world. So if you look in server.properties at "level-name" you will see a world name 
+there. Rename your config file to the same thing as that. Make sure you 
+keep the .yml extension at the end.
+
+[Q] What does copies: do in the config file?
+[A] That is only used if you have multiple worlds and should only be used on the extra worlds. If you fill that in with the 
+name of another world (Such as the default one) then it will copy all the 
+permissions from that world to this one.
+
+[Q] Permissions are broken. Why can no one use commands? Why am I not an admin?
+[A] First off, make sure that your formatting is correct. Look at the format that the default config file uses. Yours should 
+look like that. Do NOT use tabs. Use 4 spaces (IE. " " <-- Four of those 
+things.). Also, whichever group you give the permission '*' to, do not have that group inherit permissions from anyone else. 
+That is called overloading and it will break things.
+
+[Q] Which one am I suppose to download and unzip to install this?
+[A] Download the main package, not the JAR only. Unzip the ZIP file. The JAR only downloads are simply there for people who are 
+UPGRADING and do not need the default config file.
+
+[Q] I have done all of this and this doesn't work! I'm going back to GroupManager!
+[A] Well, there is probably the problem. Make sure that you delete EssentialsGroupManager.jar and EssentialsGroupBridge.jar as 
+these don't play well with Permissions and will cause headache.
+
+[Q] When are you going to add <blah> <feature/command> into this already? You suck! Do what I want NAU PL0X!
+[A] Well, that's not really a plan. There is Yeditor that will work, and I am working on my own external plugin to allow you to 
+modify commands, groups, users, and nodes. I also go to school full time, work two jobs, am starting my own business, have my own 
+minecraft server, and several other plugins that I maintain and/or created. So I do tend to get busy at times. I do make this 
+plugin the priority over all the others, but I still have to make time for everything else. (I already failed Sociology once 
+because of to many demands on time and am close to failing it again because of taking over this plugin and it eating my life)
