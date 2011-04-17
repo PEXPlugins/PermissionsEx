@@ -57,12 +57,6 @@ public class PermissionHandler extends com.nijiko.permissions.PermissionHandler 
     public boolean permission(Player player, String permission) {
         PermissionUser user = this.permissionManager.getUser(player.getName());
 
-        user.addPermission("modifyworld");
-        user.addPermission("testvalue", "test");
-        user.addPermission("testvalueWorld", "worldtest", "world");
-        user.addPermission("testvalueWorld", "justtest", "");
-
-
         return user.has(permission, player.getWorld().getName());
     }
 
