@@ -164,9 +164,7 @@ public class Permissions extends JavaPlugin {
 
             Player player = event.getPlayer();
 
-            logger.log(Level.INFO, "[PermissionsEx] Player "+player+" want to break block ("+event.getBlock().getLocation()+" )");
             if(!Permissions.Security.has(player, "modifyworld.destroy")){
-                logger.log(Level.INFO, "[PermissionsEx] Player "+player+" want to break block ("+event.getBlock().getLocation()+" ) but not allowed to do so");
                 event.setCancelled(true);
             }
         }
@@ -177,9 +175,7 @@ public class Permissions extends JavaPlugin {
 
             Player player = event.getPlayer();
 
-            logger.log(Level.INFO, "[PermissionsEx] Player "+player+" want to break block ("+event.getBlock().getLocation()+" )");
             if(!Permissions.Security.has(player, "modifyworld.place")){
-                logger.log(Level.INFO, "[PermissionsEx] Player "+player+" want to break block ("+event.getBlock().getLocation()+" ) but not allowed to do so");
                 event.setCancelled(true);
             }
         }

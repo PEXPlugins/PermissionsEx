@@ -62,7 +62,6 @@ public class FilePermissionUser extends PermissionUser {
     @Override
     public String[] getGroupNames() {
         String groups = this.node.getString("group");
-        System.out.println("User Groups: " + groups);
         if (groups == null) {
             return new String[]{this.manager.getDefaultGroup().getName()};
         } else if (groups.contains(",")) {
