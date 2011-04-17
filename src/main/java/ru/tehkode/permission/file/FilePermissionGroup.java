@@ -1,16 +1,11 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission.file;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import ru.tehkode.permission.PermissionGroup;
 import ru.tehkode.permission.PermissionManager;
 import ru.tehkode.permission.backends.FileBackend;
@@ -82,7 +77,7 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getPermissionValue(String world, String permission, boolean inheritance) {
+    public String getPermissionValue(String permission, String world, boolean inheritance) {
         if (world != null && !world.isEmpty()) {
             String worldPermission = this.node.getString("worlds." + world + ".options." + permission);
             if (worldPermission != null && !worldPermission.isEmpty()) {
@@ -97,7 +92,7 @@ public class FilePermissionGroup extends PermissionGroup {
 
         if (inheritance) {
             for (PermissionGroup group : this.getParentGroups()) {
-                String value = group.getPermissionValue(world, permission, inheritance);
+                String value = group.getPermissionValue(permission, world, inheritance);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }
@@ -111,7 +106,7 @@ public class FilePermissionGroup extends PermissionGroup {
     public void addPermission(String permission, String value, String world) {
         String nodePath = value != null && !value.isEmpty() ? "options" : "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath = ".worlds." + world + "." + nodePath;
+            nodePath += ".worlds." + world + "." + nodePath;
         }
 
         if (value != null && !value.isEmpty()) {
@@ -132,7 +127,7 @@ public class FilePermissionGroup extends PermissionGroup {
     public void setPermission(String permission, String value, String world) {
         String nodePath = "options";
         if (world != null && !world.isEmpty()) {
-            nodePath = ".worlds." + world + "." + nodePath;
+            nodePath += ".worlds." + world + "." + nodePath;
         }
 
         if (value != null && !value.isEmpty()) {
@@ -149,7 +144,7 @@ public class FilePermissionGroup extends PermissionGroup {
     public void removePermission(String permission, String world) {
         String nodePath = "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath = "worlds." + world + "." + nodePath;
+            nodePath += "worlds." + world + "." + nodePath;
         }
 
         List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
@@ -161,12 +156,11 @@ public class FilePermissionGroup extends PermissionGroup {
         this.save();
     }
 
-    public void save(){
-        if(this.virtual){
-            this.backend.permissions.setProperty("groups."+this.getName(), this.node);
+    public void save() {
+        if (this.virtual) {
+            this.backend.permissions.setProperty("groups." + this.getName(), this.node);
         }
 
         this.backend.permissions.save();
     }
 }
-

@@ -1,10 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  *
@@ -41,8 +38,8 @@ public abstract class PermissionNode {
             }
 
             // make regular expression
-            if (regexp.substring(0, 1).equals("/")) { // Just convert regular expression
-                regexp = regexp.replace("*", "(.*)").replace(".", "\\.");
+            if (!regexp.substring(0, 1).equals("/")) { // Just convert regular expression
+                regexp = regexp.replace(".", "\\.").replace("*", "(.*)");
             } else { // expression are already regular expression
                 regexp = regexp.substring(1);
             }
@@ -77,14 +74,14 @@ public abstract class PermissionNode {
         this.removePermission(permission, "");
     }
 
-    public abstract String getPermissionValue(String world, String permission, boolean inheritance);
+    public abstract String getPermissionValue(String permission, String world, boolean inheritance);
 
-    public String getPermissionValue(String world, String permission){
-        return this.getPermissionValue(world, permission, true);
+    public String getPermissionValue(String permission, String world){
+        return this.getPermissionValue(permission, world, true);
     }
 
     public String getPermissionValue(String permission){
-        return this.getPermissionValue("", permission, true);
+        return this.getPermissionValue(permission, "", true);
     }
 
     protected boolean explainExpression(String expression) {
@@ -96,4 +93,9 @@ public abstract class PermissionNode {
     public abstract String getPrefix();
 
     public abstract String getPostfix();
+
+    @Override
+    public String toString() {
+        return this.getName();
+    }
 }

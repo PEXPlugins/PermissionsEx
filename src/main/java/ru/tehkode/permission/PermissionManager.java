@@ -1,14 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bukkit.util.config.Configuration;
+import ru.tehkode.permission.config.Configuration;
 
 /**
  *
@@ -43,6 +39,8 @@ public class PermissionManager {
         this.users.clear();
         this.groups.clear();
         this.defaultGroup = null;
+
+        this.backend.reload();
     }
 
     public PermissionUser getUser(String username) {

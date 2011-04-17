@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package ru.tehkode.permission.backends;
 
 import ru.tehkode.permission.PermissionBackend;
@@ -56,6 +51,11 @@ public class SQLBackend extends PermissionBackend {
     @Override
     public PermissionGroup getDefaultGroup() {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void reload() {
+        // just do nothing...we are always "online", ie no persistence at all
     }
 
 

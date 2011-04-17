@@ -1,11 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  *
@@ -34,7 +31,7 @@ public abstract class PermissionUser extends PermissionNode {
             return this.explainExpression(expression);
         }
 
-        for (PermissionGroup group : this.getGroups()) {
+        for (PermissionGroup group : this.getGroups()){
             if (group.has(permission, world)) {
                 return true;
             }

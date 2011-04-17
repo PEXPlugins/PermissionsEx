@@ -1,11 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission.backends;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import ru.tehkode.permission.PermissionBackend;
 import ru.tehkode.permission.PermissionGroup;
@@ -49,7 +47,13 @@ public class FileBackend extends PermissionBackend {
 
                 // Load default permissions
                 permissions.setProperty("groups.default.default", true);
-                permissions.setProperty("groups.default.permissions.build", true);
+
+
+                List<String> defaultPermissions = new LinkedList<String>();
+                // Specify here default permissions
+                defaultPermissions.add("modifyworld.*");
+
+                permissions.setProperty("groups.default.permissions", defaultPermissions);
 
                 permissions.save();
             } catch (IOException e) {
@@ -90,4 +94,11 @@ public class FileBackend extends PermissionBackend {
 
         return defaultGroup;
     }
+
+    @Override
+    public void reload() {
+        this.permissions.load();
+    }
+
+
 }

@@ -1,21 +1,15 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission.file;
 
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import org.bukkit.util.config.Configuration;
-import org.bukkit.util.config.ConfigurationNode;
 import ru.tehkode.permission.PermissionGroup;
 import ru.tehkode.permission.PermissionManager;
 import ru.tehkode.permission.PermissionUser;
 import ru.tehkode.permission.backends.FileBackend;
+import ru.tehkode.permission.config.Configuration;
+import ru.tehkode.permission.config.ConfigurationNode;
 
 /**
  *
@@ -79,7 +73,7 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getPermissionValue(String world, String permission, boolean inheritance) {
+    public String getPermissionValue(String permission, String world, boolean inheritance) {
         if (world != null && !world.isEmpty()) {
             String worldPermission = this.node.getString("worlds." + world + ".options." + permission);
             if (worldPermission != null && !worldPermission.isEmpty()) {
@@ -94,7 +88,7 @@ public class FilePermissionUser extends PermissionUser {
 
         if (inheritance) {
             for (PermissionGroup group : this.getGroups()) {
-                String value = group.getPermissionValue(world, permission, inheritance);
+                String value = group.getPermissionValue(permission, world, inheritance);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }
@@ -106,9 +100,9 @@ public class FilePermissionUser extends PermissionUser {
 
     @Override
     public void addPermission(String permission, String value, String world) {
-        String nodePath = value != null && !value.isEmpty() ? "options" : "permissions";
+        String nodePath = (value != null && !value.isEmpty()) ? "options" : "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath = ".worlds." + world + "." + nodePath;
+            nodePath += ".worlds." + world + "." + nodePath;
         }
 
         if (value != null && !value.isEmpty()) {
@@ -129,7 +123,7 @@ public class FilePermissionUser extends PermissionUser {
     public void setPermission(String permission, String value, String world) {
         String nodePath = "options";
         if (world != null && !world.isEmpty()) {
-            nodePath = ".worlds." + world + "." + nodePath;
+            nodePath += ".worlds." + world + "." + nodePath;
         }
 
         if (value != null && !value.isEmpty()) {
@@ -146,7 +140,7 @@ public class FilePermissionUser extends PermissionUser {
     public void removePermission(String permission, String world) {
         String nodePath = "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath = "worlds." + world + "." + nodePath;
+            nodePath += "worlds." + world + "." + nodePath;
         }
 
         List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
@@ -160,7 +154,10 @@ public class FilePermissionUser extends PermissionUser {
 
     public void save() {
         if (this.virtual) {
-            this.backend.permissions.setProperty("users."+this.getName(), node);
+            if(this.node.getString("group", null) == null){ // Set default group
+                this.node.setProperty("group", this.manager.getDefaultGroup().getName());
+            }
+            this.backend.permissions.setProperty("users." + this.getName(), node);
         }
 
         this.backend.permissions.save();

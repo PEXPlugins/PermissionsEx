@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permission.sql;
 
 import java.sql.ResultSet;
@@ -22,6 +18,7 @@ import ru.tehkode.permission.backends.SQLBackend;
 public class SQLPermissionUser extends PermissionUser {
 
     protected SQLBackend backend;
+    protected Set<String> permissions = null;
 
     public SQLPermissionUser(String name, PermissionManager manager, SQLBackend backend) {
         super(name, manager);
@@ -31,7 +28,11 @@ public class SQLPermissionUser extends PermissionUser {
 
     @Override
     protected Set<String> getPermissions(String world) {
-        Set<String> permissions = new LinkedHashSet<String>();
+        if (permissions != null) {
+            return this.permissions;
+        }
+
+        permissions = new LinkedHashSet<String>();
 
         try {
             List<String> worldPermissions = new LinkedList<String>();
@@ -78,7 +79,7 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getPermissionValue(String world, String permission, boolean inheritance) {
+    public String getPermissionValue(String permission, String world, boolean inheritance) {
         String value = (String) this.backend.sql.queryOne("SELECT value FROM user_permissions WHERE user = ? AND permission = ? AND world = ? LIMIT 1", "", this.getName(), permission, world);
         if (!value.isEmpty()) {
             return value;
@@ -86,7 +87,7 @@ public class SQLPermissionUser extends PermissionUser {
 
         if (inheritance) {
             for (PermissionGroup group : this.getGroups()) {
-                value = group.getPermissionValue(world, permission, inheritance);
+                value = group.getPermissionValue(permission, world, inheritance);
                 if (!value.isEmpty()) {
                     return value;
                 }

@@ -33,7 +33,7 @@ public class Configuration extends ConfigurationNode {
         options.setIndent(4);
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
-        yaml = new Yaml(new SafeConstructor(), new Representer(), options);
+        yaml = new Yaml(new SafeConstructor(), new ConfigurationRepresenter(), options);
 
         this.file = file;
     }
@@ -115,20 +115,15 @@ public class Configuration extends ConfigurationNode {
 
     protected class ConfigurationRepresenter extends Representer {
 
-        public ConfigurationRepresenter() {
-            super();
-
-            this.representers.put(ConfigurationNode.class, new ConfigurationNodeRepresent());
-        }
-
-        private class ConfigurationNodeRepresent implements Represent {
-
-            @Override
-            public Node representData(Object o) {
-                ConfigurationNode node = (ConfigurationNode) o;
-
-                return representMapping(Tag.MAP, node.getRoot(), null);
+        @Override
+        protected Node representData(Object data) {
+            if(data instanceof ConfigurationNode){
+                ConfigurationNode node = (ConfigurationNode) data;
+                return this.representData(node.getRoot());
+                //return representMapping(Tag.MAP, node.getRoot(), null);
             }
+
+            return super.representData(data);
         }
     }
 }

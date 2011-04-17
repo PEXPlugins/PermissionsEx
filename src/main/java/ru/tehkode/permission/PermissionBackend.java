@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package ru.tehkode.permission;
 
 import ru.tehkode.permission.config.Configuration;
@@ -25,4 +20,6 @@ public abstract class PermissionBackend {
     public abstract PermissionGroup getGroup(String name);
     public abstract PermissionUser  getUser(String name);
     public abstract PermissionGroup getDefaultGroup();
+
+    public abstract void reload();
 }
