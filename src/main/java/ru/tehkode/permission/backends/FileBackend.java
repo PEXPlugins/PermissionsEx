@@ -74,7 +74,7 @@ public class FileBackend extends PermissionBackend {
     public PermissionGroup getDefaultGroup() {
         PermissionGroup defaultGroup = null;
 
-        Map<String, ConfigurationNode> groupsMap = this.permissions.getN("groups");
+        Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             if (entry.getValue().getBoolean("default", false)) {

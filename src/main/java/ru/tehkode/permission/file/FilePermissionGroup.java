@@ -163,11 +163,6 @@ public class FilePermissionGroup extends PermissionGroup {
 
     public void save(){
         if(this.virtual){
-            Map<String, ConfigurationNode> groups = this.backend.permissions.getNodes("groups");
-            if(groups == null){
-                groups = new HashMap<String, ConfigurationNode>();
-            }
-            groups.put(this.getName(), node);
             this.backend.permissions.setProperty("groups."+this.getName(), this.node);
         }
 

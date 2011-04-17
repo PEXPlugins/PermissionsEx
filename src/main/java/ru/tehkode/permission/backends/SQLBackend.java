@@ -5,11 +5,11 @@
 
 package ru.tehkode.permission.backends;
 
-import org.bukkit.util.config.Configuration;
 import ru.tehkode.permission.PermissionBackend;
 import ru.tehkode.permission.PermissionGroup;
 import ru.tehkode.permission.PermissionManager;
 import ru.tehkode.permission.PermissionUser;
+import ru.tehkode.permission.config.Configuration;
 import ru.tehkode.permission.sql.SQLConnectionManager;
 import ru.tehkode.permission.sql.SQLPermissionGroup;
 import ru.tehkode.permission.sql.SQLPermissionUser;

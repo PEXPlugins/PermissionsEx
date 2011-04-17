@@ -5,7 +5,8 @@
 
 package ru.tehkode.permission;
 
-import org.bukkit.util.config.Configuration;
+import ru.tehkode.permission.config.Configuration;
+
 
 /**
  *

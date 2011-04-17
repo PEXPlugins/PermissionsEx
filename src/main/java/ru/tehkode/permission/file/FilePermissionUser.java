@@ -160,12 +160,7 @@ public class FilePermissionUser extends PermissionUser {
 
     public void save() {
         if (this.virtual) {
-            Map<String, ConfigurationNode> users = this.backend.permissions.getNodes("users");
-            if(users == null){
-                users = new HashMap<String, ConfigurationNode>();
-            }
-            users.put(this.getName(), node);
-            this.backend.permissions.setProperty("users", users);
+            this.backend.permissions.setProperty("users."+this.getName(), node);
         }
 
         this.backend.permissions.save();
