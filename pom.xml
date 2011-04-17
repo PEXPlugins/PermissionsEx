@@ -2,12 +2,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.nijikokun.bukkit</groupId>
   <artifactId>Permissions</artifactId>
-  <version>2.7</version>
-  <name>Permissions</name>
-  <url>https://github.com/TheYeti/Permissions</url>
+  <version>100</version>
+  <name>PermissionsEx</name>
+  <url>https://github.com/t3hk0d3/PermissionsEx</url>
   <issueManagement>
   	<system>GitHub</system>
-  	<url>https://github.com/TheYeti/Permissions/issues</url>
+  	<url>https://github.com/t3hk0d3/PermissionsEx/issues</url>
   </issueManagement>
   <build>
       <finalName>Permissions</finalName>

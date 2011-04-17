@@ -13,11 +13,6 @@
         <include>CHANGELOG*</include>
       </includes>
     </fileSet>
-    <fileSet>
-    	<directory>${project.basedir}/Permissions/</directory>
-    	<outputDirectory>/Permissions/</outputDirectory>
-    	<includes>
-    		<include>RENAME-ME.yml</include></includes></fileSet>
   </fileSets>
   <files>
   	<file>
