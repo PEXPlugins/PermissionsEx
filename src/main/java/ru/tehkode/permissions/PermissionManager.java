@@ -2,7 +2,6 @@ package ru.tehkode.permissions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -11,8 +10,6 @@ import ru.tehkode.permissions.config.Configuration;
  * @author code
  */
 public class PermissionManager {
-    protected final static String defaultBackend = "file";
-
     protected Logger logger = Logger.getLogger("Minecraft");
 
     protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
@@ -80,47 +77,12 @@ public class PermissionManager {
     private void initBackend() {
         String backEnd = this.config.getString("permissions.backend");
 
-        if(backEnd == null){
-            backEnd = PermissionManager.defaultBackend; //Default backend
+        if(backEnd == null || backEnd.isEmpty()){
+            backEnd = PermissionBackendFactory.defaultBackend; //Default backend
             this.config.setProperty("permissions.backend", backEnd);
             this.config.save();
         }
 
-        try {
-            this.setBackend(backEnd);
-        } catch (ClassNotFoundException e) {
-            logger.log(Level.WARNING, "Selected backend \""+backEnd+"\" are not found. Falling back to file backend");
-
-            try {
-                this.setBackend("file");
-            } catch (Exception e2) {
-                // that mean what author are stupid whore, or smthing break up
-                throw new RuntimeException(e2);
-            }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error ("+e.getClass().getSimpleName()+") while \""+backEnd+"\" backend initialization. Falling back to file backend");
-
-            try {
-                this.setBackend("file");
-            } catch (Exception e2) {
-                // that mean what author are stupid whore, or smthing break up
-                throw new RuntimeException(e2);
-            }
-        }
-    }
-
-    private void setBackend(String backend) throws Exception {
-        // Aliases
-        if (backend.equals("sql")) {
-            backend = "ru.tehkode.permissions.backends.SQLBackend";
-        }
-
-        if (backend.equals("file")) {
-            backend = "ru.tehkode.permissions.backends.FileBackend";
-        }
-
-        Class backendClass = Class.forName(backend);
-
-        this.backend = (PermissionBackend)backendClass.getConstructor(PermissionManager.class, Configuration.class).newInstance(this, this.config);
+        this.backend = PermissionBackendFactory.getBackend(backEnd, this, config);
     }
 }
