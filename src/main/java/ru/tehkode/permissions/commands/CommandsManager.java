@@ -21,7 +21,7 @@ import org.bukkit.plugin.Plugin;
  * @author code
  */
 public class CommandsManager {
-    protected final Logger logger = Logger.getLogger("Minecraft");
+    protected static final Logger logger = Logger.getLogger("Minecraft");
 
     protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new HashMap<String, Map<CommandSyntax, CommandBinding>>();
 

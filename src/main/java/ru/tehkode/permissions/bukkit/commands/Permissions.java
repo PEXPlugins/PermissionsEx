@@ -5,6 +5,7 @@
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.commands.Command;
@@ -21,6 +22,7 @@ public class Permissions implements CommandListener {
     permission = "permission.manage.reload",
     description = "Reload permissions")
     public void reload(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
+        Logger.getLogger("Minecraft").info("WORKING YAY");
         sender.sendMessage("YAHOO");
     }
 }
