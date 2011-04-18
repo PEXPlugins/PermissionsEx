@@ -25,4 +25,13 @@ public class Permissions implements CommandListener {
         Logger.getLogger("Minecraft").info("WORKING YAY");
         sender.sendMessage("YAHOO");
     }
+
+    @Command(name = "permissions",
+    syntax = "user <user>",
+    permission = "permission.manage.users",
+    description = "List user's permissions")
+    public void userListPermissions(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
+        Logger.getLogger("Minecraft").info("WORKING YAY - " + arguments);
+        sender.sendMessage("User name: " + arguments.get("user"));
+    }
 }

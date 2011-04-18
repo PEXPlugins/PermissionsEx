@@ -107,8 +107,8 @@ public class PermissionsPlugin extends JavaPlugin {
         this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.Permissions());
 
         Permissions.logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + Permissions.codename + ")  loaded");
-        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.High, this);
-        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.High, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
     }
 
     @Override

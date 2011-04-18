@@ -4,6 +4,7 @@
  */
 package ru.tehkode.permissions.commands;
 
+import com.nijikokun.bukkit.Permissions.Permissions;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,7 +14,9 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -33,7 +36,7 @@ public class CommandsManager {
 
     public void register(CommandListener listener) {
         for (Method method : listener.getClass().getMethods()) {
-            if (!method.isAnnotationPresent(Command.class) || !method.isAccessible()) {
+            if (!method.isAnnotationPresent(Command.class)) {
                 continue;
             }
 
@@ -63,7 +66,7 @@ public class CommandsManager {
         for(Entry<CommandSyntax, CommandBinding> entry : callMap.entrySet()){
             CommandSyntax syntax = entry.getKey();
 
-            logger.info("Matching " + arguments + " to " + syntax.getRegexp());
+            logger.info("Matching \"" + arguments + "\" to \"" + syntax.getRegexp()+ "\"");
 
             if(!syntax.isMatch(arguments)){
                 continue;
@@ -82,6 +85,16 @@ public class CommandsManager {
             return false;
         }
 
+        // Check permission
+        Command commandAnnotation = selectedBinding.getMethodAnnotation();
+        if(!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and reqire permission
+            if(!Permissions.Security.has((Player)sender, commandAnnotation.permission())){
+                sender.sendMessage(ChatColor.RED + "[PermissionsEx] Sorry, you don't have enough permissions.");
+                return true;
+            }
+        }
+
+
         try {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
         } catch (RuntimeException e){
@@ -96,7 +109,7 @@ public class CommandsManager {
         for (int i = 0; i < args.length; i++) {
             arguments += " " + args[i];
         }
-        return arguments;
+        return arguments.trim();
     }
 
     protected class CommandSyntax {
@@ -144,21 +157,22 @@ public class CommandsManager {
         }
 
         public Map<String, String> getMatchedArguments(String str){
-            Matcher argMatcher = Pattern.compile(this.regexp).matcher(str);
+            Map<String, String> matchedArguments = new HashMap<String, String>(this.arguments.size());
 
-            Map<String, String> matchedArguments = new HashMap<String, String>();
+            if(this.arguments.size() > 0){
+                Matcher argMatcher = Pattern.compile(this.regexp).matcher(str);
 
-            int index = 0;
-            while(argMatcher.find()){
-                String argumentValue = argMatcher.group();
+                int index = 0;
+                while (argMatcher.find()) {
+                    String argumentValue = argMatcher.group();
 
-                if(argumentValue.startsWith("\"") && argumentValue.endsWith("\"")){ // Trim boundary colons
-                    argumentValue = argumentValue.substring(1, -1);
+                    if (argumentValue.startsWith("\"") && argumentValue.endsWith("\"")) { // Trim boundary colons
+                        argumentValue = argumentValue.substring(1, -1);
+                    }
+
+                    matchedArguments.put(this.arguments.get(index++), argumentValue);
                 }
-
-                matchedArguments.put(this.arguments.get(index++), argumentValue);
             }
-
             return matchedArguments;
         }
     }
@@ -173,6 +187,10 @@ public class CommandsManager {
         public CommandBinding(Object object, Method method) {
             this.object = object;
             this.method = method;
+        }
+
+        public Command getMethodAnnotation(){
+            return this.method.getAnnotation(Command.class);
         }
 
         public Map<String, String> getParams() {
