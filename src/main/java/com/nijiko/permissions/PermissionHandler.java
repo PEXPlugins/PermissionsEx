@@ -22,11 +22,14 @@ import org.bukkit.util.config.Configuration;
  * You should have received a copy of the GNU Permissions Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 /**
  * Abstract method for multiple permission handlers
  *
  * @author Nijiko
+ */
+/**
+ *            
+ * @author code
  */
 public abstract class PermissionHandler {
 
@@ -319,5 +322,4 @@ public abstract class PermissionHandler {
 
     public abstract void saveAll();
     //End of addition by rcjrrjcr
-    
 }

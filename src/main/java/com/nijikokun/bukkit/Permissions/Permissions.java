@@ -4,8 +4,8 @@ package com.nijikokun.bukkit.Permissions;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 
-import com.nijiko.Misc;
 import com.nijiko.permissions.PermissionHandler;
+import org.bukkit.Bukkit;
 import ru.tehkode.permissions.bukkit.PermissionsPlugin;
 
 /**
@@ -31,24 +31,46 @@ import ru.tehkode.permissions.bukkit.PermissionsPlugin;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 public class Permissions extends PermissionsPlugin {
-    public static Plugin instance;
+    public static Plugin instance = null;
     public static Server Server = null;
     /**
      * Controller for permissions and security.
      */
     public static PermissionHandler Security;
-    /**
-     * Miscellaneous object for various functions that don't belong anywhere else
-     */
-    public static Misc Misc = new Misc();
 
     public Permissions() {
         super();
 
-        Permissions.instance = this;
+        Permissions.instance = getInstance();
+    }
+
+    public static Plugin getInstance(){
+        if(instance == null){
+            instance = Bukkit.getServer().getPluginManager().getPlugin("Permissions");
+        }
+
+        return instance;
+    }
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
+
+        Security = this.permissionsManager.getPermissionHandler();
+    }
+
+    @Override
+    public void onDisable() {
+        super.onDisable();
+
+        Security = null;
     }
 
     public PermissionHandler getHandler() {
+        if(this.permissionsManager == null){
+            throw new RuntimeException("There is issue with some plugin, which tried check permissions while Permissions plugin disabled");
+        }
+
         return this.permissionsManager.getPermissionHandler();
     }
 }

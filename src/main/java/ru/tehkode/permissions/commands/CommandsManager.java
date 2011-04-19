@@ -24,10 +24,9 @@ import org.bukkit.plugin.Plugin;
  * @author code
  */
 public class CommandsManager {
+
     protected static final Logger logger = Logger.getLogger("Minecraft");
-
     protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new HashMap<String, Map<CommandSyntax, CommandBinding>>();
-
     protected Plugin plugin;
 
     public CommandsManager(Plugin plugin) {
@@ -43,7 +42,7 @@ public class CommandsManager {
             Command cmdAnotation = method.getAnnotation(Command.class);
 
             Map<CommandSyntax, CommandBinding> commandListeners = listeners.get(cmdAnotation.name());
-            if(commandListeners == null){
+            if (commandListeners == null) {
                 commandListeners = new HashMap<CommandSyntax, CommandBinding>();
                 listeners.put(cmdAnotation.name(), commandListeners);
             }
@@ -55,7 +54,7 @@ public class CommandsManager {
     public boolean execute(CommandSender sender, org.bukkit.command.Command command, String[] args) {
         Map<CommandSyntax, CommandBinding> callMap = this.listeners.get(command.getName());
 
-        if(callMap == null){ // No commands registred
+        if (callMap == null) { // No commands registred
             return false;
         }
 
@@ -63,16 +62,14 @@ public class CommandsManager {
         int argumentsLength = 0;
         String arguments = implodeArgs(args);
 
-        for(Entry<CommandSyntax, CommandBinding> entry : callMap.entrySet()){
+        for (Entry<CommandSyntax, CommandBinding> entry : callMap.entrySet()) {
             CommandSyntax syntax = entry.getKey();
 
-            logger.info("Matching \"" + arguments + "\" to \"" + syntax.getRegexp()+ "\"");
-
-            if(!syntax.isMatch(arguments)){
+            if (!syntax.isMatch(arguments)) {
                 continue;
             }
 
-            if(selectedBinding != null && syntax.getRegexp().length() < argumentsLength){ // match, but there already more fitted variant
+            if (selectedBinding != null && syntax.getRegexp().length() < argumentsLength) { // match, but there already more fitted variant
                 continue;
             }
 
@@ -81,15 +78,17 @@ public class CommandsManager {
             selectedBinding = binding;
         }
 
-        if(selectedBinding == null){ // there is fitting handler
+        if (selectedBinding == null) { // there is fitting handler
             return false;
         }
 
         // Check permission
         Command commandAnnotation = selectedBinding.getMethodAnnotation();
-        if(!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and reqire permission
-            if(!Permissions.Security.has((Player)sender, commandAnnotation.permission())){
-                sender.sendMessage(ChatColor.RED + "[PermissionsEx] Sorry, you don't have enough permissions.");
+        if (!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and reqire permission
+            if (!Permissions.Security.has((Player) sender, commandAnnotation.permission())) {
+                logger.warning("User " + ((Player) sender).getName() + " was tried to access chat command \"" + command.getName() + " " + arguments + "\","
+                        + " but have no rights (" + commandAnnotation.permission() + ") to do that.");
+                sender.sendMessage(ChatColor.RED + "Sorry, you don't have enough permissions.");
                 return true;
             }
         }
@@ -97,8 +96,8 @@ public class CommandsManager {
 
         try {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
-        } catch (RuntimeException e){
-            Logger.getLogger("Minecraft").severe("There is bogus command handler for "+command.getName() + " command. (Is appopriate plugin is update?)");
+        } catch (RuntimeException e) {
+            logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appopriate plugin is update?)");
         }
 
         return true;
@@ -118,7 +117,7 @@ public class CommandsManager {
         protected String regexp;
         protected List<String> arguments = new LinkedList<String>();
 
-        public CommandSyntax(String syntax){
+        public CommandSyntax(String syntax) {
             this.originalSyntax = syntax;
 
             this.regexp = this.prepareSyntaxRegexp(syntax);
@@ -128,49 +127,50 @@ public class CommandsManager {
             return regexp;
         }
 
-        private String prepareSyntaxRegexp(String syntax){
+        private String prepareSyntaxRegexp(String syntax) {
             String expression = syntax;
 
-            Matcher argMatcher = Pattern.compile("((?:[\\s]+)(\\<|\\[)([^\\>]+)(?:\\>|\\]))").matcher(expression);
+            Matcher argMatcher = Pattern.compile("(?:[\\s]+)((\\<|\\[)([^\\>\\]]+)(?:\\>|\\]))").matcher(expression);
+            //Matcher argMatcher = Pattern.compile("(\\<|\\[)([^\\>\\]]+)(?:\\>|\\])").matcher(expression);
 
-            logger.info("Converting \"" + syntax + "\"");
-
-            while(argMatcher.find()){
-                arguments.add(argMatcher.group(2));
-                String regExpression = "((?:\\\")[^\\\"]+(?:\\\")|[^\\s]+)";
-
-                logger.info("Found argument \"" + argMatcher.group()+"\"");
-                if(argMatcher.group(1).equals("[")){
-                    regExpression += "?"; //make group optional
+            int index = 0;
+            while (argMatcher.find()) {
+                // Yeah it have been done not most optimal way. Futher refactorings
+                if (argMatcher.group(2).equals("[")) {
+                    expression = expression.replace(argMatcher.group(0), "(?:(?:[\\s]+)(\"[^\"]+\"|[^\\s]+))?");
+                } else {
+                    expression = expression.replace(argMatcher.group(1), "(\"[^\"]+\"|[\\S]+)");
                 }
 
-                expression = expression.replace(argMatcher.group(), "(?:[\\s]+)?"+regExpression+"(?:[\\s]+)?");
+                arguments.add(index++, argMatcher.group(3));
             }
-
-            logger.info("Converted to \"" + expression + "\"");
 
             return expression;
         }
 
-        public boolean isMatch(String str){
+        public boolean isMatch(String str) {
             return str.matches(this.regexp);
         }
 
-        public Map<String, String> getMatchedArguments(String str){
+        public Map<String, String> getMatchedArguments(String str) {
             Map<String, String> matchedArguments = new HashMap<String, String>(this.arguments.size());
 
-            if(this.arguments.size() > 0){
+            if (this.arguments.size() > 0) {
                 Matcher argMatcher = Pattern.compile(this.regexp).matcher(str);
 
-                int index = 0;
-                while (argMatcher.find()) {
-                    String argumentValue = argMatcher.group();
+                if (argMatcher.find()) {
+                    for (int index = 1; index <= argMatcher.groupCount(); index++) {
+                        String argumentValue = argMatcher.group(index);
+                        if (argumentValue == null || argumentValue.isEmpty()) {
+                            continue;
+                        }
 
-                    if (argumentValue.startsWith("\"") && argumentValue.endsWith("\"")) { // Trim boundary colons
-                        argumentValue = argumentValue.substring(1, -1);
+                        if (argumentValue.startsWith("\"") && argumentValue.endsWith("\"")) { // Trim boundary colons
+                            argumentValue = argumentValue.substring(1, argumentValue.length() - 1);
+                        }
+
+                        matchedArguments.put(this.arguments.get(index - 1), argumentValue.trim());
                     }
-
-                    matchedArguments.put(this.arguments.get(index++), argumentValue);
                 }
             }
             return matchedArguments;
@@ -181,7 +181,6 @@ public class CommandsManager {
 
         protected Object object;
         protected Method method;
-
         protected Map<String, String> params = new HashMap<String, String>();
 
         public CommandBinding(Object object, Method method) {
@@ -189,7 +188,7 @@ public class CommandsManager {
             this.method = method;
         }
 
-        public Command getMethodAnnotation(){
+        public Command getMethodAnnotation() {
             return this.method.getAnnotation(Command.class);
         }
 

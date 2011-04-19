@@ -5,12 +5,9 @@
 
 package ru.tehkode.permissions.bukkit;
 
-import com.nijiko.Messaging;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
@@ -34,7 +31,7 @@ import ru.tehkode.permissions.config.Configuration;
  */
 public class PermissionsPlugin extends JavaPlugin {
     protected static final String configFile = "config.yml";
-    public static final Logger logger = Logger.getLogger("Minecraft");
+    protected static final Logger logger = Logger.getLogger("Minecraft");
     public static String name = "PermissionsEx";
     public static String version = "100";
     public static String codename = "Martlet";
@@ -74,17 +71,12 @@ public class PermissionsPlugin extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-        Player player = null;
         PluginDescriptionFile pdfFile = this.getDescription();
-        if (sender instanceof Player) {
-            player = (Player) sender;
-            Messaging.save(player);
-        }
         if (args.length > 0) {
             return this.commandsManager.execute(sender, command, args);
         } else {
-            if (player != null) {
-                Messaging.send("&7f[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "] (" + Permissions.codename + ")");
+            if (sender instanceof Player) {
+                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "] (" + Permissions.codename + ")");
             } else {
                 sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] (" + Permissions.codename + ")  loaded");
             }
@@ -95,16 +87,13 @@ public class PermissionsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         this.permissionsManager = null;
-        Permissions.Security = null;
-        Permissions.logger.log(Level.INFO, "[PermissionsEx] (" + Permissions.codename + ") disabled successfully.");
+        logger.log(Level.INFO, "[PermissionsEx] (" + Permissions.codename + ") disabled successfully.");
     }
 
     @Override
     public void onEnable() {
         this.permissionsManager = new PermissionManager(this.loadConfig(Permissions.name));
-        Permissions.Security = this.permissionsManager.getPermissionHandler();
-
-        this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.Permissions());
+        this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
 
         Permissions.logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + Permissions.codename + ")  loaded");
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);

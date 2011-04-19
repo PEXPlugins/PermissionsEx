@@ -12,21 +12,23 @@ commands:
            Usage:
            /<command> - Display help
            /<command> reload - Reload configuration
-           /<command> user <user> - List all user's permissions
-           /<command> user <user> list - List all user's permissions
-           /<command> user <user> group list - List all user's groups
-           /<command> user <user> add <permission> [world] - Add permission for user
+           /<command> user <user> - List all user permissions
+           /<command> user <user> list - List all user permissions
+           /<command> user <user> group list - List all user groups
+           /<command> user <user> add <permission> [world] - Add permission to user
            /<command> user <user> set <permission> <value> [world] - Set permission setting to given value
            /<command> user <user> remove <permission> [world] - Remove permission from user
            /<command> user <user> group add <group> - Add user to specified group
-           /<command> user <user> group set <group> - Set only group for user
+           /<command> user <user> group set <group> - Set only group for user (remove from others)
            /<command> user <user> group remove <group> - Remove user from specified group
-           /<command> group <group> - List all group's permissions
-           /<command> group <group> list - List all group's permissions
-           /<command> group <group> user list - List all user's permissions
-           /<command> group <group> add <permission> [world] - Add permission for user
-           /<command> group <group> set <permission> <value> [world] - Add permission for user
-           /<command> group <group> remove <permission> [world] - Add permission for user
-           /<command> group <group> user add <users> - Add users (comma separated for more) to specified group
-           /<command> group <group> user remove <users> - Add users (comma separated for more) to specified group
-
+           /<command> group <group> - List all group permissions (alias)
+           /<command> group <group> list - List all group permissions
+           /<command> group <group> user list - List all group user permissions
+           /<command> group <group> create [parents] - Create group, optionally set parent groups by comma-separated list
+           /<command> group <group> delete - Removes group
+           /<command> group <group> parents <parents> - Set parents by comma-separated list
+           /<command> group <group> add <permission> [world] - Add permission to group
+           /<command> group <group> set <permission> <value> [world] - Add permission for group
+           /<command> group <group> remove <permission> [world] - Remove permission from group
+           /<command> group <group> user add <users> - Add users (one or comma-separated list) to specified group
+           /<command> group <group> user remove <users> - Add users (one or comma-separated list) to specified group
