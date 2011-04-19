@@ -27,15 +27,14 @@ public class FileBackend extends PermissionBackend {
 
         String permissionFilename = config.getString("permissions.backends.file.file");
 
-        // Default setting
+        // Default settings
         if (permissionFilename == null) {
             permissionFilename = "permissions.yml";
             config.setProperty("permissions.backends.file.file", "permissions.yml");
             config.save();
         }
+
         String baseDir = config.getString("permissions.basedir");
-
-
 
         File permissionFile = new File(baseDir, permissionFilename);
 
@@ -78,15 +77,7 @@ public class FileBackend extends PermissionBackend {
     public PermissionGroup getDefaultGroup() {
         PermissionGroup defaultGroup = null;
 
-        Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
-
-        for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-            if (entry.getValue().getBoolean("default", false)) {
-                defaultGroup = this.manager.getGroup(entry.getKey()); // we found what we looking for, bailout :)
-                break;
-            }
-
-        }
+        
 
         if (defaultGroup == null) {
             throw new RuntimeException("Default user group are not defined. Please select one with \"default: true\" attribute");
@@ -96,9 +87,36 @@ public class FileBackend extends PermissionBackend {
     }
 
     @Override
+    public PermissionGroup[] getGroups() {
+        List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+        Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
+
+        for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
+            groups.add(this.manager.getGroup(entry.getKey()));
+        }
+
+        return groups.toArray(new PermissionGroup[]{});
+    }
+
+    @Override
+    public PermissionUser[] getUsers() {
+        List<PermissionUser> users = new LinkedList<PermissionUser>();
+        Map<String, ConfigurationNode> userMap = this.permissions.getNodesMap("users");
+
+        for (Map.Entry<String, ConfigurationNode> entry : userMap.entrySet()) {
+            users.add(this.manager.getUser(entry.getKey()));
+        }
+
+        return users.toArray(new PermissionUser[]{});
+    }
+
+    @Override
+    protected void removeGroupActually(String name) {
+        this.permissions.removeProperty("groups."+name);
+    }
+
+    @Override
     public void reload() {
         this.permissions.load();
     }
-
-
 }

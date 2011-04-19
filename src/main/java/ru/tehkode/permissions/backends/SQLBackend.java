@@ -54,6 +54,23 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
+    public PermissionGroup[] getGroups() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public PermissionUser[] getUsers() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    protected void removeGroupActually(String name) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+
+
+    @Override
     public void reload() {
         // just do nothing...we are always "online", ie no persistence at all
     }

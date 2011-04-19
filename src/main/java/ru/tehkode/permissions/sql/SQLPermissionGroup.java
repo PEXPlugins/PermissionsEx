@@ -27,47 +27,44 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public Set<PermissionGroup> getParentGroups() {
-        Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
+    protected String[] getParentGroupNames() {
+        String parents[] = ((String)backend.sql.queryOne("SELECT parents FROM groups WHERE groups = ? LIMIT 1", "", this.name)).split(",");
+        String returnParents[] = new String[parents.length];
 
-        String parents = (String) backend.sql.queryOne("SELECT parents FROM groups WHERE groups = ? LIMIT 1", "", this.name);
-        if (!parents.isEmpty()) {
-            for (String parent : parents.split(",")) {
-                parentGroups.add(this.manager.getGroup(parent.trim()));
-            }
+        for (int i = 0 ; i < parents.length ; i++ ){
+            returnParents[i] = parents[i].trim(); // Trimming are neccesary and reason for this cycle mess
         }
 
-        return parentGroups;
+        return returnParents;
     }
-
+    
     @Override
-    protected Set<String> getPermissions(String world) {
-        if(permissions != null){
-            return permissions;
-        }
+    protected String[] getPermissions(String world) {
+        if (permissions == null) {
+            permissions = new LinkedHashSet<String>();
 
-        permissions = new LinkedHashSet<String>();
+            try {
+                List<String> worldPermissions = new LinkedList<String>();
+                List<String> commonPermissions = new LinkedList<String>();
 
-        try {
-            List<String> worldPermissions = new LinkedList<String>();
-            List<String> commonPermissions = new LinkedList<String>();
-
-            ResultSet results = this.backend.sql.query("SELECT permission, world FROM group_permissions WHERE group = ? AND (world = '' OR world = ?) AND value = ''", this.name, world);
-            while (results.next()) {
-                if (results.getString("world").isEmpty()) {
-                    worldPermissions.add(results.getString("permission"));
-                } else {
-                    commonPermissions.add(results.getString("permission"));
+                ResultSet results = this.backend.sql.query("SELECT permission, world FROM group_permissions WHERE group = ? AND (world = '' OR world = ?) AND value = ''", this.name, world);
+                while (results.next()) {
+                    if (results.getString("world").isEmpty()) {
+                        worldPermissions.add(results.getString("permission"));
+                    } else {
+                        commonPermissions.add(results.getString("permission"));
+                    }
                 }
+
+                permissions.addAll(worldPermissions); // At first world specific permissions
+                permissions.addAll(commonPermissions); // Then common
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
 
-            permissions.addAll(worldPermissions); // At first world specific permissions
-            permissions.addAll(commonPermissions); // Then common
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
 
-        return permissions;
+        return permissions.toArray(new String[0]);
     }
 
     @Override
@@ -123,4 +120,21 @@ public class SQLPermissionGroup extends PermissionGroup {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public boolean isExists() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setParentGroups(PermissionGroup[] parentGroups) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setPermissions(String[] permissions, String world) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+
 }

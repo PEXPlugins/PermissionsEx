@@ -2,7 +2,6 @@ package ru.tehkode.permissions;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.util.config.Configuration;
 
@@ -98,7 +97,7 @@ public class PermissionHandler extends com.nijiko.permissions.PermissionHandler 
         return this.checkInGroup(groupName, permissionManager.getUser(userName).getGroups(), true);
     }
 
-    protected boolean checkInGroup(String groupName, Set<PermissionGroup> groupArray, boolean recursive) {
+    protected boolean checkInGroup(String groupName, PermissionGroup[] groupArray, boolean recursive) {
         for (PermissionGroup group : groupArray) {
             if (group.getName().toLowerCase().equals(groupName.toLowerCase())) {
                 return true;
@@ -455,5 +454,4 @@ public class PermissionHandler extends com.nijiko.permissions.PermissionHandler 
     public void saveAll() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    //End of addition by rcjrrjcr
 }

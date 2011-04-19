@@ -27,33 +27,33 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    protected Set<String> getPermissions(String world) {
-        if (permissions != null) {
-            return this.permissions;
-        }
+    protected String[] getPermissions(String world) {
 
-        permissions = new LinkedHashSet<String>();
 
-        try {
-            List<String> worldPermissions = new LinkedList<String>();
-            List<String> commonPermissions = new LinkedList<String>();
+        if (permissions == null) {
+            permissions = new LinkedHashSet<String>();
 
-            ResultSet results = this.backend.sql.query("SELECT permission, world FROM user_permissions WHERE user = ? AND (world = '' OR world = ?) AND value = ''", this.name, world);
-            while (results.next()) {
-                if (results.getString("world").isEmpty()) {
-                    worldPermissions.add(results.getString("permission"));
-                } else {
-                    commonPermissions.add(results.getString("permission"));
+            try {
+                List<String> worldPermissions = new LinkedList<String>();
+                List<String> commonPermissions = new LinkedList<String>();
+
+                ResultSet results = this.backend.sql.query("SELECT permission, world FROM user_permissions WHERE user = ? AND (world = '' OR world = ?) AND value = ''", this.name, world);
+                while (results.next()) {
+                    if (results.getString("world").isEmpty()) {
+                        worldPermissions.add(results.getString("permission"));
+                    } else {
+                        commonPermissions.add(results.getString("permission"));
+                    }
                 }
-            }
 
-            permissions.addAll(worldPermissions); // At first world specific permissions
-            permissions.addAll(commonPermissions); // Then common
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+                permissions.addAll(worldPermissions); // At first world specific permissions
+                permissions.addAll(commonPermissions); // Then common
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
 
-        return permissions;
+        return permissions.toArray(new String[0]);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String[] getGroupNames() {
+    protected String[] getGroupNames() {
         String groups = (String) backend.sql.queryOne("SELECT group FROM users WHERE user = ? LIMIT 1", "", this.name);
         if (groups.isEmpty()) {
             return new String[]{this.manager.getDefaultGroup().getName()};
@@ -121,4 +121,16 @@ public class SQLPermissionUser extends PermissionUser {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public void setGroups(PermissionGroup[] groups) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setPermissions(String[] permissions, String world) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+
 }

@@ -88,7 +88,14 @@ public abstract class PermissionNode {
         return !expression.substring(0, 1).equals("-"); // If expression have - (minus) before then that mean expression are negative
     }
 
-    protected abstract Set<String> getPermissions(String world);
+    public abstract void setPermissions(String[] permissions, String world);
+
+    public void setPermissions(String[] permission){
+        this.setPermissions(permission, null);
+    }
+
+
+    protected abstract String[] getPermissions(String world);
 
     public abstract String getPrefix();
 

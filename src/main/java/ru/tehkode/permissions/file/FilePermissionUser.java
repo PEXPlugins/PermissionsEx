@@ -43,7 +43,7 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    protected Set<String> getPermissions(String world) {
+    protected String[] getPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
         List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
@@ -56,11 +56,11 @@ public class FilePermissionUser extends PermissionUser {
             permissions.addAll(commonPermissions);
         }
 
-        return permissions;
+        return permissions.toArray(new String[]{});
     }
 
     @Override
-    public String[] getGroupNames() {
+    protected String[] getGroupNames() {
         String groups = this.node.getString("group");
         if (groups == null) {
             return new String[]{this.manager.getDefaultGroup().getName()};
@@ -151,9 +151,27 @@ public class FilePermissionUser extends PermissionUser {
         this.save();
     }
 
+    @Override
+    public void setGroups(PermissionGroup[] groups) {
+        String newGroups = "";
+
+        for (PermissionGroup group : groups) {
+            newGroups += "," + group.getName();
+        }
+
+        newGroups = newGroups.substring(1);
+
+        this.node.setProperty("groups", newGroups);
+    }
+
+    @Override
+    public void setPermissions(String[] permissions, String world) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     public void save() {
         if (this.virtual) {
-            if(this.node.getString("group", null) == null){ // Set default group
+            if (this.node.getString("group", null) == null) { // Set default group
                 this.node.setProperty("group", this.manager.getDefaultGroup().getName());
             }
             this.backend.permissions.setProperty("users." + this.getName(), node);

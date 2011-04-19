@@ -1,8 +1,9 @@
 package ru.tehkode.permissions;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  *
@@ -14,14 +15,28 @@ public abstract class PermissionUser extends PermissionNode {
         super(playerName, manager);
     }
 
-    public Set<PermissionGroup> getGroups() {
+    public boolean inGroup(PermissionGroup group){
+        return this.inGroup(group.getName());
+    }
+
+    public boolean inGroup(String groupName) {
+        for (String matchingGroupName : this.getGroupNames()){
+            if(groupName.equalsIgnoreCase(matchingGroupName)){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public PermissionGroup[] getGroups() {
         Set<PermissionGroup> groups = new LinkedHashSet<PermissionGroup>();
 
         for (String group : this.getGroupNames()) {
             groups.add(this.manager.getGroup(group.trim()));
         }
 
-        return groups;
+        return groups.toArray(new PermissionGroup[]{});
     }
 
     @Override
@@ -40,5 +55,38 @@ public abstract class PermissionUser extends PermissionNode {
         return false;
     }
 
-    public abstract String[] getGroupNames();
+    public void addGroup(String groupName){
+        this.addGroup(this.manager.getGroup(groupName));
+    }
+
+    public void addGroup(PermissionGroup group){
+        List<PermissionGroup> groups = Arrays.asList(this.getGroups());
+
+        if(!groups.contains(group)){
+            groups.add(group);
+
+            this.setGroups(groups.toArray(new PermissionGroup[] {}));
+        }
+    }
+
+    public void removeGroup(String groupName){
+        this.removeGroup(this.manager.getGroup(groupName));
+    }
+
+    public void removeGroup(PermissionGroup group){
+        List<PermissionGroup> groups = Arrays.asList(this.getGroups());
+
+        if(groups.contains(group)){
+            groups.remove(group);
+
+            this.setGroups(groups.toArray(new PermissionGroup[] {}));
+        }
+    }
+
+    public abstract void setGroups(PermissionGroup[] groups);
+
+    /**
+     * @todo: Think about moving this to protected
+     */
+    protected abstract String[] getGroupNames();
 }

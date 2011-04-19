@@ -1,11 +1,12 @@
 package ru.tehkode.permissions.file;
 
+import com.avaje.ebeaninternal.server.expression.LikeExpressionLucene;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.FileBackend;
@@ -35,18 +36,8 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public Set<PermissionGroup> getParentGroups() {
-        Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
-
-        List<String> parents = this.node.getStringList("inheritance", null);
-
-        if (parents != null) {
-            for (String parentGroup : parents) {
-                parentGroups.add(this.manager.getGroup(parentGroup));
-            }
-        }
-
-        return parentGroups;
+    public String[] getParentGroupNames(){
+        return this.node.getStringList("inheritance", new LinkedList<String>()).toArray(new String[0]);
     }
 
     @Override
@@ -60,7 +51,7 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    protected Set<String> getPermissions(String world) {
+    protected String[] getPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
         List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
@@ -73,7 +64,7 @@ public class FilePermissionGroup extends PermissionGroup {
             permissions.addAll(commonPermissions);
         }
 
-        return permissions;
+        return permissions.toArray(new String[]{});
     }
 
     @Override
@@ -154,6 +145,36 @@ public class FilePermissionGroup extends PermissionGroup {
         }
 
         this.save();
+    }
+
+    @Override
+    public void setPermissions(String[] permissions, String world) {
+        String nodePath = "permissions";
+        if (world != null || !world.isEmpty()) {
+            nodePath = "worlds." + world + "." + nodePath;
+        }
+
+        this.node.setProperty(nodePath, Arrays.asList(permissions));
+    }
+
+    @Override
+    public boolean isExists() {
+        return !this.virtual;
+    }
+
+    @Override
+    public void setParentGroups(PermissionGroup[] parentGroups) {
+        List<PermissionGroup> newParents = Arrays.asList(parentGroups);
+
+        List<String> parents = this.node.getStringList("inheritance", new LinkedList<String>());
+
+        parents.clear();
+        for (PermissionGroup parent : newParents) {
+            parents.add(parent.getName());
+        }
+
+        this.node.setProperty("inheritance", parents);
+
     }
 
     public void save() {

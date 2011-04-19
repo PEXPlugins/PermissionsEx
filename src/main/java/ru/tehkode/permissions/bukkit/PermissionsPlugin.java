@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -19,6 +20,7 @@ import org.bukkit.event.Event.Priority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.PermissionManager;
@@ -46,6 +48,51 @@ public class PermissionsPlugin extends JavaPlugin {
         logger.log(Level.INFO, "[PermissionsEx] (" + codename + ") was Initialized.");
     }
 
+    @Override
+    public void onLoad() {
+        this.commandsManager = new CommandsManager(this);
+    }
+
+    @Override
+    public void onDisable() {
+        this.permissionsManager = null;
+        logger.log(Level.INFO, "[PermissionsEx] (" + Permissions.codename + ") disabled successfully.");
+    }
+
+    @Override
+    public void onEnable() {
+        this.permissionsManager = new PermissionManager(this.loadConfig(Permissions.name));
+        this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
+
+        Permissions.logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + Permissions.codename + ")  loaded");
+        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
+        PluginDescriptionFile pdfFile = this.getDescription();
+        if (args.length > 0) {
+            return this.commandsManager.execute(sender, command, args);
+        } else {
+            if (sender instanceof Player) {
+                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "] (" + Permissions.codename + ")");
+            } else {
+                sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] (" + Permissions.codename + ")  loaded");
+            }
+        }
+        return false;
+    }
+
+    public static PermissionManager getPermissionManager(){
+        Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Permissions");
+        if(plugin == null || !(plugin instanceof PermissionsPlugin)){
+            throw new RuntimeException("Permissions manager are not accessable. Permissions plugin disabled?");
+        }
+
+        return ((PermissionsPlugin)plugin).permissionsManager;
+    }
+
     protected Configuration loadConfig(String name) {
         File configurationFile = new File(getDataFolder(), Permissions.configFile);
         Configuration config = null;
@@ -67,42 +114,6 @@ public class PermissionsPlugin extends JavaPlugin {
             config.load();
         }
         return config;
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-        PluginDescriptionFile pdfFile = this.getDescription();
-        if (args.length > 0) {
-            return this.commandsManager.execute(sender, command, args);
-        } else {
-            if (sender instanceof Player) {
-                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "] (" + Permissions.codename + ")");
-            } else {
-                sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] (" + Permissions.codename + ")  loaded");
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void onDisable() {
-        this.permissionsManager = null;
-        logger.log(Level.INFO, "[PermissionsEx] (" + Permissions.codename + ") disabled successfully.");
-    }
-
-    @Override
-    public void onEnable() {
-        this.permissionsManager = new PermissionManager(this.loadConfig(Permissions.name));
-        this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
-
-        Permissions.logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + Permissions.codename + ")  loaded");
-        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
-        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
-    }
-
-    @Override
-    public void onLoad() {
-        this.commandsManager = new CommandsManager(this);
     }
 
     private class BlockProtector extends BlockListener {
