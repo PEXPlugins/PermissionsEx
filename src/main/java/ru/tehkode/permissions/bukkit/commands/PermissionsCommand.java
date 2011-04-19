@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Map;
@@ -70,28 +66,28 @@ public class PermissionsCommand implements CommandListener {
      */
     @Command(name = "permissions",
     syntax = "user <user> add group list",
-    permission = "permissions.manage.user.groups",
+    permission = "permissions.manage.membership",
     description = "List all user groups")
     public void userListGroup(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
     }
 
     @Command(name = "permissions",
     syntax = "user <user> add group <group>",
-    permission = "permissions.manage.user.groups",
+    permission = "permissions.manage.membership",
     description = "Add user to specified group")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
     }
 
     @Command(name = "permissions",
     syntax = "user <user> set group <group>",
-    permission = "permissions.manage.user.groups",
+    permission = "permissions.manage.membership",
     description = "Set leave specified group for user")
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
     }
 
     @Command(name = "permissions",
     syntax = "user <user> remove group <group>",
-    permission = "permissions.manage.user.groups",
+    permission = "permissions.manage.membership",
     description = "Remove user from specified group")
     public void userRemoveGroup(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
     }
@@ -169,7 +165,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "permissions",
     syntax = "group <group> users",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.membership",
     description = "List all group users")
     public void groupUsersList(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
 
@@ -177,7 +173,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "permissions",
     syntax = "group <group> user add <user>",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
     public void groupUsersAdd(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
         
@@ -185,7 +181,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "permissions",
     syntax = "group <group> user add <user>",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> arguments) {
         
