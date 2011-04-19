@@ -19,7 +19,6 @@ public class FilePermissionUser extends PermissionUser {
 
     protected ConfigurationNode node;
     protected FileBackend backend;
-    protected Boolean virtual = false;
 
     public FilePermissionUser(String playerName, PermissionManager manager, FileBackend backend) {
         super(playerName, manager);
@@ -38,7 +37,7 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getPostfix() {
+    public String getSuffix() {
         return this.node.getString("postfix", "");
     }
 
@@ -155,6 +154,7 @@ public class FilePermissionUser extends PermissionUser {
     public void setGroups(PermissionGroup[] groups) {
         String newGroups = "";
 
+        // @TODO: Replace this code with something more graceful
         for (PermissionGroup group : groups) {
             newGroups += "," + group.getName();
         }

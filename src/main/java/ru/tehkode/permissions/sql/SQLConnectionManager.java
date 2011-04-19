@@ -5,24 +5,25 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ru.tehkode.utils.StringUtils;
 
 /**
  *
  * @author code
  */
 public class SQLConnectionManager {
-    protected String dbUri = "";
-    protected String dbUser = "";
-    protected String dbPassword = "";
+
     protected Connection db;
 
-    public SQLConnectionManager(String dbName, String user, String password, String dbDriver) {
+    public SQLConnectionManager(String uri, String user, String password, String dbDriver) {
         try {
-            Class.forName(dbDriver).newInstance();
-            db = DriverManager.getConnection("jdbc:" + dbUri, dbUser, dbPassword);
-        } catch (Exception e){
+            Class.forName(getDriverClass(dbDriver)).newInstance();
+            db = DriverManager.getConnection("jdbc:" + uri, user, password);
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -46,7 +47,7 @@ public class SQLConnectionManager {
     public ResultSet query(String sql, Object... params) throws SQLException {
         PreparedStatement stmt = this.db.prepareStatement(sql);
 
-        if(params != null){
+        if (params != null) {
             this.bindParams(stmt, params);
         }
 
@@ -55,23 +56,56 @@ public class SQLConnectionManager {
 
     public Object queryOne(String sql, Object fallback, Object... params) {
         try {
-        ResultSet result = this.query(sql, params);
+            ResultSet result = this.query(sql, params);
 
-        if(!result.next()){
-            return fallback;
-        }
+            if (!result.next()) {
+                return fallback;
+            }
 
-        return result.getObject(1);
+            return result.getObject(1);
 
-        } catch (SQLException e){
+        } catch (SQLException e) {
             Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
         }
 
         return fallback;
     }
 
+    public void insert(String table, String[] fields, List<Object[]> rows) throws SQLException {
+        String[] fieldValues = new String[fields.length];
+        Arrays.fill(fieldValues, "?");
+        String sql = "INSERT INTO " + table + " (" + StringUtils.implode(fields, ", ") + " VALUES (" + StringUtils.implode(fieldValues, ", ") + ");";
+        PreparedStatement stmt = this.db.prepareStatement(sql);
+
+        for (Object[] params : rows) {
+            this.bindParams(stmt, params);
+            stmt.execute();
+        }
+    }
+
+    public boolean isTableExist(String tableName) {
+        try {
+            return this.db.getMetaData().getTables(null, null, tableName, null).next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected static String getDriverClass(String alias){
+
+        if(alias.equals("mysql")){
+            alias = "com.mysql.jdbc.Driver";
+        } else if (alias.equals("sqlite")) {
+            alias = "org.sqlite.JDBC";
+        } else if (alias.equals("postgre")) {
+            alias = "org.postgresql.Driver";
+        }
+
+        return alias;
+    }
+
     protected void bindParams(PreparedStatement stmt, Object[] params) throws SQLException {
-        for (int i = 1 ; i <= params.length ; i++){
+        for (int i = 1; i <= params.length; i++) {
             Object param = params[i - 1];
             stmt.setObject(i, param);
         }

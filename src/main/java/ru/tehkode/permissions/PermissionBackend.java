@@ -35,6 +35,8 @@ public abstract class PermissionBackend {
             user.removeGroup(groupName);
         }
 
+        this.removeGroupActually(groupName);
+
         return true;
     }
 

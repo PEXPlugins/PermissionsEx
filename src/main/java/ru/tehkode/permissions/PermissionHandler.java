@@ -150,7 +150,7 @@ public class PermissionHandler extends com.nijiko.permissions.PermissionHandler 
      */
     @Override
     public String getGroupSuffix(String world, String groupName) {
-        return this.permissionManager.getGroup(groupName).getPostfix();
+        return this.permissionManager.getGroup(groupName).getSuffix();
     }
 
     /**

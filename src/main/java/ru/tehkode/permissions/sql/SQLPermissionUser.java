@@ -1,15 +1,8 @@
 package ru.tehkode.permissions.sql;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.SQLBackend;
 
 /**
  *
@@ -17,120 +10,90 @@ import ru.tehkode.permissions.backends.SQLBackend;
  */
 public class SQLPermissionUser extends PermissionUser {
 
-    protected SQLBackend backend;
-    protected Set<String> permissions = null;
+    protected SQLEntity backend;
 
-    public SQLPermissionUser(String name, PermissionManager manager, SQLBackend backend) {
+    public SQLPermissionUser(String name, PermissionManager manager, SQLConnectionManager sql) {
         super(name, manager);
 
-        this.backend = backend;
+        this.backend = new SQLEntity(SQLEntity.Type.USER, name, sql);
     }
 
     @Override
-    protected String[] getPermissions(String world) {
+    public void setSuffix(String suffix) {
+        backend.setSuffix(suffix);
+    }
 
+    @Override
+    public void setPrefix(String prefix) {
+        backend.setPrefix(prefix);
+    }
 
-        if (permissions == null) {
-            permissions = new LinkedHashSet<String>();
+    @Override
+    public void setPermissions(String[] permissions, String world) {
+        backend.setPermissions(permissions, world);
+    }
 
-            try {
-                List<String> worldPermissions = new LinkedList<String>();
-                List<String> commonPermissions = new LinkedList<String>();
+    @Override
+    public void setPermission(String permission, String value, String world) {
+        backend.setPermission(permission, value, world);
+    }
 
-                ResultSet results = this.backend.sql.query("SELECT permission, world FROM user_permissions WHERE user = ? AND (world = '' OR world = ?) AND value = ''", this.name, world);
-                while (results.next()) {
-                    if (results.getString("world").isEmpty()) {
-                        worldPermissions.add(results.getString("permission"));
-                    } else {
-                        commonPermissions.add(results.getString("permission"));
-                    }
-                }
+    @Override
+    public void setGroups(PermissionGroup[] parentGroups) {
+        backend.setParents(parentGroups);
+    }
 
-                permissions.addAll(worldPermissions); // At first world specific permissions
-                permissions.addAll(commonPermissions); // Then common
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
+    @Override
+    public void removePermission(String permission, String world) {
+        backend.removePermission(permission, world);
+    }
 
-        return permissions.toArray(new String[0]);
+    @Override
+    public boolean isVirtual() {
+        return backend.isVirtual();
+    }
+
+    @Override
+    public String getSuffix() {
+        return backend.getSuffix();
     }
 
     @Override
     public String getPrefix() {
-        return (String) backend.sql.queryOne("SELECT prefix FROM users WHERE user = ? LIMIT 1", "", this.name);
+        return backend.getPrefix();
     }
 
     @Override
-    public String getPostfix() {
-        return (String) backend.sql.queryOne("SELECT postfix FROM users WHERE user = ? LIMIT 1", "", this.name);
+    public String[] getPermissions(String world) {
+        return backend.getPermissions(world);
     }
 
     @Override
-    protected String[] getGroupNames() {
-        String groups = (String) backend.sql.queryOne("SELECT group FROM users WHERE user = ? LIMIT 1", "", this.name);
-        if (groups.isEmpty()) {
-            return new String[]{this.manager.getDefaultGroup().getName()};
-        } else if (groups.contains(",")) {
-            return groups.split(",");
-        } else {
-            return new String[]{groups};
-        }
+    public String[] getGroupNames() {
+        return backend.getParentNames();
+    }
+
+    @Override
+    public void addPermission(String permission, String value, String world) {
+        backend.addPermission(permission, value, world);
     }
 
     @Override
     public String getPermissionValue(String permission, String world, boolean inheritance) {
-        String value = (String) this.backend.sql.queryOne("SELECT value FROM user_permissions WHERE user = ? AND permission = ? AND world = ? LIMIT 1", "", this.getName(), permission, world);
-        if (!value.isEmpty()) {
-            return value;
+        String userValue = backend.getPermissionValue(permission, world, inheritance);
+        if (!userValue.isEmpty()) {
+            return userValue;
         }
 
         if (inheritance) {
             for (PermissionGroup group : this.getGroups()) {
-                value = group.getPermissionValue(permission, world, inheritance);
-                if (!value.isEmpty()) {
+                String value = group.getPermissionValue(permission, world, inheritance);
+                if (value != null && !value.isEmpty()) {
                     return value;
                 }
             }
         }
 
-        return "";
+        return userValue;
     }
-
-    @Override
-    public void addPermission(String permission, String value, String world) {
-        this.setPermission(permission, value, world);
-    }
-
-    @Override
-    public void setPermission(String permission, String value, String world) {
-        try {
-            // @TODO: make this moment more cross-database, remove mysql-only ON DUPLICATE for compatibility with postgre and sqlite
-            backend.sql.query("INSERT INTO user_permissions (user, permission, value, world) VALUES (?, ?, ?, ?) "
-                    + "ON DUPLICATE KEY UPDATE value = ?", this.name, permission, value, world, value);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void removePermission(String permission, String world) {
-        try {
-            backend.sql.query("DELETE FROM user_permissions WHERE user = ? AND permission = ? AND world = ?", this.getName(), permission, world);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void setGroups(PermissionGroup[] groups) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void setPermissions(String[] permissions, String world) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-
 }

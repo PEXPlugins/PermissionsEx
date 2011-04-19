@@ -21,8 +21,7 @@ public class FilePermissionGroup extends PermissionGroup {
 
     protected ConfigurationNode node;
     protected FileBackend backend;
-    protected boolean virtual = false;
-
+    
     public FilePermissionGroup(String name, PermissionManager manager, FileBackend backend) {
         super(name, manager);
 
@@ -46,8 +45,18 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getPostfix() {
+    public String getSuffix() {
         return this.node.getString("postfix", "");
+    }
+
+    @Override
+    public void setSuffix(String postfix) {
+        super.setSuffix(postfix);
+    }
+
+    @Override
+    public void setPrefix(String prefix) {
+        super.setPrefix(prefix);
     }
 
     @Override
@@ -150,16 +159,11 @@ public class FilePermissionGroup extends PermissionGroup {
     @Override
     public void setPermissions(String[] permissions, String world) {
         String nodePath = "permissions";
-        if (world != null || !world.isEmpty()) {
+        if (world != null && !world.isEmpty()) {
             nodePath = "worlds." + world + "." + nodePath;
         }
 
         this.node.setProperty(nodePath, Arrays.asList(permissions));
-    }
-
-    @Override
-    public boolean isExists() {
-        return !this.virtual;
     }
 
     @Override

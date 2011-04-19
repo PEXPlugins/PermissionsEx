@@ -50,6 +50,13 @@ public abstract class PermissionGroup extends PermissionNode {
         Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
 
         for (String parentGroup : this.getParentGroupNames()) {
+
+            // Yeah horrible thing, i know, that just safety from invoking empty named groups
+            parentGroup = parentGroup.trim();
+            if(parentGroup.isEmpty()){
+                continue;
+            }
+            
             PermissionGroup group = this.manager.getGroup(parentGroup);
             if(!group.isChildOf(this.getName(), true)){
                 parentGroups.add(group);
@@ -67,5 +74,4 @@ public abstract class PermissionGroup extends PermissionNode {
 
     public abstract void setParentGroups(PermissionGroup[] parentGroups);
 
-    public abstract boolean isExists();
 }

@@ -40,8 +40,7 @@ public class PermissionBackendFactory {
         String className = getBackendClassName(backendName);
 
         try {
-            Class backendClass = Class.forName(className);
-            return (PermissionBackend)backendClass.getConstructor(PermissionManager.class, Configuration.class).newInstance(manager, config);
+            return (PermissionBackend)Class.forName(className).getConstructor(PermissionManager.class, Configuration.class).newInstance(manager, config);
         } catch (ClassNotFoundException e) {
             Logger.getLogger("Minecraft").severe("Selected backend \""+backendName+"\" are not found. Falling back to file backend");
             

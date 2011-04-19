@@ -1,8 +1,5 @@
 package ru.tehkode.permissions;
 
-import java.util.Set;
-import java.util.logging.Logger;
-
 /**
  *
  * @author code
@@ -10,7 +7,10 @@ import java.util.logging.Logger;
 public abstract class PermissionNode {
 
     protected PermissionManager manager;
-    protected String name;
+    private String name;
+    protected boolean virtual = true;
+    protected String prefix = "";
+    protected String suffix = "";
 
     public PermissionNode(String name, PermissionManager manager) {
         this.manager = manager;
@@ -52,8 +52,6 @@ public abstract class PermissionNode {
         return null;
     }
 
-    public abstract void addPermission(String permission, String value, String world);
-
     public void addPermission(String permission) {
         this.addPermission(permission, "", "");
     }
@@ -62,13 +60,9 @@ public abstract class PermissionNode {
         this.addPermission(permission, value, "");
     }
 
-    public abstract void setPermission(String permission, String value, String world);
-
     public void setPermission(String permission, String value) {
         this.setPermission(permission, value, "");
     }
-
-    public abstract void removePermission(String permission, String world);
 
     public void removePermission(String permission) {
         this.removePermission(permission, "");
@@ -76,11 +70,11 @@ public abstract class PermissionNode {
 
     public abstract String getPermissionValue(String permission, String world, boolean inheritance);
 
-    public String getPermissionValue(String permission, String world){
+    public String getPermissionValue(String permission, String world) {
         return this.getPermissionValue(permission, world, true);
     }
 
-    public String getPermissionValue(String permission){
+    public String getPermissionValue(String permission) {
         return this.getPermissionValue(permission, "", true);
     }
 
@@ -88,21 +82,42 @@ public abstract class PermissionNode {
         return !expression.substring(0, 1).equals("-"); // If expression have - (minus) before then that mean expression are negative
     }
 
-    public abstract void setPermissions(String[] permissions, String world);
-
-    public void setPermissions(String[] permission){
+    public void setPermissions(String[] permission) {
         this.setPermissions(permission, null);
     }
 
+    public String getPrefix() {
+        return this.prefix;
+    }
 
-    protected abstract String[] getPermissions(String world);
+    public String getSuffix() {
+        return this.suffix;
+    }
 
-    public abstract String getPrefix();
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
 
-    public abstract String getPostfix();
+    public void setSuffix(String postfix) {
+        this.suffix = postfix;
+    }
 
     @Override
     public String toString() {
         return this.getName();
     }
+
+    public boolean isVirtual() {
+        return this.virtual;
+    }
+
+    protected abstract String[] getPermissions(String world);
+
+    public abstract void addPermission(String permission, String value, String world);
+
+    public abstract void setPermission(String permission, String value, String world);
+
+    public abstract void setPermissions(String[] permissions, String world);
+
+    public abstract void removePermission(String permission, String world);
 }

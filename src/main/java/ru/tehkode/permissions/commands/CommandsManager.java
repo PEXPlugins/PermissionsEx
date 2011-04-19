@@ -14,6 +14,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import ru.tehkode.utils.StringUtils;
 
 /**
  *
@@ -56,7 +57,7 @@ public class CommandsManager {
 
         CommandBinding selectedBinding = null;
         int argumentsLength = 0;
-        String arguments = implodeArgs(args);
+        String arguments = StringUtils.implode(args, " ");
 
         for (Entry<CommandSyntax, CommandBinding> entry : callMap.entrySet()) {
             CommandSyntax syntax = entry.getKey();
@@ -97,14 +98,6 @@ public class CommandsManager {
         }
 
         return true;
-    }
-
-    protected String implodeArgs(String[] args) {
-        String arguments = "";
-        for (int i = 0; i < args.length; i++) {
-            arguments += " " + args[i];
-        }
-        return arguments.trim();
     }
 
     protected class CommandSyntax {
