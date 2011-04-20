@@ -33,6 +33,12 @@ public class CommandsManager {
     }
 
     public void register(CommandListener listener) {
+        Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
+
+        if (helpPlugin != null && helpPlugin instanceof Help) {
+            logger.info("[PermissionsEx] Help plugin detected. Support enabled.");
+        }
+
         for (Method method : listener.getClass().getMethods()) {
             if (!method.isAnnotationPresent(Command.class)) {
                 continue;
@@ -40,15 +46,13 @@ public class CommandsManager {
 
             Command cmdAnotation = method.getAnnotation(Command.class);
 
-            Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
-
             Map<CommandSyntax, CommandBinding> commandListeners = listeners.get(cmdAnotation.name());
             if (commandListeners == null) {
                 commandListeners = new HashMap<CommandSyntax, CommandBinding>();
                 listeners.put(cmdAnotation.name(), commandListeners);
 
-                if(helpPlugin != null && helpPlugin instanceof Help){
-                    Help help = (Help)helpPlugin;
+                if (helpPlugin != null && helpPlugin instanceof Help) {
+                    Help help = (Help) helpPlugin;
 
                     help.registerCommand(cmdAnotation.name(), cmdAnotation.description(), plugin, cmdAnotation.permission());
                 }
