@@ -18,7 +18,7 @@ import ru.tehkode.permissions.commands.CommandListener;
  */
 public class PermissionsCommand implements CommandListener {
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "reload",
     permission = "permissions.manage.reload",
     description = "Reload permissions")
@@ -32,7 +32,7 @@ public class PermissionsCommand implements CommandListener {
     /**
      * User's permissions management
      */
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user>",
     permission = "permissions.manage.user.permissions",
     description = "List user permissions (list alias)")
@@ -40,7 +40,7 @@ public class PermissionsCommand implements CommandListener {
         this.userListPermissions(plugin, sender, args);
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> list [world]",
     permission = "permissions.manage.user.permissions",
     description = "List user permissions")
@@ -52,13 +52,13 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        sender.sendMessage("Current: " + args.get("user") + " permissions:");
+        sender.sendMessage(args.get("user") + "'s own permissions:");
         for (String permission : user.getPermissions(args.get("world"))) {
             sender.sendMessage("  " + permission);
         }
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> add <permission> [world]",
     permission = "permissions.manage.user.permissions",
     description = "Add permission to user")
@@ -71,9 +71,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.addPermission(args.get("permission"), null, args.get("world"));
+
+        sender.sendMessage(ChatColor.WHITE + "Permission added!");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> set <permission> <value> [world]",
     permission = "permissions.manage.user.permissions",
     description = "Set permission setting to given value")
@@ -86,9 +88,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.setPermission(args.get("permission"), args.get("value"), args.get("world"));
+
+        sender.sendMessage(ChatColor.WHITE + "Permission set!");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> remove <permission> [world]",
     permission = "permissions.manage.user.permissions",
     description = "Remove permission from user")
@@ -101,12 +105,14 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.removePermission(args.get("permission"), args.get("world"));
+
+        sender.sendMessage(ChatColor.WHITE + "Permission removed!");
     }
 
     /**
      * User's groups management
      */
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> group list",
     permission = "permissions.manage.membership",
     description = "List all user groups")
@@ -124,7 +130,7 @@ public class PermissionsCommand implements CommandListener {
         }
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> add group <group>",
     permission = "permissions.manage.membership",
     description = "Add user to specified group")
@@ -137,9 +143,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.addGroup(args.get("group"));
+
+        sender.sendMessage(ChatColor.WHITE + "User added to group!");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> set group <group>",
     permission = "permissions.manage.membership",
     description = "Set leave specified group for user")
@@ -152,9 +160,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.setGroups(new PermissionGroup[]{PermissionsPlugin.getPermissionManager().getGroup(args.get("group"))});
+
+        sender.sendMessage(ChatColor.WHITE + "User groups set!");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "user <user> remove group <group>",
     permission = "permissions.manage.membership",
     description = "Remove user from specified group")
@@ -174,12 +184,14 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.setGroups(groups.toArray(new PermissionGroup[0]));
+
+        sender.sendMessage(ChatColor.WHITE + "User removed from group " + args.get("group") + "!");
     }
 
     /**
      * Group management
      */
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> create [parents]",
     permission = "permissions.manage.group.create",
     description = "List all group permissions (alias)")
@@ -207,10 +219,12 @@ public class PermissionsCommand implements CommandListener {
             group.setParentGroups(groups.toArray(new PermissionGroup[0]));
         }
 
+        sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " created!");
+
         group.save();
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> delete",
     permission = "permissions.manage.group.remove",
     description = "Removes group")
@@ -222,10 +236,12 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
+        sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " removed!");
+
         group.remove();
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> parents <parents>",
     permission = "permissions.manage.group.inheritance",
     description = "Set parents by comma-separated list")
@@ -252,6 +268,8 @@ public class PermissionsCommand implements CommandListener {
 
             group.setParentGroups(groups.toArray(new PermissionGroup[0]));
 
+            sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
+
             group.save();
         }
     }
@@ -259,7 +277,7 @@ public class PermissionsCommand implements CommandListener {
     /**
      * Group permissions
      */
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group>",
     permission = "permissions.manage.group.permissions",
     description = "List all group permissions (alias)")
@@ -279,13 +297,13 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        sender.sendMessage("Group " + args.get("user") + " permissions:");
+        sender.sendMessage("Group " + args.get("group") + " own permissions:");
         for (String permission : group.getPermissions(args.get("world"))) {
             sender.sendMessage("  " + permission);
         }
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> add <permission> [world]",
     permission = "permissions.manage.group.permissions",
     description = "Add permission to group")
@@ -298,9 +316,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         group.addPermission(args.get("permission"), args.get("world"));
+
+        sender.sendMessage(ChatColor.WHITE + "Permission added to " + group.getName() + " !");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> set <permission> <value> [world]",
     permission = "permissions.manage.group.permissions",
     description = "Set permission value for group")
@@ -313,9 +333,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         group.setPermission(args.get("permission"), args.get("value"), args.get("world"));
+
+        sender.sendMessage(ChatColor.WHITE + "Permission set for " + group.getName() + " !");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> remove <permission> [world]",
     permission = "permissions.manage.group.permissions",
     description = "Remove permission from group")
@@ -328,12 +350,14 @@ public class PermissionsCommand implements CommandListener {
         }
 
         group.removePermission(args.get("permission"), args.get("world"));
+
+        sender.sendMessage(ChatColor.WHITE + "Permission removed from " + group.getName() + " !");
     }
 
     /**
      * Group users management
      */
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> users",
     permission = "permissions.manage.membership",
     description = "List all group users")
@@ -346,7 +370,7 @@ public class PermissionsCommand implements CommandListener {
         }
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> user add <user>",
     permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
@@ -359,9 +383,11 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.addGroup(args.get("group"));
+
+        sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " added to " + args.get("group") + " !");
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> user add <user>",
     permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
@@ -374,5 +400,7 @@ public class PermissionsCommand implements CommandListener {
         }
 
         user.removeGroup(args.get("group"));
+
+        sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
     }
 }

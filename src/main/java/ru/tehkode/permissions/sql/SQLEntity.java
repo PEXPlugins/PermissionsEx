@@ -11,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import ru.tehkode.permissions.PermissionGroup;
-import ru.tehkode.permissions.PermissionNode;
 
 /**
  *
@@ -91,20 +90,22 @@ public class SQLEntity {
     }
 
     public String[] getPermissions(String world) {
+        List<String> permissions = new LinkedList<String>();
+
         if (commonPermissions == null) {
             this.fetchPermissions();
         }
 
         if (world != null && !world.isEmpty() && this.worldsPermissions != null) {
             List<String> worldPermissions = this.worldsPermissions.get(world);
-            if(worldPermissions == null){
-                return new String[0];
+            if(worldPermissions != null){
+                permissions.addAll(worldPermissions);
             }
-            
-            return worldPermissions.toArray(new String[0]);
         }
 
-        return commonPermissions.toArray(new String[0]);
+        permissions.addAll(commonPermissions);
+
+        return permissions.toArray(new String[0]);
     }
 
     public String getPermissionValue(String permission, String world, boolean inheritance) {
@@ -222,15 +223,15 @@ public class SQLEntity {
         this.commonPermissions = new LinkedList<String>();
 
         try {
-            ResultSet results = this.db.query("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ? AND value = ''", this.name, this.type.ordinal());
+            ResultSet results = this.db.query("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ?", this.name, this.type.ordinal());
             while (results.next()) {
-                String permission = results.getString("permission");
-                String world = results.getString("world");
-                String value = results.getString("value");
+                String permission = results.getString("permission").trim();
+                String world = results.getString("world").trim();
+                String value = results.getString("value").trim();
 
                 // @TODO: to this in more optimal way
                 if (value.isEmpty()) {
-                    if (world.isEmpty()) {
+                    if (!world.isEmpty()) {
                         List<String> worldPermissions = this.worldsPermissions.get(world);
                         if (worldPermissions == null) {
                             worldPermissions = new LinkedList<String>();
@@ -242,7 +243,7 @@ public class SQLEntity {
                         this.commonPermissions.add(permission);
                     }
                 } else {
-                    if (results.getString("world").isEmpty()) {
+                    if (!world.isEmpty()) {
                         Map<String, String> worldOptions = this.worldsOptions.get(world);
                         if (worldOptions == null) {
                             worldOptions = new HashMap<String, String>();

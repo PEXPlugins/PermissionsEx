@@ -2,6 +2,7 @@ package ru.tehkode.permissions;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ public abstract class PermissionGroup extends PermissionNode {
     @Override
     public boolean has(String permission, String world) {
         String expression = this.getMatchingExpression(permission, world);
+
         if (expression != null) {
             return this.explainExpression(expression);
         }

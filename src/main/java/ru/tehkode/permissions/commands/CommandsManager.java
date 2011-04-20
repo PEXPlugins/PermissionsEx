@@ -50,13 +50,10 @@ public class CommandsManager {
             if (commandListeners == null) {
                 commandListeners = new HashMap<CommandSyntax, CommandBinding>();
                 listeners.put(cmdAnotation.name(), commandListeners);
+            }
 
-                if (helpPlugin != null && helpPlugin instanceof Help) {
-                    Help help = (Help) helpPlugin;
-
-                    help.registerCommand(cmdAnotation.name(), cmdAnotation.description(), plugin, cmdAnotation.permission());
-                }
-
+            if (helpPlugin != null && helpPlugin instanceof Help && !cmdAnotation.description().isEmpty()) {
+                ((Help) helpPlugin).registerCommand(cmdAnotation.name() + " " + cmdAnotation.syntax(), cmdAnotation.description(), plugin, cmdAnotation.permission());
             }
 
             commandListeners.put(new CommandSyntax(cmdAnotation.syntax()), new CommandBinding(listener, method));
@@ -110,6 +107,7 @@ public class CommandsManager {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
         } catch (RuntimeException e) {
             logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appopriate plugin is update?)");
+            e.printStackTrace();
         }
 
         return true;

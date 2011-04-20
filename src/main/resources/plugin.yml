@@ -5,8 +5,7 @@ author: t3hk0d3
 website: www.bukkit.org
 description: PermissionsEx - permission management plugin. @todo rewrite it.
 commands:
-  permissions:
-    aliases: [perms, pr]
+  pex:
     description: Provides access to Permissions commands and information.
     usage: |
            Usage:

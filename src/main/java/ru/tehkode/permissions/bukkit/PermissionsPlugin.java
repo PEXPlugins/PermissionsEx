@@ -78,7 +78,8 @@ public class PermissionsPlugin extends JavaPlugin {
                 sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] loaded");
             }
         }
-        return false;
+
+        return true;
     }
 
     public static PermissionManager getPermissionManager() {
@@ -121,8 +122,6 @@ public class PermissionsPlugin extends JavaPlugin {
             Player player = event.getPlayer();
 
             PermissionUser user = permissionsManager.getUser(player.getName());
-
-            logger.info(" Info: " + Arrays.asList(user.getGroups()));
 
             if (!permissionsManager.has(player, "modifyworld.destroy")) {
                 event.setCancelled(true);
