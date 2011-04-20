@@ -48,6 +48,11 @@
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>me.taylorkelly.help</groupId>
+      <artifactId>Help</artifactId>
+      <version>0.2</version>
+    </dependency>
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
