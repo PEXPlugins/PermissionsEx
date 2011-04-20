@@ -42,7 +42,7 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    protected String[] getPermissions(String world) {
+    public String[] getPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
         List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
@@ -152,6 +152,10 @@ public class FilePermissionUser extends PermissionUser {
 
     @Override
     public void setGroups(PermissionGroup[] groups) {
+        if(groups == null){
+            return;
+        }
+
         String newGroups = "";
 
         // @TODO: Replace this code with something more graceful
@@ -179,4 +183,15 @@ public class FilePermissionUser extends PermissionUser {
 
         this.backend.permissions.save();
     }
+
+    @Override
+    public void remove() {
+        if (!this.virtual) {
+            this.backend.permissions.setProperty("users." + this.getName(), null);
+        }
+
+        this.backend.permissions.save();
+    }
+
+
 }

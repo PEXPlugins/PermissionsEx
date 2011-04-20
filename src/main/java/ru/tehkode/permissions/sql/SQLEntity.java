@@ -174,6 +174,27 @@ public class SQLEntity {
         }
     }
 
+    public void save() {
+        this.updateInfo();
+    }
+
+    public void remove() {
+        try {
+            // clear inheritance info
+            this.db.query("DELETE FROM permisions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
+
+            // clear permissions
+            this.db.query("DELETE FROM permissions WHERE name = ? AND type = ?", this.name, this.type.ordinal());
+
+            // clear info
+            this.db.query("DELETE FROM permissions_entity WHERE name = ? AND type = ?", this.name, this.type.ordinal());
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     protected void updateInfo() {
         String sql;
         if (this.isVirtual()) {

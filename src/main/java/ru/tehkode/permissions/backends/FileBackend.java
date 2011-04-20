@@ -76,11 +76,9 @@ public class FileBackend extends PermissionBackend {
     @Override
     public PermissionGroup getDefaultGroup() {
         PermissionGroup defaultGroup = null;
-
         
-
         if (defaultGroup == null) {
-            throw new RuntimeException("Default user group are not defined. Please select one with \"default: true\" attribute");
+            throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
         }
 
         return defaultGroup;
@@ -108,11 +106,6 @@ public class FileBackend extends PermissionBackend {
         }
 
         return users.toArray(new PermissionUser[]{});
-    }
-
-    @Override
-    protected void removeGroupActually(String name) {
-        this.permissions.removeProperty("groups."+name);
     }
 
     @Override

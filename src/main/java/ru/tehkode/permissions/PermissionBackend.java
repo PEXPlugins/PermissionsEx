@@ -35,12 +35,10 @@ public abstract class PermissionBackend {
             user.removeGroup(groupName);
         }
 
-        this.removeGroupActually(groupName);
+        this.manager.getGroup(groupName).remove();
 
         return true;
     }
-
-    protected abstract void removeGroupActually(String name);
 
     public abstract PermissionGroup getDefaultGroup();
 

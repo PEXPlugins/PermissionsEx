@@ -33,6 +33,10 @@ public abstract class PermissionGroup extends PermissionNode {
     }
 
     public boolean isChildOf(String groupName, boolean checkInheritance) {
+        if (groupName == null || groupName.isEmpty()) {
+            return false;
+        }
+
         for (PermissionGroup group : this.getParentGroups()) {
             if (group.getName().equalsIgnoreCase(groupName)) {
                 return true;
@@ -53,12 +57,12 @@ public abstract class PermissionGroup extends PermissionNode {
 
             // Yeah horrible thing, i know, that just safety from invoking empty named groups
             parentGroup = parentGroup.trim();
-            if(parentGroup.isEmpty()){
+            if (parentGroup.isEmpty()) {
                 continue;
             }
-            
+
             PermissionGroup group = this.manager.getGroup(parentGroup);
-            if(!group.isChildOf(this.getName(), true)){
+            if (!group.isChildOf(this.getName(), true)) {
                 parentGroups.add(group);
             }
         }
@@ -73,5 +77,4 @@ public abstract class PermissionGroup extends PermissionNode {
     protected abstract String[] getParentGroupNames();
 
     public abstract void setParentGroups(PermissionGroup[] parentGroups);
-
 }

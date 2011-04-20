@@ -15,13 +15,13 @@ public abstract class PermissionUser extends PermissionNode {
         super(playerName, manager);
     }
 
-    public boolean inGroup(PermissionGroup group){
+    public boolean inGroup(PermissionGroup group) {
         return this.inGroup(group.getName());
     }
 
     public boolean inGroup(String groupName) {
-        for (String matchingGroupName : this.getGroupNames()){
-            if(groupName.equalsIgnoreCase(matchingGroupName)){
+        for (String matchingGroupName : this.getGroupNames()) {
+            if (groupName.equalsIgnoreCase(matchingGroupName)) {
                 return true;
             }
         }
@@ -46,7 +46,7 @@ public abstract class PermissionUser extends PermissionNode {
             return this.explainExpression(expression);
         }
 
-        for (PermissionGroup group : this.getGroups()){
+        for (PermissionGroup group : this.getGroups()) {
             if (group.has(permission, world)) {
                 return true;
             }
@@ -55,31 +55,47 @@ public abstract class PermissionUser extends PermissionNode {
         return false;
     }
 
-    public void addGroup(String groupName){
+    public void addGroup(String groupName) {
+        if (groupName == null || groupName.isEmpty()) {
+            return;
+        }
+
         this.addGroup(this.manager.getGroup(groupName));
     }
 
-    public void addGroup(PermissionGroup group){
+    public void addGroup(PermissionGroup group) {
+        if (group == null) {
+            return;
+        }
+
         List<PermissionGroup> groups = Arrays.asList(this.getGroups());
 
-        if(!groups.contains(group)){
+        if (!groups.contains(group)) {
             groups.add(group);
 
-            this.setGroups(groups.toArray(new PermissionGroup[] {}));
+            this.setGroups(groups.toArray(new PermissionGroup[]{}));
         }
     }
 
-    public void removeGroup(String groupName){
+    public void removeGroup(String groupName) {
+        if (groupName == null || groupName.isEmpty()) {
+            return;
+        }
+
         this.removeGroup(this.manager.getGroup(groupName));
     }
 
-    public void removeGroup(PermissionGroup group){
+    public void removeGroup(PermissionGroup group) {
+        if (group == null) {
+            return;
+        }
+
         List<PermissionGroup> groups = Arrays.asList(this.getGroups());
 
-        if(groups.contains(group)){
+        if (groups.contains(group)) {
             groups.remove(group);
 
-            this.setGroups(groups.toArray(new PermissionGroup[] {}));
+            this.setGroups(groups.toArray(new PermissionGroup[]{}));
         }
     }
 

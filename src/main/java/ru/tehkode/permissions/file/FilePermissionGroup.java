@@ -60,7 +60,7 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    protected String[] getPermissions(String world) {
+    public String[] getPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
         List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
@@ -168,6 +168,10 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void setParentGroups(PermissionGroup[] parentGroups) {
+        if(parentGroups == null){
+            return;
+        }
+
         List<PermissionGroup> newParents = Arrays.asList(parentGroups);
 
         List<String> parents = this.node.getStringList("inheritance", new LinkedList<String>());
@@ -184,6 +188,15 @@ public class FilePermissionGroup extends PermissionGroup {
     public void save() {
         if (this.virtual) {
             this.backend.permissions.setProperty("groups." + this.getName(), this.node);
+        }
+
+        this.backend.permissions.save();
+    }
+
+    @Override
+    public void remove(){
+        if(!this.virtual) {
+            this.backend.permissions.setProperty("groups." + this.getName(), null);
         }
 
         this.backend.permissions.save();

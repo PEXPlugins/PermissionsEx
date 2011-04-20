@@ -1,9 +1,5 @@
 package ru.tehkode.permissions.backends;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.CharBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Logger;
@@ -49,6 +45,8 @@ public class SQLBackend extends PermissionBackend {
         Logger.getLogger("Minecraft").info("Connecting sql database server on \"" + dbUri + "\"");
 
         sql = new SQLConnectionManager(dbUri, dbUser, dbPassword, dbDriver);
+
+        Logger.getLogger("Minecraft").info("Successfuly connected to database");
 
         this.deployTables();
     }
@@ -105,27 +103,26 @@ public class SQLBackend extends PermissionBackend {
     }
 
     protected final void deployTables() {
-        InputStreamReader reader = new InputStreamReader(this.getClass().getResourceAsStream("/sql/default.sql"));
-
-        StringBuilder dstBuffer = new StringBuilder();
-
-        try {
-            CharBuffer tmpBuffer = CharBuffer.allocate(1024);
-            while (reader.read(tmpBuffer) > 0) {
-                reader.read(tmpBuffer);
-                dstBuffer.append(tmpBuffer);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if(this.sql.isTableExist("permissions")){
+            return;
         }
 
-        Logger.getLogger("Minecraft").info(dstBuffer.toString());
+        Logger.getLogger("Minecraft").severe("Please deploy bundled database dump.");
 
-    }
+        throw new RuntimeException("No database scheme found. Please upload bundled (default.sql) one.");
+        
+        /*
+        try {
+            String deploySQL = StringUtils.readStream(getClass().getResourceAsStream("/sql/default.sql"));
 
-    @Override
-    protected void removeGroupActually(String name) {
-        // Not yet impelented ... this is argueble moment
+            Logger.getLogger("Minecraft").info("Deploying default database scheme");
+            this.sql.updateQuery(deploySQL);
+            
+        } catch (Exception e) {
+            Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please init database manually using defaults.sql");
+            e.printStackTrace();
+        }
+         */
     }
 
     @Override

@@ -111,7 +111,7 @@ public abstract class PermissionNode {
         return this.virtual;
     }
 
-    protected abstract String[] getPermissions(String world);
+    public abstract String[] getPermissions(String world);
 
     public abstract void addPermission(String permission, String value, String world);
 
@@ -120,4 +120,8 @@ public abstract class PermissionNode {
     public abstract void setPermissions(String[] permissions, String world);
 
     public abstract void removePermission(String permission, String world);
+
+    public abstract void save();
+
+    public abstract void remove();
 }

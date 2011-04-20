@@ -80,6 +80,10 @@ public class SQLPermissionUser extends PermissionUser {
 
     @Override
     public String getPermissionValue(String permission, String world, boolean inheritance) {
+        if (permission == null) {
+            return "";
+        }
+
         String userValue = backend.getPermissionValue(permission, world, inheritance);
         if (!userValue.isEmpty()) {
             return userValue;
@@ -95,5 +99,15 @@ public class SQLPermissionUser extends PermissionUser {
         }
 
         return userValue;
+    }
+
+    @Override
+    public void save() {
+        this.backend.save();
+    }
+
+    @Override
+    public void remove() {
+        this.backend.remove();
     }
 }
