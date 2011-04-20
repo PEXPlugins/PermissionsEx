@@ -13,6 +13,10 @@ import java.io.StringWriter;
 public class StringUtils {
 
     public static String implode(String[] array, String separator) {
+        if(array.length == 0){
+            return "";
+        }
+
         StringBuilder buffer = new StringBuilder();
 
         for (String str : array) {

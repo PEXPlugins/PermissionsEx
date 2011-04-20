@@ -73,11 +73,9 @@ public class CommandsManager {
 
         for (Entry<CommandSyntax, CommandBinding> entry : callMap.entrySet()) {
             CommandSyntax syntax = entry.getKey();
-
             if (!syntax.isMatch(arguments)) {
                 continue;
             }
-
             if (selectedBinding != null && syntax.getRegexp().length() < argumentsLength) { // match, but there already more fitted variant
                 continue;
             }
@@ -88,7 +86,8 @@ public class CommandsManager {
         }
 
         if (selectedBinding == null) { // there is fitting handler
-            return false;
+            sender.sendMessage(ChatColor.RED + "Error in command syntax. Check command help.");
+            return true;
         }
 
         // Check permission
@@ -107,7 +106,6 @@ public class CommandsManager {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
         } catch (RuntimeException e) {
             logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appopriate plugin is update?)");
-            e.printStackTrace();
         }
 
         return true;

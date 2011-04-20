@@ -11,6 +11,7 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsPlugin;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandListener;
+import ru.tehkode.utils.StringUtils;
 
 /**
  *
@@ -24,11 +25,42 @@ public class PermissionsCommand implements CommandListener {
     description = "Reload permissions")
     public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionsPlugin.getPermissionManager().reset();
+
+        sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
     }
 
     /**
      * User management
      */
+    @Command(name = "pex",
+    syntax = "users list",
+    permission = "permissions.manage.user",
+    description = "List all registred users")
+    public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionUser[] users = PermissionsPlugin.getPermissionManager().getUsers();
+
+        sender.sendMessage(ChatColor.WHITE + "Currently registred users: ");
+        for (PermissionUser user : users) {
+            sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getGroupsNames(), ", ") + "]");
+        }
+    }
+
+    @Command(name = "pex",
+    syntax = "users",
+    permission = "permissions.manage.user",
+    description = "List all registred users (alias)")
+    public void userListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        this.usersList(plugin, sender, args);
+    }
+
+    @Command(name = "pex",
+    syntax = "user",
+    permission = "permissions.manage.user",
+    description = "List all registred users (alias)")
+    public void userListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        this.usersList(plugin, sender, args);
+    }
+
     /**
      * User's permissions management
      */
@@ -192,6 +224,35 @@ public class PermissionsCommand implements CommandListener {
      * Group management
      */
     @Command(name = "pex",
+    syntax = "groups list",
+    permission = "permissions.manage.group",
+    description = "List all registred groups")
+    public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionGroup[] groups = PermissionsPlugin.getPermissionManager().getGroups();
+
+        sender.sendMessage(ChatColor.WHITE + "Currently registred groups: ");
+        for (PermissionGroup group : groups) {
+            sender.sendMessage(" " + group.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(group.getParentGroupsNames(), ", ") + "]");
+        }
+    }
+
+    @Command(name = "pex",
+    syntax = "groups",
+    permission = "permissions.manage.group",
+    description = "List all registred groups (alias)")
+    public void groupsListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        this.groupsList(plugin, sender, args);
+    }
+
+    @Command(name = "pex",
+    syntax = "group",
+    permission = "permissions.manage.group",
+    description = "List all registred groups (alias)")
+    public void groupsListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        this.groupsList(plugin, sender, args);
+    }
+
+    @Command(name = "pex",
     syntax = "group <group> create [parents]",
     permission = "permissions.manage.group.create",
     description = "List all group permissions (alias)")
@@ -241,11 +302,14 @@ public class PermissionsCommand implements CommandListener {
         group.remove();
     }
 
+    /**
+     * Group inheritance
+     */
     @Command(name = "pex",
-    syntax = "group <group> parents <parents>",
+    syntax = "group <group> parents list",
     permission = "permissions.manage.group.inheritance",
     description = "Set parents by comma-separated list")
-    public void groupSetParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+    public void groupListParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
@@ -253,8 +317,28 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        if (!group.isVirtual()) {
-            sender.sendMessage(ChatColor.RED + "Group " + args.get("group") + " are already exists");
+        if (group.getParentGroups().length == 0) {
+            sender.sendMessage(ChatColor.RED + "Group " + group.getName() + " doesn't have parents");
+            return;
+        }
+
+        sender.sendMessage("Group " + group.getName() + " parents:");
+
+        for (PermissionGroup parent : group.getParentGroups()) {
+            sender.sendMessage("  " + parent.getName());
+        }
+
+    }
+
+    @Command(name = "pex",
+    syntax = "group <group> parents set <parents>",
+    permission = "permissions.manage.group.inheritance",
+    description = "Set parents by comma-separated list")
+    public void groupSetParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "No such group found");
             return;
         }
 
@@ -285,7 +369,7 @@ public class PermissionsCommand implements CommandListener {
         this.groupListPermissions(plugin, sender, args);
     }
 
-    @Command(name = "permissions",
+    @Command(name = "pex",
     syntax = "group <group> list [world]",
     permission = "permissions.manage.group.permissions",
     description = "List all group permissions")

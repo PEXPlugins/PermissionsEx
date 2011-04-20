@@ -64,7 +64,7 @@ public class SQLBackend extends PermissionBackend {
     @Override
     public PermissionGroup getDefaultGroup() {
         try {
-            ResultSet result = this.sql.query("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+            ResultSet result = this.sql.selectQuery("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
 
             if (!result.next()) {
                 throw new RuntimeException("There is no default group set, this is serious issue");

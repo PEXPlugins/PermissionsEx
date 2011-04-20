@@ -11,6 +11,10 @@ commands:
            Usage:
            /<command> - Display help
            /<command> reload - Reload configuration
+           /<command> users
+           /<command> users list
+           /<command> groups
+           /<command> groups list
            /<command> user <user> - List all user permissions
            /<command> user <user> list - List all user permissions
            /<command> user <user> group list - List all user groups
@@ -25,7 +29,10 @@ commands:
            /<command> group <group> user list - List all group user permissions
            /<command> group <group> create [parents] - Create group, optionally set parent groups by comma-separated list
            /<command> group <group> delete - Removes group
-           /<command> group <group> parents <parents> - Set parents by comma-separated list
+           /<command> group <group> parents - List all group parents (alias)
+           /<command> group <group> parents list - List all group parents
+           /<command> group <group> parents add <parents> - Set parents by comma-separated list
+           /<command> group <group> parents remove <parents> - Set parents by comma-separated list
            /<command> group <group> add <permission> [world] - Add permission to group
            /<command> group <group> set <permission> <value> [world] - Add permission for group
            /<command> group <group> remove <permission> [world] - Remove permission from group

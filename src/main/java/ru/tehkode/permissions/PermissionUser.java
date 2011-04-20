@@ -2,6 +2,7 @@ package ru.tehkode.permissions;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -9,7 +10,7 @@ import java.util.Set;
  *
  * @author code
  */
-public abstract class PermissionUser extends PermissionNode {
+public abstract class PermissionUser extends PermissionEntity {
 
     public PermissionUser(String playerName, PermissionManager manager) {
         super(playerName, manager);
@@ -20,7 +21,7 @@ public abstract class PermissionUser extends PermissionNode {
     }
 
     public boolean inGroup(String groupName) {
-        for (String matchingGroupName : this.getGroupNames()) {
+        for (String matchingGroupName : this.getGroupsNamesImpl()) {
             if (groupName.equalsIgnoreCase(matchingGroupName)) {
                 return true;
             }
@@ -32,7 +33,7 @@ public abstract class PermissionUser extends PermissionNode {
     public PermissionGroup[] getGroups() {
         Set<PermissionGroup> groups = new LinkedHashSet<PermissionGroup>();
 
-        for (String group : this.getGroupNames()) {
+        for (String group : this.getGroupsNamesImpl()) {
             groups.add(this.manager.getGroup(group.trim()));
         }
 
@@ -41,6 +42,15 @@ public abstract class PermissionUser extends PermissionNode {
         }
 
         return groups.toArray(new PermissionGroup[]{});
+    }
+
+    public String[] getGroupsNames() {
+        List<String> groups = new LinkedList<String>();
+        for (PermissionGroup group : this.getGroups()){
+            groups.add(group.getName());
+        }
+
+        return groups.toArray(new String[0]);
     }
 
     @Override
@@ -105,8 +115,5 @@ public abstract class PermissionUser extends PermissionNode {
 
     public abstract void setGroups(PermissionGroup[] groups);
 
-    /**
-     * @todo: Think about moving this to protected
-     */
-    protected abstract String[] getGroupNames();
+    protected abstract String[] getGroupsNamesImpl();
 }

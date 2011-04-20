@@ -41,11 +41,7 @@ public class SQLConnectionManager {
         }
     }
 
-    public ResultSet query(String sql) throws SQLException {
-        return this.query(sql, null);
-    }
-
-    public ResultSet query(String sql, Object... params) throws SQLException {
+    public ResultSet selectQuery(String sql, Object... params) throws SQLException {
         PreparedStatement stmt = this.db.prepareStatement(sql);
 
         if (params != null) {
@@ -55,9 +51,9 @@ public class SQLConnectionManager {
         return stmt.executeQuery();
     }
 
-    public Object queryOne(String sql, Object fallback, Object... params) {
+    public Object selectQueryOne(String sql, Object fallback, Object... params) {
         try {
-            ResultSet result = this.query(sql, params);
+            ResultSet result = this.selectQuery(sql, params);
 
             if (!result.next()) {
                 return fallback;
@@ -72,10 +68,25 @@ public class SQLConnectionManager {
         return fallback;
     }
 
+    public void updateQuery(String sql, Object... params) {
+        try {
+            PreparedStatement stmt = this.db.prepareStatement(sql);
+
+            if (params != null) {
+                this.bindParams(stmt, params);
+            }
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void insert(String table, String[] fields, List<Object[]> rows) throws SQLException {
         String[] fieldValues = new String[fields.length];
         Arrays.fill(fieldValues, "?");
-        String sql = "INSERT INTO " + table + " (" + StringUtils.implode(fields, ", ") + " VALUES (" + StringUtils.implode(fieldValues, ", ") + ");";
+        String sql = "INSERT INTO " + table + " (" + StringUtils.implode(fields, ", ") + ") VALUES (" + StringUtils.implode(fieldValues, ", ") + ");";
         PreparedStatement stmt = this.db.prepareStatement(sql);
 
         for (Object[] params : rows) {
@@ -92,9 +103,9 @@ public class SQLConnectionManager {
         }
     }
 
-    protected static String getDriverClass(String alias){
+    protected static String getDriverClass(String alias) {
 
-        if(alias.equals("mysql")){
+        if (alias.equals("mysql")) {
             alias = "com.mysql.jdbc.Driver";
         } else if (alias.equals("sqlite")) {
             alias = "org.sqlite.JDBC";

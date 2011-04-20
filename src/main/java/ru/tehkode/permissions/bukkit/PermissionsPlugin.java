@@ -73,7 +73,7 @@ public class PermissionsPlugin extends JavaPlugin {
             return this.commandsManager.execute(sender, command, args);
         } else {
             if (sender instanceof Player) {
-                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "]");
+                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running (" + pdfFile.getVersion() + ")");
             } else {
                 sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] loaded");
             }

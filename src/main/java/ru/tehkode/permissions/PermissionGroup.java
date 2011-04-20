@@ -1,14 +1,15 @@
 package ru.tehkode.permissions;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  *
  * @author code
  */
-public abstract class PermissionGroup extends PermissionNode {
+public abstract class PermissionGroup extends PermissionEntity {
 
     public PermissionGroup(String groupName, PermissionManager manager) {
         super(groupName, manager);
@@ -52,7 +53,7 @@ public abstract class PermissionGroup extends PermissionNode {
     public PermissionGroup[] getParentGroups() {
         Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
 
-        for (String parentGroup : this.getParentGroupNames()) {
+        for (String parentGroup : this.getParentGroupsNamesImpl()) {
 
             // Yeah horrible thing, i know, that just safety from invoking empty named groups
             parentGroup = parentGroup.trim();
@@ -69,11 +70,20 @@ public abstract class PermissionGroup extends PermissionNode {
         return parentGroups.toArray(new PermissionGroup[]{});
     }
 
+    public String[] getParentGroupsNames() {
+        List<String> groups = new LinkedList<String>();
+        for (PermissionGroup group : this.getParentGroups()) {
+            groups.add(group.getName());
+        }
+
+        return groups.toArray(new String[0]);
+    }
+
     public boolean isChildOf(String groupName) {
         return this.isChildOf(groupName, false);
     }
 
-    protected abstract String[] getParentGroupNames();
+    protected abstract String[] getParentGroupsNamesImpl();
 
     public abstract void setParentGroups(PermissionGroup[] parentGroups);
 }

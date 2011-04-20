@@ -59,7 +59,7 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    protected String[] getGroupNames() {
+    protected String[] getGroupsNamesImpl() {
         String groups = this.node.getString("group");
         if (groups == null) {
             return new String[]{};

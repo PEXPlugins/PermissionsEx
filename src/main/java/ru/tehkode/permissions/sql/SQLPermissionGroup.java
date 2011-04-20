@@ -41,7 +41,7 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    protected String[] getParentGroupNames() {
+    protected String[] getParentGroupsNamesImpl() {
         return this.backend.getParentNames();
     }
 

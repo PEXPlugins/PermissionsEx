@@ -69,7 +69,7 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String[] getGroupNames() {
+    protected String[] getGroupsNamesImpl() {
         return backend.getParentNames();
     }
 

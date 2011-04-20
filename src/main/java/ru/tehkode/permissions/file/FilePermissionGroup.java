@@ -35,7 +35,7 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String[] getParentGroupNames(){
+    public String[] getParentGroupsNamesImpl(){
         return this.node.getStringList("inheritance", new LinkedList<String>()).toArray(new String[0]);
     }
 

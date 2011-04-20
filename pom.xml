@@ -14,6 +14,7 @@
         <url>https://github.com/t3hk0d3/PermissionsEx/issues</url>
     </issueManagement>
     <build>
+        <finalName>PermissionsEx</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
