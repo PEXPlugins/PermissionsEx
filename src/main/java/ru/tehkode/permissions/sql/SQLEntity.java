@@ -96,7 +96,12 @@ public class SQLEntity {
         }
 
         if (world != null && !world.isEmpty() && this.worldsPermissions != null) {
-            return this.worldsPermissions.get(world).toArray(new String[0]);
+            List<String> worldPermissions = this.worldsPermissions.get(world);
+            if(worldPermissions == null){
+                return new String[0];
+            }
+            
+            return worldPermissions.toArray(new String[0]);
         }
 
         return commonPermissions.toArray(new String[0]);

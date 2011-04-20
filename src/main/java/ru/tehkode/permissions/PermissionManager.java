@@ -3,6 +3,7 @@ package ru.tehkode.permissions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.bukkit.entity.Player;
 import ru.tehkode.permissions.config.Configuration;
 
 /**
@@ -15,7 +16,6 @@ public class PermissionManager {
     protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
     protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
     protected PermissionBackend backend = null;
-    protected PermissionHandler permissionHandler = new PermissionHandler(this);
     protected PermissionGroup defaultGroup = null;
     protected Configuration config;
 
@@ -23,10 +23,6 @@ public class PermissionManager {
         this.config = config;
 
         this.initBackend();
-    }
-
-    public PermissionHandler getPermissionHandler() {
-        return permissionHandler;
     }
 
     public void reset() {
@@ -69,6 +65,16 @@ public class PermissionManager {
         }
 
         return group;
+    }
+
+    public boolean has(Player player, String permission){
+        PermissionUser user = this.getUser(player.getName());
+
+        if(user == null){
+            return false;
+        }
+
+        return user.has(permission, player.getWorld().getName());
     }
 
     public boolean removeGroup(String groupName) {

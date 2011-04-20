@@ -2,10 +2,8 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package ru.tehkode.permissions.bukkit;
 
-import com.nijikokun.bukkit.Permissions.Permissions;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -32,20 +30,15 @@ import ru.tehkode.permissions.config.Configuration;
  * @author code
  */
 public class PermissionsPlugin extends JavaPlugin {
+
     protected static final String configFile = "config.yml";
     protected static final Logger logger = Logger.getLogger("Minecraft");
-    public static String name = "PermissionsEx";
-    public static String version = "100";
-    public static String codename = "Martlet";
-
     public PermissionManager permissionsManager;
     public CommandsManager commandsManager;
-
     protected BlockListener blockProtector = new BlockProtector();
-    
 
-    public PermissionsPlugin(){
-        logger.log(Level.INFO, "[PermissionsEx] (" + codename + ") was Initialized.");
+    public PermissionsPlugin() {
+        logger.log(Level.INFO, "[PermissionsEx-" + this.getDescription().getVersion() + "] was Initialized.");
     }
 
     @Override
@@ -56,15 +49,15 @@ public class PermissionsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         this.permissionsManager = null;
-        logger.log(Level.INFO, "[PermissionsEx] (" + Permissions.codename + ") disabled successfully.");
+        logger.log(Level.INFO, "[PermissionsEx-" + this.getDescription().getVersion() + "] disabled successfully.");
     }
 
     @Override
     public void onEnable() {
-        this.permissionsManager = new PermissionManager(this.loadConfig(Permissions.name));
+        this.permissionsManager = new PermissionManager(this.loadConfig(configFile));
         this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
 
-        Permissions.logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + Permissions.codename + ")  loaded");
+        logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
     }
@@ -76,25 +69,25 @@ public class PermissionsPlugin extends JavaPlugin {
             return this.commandsManager.execute(sender, command, args);
         } else {
             if (sender instanceof Player) {
-                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "] (" + Permissions.codename + ")");
+                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running &f[" + pdfFile.getVersion() + "]");
             } else {
-                sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] (" + Permissions.codename + ")  loaded");
+                sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] loaded");
             }
         }
         return false;
     }
 
-    public static PermissionManager getPermissionManager(){
+    public static PermissionManager getPermissionManager() {
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Permissions");
-        if(plugin == null || !(plugin instanceof PermissionsPlugin)){
+        if (plugin == null || !(plugin instanceof PermissionsPlugin)) {
             throw new RuntimeException("Permissions manager are not accessable. Permissions plugin disabled?");
         }
 
-        return ((PermissionsPlugin)plugin).permissionsManager;
+        return ((PermissionsPlugin) plugin).permissionsManager;
     }
 
     protected Configuration loadConfig(String name) {
-        File configurationFile = new File(getDataFolder(), Permissions.configFile);
+        File configurationFile = new File(getDataFolder(), configFile);
         Configuration config = null;
         if (!configurationFile.exists()) {
             try {
@@ -122,7 +115,7 @@ public class PermissionsPlugin extends JavaPlugin {
         public void onBlockBreak(BlockBreakEvent event) {
             super.onBlockBreak(event);
             Player player = event.getPlayer();
-            if (!Permissions.Security.has(player, "modifyworld.destroy")) {
+            if (!permissionsManager.has(player, "modifyworld.destroy")) {
                 event.setCancelled(true);
             }
         }
@@ -131,10 +124,9 @@ public class PermissionsPlugin extends JavaPlugin {
         public void onBlockPlace(BlockPlaceEvent event) {
             super.onBlockPlace(event);
             Player player = event.getPlayer();
-            if (!Permissions.Security.has(player, "modifyworld.place")) {
+            if (!permissionsManager.has(player, "modifyworld.place")) {
                 event.setCancelled(true);
             }
         }
     }
-
 }

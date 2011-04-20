@@ -1,9 +1,9 @@
-name: Permissions
-main: com.nijikokun.bukkit.Permissions.Permissions
+name: PermissionsEx
+main: ru.tehkode.permissions.bukkit.PermissionsPlugin
 version: 100
 author: t3hk0d3
 website: www.bukkit.org
-description: Fork of famous Permissions plugin, permissions framework for bukkit plugins.
+description: PermissionsEx - permission management plugin. @todo rewrite it.
 commands:
   permissions:
     aliases: [perms, pr]
