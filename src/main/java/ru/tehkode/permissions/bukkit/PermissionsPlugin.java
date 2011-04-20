@@ -38,7 +38,9 @@ public class PermissionsPlugin extends JavaPlugin {
     protected BlockListener blockProtector = new BlockProtector();
 
     public PermissionsPlugin() {
-        logger.log(Level.INFO, "[PermissionsEx-" + this.getDescription().getVersion() + "] was Initialized.");
+        super();
+        
+        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
     }
 
     @Override

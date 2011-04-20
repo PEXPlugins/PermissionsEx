@@ -75,13 +75,15 @@ public class FileBackend extends PermissionBackend {
 
     @Override
     public PermissionGroup getDefaultGroup() {
-        PermissionGroup defaultGroup = null;
-        
-        if (defaultGroup == null) {
-            throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
-        }
+        Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
-        return defaultGroup;
+        for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
+            if(entry.getValue().getBoolean("default", false)){
+                return this.manager.getGroup(entry.getKey());
+            }
+        }
+        
+        throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
     }
 
     @Override
