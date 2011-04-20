@@ -36,6 +36,10 @@ public abstract class PermissionUser extends PermissionNode {
             groups.add(this.manager.getGroup(group.trim()));
         }
 
+        if(groups.isEmpty()){
+            groups.add(this.manager.getDefaultGroup());
+        }
+
         return groups.toArray(new PermissionGroup[]{});
     }
 

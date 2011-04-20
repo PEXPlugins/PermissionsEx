@@ -29,9 +29,6 @@ public abstract class PermissionGroup extends PermissionNode {
         return false;
     }
 
-    public void addUser(PermissionUser user) {
-    }
-
     public boolean isChildOf(String groupName, boolean checkInheritance) {
         if (groupName == null || groupName.isEmpty()) {
             return false;

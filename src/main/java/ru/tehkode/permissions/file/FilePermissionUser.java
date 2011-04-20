@@ -62,7 +62,7 @@ public class FilePermissionUser extends PermissionUser {
     protected String[] getGroupNames() {
         String groups = this.node.getString("group");
         if (groups == null) {
-            return new String[]{this.manager.getDefaultGroup().getName()};
+            return new String[]{};
         } else if (groups.contains(",")) {
             return groups.split(",");
         } else {

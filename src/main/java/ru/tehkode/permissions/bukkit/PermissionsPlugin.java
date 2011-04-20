@@ -6,6 +6,7 @@ package ru.tehkode.permissions.bukkit;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
@@ -22,6 +23,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -46,22 +48,22 @@ public class PermissionsPlugin extends JavaPlugin {
     @Override
     public void onLoad() {
         this.commandsManager = new CommandsManager(this);
-    }
-
-    @Override
-    public void onDisable() {
-        this.permissionsManager = null;
-        logger.log(Level.INFO, "[PermissionsEx-" + this.getDescription().getVersion() + "] disabled successfully.");
+        this.permissionsManager = new PermissionManager(this.loadConfig(configFile));
     }
 
     @Override
     public void onEnable() {
-        this.permissionsManager = new PermissionManager(this.loadConfig(configFile));
         this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
 
-        logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
+
+        logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
+    }
+
+    @Override
+    public void onDisable() {
+        logger.log(Level.INFO, "[PermissionsEx-" + this.getDescription().getVersion() + "] disabled successfully.");
     }
 
     @Override
@@ -80,7 +82,7 @@ public class PermissionsPlugin extends JavaPlugin {
     }
 
     public static PermissionManager getPermissionManager() {
-        Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Permissions");
+        Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
         if (plugin == null || !(plugin instanceof PermissionsPlugin)) {
             throw new RuntimeException("Permissions manager are not accessable. Permissions plugin disabled?");
         }
@@ -117,6 +119,11 @@ public class PermissionsPlugin extends JavaPlugin {
         public void onBlockBreak(BlockBreakEvent event) {
             super.onBlockBreak(event);
             Player player = event.getPlayer();
+
+            PermissionUser user = permissionsManager.getUser(player.getName());
+
+            logger.info(" Info: " + Arrays.asList(user.getGroups()));
+
             if (!permissionsManager.has(player, "modifyworld.destroy")) {
                 event.setCancelled(true);
             }

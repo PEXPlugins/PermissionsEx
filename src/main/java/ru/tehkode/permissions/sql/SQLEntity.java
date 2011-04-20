@@ -262,6 +262,7 @@ public class SQLEntity {
 
     protected final void fetchInheritance() {
         try {
+            this.parents = new LinkedList<String>();
             ResultSet results = this.db.query("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
 
             while (results.next()) {
