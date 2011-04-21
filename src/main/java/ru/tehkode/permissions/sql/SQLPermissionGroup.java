@@ -3,10 +3,6 @@ package ru.tehkode.permissions.sql;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 
-/**
- *
- * @author code
- */
 public class SQLPermissionGroup extends PermissionGroup {
 
     protected SQLEntity backend;
@@ -125,6 +121,4 @@ public class SQLPermissionGroup extends PermissionGroup {
     public void remove() {
         this.backend.remove();
     }
-
-
 }

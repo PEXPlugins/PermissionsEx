@@ -11,10 +11,12 @@ commands:
            Usage:
            /<command> - Display help
            /<command> reload - Reload configuration
-           /<command> users
-           /<command> users list
-           /<command> groups
-           /<command> groups list
+           /<command> backend - Print currently using backend
+           /<command> backend <backend> - Change permission backend on the fly (Use with caution!)
+           /<command> users - Print registred user list (alias)
+           /<command> users list - Print registred user list
+           /<command> groups - Print registed group list (alias)
+           /<command> groups list - Print registred group list
            /<command> user <user> - List all user permissions
            /<command> user <user> list - List all user permissions
            /<command> user <user> group list - List all user groups

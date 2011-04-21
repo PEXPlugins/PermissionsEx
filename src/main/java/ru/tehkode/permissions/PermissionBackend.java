@@ -127,6 +127,18 @@ public abstract class PermissionBackend {
         registedAliases.put(alias, backendClass.getName());
     }
 
+    public static String getBackendAlias(Class<?> backendClass){
+        if(registedAliases.containsValue(backendClass.getName())){
+            for(String alias : registedAliases.keySet()){ // Is there better way to find key by value?
+                if(registedAliases.get(alias).equals(backendClass.getName())){
+                    return alias;
+                }
+            }
+        }
+
+        return backendClass.getName();
+    }
+
     public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config) {
         if (backendName == null || backendName.isEmpty()) {
             backendName = defaultBackend;

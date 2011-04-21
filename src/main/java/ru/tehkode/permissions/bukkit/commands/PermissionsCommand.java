@@ -29,6 +29,31 @@ public class PermissionsCommand implements CommandListener {
         sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
     }
 
+    @Command(name = "pex",
+    syntax = "backend",
+    permission = "permissions.manage.backend",
+    description = "Print currently using backend")
+    public void getBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        sender.sendMessage("Current backend: " + PermissionsPlugin.getPermissionManager().getBackend());
+    }
+
+    @Command(name = "pex",
+    syntax = "backend <backend>",
+    permission = "permissions.manage.backend",
+    description = "Change permission backend on the fly (Use with caution!)")
+    public void setBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        if (args.get("backend") == null) {
+            return;
+        }
+
+        try {
+            PermissionsPlugin.getPermissionManager().setBackend(args.get("backend"));
+            sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
+        } catch (RuntimeException e) {
+            sender.sendMessage(ChatColor.RED + "Specifiend backend not found.");
+        }
+    }
+
     /**
      * User management
      */

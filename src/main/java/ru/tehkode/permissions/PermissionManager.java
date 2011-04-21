@@ -125,4 +125,13 @@ public class PermissionManager {
         
         this.backend = PermissionBackend.getBackend(backEnd, this, config);
     }
+
+    public void setBackend(String backEnd){
+        this.reset();
+        this.backend = PermissionBackend.getBackend(backEnd, this, config);
+    }
+
+    public String getBackend() {
+        return PermissionBackend.getBackendAlias(this.backend.getClass());
+    }
 }
