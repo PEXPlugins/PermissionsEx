@@ -120,4 +120,6 @@ public abstract class PermissionUser extends PermissionEntity {
     public abstract void setGroups(PermissionGroup[] groups);
 
     protected abstract String[] getGroupsNamesImpl();
+
+
 }

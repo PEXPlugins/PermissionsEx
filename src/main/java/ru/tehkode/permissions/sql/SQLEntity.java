@@ -138,10 +138,18 @@ public class SQLEntity {
             value = "";
         }
 
+        if(world == null){
+            world = "";
+        }
+
         if (newOption) {
             this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, ?, ?, ?)", this.name, permission, value, world, this.type.ordinal());
         } else {
             this.db.updateQuery("UPDATE permissions SET value = ? WHERE name = ? AND type = ? AND permission = ?", value, this.name, this.type.ordinal(), permission);
+        }
+
+        if(this.isVirtual()){
+            this.save();
         }
     }
 
@@ -156,6 +164,10 @@ public class SQLEntity {
 
             List<Object[]> rows = new LinkedList<Object[]>();
             for (PermissionGroup group : parentGroups) {
+                if(group == null || group.getName().isEmpty()){
+                    continue;
+                }
+
                 rows.add(new Object[]{this.name, group.getName(), this.type.ordinal()});
             }
 
@@ -163,12 +175,20 @@ public class SQLEntity {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
+        if(this.isVirtual()){
+            this.save();
+        }
     }
 
     public void setPermissions(String[] permissions, String world) {
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ? AND world = ? AND value = ''", this.name, this.type.ordinal(), world);
         for (String permission : permissions) {
             this.setPermission(permission, "", world);
+        }
+
+        if(this.isVirtual()){
+            this.save();
         }
     }
 
@@ -178,7 +198,7 @@ public class SQLEntity {
 
     public void remove() {
         // clear inheritance info
-        this.db.updateQuery("DELETE FROM permisions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
+        this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
         // clear permissions
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ?", this.name, this.type.ordinal());
         // clear info
@@ -194,6 +214,8 @@ public class SQLEntity {
         }
 
         this.db.updateQuery(sql, this.suffix, this.prefix, this.name, this.type.ordinal());
+
+        this.virtual = false;
     }
 
     protected final void fetchPermissions() {
