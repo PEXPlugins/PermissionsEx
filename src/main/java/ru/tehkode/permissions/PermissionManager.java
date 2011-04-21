@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.entity.Player;
+import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.Configuration;
 
 /**
@@ -77,6 +78,14 @@ public class PermissionManager {
         return user.has(permission, player.getWorld().getName());
     }
 
+    public void resetUser(String userName){
+        this.users.put(userName, null);
+    }
+
+    public void resetGroup(String groupName){
+        this.groups.put(groupName, null);
+    }
+
     public boolean removeGroup(String groupName) {
         return backend.removeGroup(groupName);
     }
@@ -109,11 +118,11 @@ public class PermissionManager {
         String backEnd = this.config.getString("permissions.backend");
 
         if (backEnd == null || backEnd.isEmpty()) {
-            backEnd = PermissionBackendFactory.defaultBackend; //Default backend
+            backEnd = PermissionBackend.defaultBackend; //Default backend
             this.config.setProperty("permissions.backend", backEnd);
             this.config.save();
         }
-
-        this.backend = PermissionBackendFactory.getBackend(backEnd, this, config);
+        
+        this.backend = PermissionBackend.getBackend(backEnd, this, config);
     }
 }

@@ -17,6 +17,10 @@ public abstract class PermissionGroup extends PermissionEntity {
 
     @Override
     public boolean has(String permission, String world) {
+        if(permission != null && permission.isEmpty()){ // empty permission for public access :)
+            return true;
+        }
+
         String expression = this.getMatchingExpression(permission, world);
 
         if (expression != null) {

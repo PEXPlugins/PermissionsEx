@@ -19,11 +19,16 @@ import org.bukkit.event.Event.Priority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.backends.FileBackend;
+import ru.tehkode.permissions.backends.SQLBackend;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -35,13 +40,16 @@ public class PermissionsPlugin extends JavaPlugin {
 
     protected static final String configFile = "config.yml";
     protected static final Logger logger = Logger.getLogger("Minecraft");
-    public PermissionManager permissionsManager;
-    public CommandsManager commandsManager;
+    protected PermissionManager permissionsManager;
+    protected CommandsManager commandsManager;
     protected BlockListener blockProtector = new BlockProtector();
 
     public PermissionsPlugin() {
         super();
-        
+
+        PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
+        PermissionBackend.registerBackendAlias("file", FileBackend.class);
+
         logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
     }
 
@@ -57,6 +65,8 @@ public class PermissionsPlugin extends JavaPlugin {
 
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
         this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
+
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new org.bukkit.event.player.PlayerListener(), Priority.Low, this);
 
         logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
     }
@@ -112,6 +122,15 @@ public class PermissionsPlugin extends JavaPlugin {
             config.load();
         }
         return config;
+    }
+
+    private class PlayerListener extends org.bukkit.event.player.PlayerListener {
+
+        @Override
+        public void onPlayerQuit(PlayerQuitEvent event) {
+            super.onPlayerQuit(event);
+            getPermissionManager().resetUser(event.getPlayer().getName());
+        }
     }
 
     private class BlockProtector extends BlockListener {

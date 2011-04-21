@@ -134,6 +134,10 @@ public class SQLEntity {
             newOption = false;
         }
 
+        if(value == null){
+            value = "";
+        }
+
         if (newOption) {
             this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, ?, ?, ?)", this.name, permission, value, world, this.type.ordinal());
         } else {
