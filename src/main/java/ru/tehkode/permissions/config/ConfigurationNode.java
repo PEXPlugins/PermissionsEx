@@ -42,6 +42,9 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 
         List<ConfigurationNode> list = new ArrayList<ConfigurationNode>();
         for (Object o : raw) {
+            if (o instanceof ConfigurationNode){
+                list.add((ConfigurationNode)o);
+            }
             if (o instanceof Map) {
                 list.add(new ConfigurationNode((Map<String, Object>) o));
             }
@@ -61,6 +64,10 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
     @Override
     public ConfigurationNode getNode(String path) {
         Object raw = getProperty(path);
+        if (raw instanceof ConfigurationNode) {
+            return (ConfigurationNode) raw;
+        }
+
         if (raw instanceof Map) {
             return new ConfigurationNode((Map<String, Object>) raw);
         }
@@ -79,14 +86,17 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
         Object o = getProperty(path);
         if (o == null) {
             return null;
-        } else if (o instanceof Map) {
+        }
+        
+        if (o instanceof Map) {
             Map<String, ConfigurationNode> nodes =
                     new HashMap<String, ConfigurationNode>();
 
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) o).entrySet()) {
-                if (entry.getValue() instanceof Map) {
-                    nodes.put(entry.getKey(),
-                            new ConfigurationNode((Map<String, Object>) entry.getValue()));
+                if (entry.getValue() instanceof ConfigurationNode){
+                    nodes.put(entry.getKey(), (ConfigurationNode)entry.getValue());
+                } else if (entry.getValue() instanceof Map) {
+                    nodes.put(entry.getKey(), new ConfigurationNode((Map<String, Object>) entry.getValue()));
                 }
             }
 

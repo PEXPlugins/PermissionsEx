@@ -20,7 +20,7 @@ public abstract class PermissionGroup extends PermissionEntity {
         if(permission != null && permission.isEmpty()){ // empty permission for public access :)
             return true;
         }
-
+        
         String expression = this.getMatchingExpression(permission, world);
 
         if (expression != null) {
