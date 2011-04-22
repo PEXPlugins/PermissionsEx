@@ -29,6 +29,7 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
+import ru.tehkode.utils.StringUtils;
 
 /**
  *

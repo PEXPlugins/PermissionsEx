@@ -3,7 +3,7 @@ main: ru.tehkode.permissions.bukkit.PermissionsPlugin
 version: 100
 author: t3hk0d3
 website: www.bukkit.org
-description: PermissionsEx - permission management plugin. @todo rewrite it.
+description: PermissionsEx - New powerful users and groups permissions management plugin.
 commands:
   pex:
     description: Provides access to Permissions commands and information.

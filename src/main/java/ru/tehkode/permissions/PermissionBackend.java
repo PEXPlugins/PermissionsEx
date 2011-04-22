@@ -122,12 +122,6 @@ public abstract class PermissionBackend {
 
     protected static Map<String, String> registedAliases = new HashMap<String, String>();
 
-    /**
-     * @todo Make this thing reconfigurable and flexible. Think about it
-     *
-     * @param alias
-     * @return String - classname for given alias
-     */
     public static String getBackendClassName(String alias) {
 
         if(registedAliases.containsKey(alias)){

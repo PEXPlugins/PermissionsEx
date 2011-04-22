@@ -19,13 +19,11 @@
 
 package ru.tehkode.permissions.file;
 
+import com.avaje.ebeaninternal.server.core.ConcurrencyMode;
 import com.avaje.ebeaninternal.server.expression.LikeExpressionLucene;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+
+import java.util.*;
+
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.FileBackend;
@@ -215,7 +213,12 @@ public class FilePermissionGroup extends PermissionGroup {
     @Override
     public void remove(){
         if(!this.virtual) {
-            this.backend.permissions.setProperty("groups." + this.getName(), null);
+            Map<String, ConfigurationNode> nodes = this.backend.permissions.getNodesMap("groups");
+            nodes.remove(this.node);
+
+
+            //this.backend.permissions.setProperty("groups." + this.getName(), null);
+            this.backend.permissions.setProperty("groups", nodes);
         }
 
         this.backend.permissions.save();

@@ -42,6 +42,14 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
         return root;
     }
 
+    public void setProperty(String path, Object value) {
+         if(value instanceof ConfigurationNode){
+             value = ((ConfigurationNode)value).getRoot();
+         }
+
+        super.setProperty(path, value);
+     }
+
     /**
      * Gets a list of nodes. Non-valid entries will not be in the list.
      * There will be no null slots. If the list is not defined, the
