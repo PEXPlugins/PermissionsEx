@@ -1,3 +1,22 @@
+/*
+ * PermissionsEx - Permissions plugin for Bukkit
+ * Copyright (C) 2011 t3hk0d3 http://www.tehkode.ru
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 package ru.tehkode.permissions.commands;
 
 import java.lang.reflect.Method;
@@ -32,6 +51,8 @@ public class CommandsManager {
         this.plugin = plugin;
     }
 
+
+
     public void register(CommandListener listener) {
         Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
 
@@ -44,26 +65,26 @@ public class CommandsManager {
                 continue;
             }
 
-            Command cmdAnotation = method.getAnnotation(Command.class);
+            Command cmdAnnotation = method.getAnnotation(Command.class);
 
-            Map<CommandSyntax, CommandBinding> commandListeners = listeners.get(cmdAnotation.name());
+            Map<CommandSyntax, CommandBinding> commandListeners = listeners.get(cmdAnnotation.name());
             if (commandListeners == null) {
                 commandListeners = new HashMap<CommandSyntax, CommandBinding>();
-                listeners.put(cmdAnotation.name(), commandListeners);
+                listeners.put(cmdAnnotation.name(), commandListeners);
             }
 
-            if (helpPlugin != null && helpPlugin instanceof Help && !cmdAnotation.description().isEmpty()) {
-                ((Help) helpPlugin).registerCommand(cmdAnotation.name() + " " + cmdAnotation.syntax(), cmdAnotation.description(), plugin, cmdAnotation.permission());
+            if (helpPlugin != null && helpPlugin instanceof Help && !cmdAnnotation.description().isEmpty()) {
+                ((Help) helpPlugin).registerCommand(cmdAnnotation.name() + " " + cmdAnnotation.syntax(), cmdAnnotation.description(), plugin, cmdAnnotation.permission());
             }
 
-            commandListeners.put(new CommandSyntax(cmdAnotation.syntax()), new CommandBinding(listener, method));
+            commandListeners.put(new CommandSyntax(cmdAnnotation.syntax()), new CommandBinding(listener, method));
         }
     }
 
     public boolean execute(CommandSender sender, org.bukkit.command.Command command, String[] args) {
         Map<CommandSyntax, CommandBinding> callMap = this.listeners.get(command.getName());
 
-        if (callMap == null) { // No commands registred
+        if (callMap == null) { // No commands registered
             return false;
         }
 
@@ -92,7 +113,7 @@ public class CommandsManager {
 
         // Check permission
         Command commandAnnotation = selectedBinding.getMethodAnnotation();
-        if (!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and reqire permission
+        if (!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and required permission
             if (!PermissionsPlugin.getPermissionManager().has((Player) sender, commandAnnotation.permission())) {
                 logger.warning("User " + ((Player) sender).getName() + " was tried to access chat command \"" + command.getName() + " " + arguments + "\","
                         + " but have no rights (" + commandAnnotation.permission() + ") to do that.");
@@ -105,7 +126,7 @@ public class CommandsManager {
         try {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
         } catch (RuntimeException e) {
-            logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appopriate plugin is update?)");
+            logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appropriate plugin is update?)");
             e.printStackTrace();
         }
 
@@ -136,7 +157,6 @@ public class CommandsManager {
 
             int index = 0;
             while (argMatcher.find()) {
-                // Yeah it have been done not most optimal way. Futher refactorings
                 if (argMatcher.group(2).equals("[")) {
                     expression = expression.replace(argMatcher.group(0), "(?:(?:[\\s]+)(\"[^\"]+\"|[^\\s]+))?");
                 } else {
