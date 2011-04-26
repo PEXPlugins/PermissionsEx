@@ -24,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  *
@@ -73,23 +74,12 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     @Override
-    public boolean has(String permission, String world) {
-        if(permission != null && permission.isEmpty()){ // empty permission for public access :)
-            return true;
-        }
+    protected void getInheritedPermissions(String world, List<String> permissions){
+        permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
-        String expression = this.getMatchingExpression(permission, world);
-        if (expression != null) {
-            return this.explainExpression(expression);
+        for(PermissionGroup group : this.getGroups()){
+            group.getInheritedPermissions(world, permissions);
         }
-
-        for (PermissionGroup group : this.getGroups()) {
-            if (group.has(permission, world)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public void addGroup(String groupName) {
@@ -105,13 +95,15 @@ public abstract class PermissionUser extends PermissionEntity {
             return;
         }
 
-        List<PermissionGroup> groups = Arrays.asList(this.getGroups());
+        List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups()));
+
+        Logger.getLogger("Minecraft").info("Groups ("+groups.getClass().getSimpleName()+") :" + groups);
 
         if (!groups.contains(group)) {
             groups.add(group);
 
-            this.setGroups(groups.toArray(new PermissionGroup[]{}));
-        }
+            this.setGroups(groups.toArray(new PermissionGroup[0]));
+        }        
     }
 
     public void removeGroup(String groupName) {

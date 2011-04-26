@@ -19,6 +19,7 @@
 
 package ru.tehkode.permissions.bukkit.commands;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -128,10 +129,12 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        sender.sendMessage(args.get("user") + "'s own permissions:");
-        for (String permission : user.getPermissions(args.get("world"))) {
+        sender.sendMessage(args.get("user") + "'s permissions:");
+        for (String permission : user.getOwnPermissions(args.get("world"))) {
             sender.sendMessage("  " + permission);
         }
+
+        user.getOptions(args.get("world"));
     }
 
     @Command(name = "pex",
@@ -146,7 +149,7 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        user.addPermission(args.get("permission"), null, args.get("world"));
+        user.addPermission(args.get("permission"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission added!");
     }
@@ -163,7 +166,7 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        user.setPermission(args.get("permission"), args.get("value"), args.get("world"));
+        user.setOption(args.get("permission"), args.get("value"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission set!");
     }
@@ -207,7 +210,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "user <user> add group <group>",
+    syntax = "user <user> group add <group>",
     permission = "permissions.manage.membership",
     description = "Add user to specified group")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -224,7 +227,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "user <user> set group <group>",
+    syntax = "user <user> group set <group>",
     permission = "permissions.manage.membership",
     description = "Set leave specified group for user")
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -241,7 +244,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "user <user> remove group <group>",
+    syntax = "user <user> group remove <group>",
     permission = "permissions.manage.membership",
     description = "Remove user from specified group")
     public void userRemoveGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -344,6 +347,8 @@ public class PermissionsCommand implements CommandListener {
         sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " removed!");
 
         group.remove();
+        PermissionsPlugin.getPermissionManager().resetGroup(group.getName());
+        group = null;
     }
 
     /**
@@ -426,8 +431,13 @@ public class PermissionsCommand implements CommandListener {
         }
 
         sender.sendMessage("Group " + args.get("group") + " own permissions:");
-        for (String permission : group.getPermissions(args.get("world"))) {
+        for (String permission : group.getOwnPermissions(args.get("world"))) {
             sender.sendMessage("  " + permission);
+        }
+
+        sender.sendMessage("Options: ");
+        for(Map.Entry<String, String> option : group.getOptions(args.get("world")).entrySet()){
+            sender.sendMessage("  " + option.getKey() + " = " + option.getValue());
         }
     }
 
@@ -460,7 +470,7 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        group.setPermission(args.get("permission"), args.get("value"), args.get("world"));
+        group.setOption(args.get("permission"), args.get("value"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission set for " + group.getName() + " !");
     }
@@ -495,6 +505,12 @@ public class PermissionsCommand implements CommandListener {
         if (users == null || users.length == 0) {
             sender.sendMessage(ChatColor.RED + "No such group found");
         }
+
+        sender.sendMessage("Group " + args.get("group") + " users:");
+
+        for(PermissionUser user : users){
+            sender.sendMessage("   " + user.getName());
+        }
     }
 
     @Command(name = "pex",
@@ -515,7 +531,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "group <group> user add <user>",
+    syntax = "group <group> user remove <user>",
     permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -530,4 +546,5 @@ public class PermissionsCommand implements CommandListener {
 
         sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
     }
+
 }

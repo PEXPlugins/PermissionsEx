@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.backends;
 
 import java.io.File;
@@ -97,11 +96,11 @@ public class FileBackend extends PermissionBackend {
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-            if(entry.getValue().getBoolean("default", false)){
+            if (entry.getValue().getBoolean("default", false)) {
                 return this.manager.getGroup(entry.getKey());
             }
         }
-        
+
         throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
     }
 
@@ -122,8 +121,10 @@ public class FileBackend extends PermissionBackend {
         List<PermissionUser> users = new LinkedList<PermissionUser>();
         Map<String, ConfigurationNode> userMap = this.permissions.getNodesMap("users");
 
-        for (Map.Entry<String, ConfigurationNode> entry : userMap.entrySet()) {
-            users.add(this.manager.getUser(entry.getKey()));
+        if (userMap != null) {
+            for (Map.Entry<String, ConfigurationNode> entry : userMap.entrySet()) {
+                users.add(this.manager.getUser(entry.getKey()));
+            }
         }
 
         return users.toArray(new PermissionUser[]{});

@@ -19,6 +19,7 @@
 
 package ru.tehkode.permissions.sql;
 
+import java.util.Map;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 
@@ -33,7 +34,7 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getPermissionValue(String permission, String world, boolean inheritance) {
+    public String getOption(String permission, String world, boolean inheritance) {
         if (permission == null) {
             return "";
         }
@@ -45,7 +46,7 @@ public class SQLPermissionGroup extends PermissionGroup {
 
         if (inheritance) {
             for (PermissionGroup group : this.getParentGroups()) {
-                String value = group.getPermissionValue(permission, world, inheritance);
+                String value = group.getOption(permission, world, inheritance);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }
@@ -53,6 +54,11 @@ public class SQLPermissionGroup extends PermissionGroup {
         }
 
         return userValue;
+    }
+
+    @Override
+    public Map<String, String> getOptions(String world) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -90,7 +96,7 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public void setPermission(String permission, String value, String world) {
+    public void setOption(String permission, String value, String world) {
         if (permission == null) {
             return;
         }
@@ -122,13 +128,13 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String[] getPermissions(String world) {
+    public String[] getOwnPermissions(String world) {
         return backend.getPermissions(world);
     }
 
     @Override
-    public void addPermission(String permission, String value, String world) {
-        backend.addPermission(permission, value, world);
+    public void addPermission(String permission, String world) {
+        backend.addPermission(permission, world);
     }
 
     @Override
@@ -137,7 +143,7 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public void remove() {
+    public void removeGroup() {
         this.backend.remove();
     }
 }

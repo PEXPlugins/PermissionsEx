@@ -19,6 +19,7 @@
 
 package ru.tehkode.permissions.sql;
 
+import java.util.Map;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
@@ -53,7 +54,7 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void setPermission(String permission, String value, String world) {
+    public void setOption(String permission, String value, String world) {
         backend.setPermission(permission, value, world);
     }
 
@@ -83,8 +84,13 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String[] getPermissions(String world) {
+    public String[] getOwnPermissions(String world) {
         return backend.getPermissions(world);
+    }
+
+    @Override
+    public Map<String, String> getOptions(String world) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -93,12 +99,12 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void addPermission(String permission, String value, String world) {
-        backend.addPermission(permission, value, world);
+    public void addPermission(String permission, String world) {
+        backend.addPermission(permission, world);
     }
 
     @Override
-    public String getPermissionValue(String permission, String world, boolean inheritance) {
+    public String getOption(String permission, String world, boolean inheritance) {
         if (permission == null) {
             return "";
         }
@@ -110,7 +116,7 @@ public class SQLPermissionUser extends PermissionUser {
 
         if (inheritance) {
             for (PermissionGroup group : this.getGroups()) {
-                String value = group.getPermissionValue(permission, world, inheritance);
+                String value = group.getOption(permission, world, inheritance);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }

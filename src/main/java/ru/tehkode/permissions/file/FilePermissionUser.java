@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.file;
 
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -29,7 +29,6 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
-import ru.tehkode.utils.StringUtils;
 
 /**
  *
@@ -62,12 +61,14 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    public String[] getPermissions(String world) {
+    public String[] getOwnPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
-        List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
-        if (worldPermissions != null) {
-            permissions.addAll(worldPermissions);
+        if (world != null && !world.isEmpty()) {
+            List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
+            if (worldPermissions != null) {
+                permissions.addAll(worldPermissions);
+            }
         }
 
         List<String> commonPermissions = this.node.getStringList("permissions", null);
@@ -76,6 +77,11 @@ public class FilePermissionUser extends PermissionUser {
         }
 
         return permissions.toArray(new String[]{});
+    }
+
+    @Override
+    public Map<String, String> getOptions(String world) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -91,7 +97,7 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getPermissionValue(String permission, String world, boolean inheritance) {
+    public String getOption(String permission, String world, boolean inheritance) {
         if (world != null && !world.isEmpty()) {
             String worldPermission = this.node.getString("worlds." + world + ".options." + permission);
             if (worldPermission != null && !worldPermission.isEmpty()) {
@@ -106,7 +112,7 @@ public class FilePermissionUser extends PermissionUser {
 
         if (inheritance) {
             for (PermissionGroup group : this.getGroups()) {
-                String value = group.getPermissionValue(permission, world, inheritance);
+                String value = group.getOption(permission, world, inheritance);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }
@@ -117,31 +123,27 @@ public class FilePermissionUser extends PermissionUser {
     }
 
     @Override
-    public void addPermission(String permission, String value, String world) {
-        String nodePath = (value != null && !value.isEmpty()) ? "options" : "permissions";
+    public void addPermission(String permission, String world) {
+        String nodePath = "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath += ".worlds." + world + "." + nodePath;
+            nodePath = "worlds." + world + "." + nodePath;
         }
 
-        if (value != null && !value.isEmpty()) {
-            nodePath += "." + permission;
-            this.node.setProperty(nodePath, value);
-        } else {
-            List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
-            if (!permissions.contains(permission)) {
-                permissions.add(permission);
-            }
-            this.node.setProperty(nodePath, permissions);
+
+        List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
+        if (!permissions.contains(permission)) {
+            permissions.add(permission);
         }
+        this.node.setProperty(nodePath, permissions);
 
         this.save();
     }
 
     @Override
-    public void setPermission(String permission, String value, String world) {
+    public void setOption(String permission, String value, String world) {
         String nodePath = "options";
         if (world != null && !world.isEmpty()) {
-            nodePath += ".worlds." + world + "." + nodePath;
+            nodePath = "worlds." + world + "." + nodePath;
         }
 
         if (value != null && !value.isEmpty()) {
@@ -158,7 +160,7 @@ public class FilePermissionUser extends PermissionUser {
     public void removePermission(String permission, String world) {
         String nodePath = "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath += "worlds." + world + "." + nodePath;
+            nodePath = "worlds." + world + "." + nodePath;
         }
 
         List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
@@ -172,7 +174,7 @@ public class FilePermissionUser extends PermissionUser {
 
     @Override
     public void setGroups(PermissionGroup[] groups) {
-        if(groups == null){
+        if (groups == null) {
             return;
         }
 
@@ -212,6 +214,4 @@ public class FilePermissionUser extends PermissionUser {
 
         this.backend.permissions.save();
     }
-
-
 }

@@ -19,6 +19,7 @@
 
 package ru.tehkode.permissions;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,26 +36,14 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     @Override
-    public boolean has(String permission, String world) {
-        if(permission != null && permission.isEmpty()){ // empty permission for public access :)
-            return true;
-        }
-        
-        String expression = this.getMatchingExpression(permission, world);
+    protected void getInheritedPermissions(String world, List<String> permissions){
+        permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
-        if (expression != null) {
-            return this.explainExpression(expression);
+        for(PermissionGroup group : this.getParentGroups()){
+            group.getInheritedPermissions(world, permissions);
         }
-
-        for (PermissionGroup parent : this.getParentGroups()) {
-            if (parent.has(permission, world)) {
-                return true;
-            }
-        }
-
-        return false;
     }
-
+    
     public boolean isChildOf(String groupName, boolean checkInheritance) {
         if (groupName == null || groupName.isEmpty()) {
             return false;
@@ -107,6 +96,28 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     protected abstract String[] getParentGroupsNamesImpl();
+
+    @Override
+    public final void remove() {
+        for(PermissionGroup group : this.manager.getGroups(this.getName())){
+            List<PermissionGroup> parentGroups = Arrays.asList(group.getParentGroups());
+            parentGroups.remove(this);
+            group.setParentGroups(parentGroups.toArray(new PermissionGroup[0]));
+        }
+
+        if(this.manager.getGroups(this.getName()).length > 0){
+            return;
+        }
+
+        for(PermissionUser user : this.manager.getUsers(this.getName()) ){
+            user.removeGroup(this);
+        }
+
+        this.removeGroup();
+    }
+
+    protected abstract void removeGroup();
+
 
     public abstract void setParentGroups(PermissionGroup[] parentGroups);
 }

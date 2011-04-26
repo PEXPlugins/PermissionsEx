@@ -38,7 +38,6 @@ import ru.tehkode.permissions.PermissionGroup;
 public class SQLEntity {
 
     public enum Type {
-
         GROUP, USER
     }
 
@@ -136,8 +135,8 @@ public class SQLEntity {
         return "";
     }
 
-    public void addPermission(String permission, String value, String world) {
-        this.setPermission(permission, value, world);
+    public void addPermission(String permission, String world) {
+        this.setPermission(permission, null, world);
     }
 
     public void setPermission(String permission, String value, String world) {
@@ -171,10 +170,19 @@ public class SQLEntity {
         if(this.isVirtual()){
             this.save();
         }
+
+        // Refresh permissions
+        this.fetchPermissions();
     }
 
     public void removePermission(String permission, String world) {
+        if(world == null){
+            world = "";
+        }
+
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND world = ? AND type = ?", this.name, permission, world, this.type.ordinal());
+
+        this.fetchPermissions();
     }
 
     public void setParents(PermissionGroup[] parentGroups) {
@@ -199,6 +207,8 @@ public class SQLEntity {
         if(this.isVirtual()){
             this.save();
         }
+
+        this.fetchInheritance();
     }
 
     public void setPermissions(String[] permissions, String world) {
@@ -210,6 +220,8 @@ public class SQLEntity {
         if(this.isVirtual()){
             this.save();
         }
+
+        this.fetchPermissions();
     }
 
     public void save() {

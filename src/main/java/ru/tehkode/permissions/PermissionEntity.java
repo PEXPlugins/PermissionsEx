@@ -16,8 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -41,7 +44,7 @@ public abstract class PermissionEntity {
     }
 
     public boolean has(String permission, String world) {
-        if(permission != null && permission.isEmpty()){ // empty permission for public access :)
+        if (permission != null && permission.isEmpty()) { // empty permission for public access :)
             return true;
         }
 
@@ -70,30 +73,20 @@ public abstract class PermissionEntity {
         return null;
     }
 
-    public void addPermission(String permission) {
-        this.addPermission(permission, "", "");
-    }
-
-    public void addPermission(String permission, String value) {
-        this.addPermission(permission, value, "");
-    }
-
     public void setPermission(String permission, String value) {
-        this.setPermission(permission, value, "");
+        this.setOption(permission, value, "");
     }
 
     public void removePermission(String permission) {
         this.removePermission(permission, "");
     }
 
-    public abstract String getPermissionValue(String permission, String world, boolean inheritance);
-
-    public String getPermissionValue(String permission, String world) {
-        return this.getPermissionValue(permission, world, true);
+    public String getOptionValue(String permission, String world) {
+        return this.getOption(permission, world, true);
     }
 
-    public String getPermissionValue(String permission) {
-        return this.getPermissionValue(permission, "", true);
+    public String getOptionValue(String permission) {
+        return this.getOption(permission, "", true);
     }
 
     protected boolean explainExpression(String expression) {
@@ -129,15 +122,27 @@ public abstract class PermissionEntity {
         return this.virtual;
     }
 
-    public abstract String[] getPermissions(String world);
+    public String[] getPermissions(String world){
+        List<String> permissions = new LinkedList<String>();
+        this.getInheritedPermissions(world, permissions);
+        return permissions.toArray(new String[0]);
+    }
 
-    public abstract void addPermission(String permission, String value, String world);
+    protected abstract void getInheritedPermissions(String world, List<String> permissions);
 
-    public abstract void setPermission(String permission, String value, String world);
+    public abstract String[] getOwnPermissions(String world);
 
-    public abstract void setPermissions(String[] permissions, String world);
+    public abstract Map<String, String> getOptions(String world);
+
+    public abstract String getOption(String permission, String world, boolean inheritance);
+
+    public abstract void setOption(String permission, String value, String world);
+
+    public abstract void addPermission(String permission, String world);
 
     public abstract void removePermission(String permission, String world);
+
+    public abstract void setPermissions(String[] permissions, String world);
 
     public abstract void save();
 
