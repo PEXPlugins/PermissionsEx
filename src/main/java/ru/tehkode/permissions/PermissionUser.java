@@ -97,7 +97,9 @@ public abstract class PermissionUser extends PermissionEntity {
 
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups()));
 
-        Logger.getLogger("Minecraft").info("Groups ("+groups.getClass().getSimpleName()+") :" + groups);
+        if(this.getGroupsNamesImpl().length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup())){
+            groups.clear(); // clean out default group
+        }
 
         if (!groups.contains(group)) {
             groups.add(group);
