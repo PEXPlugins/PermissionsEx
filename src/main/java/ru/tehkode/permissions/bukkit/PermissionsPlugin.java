@@ -25,7 +25,6 @@ package ru.tehkode.permissions.bukkit;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
@@ -33,21 +32,16 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
+import org.bukkit.event.*;
 import org.bukkit.event.Event.Priority;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockListener;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.event.block.*;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.player.*;
+import org.bukkit.event.vehicle.*;
+import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.tehkode.permissions.PermissionBackend;
-import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.backends.SQLBackend;
+import ru.tehkode.permissions.*;
+import ru.tehkode.permissions.backends.*;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -61,7 +55,6 @@ public class PermissionsPlugin extends JavaPlugin {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected PermissionManager permissionsManager;
     protected CommandsManager commandsManager;
-    protected BlockListener blockProtector = new BlockProtector();
 
     public PermissionsPlugin() {
         super();
@@ -82,10 +75,7 @@ public class PermissionsPlugin extends JavaPlugin {
     public void onEnable() {
         this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
 
-        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, this.blockProtector, Priority.Low, this);
-        this.getServer().getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, this.blockProtector, Priority.Low, this);
-
-        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new org.bukkit.event.player.PlayerListener(), Priority.Low, this);
+        this.registerEvents();
 
         logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
     }
@@ -145,12 +135,183 @@ public class PermissionsPlugin extends JavaPlugin {
         return config;
     }
 
+    protected void registerEvents() {
+        BlockListener blockProtector = new BlockProtector();
+        PlayerListener playerProtector = new PlayerListener();
+        EntityListener entityProtector = new EntityListener();
+        VehicleListener vehicleProtector = new VehicleListener();
+
+        PluginManager pluginManager = this.getServer().getPluginManager();
+
+
+        //Block events
+        pluginManager.registerEvent(Event.Type.BLOCK_PLACE, blockProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.BLOCK_BREAK, blockProtector, Priority.Low, this);
+
+        //Player events
+        pluginManager.registerEvent(Event.Type.PLAYER_QUIT, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_BUCKET_EMPTY, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_BUCKET_FILL, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_CHAT, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_DROP_ITEM, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_INTERACT, playerProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.PLAYER_PICKUP_ITEM, playerProtector, Priority.Low, this);
+
+        //Entity events
+        pluginManager.registerEvent(Event.Type.ENTITY_TARGET, entityProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.ENTITY_INTERACT, entityProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.ENTITY_DAMAGE, entityProtector, Priority.Low, this);
+
+        //Vehicle events
+        pluginManager.registerEvent(Event.Type.VEHICLE_COLLISION_ENTITY, vehicleProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.VEHICLE_ENTER, vehicleProtector, Priority.Low, this);
+        pluginManager.registerEvent(Event.Type.VEHICLE_DAMAGE, vehicleProtector, Priority.Low, this);
+
+    }
+
+    private class VehicleListener extends org.bukkit.event.vehicle.VehicleListener {
+
+        @Override
+        public void onVehicleDamage(VehicleDamageEvent event) {
+            if (!(event.getAttacker() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getAttacker();
+            if (!permissionsManager.has(player, "modifyworld.vehicle.destroy")) {
+                player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onVehicleEnter(VehicleEnterEvent event) {
+            if (!(event.getEntered() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getEntered();
+            if (!permissionsManager.has(player, "modifyworld.vehicle.enter")) {
+                player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
+            if (!(event.getEntity() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getEntity();
+            if (!permissionsManager.has(player, "modifyworld.vehicle.collide")) {
+                player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+                event.setCollisionCancelled(true);
+                event.setPickupCancelled(true);
+            }
+        }
+    }
+
+    private class EntityListener extends org.bukkit.event.entity.EntityListener {
+
+        @Override
+        public void onEntityDamage(EntityDamageEvent event) {
+            if (event instanceof EntityDamageByEntityEvent) { // player is damager
+                EntityDamageByEntityEvent edbe = (EntityDamageByEntityEvent) event;
+                if (!(edbe.getDamager() instanceof Player)) { // not caused by player
+                    return;
+                }
+
+                Player player = (Player) edbe.getDamager();
+                if (!permissionsManager.has(player, "modifyworld.entity.damage.deal")) {
+                    player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                    event.setCancelled(true);
+                }
+            } else if (event.getEntity() instanceof Player) { // player are been damaged by someone
+                Player player = (Player) event.getEntity();
+                if (!permissionsManager.has(player, "modifyworld.entity.damage.take")) {
+                    player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                    event.setCancelled(true);
+                }
+            }
+        }
+
+        @Override
+        public void onEntityTarget(EntityTargetEvent event) {
+            if (event.getEntity() instanceof Player) {
+                Player player = (Player) event.getEntity();
+                if (!permissionsManager.has(player, "modifyworld.entity.mobtarget")) {
+                    player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
     private class PlayerListener extends org.bukkit.event.player.PlayerListener {
 
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {
             super.onPlayerQuit(event);
             getPermissionManager().resetUser(event.getPlayer().getName());
+        }
+
+        @Override
+        public void onPlayerBedEnter(PlayerBedEnterEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.usebeds")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.empty")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onPlayerBucketFill(PlayerBucketFillEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onPlayerChat(PlayerChatEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.chat")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onPlayerDropItem(PlayerDropItemEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.pickup." + event.getItem().getEntityId())) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onPlayerInteract(PlayerInteractEvent event) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -159,8 +320,8 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onBlockBreak(BlockBreakEvent event) {
             super.onBlockBreak(event);
-            Player player = event.getPlayer();
-            if (!permissionsManager.has(player, "modifyworld.destroy")) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.destroy")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -168,8 +329,8 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onBlockPlace(BlockPlaceEvent event) {
             super.onBlockPlace(event);
-            Player player = event.getPlayer();
-            if (!permissionsManager.has(player, "modifyworld.place")) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place")) {
+                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
