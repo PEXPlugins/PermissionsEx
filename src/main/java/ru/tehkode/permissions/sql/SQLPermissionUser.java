@@ -90,7 +90,7 @@ public class SQLPermissionUser extends PermissionUser {
 
     @Override
     public Map<String, String> getOptions(String world) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return backend.getOptions(world);
     }
 
     @Override

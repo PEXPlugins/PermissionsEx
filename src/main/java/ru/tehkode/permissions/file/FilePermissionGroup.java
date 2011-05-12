@@ -94,15 +94,18 @@ public class FilePermissionGroup extends PermissionGroup {
     public Map<String, String> getOptions(String world) {
         Map<String, String> result = new HashMap<String, String>();
 
+        ConfigurationNode commonOptions = this.node.getNode("options");
+        if (commonOptions != null) {
+            result.putAll(FileBackend.collectOptions(commonOptions.getRoot()));
+        }
+
+        // Override
         if (world != null && !world.isEmpty()) {
             ConfigurationNode worldNode = this.node.getNode("world." + world + ".options");
             if (worldNode != null) {
+                result.putAll(FileBackend.collectOptions(worldNode.getRoot()));
             }
         }
-
-        Logger.getLogger("Minecraft").info("Options :" + this.node.getList("options"));
-
-
         return result;
     }
 

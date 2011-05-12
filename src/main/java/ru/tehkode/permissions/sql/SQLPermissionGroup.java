@@ -58,7 +58,7 @@ public class SQLPermissionGroup extends PermissionGroup {
 
     @Override
     public Map<String, String> getOptions(String world) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return this.backend.getOptions(world);
     }
 
     @Override

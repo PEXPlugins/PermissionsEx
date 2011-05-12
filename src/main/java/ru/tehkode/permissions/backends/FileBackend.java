@@ -20,6 +20,7 @@ package ru.tehkode.permissions.backends;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -133,5 +134,25 @@ public class FileBackend extends PermissionBackend {
     @Override
     public void reload() {
         this.permissions.load();
+    }
+
+    public static Map<String, String> collectOptions(Map<String, Object> root){
+        return collectOptions(root, "", new HashMap<String, String>());
+    }
+
+    protected static Map<String, String> collectOptions(Map<String, Object> root, String baseKey, Map<String, String> collector){
+        for(Map.Entry<String, Object> entry : root.entrySet()){
+            String newKey = baseKey + "." + entry.getKey();
+            if(entry.getValue() instanceof Map){
+                Map<String, Object> map = (Map<String, Object>)entry.getValue();
+                collectOptions(map, newKey, collector);
+            } else if (entry.getValue() instanceof ConfigurationNode){
+                collectOptions(((ConfigurationNode)entry.getValue()).getRoot(), newKey, collector);
+            } else {
+                collector.put(newKey, (String)entry.getValue());
+            }
+        }
+
+        return collector;
     }
 }

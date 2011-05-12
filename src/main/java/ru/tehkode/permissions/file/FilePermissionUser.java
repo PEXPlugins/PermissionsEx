@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.file;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,7 +82,21 @@ public class FilePermissionUser extends PermissionUser {
 
     @Override
     public Map<String, String> getOptions(String world) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Map<String, String> result = new HashMap<String, String>();
+
+        ConfigurationNode commonOptions = this.node.getNode("options");
+        if (commonOptions != null) {
+            result.putAll(FileBackend.collectOptions(commonOptions.getRoot()));
+        }
+
+        // Override
+        if (world != null && !world.isEmpty()) {
+            ConfigurationNode worldNode = this.node.getNode("world." + world + ".options");
+            if (worldNode != null) {
+                result.putAll(FileBackend.collectOptions(worldNode.getRoot()));
+            }
+        }
+        return result;
     }
 
     @Override

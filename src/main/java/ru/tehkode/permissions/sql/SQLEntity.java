@@ -38,9 +38,9 @@ import ru.tehkode.permissions.PermissionGroup;
 public class SQLEntity {
 
     public enum Type {
+
         GROUP, USER
     }
-
     protected SQLConnectionManager db;
     protected String name;
     protected boolean virtual;
@@ -153,11 +153,11 @@ public class SQLEntity {
             newOption = false;
         }
 
-        if(value == null){
+        if (value == null) {
             value = "";
         }
 
-        if(world == null){
+        if (world == null) {
             world = "";
         }
 
@@ -167,7 +167,7 @@ public class SQLEntity {
             this.db.updateQuery("UPDATE permissions SET value = ? WHERE name = ? AND type = ? AND permission = ?", value, this.name, this.type.ordinal(), permission);
         }
 
-        if(this.isVirtual()){
+        if (this.isVirtual()) {
             this.save();
         }
 
@@ -176,7 +176,7 @@ public class SQLEntity {
     }
 
     public void removePermission(String permission, String world) {
-        if(world == null){
+        if (world == null) {
             world = "";
         }
 
@@ -192,7 +192,7 @@ public class SQLEntity {
 
             List<Object[]> rows = new LinkedList<Object[]>();
             for (PermissionGroup group : parentGroups) {
-                if(group == null || group.getName().isEmpty()){
+                if (group == null || group.getName().isEmpty()) {
                     continue;
                 }
 
@@ -204,11 +204,26 @@ public class SQLEntity {
             throw new RuntimeException(e);
         }
 
-        if(this.isVirtual()){
+        if (this.isVirtual()) {
             this.save();
         }
 
+        //reload inherirance
+        this.parents = null;
         this.fetchInheritance();
+    }
+
+    public Map<String, String> getOptions(String world) {
+        Map<String, String> options = new HashMap<String, String>();
+
+        // put common options
+        options.putAll(this.commonOptions);
+        // override them with world-specific
+        if (this.worldsOptions.containsKey(world)) {
+            options.putAll(this.worldsOptions.get(world));
+        }
+
+        return options;
     }
 
     public void setPermissions(String[] permissions, String world) {
@@ -217,7 +232,7 @@ public class SQLEntity {
             this.setPermission(permission, "", world);
         }
 
-        if(this.isVirtual()){
+        if (this.isVirtual()) {
             this.save();
         }
 

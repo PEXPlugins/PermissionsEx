@@ -19,7 +19,6 @@
 
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +32,6 @@ import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandListener;
 import ru.tehkode.utils.StringUtils;
 
-/**
- *
- * @author code
- */
 public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
@@ -70,7 +65,7 @@ public class PermissionsCommand implements CommandListener {
             PermissionsPlugin.getPermissionManager().setBackend(args.get("backend"));
             sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
         } catch (RuntimeException e) {
-            sender.sendMessage(ChatColor.RED + "Specifiend backend not found.");
+            sender.sendMessage(ChatColor.RED + "Specified backend not found.");
         }
     }
 
