@@ -55,6 +55,7 @@ public class PermissionsPlugin extends JavaPlugin {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected PermissionManager permissionsManager;
     protected CommandsManager commandsManager;
+    protected Configuration config;
 
     public PermissionsPlugin() {
         super();
@@ -67,8 +68,9 @@ public class PermissionsPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        this.config = this.loadConfig(configFile);
         this.commandsManager = new CommandsManager(this);
-        this.permissionsManager = new PermissionManager(this.loadConfig(configFile));
+        this.permissionsManager = new PermissionManager(this.config);
     }
 
     @Override
@@ -135,6 +137,12 @@ public class PermissionsPlugin extends JavaPlugin {
         return config;
     }
 
+    public void informUser(Player player, String message) {
+        if(this.config.getBoolean("verbose", false)){
+            player.sendMessage(message);
+        }
+    }
+
     protected void registerEvents() {
         BlockListener blockProtector = new BlockProtector();
         PlayerListener playerProtector = new PlayerListener();
@@ -180,7 +188,7 @@ public class PermissionsPlugin extends JavaPlugin {
 
             Player player = (Player) event.getAttacker();
             if (!permissionsManager.has(player, "modifyworld.vehicle.destroy")) {
-                player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -193,7 +201,7 @@ public class PermissionsPlugin extends JavaPlugin {
 
             Player player = (Player) event.getEntered();
             if (!permissionsManager.has(player, "modifyworld.vehicle.enter")) {
-                player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -206,7 +214,6 @@ public class PermissionsPlugin extends JavaPlugin {
 
             Player player = (Player) event.getEntity();
             if (!permissionsManager.has(player, "modifyworld.vehicle.collide")) {
-                player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
                 event.setCollisionCancelled(true);
                 event.setPickupCancelled(true);
@@ -226,13 +233,13 @@ public class PermissionsPlugin extends JavaPlugin {
 
                 Player player = (Player) edbe.getDamager();
                 if (!permissionsManager.has(player, "modifyworld.entity.damage.deal")) {
-                    player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                    informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                     event.setCancelled(true);
                 }
             } else if (event.getEntity() instanceof Player) { // player are been damaged by someone
                 Player player = (Player) event.getEntity();
                 if (!permissionsManager.has(player, "modifyworld.entity.damage.take")) {
-                    player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                    informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                     event.setCancelled(true);
                 }
             }
@@ -243,7 +250,6 @@ public class PermissionsPlugin extends JavaPlugin {
             if (event.getEntity() instanceof Player) {
                 Player player = (Player) event.getEntity();
                 if (!permissionsManager.has(player, "modifyworld.entity.mobtarget")) {
-                    player.sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
                     event.setCancelled(true);
                 }
             }
@@ -261,7 +267,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerBedEnter(PlayerBedEnterEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.usebeds")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -269,7 +275,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.empty")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -277,7 +283,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerBucketFill(PlayerBucketFillEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -285,7 +291,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerChat(PlayerChatEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.chat")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -293,7 +299,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerDropItem(PlayerDropItemEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -301,7 +307,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerPickupItem(PlayerPickupItemEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.pickup." + event.getItem().getEntityId())) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -309,7 +315,7 @@ public class PermissionsPlugin extends JavaPlugin {
         @Override
         public void onPlayerInteract(PlayerInteractEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -321,7 +327,7 @@ public class PermissionsPlugin extends JavaPlugin {
         public void onBlockBreak(BlockBreakEvent event) {
             super.onBlockBreak(event);
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.destroy")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -330,7 +336,7 @@ public class PermissionsPlugin extends JavaPlugin {
         public void onBlockPlace(BlockPlaceEvent event) {
             super.onBlockPlace(event);
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place")) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
