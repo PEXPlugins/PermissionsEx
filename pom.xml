@@ -54,7 +54,7 @@
         <dependency>
             <groupId>me.taylorkelly.help</groupId>
             <artifactId>Help</artifactId>
-            <version>0.2</version>
+            <version>[0.2,)</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
