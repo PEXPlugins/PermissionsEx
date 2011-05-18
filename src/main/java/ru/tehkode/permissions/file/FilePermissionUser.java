@@ -51,8 +51,10 @@ public class FilePermissionUser extends PermissionUser {
         }
 
         this.prefix = this.node.getString("prefix",  "");
-        this.suffix = this.node.getString("postfix", "");
+        this.suffix = this.node.getString("suffix", "");
     }
+
+
 
     @Override
     public String[] getOwnPermissions(String world) {
@@ -90,6 +92,18 @@ public class FilePermissionUser extends PermissionUser {
             }
         }
         return result;
+    }
+
+    @Override
+    public void setPrefix(String prefix) {
+        this.node.setProperty("prefix", prefix);
+        super.setPrefix(prefix);
+    }
+
+    @Override
+    public void setSuffix(String postfix) {
+        this.node.setProperty("suffix", prefix);
+        super.setSuffix(postfix);
     }
 
     @Override

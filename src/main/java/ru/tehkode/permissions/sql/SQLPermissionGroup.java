@@ -71,13 +71,13 @@ public class SQLPermissionGroup extends PermissionGroup {
     @Override
     public void setPrefix(String prefix) {
         backend.setPrefix(prefix);
-        this.prefix = prefix;
+        super.setPrefix(prefix);
     }
 
     @Override
     public void setSuffix(String suffix) {
         backend.setSuffix(suffix);
-        this.suffix = suffix;
+        super.setSuffix(suffix);
     }
     
     @Override

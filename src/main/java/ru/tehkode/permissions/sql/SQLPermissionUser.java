@@ -41,15 +41,15 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void setSuffix(String suffix) {
-        backend.setSuffix(suffix);
-        this.suffix = suffix;
+    public void setPrefix(String prefix) {
+        backend.setPrefix(prefix);
+        super.setPrefix(prefix);
     }
 
     @Override
-    public void setPrefix(String prefix) {
-        backend.setPrefix(prefix);
-        this.prefix = prefix;
+    public void setSuffix(String suffix) {
+        backend.setSuffix(suffix);
+        super.setSuffix(suffix);
     }
 
     @Override

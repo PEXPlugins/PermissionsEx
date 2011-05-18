@@ -47,8 +47,8 @@ public class FilePermissionGroup extends PermissionGroup {
             this.virtual = true;
         }
 
-        this.prefix = this.node.getString("prefix",  "");
-        this.suffix = this.node.getString("postfix", "");
+        this.prefix = this.node.getString("prefix", "");
+        this.suffix = this.node.getString("suffix", "");
     }
 
     @Override
@@ -57,13 +57,15 @@ public class FilePermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public void setSuffix(String postfix) {
-        super.setSuffix(postfix);
+    public void setPrefix(String prefix) {
+        this.node.setProperty("prefix", prefix);
+        super.setPrefix(prefix);
     }
 
     @Override
-    public void setPrefix(String prefix) {
-        super.setPrefix(prefix);
+    public void setSuffix(String postfix) {
+        this.node.setProperty("suffix", prefix);
+        super.setSuffix(postfix);
     }
 
     @Override
