@@ -35,6 +35,44 @@ public abstract class PermissionGroup extends PermissionEntity {
         super(groupName, manager);
     }
 
+     @Override
+    public final String getPrefix() {
+        String prefix = super.getPrefix();
+        if(prefix == null || prefix.isEmpty()){
+            for(PermissionGroup group : this.getParentGroups()){
+                prefix = group.getPrefix();
+                if(prefix != null && !prefix.isEmpty()){
+                    break;
+                }
+            }
+        }
+
+        if(prefix == null){ // just for NPE safety
+            prefix = "";
+        }
+
+        return prefix;
+    }
+
+    @Override
+    public final String getSuffix() {
+        String suffix = super.getSuffix();
+        if(suffix == null || suffix.isEmpty()){
+            for(PermissionGroup group : this.getParentGroups()){
+                suffix = group.getSuffix();
+                if(suffix != null && !suffix.isEmpty()){
+                    break;
+                }
+            }
+        }
+
+        if(suffix == null){ // just for NPE safety
+            suffix = "";
+        }
+
+        return suffix;
+    }
+
     @Override
     protected void getInheritedPermissions(String world, List<String> permissions){
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));

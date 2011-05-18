@@ -46,21 +46,14 @@ public class FilePermissionGroup extends PermissionGroup {
             this.node = Configuration.getEmptyNode();
             this.virtual = true;
         }
+
+        this.prefix = this.node.getString("prefix",  "");
+        this.suffix = this.node.getString("postfix", "");
     }
 
     @Override
     public String[] getParentGroupsNamesImpl() {
         return this.node.getStringList("inheritance", new LinkedList<String>()).toArray(new String[0]);
-    }
-
-    @Override
-    public String getPrefix() {
-        return this.node.getString("prefix", "");
-    }
-
-    @Override
-    public String getSuffix() {
-        return this.node.getString("postfix", "");
     }
 
     @Override

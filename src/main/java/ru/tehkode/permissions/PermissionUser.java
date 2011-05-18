@@ -24,7 +24,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  *
@@ -128,6 +127,44 @@ public abstract class PermissionUser extends PermissionEntity {
 
             this.setGroups(groups.toArray(new PermissionGroup[]{}));
         }
+    }
+
+    @Override
+    public final String getPrefix() {
+        String prefix = super.getPrefix();
+        if(prefix == null || prefix.isEmpty()){
+            for(PermissionGroup group : this.getGroups()){
+                prefix = group.getPrefix();
+                if(prefix != null && !prefix.isEmpty()){
+                    break;
+                }
+            }
+        }
+
+        if(prefix == null){ // just for NPE safety
+            prefix = "";
+        }
+
+        return prefix;
+    }
+
+    @Override
+    public final String getSuffix() {
+        String suffix = super.getSuffix();
+        if(suffix == null || suffix.isEmpty()){
+            for(PermissionGroup group : this.getGroups()){
+                suffix = group.getSuffix();
+                if(suffix != null && !suffix.isEmpty()){
+                    break;
+                }
+            }
+        }
+
+        if(suffix == null){ // just for NPE safety
+            suffix = "";
+        }
+
+        return suffix;
     }
 
     public abstract void setGroups(PermissionGroup[] groups);

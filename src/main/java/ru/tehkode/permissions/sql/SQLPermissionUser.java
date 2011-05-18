@@ -36,16 +36,20 @@ public class SQLPermissionUser extends PermissionUser {
         super(name, manager);
 
         this.backend = new SQLEntity(SQLEntity.Type.USER, name, sql);
+        this.prefix = backend.getPrefix();
+        this.suffix = backend.getSuffix();
     }
 
     @Override
     public void setSuffix(String suffix) {
         backend.setSuffix(suffix);
+        this.suffix = suffix;
     }
 
     @Override
     public void setPrefix(String prefix) {
         backend.setPrefix(prefix);
+        this.prefix = prefix;
     }
 
     @Override
@@ -71,16 +75,6 @@ public class SQLPermissionUser extends PermissionUser {
     @Override
     public boolean isVirtual() {
         return backend.isVirtual();
-    }
-
-    @Override
-    public String getSuffix() {
-        return backend.getSuffix();
-    }
-
-    @Override
-    public String getPrefix() {
-        return backend.getPrefix();
     }
 
     @Override

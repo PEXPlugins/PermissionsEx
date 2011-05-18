@@ -260,7 +260,6 @@ public class PermissionsPlugin extends JavaPlugin {
 
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {
-            super.onPlayerQuit(event);
             getPermissionManager().resetUser(event.getPlayer().getName());
         }
 

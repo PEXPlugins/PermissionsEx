@@ -31,6 +31,8 @@ public class SQLPermissionGroup extends PermissionGroup {
         super(name, manager);
 
         this.backend = new SQLEntity(SQLEntity.Type.GROUP, name, sql);
+        this.prefix = backend.getPrefix();
+        this.suffix = backend.getSuffix();
     }
 
     @Override
@@ -67,25 +69,17 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getPrefix() {
-        return this.backend.getPrefix();
-    }
-
-    @Override
-    public String getSuffix() {
-        return this.backend.getSuffix();
+    public void setPrefix(String prefix) {
+        backend.setPrefix(prefix);
+        this.prefix = prefix;
     }
 
     @Override
     public void setSuffix(String suffix) {
         backend.setSuffix(suffix);
+        this.suffix = suffix;
     }
-
-    @Override
-    public void setPrefix(String prefix) {
-        backend.setPrefix(prefix);
-    }
-
+    
     @Override
     public void setPermissions(String[] permissions, String world) {
         if (permissions == null) {

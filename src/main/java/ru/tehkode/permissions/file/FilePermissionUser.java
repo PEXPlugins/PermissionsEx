@@ -49,16 +49,9 @@ public class FilePermissionUser extends PermissionUser {
             this.node = Configuration.getEmptyNode();
             this.virtual = true;
         }
-    }
 
-    @Override
-    public String getPrefix() {
-        return this.node.getString("prefix", "");
-    }
-
-    @Override
-    public String getSuffix() {
-        return this.node.getString("postfix", "");
+        this.prefix = this.node.getString("prefix",  "");
+        this.suffix = this.node.getString("postfix", "");
     }
 
     @Override
