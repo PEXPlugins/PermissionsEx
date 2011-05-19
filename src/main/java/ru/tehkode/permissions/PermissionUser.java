@@ -40,7 +40,7 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     public boolean inGroup(String groupName) {
-        for (String matchingGroupName : this.getGroupsNamesImpl()) {
+        for (String matchingGroupName : this.getGroupsNames()) {
             if (groupName.equalsIgnoreCase(matchingGroupName)) {
                 return true;
             }

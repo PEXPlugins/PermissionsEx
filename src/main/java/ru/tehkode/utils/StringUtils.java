@@ -67,4 +67,13 @@ public class StringUtils {
 
         return null;
     }
+
+    public static String repeat(String str, int times) {
+        final StringBuilder buffer = new StringBuilder(times * str.length());
+        for(int i = 0; i < times; i++) {
+            buffer.append(str);
+        }
+        return buffer.toString();
+
+    }
 }

@@ -10,6 +10,7 @@ commands:
     usage: |
            Usage:
            /<command> - Display help
+           /<command> hierarhy - Print complete user/group hierarhy
            /<command> reload - Reload configuration
            /<command> backend - Print currently using backend
            /<command> backend <backend> - Change permission backend on the fly (Use with caution!)
@@ -20,8 +21,10 @@ commands:
            /<command> user <user> - List all user permissions
            /<command> user <user> list - List all user permissions
            /<command> user <user> group list - List all user groups
+           /<command> user <user> prefix [newprefix]
+           /<command> user <user> suffix [newsuffix]
            /<command> user <user> add <permission> [world] - Add permission to user
-           /<command> user <user> set <permission> <value> [world] - Set permission setting to given value
+           /<command> user <user> set <option> <value> [world] - Set permission setting to given value
            /<command> user <user> remove <permission> [world] - Remove permission from user
            /<command> user <user> group add <group> - Add user to specified group
            /<command> user <user> group set <group> - Set only group for user (remove from others)
@@ -29,6 +32,8 @@ commands:
            /<command> group <group> - List all group permissions (alias)
            /<command> group <group> list - List all group permissions
            /<command> group <group> user list - List all group user permissions
+           /<command> group <group> prefix [newprefix]
+           /<command> group <group> suffix [newsuffix]
            /<command> group <group> create [parents] - Create group, optionally set parent groups by comma-separated list
            /<command> group <group> delete - Removes group
            /<command> group <group> parents - List all group parents (alias)

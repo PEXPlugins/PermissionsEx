@@ -88,13 +88,17 @@ public class PermissionManager {
     }
 
     public boolean has(Player player, String permission){
+        return this.has(player, permission, player.getWorld().getName());
+    }
+
+    public boolean has(Player player, String permission, String world){
         PermissionUser user = this.getUser(player.getName());
 
         if(user == null){
             return false;
         }
 
-        return user.has(permission, player.getWorld().getName());
+        return user.has(permission, world);
     }
 
     public void resetUser(String userName){

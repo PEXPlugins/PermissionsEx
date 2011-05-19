@@ -120,6 +120,14 @@ public abstract class PermissionGroup extends PermissionEntity {
         return parentGroups.toArray(new PermissionGroup[]{});
     }
 
+    public PermissionGroup[] getChildGroups() {
+        return this.manager.getGroups(this.getName());
+    }
+
+    public PermissionUser[] getUsers(){
+        return this.manager.getUsers(this.getName());
+    }
+
     public String[] getParentGroupsNames() {
         List<String> groups = new LinkedList<String>();
         for (PermissionGroup group : this.getParentGroups()) {

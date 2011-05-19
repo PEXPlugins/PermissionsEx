@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.LinkedList;
@@ -25,6 +24,7 @@ import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
+import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsPlugin;
@@ -67,6 +67,14 @@ public class PermissionsCommand implements CommandListener {
         } catch (RuntimeException e) {
             sender.sendMessage(ChatColor.RED + "Specified backend not found.");
         }
+    }
+
+    @Command(name = "pex",
+    syntax = "hierarhy",
+    permission = "permissions.manage",
+    description = "Print complete user/group hierarhy")
+    public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        sender.sendMessage("Permission Inheritance Hierarhy:\n" + this.printHierarhy(null, 0));
     }
 
     /**
@@ -124,13 +132,64 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        sender.sendMessage(args.get("user") + "'s permissions:");
-        for (String permission : user.getOwnPermissions(args.get("world"))) {
-            sender.sendMessage("  " + permission);
+        sender.sendMessage(args.get("user") + " are member of:");
+        for (PermissionGroup group : user.getGroups()) {
+            sender.sendMessage("  " + group.getName());
         }
 
-        user.getOptions(args.get("world"));
+        sender.sendMessage(args.get("user") + "'s permissions:\n"
+                + this.mapPermissions(args.get("world"), user, 0));
+        /*
+        for (String permission : user.getOwnPermissions(args.get("world"))) {
+        sender.sendMessage("  " + permission);
+        }
+         */
+
+        sender.sendMessage(args.get("user") + "'s options:");
+        for (Map.Entry<String, String> option : user.getOptions(args.get("world")).entrySet()) {
+            sender.sendMessage("  " + option.getKey() + " = \"" + option.getValue() + "\"");
+        }
+
     }
+
+    @Command(name = "pex",
+    syntax = "user <user> prefix [newprefix]",
+    permission = "permissions.manage.user.permissions",
+    description = "Add permission to user")
+    public void userPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "No such user found");
+            return;
+        }
+
+        if (args.containsKey("newprefix")) {
+            user.setPrefix(args.get("newprefix"));
+        }
+
+        sender.sendMessage(user.getName() + "'s prefix is: " + user.getPrefix());
+    }
+
+    @Command(name = "pex",
+    syntax = "user <user> suffix [newsuffix]",
+    permission = "permissions.manage.user.permissions",
+    description = "Add permission to user")
+    public void userSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "No such user found");
+            return;
+        }
+
+        if (args.containsKey("newsuffix")) {
+            user.setSuffix(args.get("newsuffix"));
+        }
+
+        sender.sendMessage(user.getName() + "'s suffix is: " + user.getSuffix());
+    }
+
 
     @Command(name = "pex",
     syntax = "user <user> add <permission> [world]",
@@ -150,10 +209,10 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "user <user> set <permission> <value> [world]",
+    syntax = "user <user> set <option> <value> [world]",
     permission = "permissions.manage.user.permissions",
     description = "Set permission setting to given value")
-    public void userSetPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+    public void userSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
@@ -163,7 +222,7 @@ public class PermissionsCommand implements CommandListener {
 
         user.setOption(args.get("permission"), args.get("value"), args.get("world"));
 
-        sender.sendMessage(ChatColor.WHITE + "Permission set!");
+        sender.sendMessage(ChatColor.WHITE + "Option set!");
     }
 
     @Command(name = "pex",
@@ -292,6 +351,44 @@ public class PermissionsCommand implements CommandListener {
     description = "List all registred groups (alias)")
     public void groupsListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupsList(plugin, sender, args);
+    }
+
+     @Command(name = "pex",
+    syntax = "group <group> prefix [newprefix]",
+    permission = "permissions.manage.user.permissions",
+    description = "Add permission to user")
+    public void groupPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "No such group found");
+            return;
+        }
+
+        if (args.containsKey("newprefix")) {
+            group.setPrefix(args.get("newprefix"));
+        }
+
+        sender.sendMessage(group.getName() + "'s prefix is: " + group.getPrefix());
+    }
+
+    @Command(name = "pex",
+    syntax = "group <group> suffix [newsuffix]",
+    permission = "permissions.manage.user.permissions",
+    description = "Add permission to user")
+    public void groupSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "No such group found");
+            return;
+        }
+
+        if (args.containsKey("newsuffix")) {
+            group.setSuffix(args.get("newsuffix"));
+        }
+
+        sender.sendMessage(group.getName() + "'s suffix is: " + group.getSuffix());
     }
 
     @Command(name = "pex",
@@ -425,14 +522,12 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        sender.sendMessage("Group " + args.get("group") + " own permissions:");
-        for (String permission : group.getOwnPermissions(args.get("world"))) {
-            sender.sendMessage("  " + permission);
-        }
+        sender.sendMessage("Group " + args.get("group") + "'s permissions:\n"
+                + this.mapPermissions(args.get("world"), group, 0));
 
-        sender.sendMessage("Options: ");
-        for(Map.Entry<String, String> option : group.getOptions(args.get("world")).entrySet()){
-            sender.sendMessage("  " + option.getKey() + " = " + option.getValue());
+        sender.sendMessage("Group " + args.get("group") + "'s Options: ");
+        for (Map.Entry<String, String> option : group.getOptions(args.get("world")).entrySet()) {
+            sender.sendMessage("  " + option.getKey() + " = \"" + option.getValue() + "\"");
         }
     }
 
@@ -454,10 +549,10 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "group <group> set <permission> <value> [world]",
+    syntax = "group <group> set <option> <value> [world]",
     permission = "permissions.manage.group.permissions",
     description = "Set permission value for group")
-    public void groupSetPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+    public void groupSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
@@ -467,7 +562,7 @@ public class PermissionsCommand implements CommandListener {
 
         group.setOption(args.get("permission"), args.get("value"), args.get("world"));
 
-        sender.sendMessage(ChatColor.WHITE + "Permission set for " + group.getName() + " !");
+        sender.sendMessage(ChatColor.WHITE + "Option set!");
     }
 
     @Command(name = "pex",
@@ -503,7 +598,7 @@ public class PermissionsCommand implements CommandListener {
 
         sender.sendMessage("Group " + args.get("group") + " users:");
 
-        for(PermissionUser user : users){
+        for (PermissionUser user : users) {
             sender.sendMessage("   " + user.getName());
         }
     }
@@ -542,4 +637,62 @@ public class PermissionsCommand implements CommandListener {
         sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
     }
 
+    protected String printHierarhy(PermissionGroup parent, int level) {
+        StringBuilder builder = new StringBuilder();
+
+        PermissionGroup[] groups;
+        if (parent == null) {
+            groups = PermissionsPlugin.getPermissionManager().getGroups();
+        } else {
+            groups = parent.getChildGroups();
+        }
+
+        for (PermissionGroup group : groups) {
+            if (parent == null && group.getParentGroups().length > 0) {
+                continue;
+            }
+
+            builder.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
+
+            // Groups
+            builder.append(printHierarhy(group, level + 1));
+
+            for (PermissionUser user : group.getUsers()) {
+                builder.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
+            }
+        }
+
+        return builder.toString();
+    }
+
+    protected String mapPermissions(String world, PermissionEntity entity, int level) {
+        StringBuilder builder = new StringBuilder();
+
+        for (String permission : entity.getOwnPermissions(world)) {
+            builder.append("  ").append(permission);
+            if (level > 0) {
+                builder.append(" (from ").append(entity.getName()).append(")");
+            } else {
+                builder.append(" (own)");
+            }
+            builder.append("\n");
+        }
+
+        PermissionGroup[] parents;
+
+        if (entity instanceof PermissionUser) {
+            parents = ((PermissionUser) entity).getGroups();
+        } else if (entity instanceof PermissionGroup) {
+            parents = ((PermissionGroup) entity).getParentGroups();
+        } else {
+            throw new RuntimeException("Unknown class in hierarhy. Nag t3hk0d3 pls.");
+        }
+
+        level++; // Just increment level once
+        for (PermissionGroup group : parents) {
+            builder.append(mapPermissions(world, group, level));
+        }
+
+        return builder.toString();
+    }
 }

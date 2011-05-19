@@ -254,13 +254,13 @@ public class SQLEntity {
 
     protected void updateInfo() {
         String sql;
-        if (this.isVirtual()) {
+        if (this.isVirtual()) { // This section are suspicious, here was problem which are resolved mysticaly. Keep eye on it.
             sql = "INSERT INTO permissions_entity (prefix, suffix, name, type) VALUES (?, ?, ?, ?)";
         } else {
             sql = "UPDATE permissions_entity SET prefix = ?, suffix = ? WHERE name = ? AND type = ?";
         }
 
-        this.db.updateQuery(sql, this.suffix, this.prefix, this.name, this.type.ordinal());
+        this.db.updateQuery(sql, this.prefix, this.suffix, this.name, this.type.ordinal());
 
         this.virtual = false;
     }
