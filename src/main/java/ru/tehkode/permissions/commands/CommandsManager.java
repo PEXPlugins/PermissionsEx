@@ -34,7 +34,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import ru.tehkode.permissions.bukkit.PermissionsPlugin;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -114,7 +114,7 @@ public class CommandsManager {
         // Check permission
         Command commandAnnotation = selectedBinding.getMethodAnnotation();
         if (!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and required permission
-            if (!PermissionsPlugin.getPermissionManager().has((Player) sender, commandAnnotation.permission())) {
+            if (!PermissionsEx.getPermissionManager().has((Player) sender, commandAnnotation.permission())) {
                 logger.warning("User " + ((Player) sender).getName() + " was tried to access chat command \"" + command.getName() + " " + arguments + "\","
                         + " but have no rights (" + commandAnnotation.permission() + ") to do that.");
                 sender.sendMessage(ChatColor.RED + "Sorry, you don't have enough permissions.");

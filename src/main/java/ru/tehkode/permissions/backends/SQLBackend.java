@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.backends;
 
 import java.sql.ResultSet;
@@ -31,6 +30,7 @@ import ru.tehkode.permissions.sql.SQLConnectionManager;
 import ru.tehkode.permissions.sql.SQLEntity;
 import ru.tehkode.permissions.sql.SQLPermissionGroup;
 import ru.tehkode.permissions.sql.SQLPermissionUser;
+import ru.tehkode.utils.StringUtils;
 
 /**
  *
@@ -122,26 +122,35 @@ public class SQLBackend extends PermissionBackend {
     }
 
     protected final void deployTables() {
-        if(this.sql.isTableExist("permissions")){
+        if (this.sql.isTableExist("permissions")) {
             return;
         }
 
-        Logger.getLogger("Minecraft").severe("Please deploy bundled database dump.");
+        //Logger.getLogger("Minecraft").severe("Please deploy bundled database dump.");
 
-        throw new RuntimeException("No database scheme found. Please upload bundled (default.sql) one.");
-        
-        /*
+        //throw new RuntimeException("No database scheme found. Please upload bundled (default.sql) one.");
+
         try {
             String deploySQL = StringUtils.readStream(getClass().getResourceAsStream("/sql/default.sql"));
 
             Logger.getLogger("Minecraft").info("Deploying default database scheme");
-            this.sql.updateQuery(deploySQL);
-            
+
+            for (String sqlQuery : deploySQL.trim().split(";")) {
+                sqlQuery = sqlQuery.trim();
+                if(sqlQuery.isEmpty()){
+                    continue;
+                }
+                
+                sqlQuery = sqlQuery + ";";
+
+                this.sql.updateQuery(sqlQuery);
+            }
+
+            Logger.getLogger("Minecraft").info("Database scheme deploying complete.");
+
         } catch (Exception e) {
             Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please init database manually using defaults.sql");
-            e.printStackTrace();
         }
-         */
     }
 
     @Override

@@ -27,7 +27,7 @@ import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.bukkit.PermissionsPlugin;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandListener;
 import ru.tehkode.utils.StringUtils;
@@ -39,7 +39,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.reload",
     description = "Reload permissions")
     public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionsPlugin.getPermissionManager().reset();
+        PermissionsEx.getPermissionManager().reset();
 
         sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
     }
@@ -49,7 +49,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.backend",
     description = "Print currently using backend")
     public void getBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        sender.sendMessage("Current backend: " + PermissionsPlugin.getPermissionManager().getBackend());
+        sender.sendMessage("Current backend: " + PermissionsEx.getPermissionManager().getBackend());
     }
 
     @Command(name = "pex",
@@ -62,7 +62,7 @@ public class PermissionsCommand implements CommandListener {
         }
 
         try {
-            PermissionsPlugin.getPermissionManager().setBackend(args.get("backend"));
+            PermissionsEx.getPermissionManager().setBackend(args.get("backend"));
             sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
         } catch (RuntimeException e) {
             sender.sendMessage(ChatColor.RED + "Specified backend not found.");
@@ -85,7 +85,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user",
     description = "List all registred users")
     public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser[] users = PermissionsPlugin.getPermissionManager().getUsers();
+        PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
 
         sender.sendMessage(ChatColor.WHITE + "Currently registred users: ");
         for (PermissionUser user : users) {
@@ -125,7 +125,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "List user permissions")
     public void userListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -157,7 +157,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Add permission to user")
     public void userPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -176,7 +176,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Add permission to user")
     public void userSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -196,7 +196,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Add permission to user")
     public void userAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -213,7 +213,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Set permission setting to given value")
     public void userSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -230,7 +230,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Remove permission from user")
     public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -250,7 +250,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "List all user groups")
     public void userListGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -268,7 +268,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "Add user to specified group")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -285,14 +285,14 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "Set leave specified group for user")
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
             return;
         }
 
-        user.setGroups(new PermissionGroup[]{PermissionsPlugin.getPermissionManager().getGroup(args.get("group"))});
+        user.setGroups(new PermissionGroup[]{PermissionsEx.getPermissionManager().getGroup(args.get("group"))});
 
         sender.sendMessage(ChatColor.WHITE + "User groups set!");
     }
@@ -302,7 +302,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "Remove user from specified group")
     public void userRemoveGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
@@ -329,7 +329,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group",
     description = "List all registred groups")
     public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup[] groups = PermissionsPlugin.getPermissionManager().getGroups();
+        PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
 
         sender.sendMessage(ChatColor.WHITE + "Currently registred groups: ");
         for (PermissionGroup group : groups) {
@@ -358,7 +358,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Add permission to user")
     public void groupPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -377,7 +377,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.user.permissions",
     description = "Add permission to user")
     public void groupSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -396,7 +396,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.create",
     description = "List all group permissions (alias)")
     public void groupCreate(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -413,7 +413,7 @@ public class PermissionsCommand implements CommandListener {
             List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
             for (String parent : parents) {
-                groups.add(PermissionsPlugin.getPermissionManager().getGroup(parent));
+                groups.add(PermissionsEx.getPermissionManager().getGroup(parent));
             }
 
             group.setParentGroups(groups.toArray(new PermissionGroup[0]));
@@ -429,7 +429,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.remove",
     description = "Removes group")
     public void groupDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -439,7 +439,7 @@ public class PermissionsCommand implements CommandListener {
         sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " removed!");
 
         group.remove();
-        PermissionsPlugin.getPermissionManager().resetGroup(group.getName());
+        PermissionsEx.getPermissionManager().resetGroup(group.getName());
         group = null;
     }
 
@@ -451,7 +451,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.inheritance",
     description = "Set parents by comma-separated list")
     public void groupListParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -476,7 +476,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.inheritance",
     description = "Set parents by comma-separated list")
     public void groupSetParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -488,7 +488,7 @@ public class PermissionsCommand implements CommandListener {
             List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
             for (String parent : parents) {
-                groups.add(PermissionsPlugin.getPermissionManager().getGroup(parent));
+                groups.add(PermissionsEx.getPermissionManager().getGroup(parent));
             }
 
             group.setParentGroups(groups.toArray(new PermissionGroup[0]));
@@ -515,7 +515,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.permissions",
     description = "List all group permissions")
     public void groupListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -536,7 +536,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.permissions",
     description = "Add permission to group")
     public void groupAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -553,7 +553,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.permissions",
     description = "Set permission value for group")
     public void groupSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -570,7 +570,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.group.permissions",
     description = "Remove permission from group")
     public void groupRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionGroup group = PermissionsPlugin.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -590,7 +590,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "List all group users")
     public void groupUsersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser[] users = PermissionsPlugin.getPermissionManager().getUsers(args.get("group"));
+        PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers(args.get("group"));
 
         if (users == null || users.length == 0) {
             sender.sendMessage(ChatColor.RED + "No such group found");
@@ -608,7 +608,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
     public void groupUsersAdd(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such users found");
@@ -625,7 +625,7 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.membership",
     description = "Add users (one or comma-separated list) to specified group")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        PermissionUser user = PermissionsPlugin.getPermissionManager().getUser(args.get("user"));
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such users found");
@@ -642,7 +642,7 @@ public class PermissionsCommand implements CommandListener {
 
         PermissionGroup[] groups;
         if (parent == null) {
-            groups = PermissionsPlugin.getPermissionManager().getGroups();
+            groups = PermissionsEx.getPermissionManager().getGroups();
         } else {
             groups = parent.getChildGroups();
         }

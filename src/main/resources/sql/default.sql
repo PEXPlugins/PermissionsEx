@@ -1,11 +1,9 @@
-SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
-
 CREATE TABLE IF NOT EXISTS `permissions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
+  `name` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
-  `permission` varchar(255) NOT NULL,
-  `world` varchar(255) NOT NULL,
+  `permission` varchar(200) NOT NULL,
+  `world` varchar(50) NOT NULL,
   `value` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique` (`name`,`permission`,`world`,`type`),
@@ -18,7 +16,7 @@ INSERT INTO `permissions` (`id`, `name`, `type`, `permission`, `world`, `value`)
 
 CREATE TABLE IF NOT EXISTS `permissions_entity` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
+  `name` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
   `prefix` varchar(255) NOT NULL,
   `suffix` varchar(255) NOT NULL,
@@ -33,12 +31,11 @@ INSERT INTO `permissions_entity` (`id`, `name`, `type`, `prefix`, `suffix`, `def
 
 CREATE TABLE IF NOT EXISTS `permissions_inheritance` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `child` varchar(255) NOT NULL,
-  `parent` varchar(255) NOT NULL,
+  `child` varchar(50) NOT NULL,
+  `parent` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `child` (`child`,`parent`,`type`),
   KEY `child_2` (`child`,`type`),
   KEY `parent` (`parent`,`type`)
 );
-

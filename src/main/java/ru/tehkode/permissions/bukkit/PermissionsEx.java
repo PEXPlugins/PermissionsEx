@@ -49,7 +49,7 @@ import ru.tehkode.permissions.config.Configuration;
  *
  * @author code
  */
-public class PermissionsPlugin extends JavaPlugin {
+public class PermissionsEx extends JavaPlugin {
 
     protected static final String configFile = "config.yml";
     protected static final Logger logger = Logger.getLogger("Minecraft");
@@ -57,7 +57,7 @@ public class PermissionsPlugin extends JavaPlugin {
     protected CommandsManager commandsManager;
     protected Configuration config;
 
-    public PermissionsPlugin() {
+    public PermissionsEx() {
         super();
 
         PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
@@ -107,37 +107,45 @@ public class PermissionsPlugin extends JavaPlugin {
 
     public static PermissionManager getPermissionManager() {
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
-        if (plugin == null || !(plugin instanceof PermissionsPlugin)) {
+        if (plugin == null || !(plugin instanceof PermissionsEx)) {
             throw new RuntimeException("Permissions manager are not accessable. PermissionsEx plugin disabled?");
         }
 
-        return ((PermissionsPlugin) plugin).permissionsManager;
+        return ((PermissionsEx) plugin).permissionsManager;
+    }
+
+    public boolean has(Player player, String permission){
+        return this.permissionsManager.has(player, permission);
+    }
+
+    public boolean has(Player player, String permission, String world) {
+        return this.permissionsManager.has(player, permission, world);
     }
 
     protected Configuration loadConfig(String name) {
         File configurationFile = new File(getDataFolder(), configFile);
-        Configuration config;
+        Configuration configuration;
         if (!configurationFile.exists()) {
             try {
                 if (!getDataFolder().exists()) {
                     getDataFolder().mkdirs();
                 }
                 configurationFile.createNewFile(); // Try to create new one
-                config = new Configuration(configurationFile);
-                config.setProperty("permissions.basedir", getDataFolder().getPath());
-                config.save();
+                configuration = new Configuration(configurationFile);
+                configuration.setProperty("permissions.basedir", getDataFolder().getPath());
+                configuration.save();
             } catch (IOException e) {
                 // And if failed (ex.: not enough rights) - catch exception
                 throw new RuntimeException(e); // Rethrow exception
             }
         } else {
-            config = new Configuration(configurationFile);
-            config.load();
+            configuration = new Configuration(configurationFile);
+            configuration.load();
         }
-        return config;
+        return configuration;
     }
 
-    public void informUser(Player player, String message) {
+    protected void informUser(Player player, String message) {
         if(this.config.getBoolean("verbose", false)){
             player.sendMessage(message);
         }
