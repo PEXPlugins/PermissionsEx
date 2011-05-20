@@ -1,5 +1,5 @@
 name: PermissionsEx
-main: ru.tehkode.permissions.bukkit.PermissionsPlugin
+main: ru.tehkode.permissions.bukkit.PermissionsEx
 version: 100
 author: t3hk0d3
 website: www.bukkit.org
