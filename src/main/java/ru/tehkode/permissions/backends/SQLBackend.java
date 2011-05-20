@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.backends;
 
+import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Logger;
@@ -67,7 +68,7 @@ public class SQLBackend extends PermissionBackend {
 
         Logger.getLogger("Minecraft").info("Successfuly connected to database");
 
-        this.deployTables();
+        this.deployTables(dbDriver);
     }
 
     @Override
@@ -121,7 +122,7 @@ public class SQLBackend extends PermissionBackend {
         return users;
     }
 
-    protected final void deployTables() {
+    protected final void deployTables(String driver) {
         if (this.sql.isTableExist("permissions")) {
             return;
         }
@@ -131,16 +132,22 @@ public class SQLBackend extends PermissionBackend {
         //throw new RuntimeException("No database scheme found. Please upload bundled (default.sql) one.");
 
         try {
-            String deploySQL = StringUtils.readStream(getClass().getResourceAsStream("/sql/default.sql"));
+            InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + driver + ".sql");
+
+            if (databaseDumpStream == null) {
+                throw new Exception("Can't find apporiate database dump for used database (" + driver + "). Is it bundled?");
+            }
+
+            String deploySQL = StringUtils.readStream(databaseDumpStream);
 
             Logger.getLogger("Minecraft").info("Deploying default database scheme");
 
             for (String sqlQuery : deploySQL.trim().split(";")) {
                 sqlQuery = sqlQuery.trim();
-                if(sqlQuery.isEmpty()){
+                if (sqlQuery.isEmpty()) {
                     continue;
                 }
-                
+
                 sqlQuery = sqlQuery + ";";
 
                 this.sql.updateQuery(sqlQuery);
