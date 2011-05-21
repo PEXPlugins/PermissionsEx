@@ -63,6 +63,25 @@ public abstract class PermissionEntity {
                 regexp = regexp.substring(1);
             }
 
+            /*
+             * Code below done to solve situations like this:
+             * We have permission
+             * "example.permission.*"
+             * but we checked exacly on
+             * "example.permission"
+             *
+             * Permission "example.permission.*" assuming what we have "example.permission" too, but technicaly we haven't.
+             * Here is still issue present (expression below will fail if expression is regualar expression).
+             * Ie:
+             * example.(permission|right).*
+             * will fail against example.permission
+             *
+             * But this still is not that vital, since support of regexped permissions aren't official.
+             */
+            if(expression.endsWith(".*") && regexp.substring(0, permission.length()).equals(permission)){
+                return expression;
+            }
+
             regexp = regexp.replace(".", "\\.").replace("*", "(.*)");
 
             if (permission.matches(regexp)) {

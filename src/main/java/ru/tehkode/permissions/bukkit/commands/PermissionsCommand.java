@@ -71,7 +71,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "hierarhy",
-    permission = "permissions.manage",
+    permission = "permissions.manage.users",
     description = "Print complete user/group hierarhy")
     public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
         sender.sendMessage("Permission Inheritance Hierarhy:\n" + this.printHierarhy(null, 0));
@@ -82,7 +82,7 @@ public class PermissionsCommand implements CommandListener {
      */
     @Command(name = "pex",
     syntax = "users list",
-    permission = "permissions.manage.user",
+    permission = "permissions.manage.users",
     description = "List all registred users")
     public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
@@ -95,7 +95,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "users",
-    permission = "permissions.manage.user",
+    permission = "permissions.manage.users",
     description = "List all registred users (alias)")
     public void userListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.usersList(plugin, sender, args);
@@ -103,7 +103,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user",
-    permission = "permissions.manage.user",
+    permission = "permissions.manage.users",
     description = "List all registred users (alias)")
     public void userListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.usersList(plugin, sender, args);
@@ -114,7 +114,7 @@ public class PermissionsCommand implements CommandListener {
      */
     @Command(name = "pex",
     syntax = "user <user>",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users.permissions",
     description = "List user permissions (list alias)")
     public void userListAliasPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.userListPermissions(plugin, sender, args);
@@ -122,7 +122,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user <user> list [world]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users.permissions",
     description = "List user permissions")
     public void userListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
@@ -154,7 +154,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user <user> prefix [newprefix]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users",
     description = "Add permission to user")
     public void userPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
@@ -173,7 +173,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user <user> suffix [newsuffix]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users",
     description = "Add permission to user")
     public void userSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
@@ -193,7 +193,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user <user> add <permission> [world]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users.permissions",
     description = "Add permission to user")
     public void userAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
@@ -210,7 +210,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user <user> set <option> <value> [world]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users.permissions",
     description = "Set permission setting to given value")
     public void userSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
@@ -227,7 +227,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "user <user> remove <permission> [world]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.users.permissions",
     description = "Remove permission from user")
     public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
@@ -326,7 +326,7 @@ public class PermissionsCommand implements CommandListener {
      */
     @Command(name = "pex",
     syntax = "groups list",
-    permission = "permissions.manage.group",
+    permission = "permissions.manage.groups",
     description = "List all registred groups")
     public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
@@ -339,7 +339,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "groups",
-    permission = "permissions.manage.group",
+    permission = "permissions.manage.groups",
     description = "List all registred groups (alias)")
     public void groupsListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupsList(plugin, sender, args);
@@ -347,7 +347,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group",
-    permission = "permissions.manage.group",
+    permission = "permissions.manage.groups",
     description = "List all registred groups (alias)")
     public void groupsListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupsList(plugin, sender, args);
@@ -355,7 +355,7 @@ public class PermissionsCommand implements CommandListener {
 
      @Command(name = "pex",
     syntax = "group <group> prefix [newprefix]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.groups",
     description = "Add permission to user")
     public void groupPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -374,7 +374,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> suffix [newsuffix]",
-    permission = "permissions.manage.user.permissions",
+    permission = "permissions.manage.groups",
     description = "Add permission to user")
     public void groupSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -393,7 +393,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> create [parents]",
-    permission = "permissions.manage.group.create",
+    permission = "permissions.manage.groups.create",
     description = "List all group permissions (alias)")
     public void groupCreate(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -426,7 +426,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> delete",
-    permission = "permissions.manage.group.remove",
+    permission = "permissions.manage.groups.remove",
     description = "Removes group")
     public void groupDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -448,7 +448,7 @@ public class PermissionsCommand implements CommandListener {
      */
     @Command(name = "pex",
     syntax = "group <group> parents list",
-    permission = "permissions.manage.group.inheritance",
+    permission = "permissions.manage.groups.inheritance",
     description = "Set parents by comma-separated list")
     public void groupListParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -473,7 +473,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> parents set <parents>",
-    permission = "permissions.manage.group.inheritance",
+    permission = "permissions.manage.groups.inheritance",
     description = "Set parents by comma-separated list")
     public void groupSetParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -504,7 +504,7 @@ public class PermissionsCommand implements CommandListener {
      */
     @Command(name = "pex",
     syntax = "group <group>",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.groups.permissions",
     description = "List all group permissions (alias)")
     public void groupListAliasPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupListPermissions(plugin, sender, args);
@@ -512,7 +512,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> list [world]",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.groups.permissions",
     description = "List all group permissions")
     public void groupListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -533,7 +533,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> add <permission> [world]",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.groups.permissions",
     description = "Add permission to group")
     public void groupAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -550,7 +550,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> set <option> <value> [world]",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.groups.permissions",
     description = "Set permission value for group")
     public void groupSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
@@ -567,7 +567,7 @@ public class PermissionsCommand implements CommandListener {
 
     @Command(name = "pex",
     syntax = "group <group> remove <permission> [world]",
-    permission = "permissions.manage.group.permissions",
+    permission = "permissions.manage.groups.permissions",
     description = "Remove permission from group")
     public void groupRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));

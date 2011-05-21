@@ -114,7 +114,7 @@ public class PermissionsEx extends JavaPlugin {
         return ((PermissionsEx) plugin).permissionsManager;
     }
 
-    public boolean has(Player player, String permission){
+    public boolean has(Player player, String permission) {
         return this.permissionsManager.has(player, permission);
     }
 
@@ -146,12 +146,19 @@ public class PermissionsEx extends JavaPlugin {
     }
 
     protected void informUser(Player player, String message) {
-        if(this.config.getBoolean("verbose", false)){
+        if (this.config.getBoolean("permission.verbose", false)) {
             player.sendMessage(message);
         }
     }
 
     protected void registerEvents() {
+        if(this.config.getBoolean("permissions.modifyworld", false)){
+            Logger.getLogger("Minecraft").info("PEX Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
+            return;
+        }
+
+        Logger.getLogger("Minecraft").info("PEX Modifyworld are enabled.");
+
         BlockListener blockProtector = new BlockProtector();
         PlayerListener playerProtector = new PlayerListener();
         EntityListener entityProtector = new EntityListener();
@@ -305,7 +312,7 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onPlayerDropItem(PlayerDropItemEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop")) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop." + event.getItemDrop().getEntityId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
@@ -321,7 +328,11 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onPlayerInteract(PlayerInteractEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact")) {
+            if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) { // we not interested in clicking air or digging
+                return;
+            }
+
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact." + event.getClickedBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
@@ -332,8 +343,8 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onBlockBreak(BlockBreakEvent event) {
-            super.onBlockBreak(event);
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.destroy")) {
+
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.destroy." + event.getBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
@@ -341,8 +352,7 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onBlockPlace(BlockPlaceEvent event) {
-            super.onBlockPlace(event);
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place")) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place" + event.getBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
