@@ -20,7 +20,8 @@
             <directory>${project.basedir}/src/main/resources/sql</directory>
             <outputDirectory>/PermissionsEx/</outputDirectory>
             <includes>
-                <include>default.sql</include>
+                <include>mysql.sql</include>
+                <include>sqlite.sql</include>
             </includes>
         </fileSet>
     </fileSets>
