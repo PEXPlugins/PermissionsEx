@@ -77,7 +77,7 @@ public class PermissionsEx extends JavaPlugin {
     public void onEnable() {
         this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
 
-        this.registerEvents();
+        this.registerModifyworld();
 
         logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
     }
@@ -151,28 +151,31 @@ public class PermissionsEx extends JavaPlugin {
         }
     }
 
-    protected void registerEvents() {
+    protected void registerModifyworld() {
+        PluginManager pluginManager = this.getServer().getPluginManager();
+        PlayerListener playerProtector = new PlayerListener();
+
+        // PLAYER_QUIT event arent part of Modifyworld, this is just to reset permissions for player.
+        pluginManager.registerEvent(Event.Type.PLAYER_QUIT, playerProtector, Priority.Low, this);
+
         if(this.config.getBoolean("permissions.modifyworld", false)){
             Logger.getLogger("Minecraft").info("PEX Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
             return;
         }
 
+        // Other EVENTS are modifyworld
+
         Logger.getLogger("Minecraft").info("PEX Modifyworld are enabled.");
 
         BlockListener blockProtector = new BlockProtector();
-        PlayerListener playerProtector = new PlayerListener();
         EntityListener entityProtector = new EntityListener();
         VehicleListener vehicleProtector = new VehicleListener();
-
-        PluginManager pluginManager = this.getServer().getPluginManager();
-
 
         //Block events
         pluginManager.registerEvent(Event.Type.BLOCK_PLACE, blockProtector, Priority.Low, this);
         pluginManager.registerEvent(Event.Type.BLOCK_BREAK, blockProtector, Priority.Low, this);
 
         //Player events
-        pluginManager.registerEvent(Event.Type.PLAYER_QUIT, playerProtector, Priority.Low, this);
         pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, playerProtector, Priority.Low, this);
         pluginManager.registerEvent(Event.Type.PLAYER_BUCKET_EMPTY, playerProtector, Priority.Low, this);
         pluginManager.registerEvent(Event.Type.PLAYER_BUCKET_FILL, playerProtector, Priority.Low, this);
