@@ -331,10 +331,11 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onPlayerInteract(PlayerInteractEvent event) {
-            if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) { // we not interested in clicking air or digging
+            Action action = event.getAction();
+            if(action != Action.LEFT_CLICK_BLOCK && action != Action.RIGHT_CLICK_BLOCK){
                 return;
             }
-
+            
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact." + event.getClickedBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
