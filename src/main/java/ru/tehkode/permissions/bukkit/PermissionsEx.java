@@ -268,8 +268,8 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onEntityTarget(EntityTargetEvent event) {
-            if (event.getEntity() instanceof Player) {
-                Player player = (Player) event.getEntity();
+            if (event.getTarget() instanceof Player) {
+                Player player = (Player) event.getTarget();
                 if (!permissionsManager.has(player, "modifyworld.entity.mobtarget")) {
                     event.setCancelled(true);
                 }
