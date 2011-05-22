@@ -272,7 +272,7 @@ public class SQLEntity {
         this.commonPermissions = new LinkedList<String>();
 
         try {
-            ResultSet results = this.db.selectQuery("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ?", this.name, this.type.ordinal());
+            ResultSet results = this.db.selectQuery("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ? ORDER BY id DESC", this.name, this.type.ordinal());
             while (results.next()) {
                 String permission = results.getString("permission").trim();
                 String world = results.getString("world").trim();

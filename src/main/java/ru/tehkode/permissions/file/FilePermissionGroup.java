@@ -157,7 +157,7 @@ public class FilePermissionGroup extends PermissionGroup {
         }
         List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
         if (!permissions.contains(permission)) {
-            permissions.add(permission);
+            permissions.add(0, permission);
         }
         this.node.setProperty(nodePath, permissions);
 

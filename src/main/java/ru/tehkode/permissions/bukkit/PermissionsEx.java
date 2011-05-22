@@ -315,7 +315,7 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onPlayerDropItem(PlayerDropItemEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop." + event.getItemDrop().getEntityId())) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop." + event.getItemDrop().getItemStack().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
@@ -323,8 +323,8 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onPlayerPickupItem(PlayerPickupItemEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.pickup." + event.getItem().getEntityId())) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.pickup." + event.getItem().getItemStack().getTypeId())) {
+                //informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
@@ -356,7 +356,7 @@ public class PermissionsEx extends JavaPlugin {
 
         @Override
         public void onBlockPlace(BlockPlaceEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place" + event.getBlock().getTypeId())) {
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place." + event.getBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }

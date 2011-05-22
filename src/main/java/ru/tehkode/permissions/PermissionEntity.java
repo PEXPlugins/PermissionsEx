@@ -21,6 +21,7 @@ package ru.tehkode.permissions;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  *
@@ -63,6 +64,7 @@ public abstract class PermissionEntity {
                 regexp = regexp.substring(1);
             }
 
+            regexp = regexp.replace(".", "\\.").replace("*", "(.*)");
             /*
              * Code below done to solve situations like this:
              * We have permission
@@ -78,11 +80,11 @@ public abstract class PermissionEntity {
              *
              * But this still is not that vital, since support of regexped permissions aren't official.
              */
-            if(expression.endsWith(".*") && regexp.substring(0, permission.length()).equals(permission)){
-                return expression;
+            if (expression.endsWith(".*")) { // \.(.*)
+                if (permission.matches(regexp.substring(0, regexp.length() - 6))) {
+                    return expression;
+                }
             }
-
-            regexp = regexp.replace(".", "\\.").replace("*", "(.*)");
 
             if (permission.matches(regexp)) {
                 return expression;
@@ -141,7 +143,7 @@ public abstract class PermissionEntity {
         return this.virtual;
     }
 
-    public String[] getPermissions(String world){
+    public String[] getPermissions(String world) {
         List<String> permissions = new LinkedList<String>();
         this.getInheritedPermissions(world, permissions);
         return permissions.toArray(new String[0]);
