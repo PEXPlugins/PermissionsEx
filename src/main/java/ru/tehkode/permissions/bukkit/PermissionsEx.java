@@ -63,14 +63,11 @@ public class PermissionsEx extends JavaPlugin {
         PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
         PermissionBackend.registerBackendAlias("file", FileBackend.class);
 
-        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
-    }
-
-    @Override
-    public void onLoad() {
         this.config = this.loadConfig(configFile);
         this.commandsManager = new CommandsManager(this);
         this.permissionsManager = new PermissionManager(this.config);
+
+        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
     }
 
     @Override
@@ -79,7 +76,7 @@ public class PermissionsEx extends JavaPlugin {
 
         this.registerModifyworld();
 
-        logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  loaded");
+        logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  enabled");
     }
 
     @Override
@@ -122,7 +119,7 @@ public class PermissionsEx extends JavaPlugin {
         return this.permissionsManager.has(player, permission, world);
     }
 
-    protected Configuration loadConfig(String name) {
+    protected final Configuration loadConfig(String name) {
         File configurationFile = new File(getDataFolder(), configFile);
         Configuration configuration;
         if (!configurationFile.exists()) {
