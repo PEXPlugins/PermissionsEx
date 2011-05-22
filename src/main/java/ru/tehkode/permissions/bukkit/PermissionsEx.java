@@ -120,16 +120,22 @@ public class PermissionsEx extends JavaPlugin {
     }
 
     protected final Configuration loadConfig(String name) {
-        File configurationFile = new File(getDataFolder(), configFile);
+        File dataFolder = getDataFolder();
+        
+        if(dataFolder == null){
+            dataFolder = new File("plugins/PermissionsEx/");
+        }
+        
+        File configurationFile = new File(dataFolder, configFile);
         Configuration configuration;
         if (!configurationFile.exists()) {
             try {
-                if (!getDataFolder().exists()) {
-                    getDataFolder().mkdirs();
+                if (!dataFolder.exists()) {
+                    dataFolder.mkdirs();
                 }
                 configurationFile.createNewFile(); // Try to create new one
                 configuration = new Configuration(configurationFile);
-                configuration.setProperty("permissions.basedir", getDataFolder().getPath());
+                configuration.setProperty("permissions.basedir", dataFolder.getPath());
                 configuration.save();
             } catch (IOException e) {
                 // And if failed (ex.: not enough rights) - catch exception
