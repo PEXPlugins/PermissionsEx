@@ -21,6 +21,7 @@ commands:
            /<command> user <user> - List all user permissions
            /<command> user <user> list - List all user permissions
            /<command> user <user> group list - List all user groups
+           /<command> user <user> delete - Remove group
            /<command> user <user> prefix [newprefix]
            /<command> user <user> suffix [newsuffix]
            /<command> user <user> add <permission> [world] - Add permission to user

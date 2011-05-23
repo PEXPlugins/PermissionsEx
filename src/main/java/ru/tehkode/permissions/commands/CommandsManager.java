@@ -229,4 +229,7 @@ public class CommandsManager {
             }
         }
     }
+
+    public class AutoCompleteException extends RuntimeException {}
+    public class AutoCompleteChoicesException extends AutoCompleteException {}
 }

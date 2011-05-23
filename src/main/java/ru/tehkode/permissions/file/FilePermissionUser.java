@@ -241,7 +241,7 @@ public class FilePermissionUser extends PermissionUser {
     @Override
     public void remove() {
         if (!this.virtual) {
-            this.backend.permissions.setProperty("users." + this.getName(), null);
+            this.backend.permissions.removeProperty("users." + this.getName());
         }
 
         this.backend.permissions.save();

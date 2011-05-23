@@ -190,6 +190,26 @@ public class PermissionsCommand implements CommandListener {
         sender.sendMessage(user.getName() + "'s suffix is: " + user.getSuffix());
     }
 
+    @Command(name = "pex",
+    syntax = "user <user> delete",
+    permission = "permissions.manage.users",
+    description = "Add permission to user")
+    public void userDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(args.get("user"));
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "No such user found");
+            return;
+        }
+
+        if (user.isVirtual()) {
+            sender.sendMessage(ChatColor.RED + "User are virtual");
+        }
+
+        user.remove();
+
+        sender.sendMessage(ChatColor.WHITE + "User \"" + user.getName() + "\" removed!");
+    }
 
     @Command(name = "pex",
     syntax = "user <user> add <permission> [world]",
@@ -353,7 +373,7 @@ public class PermissionsCommand implements CommandListener {
         this.groupsList(plugin, sender, args);
     }
 
-     @Command(name = "pex",
+    @Command(name = "pex",
     syntax = "group <group> prefix [newprefix]",
     permission = "permissions.manage.groups",
     description = "Add permission to user")
