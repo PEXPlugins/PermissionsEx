@@ -19,7 +19,6 @@
 package ru.tehkode.permissions.file;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -58,7 +57,7 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void setPrefix(String prefix) {
-        if(prefix != null && !prefix.isEmpty()){
+        if (prefix != null && !prefix.isEmpty()) {
             this.node.setProperty("suffix", suffix);
         } else {
             this.node.removeProperty("prefix");
@@ -69,7 +68,7 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void setSuffix(String suffix) {
-        if(prefix != null && !suffix.isEmpty()){
+        if (prefix != null && !suffix.isEmpty()) {
             this.node.setProperty("suffix", suffix);
         } else {
             this.node.removeProperty("suffix");
@@ -230,9 +229,10 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void removeGroup() {
-        if (this.backend.permissions.getProperty("groups") instanceof Map) {
-            this.backend.permissions.removeProperty("groups." + this.getName());
-        }
+        this.node.getRoot().clear();
+        this.prefix = "";
+        this.suffix = "";
+        this.backend.permissions.removeProperty("groups." + this.getName());
 
         this.backend.permissions.save();
     }
