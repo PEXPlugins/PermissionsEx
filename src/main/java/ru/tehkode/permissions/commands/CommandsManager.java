@@ -16,9 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.commands;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -35,6 +35,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -50,8 +51,6 @@ public class CommandsManager {
     public CommandsManager(Plugin plugin) {
         this.plugin = plugin;
     }
-
-
 
     public void register(CommandListener listener) {
         Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
@@ -224,12 +223,16 @@ public class CommandsManager {
         public void call(Object... args) {
             try {
                 this.method.invoke(object, args);
+            } catch (InvocationTargetException e){
+                if(e.getTargetException() instanceof AutoCompleteChoicesException){
+                    AutoCompleteChoicesException autocomplete = (AutoCompleteChoicesException)e.getTargetException();
+                    logger.info("Autocomplete for <" + autocomplete.getArgName() + ">:\n  " + StringUtils.implode(autocomplete.getChoices(), "   "));
+                } else {
+                    throw new RuntimeException(e.getTargetException());
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
     }
-
-    public class AutoCompleteException extends RuntimeException {}
-    public class AutoCompleteChoicesException extends AutoCompleteException {}
 }

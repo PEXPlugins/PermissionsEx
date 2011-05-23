@@ -250,6 +250,12 @@ public class SQLEntity {
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ?", this.name, this.type.ordinal());
         // clear info
         this.db.updateQuery("DELETE FROM permissions_entity WHERE name = ? AND type = ?", this.name, this.type.ordinal());
+
+        this.virtual = true;
+        this.commonOptions.clear();
+        this.commonPermissions.clear();
+        this.worldsOptions.clear();
+        this.worldsPermissions.clear();
     }
 
     protected void updateInfo() {

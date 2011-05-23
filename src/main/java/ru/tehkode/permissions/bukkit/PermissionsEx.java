@@ -161,7 +161,7 @@ public class PermissionsEx extends JavaPlugin {
         // PLAYER_QUIT event arent part of Modifyworld, this is just to reset permissions for player.
         pluginManager.registerEvent(Event.Type.PLAYER_QUIT, playerProtector, Priority.Low, this);
 
-        if(this.config.getBoolean("permissions.modifyworld", false)){
+        if(!this.config.getBoolean("permissions.modifyworld", false)){
             Logger.getLogger("Minecraft").info("PEX Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
             return;
         }
