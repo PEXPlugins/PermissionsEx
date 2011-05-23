@@ -10,7 +10,7 @@ commands:
     usage: |
            Usage:
            /<command> - Display help
-           /<command> hierarhy - Print complete user/group hierarhy
+           /<command> hierarchy - Print complete user/group hierarhy
            /<command> reload - Reload configuration
            /<command> backend - Print currently using backend
            /<command> backend <backend> - Change permission backend on the fly (Use with caution!)

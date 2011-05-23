@@ -112,7 +112,7 @@ Here is the overview of available commands:
 /pex - Display help. ("permissions.manage")
 /pex reload - Reload configuration. ("permissions.manage.reload")
 
-/pex hierarhy - Print complete user/group hierarhy. ("permissions.manage.users")
+/pex hierarchy - Print complete user/group hierarhy. ("permissions.manage.users")
 
 /pex backend - Print currently using backend. ("permissions.manage.backend")
 /pex backend <backend> - Change permission backend on the fly. Use with caution! ("permissions.manage.backend")
