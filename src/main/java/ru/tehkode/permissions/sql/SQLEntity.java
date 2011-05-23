@@ -260,6 +260,7 @@ public class SQLEntity {
         this.commonPermissions.clear();
         this.worldsOptions.clear();
         this.worldsPermissions.clear();
+        this.parents.clear();
     }
 
     protected void updateInfo() {
