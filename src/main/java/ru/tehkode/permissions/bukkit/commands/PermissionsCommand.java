@@ -50,7 +50,7 @@ public class PermissionsCommand implements CommandListener {
     @Command(name = "pex",
     syntax = "backend",
     permission = "permissions.manage.backend",
-    description = "Print currently using backend")
+    description = "Print currently used backend")
     public void getBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
         sender.sendMessage("Current backend: " + PermissionsEx.getPermissionManager().getBackend());
     }
@@ -213,7 +213,7 @@ public class PermissionsCommand implements CommandListener {
         }
 
         if (user.isVirtual()) {
-            sender.sendMessage(ChatColor.RED + "User are virtual");
+            sender.sendMessage(ChatColor.RED + "User is virtual");
         }
 
         user.remove();
@@ -331,7 +331,7 @@ public class PermissionsCommand implements CommandListener {
     @Command(name = "pex",
     syntax = "user <user> group set <group>",
     permission = "permissions.manage.membership",
-    description = "Set leave specified group for user")
+    description = "Set specified group for user")
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
@@ -376,7 +376,7 @@ public class PermissionsCommand implements CommandListener {
 
         sender.sendMessage(ChatColor.WHITE + "User removed from group " + groupName + "!");
 
-        this.informPlayer(plugin, userName, "You are deassigned from \"" + groupName + "\" group");
+        this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
     }
 
     /**
@@ -466,7 +466,7 @@ public class PermissionsCommand implements CommandListener {
         }
 
         if (!group.isVirtual()) {
-            sender.sendMessage(ChatColor.RED + "Group " + args.get("group") + " are already exists");
+            sender.sendMessage(ChatColor.RED + "Group " + args.get("group") + " already exists");
             return;
         }
 
@@ -670,7 +670,7 @@ public class PermissionsCommand implements CommandListener {
     @Command(name = "pex",
     syntax = "group <group> users",
     permission = "permissions.manage.membership",
-    description = "List all group users")
+    description = "List all users in the specified group")
     public void groupUsersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
 
@@ -690,7 +690,7 @@ public class PermissionsCommand implements CommandListener {
     @Command(name = "pex",
     syntax = "group <group> user add <user>",
     permission = "permissions.manage.membership",
-    description = "Add users (one or comma-separated list) to specified group")
+    description = "Add users (single or comma-separated list) to specified group")
     public void groupUsersAdd(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
@@ -712,7 +712,7 @@ public class PermissionsCommand implements CommandListener {
     @Command(name = "pex",
     syntax = "group <group> user remove <user>",
     permission = "permissions.manage.membership",
-    description = "Add users (one or comma-separated list) to specified group")
+    description = "Add users (single or comma-separated list) to specified group")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
@@ -728,7 +728,7 @@ public class PermissionsCommand implements CommandListener {
 
         sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
 
-        this.informPlayer(plugin, userName, "You are disassigned from \"" + groupName + "\" group");
+        this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
     }
 
     protected void informGroup(Plugin plugin, PermissionGroup group, String message) {
