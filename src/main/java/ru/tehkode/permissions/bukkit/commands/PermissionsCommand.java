@@ -70,7 +70,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     @Command(name = "pex",
-    syntax = "hierarhy",
+    syntax = "hierarchy",
     permission = "permissions.manage.users",
     description = "Print complete user/group hierarhy")
     public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
