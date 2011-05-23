@@ -24,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  *
@@ -98,6 +99,10 @@ public abstract class PermissionUser extends PermissionEntity {
 
         if(this.getGroupsNamesImpl().length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup())){
             groups.clear(); // clean out default group
+        }
+
+        if(group.isVirtual()){
+            group.save();
         }
 
         if (!groups.contains(group)) {

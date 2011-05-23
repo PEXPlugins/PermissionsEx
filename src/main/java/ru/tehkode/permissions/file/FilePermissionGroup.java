@@ -187,7 +187,7 @@ public class FilePermissionGroup extends PermissionGroup {
             nodePath = "worlds." + world + "." + nodePath;
         }
 
-        this.node.setProperty(nodePath, Arrays.asList(permissions));
+        this.node.setProperty(nodePath, new LinkedList<String>(Arrays.asList(permissions)));
     }
 
     @Override

@@ -76,12 +76,12 @@ public class PermissionsEx extends JavaPlugin {
 
         this.registerModifyworld();
 
-        logger.log(Level.INFO, "[PermissionsEx] version [" + this.getDescription().getVersion() + "] (" + this.getDescription().getVersion() + ")  enabled");
+        logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + "  enabled");
     }
 
     @Override
     public void onDisable() {
-        logger.log(Level.INFO, "[PermissionsEx-" + this.getDescription().getVersion() + "] disabled successfully.");
+        logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
     }
 
     @Override
@@ -168,7 +168,7 @@ public class PermissionsEx extends JavaPlugin {
 
         // Other EVENTS are modifyworld
 
-        Logger.getLogger("Minecraft").info("PEX Modifyworld are enabled.");
+        Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are enabled.");
 
         BlockListener blockProtector = new BlockProtector();
         EntityListener entityProtector = new EntityListener();

@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.file;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -209,12 +210,21 @@ public class FilePermissionUser extends PermissionUser {
 
         newGroups = newGroups.substring(1);
 
-        this.node.setProperty("groups", newGroups);
+        this.node.setProperty("group", newGroups);
+
+        this.save();
     }
 
     @Override
     public void setPermissions(String[] permissions, String world) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String nodePath = "permissions";
+        if (world != null && !world.isEmpty()) {
+            nodePath = "worlds." + world + "." + nodePath;
+        }
+
+        this.node.setProperty(nodePath, new LinkedList<String>(Arrays.asList(permissions)));
+
+        this.save();
     }
 
     public void save() {
