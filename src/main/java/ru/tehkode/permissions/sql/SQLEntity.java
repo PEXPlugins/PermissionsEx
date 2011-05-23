@@ -261,6 +261,8 @@ public class SQLEntity {
         this.worldsOptions.clear();
         this.worldsPermissions.clear();
         this.parents.clear();
+        this.prefix = "";
+        this.suffix = "";
     }
 
     protected void updateInfo() {
