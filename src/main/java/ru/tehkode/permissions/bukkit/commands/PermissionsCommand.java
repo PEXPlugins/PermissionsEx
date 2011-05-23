@@ -238,6 +238,8 @@ public class PermissionsCommand implements CommandListener {
         user.addPermission(args.get("permission"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission added!");
+
+        this.informPlayer(plugin, userName, "Your permissions has been changed!");
     }
 
     @Command(name = "pex",
@@ -257,6 +259,8 @@ public class PermissionsCommand implements CommandListener {
         user.setOption(args.get("option"), args.get("value"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
+
+        this.informPlayer(plugin, userName, "Your permissions has been changed!");
     }
 
     @Command(name = "pex",
@@ -276,6 +280,7 @@ public class PermissionsCommand implements CommandListener {
         user.removePermission(args.get("permission"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed!");
+        this.informPlayer(plugin, userName, "Your permissions has been changed!");
     }
 
     /**
@@ -307,6 +312,7 @@ public class PermissionsCommand implements CommandListener {
     description = "Add user to specified group")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
+         String groupName = this.autoCompleteGroupName(args.get("group"));
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
@@ -315,9 +321,11 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        user.addGroup(args.get("group"));
+        user.addGroup(groupName);
 
         sender.sendMessage(ChatColor.WHITE + "User added to group!");
+
+        this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
     }
 
     @Command(name = "pex",
@@ -338,6 +346,8 @@ public class PermissionsCommand implements CommandListener {
         user.setGroups(new PermissionGroup[]{PermissionsEx.getPermissionManager().getGroup(groupName)});
 
         sender.sendMessage(ChatColor.WHITE + "User groups set!");
+
+        this.informPlayer(plugin, userName, "You are now only in \"" + groupName + "\" group");
     }
 
     @Command(name = "pex",
@@ -357,14 +367,16 @@ public class PermissionsCommand implements CommandListener {
 
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
         for (PermissionGroup group : user.getGroups()) {
-            if (!group.getName().equalsIgnoreCase(args.get("group"))) {
+            if (!group.getName().equalsIgnoreCase(groupName)) {
                 groups.add(group);
             }
         }
 
         user.setGroups(groups.toArray(new PermissionGroup[0]));
 
-        sender.sendMessage(ChatColor.WHITE + "User removed from group " + args.get("group") + "!");
+        sender.sendMessage(ChatColor.WHITE + "User removed from group " + groupName + "!");
+
+        this.informPlayer(plugin, userName, "You are deassigned from \"" + groupName + "\" group");
     }
 
     /**
@@ -606,6 +618,8 @@ public class PermissionsCommand implements CommandListener {
         group.addPermission(args.get("permission"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission added to " + group.getName() + " !");
+
+        this.informGroup(plugin, group, "Your permissions has been changed");
     }
 
     @Command(name = "pex",
@@ -625,6 +639,8 @@ public class PermissionsCommand implements CommandListener {
         group.setOption(args.get("option"), args.get("value"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
+
+        this.informGroup(plugin, group, "Your permissions has been changed");
     }
 
     @Command(name = "pex",
@@ -644,6 +660,8 @@ public class PermissionsCommand implements CommandListener {
         group.removePermission(args.get("permission"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed from " + group.getName() + " !");
+
+        this.informGroup(plugin, group, "Your permissions has been changed");
     }
 
     /**
@@ -688,6 +706,7 @@ public class PermissionsCommand implements CommandListener {
         user.addGroup(groupName);
 
         sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " added to " + groupName + " !");
+        this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
     }
 
     @Command(name = "pex",
@@ -708,6 +727,28 @@ public class PermissionsCommand implements CommandListener {
         user.removeGroup(groupName);
 
         sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
+
+        this.informPlayer(plugin, userName, "You are disassigned from \"" + groupName + "\" group");
+    }
+
+    protected void informGroup(Plugin plugin, PermissionGroup group, String message) {
+        for (PermissionUser user : group.getUsers()) {
+            this.informPlayer(plugin, user.getName(), message);
+        }
+    }
+
+    protected void informPlayer(Plugin plugin, String playerName, String message) {
+        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfig().getBoolean("permissions.informplayers", false)) {
+            return; // User informing are disabled
+        }
+
+        Player player = Bukkit.getServer().getPlayer(playerName);
+        if (player == null) {
+            // @todo mb Logger.inform ?
+            return;
+        }
+
+        player.sendMessage(ChatColor.BLUE + "[PermissionsEx] " + ChatColor.WHITE + message);
     }
 
     protected String autoCompletePlayerName(String playerName) {
@@ -717,16 +758,26 @@ public class PermissionsCommand implements CommandListener {
 
         List<String> players = new LinkedList<String>();
 
+        playerName = playerName.toLowerCase();
+
         // Collect online Player names
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            if (player.getName().startsWith(playerName) && !players.contains(player.getName())) {
+            if (player.getName().equalsIgnoreCase(playerName)) {
+                return player.getName();
+            }
+
+            if (player.getName().toLowerCase().startsWith(playerName) && !players.contains(player.getName())) {
                 players.add(player.getName());
             }
         }
 
         // Collect registred PEX user names
         for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers()) {
-            if (user.getName().startsWith(playerName) && !players.contains(user.getName())) {
+            if (user.getName().equalsIgnoreCase(playerName)) {
+                return user.getName();
+            }
+
+            if (user.getName().toLowerCase().startsWith(playerName.toLowerCase()) && !players.contains(user.getName())) {
                 players.add(user.getName());
             }
         }
@@ -744,7 +795,11 @@ public class PermissionsCommand implements CommandListener {
         List<String> groups = new LinkedList<String>();
 
         for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
-            if (group.getName().startsWith(groupName) && !groups.contains(group.getName())) {
+            if (group.getName().equalsIgnoreCase(groupName)) {
+                return group.getName();
+            }
+
+            if (group.getName().toLowerCase().startsWith(groupName.toLowerCase()) && !groups.contains(group.getName())) {
                 groups.add(group.getName());
             }
         }

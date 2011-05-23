@@ -119,6 +119,10 @@ public class PermissionsEx extends JavaPlugin {
         return this.permissionsManager.has(player, permission, world);
     }
 
+    public Configuration getConfig() {
+        return config;
+    }
+
     protected final Configuration loadConfig(String name) {
         File dataFolder = getDataFolder();
         
