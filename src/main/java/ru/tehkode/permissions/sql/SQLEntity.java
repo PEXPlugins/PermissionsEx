@@ -140,6 +140,10 @@ public class SQLEntity {
     }
 
     public void setPermission(String permission, String value, String world) {
+        if(permission == null || permission.isEmpty()){
+            return;
+        }
+
         Boolean newOption = true;
         if (this.worldsPermissions == null) {
             this.fetchPermissions();

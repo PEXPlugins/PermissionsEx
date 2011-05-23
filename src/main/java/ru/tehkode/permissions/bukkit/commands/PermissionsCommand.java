@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -33,7 +32,6 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandListener;
-import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
@@ -229,7 +227,7 @@ public class PermissionsCommand implements CommandListener {
     description = "Add permission to user")
     public void userAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
-        
+
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -256,7 +254,7 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        user.setOption(args.get("permission"), args.get("value"), args.get("world"));
+        user.setOption(args.get("option"), args.get("value"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
     }
@@ -267,7 +265,7 @@ public class PermissionsCommand implements CommandListener {
     description = "Remove permission from user")
     public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
-        
+
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -289,7 +287,7 @@ public class PermissionsCommand implements CommandListener {
     description = "List all user groups")
     public void userListGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
-        
+
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -329,7 +327,7 @@ public class PermissionsCommand implements CommandListener {
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
-        
+
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -624,7 +622,7 @@ public class PermissionsCommand implements CommandListener {
             return;
         }
 
-        group.setOption(args.get("permission"), args.get("value"), args.get("world"));
+        group.setOption(args.get("option"), args.get("value"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
     }
@@ -712,48 +710,48 @@ public class PermissionsCommand implements CommandListener {
         sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
     }
 
-    protected String autoCompletePlayerName(String playerName){
-        if(playerName == null){
+    protected String autoCompletePlayerName(String playerName) {
+        if (playerName == null) {
             return null;
         }
 
         List<String> players = new LinkedList<String>();
 
         // Collect online Player names
-        for(Player player : Bukkit.getServer().getOnlinePlayers()){
-            if(player.getName().startsWith(playerName) && !players.contains(player.getName())){
+        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+            if (player.getName().startsWith(playerName) && !players.contains(player.getName())) {
                 players.add(player.getName());
             }
         }
 
         // Collect registred PEX user names
-        for(PermissionUser user : PermissionsEx.getPermissionManager().getUsers()){
-            if(user.getName().startsWith(playerName) && !players.contains(user.getName())){
+        for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers()) {
+            if (user.getName().startsWith(playerName) && !players.contains(user.getName())) {
                 players.add(user.getName());
             }
         }
 
-        if(players.size() > 1){
+        if (players.size() > 1) {
             throw new AutoCompleteChoicesException(players.toArray(new String[0]), "user");
-        } else if (players.size() == 1){
+        } else if (players.size() == 1) {
             return players.get(0);
         } else {
             return playerName;
         }
     }
 
-    protected String autoCompleteGroupName(String groupName){
+    protected String autoCompleteGroupName(String groupName) {
         List<String> groups = new LinkedList<String>();
 
-        for(PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()){
-            if(group.getName().startsWith(groupName) && !groups.contains(group.getName())){
+        for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
+            if (group.getName().startsWith(groupName) && !groups.contains(group.getName())) {
                 groups.add(group.getName());
             }
         }
 
-        if(groups.size() > 1){ // Found several choices
+        if (groups.size() > 1) { // Found several choices
             throw new AutoCompleteChoicesException(groups.toArray(new String[0]), "group");
-        } else if (groups.size() == 1){ // Found one name
+        } else if (groups.size() == 1) { // Found one name
             return groups.get(0);
         } else { // Nothing found
             return groupName;
