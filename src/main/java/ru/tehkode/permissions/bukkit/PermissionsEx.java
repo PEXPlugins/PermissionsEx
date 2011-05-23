@@ -153,7 +153,7 @@ public class PermissionsEx extends JavaPlugin {
     }
 
     protected void informUser(Player player, String message) {
-        if (this.config.getBoolean("permission.verbose", false)) {
+        if (this.config.getBoolean("permissions.informplayers.modifyworld", false)) {
             player.sendMessage(message);
         }
     }
@@ -166,7 +166,7 @@ public class PermissionsEx extends JavaPlugin {
         pluginManager.registerEvent(Event.Type.PLAYER_QUIT, playerProtector, Priority.Low, this);
 
         if(!this.config.getBoolean("permissions.modifyworld", false)){
-            Logger.getLogger("Minecraft").info("PEX Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
             return;
         }
 

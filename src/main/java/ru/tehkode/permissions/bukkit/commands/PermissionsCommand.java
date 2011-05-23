@@ -118,7 +118,8 @@ public class PermissionsCommand implements CommandListener {
     permission = "permissions.manage.users",
     description = "Print complete user/group hierarhy")
     public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        sender.sendMessage("Permission Inheritance Hierarhy:\n" + this.printHierarhy(null, 0));
+        sender.sendMessage("Permission Inheritance Hierarhy:");
+        this.printHierarhy(sender, null, 0);
     }
 
     /**
@@ -779,7 +780,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     protected void informPlayer(Plugin plugin, String playerName, String message) {
-        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfigurationNode().getBoolean("permissions.informplayers", false)) {
+        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfigurationNode().getBoolean("permissions.informplayers.changes", false)) {
             return; // User informing are disabled
         }
 
@@ -854,8 +855,7 @@ public class PermissionsCommand implements CommandListener {
         }
     }
 
-    protected String printHierarhy(PermissionGroup parent, int level) {
-        StringBuilder builder = new StringBuilder();
+    protected void printHierarhy(CommandSender sender, PermissionGroup parent, int level) {
 
         PermissionGroup[] groups;
         if (parent == null) {
@@ -869,17 +869,16 @@ public class PermissionsCommand implements CommandListener {
                 continue;
             }
 
-            builder.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
+            sender.sendMessage(StringUtils.repeat("  ", level) + " - " + group.getName());
 
             // Groups
-            builder.append(printHierarhy(group, level + 1));
+            printHierarhy(sender, group, level + 1);
 
             for (PermissionUser user : group.getUsers()) {
-                builder.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
+                sender.sendMessage(StringUtils.repeat("  ", level + 1) + " + " + user.getName());
             }
         }
 
-        return builder.toString();
     }
 
     protected String mapPermissions(String world, PermissionEntity entity, int level) {
