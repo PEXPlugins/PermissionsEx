@@ -21,6 +21,7 @@ package ru.tehkode.permissions.bukkit.commands;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -33,9 +34,12 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandListener;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
+import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.utils.StringUtils;
 
 public class PermissionsCommand implements CommandListener {
+
+    protected static final Logger logger = Logger.getLogger("Minecraft");
 
     @Command(name = "pex",
     syntax = "reload",
@@ -45,6 +49,43 @@ public class PermissionsCommand implements CommandListener {
         PermissionsEx.getPermissionManager().reset();
 
         sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
+    }
+
+    @Command(name = "pex",
+    syntax = "config <node> [value]",
+    permission = "permissions.manage.config",
+    description = "Print <node> value from plugin configuration. Specify [value] to set new value.")
+    public void config(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        if (!(plugin instanceof PermissionsEx)) {
+            return;
+        }
+
+        String nodeName = args.get("node");
+        if (nodeName == null || nodeName.isEmpty()) {
+            return;
+        }
+
+        Configuration config = ((PermissionsEx) plugin).getConfigurationNode();
+
+        if (args.get("value") != null) {
+            config.setProperty(nodeName, this.parseValue(args.get("value")));
+            config.save();
+        }
+
+        Object node = config.getProperty(nodeName);
+        if (node instanceof Map) {
+            sender.sendMessage("Node \"" + nodeName + "\": ");
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>) node).entrySet()) {
+                sender.sendMessage("  " + entry.getKey() + " = " + entry.getValue());
+            }
+        } else if (node instanceof List) {
+            sender.sendMessage("Node \"" + nodeName + "\": ");
+            for (String item : ((List<String>) node)) {
+                sender.sendMessage(" - " + item);
+            }
+        } else {
+            sender.sendMessage("Node \"" + nodeName + "\" = \"" + node.toString() + "\"");
+        }
     }
 
     @Command(name = "pex",
@@ -312,7 +353,7 @@ public class PermissionsCommand implements CommandListener {
     description = "Add user to specified group")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
-         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String groupName = this.autoCompleteGroupName(args.get("group"));
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
@@ -738,7 +779,7 @@ public class PermissionsCommand implements CommandListener {
     }
 
     protected void informPlayer(Plugin plugin, String playerName, String message) {
-        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfig().getBoolean("permissions.informplayers", false)) {
+        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfigurationNode().getBoolean("permissions.informplayers", false)) {
             return; // User informing are disabled
         }
 
@@ -870,5 +911,27 @@ public class PermissionsCommand implements CommandListener {
         }
 
         return builder.toString();
+    }
+
+    protected Object parseValue(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+            return Boolean.parseBoolean(value);
+        }
+
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+        }
+
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+        }
+
+        return value;
     }
 }

@@ -116,11 +116,11 @@ public class PermissionsEx extends JavaPlugin {
     }
 
     public boolean has(Player player, String permission, String world) {
-        return this.permissionsManager.has(player, permission, world);
+        return this.permissionsManager.has(player, permission, world); 
     }
 
-    public Configuration getConfig() {
-        return config;
+    public Configuration getConfigurationNode() {
+        return this.config;
     }
 
     protected final Configuration loadConfig(String name) {
