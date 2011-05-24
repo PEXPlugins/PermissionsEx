@@ -42,6 +42,9 @@ import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.*;
 import ru.tehkode.permissions.backends.*;
+import ru.tehkode.permissions.bukkit.commands.GroupCommands;
+import ru.tehkode.permissions.bukkit.commands.UserCommands;
+import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -72,7 +75,9 @@ public class PermissionsEx extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        this.commandsManager.register(new ru.tehkode.permissions.bukkit.commands.PermissionsCommand());
+        this.commandsManager.register(new UtilityCommands());
+        this.commandsManager.register(new UserCommands());
+        this.commandsManager.register(new GroupCommands());
 
         this.registerModifyworld();
 
