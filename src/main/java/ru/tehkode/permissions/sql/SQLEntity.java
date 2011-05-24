@@ -59,6 +59,8 @@ public class SQLEntity {
         this.type = type;
 
         this.fetchInfo();
+        this.fetchPermissions();
+        this.fetchInheritance();
     }
 
     public static String[] getEntitiesNams(SQLConnectionManager sql, Type type, boolean defaultOnly) {
