@@ -79,7 +79,7 @@ public class GroupCommands extends PermissionsCommand {
             group.setPrefix(args.get("newprefix"));
         }
 
-        sender.sendMessage(group.getName() + "'s prefix is: " + group.getPrefix());
+        sender.sendMessage(group.getName() + "'s prefix = \"" + group.getPrefix() + "\"");
     }
 
     @Command(name = "pex",
@@ -100,7 +100,7 @@ public class GroupCommands extends PermissionsCommand {
             group.setSuffix(args.get("newsuffix"));
         }
 
-        sender.sendMessage(group.getName() + "'s suffix is: " + group.getSuffix());
+        sender.sendMessage(group.getName() + "'s suffix is = \"" + group.getSuffix() + "\"");
     }
 
     @Command(name = "pex",

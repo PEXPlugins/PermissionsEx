@@ -124,7 +124,7 @@ public class UserCommands extends PermissionsCommand {
             user.setPrefix(args.get("newprefix"));
         }
 
-        sender.sendMessage(user.getName() + "'s prefix is: " + user.getPrefix());
+        sender.sendMessage(user.getName() + "'s prefix = \"" + user.getPrefix() + "\"");
     }
 
     @Command(name = "pex",
@@ -145,7 +145,7 @@ public class UserCommands extends PermissionsCommand {
             user.setSuffix(args.get("newsuffix"));
         }
 
-        sender.sendMessage(user.getName() + "'s suffix is: " + user.getSuffix());
+        sender.sendMessage(user.getName() + "'s suffix = \"" + user.getSuffix() + "\"");
     }
 
     @Command(name = "pex",
