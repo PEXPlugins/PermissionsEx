@@ -208,7 +208,7 @@ public class PermissionsEx extends JavaPlugin {
 
     }
 
-    private class VehicleListener extends org.bukkit.event.vehicle.VehicleListener {
+    public class VehicleListener extends org.bukkit.event.vehicle.VehicleListener {
 
         @Override
         public void onVehicleDamage(VehicleDamageEvent event) {
@@ -251,7 +251,7 @@ public class PermissionsEx extends JavaPlugin {
         }
     }
 
-    private class EntityListener extends org.bukkit.event.entity.EntityListener {
+    public class EntityListener extends org.bukkit.event.entity.EntityListener {
 
         @Override
         public void onEntityDamage(EntityDamageEvent event) {
@@ -286,7 +286,7 @@ public class PermissionsEx extends JavaPlugin {
         }
     }
 
-    private class PlayerListener extends org.bukkit.event.player.PlayerListener {
+    public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {
@@ -355,7 +355,7 @@ public class PermissionsEx extends JavaPlugin {
         }
     }
 
-    private class BlockProtector extends BlockListener {
+    public class BlockProtector extends BlockListener {
 
         @Override
         public void onBlockBreak(BlockBreakEvent event) {

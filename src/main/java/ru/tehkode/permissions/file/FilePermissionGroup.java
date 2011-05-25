@@ -81,7 +81,7 @@ public class FilePermissionGroup extends PermissionGroup {
     public String[] getOwnPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
-        if (world != null || !world.isEmpty()) {
+        if (world != null && !world.isEmpty()) {
             List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
             if (worldPermissions != null) {
                 permissions.addAll(worldPermissions);
