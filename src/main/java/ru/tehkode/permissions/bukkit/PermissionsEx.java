@@ -53,42 +53,45 @@ import ru.tehkode.permissions.config.Configuration;
  * @author code
  */
 public class PermissionsEx extends JavaPlugin {
-
+    
     protected static final String configFile = "config.yml";
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected PermissionManager permissionsManager;
     protected CommandsManager commandsManager;
     protected Configuration config;
-
+    
     public PermissionsEx() {
         super();
-
+        
         PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
         PermissionBackend.registerBackendAlias("file", FileBackend.class);
 
+        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
+    }
+    
+    @Override
+    public void onLoad() {
         this.config = this.loadConfig(configFile);
         this.commandsManager = new CommandsManager(this);
         this.permissionsManager = new PermissionManager(this.config);
-
-        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
     }
-
+    
     @Override
     public void onEnable() {
         this.commandsManager.register(new UtilityCommands());
         this.commandsManager.register(new UserCommands());
         this.commandsManager.register(new GroupCommands());
-
+        
         this.registerModifyworld();
-
+        
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + "  enabled");
     }
-
+    
     @Override
     public void onDisable() {
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
     }
-
+    
     @Override
     public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
         PluginDescriptionFile pdfFile = this.getDescription();
@@ -97,41 +100,41 @@ public class PermissionsEx extends JavaPlugin {
         } else {
             if (sender instanceof Player) {
                 sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running (" + pdfFile.getVersion() + ")");
-
+                
                 return !this.permissionsManager.has((Player) sender, "permissions.manage");
             } else {
                 sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] loaded");
-
+                
                 return false;
             }
         }
     }
-
+    
     public static PermissionManager getPermissionManager() {
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
         if (plugin == null || !(plugin instanceof PermissionsEx)) {
             throw new RuntimeException("Permissions manager are not accessable. PermissionsEx plugin disabled?");
         }
-
+        
         return ((PermissionsEx) plugin).permissionsManager;
     }
-
+    
     public boolean has(Player player, String permission) {
         return this.permissionsManager.has(player, permission);
     }
-
+    
     public boolean has(Player player, String permission, String world) {
-        return this.permissionsManager.has(player, permission, world); 
+        return this.permissionsManager.has(player, permission, world);        
     }
-
+    
     public Configuration getConfigurationNode() {
         return this.config;
     }
-
+    
     protected final Configuration loadConfig(String name) {
         File dataFolder = getDataFolder();
         
-        if(dataFolder == null){
+        if (dataFolder == null) {
             dataFolder = new File("plugins/PermissionsEx/");
         }
         
@@ -156,21 +159,21 @@ public class PermissionsEx extends JavaPlugin {
         }
         return configuration;
     }
-
+    
     protected void informUser(Player player, String message) {
         if (this.config.getBoolean("permissions.informplayers.modifyworld", false)) {
             player.sendMessage(message);
         }
     }
-
+    
     protected void registerModifyworld() {
         PluginManager pluginManager = this.getServer().getPluginManager();
         PlayerListener playerProtector = new PlayerListener();
 
         // PLAYER_QUIT event arent part of Modifyworld, this is just to reset permissions for player.
         pluginManager.registerEvent(Event.Type.PLAYER_QUIT, playerProtector, Priority.Low, this);
-
-        if(!this.config.getBoolean("permissions.modifyworld", false)){
+        
+        if (!this.config.getBoolean("permissions.modifyworld", false)) {
             Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
             return;
         }
@@ -178,7 +181,7 @@ public class PermissionsEx extends JavaPlugin {
         // Other EVENTS are modifyworld
 
         Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are enabled.");
-
+        
         BlockListener blockProtector = new BlockProtector();
         EntityListener entityProtector = new EntityListener();
         VehicleListener vehicleProtector = new VehicleListener();
@@ -205,43 +208,43 @@ public class PermissionsEx extends JavaPlugin {
         pluginManager.registerEvent(Event.Type.VEHICLE_COLLISION_ENTITY, vehicleProtector, Priority.Low, this);
         pluginManager.registerEvent(Event.Type.VEHICLE_ENTER, vehicleProtector, Priority.Low, this);
         pluginManager.registerEvent(Event.Type.VEHICLE_DAMAGE, vehicleProtector, Priority.Low, this);
-
+        
     }
-
+    
     public class VehicleListener extends org.bukkit.event.vehicle.VehicleListener {
-
+        
         @Override
         public void onVehicleDamage(VehicleDamageEvent event) {
             if (!(event.getAttacker() instanceof Player)) {
                 return;
             }
-
+            
             Player player = (Player) event.getAttacker();
             if (!permissionsManager.has(player, "modifyworld.vehicle.destroy")) {
                 informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onVehicleEnter(VehicleEnterEvent event) {
             if (!(event.getEntered() instanceof Player)) {
                 return;
             }
-
+            
             Player player = (Player) event.getEntered();
             if (!permissionsManager.has(player, "modifyworld.vehicle.enter")) {
                 informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
             if (!(event.getEntity() instanceof Player)) {
                 return;
             }
-
+            
             Player player = (Player) event.getEntity();
             if (!permissionsManager.has(player, "modifyworld.vehicle.collide")) {
                 event.setCancelled(true);
@@ -250,9 +253,9 @@ public class PermissionsEx extends JavaPlugin {
             }
         }
     }
-
+    
     public class EntityListener extends org.bukkit.event.entity.EntityListener {
-
+        
         @Override
         public void onEntityDamage(EntityDamageEvent event) {
             if (event instanceof EntityDamageByEntityEvent) { // player is damager
@@ -260,7 +263,7 @@ public class PermissionsEx extends JavaPlugin {
                 if (!(edbe.getDamager() instanceof Player)) { // not caused by player
                     return;
                 }
-
+                
                 Player player = (Player) edbe.getDamager();
                 if (!permissionsManager.has(player, "modifyworld.entity.damage.deal")) {
                     informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
@@ -274,7 +277,7 @@ public class PermissionsEx extends JavaPlugin {
                 }
             }
         }
-
+        
         @Override
         public void onEntityTarget(EntityTargetEvent event) {
             if (event.getTarget() instanceof Player) {
@@ -285,14 +288,14 @@ public class PermissionsEx extends JavaPlugin {
             }
         }
     }
-
+    
     public class PlayerListener extends org.bukkit.event.player.PlayerListener {
-
+        
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {
             getPermissionManager().resetUser(event.getPlayer().getName());
         }
-
+        
         @Override
         public void onPlayerBedEnter(PlayerBedEnterEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.usebeds")) {
@@ -300,7 +303,7 @@ public class PermissionsEx extends JavaPlugin {
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.empty")) {
@@ -308,7 +311,7 @@ public class PermissionsEx extends JavaPlugin {
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onPlayerBucketFill(PlayerBucketFillEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill")) {
@@ -316,7 +319,7 @@ public class PermissionsEx extends JavaPlugin {
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onPlayerChat(PlayerChatEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.chat")) {
@@ -324,7 +327,7 @@ public class PermissionsEx extends JavaPlugin {
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onPlayerDropItem(PlayerDropItemEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop." + event.getItemDrop().getItemStack().getTypeId())) {
@@ -332,7 +335,7 @@ public class PermissionsEx extends JavaPlugin {
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onPlayerPickupItem(PlayerPickupItemEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.pickup." + event.getItem().getItemStack().getTypeId())) {
@@ -340,11 +343,11 @@ public class PermissionsEx extends JavaPlugin {
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onPlayerInteract(PlayerInteractEvent event) {
             Action action = event.getAction();
-            if(action != Action.LEFT_CLICK_BLOCK && action != Action.RIGHT_CLICK_BLOCK){
+            if (action != Action.LEFT_CLICK_BLOCK && action != Action.RIGHT_CLICK_BLOCK) {
                 return;
             }
             
@@ -354,18 +357,18 @@ public class PermissionsEx extends JavaPlugin {
             }
         }
     }
-
+    
     public class BlockProtector extends BlockListener {
-
+        
         @Override
         public void onBlockBreak(BlockBreakEvent event) {
-
+            
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.destroy." + event.getBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
         }
-
+        
         @Override
         public void onBlockPlace(BlockPlaceEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place." + event.getBlock().getTypeId())) {
