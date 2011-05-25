@@ -25,6 +25,8 @@ commands:
            /<command> user <user> delete - Remove group
            /<command> user <user> prefix [newprefix]
            /<command> user <user> suffix [newsuffix]
+           /<command> promote <user> <group> - Set only group for user (remove from others)
+           /<command> demote <user> <group> - Remove user from specified group
            /<command> user <user> add <permission> [world] - Add permission to user
            /<command> user <user> set <option> <value> [world] - Set permission setting to given value
            /<command> user <user> remove <permission> [world] - Remove permission from user

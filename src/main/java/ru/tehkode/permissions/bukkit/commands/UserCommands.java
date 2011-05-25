@@ -327,4 +327,20 @@ public class UserCommands extends PermissionsCommand {
 
         this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
     }
+
+    @Command(name = "pex",
+    syntax = "promote <user> <group>",
+    permission = "permissions.manage.membership",
+    description = "Remove user from specified group")
+    public void userPromote(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        this.userSetGroup(plugin, sender, args);
+    }
+    
+    @Command(name = "pex",
+    syntax = "demote <user> <group>",
+    permission = "permissions.manage.membership",
+    description = "Remove user from specified group")
+    public void userDemote(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        this.userRemoveGroup(plugin, sender, args);
+    }
 }

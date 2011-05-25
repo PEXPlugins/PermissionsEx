@@ -197,7 +197,7 @@ public class SQLBackend extends PermissionBackend {
         // Groups
         for (PermissionGroup group : this.manager.getGroups()) {
             // Basic info (Prefix/Suffix)
-            writer.append("INSERT INTO permissions_entity ( name, type, prefix, suffix, default ) VALUES ( '" + group.getName() + "', 0, '" + group.getOwnPrefix() + "','" + group.getOwnSuffix() + "', " + (group.equals(defaultGroup) ? "1" : "0") + " );\n");
+            writer.append("INSERT INTO permissions_entity ( name, type, prefix, suffix, `default` ) VALUES ( '" + group.getName() + "', 0, '" + group.getOwnPrefix() + "','" + group.getOwnSuffix() + "', " + (group.equals(defaultGroup) ? "1" : "0") + " );\n");
 
             // Inheritance
             for (String parent : group.getParentGroupsNames()) {
