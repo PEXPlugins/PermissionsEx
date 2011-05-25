@@ -142,7 +142,7 @@ public class SQLEntity {
     }
 
     public void setPermission(String permission, String value, String world) {
-        if(permission == null || permission.isEmpty()){
+        if (permission == null || permission.isEmpty()) {
             return;
         }
 
@@ -230,6 +230,30 @@ public class SQLEntity {
         }
 
         return options;
+    }
+
+    public Map<String, String[]> getAllPermissions() {
+        Map<String, String[]> allPermissions = new HashMap<String, String[]>();
+
+        allPermissions.put("", this.commonPermissions.toArray(new String[0]));
+
+        for (Map.Entry<String, List<String>> entry : this.worldsPermissions.entrySet()) {
+            allPermissions.put(entry.getKey(), entry.getValue().toArray(new String[0]));
+        }
+
+        return allPermissions;
+    }
+
+    public Map<String, Map<String, String>> getAllOptions(){
+        Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
+
+        allOptions.put("", this.commonOptions);
+
+        for (Map.Entry<String, Map<String, String>> entry : this.worldsOptions.entrySet()){
+            allOptions.put(entry.getKey(), entry.getValue());
+        }
+
+        return allOptions;
     }
 
     public void setPermissions(String[] permissions, String world) {
@@ -328,7 +352,7 @@ public class SQLEntity {
     protected final void fetchInheritance() {
         try {
             this.parents = new LinkedList<String>();
-            ResultSet results = this.db.selectQuery("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
+            ResultSet results = this.db.selectQuery("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = ? ORDER BY id DESC", this.name, this.type.ordinal());
 
             while (results.next()) {
                 this.parents.add(results.getString("parent"));

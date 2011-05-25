@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.sql;
 
 import java.util.Map;
@@ -64,6 +63,16 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
+    public Map<String, Map<String, String>> getAllOptions() {
+        return this.backend.getAllOptions();
+    }
+
+    @Override
+    public Map<String, String[]> getAllPermissions() {
+        return this.backend.getAllPermissions();
+    }
+
+    @Override
     protected String[] getParentGroupsNamesImpl() {
         return this.backend.getParentNames();
     }
@@ -79,7 +88,7 @@ public class SQLPermissionGroup extends PermissionGroup {
         backend.setSuffix(suffix);
         super.setSuffix(suffix);
     }
-    
+
     @Override
     public void setPermissions(String[] permissions, String world) {
         if (permissions == null) {

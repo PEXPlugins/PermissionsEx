@@ -18,9 +18,12 @@
  */
 package ru.tehkode.permissions.backends;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.logging.Logger;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionGroup;
@@ -158,6 +161,67 @@ public class SQLBackend extends PermissionBackend {
         } catch (Exception e) {
             Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please init database manually using defaults.sql");
         }
+    }
+
+    @Override
+    public void dumpData(OutputStreamWriter writer) throws IOException {
+
+        // Users
+        for (PermissionUser user : this.manager.getUsers()) {
+            // Basic info (Prefix/Suffix)
+            writer.append("INSERT INTO permissions_entity ( name, type, prefix, suffix ) VALUES ( '" + user.getName() + "', 1, '" + user.getOwnPrefix() + "','" + user.getOwnSuffix() + "' );\n");
+
+            // Inheritance
+            for (String group : user.getGroupsNames()) {
+                writer.append("INSERT INTO permissions_inheritance ( child, parent, type ) VALUES ( '" + user.getName() + "', '" + group + "',  1);\n");
+            }
+
+            // Permissions
+            for (Map.Entry<String, String[]> entry : user.getAllPermissions().entrySet()) {
+                for (String permission : entry.getValue()) {
+                    writer.append("INSERT INTO permissions ( name, type, permission, world ) VALUES ('" + user.getName() + "', 1, '" + permission + "', '" + entry.getKey() + "'); \n");
+                }
+            }
+
+            // Options
+            for (Map.Entry<String, Map<String, String>> entry : user.getAllOptions().entrySet()) {
+                for (Map.Entry<String, String> option : entry.getValue().entrySet()) {
+                    String value = option.getValue().replace("'", "\\'");
+                    writer.append("INSERT INTO permissions ( name, type, permission, world, value ) VALUES ('" + user.getName() + "', 1, '" + option.getKey() + "', '" + entry.getKey() + "', '" + value + "' );\n");
+                }
+            }
+        }
+
+        PermissionGroup defaultGroup = manager.getDefaultGroup();
+
+        // Groups
+        for (PermissionGroup group : this.manager.getGroups()) {
+            // Basic info (Prefix/Suffix)
+            writer.append("INSERT INTO permissions_entity ( name, type, prefix, suffix, default ) VALUES ( '" + group.getName() + "', 0, '" + group.getOwnPrefix() + "','" + group.getOwnSuffix() + "', " + (group.equals(defaultGroup) ? "1" : "0") + " );\n");
+
+            // Inheritance
+            for (String parent : group.getParentGroupsNames()) {
+                writer.append("INSERT INTO permissions_inheritance ( child, parent, type ) VALUES ( '" + group.getName() + "', '" + parent + "',  0);\n");
+            }
+
+            // Permissions
+            for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
+                for (String permission : entry.getValue()) {
+                    writer.append("INSERT INTO permissions ( name, type, permission, world ) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + entry.getKey() + "');\n");
+                }
+            }
+
+            // Options
+            for (Map.Entry<String, Map<String, String>> entry : group.getAllOptions().entrySet()) {
+                for (Map.Entry<String, String> option : entry.getValue().entrySet()) {
+                    String value = option.getValue().replace("'", "\\'");
+                    writer.append("INSERT INTO permissions ( name, type, permission, world, value ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + entry.getKey() + "', '" + value + "' );\n");
+                }
+            }
+        }
+
+        
+        writer.flush();
     }
 
     @Override

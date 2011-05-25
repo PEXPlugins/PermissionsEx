@@ -1,6 +1,6 @@
 name: PermissionsEx
 main: ru.tehkode.permissions.bukkit.PermissionsEx
-version: 1.04
+version: 1.05
 author: t3hk0d3
 website: www.bukkit.org
 description: PermissionsEx - New powerful users and groups permissions management plugin.
@@ -14,6 +14,7 @@ commands:
            /<command> reload - Reload configuration
            /<command> backend - Print currently using backend
            /<command> backend <backend> - Change permission backend on the fly (Use with caution!)
+           /<command> dump <backend> <file> - Dump users/groups to selected <backend> format.
            /<command> users - Print registred user list (alias)
            /<command> users list - Print registred user list
            /<command> groups - Print registed group list (alias)
@@ -39,8 +40,7 @@ commands:
            /<command> group <group> delete - Removes group
            /<command> group <group> parents - List all group parents (alias)
            /<command> group <group> parents list - List all group parents
-           /<command> group <group> parents add <parents> - Set parents by comma-separated list
-           /<command> group <group> parents remove <parents> - Set parents by comma-separated list
+           /<command> group <group> parents set <parents> - Set parents by comma-separated list
            /<command> group <group> add <permission> [world] - Add permission to group
            /<command> group <group> set <permission> <value> [world] - Add permission for group
            /<command> group <group> remove <permission> [world] - Remove permission from group

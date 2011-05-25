@@ -81,9 +81,11 @@ public class FilePermissionGroup extends PermissionGroup {
     public String[] getOwnPermissions(String world) {
         Set<String> permissions = new LinkedHashSet<String>();
 
-        List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
-        if (worldPermissions != null) {
-            permissions.addAll(worldPermissions);
+        if (world != null || !world.isEmpty()) {
+            List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null); // world specific permissions
+            if (worldPermissions != null) {
+                permissions.addAll(worldPermissions);
+            }
         }
 
         List<String> commonPermissions = this.node.getStringList("permissions", null);
@@ -216,6 +218,52 @@ public class FilePermissionGroup extends PermissionGroup {
 
         this.node.setProperty("inheritance", parents);
 
+    }
+
+    @Override
+    public Map<String, String[]> getAllPermissions() {
+        Map<String, String[]> allPermissions = new HashMap<String, String[]>();
+
+        // Common permissions
+        List<String> commonPermissions = this.node.getStringList("permissions", null);
+        if (commonPermissions != null) {
+            allPermissions.put("", commonPermissions.toArray(new String[0]));
+        }
+
+        //World-specific permissions
+        List<String> worlds = this.node.getKeys("worlds");
+        if (worlds != null) {
+            for (String world : worlds) {
+                List<String> worldPermissions = this.node.getStringList("world." + world + ".permissions", null);
+                if (commonPermissions != null) {
+                    allPermissions.put(world, worldPermissions.toArray(new String[0]));
+                }
+            }
+        }
+
+        return allPermissions;
+    }
+
+    @Override
+    public Map<String, Map<String, String>> getAllOptions() {
+        Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
+
+        ConfigurationNode commonOptionsNode = this.node.getNode("options");
+        if (commonOptionsNode != null) {
+            allOptions.put("", FileBackend.collectOptions(commonOptionsNode.getRoot()));
+        }
+
+        List<String> worlds = this.node.getKeys("worlds");
+        if (worlds != null) {
+            for (String world : worlds) {
+                ConfigurationNode worldOptionsNode = this.node.getNode("world." + world + ".permissions");
+                if (worldOptionsNode != null) {
+                    allOptions.put(world, FileBackend.collectOptions(worldOptionsNode.getRoot()));
+                }
+            }
+        }
+
+        return allOptions;
     }
 
     @Override

@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.config;
 
 import java.io.File;
@@ -31,9 +30,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.reader.UnicodeReader;
-import org.yaml.snakeyaml.representer.Represent;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
@@ -136,7 +133,7 @@ public class Configuration extends ConfigurationNode {
 
         @Override
         protected Node representData(Object data) {
-            if(data instanceof ConfigurationNode){
+            if (data instanceof ConfigurationNode) {
                 ConfigurationNode node = (ConfigurationNode) data;
                 return this.representData(node.getRoot());
                 //return representMapping(Tag.MAP, node.getRoot(), null);

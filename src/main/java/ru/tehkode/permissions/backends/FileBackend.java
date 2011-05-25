@@ -20,10 +20,16 @@ package ru.tehkode.permissions.backends;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.representer.Representer;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -32,6 +38,7 @@ import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
 import ru.tehkode.permissions.file.FilePermissionGroup;
 import ru.tehkode.permissions.file.FilePermissionUser;
+import ru.tehkode.utils.StringUtils;
 
 /**
  *
@@ -80,6 +87,116 @@ public class FileBackend extends PermissionBackend {
         }
 
         permissions.load();
+    }
+
+    @Override
+    public void dumpData(OutputStreamWriter writer) throws IOException {
+        DumperOptions options = new DumperOptions();
+        options.setIndent(4);
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+
+        Yaml yaml = new Yaml(new SafeConstructor(), new Representer(), options);
+
+        ConfigurationNode root = new ConfigurationNode();
+
+        // Users setup
+        for (PermissionUser user : this.manager.getUsers()) {
+            // Inheritance
+            if (user.getGroupsNames().length > 0) {
+                root.setProperty("users." + user.getName() + ".group", StringUtils.implode(user.getGroupsNames(), ","));
+            }
+
+            // Prefix
+            if (user.getOwnPrefix() != null && !user.getOwnPrefix().isEmpty()) {
+                root.setProperty("users." + user.getName() + ".prefix", user.getOwnPrefix());
+            }
+
+            //Suffix
+            if (user.getOwnSuffix() != null && !user.getOwnSuffix().isEmpty()) {
+                root.setProperty("users." + user.getName() + ".suffix", user.getOwnSuffix());
+            }
+
+            // Permissions
+            for (Map.Entry<String, String[]> entry : user.getAllPermissions().entrySet()) {
+                String nodePath = "users." + user.getName();
+                if (!entry.getKey().isEmpty()) {
+                    nodePath += ".worlds." + entry.getKey();
+                }
+                nodePath += ".permissions";
+
+                if (entry.getValue().length > 0) {
+                    root.setProperty(nodePath, Arrays.asList(entry.getValue()));
+                }
+            }
+
+            // Options
+            for (Map.Entry<String, Map<String, String>> entry : user.getAllOptions().entrySet()) {
+                String nodePath = "users." + user.getName();
+                if (!entry.getKey().isEmpty()) {
+                    nodePath += "worlds." + entry.getKey();
+                }
+                nodePath += ".options";
+
+                if (entry.getValue().size() > 0) {
+                    root.setProperty(nodePath, entry.getValue());
+                }
+            }
+        }
+
+
+        PermissionGroup defaultGroup = this.manager.getDefaultGroup();
+
+        // Groups
+        for (PermissionGroup group : this.manager.getGroups()) {
+            // Inheritance
+            if (group.getParentGroupsNames().length > 0) {
+                root.setProperty("groups." + group.getName() + ".inheritance", Arrays.asList(group.getParentGroupsNames()));
+            }
+
+
+            // Prefix
+            if (group.getOwnPrefix() != null && !group.getOwnPrefix().isEmpty()) {
+                root.setProperty("groups." + group.getName() + ".prefix", group.getOwnPrefix());
+            }
+
+            //Suffix
+            if (group.getOwnSuffix() != null && !group.getOwnSuffix().isEmpty()) {
+                root.setProperty("groups." + group.getName() + ".suffix", group.getOwnSuffix());
+            }
+
+            if (defaultGroup.equals(group)) {
+                root.setProperty("groups." + group.getName() + ".default", true);
+            }
+
+            // Permissions
+            for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
+                String nodePath = "groups." + group.getName();
+                if (!entry.getKey().isEmpty()) {
+                    nodePath += ".worlds." + entry.getKey();
+                }
+                nodePath += ".permissions";
+
+                if (entry.getValue().length > 0) {
+                    root.setProperty(nodePath, Arrays.asList(entry.getValue()));
+                }
+            }
+
+            // Options
+            for (Map.Entry<String, Map<String, String>> entry : group.getAllOptions().entrySet()) {
+                String nodePath = "groups." + group.getName();
+                if (!entry.getKey().isEmpty()) {
+                    nodePath += "worlds." + entry.getKey();
+                }
+                nodePath += ".options";
+
+                if (entry.getValue().size() > 0) {
+                    root.setProperty(nodePath, entry.getValue());
+                }
+            }
+        }
+
+
+        yaml.dump(root.getRoot(), writer);
     }
 
     @Override
@@ -136,20 +253,20 @@ public class FileBackend extends PermissionBackend {
         this.permissions.load();
     }
 
-    public static Map<String, String> collectOptions(Map<String, Object> root){
+    public static Map<String, String> collectOptions(Map<String, Object> root) {
         return collectOptions(root, "", new HashMap<String, String>());
     }
 
-    protected static Map<String, String> collectOptions(Map<String, Object> root, String baseKey, Map<String, String> collector){
-        for(Map.Entry<String, Object> entry : root.entrySet()){
+    protected static Map<String, String> collectOptions(Map<String, Object> root, String baseKey, Map<String, String> collector) {
+        for (Map.Entry<String, Object> entry : root.entrySet()) {
             String newKey = baseKey + "." + entry.getKey();
-            if(entry.getValue() instanceof Map){
-                Map<String, Object> map = (Map<String, Object>)entry.getValue();
+            if (entry.getValue() instanceof Map) {
+                Map<String, Object> map = (Map<String, Object>) entry.getValue();
                 collectOptions(map, newKey, collector);
-            } else if (entry.getValue() instanceof ConfigurationNode){
-                collectOptions(((ConfigurationNode)entry.getValue()).getRoot(), newKey, collector);
+            } else if (entry.getValue() instanceof ConfigurationNode) {
+                collectOptions(((ConfigurationNode) entry.getValue()).getRoot(), newKey, collector);
             } else {
-                collector.put(newKey, (String)entry.getValue());
+                collector.put(newKey, (String) entry.getValue());
             }
         }
 

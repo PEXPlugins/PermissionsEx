@@ -117,6 +117,8 @@ Here is the overview of available commands:
 /pex backend - Print currently using backend. ("permissions.manage.backend")
 /pex backend <backend> - Change permission backend on the fly. Use with caution! ("permissions.manage.backend")
 
+/pex dump <backend> <file> - Dump users/groups to selected <backend> format. ("permissions.dump")
+
 /pex users - Print registred user list (alias). ("permissions.manage.users")
 /pex users list - Print registred user list. ("permissions.manage.users")
 
@@ -144,8 +146,7 @@ Here is the overview of available commands:
 /pex group <group> delete - Removes group. ("permissions.manage.groups.remove")
 /pex group <group> parents - List all group parents (alias). ("permissions.manage.groups.inheritance")
 /pex group <group> parents list - List all group parents. ("permissions.manage.groups.inheritance")
-/pex group <group> parents add <parents> - Set parents by comma-separated list. ("permissions.manage.groups.inheritance")
-/pex group <group> parents remove <parents> - Set parents by comma-separated list. ("permissions.manage.groups.inheritance")
+/pex group <group> parents set <parents> - Set parents by comma-separated list. ("permissions.manage.groups.inheritance")
 /pex group <group> add <permission> [world] - Add permission to group. ("permissions.manage.groups.permissions")
 /pex group <group> set <permission> <value> [world] - Add permission for group. ("permissions.manage.groups.permissions")
 /pex group <group> remove <permission> [world] - Remove permission from group. ("permissions.manage.groups.permissions")

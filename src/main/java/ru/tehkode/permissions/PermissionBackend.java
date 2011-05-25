@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +34,6 @@ import ru.tehkode.permissions.config.Configuration;
 public abstract class PermissionBackend {
 
     protected final static String defaultBackend = "file";
-
     protected PermissionManager manager;
     protected Configuration config;
 
@@ -46,16 +46,16 @@ public abstract class PermissionBackend {
 
     public abstract PermissionGroup getGroup(String name);
 
-    public PermissionGroup createGroup(String name){
+    public PermissionGroup createGroup(String name) {
         return this.getGroup(name);
     }
 
-    public boolean removeGroup(String groupName){
-        if(this.getGroups(groupName).length > 0){
+    public boolean removeGroup(String groupName) {
+        if (this.getGroups(groupName).length > 0) {
             return false;
         }
 
-        for(PermissionUser user : this.getUsers(groupName)){
+        for (PermissionUser user : this.getUsers(groupName)) {
             user.removeGroup(groupName);
         }
 
@@ -65,7 +65,6 @@ public abstract class PermissionBackend {
     }
 
     public abstract PermissionGroup getDefaultGroup();
-
 
     /**
      * Return all registred groups
@@ -82,8 +81,8 @@ public abstract class PermissionBackend {
     public PermissionGroup[] getGroups(String groupName) {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-        for(PermissionGroup group : this.getGroups()){
-            if(group.isChildOf(groupName)){
+        for (PermissionGroup group : this.getGroups()) {
+            if (group.isChildOf(groupName)) {
                 groups.add(group);
             }
         }
@@ -108,8 +107,8 @@ public abstract class PermissionBackend {
     public PermissionUser[] getUsers(String groupName) {
         List<PermissionUser> users = new LinkedList<PermissionUser>();
 
-        for (PermissionUser user : this.getUsers()){
-            if(user.inGroup(groupName)){
+        for (PermissionUser user : this.getUsers()) {
+            if (user.inGroup(groupName)) {
                 users.add(user);
             }
         }
@@ -118,13 +117,11 @@ public abstract class PermissionBackend {
     }
 
     public abstract void reload();
-
-
     protected static Map<String, String> registedAliases = new HashMap<String, String>();
 
     public static String getBackendClassName(String alias) {
 
-        if(registedAliases.containsKey(alias)){
+        if (registedAliases.containsKey(alias)) {
             return registedAliases.get(alias);
         }
 
@@ -132,17 +129,17 @@ public abstract class PermissionBackend {
     }
 
     public static void registerBackendAlias(String alias, Class<?> backendClass) {
-        if(!PermissionBackend.class.isAssignableFrom(backendClass)){
+        if (!PermissionBackend.class.isAssignableFrom(backendClass)) {
             throw new RuntimeException("Provided class should be subclass of PermissionBackend");
         }
 
         registedAliases.put(alias, backendClass.getName());
     }
 
-    public static String getBackendAlias(Class<?> backendClass){
-        if(registedAliases.containsValue(backendClass.getName())){
-            for(String alias : registedAliases.keySet()){ // Is there better way to find key by value?
-                if(registedAliases.get(alias).equals(backendClass.getName())){
+    public static String getBackendAlias(Class<?> backendClass) {
+        if (registedAliases.containsValue(backendClass.getName())) {
+            for (String alias : registedAliases.keySet()) { // Is there better way to find key by value?
+                if (registedAliases.get(alias).equals(backendClass.getName())) {
                     return alias;
                 }
             }
@@ -152,6 +149,10 @@ public abstract class PermissionBackend {
     }
 
     public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config) {
+        return getBackend(backendName, manager, config, defaultBackend);
+    }
+
+    public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config, String fallBackBackend) {
         if (backendName == null || backendName.isEmpty()) {
             backendName = defaultBackend;
         }
@@ -159,12 +160,16 @@ public abstract class PermissionBackend {
         String className = getBackendClassName(backendName);
 
         try {
-            return (PermissionBackend)Class.forName(className).getConstructor(PermissionManager.class, Configuration.class).newInstance(manager, config);
+            return (PermissionBackend) Class.forName(className).getConstructor(PermissionManager.class, Configuration.class).newInstance(manager, config);
         } catch (ClassNotFoundException e) {
-            Logger.getLogger("Minecraft").severe("Selected backend \""+backendName+"\" are not found. Falling back to file backend");
+            Logger.getLogger("Minecraft").severe("[PermissionsEx] Selected backend \"" + backendName + "\" are not found.");
 
-            if(!className.equals(getBackendClassName(defaultBackend))){
-                return getBackend(defaultBackend, manager, config);
+            if (fallBackBackend == null) {
+                throw new RuntimeException(e);
+            }
+
+            if (!className.equals(getBackendClassName(fallBackBackend))) {
+                return getBackend(fallBackBackend, manager, config, null);
             } else {
                 throw new RuntimeException(e);
             }
@@ -172,4 +177,6 @@ public abstract class PermissionBackend {
             throw new RuntimeException(e);
         }
     }
+
+    public abstract void dumpData(OutputStreamWriter writer) throws IOException;
 }

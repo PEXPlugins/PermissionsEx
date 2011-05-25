@@ -18,11 +18,17 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
+import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.config.Configuration;
@@ -108,5 +114,33 @@ public class UtilityCommands extends PermissionsCommand {
     public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
         sender.sendMessage("Permission Inheritance Hierarhy:");
         this.printHierarhy(sender, null, 0);
+    }
+
+    @Command(name = "pex",
+    syntax = "dump <backend> <filename>",
+    permission = "permissions.dump",
+    description = "Dump users/groups to selected <backend> format")
+    public void dumpData(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        if (!(plugin instanceof PermissionsEx)) {
+            return; // User informing are disabled
+        }
+
+        try {
+            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfigurationNode(), null);
+
+            File dstFile = new File(args.get("filename"));
+            backend.dumpData(new OutputStreamWriter(new FileOutputStream(dstFile), "UTF-8"));
+
+            sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data dumped in \"" + dstFile.getName() + "\" ");
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof ClassNotFoundException) {
+                sender.sendMessage(ChatColor.RED + "Specified backend not found!");
+            } else {
+                sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
+                logger.severe("Error (" + e.getCause().getClass().getName() + "): " + e.getMessage());
+            }
+        } catch (IOException e) {
+            sender.sendMessage(ChatColor.RED + "IO Error: " + e.getMessage());
+        }
     }
 }

@@ -21,7 +21,6 @@ package ru.tehkode.permissions;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  *
@@ -65,25 +64,9 @@ public abstract class PermissionEntity {
             }
 
             regexp = regexp.replace(".", "\\.").replace("*", "(.*)");
-            /*
-             * Code below done to solve situations like this:
-             * We have permission
-             * "example.permission.*"
-             * but we checked exacly on
-             * "example.permission"
-             *
-             * Permission "example.permission.*" assuming what we have "example.permission" too, but technicaly we haven't.
-             * Here is still issue present (expression below will fail if expression is regualar expression).
-             * Ie:
-             * example.(permission|right).*
-             * will fail against example.permission
-             *
-             * But this still is not that vital, since support of regexped permissions aren't official.
-             */
-            if (expression.endsWith(".*")) { // \.(.*)
-                if (permission.matches(regexp.substring(0, regexp.length() - 6))) {
-                    return expression;
-                }
+
+            if (expression.endsWith(".*") && permission.matches(regexp.substring(0, regexp.length() - 6))) {
+                return expression;
             }
 
             if (permission.matches(regexp)) {
@@ -149,6 +132,10 @@ public abstract class PermissionEntity {
         return permissions.toArray(new String[0]);
     }
 
+    public abstract Map<String, String[]> getAllPermissions();
+
+    public abstract Map<String, Map<String, String>> getAllOptions();
+
     protected abstract void getInheritedPermissions(String world, List<String> permissions);
 
     public abstract String[] getOwnPermissions(String world);
@@ -189,5 +176,13 @@ public abstract class PermissionEntity {
         int hash = 7;
         hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
+    }
+    
+    public final String getOwnPrefix(){
+        return this.prefix;
+    }
+    
+    public final String getOwnSuffix(){
+        return this.suffix;
     }
 }
