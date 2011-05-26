@@ -20,7 +20,6 @@ package ru.tehkode.permissions.bukkit.commands;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
@@ -128,7 +127,7 @@ public class UtilityCommands extends PermissionsCommand {
         try {
             PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfigurationNode(), null);
 
-            File dstFile = new File(args.get("filename"));
+            File dstFile = new File("plugins/PermissionsEx/", args.get("filename"));
             backend.dumpData(new OutputStreamWriter(new FileOutputStream(dstFile), "UTF-8"));
 
             sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data dumped in \"" + dstFile.getName() + "\" ");
