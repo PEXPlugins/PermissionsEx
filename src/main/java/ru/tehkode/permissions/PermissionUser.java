@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions;
 
 import java.util.Arrays;
@@ -58,7 +57,7 @@ public abstract class PermissionUser extends PermissionEntity {
             groups.add(this.manager.getGroup(group.trim()));
         }
 
-        if(groups.isEmpty()){
+        if (groups.isEmpty()) {
             groups.add(this.manager.getDefaultGroup());
         }
 
@@ -67,18 +66,26 @@ public abstract class PermissionUser extends PermissionEntity {
 
     public String[] getGroupsNames() {
         List<String> groups = new LinkedList<String>();
-        for (PermissionGroup group : this.getGroups()){
+        for (PermissionGroup group : this.getGroups()) {
             groups.add(group.getName());
         }
 
         return groups.toArray(new String[0]);
     }
 
+    public abstract String[] getOwnPermissions(String world);
+
     @Override
-    protected void getInheritedPermissions(String world, List<String> permissions){
+    public String[] getPermissions(String world) {
+        List<String> permissions = new LinkedList<String>();
+        this.getInheritedPermissions(world, permissions);
+        return permissions.toArray(new String[0]);
+    }
+
+    protected void getInheritedPermissions(String world, List<String> permissions) {
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
-        for(PermissionGroup group : this.getGroups()){
+        for (PermissionGroup group : this.getGroups()) {
             group.getInheritedPermissions(world, permissions);
         }
     }
@@ -98,11 +105,11 @@ public abstract class PermissionUser extends PermissionEntity {
 
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups()));
 
-        if(this.getGroupsNamesImpl().length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup())){
+        if (this.getGroupsNamesImpl().length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup())) {
             groups.clear(); // clean out default group
         }
 
-        if(group.isVirtual()){
+        if (group.isVirtual()) {
             group.save();
         }
 
@@ -110,7 +117,7 @@ public abstract class PermissionUser extends PermissionEntity {
             groups.add(group);
 
             this.setGroups(groups.toArray(new PermissionGroup[0]));
-        }        
+        }
     }
 
     public void removeGroup(String groupName) {
@@ -136,18 +143,18 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     @Override
-    public final String getPrefix() {
+    public String getPrefix() {
         String prefix = super.getPrefix();
-        if(prefix == null || prefix.isEmpty()){
-            for(PermissionGroup group : this.getGroups()){
+        if (prefix == null || prefix.isEmpty()) {
+            for (PermissionGroup group : this.getGroups()) {
                 prefix = group.getPrefix();
-                if(prefix != null && !prefix.isEmpty()){
+                if (prefix != null && !prefix.isEmpty()) {
                     break;
                 }
             }
         }
 
-        if(prefix == null){ // just for NPE safety
+        if (prefix == null) { // just for NPE safety
             prefix = "";
         }
 
@@ -155,18 +162,18 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     @Override
-    public final String getSuffix() {
+    public String getSuffix() {
         String suffix = super.getSuffix();
-        if(suffix == null || suffix.isEmpty()){
-            for(PermissionGroup group : this.getGroups()){
+        if (suffix == null || suffix.isEmpty()) {
+            for (PermissionGroup group : this.getGroups()) {
                 suffix = group.getSuffix();
-                if(suffix != null && !suffix.isEmpty()){
+                if (suffix != null && !suffix.isEmpty()) {
                     break;
                 }
             }
         }
 
-        if(suffix == null){ // just for NPE safety
+        if (suffix == null) { // just for NPE safety
             suffix = "";
         }
 
@@ -177,5 +184,11 @@ public abstract class PermissionUser extends PermissionEntity {
 
     protected abstract String[] getGroupsNamesImpl();
 
+    public final String getOwnPrefix() {
+        return this.prefix;
+    }
 
+    public final String getOwnSuffix() {
+        return this.suffix;
+    }
 }

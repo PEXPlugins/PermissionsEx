@@ -148,7 +148,17 @@ public abstract class PermissionsCommand implements CommandListener {
     protected String mapPermissions(String world, PermissionEntity entity, int level) {
         StringBuilder builder = new StringBuilder();
 
-        for (String permission : entity.getOwnPermissions(world)) {
+        String ownPermissions[];
+        
+        if(entity instanceof PermissionUser){
+            ownPermissions = ((PermissionUser)entity).getOwnPermissions(world);
+        } else if(entity instanceof PermissionGroup){
+            ownPermissions = ((PermissionGroup)entity).getOwnPermissions(world);
+        } else {
+            throw new RuntimeException("Unknown PermissionsEntity instance");
+        }
+        
+        for (String permission : ownPermissions) {
             builder.append("  ").append(permission);
             if (level > 0) {
                 builder.append(" (from ").append(entity.getName()).append(")");

@@ -20,6 +20,7 @@ package ru.tehkode.permissions;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -117,15 +118,23 @@ public abstract class PermissionBackend {
     }
 
     public abstract void reload();
-    protected static Map<String, String> registedAliases = new HashMap<String, String>();
+    protected static Map<String, Class> registedAliases = new HashMap<String, Class>();
 
     public static String getBackendClassName(String alias) {
 
         if (registedAliases.containsKey(alias)) {
-            return registedAliases.get(alias);
+            return registedAliases.get(alias).getName();
         }
 
         return alias;
+    }
+
+    public static Class getBackendClass(String alias) throws ClassNotFoundException {
+        if (!registedAliases.containsKey(alias)) {
+            return Class.forName(alias);
+        }
+
+        return registedAliases.get(alias);
     }
 
     public static void registerBackendAlias(String alias, Class<?> backendClass) {
@@ -133,13 +142,15 @@ public abstract class PermissionBackend {
             throw new RuntimeException("Provided class should be subclass of PermissionBackend");
         }
 
-        registedAliases.put(alias, backendClass.getName());
+        registedAliases.put(alias, backendClass);
+
+        Logger.getLogger("Minecraft").info("[PermissionsEx] " + alias + " backend registred!");
     }
 
     public static String getBackendAlias(Class<?> backendClass) {
-        if (registedAliases.containsValue(backendClass.getName())) {
+        if (registedAliases.containsValue(backendClass)) {
             for (String alias : registedAliases.keySet()) { // Is there better way to find key by value?
-                if (registedAliases.get(alias).equals(backendClass.getName())) {
+                if (registedAliases.get(alias).equals(backendClass)) {
                     return alias;
                 }
             }
@@ -160,10 +171,15 @@ public abstract class PermissionBackend {
         String className = getBackendClassName(backendName);
 
         try {
-            return (PermissionBackend) Class.forName(className).getConstructor(PermissionManager.class, Configuration.class).newInstance(manager, config);
-        } catch (ClassNotFoundException e) {
-            Logger.getLogger("Minecraft").severe("[PermissionsEx] Selected backend \"" + backendName + "\" are not found.");
+            Class backendClass = getBackendClass(backendName);
 
+            Logger.getLogger("Minecraft").info("Switching to " + backendName + " backend");
+            
+            Constructor<PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
+            return (PermissionBackend) constructor.newInstance(manager, config);
+        } catch (ClassNotFoundException e) {
+            Logger.getLogger("Minecraft").warning("[PermissionsEx] Specified backend \"" + backendName + "\" are not found.");
+            
             if (fallBackBackend == null) {
                 throw new RuntimeException(e);
             }

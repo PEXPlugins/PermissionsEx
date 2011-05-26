@@ -36,7 +36,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
      @Override
-    public final String getPrefix() {
+    public String getPrefix() {
         String prefix = super.getPrefix();
         if(prefix == null || prefix.isEmpty()){
             for(PermissionGroup group : this.getParentGroups()){
@@ -47,7 +47,7 @@ public abstract class PermissionGroup extends PermissionEntity {
             }
         }
 
-        if(prefix == null){ // just for NPE safety
+        if(prefix == null){ // NPE safety
             prefix = "";
         }
 
@@ -55,7 +55,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     @Override
-    public final String getSuffix() {
+    public String getSuffix() {
         String suffix = super.getSuffix();
         if(suffix == null || suffix.isEmpty()){
             for(PermissionGroup group : this.getParentGroups()){
@@ -66,14 +66,22 @@ public abstract class PermissionGroup extends PermissionEntity {
             }
         }
 
-        if(suffix == null){ // just for NPE safety
+        if(suffix == null){ // NPE safety
             suffix = "";
         }
 
         return suffix;
     }
 
+    public abstract String[] getOwnPermissions(String world);
+    
     @Override
+    public String[] getPermissions(String world) {
+        List<String> permissions = new LinkedList<String>();
+        this.getInheritedPermissions(world, permissions);
+        return permissions.toArray(new String[0]);
+    }
+    
     protected void getInheritedPermissions(String world, List<String> permissions){
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
@@ -166,4 +174,12 @@ public abstract class PermissionGroup extends PermissionEntity {
 
 
     public abstract void setParentGroups(PermissionGroup[] parentGroups);
+    
+    public final String getOwnPrefix(){
+        return this.prefix;
+    }
+    
+    public final String getOwnSuffix(){
+        return this.suffix;
+    }
 }

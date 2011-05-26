@@ -126,19 +126,11 @@ public abstract class PermissionEntity {
         return this.virtual;
     }
 
-    public String[] getPermissions(String world) {
-        List<String> permissions = new LinkedList<String>();
-        this.getInheritedPermissions(world, permissions);
-        return permissions.toArray(new String[0]);
-    }
+    public abstract String[] getPermissions(String world);
 
     public abstract Map<String, String[]> getAllPermissions();
 
     public abstract Map<String, Map<String, String>> getAllOptions();
-
-    protected abstract void getInheritedPermissions(String world, List<String> permissions);
-
-    public abstract String[] getOwnPermissions(String world);
 
     public abstract Map<String, String> getOptions(String world);
 
@@ -178,11 +170,4 @@ public abstract class PermissionEntity {
         return hash;
     }
     
-    public final String getOwnPrefix(){
-        return this.prefix;
-    }
-    
-    public final String getOwnSuffix(){
-        return this.suffix;
-    }
 }
