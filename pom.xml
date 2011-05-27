@@ -1,3 +1,4 @@
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.tehkode</groupId>
@@ -41,6 +42,26 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <finalName>uber-${artifactId}-${version}</finalName>
+                    <artifactSet>
+                        <includes>
+                            <include>de.brics:Automation</include>
+                        </includes>
+                    </artifactSet>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -51,6 +72,12 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.7</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>me.taylorkelly.help</groupId>
             <artifactId>Help</artifactId>
             <version>[0.2,)</version>
@@ -58,10 +85,10 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.7</version>
-            <type>jar</type>
+            <groupId>de.brics</groupId>
+            <artifactId>Automation</artifactId>
+            <version>1.11-7</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>
