@@ -274,6 +274,7 @@ public class PermissionsEx extends JavaPlugin {
                 if (!permissionsManager.has(player, "modifyworld.entity.damage.take")) {
                     informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
                     event.setCancelled(true);
+                    event.setDamage(0);
                 }
             }
         }

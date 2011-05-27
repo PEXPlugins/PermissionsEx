@@ -54,11 +54,15 @@ public class SQLPermissionUser extends PermissionUser {
     @Override
     public void setPermissions(String[] permissions, String world) {
         backend.setPermissions(permissions, world);
+        
+        this.clearCache();
     }
 
     @Override
     public void setOption(String permission, String value, String world) {
         backend.setPermission(permission, value, world);
+        
+        this.clearCache();
     }
 
     @Override
@@ -74,11 +78,15 @@ public class SQLPermissionUser extends PermissionUser {
     @Override
     public void setGroups(PermissionGroup[] parentGroups) {
         backend.setParents(parentGroups);
+        
+        this.clearCache();
     }
 
     @Override
     public void removePermission(String permission, String world) {
         backend.removePermission(permission, world);
+        
+        this.clearCache();
     }
 
     @Override
@@ -104,6 +112,8 @@ public class SQLPermissionUser extends PermissionUser {
     @Override
     public void addPermission(String permission, String world) {
         backend.addPermission(permission, world);
+        
+        this.clearCache();
     }
 
     @Override

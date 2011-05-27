@@ -281,7 +281,10 @@ public class FilePermissionUser extends PermissionUser {
         this.save();
     }
 
+    @Override
     public void save() {
+        this.clearCache();
+        
         if (this.virtual) {
             if (this.node.getString("group", null) == null) { // Set default group
                 this.node.setProperty("group", this.manager.getDefaultGroup().getName());
@@ -301,5 +304,6 @@ public class FilePermissionUser extends PermissionUser {
         this.backend.permissions.removeProperty("users." + this.getName());
 
         this.backend.permissions.save();
+        this.clearCache();
     }
 }

@@ -16,14 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.entity.Player;
-import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.Configuration;
 
 /**
@@ -87,25 +85,29 @@ public class PermissionManager {
         return group;
     }
 
-    public boolean has(Player player, String permission){
-        return this.has(player, permission, player.getWorld().getName());
+    public boolean has(Player player, String permission) {
+        return this.has(player.getName(), permission, player.getWorld().getName());
     }
 
-    public boolean has(Player player, String permission, String world){
-        PermissionUser user = this.getUser(player.getName());
+    public boolean has(Player player, String permission, String world) {
+        return this.has(player.getName(), permission, world);
+    }
 
-        if(user == null){
+    public boolean has(String playerName, String permission, String world) {
+        PermissionUser user = this.getUser(playerName);
+
+        if (user == null) {
             return false;
         }
 
         return user.has(permission, world);
     }
 
-    public void resetUser(String userName){
+    public void resetUser(String userName) {
         this.users.put(userName, null);
     }
 
-    public void resetGroup(String groupName){
+    public void resetGroup(String groupName) {
         this.groups.put(groupName, null);
     }
 
@@ -145,11 +147,11 @@ public class PermissionManager {
             this.config.setProperty("permissions.backend", backEnd);
             this.config.save();
         }
-        
+
         this.backend = PermissionBackend.getBackend(backEnd, this, config);
     }
 
-    public void setBackend(String backEnd){
+    public void setBackend(String backEnd) {
         this.reset();
         this.backend = PermissionBackend.getBackend(backEnd, this, config);
     }
