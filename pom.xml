@@ -82,11 +82,5 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>de.brics</groupId>
-            <artifactId>Automation</artifactId>
-            <version>1.11-7</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 </project>

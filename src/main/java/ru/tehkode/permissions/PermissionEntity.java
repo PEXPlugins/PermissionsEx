@@ -18,10 +18,9 @@
  */
 package ru.tehkode.permissions;
 
-import dk.brics.automaton.Automaton;
-import dk.brics.automaton.RegExp;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -159,11 +158,10 @@ public abstract class PermissionEntity {
         hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
     }
-    
     /**
      * Pattern cache
      */
-    protected static HashMap<String, Automaton> patternCache = new HashMap<String, Automaton>();
+    protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
 
     public static boolean isMatches(String expression, String permission) {
         if (expression.startsWith("-")) {
@@ -171,14 +169,21 @@ public abstract class PermissionEntity {
         }
 
         if (!patternCache.containsKey(expression)) {
-            if(expression.endsWith(".*")){
-                patternCache.put(expression.substring(0, expression.length() - 2),
-                        new RegExp(expression.substring(0, expression.length() - 2).replace(".", "\\.").replace("*", "(.*)")).toAutomaton());
-            }
-            
-            patternCache.put(expression, new RegExp(expression.replace(".", "\\.").replace("*", "(.*)")).toAutomaton());
+            patternCache.put(expression, Pattern.compile(prepareRegexp(expression)));
         }
 
-        return patternCache.get(expression).run(permission);
+        if (patternCache.get(expression).matcher(permission).matches()) {
+            return true;
+        }
+
+        if (expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected static String prepareRegexp(String expression) {
+        return expression.replace(".", "\\.").replace("*", "(.*)");
     }
 }
