@@ -21,8 +21,10 @@ package ru.tehkode.permissions.bukkit.commands;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
@@ -92,8 +94,9 @@ public class UserCommands extends PermissionsCommand {
             sender.sendMessage("  " + group.getName());
         }
 
-        sender.sendMessage(userName + "'s permissions:\n"
-                + this.mapPermissions(args.get("world"), user, 0));
+        sender.sendMessage(userName + "'s permissions:");
+        
+        this.sendMessage(sender, this.mapPermissions(args.get("world"), user, 0));
         /*
         for (String permission : user.getOwnPermissions(args.get("world"))) {
         sender.sendMessage("  " + permission);
@@ -232,6 +235,8 @@ public class UserCommands extends PermissionsCommand {
         sender.sendMessage(ChatColor.WHITE + "Permission removed!");
         this.informPlayer(plugin, userName, "Your permissions has been changed!");
     }
+    
+    
 
     /**
      * User's groups management
@@ -333,15 +338,15 @@ public class UserCommands extends PermissionsCommand {
     syntax = "promote <user> <group>",
     permission = "permissions.manage.membership",
     description = "Remove user from specified group")
-    public void userPromote(Plugin plugin, CommandSender sender, Map<String, String> args) {
+    public void userPromoteToGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.userSetGroup(plugin, sender, args);
     }
-    
+
     @Command(name = "pex",
     syntax = "demote <user> <group>",
     permission = "permissions.manage.membership",
     description = "Remove user from specified group")
-    public void userDemote(Plugin plugin, CommandSender sender, Map<String, String> args) {
+    public void userDemoteToGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.userRemoveGroup(plugin, sender, args);
     }
 }

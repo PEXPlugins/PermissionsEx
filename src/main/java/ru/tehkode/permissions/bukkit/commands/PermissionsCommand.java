@@ -120,7 +120,8 @@ public abstract class PermissionsCommand implements CommandListener {
         }
     }
 
-    protected void printHierarhy(CommandSender sender, PermissionGroup parent, int level) {
+    protected String printHierarhy(PermissionGroup parent, int level) {
+        StringBuilder buffer = new StringBuilder();
 
         PermissionGroup[] groups;
         if (parent == null) {
@@ -134,32 +135,41 @@ public abstract class PermissionsCommand implements CommandListener {
                 continue;
             }
 
-            sender.sendMessage(StringUtils.repeat("  ", level) + " - " + group.getName());
+            buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName());
 
             // Groups
-            printHierarhy(sender, group, level + 1);
+            printHierarhy(group, level + 1);
 
             for (PermissionUser user : group.getUsers()) {
-                sender.sendMessage(StringUtils.repeat("  ", level + 1) + " + " + user.getName());
+                buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName());
             }
         }
+        
+        return buffer.toString();
     }
 
     protected String mapPermissions(String world, PermissionEntity entity, int level) {
         StringBuilder builder = new StringBuilder();
 
         String ownPermissions[];
-        
-        if(entity instanceof PermissionUser){
-            ownPermissions = ((PermissionUser)entity).getOwnPermissions(world);
-        } else if(entity instanceof PermissionGroup){
-            ownPermissions = ((PermissionGroup)entity).getOwnPermissions(world);
+
+        if (entity instanceof PermissionUser) {
+            ownPermissions = ((PermissionUser) entity).getOwnPermissions(world);
+        } else if (entity instanceof PermissionGroup) {
+            ownPermissions = ((PermissionGroup) entity).getOwnPermissions(world);
         } else {
             throw new RuntimeException("Unknown PermissionsEntity instance");
         }
-        
+
+        int index = 1;
         for (String permission : ownPermissions) {
-            builder.append("  ").append(permission);
+            if (level > 0) {
+                builder.append("   ");
+            } else {
+                builder.append(index++).append(") ");
+            }
+
+            builder.append(permission);
             if (level > 0) {
                 builder.append(" (from ").append(entity.getName()).append(")");
             } else {
@@ -206,5 +216,11 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         return value;
+    }
+
+    protected void sendMessage(CommandSender sender, String message) {
+        for (String messagePart : message.split("\n")) {
+            sender.sendMessage(messagePart);
+        }
     }
 }

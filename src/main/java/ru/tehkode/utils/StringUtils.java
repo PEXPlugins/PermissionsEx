@@ -16,23 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.utils;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 
-/**
- *
- * @author code
- */
 public class StringUtils {
 
     public static String implode(String[] array, String separator) {
-        if(array.length == 0){
+        if (array.length == 0) {
             return "";
         }
 
@@ -55,7 +49,7 @@ public class StringUtils {
 
                 char[] buffer = new char[128];
                 int read = 0;
-                while((read = reader.read(buffer)) > 0){
+                while ((read = reader.read(buffer)) > 0) {
                     writer.write(buffer, 0, read);
                 }
             } finally {
@@ -70,10 +64,22 @@ public class StringUtils {
 
     public static String repeat(String str, int times) {
         final StringBuilder buffer = new StringBuilder(times * str.length());
-        for(int i = 0; i < times; i++) {
+        for (int i = 0; i < times; i++) {
             buffer.append(str);
         }
         return buffer.toString();
 
+    }
+
+    public static int toInteger(String value, int defaultValue) {
+        if(value == null || value.isEmpty()){
+            return defaultValue;
+        }
+        
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }
