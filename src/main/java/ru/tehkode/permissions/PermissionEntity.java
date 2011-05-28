@@ -58,7 +58,7 @@ public abstract class PermissionEntity {
 
     protected String getMatchingExpression(String permission, String world) {
         for (String expression : this.getPermissions(world)) {
-            if (isMatches(expression, permission)) {
+            if (isMatches(expression, permission, true)) {
                 return expression;
             }
         }
@@ -125,6 +125,10 @@ public abstract class PermissionEntity {
 
     public abstract String getOption(String permission, String world, boolean inheritance);
 
+    public void setOption(String permission, String value) {
+        this.setOption(permission, value, null);
+    }
+
     public abstract void setOption(String permission, String value, String world);
 
     public abstract void addPermission(String permission, String world);
@@ -163,7 +167,7 @@ public abstract class PermissionEntity {
      */
     protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
 
-    public static boolean isMatches(String expression, String permission) {
+    public static boolean isMatches(String expression, String permission, boolean additionalChecks) {
         if (expression.startsWith("-")) {
             expression = expression.substring(1);
         }
@@ -176,7 +180,11 @@ public abstract class PermissionEntity {
             return true;
         }
 
-        if (expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission)) {
+        if (additionalChecks && expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission, false)) {
+            return true;
+        }
+
+        if (additionalChecks && !expression.endsWith(".*") && isMatches(expression + ".*", permission, false)) {
             return true;
         }
 
