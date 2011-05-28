@@ -73,20 +73,20 @@ public class ModifyworldManager {
         // Well, code below looks stupid. Blame Bukkit devs.
         
         //Player events
-        PlayerListener playerProtector = new PlayerListener();
+        PlayerProtector playerProtector = new PlayerProtector();
         playerProtector.registerEvents(pluginManager, pex, config);
         
         //Block events
-        BlockListener blockProtector = new BlockProtector();
-        playerProtector.registerEvents(pluginManager, pex, config);
+        BlockProtector blockProtector = new BlockProtector();
+        blockProtector.registerEvents(pluginManager, pex, config);
         
         //Entity events
-        EntityListener entityProtector = new EntityListener();
-        playerProtector.registerEvents(pluginManager, pex, config);
+        EntityProtector entityProtector = new EntityProtector();
+        entityProtector.registerEvents(pluginManager, pex, config);
         
         //Vehicle events
-        VehicleListener vehicleProtector = new VehicleListener();
-        playerProtector.registerEvents(pluginManager, pex, config);
+        VehicleProtector vehicleProtector = new VehicleProtector();
+        vehicleProtector.registerEvents(pluginManager, pex, config);
 
         Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are enabled.");
 
@@ -100,56 +100,6 @@ public class ModifyworldManager {
 
     protected String getEntityName(Entity entity) {
         return entity.toString().substring(5).toLowerCase();
-    }
-
-    public class VehicleListener extends org.bukkit.event.vehicle.VehicleListener implements EventHandler {
-        
-        @Override
-        public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
-            pluginManager.registerEvent(Event.Type.VEHICLE_COLLISION_ENTITY, this, Priority.Low, pex);
-            pluginManager.registerEvent(Event.Type.VEHICLE_ENTER, this, Priority.Low, pex);
-            pluginManager.registerEvent(Event.Type.VEHICLE_DAMAGE, this, Priority.Low, pex);
-        }
-
-        @Override
-        public void onVehicleDamage(VehicleDamageEvent event) {
-            if (!(event.getAttacker() instanceof Player)) {
-                return;
-            }
-
-            Player player = (Player) event.getAttacker();
-            if (!permissionsManager.has(player, "modifyworld.vehicle.destroy")) {
-                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
-                event.setCancelled(true);
-            }
-        }
-
-        @Override
-        public void onVehicleEnter(VehicleEnterEvent event) {
-            if (!(event.getEntered() instanceof Player)) {
-                return;
-            }
-
-            Player player = (Player) event.getEntered();
-            if (!permissionsManager.has(player, "modifyworld.vehicle.enter")) {
-                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
-                event.setCancelled(true);
-            }
-        }
-
-        @Override
-        public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
-            if (!(event.getEntity() instanceof Player)) {
-                return;
-            }
-
-            Player player = (Player) event.getEntity();
-            if (!permissionsManager.has(player, "modifyworld.vehicle.collide")) {
-                event.setCancelled(true);
-                event.setCollisionCancelled(true);
-                event.setPickupCancelled(true);
-            }
-        }
     }
 
     public class BlockProtector extends BlockListener implements EventHandler {
@@ -177,7 +127,7 @@ public class ModifyworldManager {
         }
     }
 
-    public class PlayerListener extends org.bukkit.event.player.PlayerListener implements EventHandler {
+    public class PlayerProtector extends org.bukkit.event.player.PlayerListener implements EventHandler {
 
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
@@ -294,7 +244,7 @@ public class ModifyworldManager {
         }
     }
 
-    public class EntityListener extends org.bukkit.event.entity.EntityListener implements EventHandler {
+    public class EntityProtector extends org.bukkit.event.entity.EntityListener implements EventHandler {
 
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
@@ -330,9 +280,60 @@ public class ModifyworldManager {
         public void onEntityTarget(EntityTargetEvent event) {
             if (event.getTarget() instanceof Player) {
                 Player player = (Player) event.getTarget();
+                player.sendMessage("BOO!");
                 if (!permissionsManager.has(player, "modifyworld.entity.mobtarget." + getEntityName(event.getEntity()))) {
                     event.setCancelled(true);
                 }
+            }
+        }
+    }
+    
+    public class VehicleProtector extends org.bukkit.event.vehicle.VehicleListener implements EventHandler {
+        
+        @Override
+        public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
+            pluginManager.registerEvent(Event.Type.VEHICLE_COLLISION_ENTITY, this, Priority.Low, pex);
+            pluginManager.registerEvent(Event.Type.VEHICLE_ENTER, this, Priority.Low, pex);
+            pluginManager.registerEvent(Event.Type.VEHICLE_DAMAGE, this, Priority.Low, pex);
+        }
+
+        @Override
+        public void onVehicleDamage(VehicleDamageEvent event) {
+            if (!(event.getAttacker() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getAttacker();
+            if (!permissionsManager.has(player, "modifyworld.vehicle.destroy")) {
+                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onVehicleEnter(VehicleEnterEvent event) {
+            if (!(event.getEntered() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getEntered();
+            if (!permissionsManager.has(player, "modifyworld.vehicle.enter")) {
+                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
+        public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
+            if (!(event.getEntity() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getEntity();
+            if (!permissionsManager.has(player, "modifyworld.vehicle.collide")) {
+                event.setCancelled(true);
+                event.setCollisionCancelled(true);
+                event.setPickupCancelled(true);
             }
         }
     }
