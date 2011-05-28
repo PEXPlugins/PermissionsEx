@@ -48,7 +48,8 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "users",
     permission = "permissions.manage.users",
-    description = "List all registred users (alias)")
+    description = "List all registred users (alias)",
+    isPrimary = true)
     public void userListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.usersList(plugin, sender, args);
     }

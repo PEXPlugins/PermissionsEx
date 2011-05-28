@@ -173,13 +173,13 @@ public abstract class PermissionBackend {
         try {
             Class backendClass = getBackendClass(backendName);
 
-            Logger.getLogger("Minecraft").info("Switching to " + backendName + " backend");
-            
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Initializing " + backendName + " backend");
+
             Constructor<PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
             return (PermissionBackend) constructor.newInstance(manager, config);
         } catch (ClassNotFoundException e) {
             Logger.getLogger("Minecraft").warning("[PermissionsEx] Specified backend \"" + backendName + "\" are not found.");
-            
+
             if (fallBackBackend == null) {
                 throw new RuntimeException(e);
             }

@@ -18,9 +18,9 @@
  */
 package ru.tehkode.permissions;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -58,18 +58,7 @@ public abstract class PermissionEntity {
 
     protected String getMatchingExpression(String permission, String world) {
         for (String expression : this.getPermissions(world)) {
-            String regexp = expression;
-            if (regexp.startsWith("-")) {
-                regexp = regexp.substring(1);
-            }
-
-            regexp = regexp.replace(".", "\\.").replace("*", "(.*)");
-
-            if (expression.endsWith(".*") && permission.matches(regexp.substring(0, regexp.length() - 6))) {
-                return expression;
-            }
-
-            if (permission.matches(regexp)) {
+            if (isMatches(expression, permission)) {
                 return expression;
             }
         }
@@ -169,5 +158,32 @@ public abstract class PermissionEntity {
         hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
     }
-    
+    /**
+     * Pattern cache
+     */
+    protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
+
+    public static boolean isMatches(String expression, String permission) {
+        if (expression.startsWith("-")) {
+            expression = expression.substring(1);
+        }
+
+        if (!patternCache.containsKey(expression)) {
+            patternCache.put(expression, Pattern.compile(prepareRegexp(expression)));
+        }
+
+        if (patternCache.get(expression).matcher(permission).matches()) {
+            return true;
+        }
+
+        if (expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected static String prepareRegexp(String expression) {
+        return expression.replace(".", "\\.").replace("*", "(.*)");
+    }
 }

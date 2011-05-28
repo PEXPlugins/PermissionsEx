@@ -16,26 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package ru.tehkode.permissions.bukkit.modifyworld;
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+import org.bukkit.plugin.PluginManager;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.config.ConfigurationNode;
 
-package ru.tehkode.permissions.commands;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-/**
- *
- * @author code
- */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Command {
-    String name();
-    String syntax();
-    String description();
-    String permission();
-    boolean isPrimary() default false;
+public interface EventHandler {
+    public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config);
 }
