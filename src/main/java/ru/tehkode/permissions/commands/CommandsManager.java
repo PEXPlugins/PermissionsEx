@@ -146,7 +146,7 @@ public class CommandsManager {
 
         for(Plugin helpPlugin : this.helpPlugins){
             if(helpPlugin instanceof Help){
-                ((Help)helpPlugin).registerCommand(command.name() + " " + command.syntax(), command.description(), plugin, command.permission());
+                ((Help)helpPlugin).registerCommand(command.name() + " " + command.syntax(), command.description(), plugin, command.isPrimary(), command.permission());
             }
         }
     }
