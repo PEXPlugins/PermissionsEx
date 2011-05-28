@@ -1,9 +1,8 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.tehkode</groupId>
     <artifactId>PermissionsEx</artifactId>
-    <version>1.06</version>
+    <version>1.10</version>
     <name>PermissionsEx</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -14,7 +13,6 @@
         <url>https://github.com/t3hk0d3/PermissionsEx/issues</url>
     </issueManagement>
     <build>
-        <finalName>PermissionsEx</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -23,6 +21,26 @@
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <finalName>${project.artifactId}</finalName>
+                    <artifactSet>
+                        <includes>
+                            <include>de.brics:Automation</include>
+                        </includes>
+                    </artifactSet>
                 </configuration>
             </plugin>
             <plugin>
@@ -41,26 +59,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <finalName>uber-${artifactId}-${version}</finalName>
-                    <artifactSet>
-                        <includes>
-                            <include>de.brics:Automation</include>
-                        </includes>
-                    </artifactSet>
-                </configuration>
             </plugin>
         </plugins>
     </build>

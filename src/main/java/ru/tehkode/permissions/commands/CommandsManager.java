@@ -47,17 +47,17 @@ public class CommandsManager {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new HashMap<String, Map<CommandSyntax, CommandBinding>>();
     protected Plugin plugin;
+    
+    protected List<Plugin> helpPlugins = new LinkedList<Plugin>();
 
     public CommandsManager(Plugin plugin) {
         this.plugin = plugin;
+        
+        
     }
 
     public void register(CommandListener listener) {
-        Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
 
-        if (helpPlugin != null && helpPlugin instanceof Help) {
-            logger.info("[PermissionsEx] Help plugin detected. Support enabled.");
-        }
 
         for (Method method : listener.getClass().getMethods()) {
             if (!method.isAnnotationPresent(Command.class)) {
@@ -72,9 +72,7 @@ public class CommandsManager {
                 listeners.put(cmdAnnotation.name(), commandListeners);
             }
 
-            if (helpPlugin != null && helpPlugin instanceof Help && !cmdAnnotation.description().isEmpty()) {
-                ((Help) helpPlugin).registerCommand(cmdAnnotation.name() + " " + cmdAnnotation.syntax(), cmdAnnotation.description(), plugin, cmdAnnotation.permission());
-            }
+            this.registerCommandHelp(cmdAnnotation);
 
             commandListeners.put(new CommandSyntax(cmdAnnotation.syntax()), new CommandBinding(listener, method));
         }
@@ -130,6 +128,27 @@ public class CommandsManager {
         }
 
         return true;
+    }
+    
+    protected void findCommandHelpPlugins(){
+        // Tkelly's Help plugin
+        Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
+        if (helpPlugin != null && helpPlugin instanceof Help) {
+            logger.info("[PermissionsEx] Help plugin detected. Support enabled.");
+            this.helpPlugins.add(helpPlugin);
+        }
+    }
+
+    protected void registerCommandHelp(Command command) {
+        if(command.description().isEmpty()){
+            return;
+        }
+
+        for(Plugin helpPlugin : this.helpPlugins){
+            if(helpPlugin instanceof Help){
+                ((Help)helpPlugin).registerCommand(command.name() + " " + command.syntax(), command.description(), plugin, command.permission());
+            }
+        }
     }
 
     protected class CommandSyntax {
@@ -223,9 +242,9 @@ public class CommandsManager {
         public void call(Object... args) {
             try {
                 this.method.invoke(object, args);
-            } catch (InvocationTargetException e){
-                if(e.getTargetException() instanceof AutoCompleteChoicesException){
-                    AutoCompleteChoicesException autocomplete = (AutoCompleteChoicesException)e.getTargetException();
+            } catch (InvocationTargetException e) {
+                if (e.getTargetException() instanceof AutoCompleteChoicesException) {
+                    AutoCompleteChoicesException autocomplete = (AutoCompleteChoicesException) e.getTargetException();
                     logger.info("Autocomplete for <" + autocomplete.getArgName() + ">:\n  " + StringUtils.implode(autocomplete.getChoices(), "   "));
                 } else {
                     throw new RuntimeException(e.getTargetException());

@@ -209,12 +209,12 @@ public abstract class PermissionUser extends PermissionEntity {
 
     @Override
     protected String getMatchingExpression(String permission, String world) {
-        String cachingId = world + ":" + permission;
-        if (!this.cachedAnwsers.containsKey(cachingId)) {
-            this.cachedAnwsers.put(cachingId, super.getMatchingExpression(permission, world));
+        String cacheId = world + ":" + permission;
+        if (!this.cachedAnwsers.containsKey(cacheId)) {
+            this.cachedAnwsers.put(cacheId, super.getMatchingExpression(permission, world));
         }
 
-        return this.cachedAnwsers.get(cachingId);
+        return this.cachedAnwsers.get(cacheId);
     }
 
     protected void clearCache() {

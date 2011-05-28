@@ -22,8 +22,6 @@ import dk.brics.automaton.Automaton;
 import dk.brics.automaton.RegExp;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -161,6 +159,7 @@ public abstract class PermissionEntity {
         hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
     }
+    
     /**
      * Pattern cache
      */
@@ -172,6 +171,11 @@ public abstract class PermissionEntity {
         }
 
         if (!patternCache.containsKey(expression)) {
+            if(expression.endsWith(".*")){
+                patternCache.put(expression.substring(0, expression.length() - 2),
+                        new RegExp(expression.substring(0, expression.length() - 2).replace(".", "\\.").replace("*", "(.*)")).toAutomaton());
+            }
+            
             patternCache.put(expression, new RegExp(expression.replace(".", "\\.").replace("*", "(.*)")).toAutomaton());
         }
 
