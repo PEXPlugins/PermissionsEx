@@ -96,7 +96,7 @@ public class PromotionCommands extends PermissionsCommand {
 
             promoterRank = StringUtils.toInteger(promoter.getOptionValue("rank"), 0);
             if (srcRank <= promoterRank) {
-                sender.sendMessage(ChatColor.RED + "You can't promote user with higher or equal rank than you!");
+                sender.sendMessage(ChatColor.RED + "You can't promote user who has higher or equal rank than you!");
                 return;
             }
         }
@@ -162,7 +162,7 @@ public class PromotionCommands extends PermissionsCommand {
 
             int promoterRank = StringUtils.toInteger(demoter.getOptionValue("rank"), 0);
             if (srcRank <= promoterRank) {
-                sender.sendMessage(ChatColor.RED + "You can't demote user with equal or higher rank than you!");
+                sender.sendMessage(ChatColor.RED + "You can't demote user who has equal or higher rank than you!");
                 return;
             }
         }
