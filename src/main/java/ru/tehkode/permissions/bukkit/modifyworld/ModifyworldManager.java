@@ -129,6 +129,8 @@ public class ModifyworldManager {
 
     public class PlayerProtector extends org.bukkit.event.player.PlayerListener implements EventHandler {
 
+        protected boolean checkInventory = false;
+        
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
             pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Priority.Low, pex);
@@ -147,6 +149,7 @@ public class ModifyworldManager {
             }
 
             if (config.getBoolean("itemRestrictions", false)) {
+                checkInventory = true;
                 pluginManager.registerEvent(Event.Type.PLAYER_ITEM_HELD, this, Priority.Low, pex);
                 pluginManager.registerEvent(Event.Type.INVENTORY_OPEN, this, Priority.Low, pex);
             }
@@ -197,7 +200,6 @@ public class ModifyworldManager {
             this.checkPlayerInventory(event.getPlayer());
         }
         
-        
 
         @Override
         public void onItemHeldChange(PlayerItemHeldEvent event) {
@@ -218,6 +220,8 @@ public class ModifyworldManager {
                 //informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
+            
+            this.checkPlayerInventory(event.getPlayer());
         }
 
         @Override
@@ -234,6 +238,10 @@ public class ModifyworldManager {
         }
         
         protected void checkPlayerInventory(Player player){
+            if(!checkInventory){
+                return;
+            }
+            
             Inventory inventory = player.getInventory();
             for (ItemStack stack : inventory.getContents()) {
                 if (stack != null && !permissionsManager.has(player, "modifyworld.items.have." + stack.getTypeId())) {
