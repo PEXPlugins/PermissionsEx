@@ -32,7 +32,7 @@ import ru.tehkode.utils.StringUtils;
 public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
-    syntax = "group <group> rank <rank>",
+    syntax = "group <group> rank [rank]",
     description = "Promotes user to next group",
     isPrimary = true,
     permission = "permissions.groups.rank")
@@ -46,15 +46,23 @@ public class PromotionCommands extends PermissionsCommand {
             return;
         }
 
-        String newRank = args.get("rank").trim();
+        if (args.get("rank") != null) {
+            String newRank = args.get("rank").trim();
 
-        try {
-            Integer.parseInt(newRank); // Just to check what this is legal integer number
-            group.setOption("rank", newRank);
-            sender.sendMessage("Group " + group.getName() + " rank changed to " + newRank);
-        } catch (NumberFormatException e) {
-            sender.sendMessage("Wrong rank. Make sure it's number.");
+            try {
+                Integer.parseInt(newRank); // Just to check what this is legal integer number
+                group.setOption("rank", newRank);
+            } catch (NumberFormatException e) {
+                sender.sendMessage("Wrong rank. Make sure it's number.");
+            }
         }
+
+        String rank = group.getOptionValue("rank");
+        if (rank.isEmpty()) {
+            rank = "0";
+        }
+
+        sender.sendMessage("Group " + group.getName() + " rank is " + rank);
     }
 
     @Command(name = "pex",
@@ -77,6 +85,7 @@ public class PromotionCommands extends PermissionsCommand {
             return;
         }
 
+        int promoterRank = 0;
         if (sender instanceof Player) {
             PermissionUser promoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
 
@@ -85,9 +94,9 @@ public class PromotionCommands extends PermissionsCommand {
                 return;
             }
 
-            int promoterRank = StringUtils.toInteger(promoter.getOptionValue("rank"), 0);
+            promoterRank = StringUtils.toInteger(promoter.getOptionValue("rank"), 0);
             if (srcRank <= promoterRank) {
-                sender.sendMessage(ChatColor.RED + "Promoting user have higher or equal rank than you!");
+                sender.sendMessage(ChatColor.RED + "You can't promote user with higher or equal rank than you!");
                 return;
             }
         }
@@ -99,7 +108,7 @@ public class PromotionCommands extends PermissionsCommand {
         for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
             int groupRank = StringUtils.toInteger(group.getOptionValue("rank"), 0);
 
-            if (groupRank == 0 || groupRank >= srcRank) { // Group arent ranked or have lower rank than user rank
+            if (groupRank == 0 || groupRank >= srcRank || groupRank <= promoterRank) { // Group arent ranked or have lower rank than user rank
                 continue;
             }
 
@@ -114,6 +123,7 @@ public class PromotionCommands extends PermissionsCommand {
 
         if (targetGroup == null) {
             sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not promoteable.");
+            return;
         }
 
         user.setGroups(new PermissionGroup[]{targetGroup});
@@ -152,7 +162,7 @@ public class PromotionCommands extends PermissionsCommand {
 
             int promoterRank = StringUtils.toInteger(demoter.getOptionValue("rank"), 0);
             if (srcRank <= promoterRank) {
-                sender.sendMessage(ChatColor.RED + "Demoting user have equal or higher rank than you!");
+                sender.sendMessage(ChatColor.RED + "You can't demote user with equal or higher rank than you!");
                 return;
             }
         }
@@ -179,6 +189,7 @@ public class PromotionCommands extends PermissionsCommand {
 
         if (targetGroup == null) {
             sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not demoteable.");
+            return;
         }
 
         user.setGroups(new PermissionGroup[]{targetGroup});

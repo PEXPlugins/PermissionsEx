@@ -39,9 +39,14 @@ public class GroupCommands extends PermissionsCommand {
     public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
 
-        sender.sendMessage(ChatColor.WHITE + "Currently registred groups: ");
+        sender.sendMessage(ChatColor.WHITE + "Registred groups: ");
         for (PermissionGroup group : groups) {
-            sender.sendMessage(" " + group.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(group.getParentGroupsNames(), ", ") + "]");
+            String rank = group.getOptionValue("rank");
+            if (rank.isEmpty()) {
+                rank = "not ranked";
+            }
+
+            sender.sendMessage(" " + group.getName() + " (" + rank + ") " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(group.getParentGroupsNames(), ", ") + "]");
         }
     }
 
