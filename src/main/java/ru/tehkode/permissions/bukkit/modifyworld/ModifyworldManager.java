@@ -196,7 +196,7 @@ public class ModifyworldManager {
         public void onInventoryOpen(PlayerInventoryEvent event) {
             Inventory inventory = event.getPlayer().getInventory();
             for (ItemStack stack : inventory.getContents()) {
-                if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.canhave." + stack.getTypeId())) {
+                if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.have." + stack.getTypeId())) {
                     inventory.remove(stack);
                     informUser(event.getPlayer(), "You have prohibited item \"" + stack.getType().name() + "\" (" + stack.getAmount() + ").");
                 }
