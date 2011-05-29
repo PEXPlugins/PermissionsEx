@@ -268,6 +268,14 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void save() {
+        if (this.node.getString("prefix", "").isEmpty()) {
+            this.node.removeProperty("prefix");
+        }
+
+        if (this.node.getString("suffix", "").isEmpty()) {
+            this.node.removeProperty("suffix");
+        }
+        
         if (this.virtual) {
             this.backend.permissions.setProperty("groups." + this.getName(), this.node);
         }

@@ -51,8 +51,15 @@ public class FilePermissionUser extends PermissionUser {
             this.virtual = true;
         }
 
-        this.prefix = this.node.getString("prefix", "");
-        this.suffix = this.node.getString("suffix", "");
+        this.prefix = this.node.getString("prefix");
+        if(this.prefix == null){
+            this.prefix = "";
+        }
+        
+        this.suffix = this.node.getString("suffix");
+        if(this.suffix == null){
+            this.suffix = "";
+        }
     }
 
     @Override
@@ -147,6 +154,8 @@ public class FilePermissionUser extends PermissionUser {
             this.node.removeProperty("prefix");
         }
 
+        this.save();
+
         super.setPrefix(prefix);
     }
 
@@ -157,6 +166,8 @@ public class FilePermissionUser extends PermissionUser {
         } else {
             this.node.removeProperty("suffix");
         }
+
+        this.save();
 
         super.setSuffix(suffix);
     }
@@ -284,7 +295,7 @@ public class FilePermissionUser extends PermissionUser {
     @Override
     public void save() {
         this.clearCache();
-        
+
         if (this.virtual) {
             if (this.node.getString("group", null) == null) { // Set default group
                 this.node.setProperty("group", this.manager.getDefaultGroup().getName());
