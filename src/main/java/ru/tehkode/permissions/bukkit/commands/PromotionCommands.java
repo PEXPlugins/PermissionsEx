@@ -39,7 +39,7 @@ public class PromotionCommands extends PermissionsCommand {
     public void rankGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
 
-        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
             sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" not found");

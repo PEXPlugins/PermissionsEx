@@ -53,7 +53,7 @@ public class CommandsManager {
     public CommandsManager(Plugin plugin) {
         this.plugin = plugin;
         
-        
+        this.findCommandHelpPlugins();
     }
 
     public void register(CommandListener listener) {
