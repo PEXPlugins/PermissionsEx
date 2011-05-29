@@ -280,7 +280,6 @@ public class ModifyworldManager {
         public void onEntityTarget(EntityTargetEvent event) {
             if (event.getTarget() instanceof Player) {
                 Player player = (Player) event.getTarget();
-                player.sendMessage("BOO!");
                 if (!permissionsManager.has(player, "modifyworld.entity.mobtarget." + getEntityName(event.getEntity()))) {
                     event.setCancelled(true);
                 }
