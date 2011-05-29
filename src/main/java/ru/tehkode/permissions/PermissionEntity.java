@@ -183,11 +183,11 @@ public abstract class PermissionEntity {
         if (additionalChecks && expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission, false)) {
             return true;
         }
-
+/*
         if (additionalChecks && !expression.endsWith(".*") && isMatches(expression + ".*", permission, false)) {
             return true;
         }
-
+*/
         return false;
     }
 
