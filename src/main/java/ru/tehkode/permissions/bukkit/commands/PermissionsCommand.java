@@ -135,13 +135,13 @@ public abstract class PermissionsCommand implements CommandListener {
                 continue;
             }
 
-            buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName());
+            buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
 
             // Groups
             printHierarhy(group, level + 1);
 
             for (PermissionUser user : group.getUsers()) {
-                buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName());
+                buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
             }
         }
         

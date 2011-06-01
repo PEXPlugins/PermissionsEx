@@ -129,6 +129,8 @@ public class ModifyworldManager {
 
     public class PlayerProtector extends org.bukkit.event.player.PlayerListener implements EventHandler {
 
+        protected boolean checkInventory = false;
+        
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
             pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Priority.Low, pex);
@@ -147,8 +149,9 @@ public class ModifyworldManager {
             }
 
             if (config.getBoolean("itemRestrictions", false)) {
+                checkInventory = true;
                 pluginManager.registerEvent(Event.Type.PLAYER_ITEM_HELD, this, Priority.Low, pex);
-                pluginManager.registerEvent(Event.Type.PLAYER_INVENTORY, this, Priority.Low, pex);
+                pluginManager.registerEvent(Event.Type.INVENTORY_OPEN, this, Priority.Low, pex);
             }
         }
 
@@ -194,24 +197,13 @@ public class ModifyworldManager {
 
         @Override
         public void onInventoryOpen(PlayerInventoryEvent event) {
-            Inventory inventory = event.getPlayer().getInventory();
-            for (ItemStack stack : inventory.getContents()) {
-                if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.have." + stack.getTypeId())) {
-                    inventory.remove(stack);
-                    informUser(event.getPlayer(), "You have prohibited item \"" + stack.getType().name() + "\" (" + stack.getAmount() + ").");
-                }
-            }
+            this.checkPlayerInventory(event.getPlayer());
         }
+        
 
         @Override
         public void onItemHeldChange(PlayerItemHeldEvent event) {
-            Inventory inventory = event.getPlayer().getInventory();
-            for (ItemStack stack : inventory.getContents()) {
-                if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.have." + stack.getTypeId())) {
-                    inventory.remove(stack);
-                    informUser(event.getPlayer(), "You have prohibited item \"" + stack.getType().name() + "\" (" + stack.getAmount() + ").");
-                }
-            }
+            this.checkPlayerInventory(event.getPlayer());
         }
 
         @Override
@@ -228,6 +220,8 @@ public class ModifyworldManager {
                 //informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
+            
+            this.checkPlayerInventory(event.getPlayer());
         }
 
         @Override
@@ -240,6 +234,20 @@ public class ModifyworldManager {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact." + event.getClickedBlock().getTypeId())) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
+            }
+        }
+        
+        protected void checkPlayerInventory(Player player){
+            if(!checkInventory){
+                return;
+            }
+            
+            Inventory inventory = player.getInventory();
+            for (ItemStack stack : inventory.getContents()) {
+                if (stack != null && !permissionsManager.has(player, "modifyworld.items.have." + stack.getTypeId())) {
+                    inventory.remove(stack);
+                    informUser(player, "You have prohibited item \"" + stack.getType().name() + "\" (" + stack.getAmount() + ").");
+                }
             }
         }
     }
