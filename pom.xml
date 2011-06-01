@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.tehkode</groupId>
     <artifactId>PermissionsEx</artifactId>
-    <version>1.10</version>
+    <version>1.11</version>
     <name>PermissionsEx</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
