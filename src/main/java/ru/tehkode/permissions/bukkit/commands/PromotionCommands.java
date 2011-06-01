@@ -57,7 +57,7 @@ public class PromotionCommands extends PermissionsCommand {
             }
         }
 
-        String rank = group.getOptionValue("rank");
+        String rank = group.getOption("rank");
         if (rank.isEmpty()) {
             rank = "0";
         }
@@ -79,7 +79,7 @@ public class PromotionCommands extends PermissionsCommand {
             return;
         }
 
-        int srcRank = StringUtils.toInteger(user.getOptionValue("rank"), 0);
+        int srcRank = StringUtils.toInteger(user.getOption("rank"), 0);
         if (srcRank == 0) {
             sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not promoteable.");
             return;
@@ -94,7 +94,7 @@ public class PromotionCommands extends PermissionsCommand {
                 return;
             }
 
-            promoterRank = StringUtils.toInteger(promoter.getOptionValue("rank"), 0);
+            promoterRank = StringUtils.toInteger(promoter.getOption("rank"), 0);
             if (srcRank <= promoterRank) {
                 sender.sendMessage(ChatColor.RED + "You can't promote user who has higher or equal rank than you!");
                 return;
@@ -106,7 +106,7 @@ public class PromotionCommands extends PermissionsCommand {
         int targetGroupRank = 0;
 
         for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
-            int groupRank = StringUtils.toInteger(group.getOptionValue("rank"), 0);
+            int groupRank = StringUtils.toInteger(group.getOption("rank"), 0);
 
             if (groupRank == 0 || groupRank >= srcRank || groupRank <= promoterRank) { // Group arent ranked or have lower rank than user rank
                 continue;
@@ -146,7 +146,7 @@ public class PromotionCommands extends PermissionsCommand {
             return;
         }
 
-        int srcRank = StringUtils.toInteger(user.getOptionValue("rank"), 0);
+        int srcRank = StringUtils.toInteger(user.getOption("rank"), 0);
         if (srcRank == 0) {
             sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not demoteable.");
             return;
@@ -160,7 +160,7 @@ public class PromotionCommands extends PermissionsCommand {
                 return;
             }
 
-            int promoterRank = StringUtils.toInteger(demoter.getOptionValue("rank"), 0);
+            int promoterRank = StringUtils.toInteger(demoter.getOption("rank"), 0);
             if (srcRank <= promoterRank) {
                 sender.sendMessage(ChatColor.RED + "You can't demote user who has equal or higher rank than you!");
                 return;
@@ -172,7 +172,7 @@ public class PromotionCommands extends PermissionsCommand {
         int targetGroupRank = 0;
 
         for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
-            int groupRank = StringUtils.toInteger(group.getOptionValue("rank"), 0);
+            int groupRank = StringUtils.toInteger(group.getOption("rank"), 0);
 
             if (groupRank == 0 || groupRank <= srcRank) { // Group arent ranked or have higher rank than user rank
                 continue;

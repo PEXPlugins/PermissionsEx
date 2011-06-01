@@ -103,6 +103,7 @@ public class UtilityCommands extends PermissionsCommand {
             sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
         } catch (RuntimeException e) {
             sender.sendMessage(ChatColor.RED + "Specified backend not found.");
+            e.printStackTrace();
         }
     }
 

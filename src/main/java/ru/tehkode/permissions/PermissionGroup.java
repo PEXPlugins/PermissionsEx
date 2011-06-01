@@ -175,11 +175,11 @@ public abstract class PermissionGroup extends PermissionEntity {
 
     public abstract void setParentGroups(PermissionGroup[] parentGroups);
     
-    public final String getOwnPrefix(){
+    public String getOwnPrefix(){
         return this.prefix;
     }
     
-    public final String getOwnSuffix(){
+    public String getOwnSuffix(){
         return this.suffix;
     }
 }

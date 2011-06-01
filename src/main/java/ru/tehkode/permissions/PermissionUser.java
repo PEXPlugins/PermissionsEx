@@ -226,11 +226,11 @@ public abstract class PermissionUser extends PermissionEntity {
         this.cachedAnwsers.clear();
     }
 
-    public final String getOwnPrefix() {
+    public String getOwnPrefix() {
         return this.prefix;
     }
 
-    public final String getOwnSuffix() {
+    public String getOwnSuffix() {
         return this.suffix;
     }
 

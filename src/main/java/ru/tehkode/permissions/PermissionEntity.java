@@ -74,12 +74,44 @@ public abstract class PermissionEntity {
         this.removePermission(permission, "");
     }
 
-    public String getOptionValue(String permission, String world) {
+    public String getOption(String permission, String world) {
         return this.getOption(permission, world, true);
     }
 
-    public String getOptionValue(String permission) {
+    public String getOption(String permission) {
         return this.getOption(permission, "", true);
+    }
+
+    public boolean getOptionBoolean(String permission, String world, boolean defaultValue) {
+        String option = this.getOption(permission, world);
+
+        if ("false".equalsIgnoreCase(option)) {
+            return false;
+        } else if ("true".equalsIgnoreCase(option)) {
+            return true;
+        }
+
+        return defaultValue;
+    }
+    
+    public int getOptionInteger(String permission, String world, int defaultValue){
+        String option = this.getOption(permission, world);
+        
+        try {
+            return Integer.parseInt(option);
+        } catch (NumberFormatException e){  }
+        
+        return defaultValue;
+    }
+    
+    public double getOptionDouble(String permission, String world, double defaultValue){
+        String option = this.getOption(permission, world);
+        
+        try {
+            return Double.parseDouble(option);
+        } catch (NumberFormatException e){  }
+        
+        return defaultValue;
     }
 
     protected boolean explainExpression(String expression) {
@@ -183,11 +215,11 @@ public abstract class PermissionEntity {
         if (additionalChecks && expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission, false)) {
             return true;
         }
-/*
+        /*
         if (additionalChecks && !expression.endsWith(".*") && isMatches(expression + ".*", permission, false)) {
-            return true;
+        return true;
         }
-*/
+         */
         return false;
     }
 

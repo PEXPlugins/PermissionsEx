@@ -41,7 +41,7 @@ public class GroupCommands extends PermissionsCommand {
 
         sender.sendMessage(ChatColor.WHITE + "Registred groups: ");
         for (PermissionGroup group : groups) {
-            String rank = group.getOptionValue("rank");
+            String rank = group.getOption("rank");
             if (rank.isEmpty()) {
                 rank = "not ranked";
             }
