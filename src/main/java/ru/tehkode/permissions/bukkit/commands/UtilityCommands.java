@@ -102,8 +102,12 @@ public class UtilityCommands extends PermissionsCommand {
             PermissionsEx.getPermissionManager().setBackend(args.get("backend"));
             sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
         } catch (RuntimeException e) {
-            sender.sendMessage(ChatColor.RED + "Specified backend not found.");
-            e.printStackTrace();
+            if(e.getCause() instanceof ClassNotFoundException){
+                sender.sendMessage(ChatColor.RED + "Specified backend not found.");
+            } else {
+                sender.sendMessage(ChatColor.RED + "Error during backend initializtation:");
+                e.getCause().printStackTrace();
+            }
         }
     }
 
