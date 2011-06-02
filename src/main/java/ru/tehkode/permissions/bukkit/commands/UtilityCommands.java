@@ -102,7 +102,7 @@ public class UtilityCommands extends PermissionsCommand {
             PermissionsEx.getPermissionManager().setBackend(args.get("backend"));
             sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
         } catch (RuntimeException e) {
-            if(e.getCause() instanceof ClassNotFoundException){
+            if (e.getCause() instanceof ClassNotFoundException) {
                 sender.sendMessage(ChatColor.RED + "Specified backend not found.");
             } else {
                 sender.sendMessage(ChatColor.RED + "Error during backend initializtation:");
@@ -133,7 +133,12 @@ public class UtilityCommands extends PermissionsCommand {
             PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfigurationNode(), null);
 
             File dstFile = new File("plugins/PermissionsEx/", args.get("filename"));
-            backend.dumpData(new OutputStreamWriter(new FileOutputStream(dstFile), "UTF-8"));
+
+            FileOutputStream outStream = new FileOutputStream(dstFile);
+
+            backend.dumpData(new OutputStreamWriter(outStream, "UTF-8"));
+
+            outStream.close();
 
             sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data dumped in \"" + dstFile.getName() + "\" ");
         } catch (RuntimeException e) {
