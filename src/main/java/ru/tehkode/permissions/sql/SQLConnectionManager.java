@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.sql;
 
 import java.sql.Connection;
@@ -24,7 +23,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -38,11 +36,20 @@ import ru.tehkode.utils.StringUtils;
 public class SQLConnectionManager {
 
     protected Connection db;
+    protected String uri;
+    protected String user;
+    protected String password;
 
     public SQLConnectionManager(String uri, String user, String password, String dbDriver) {
         try {
+
             Class.forName(getDriverClass(dbDriver)).newInstance();
-            db = DriverManager.getConnection("jdbc:" + uri, user, password);
+
+            this.uri = uri;
+            this.user = user;
+            this.password = password;
+
+            this.connect();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -61,6 +68,8 @@ public class SQLConnectionManager {
     }
 
     public ResultSet selectQuery(String sql, Object... params) throws SQLException {
+        this.checkConnection();
+
         PreparedStatement stmt = this.db.prepareStatement(sql);
 
         if (params != null) {
@@ -72,6 +81,8 @@ public class SQLConnectionManager {
 
     public Object selectQueryOne(String sql, Object fallback, Object... params) {
         try {
+            this.checkConnection();
+
             ResultSet result = this.selectQuery(sql, params);
 
             if (!result.next()) {
@@ -89,6 +100,8 @@ public class SQLConnectionManager {
 
     public void updateQuery(String sql, Object... params) {
         try {
+            this.checkConnection();
+            
             PreparedStatement stmt = this.db.prepareStatement(sql);
 
             if (params != null) {
@@ -103,6 +116,8 @@ public class SQLConnectionManager {
     }
 
     public void insert(String table, String[] fields, List<Object[]> rows) throws SQLException {
+        this.checkConnection();
+        
         String[] fieldValues = new String[fields.length];
         Arrays.fill(fieldValues, "?");
         String sql = "INSERT INTO " + table + " (" + StringUtils.implode(fields, ", ") + ") VALUES (" + StringUtils.implode(fieldValues, ", ") + ");";
@@ -116,10 +131,27 @@ public class SQLConnectionManager {
 
     public boolean isTableExist(String tableName) {
         try {
+            this.checkConnection();
+            
             return this.db.getMetaData().getTables(null, null, tableName, null).next();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected void checkConnection() throws SQLException {
+        if (!this.db.isValid(0)) {
+            Logger.getLogger("Minecraft").warning("Lost connection with sql server. Reconnecting.");
+            this.connect();
+        }
+    }
+
+    protected final void connect() throws SQLException {
+        if (this.db != null && !this.db.isValid(0)) {
+            return;
+        }
+
+        db = DriverManager.getConnection("jdbc:" + uri, user, password);
     }
 
     protected static String getDriverClass(String alias) {
