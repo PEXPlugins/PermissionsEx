@@ -347,21 +347,29 @@ public class GroupCommands extends PermissionsCommand {
     permission = "permissions.manage.membership",
     description = "Add users (single or comma-separated list) to specified group")
     public void groupUsersAdd(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String users[];
 
-        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
-
-
-        if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such users found");
-            return;
+        if (!args.get("user").contains(",")) {
+            users = new String[]{args.get("user")};
+        } else {
+            users = args.get("user").split(",");
         }
 
-        user.addGroup(groupName);
+        for (String userName : users) {
+            userName = this.autoCompletePlayerName(userName);
+            PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
-        sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " added to " + groupName + " !");
-        this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
+            if (user == null) {
+                sender.sendMessage(ChatColor.RED + "No such users found");
+                return;
+            }
+
+            user.addGroup(groupName);
+
+            sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " added to " + groupName + " !");
+            this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
+        }
     }
 
     @Command(name = "pex",
@@ -369,20 +377,29 @@ public class GroupCommands extends PermissionsCommand {
     permission = "permissions.manage.membership",
     description = "Add users (single or comma-separated list) to specified group")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String users[];
 
-        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
-
-        if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such users found");
-            return;
+        if (!args.get("user").contains(",")) {
+            users = new String[]{args.get("user")};
+        } else {
+            users = args.get("user").split(",");
         }
 
-        user.removeGroup(groupName);
+        for (String userName : users) {
+            userName = this.autoCompletePlayerName(userName);
+            PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
-        sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
+            if (user == null) {
+                sender.sendMessage(ChatColor.RED + "No such users found");
+                return;
+            }
 
-        this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
+            user.removeGroup(groupName);
+
+            sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
+            this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
+
+        }
     }
 }
