@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import ru.tehkode.permissions.PermissionBackend;
@@ -102,14 +104,13 @@ public class SQLBackend extends PermissionBackend {
     @Override
     public PermissionGroup[] getGroups() {
         String[] groupNames = SQLEntity.getEntitiesNams(sql, SQLEntity.Type.GROUP, false);
-        PermissionGroup[] groups = new PermissionGroup[groupNames.length];
+        List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-        int index = 0;
         for (String groupName : groupNames) {
-            groups[index++] = this.manager.getGroup(groupName);
+            groups.add(this.manager.getGroup(groupName));
         }
 
-        return groups;
+        return groups.toArray(new PermissionGroup[0]);
     }
 
     @Override
