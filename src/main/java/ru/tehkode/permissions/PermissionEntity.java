@@ -93,24 +93,26 @@ public abstract class PermissionEntity {
 
         return defaultValue;
     }
-    
-    public int getOptionInteger(String permission, String world, int defaultValue){
+
+    public int getOptionInteger(String permission, String world, int defaultValue) {
         String option = this.getOption(permission, world);
-        
+
         try {
             return Integer.parseInt(option);
-        } catch (NumberFormatException e){  }
-        
+        } catch (NumberFormatException e) {
+        }
+
         return defaultValue;
     }
-    
-    public double getOptionDouble(String permission, String world, double defaultValue){
+
+    public double getOptionDouble(String permission, String world, double defaultValue) {
         String option = this.getOption(permission, world);
-        
+
         try {
             return Double.parseDouble(option);
-        } catch (NumberFormatException e){  }
-        
+        } catch (NumberFormatException e) {
+        }
+
         return defaultValue;
     }
 

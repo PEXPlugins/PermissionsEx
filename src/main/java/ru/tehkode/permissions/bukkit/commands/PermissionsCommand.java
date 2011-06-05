@@ -220,7 +220,7 @@ public abstract class PermissionsCommand implements CommandListener {
 
     protected void sendMessage(CommandSender sender, String message) {
         for (String messagePart : message.split("\n")) {
-            sender.sendMessage(messagePart + "\n");
+            sender.sendMessage(messagePart);
         }
     }
 }
