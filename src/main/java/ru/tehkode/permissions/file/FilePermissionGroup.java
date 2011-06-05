@@ -168,7 +168,7 @@ public class FilePermissionGroup extends PermissionGroup {
         }
         List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
         if (!permissions.contains(permission)) {
-            permissions.add(0, permission);
+            permissions.add(0, permission); // Add permission to begining
         }
         this.node.setProperty(nodePath, permissions);
 
@@ -268,19 +268,11 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void save() {
-        if (this.node.getString("prefix", "").isEmpty()) {
-            this.node.removeProperty("prefix");
-        }
 
-        if (this.node.getString("suffix", "").isEmpty()) {
-            this.node.removeProperty("suffix");
-        }
-        
-        if (this.virtual) {
-            this.backend.permissions.setProperty("groups." + this.getName(), this.node);
-        }
+        this.backend.permissions.setProperty("groups." + this.getName(), this.node);
 
         this.backend.permissions.save();
+
     }
 
     @Override

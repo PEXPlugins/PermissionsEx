@@ -52,12 +52,12 @@ public class FilePermissionUser extends PermissionUser {
         }
 
         this.prefix = this.node.getString("prefix");
-        if(this.prefix == null){
+        if (this.prefix == null) {
             this.prefix = "";
         }
-        
+
         this.suffix = this.node.getString("suffix");
-        if(this.suffix == null){
+        if (this.suffix == null) {
             this.suffix = "";
         }
     }
@@ -296,12 +296,10 @@ public class FilePermissionUser extends PermissionUser {
     public void save() {
         this.clearCache();
 
-        if (this.virtual) {
-            if (this.node.getString("group", null) == null) { // Set default group
-                this.node.setProperty("group", this.manager.getDefaultGroup().getName());
-            }
-            this.backend.permissions.setProperty("users." + this.getName(), node);
+        if (this.node.getString("group", null) == null) { // Set default group
+            this.node.setProperty("group", this.manager.getDefaultGroup().getName());
         }
+        this.backend.permissions.setProperty("users." + this.getName(), node);
 
         this.backend.permissions.save();
     }
