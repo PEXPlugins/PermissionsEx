@@ -208,7 +208,7 @@ public class CommandsManager {
                             argumentValue = argumentValue.substring(1, argumentValue.length() - 1);
                         }
 
-                        matchedArguments.put(this.arguments.get(index - 1), argumentValue.trim());
+                        matchedArguments.put(this.arguments.get(index - 1), argumentValue);
                     }
                 }
             }
