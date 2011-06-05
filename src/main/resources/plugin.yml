@@ -35,7 +35,7 @@ commands:
            /<command> user <user> group remove <group> - Remove user from specified group
            /<command> group <group> - List all group permissions (alias)
            /<command> group <group> list - List all group permissions
-           /<command> group <group> user list - List all group user permissions
+           /<command> group <group> users - List all group user permissions
            /<command> group <group> prefix [newprefix]
            /<command> group <group> suffix [newsuffix]
            /<command> group <group> create [parents] - Create group, optionally set parent groups by comma-separated list

@@ -141,7 +141,7 @@ Here is the overview of available commands:
 
 /pex group <group> - List all group permissions (alias). ("permissions.manage.groups")
 /pex group <group> list - List all group permissions. ("permissions.manage.groups")
-/pex group <group> user list - List all group user permissions. ("permissions.manage.membership")
+/pex group <group> users - List all group user permissions. ("permissions.manage.membership")
 /pex group <group> prefix [newprefix] - Print current group's prefix. Specify newprefix to set prefix. ("permissions.manage.groups")
 /pex group <group> suffix [newsuffix] - Print current group's suffix. Specify newsuffix to set suffix. ("permissions.manage.groups")
 /pex group <group> create [parents] - Create group, optionally set parent groups by comma-separated list. ("permissions.manage.groups.create")
