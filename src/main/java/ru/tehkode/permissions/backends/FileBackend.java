@@ -259,7 +259,10 @@ public class FileBackend extends PermissionBackend {
 
     protected static Map<String, String> collectOptions(Map<String, Object> root, String baseKey, Map<String, String> collector) {
         for (Map.Entry<String, Object> entry : root.entrySet()) {
-            String newKey = baseKey + "." + entry.getKey();
+            String newKey = entry.getKey();
+            if(baseKey != null && !baseKey.isEmpty()){
+                newKey = baseKey + "." + newKey;
+            }
             if (entry.getValue() instanceof Map) {
                 Map<String, Object> map = (Map<String, Object>) entry.getValue();
                 collectOptions(map, newKey, collector);
