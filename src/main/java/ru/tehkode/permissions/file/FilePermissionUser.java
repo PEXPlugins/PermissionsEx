@@ -149,7 +149,7 @@ public class FilePermissionUser extends PermissionUser {
     @Override
     public void setPrefix(String prefix) {
         if (prefix != null && !prefix.isEmpty()) {
-            this.node.setProperty("suffix", suffix);
+            this.node.setProperty("prefix", prefix);
         } else {
             this.node.removeProperty("prefix");
         }

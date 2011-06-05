@@ -46,8 +46,15 @@ public class FilePermissionGroup extends PermissionGroup {
             this.virtual = true;
         }
 
-        this.prefix = this.node.getString("prefix", "");
-        this.suffix = this.node.getString("suffix", "");
+        this.prefix = this.node.getString("prefix");
+        if(this.prefix == null){
+            this.prefix = "";
+        }
+        
+        this.suffix = this.node.getString("suffix");
+        if(this.suffix == null){
+            this.prefix = "";
+        }
     }
 
     @Override
@@ -58,11 +65,13 @@ public class FilePermissionGroup extends PermissionGroup {
     @Override
     public void setPrefix(String prefix) {
         if (prefix != null && !prefix.isEmpty()) {
-            this.node.setProperty("suffix", suffix);
+            this.node.setProperty("prefix", prefix);
         } else {
             this.node.removeProperty("prefix");
         }
 
+        this.save();
+        
         super.setPrefix(prefix);
     }
 
@@ -73,6 +82,8 @@ public class FilePermissionGroup extends PermissionGroup {
         } else {
             this.node.removeProperty("suffix");
         }
+        
+        this.save();
 
         super.setSuffix(suffix);
     }
@@ -268,9 +279,7 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void save() {
-
         this.backend.permissions.setProperty("groups." + this.getName(), this.node);
-
         this.backend.permissions.save();
 
     }
