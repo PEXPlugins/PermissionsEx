@@ -49,11 +49,8 @@ public abstract class PermissionEntity {
         }
 
         String expression = getMatchingExpression(permission, world);
-        if (expression != null) {
-            return this.explainExpression(expression);
-        }
+        return this.explainExpression(expression);
 
-        return false;
     }
 
     protected String getMatchingExpression(String permission, String world) {
@@ -117,7 +114,11 @@ public abstract class PermissionEntity {
     }
 
     protected boolean explainExpression(String expression) {
-        return !expression.substring(0, 1).equals("-"); // If expression have - (minus) before then that mean expression are negative
+        if (expression == null || expression.isEmpty()) {
+            return false;
+        }
+
+        return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
     }
 
     public void setPermissions(String[] permission) {
@@ -202,19 +203,21 @@ public abstract class PermissionEntity {
     protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
 
     public static boolean isMatches(String expression, String permission, boolean additionalChecks) {
-        if (expression.startsWith("-")) {
-            expression = expression.substring(1);
+        String localExpression = expression;
+        
+        if(localExpression.startsWith("-")){
+            localExpression = localExpression.substring(1);
+        }
+        
+        if (!patternCache.containsKey(localExpression)) {
+            patternCache.put(localExpression, Pattern.compile(prepareRegexp(localExpression)));
         }
 
-        if (!patternCache.containsKey(expression)) {
-            patternCache.put(expression, Pattern.compile(prepareRegexp(expression)));
-        }
-
-        if (patternCache.get(expression).matcher(permission).matches()) {
+        if (patternCache.get(localExpression).matcher(permission).matches()) {
             return true;
         }
 
-        if (additionalChecks && expression.endsWith(".*") && isMatches(expression.substring(0, expression.length() - 2), permission, false)) {
+        if (additionalChecks && localExpression.endsWith(".*") && isMatches(localExpression.substring(0, localExpression.length() - 2), permission, false)) {
             return true;
         }
         /*

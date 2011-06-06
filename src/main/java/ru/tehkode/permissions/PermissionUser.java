@@ -213,7 +213,7 @@ public abstract class PermissionUser extends PermissionEntity {
         if (!this.cachedAnwsers.containsKey(cacheId)) {
             this.cachedAnwsers.put(cacheId, super.getMatchingExpression(permission, world));
         }
-
+        
         return this.cachedAnwsers.get(cacheId);
     }
 
