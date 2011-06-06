@@ -53,7 +53,7 @@ public class FilePermissionGroup extends PermissionGroup {
         
         this.suffix = this.node.getString("suffix");
         if(this.suffix == null){
-            this.prefix = "";
+            this.suffix = "";
         }
     }
 
@@ -77,7 +77,7 @@ public class FilePermissionGroup extends PermissionGroup {
 
     @Override
     public void setSuffix(String suffix) {
-        if (prefix != null && !suffix.isEmpty()) {
+        if (suffix != null && !suffix.isEmpty()) {
             this.node.setProperty("suffix", suffix);
         } else {
             this.node.removeProperty("suffix");

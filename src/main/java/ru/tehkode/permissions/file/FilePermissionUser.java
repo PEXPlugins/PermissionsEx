@@ -161,7 +161,7 @@ public class FilePermissionUser extends PermissionUser {
 
     @Override
     public void setSuffix(String suffix) {
-        if (prefix != null && !suffix.isEmpty()) {
+        if (suffix != null && !suffix.isEmpty()) {
             this.node.setProperty("suffix", suffix);
         } else {
             this.node.removeProperty("suffix");
