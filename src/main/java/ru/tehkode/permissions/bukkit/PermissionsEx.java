@@ -61,7 +61,7 @@ public class PermissionsEx extends JavaPlugin {
         PermissionBackend.registerBackendAlias("file", FileBackend.class);
         PermissionBackend.registerBackendAlias("xml", XMLBackend.class);
 
-        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin was Initialized.");
+        logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin initialized.");
     }
 
     @Override
@@ -83,7 +83,7 @@ public class PermissionsEx extends JavaPlugin {
 
         this.modifyworldManager.registerEvents();
 
-        logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + "  enabled");
+        logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
     }
 
     @Override

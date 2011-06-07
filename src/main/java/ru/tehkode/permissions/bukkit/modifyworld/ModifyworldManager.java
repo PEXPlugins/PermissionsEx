@@ -60,7 +60,7 @@ public class ModifyworldManager {
         }
 
         if (!config.getBoolean("enable", false)) {
-            Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld is disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
             return;
         }
 
@@ -88,7 +88,7 @@ public class ModifyworldManager {
         VehicleProtector vehicleProtector = new VehicleProtector();
         vehicleProtector.registerEvents(pluginManager, pex, config);
 
-        Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld are enabled.");
+        Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld is enabled.");
 
     }
 
@@ -113,7 +113,7 @@ public class ModifyworldManager {
         @Override
         public void onBlockBreak(BlockBreakEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.destroy." + event.getBlock().getTypeId())) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -121,7 +121,7 @@ public class ModifyworldManager {
         @Override
         public void onBlockPlace(BlockPlaceEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.place." + event.getBlock().getTypeId())) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -158,7 +158,7 @@ public class ModifyworldManager {
         @Override
         public void onPlayerBedEnter(PlayerBedEnterEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.usebeds")) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -166,7 +166,7 @@ public class ModifyworldManager {
         @Override
         public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.empty")) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -174,7 +174,7 @@ public class ModifyworldManager {
         @Override
         public void onPlayerBucketFill(PlayerBucketFillEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill")) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -182,7 +182,7 @@ public class ModifyworldManager {
         @Override
         public void onPlayerChat(PlayerChatEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.chat")) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -190,7 +190,7 @@ public class ModifyworldManager {
         @Override
         public void onPlayerDropItem(PlayerDropItemEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.items.drop." + event.getItemDrop().getItemStack().getTypeId())) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -210,7 +210,7 @@ public class ModifyworldManager {
         public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.entity.interact." + getEntityName(event.getRightClicked()))) {
                 event.setCancelled(true);
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
             }
         }
 
@@ -232,7 +232,7 @@ public class ModifyworldManager {
             }
 
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.blocks.interact." + event.getClickedBlock().getTypeId())) {
-                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -271,13 +271,13 @@ public class ModifyworldManager {
 
                 Player player = (Player) edbe.getDamager();
                 if (!permissionsManager.has(player, "modifyworld.entity.damage.deal." + getEntityName(event.getEntity()))) {
-                    informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
+                    informUser(player, ChatColor.RED + "Sorry, you don't have enough permissions");
                     event.setCancelled(true);
                 }
             } else if (event.getEntity() instanceof Player) { // player are been damaged by someone
                 Player player = (Player) event.getEntity();
                 if (!permissionsManager.has(player, "modifyworld.entity.damage.take." + getEntityName(event.getEntity()))) {
-                    informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
+                    informUser(player, ChatColor.RED + "Sorry, you don't have enough permissions");
                     event.setCancelled(true);
                     event.setDamage(0);
                 }
@@ -312,7 +312,7 @@ public class ModifyworldManager {
 
             Player player = (Player) event.getAttacker();
             if (!permissionsManager.has(player, "modifyworld.vehicle.destroy")) {
-                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(player, ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
@@ -325,7 +325,7 @@ public class ModifyworldManager {
 
             Player player = (Player) event.getEntered();
             if (!permissionsManager.has(player, "modifyworld.vehicle.enter")) {
-                informUser(player, ChatColor.RED + "Sorry, you don't have enought permissions");
+                informUser(player, ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
         }
