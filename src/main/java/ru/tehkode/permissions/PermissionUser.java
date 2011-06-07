@@ -32,7 +32,7 @@ import java.util.Set;
 public abstract class PermissionUser extends PermissionEntity {
 
     protected PermissionGroup[] cachedGroups = null;
-    protected String[] cachedPermissions = null;
+    protected HashMap<String, String[]> cachedPermissions = new HashMap<String, String[]>();
     protected String cachedPrefix = null;
     protected String cachedSuffix = null;
     protected HashMap<String, String> cachedAnwsers = new HashMap<String, String>();
@@ -86,14 +86,14 @@ public abstract class PermissionUser extends PermissionEntity {
 
     @Override
     public String[] getPermissions(String world) {
-        if (this.cachedPermissions == null) {
+        if (!this.cachedPermissions.containsKey(world)) {
             List<String> permissions = new LinkedList<String>();
             this.getInheritedPermissions(world, permissions);
 
-            this.cachedPermissions = permissions.toArray(new String[0]);
+            this.cachedPermissions.put(world, permissions.toArray(new String[0]));
         }
 
-        return this.cachedPermissions;
+        return this.cachedPermissions.get(world);
     }
 
     protected void getInheritedPermissions(String world, List<String> permissions) {
@@ -219,10 +219,10 @@ public abstract class PermissionUser extends PermissionEntity {
 
     protected void clearCache() {
         this.cachedGroups = null;
-        this.cachedPermissions = null;
         this.cachedPrefix = null;
         this.cachedSuffix = null;
 
+        this.cachedPermissions.clear();
         this.cachedAnwsers.clear();
     }
 
