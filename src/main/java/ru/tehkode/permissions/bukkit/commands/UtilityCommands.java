@@ -146,8 +146,8 @@ public class UtilityCommands extends PermissionsCommand {
                 sender.sendMessage(ChatColor.RED + "Specified backend not found!");
             } else {
                 sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
-                logger.severe("Error (" + e.getCause().getClass().getName() + "): " + e.getMessage());
-            }
+                logger.severe("Error: " + e.getMessage());
+            } 
         } catch (IOException e) {
             sender.sendMessage(ChatColor.RED + "IO Error: " + e.getMessage());
         }
