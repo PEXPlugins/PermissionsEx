@@ -147,6 +147,7 @@ public class UtilityCommands extends PermissionsCommand {
             } else {
                 sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
                 logger.severe("Error: " + e.getMessage());
+                e.printStackTrace();
             } 
         } catch (IOException e) {
             sender.sendMessage(ChatColor.RED + "IO Error: " + e.getMessage());
