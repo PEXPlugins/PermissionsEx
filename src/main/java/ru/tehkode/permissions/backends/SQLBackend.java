@@ -67,11 +67,9 @@ public class SQLBackend extends PermissionBackend {
             throw new RuntimeException("SQL Connection are not configured, check config.yml");
         }
 
-        Logger.getLogger("Minecraft").info("Connecting sql database server on \"" + dbUri + "\"");
-
         sql = new SQLConnectionManager(dbUri, dbUser, dbPassword, dbDriver);
 
-        Logger.getLogger("Minecraft").info("Successfuly connected to database");
+        Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Successfuly connected to database");
 
         this.deployTables(dbDriver);
     }

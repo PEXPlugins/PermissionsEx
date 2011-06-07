@@ -34,27 +34,28 @@ import ru.tehkode.utils.StringUtils;
  * @author code
  */
 public class SQLConnectionManager {
-
+    
     protected Connection db;
     protected String uri;
     protected String user;
     protected String password;
-
+    protected String dbDriver;
+    
     public SQLConnectionManager(String uri, String user, String password, String dbDriver) {
         try {
-
+            
             Class.forName(getDriverClass(dbDriver)).newInstance();
-
+            
             this.uri = uri;
             this.user = user;
             this.password = password;
-
+            
             this.connect();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
-
+    
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -66,55 +67,55 @@ public class SQLConnectionManager {
             db = null;
         }
     }
-
+    
     public ResultSet selectQuery(String sql, Object... params) throws SQLException {
         this.checkConnection();
-
+        
         PreparedStatement stmt = this.db.prepareStatement(sql);
-
+        
         if (params != null) {
             this.bindParams(stmt, params);
         }
-
+        
         return stmt.executeQuery();
     }
-
+    
     public Object selectQueryOne(String sql, Object fallback, Object... params) {
         try {
             this.checkConnection();
-
+            
             ResultSet result = this.selectQuery(sql, params);
-
+            
             if (!result.next()) {
                 return fallback;
             }
-
+            
             return result.getObject(1);
-
+            
         } catch (SQLException e) {
             Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
         }
-
+        
         return fallback;
     }
-
+    
     public void updateQuery(String sql, Object... params) {
         try {
             this.checkConnection();
             
             PreparedStatement stmt = this.db.prepareStatement(sql);
-
+            
             if (params != null) {
                 this.bindParams(stmt, params);
             }
-
+            
             stmt.executeUpdate();
-
+            
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-
+    
     public void insert(String table, String[] fields, List<Object[]> rows) throws SQLException {
         this.checkConnection();
         
@@ -122,13 +123,13 @@ public class SQLConnectionManager {
         Arrays.fill(fieldValues, "?");
         String sql = "INSERT INTO " + table + " (" + StringUtils.implode(fields, ", ") + ") VALUES (" + StringUtils.implode(fieldValues, ", ") + ");";
         PreparedStatement stmt = this.db.prepareStatement(sql);
-
+        
         for (Object[] params : rows) {
             this.bindParams(stmt, params);
             stmt.execute();
         }
     }
-
+    
     public boolean isTableExist(String tableName) {
         try {
             this.checkConnection();
@@ -138,24 +139,25 @@ public class SQLConnectionManager {
             throw new RuntimeException(e);
         }
     }
-
+    
     protected void checkConnection() throws SQLException {
+        if(this.db.getClass().getName().startsWith("org.sqlite")){
+            return;
+        }
+        
         if (!this.db.isValid(0)) {
             Logger.getLogger("Minecraft").warning("Lost connection with sql server. Reconnecting.");
             this.connect();
         }
     }
-
+    
     protected final void connect() throws SQLException {
-        if (this.db != null && !this.db.isValid(0)) {
-            return;
-        }
-
+        Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Connecting to database \"" + this.uri + "\"");
         db = DriverManager.getConnection("jdbc:" + uri, user, password);
     }
-
+    
     protected static String getDriverClass(String alias) {
-
+        
         if (alias.equals("mysql")) {
             alias = "com.mysql.jdbc.Driver";
         } else if (alias.equals("sqlite")) {
@@ -163,10 +165,10 @@ public class SQLConnectionManager {
         } else if (alias.equals("postgre")) {
             alias = "org.postgresql.Driver";
         }
-
+        
         return alias;
     }
-
+    
     protected void bindParams(PreparedStatement stmt, Object[] params) throws SQLException {
         for (int i = 1; i <= params.length; i++) {
             Object param = params[i - 1];

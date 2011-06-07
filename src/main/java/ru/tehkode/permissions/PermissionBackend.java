@@ -144,7 +144,7 @@ public abstract class PermissionBackend {
 
         registedAliases.put(alias, backendClass);
 
-        Logger.getLogger("Minecraft").info("[PermissionsEx] " + alias + " backend registred!");
+        Logger.getLogger("Minecraft").info("[PermissionsEx] " + alias + " backend registered!");
     }
 
     public static String getBackendAlias(Class<?> backendClass) {
