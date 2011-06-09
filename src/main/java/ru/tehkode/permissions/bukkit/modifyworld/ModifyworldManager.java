@@ -53,37 +53,34 @@ public class ModifyworldManager {
             this.pex.getConfigurationNode().setProperty("permissions.modifyworld.itemRestrictions", false);
             this.pex.getConfigurationNode().save();
         }
-        
+
         ConfigurationNode config = this.pex.getConfigurationNode().getNode("permissions.modifyworld");
-        if(config == null){
+        if (config == null) {
             config = Configuration.getEmptyNode();
         }
 
         if (!config.getBoolean("enable", false)) {
-            Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld is disabled. To enable set \"permissions.modifyworld\" to \"true\" in config.yml");
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld is disabled. To enable set \"permissions.modifyworld.enable\" to \"true\" in config.yml");
             return;
         }
 
-        // Other EVENTS are modifyworld
 
-        
-        
         PluginManager pluginManager = this.pex.getServer().getPluginManager();
-        
+
         // Well, code below looks stupid. Blame Bukkit devs.
-        
+
         //Player events
         PlayerProtector playerProtector = new PlayerProtector();
         playerProtector.registerEvents(pluginManager, pex, config);
-        
+
         //Block events
         BlockProtector blockProtector = new BlockProtector();
         blockProtector.registerEvents(pluginManager, pex, config);
-        
+
         //Entity events
         EntityProtector entityProtector = new EntityProtector();
         entityProtector.registerEvents(pluginManager, pex, config);
-        
+
         //Vehicle events
         VehicleProtector vehicleProtector = new VehicleProtector();
         vehicleProtector.registerEvents(pluginManager, pex, config);
@@ -130,12 +127,13 @@ public class ModifyworldManager {
     public class PlayerProtector extends org.bukkit.event.player.PlayerListener implements EventHandler {
 
         protected boolean checkInventory = false;
-        
+
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
             pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Priority.Low, pex);
             pluginManager.registerEvent(Event.Type.PLAYER_BUCKET_EMPTY, this, Priority.Low, pex);
             pluginManager.registerEvent(Event.Type.PLAYER_BUCKET_FILL, this, Priority.Low, pex);
+            pluginManager.registerEvent(Event.Type.PLAYER_COMMAND_PREPROCESS, this, Priority.Low, pex);
             pluginManager.registerEvent(Event.Type.PLAYER_CHAT, this, Priority.Low, pex);
             pluginManager.registerEvent(Event.Type.PLAYER_DROP_ITEM, this, Priority.Low, pex);
             pluginManager.registerEvent(Event.Type.PLAYER_INTERACT, this, Priority.Low, pex);
@@ -180,6 +178,14 @@ public class ModifyworldManager {
         }
 
         @Override
+        public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+            if(event.getMessage().startsWith("/tell") && !permissionsManager.has(event.getPlayer(), "modifyworld.chat.private")){
+                informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
+                event.setCancelled(true);
+            }
+        }
+
+        @Override
         public void onPlayerChat(PlayerChatEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.chat")) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
@@ -199,7 +205,6 @@ public class ModifyworldManager {
         public void onInventoryOpen(PlayerInventoryEvent event) {
             this.checkPlayerInventory(event.getPlayer());
         }
-        
 
         @Override
         public void onItemHeldChange(PlayerItemHeldEvent event) {
@@ -220,7 +225,7 @@ public class ModifyworldManager {
                 //informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enought permissions");
                 event.setCancelled(true);
             }
-            
+
             this.checkPlayerInventory(event.getPlayer());
         }
 
@@ -236,12 +241,12 @@ public class ModifyworldManager {
                 event.setCancelled(true);
             }
         }
-        
-        protected void checkPlayerInventory(Player player){
-            if(!checkInventory){
+
+        protected void checkPlayerInventory(Player player) {
+            if (!checkInventory) {
                 return;
             }
-            
+
             Inventory inventory = player.getInventory();
             for (ItemStack stack : inventory.getContents()) {
                 if (stack != null && !permissionsManager.has(player, "modifyworld.items.have." + stack.getTypeId())) {
@@ -294,9 +299,9 @@ public class ModifyworldManager {
             }
         }
     }
-    
+
     public class VehicleProtector extends org.bukkit.event.vehicle.VehicleListener implements EventHandler {
-        
+
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
             pluginManager.registerEvent(Event.Type.VEHICLE_COLLISION_ENTITY, this, Priority.Low, pex);
