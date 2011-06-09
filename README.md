@@ -180,6 +180,7 @@ modifyworld.items.pickup.<itemid> - Ability to pickup items, you can choose whic
 modifyworld.items.drop.<itemid> - Ability to drop items.
 
 modifyworld.chat - Ability to chat.
+modifyworld.chat.private - Ability to chat privately (/tell)
 
 modifyworld.bucket.fill - Bucket filling.
 modifyworld.bucket.empty - Emptying buckets.
