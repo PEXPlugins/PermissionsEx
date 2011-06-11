@@ -31,7 +31,9 @@ import org.bukkit.event.vehicle.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
+import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
@@ -93,10 +95,6 @@ public class ModifyworldManager {
         if (this.pex.getConfigurationNode().getBoolean("permissions.informplayers.modifyworld", false)) {
             player.sendMessage(message);
         }
-    }
-
-    protected String getEntityName(Entity entity) {
-        return entity.toString().substring(5).toLowerCase();
     }
 
     public class BlockProtector extends BlockListener implements EventHandler {
@@ -179,7 +177,7 @@ public class ModifyworldManager {
 
         @Override
         public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-            if(event.getMessage().startsWith("/tell") && !permissionsManager.has(event.getPlayer(), "modifyworld.chat.private")){
+            if (event.getMessage().startsWith("/tell") && !permissionsManager.has(event.getPlayer(), "modifyworld.chat.private")) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
@@ -259,6 +257,32 @@ public class ModifyworldManager {
 
     public class EntityProtector extends org.bukkit.event.entity.EntityListener implements EventHandler {
 
+        protected String getEntityName(Entity entity) {
+            String entityName = entity.toString().substring(5).toLowerCase();
+
+            if (entity instanceof Player) {
+                entityName += "." + ((Player) entity).getName();
+            }
+
+            return entityName;
+        }
+
+        protected boolean canMessWithEntity(Player player, String basePermission, Entity entity) {
+            if (entity instanceof Player) {
+                PermissionUser entityUser = permissionsManager.getUser(((Player) entity).getName());
+
+                for (PermissionGroup group : entityUser.getGroups()) {
+                    if (permissionsManager.has(player, basePermission + "group." + group.getName())) {
+                        return true;
+                    }
+                }
+
+                return permissionsManager.has(player, basePermission + "player." + entityUser.getName());
+            }
+            
+            return permissionsManager.has(player, basePermission + getEntityName(entity));
+        }
+
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
             pluginManager.registerEvent(Event.Type.ENTITY_TARGET, this, Priority.Low, pex);
@@ -275,13 +299,13 @@ public class ModifyworldManager {
                 }
 
                 Player player = (Player) edbe.getDamager();
-                if (!permissionsManager.has(player, "modifyworld.entity.damage.deal." + getEntityName(event.getEntity()))) {
+                if (!canMessWithEntity(player, "modifyworld.entity.damage.deal.", event.getEntity())) {
                     informUser(player, ChatColor.RED + "Sorry, you don't have enough permissions");
                     event.setCancelled(true);
                 }
             } else if (event.getEntity() instanceof Player) { // player are been damaged by someone
                 Player player = (Player) event.getEntity();
-                if (!permissionsManager.has(player, "modifyworld.entity.damage.take." + getEntityName(event.getEntity()))) {
+                if (!canMessWithEntity(player, "modifyworld.entity.damage.take.", event.getEntity())) {
                     informUser(player, ChatColor.RED + "Sorry, you don't have enough permissions");
                     event.setCancelled(true);
                     event.setDamage(0);
