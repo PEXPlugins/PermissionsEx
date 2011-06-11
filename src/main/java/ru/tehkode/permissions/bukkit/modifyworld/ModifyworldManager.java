@@ -97,6 +97,16 @@ public class ModifyworldManager {
         }
     }
 
+    protected String getEntityName(Entity entity) {
+        String entityName = entity.toString().substring(5).toLowerCase();
+
+        if (entity instanceof Player) {
+            entityName += "." + ((Player) entity).getName();
+        }
+
+        return entityName;
+    }
+
     public class BlockProtector extends BlockListener implements EventHandler {
 
         @Override
@@ -257,16 +267,6 @@ public class ModifyworldManager {
 
     public class EntityProtector extends org.bukkit.event.entity.EntityListener implements EventHandler {
 
-        protected String getEntityName(Entity entity) {
-            String entityName = entity.toString().substring(5).toLowerCase();
-
-            if (entity instanceof Player) {
-                entityName += "." + ((Player) entity).getName();
-            }
-
-            return entityName;
-        }
-
         protected boolean canMessWithEntity(Player player, String basePermission, Entity entity) {
             if (entity instanceof Player) {
                 PermissionUser entityUser = permissionsManager.getUser(((Player) entity).getName());
@@ -279,7 +279,7 @@ public class ModifyworldManager {
 
                 return permissionsManager.has(player, basePermission + "player." + entityUser.getName());
             }
-            
+
             return permissionsManager.has(player, basePermission + getEntityName(entity));
         }
 
