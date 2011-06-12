@@ -67,7 +67,7 @@ public class FileBackend extends PermissionBackend {
         permissions = new Configuration(permissionFile);
 
         if (!permissionFile.exists()) {
-            try {
+            try {                
                 permissionFile.createNewFile();
 
                 // Load default permissions
@@ -250,7 +250,7 @@ public class FileBackend extends PermissionBackend {
                 root.setProperty("groups." + group.getName() + ".suffix", group.getOwnSuffix());
             }
 
-            if (defaultGroup.equals(group)) {
+            if (group.equals(defaultGroup)) {
                 root.setProperty("groups." + group.getName() + ".default", true);
             }
 
