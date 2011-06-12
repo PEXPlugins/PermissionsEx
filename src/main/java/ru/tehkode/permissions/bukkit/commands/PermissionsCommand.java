@@ -18,8 +18,10 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -144,25 +146,16 @@ public abstract class PermissionsCommand implements CommandListener {
                 buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
             }
         }
-        
+
         return buffer.toString();
     }
 
     protected String mapPermissions(String world, PermissionEntity entity, int level) {
         StringBuilder builder = new StringBuilder();
 
-        String ownPermissions[];
-
-        if (entity instanceof PermissionUser) {
-            ownPermissions = ((PermissionUser) entity).getOwnPermissions(world);
-        } else if (entity instanceof PermissionGroup) {
-            ownPermissions = ((PermissionGroup) entity).getOwnPermissions(world);
-        } else {
-            throw new RuntimeException("Unknown PermissionsEntity instance");
-        }
 
         int index = 1;
-        for (String permission : ownPermissions) {
+        for (String permission : this.getPermissionsTree(entity, world, 0)) {
             if (level > 0) {
                 builder.append("   ");
             } else {
@@ -194,6 +187,42 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         return builder.toString();
+    }
+
+    protected List<String> getPermissionsTree(PermissionEntity entity, String world, int level) {
+        List<String> permissions = new LinkedList<String>();
+        Map<String, String[]> allPermissions = entity.getAllPermissions();
+
+        String[] worldsPermissions = allPermissions.get(world);
+        if (worldsPermissions != null) {
+            permissions.addAll(sprintPermissions(world, worldsPermissions));
+        }
+
+        for (String parentWorld : PermissionsEx.getPermissionManager().getWorldInheritance(world)) {
+            if (parentWorld != null && !parentWorld.isEmpty()) {
+                permissions.addAll(getPermissionsTree(entity, parentWorld, level + 1));
+            }
+        }
+
+        if (level == 0 && allPermissions.get("") != null) { // default world permissions
+            permissions.addAll(sprintPermissions("common", allPermissions.get("")));
+        }
+
+        return permissions;
+    }
+
+    protected List<String> sprintPermissions(String world, String[] permissions) {
+        List<String> permissionList = new LinkedList<String>();
+
+        if (permissions == null) {
+            return permissionList;
+        }
+
+        for (String permission : permissions) {
+            permissionList.add(permission + " @" + world);
+        }
+
+        return permissionList;
     }
 
     protected Object parseValue(String value) {
