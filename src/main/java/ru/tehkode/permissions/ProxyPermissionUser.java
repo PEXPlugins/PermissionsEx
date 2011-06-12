@@ -52,13 +52,13 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void addPermission(String permission, String world) {
-        this.backendEntity.addPermission(permission, world);
+    public String[] getOwnPermissions(String world) {
+        return this.backendEntity.getPermissions(world);
     }
 
     @Override
-    public Map<String, Map<String, String>> getAllOptions() {
-        return this.backendEntity.getAllOptions();
+    public void addPermission(String permission, String world) {
+        this.backendEntity.addPermission(permission, world);
     }
 
     @Override
@@ -67,13 +67,8 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getOption(String permission, String world, boolean inheritance) {
-        return this.backendEntity.getOption(permission, world, inheritance);
-    }
-
-    @Override
-    public Map<String, String> getOptions(String world) {
-        return this.backendEntity.getOptions(world);
+    public void setPermissions(String[] permissions, String world) {
+        this.backendEntity.setPermissions(permissions, world);
     }
 
     @Override
@@ -82,8 +77,29 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void save() {
-        this.backendEntity.save();
+    public Map<String, Map<String, String>> getAllOptions() {
+        return this.backendEntity.getAllOptions();
+    }
+
+    @Override
+    public String getOption(String permission, String world) {
+        String option = this.backendEntity.getOption(permission, world);
+        
+        if(option == null || option.isEmpty()){
+            for(PermissionGroup group : this.getGroups()){
+                option = group.getOption(permission, world);
+                if(option != null && !option.isEmpty()){
+                    return option;
+                }
+            }
+        }
+        
+        return option;
+    }
+
+    @Override
+    public Map<String, String> getOptions(String world) {
+        return this.backendEntity.getOptions(world);
     }
 
     @Override
@@ -92,12 +108,14 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void setPermissions(String[] permissions, String world) {
-        this.backendEntity.setPermissions(permissions, world);
+    public void save() {
+        this.backendEntity.save();
+        super.save();
     }
 
     @Override
     public void remove() {
         this.backendEntity.remove();
+        super.remove();
     }
 }

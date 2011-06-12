@@ -28,7 +28,7 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
         super(backendEntity.getName(), backendEntity.manager);
 
         this.backendEntity = backendEntity;
-        
+
         this.prefix = backendEntity.getPrefix();
         this.suffix = backendEntity.getSuffix();
         this.virtual = backendEntity.isVirtual();
@@ -67,8 +67,24 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getOption(String permission, String world, boolean inheritance) {
-        return this.backendEntity.getOption(permission, world, inheritance);
+    public String[] getOwnPermissions(String world) {
+        return this.backendEntity.getPermissions(world);
+    }
+
+    @Override
+    public String getOption(String permission, String world) {
+        String option = this.backendEntity.getOption(permission, world);
+
+        if (option == null || option.isEmpty()) {
+            for (PermissionGroup group : this.getParentGroups()) {
+                option = group.getOption(permission, world);
+                if (option != null && !option.isEmpty()) {
+                    return option;
+                }
+            }
+        }
+
+        return option;
     }
 
     @Override
@@ -87,6 +103,11 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     }
 
     @Override
+    protected void removeGroup() {
+        this.backendEntity.remove();
+    }
+
+    @Override
     public void setOption(String permission, String value, String world) {
         this.backendEntity.setOption(permission, value, world);
     }
@@ -95,6 +116,4 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
     }
-
-    
 }

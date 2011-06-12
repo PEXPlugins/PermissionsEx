@@ -22,11 +22,11 @@ import java.util.Map;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 
-public class SQLPermissionGroup extends PermissionGroup {
+public class SQLGroup extends PermissionGroup {
 
     protected SQLEntity backend;
 
-    public SQLPermissionGroup(String name, PermissionManager manager, SQLConnectionManager sql) {
+    public SQLGroup(String name, PermissionManager manager, SQLConnectionManager sql) {
         super(name, manager);
 
         this.backend = new SQLEntity(SQLEntity.Type.GROUP, name, sql);
@@ -35,24 +35,23 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getOption(String permission, String world, boolean inheritance) {
+    public String getOption(String permission, String world) {
         if (permission == null) {
             return "";
         }
 
-        String userValue = this.backend.getPermissionValue(permission, world, inheritance);
+        String userValue = this.backend.getOption(permission, world);
         if (!userValue.isEmpty()) {
             return userValue;
         }
 
-        if (inheritance) {
-            for (PermissionGroup group : this.getParentGroups()) {
-                String value = group.getOption(permission, world, inheritance);
-                if (value != null && !value.isEmpty()) {
-                    return value;
-                }
+        for (PermissionGroup group : this.getParentGroups()) {
+            String value = group.getOption(permission, world);
+            if (value != null && !value.isEmpty()) {
+                return value;
             }
         }
+
 
         return userValue;
     }
@@ -108,7 +107,7 @@ public class SQLPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public void setParentGroups(PermissionGroup[] parentGroups) {
+    public void setParentGroups(String[] parentGroups) {
         if (parentGroups == null) {
             return;
         }

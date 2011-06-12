@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +35,8 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.sql.SQLConnectionManager;
 import ru.tehkode.permissions.sql.SQLEntity;
-import ru.tehkode.permissions.sql.SQLPermissionGroup;
-import ru.tehkode.permissions.sql.SQLPermissionUser;
+import ru.tehkode.permissions.sql.SQLGroup;
+import ru.tehkode.permissions.sql.SQLUser;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -44,6 +45,7 @@ import ru.tehkode.utils.StringUtils;
  */
 public class SQLBackend extends PermissionBackend {
 
+    protected Map<String, String[]> worldInheritanceCache = new HashMap<String, String[]>();
     public SQLConnectionManager sql;
 
     public SQLBackend(PermissionManager manager, Configuration config) {
@@ -76,12 +78,12 @@ public class SQLBackend extends PermissionBackend {
 
     @Override
     public PermissionUser getUser(String name) {
-        return new SQLPermissionUser(name, manager, this.sql);
+        return new SQLUser(name, manager, this.sql);
     }
 
     @Override
     public PermissionGroup getGroup(String name) {
-        return new SQLPermissionGroup(name, manager, this.sql);
+        return new SQLGroup(name, manager, this.sql);
     }
 
     @Override
@@ -219,12 +221,36 @@ public class SQLBackend extends PermissionBackend {
             }
         }
 
-        
+
         writer.flush();
     }
 
     @Override
+    public String[] getWorldInheritance(String world) {
+        if (world == null || world.isEmpty()) {
+            return new String[0];
+        }
+
+        if (!worldInheritanceCache.containsKey(world)) {
+            try {
+                ResultSet result = this.sql.selectQuery("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = 2;", world);
+                LinkedList<String> worldParents = new LinkedList<String>();
+
+                while (result.next()) {
+                    worldParents.add(result.getString(0));
+                }
+
+                this.worldInheritanceCache.put(world, worldParents.toArray(new String[0]));
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return worldInheritanceCache.get(world);
+    }
+
+    @Override
     public void reload() {
-        // just do nothing...we are always "online", ie no persistence at all
+        worldInheritanceCache.clear();
     }
 }

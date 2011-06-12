@@ -130,6 +130,10 @@ public class PermissionManager {
     public PermissionGroup[] getGroups() {
         return backend.getGroups();
     }
+    
+    public String[] getWorldInheritance(String worldName){
+        return backend.getWorldInheritance(worldName);
+    }
 
     public PermissionGroup getDefaultGroup() {
         if (this.defaultGroup == null) {

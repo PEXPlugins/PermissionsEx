@@ -59,7 +59,6 @@ public class PermissionsEx extends JavaPlugin {
 
         PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
         PermissionBackend.registerBackendAlias("file", FileBackend.class);
-        PermissionBackend.registerBackendAlias("xml", XMLBackend.class);
 
         logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin initialized.");
     }

@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions;
 
 import java.util.Arrays;
@@ -35,19 +34,35 @@ public abstract class PermissionGroup extends PermissionEntity {
         super(groupName, manager);
     }
 
-     @Override
+    protected abstract String[] getOwnPermissions(String world);
+
+    protected abstract void removeGroup();
+
+    public abstract void setParentGroups(String[] parentGroups);
+
+    public void setParentGroups(PermissionGroup[] parentGroups) {
+        List<String> groups = new LinkedList<String>();
+
+        for (PermissionGroup group : parentGroups) {
+            groups.add(group.getName());
+        }
+
+        this.setParentGroups(groups.toArray(new String[0]));
+    }
+
+    @Override
     public String getPrefix() {
         String prefix = super.getPrefix();
-        if(prefix == null || prefix.isEmpty()){
-            for(PermissionGroup group : this.getParentGroups()){
+        if (prefix == null || prefix.isEmpty()) {
+            for (PermissionGroup group : this.getParentGroups()) {
                 prefix = group.getPrefix();
-                if(prefix != null && !prefix.isEmpty()){
+                if (prefix != null && !prefix.isEmpty()) {
                     break;
                 }
             }
         }
 
-        if(prefix == null){ // NPE safety
+        if (prefix == null) { // NPE safety
             prefix = "";
         }
 
@@ -57,39 +72,47 @@ public abstract class PermissionGroup extends PermissionEntity {
     @Override
     public String getSuffix() {
         String suffix = super.getSuffix();
-        if(suffix == null || suffix.isEmpty()){
-            for(PermissionGroup group : this.getParentGroups()){
+        if (suffix == null || suffix.isEmpty()) {
+            for (PermissionGroup group : this.getParentGroups()) {
                 suffix = group.getSuffix();
-                if(suffix != null && !suffix.isEmpty()){
+                if (suffix != null && !suffix.isEmpty()) {
                     break;
                 }
             }
         }
 
-        if(suffix == null){ // NPE safety
+        if (suffix == null) { // NPE safety
             suffix = "";
         }
 
         return suffix;
     }
 
-    public abstract String[] getOwnPermissions(String world);
-    
     @Override
     public String[] getPermissions(String world) {
         List<String> permissions = new LinkedList<String>();
-        this.getInheritedPermissions(world, permissions);
+        this.getInheritedPermissions(world, permissions, true);
         return permissions.toArray(new String[0]);
     }
-    
-    protected void getInheritedPermissions(String world, List<String> permissions){
+
+    protected void getInheritedPermissions(String world, List<String> permissions, boolean groupInheritance) {
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
-        for(PermissionGroup group : this.getParentGroups()){
-            group.getInheritedPermissions(world, permissions);
+        // World inheritance
+        for (String parentWorld : this.manager.getWorldInheritance(world)) {
+            getInheritedPermissions(parentWorld, permissions, false);
+        }
+        // Common permissions
+        permissions.addAll(Arrays.asList(this.getOwnPermissions(null)));
+
+        // Group inhertance
+        if (groupInheritance) {
+            for (PermissionGroup group : this.getParentGroups()) {
+                group.getInheritedPermissions(world, permissions, true);
+            }
         }
     }
-    
+
     public boolean isChildOf(String groupName, boolean checkInheritance) {
         if (groupName == null || groupName.isEmpty()) {
             return false;
@@ -132,7 +155,7 @@ public abstract class PermissionGroup extends PermissionEntity {
         return this.manager.getGroups(this.getName());
     }
 
-    public PermissionUser[] getUsers(){
+    public PermissionUser[] getUsers() {
         return this.manager.getUsers(this.getName());
     }
 
@@ -153,33 +176,28 @@ public abstract class PermissionGroup extends PermissionEntity {
 
     @Override
     public final void remove() {
-        for(PermissionGroup group : this.manager.getGroups(this.getName())){
+        for (PermissionGroup group : this.manager.getGroups(this.getName())) {
             List<PermissionGroup> parentGroups = Arrays.asList(group.getParentGroups());
             parentGroups.remove(this);
             group.setParentGroups(parentGroups.toArray(new PermissionGroup[0]));
         }
 
-        if(this.manager.getGroups(this.getName()).length > 0){
+        if (this.manager.getGroups(this.getName()).length > 0) {
             return;
         }
 
-        for(PermissionUser user : this.manager.getUsers(this.getName()) ){
+        for (PermissionUser user : this.manager.getUsers(this.getName())) {
             user.removeGroup(this);
         }
 
         this.removeGroup();
     }
 
-    protected abstract void removeGroup();
-
-
-    public abstract void setParentGroups(PermissionGroup[] parentGroups);
-    
-    public String getOwnPrefix(){
+    public String getOwnPrefix() {
         return this.prefix;
     }
-    
-    public String getOwnSuffix(){
+
+    public String getOwnSuffix() {
         return this.suffix;
     }
 }

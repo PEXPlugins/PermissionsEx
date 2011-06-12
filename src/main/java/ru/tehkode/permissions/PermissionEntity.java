@@ -71,12 +71,9 @@ public abstract class PermissionEntity {
         this.removePermission(permission, "");
     }
 
-    public String getOption(String permission, String world) {
-        return this.getOption(permission, world, true);
-    }
 
     public String getOption(String permission) {
-        return this.getOption(permission, "", true);
+        return this.getOption(permission, "");
     }
 
     public boolean getOptionBoolean(String permission, String world, boolean defaultValue) {
@@ -158,7 +155,7 @@ public abstract class PermissionEntity {
 
     public abstract Map<String, String> getOptions(String world);
 
-    public abstract String getOption(String permission, String world, boolean inheritance);
+    public abstract String getOption(String permission, String world);
 
     public void setOption(String permission, String value) {
         this.setOption(permission, value, null);

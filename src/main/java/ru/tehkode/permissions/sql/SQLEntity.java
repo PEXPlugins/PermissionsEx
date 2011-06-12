@@ -38,7 +38,6 @@ import ru.tehkode.permissions.PermissionGroup;
 public class SQLEntity {
 
     public enum Type {
-
         GROUP, USER
     }
     protected SQLConnectionManager db;
@@ -122,14 +121,14 @@ public class SQLEntity {
             if (worldPermissions != null) {
                 permissions.addAll(worldPermissions);
             }
+        } else {
+            permissions.addAll(commonPermissions);
         }
-
-        permissions.addAll(commonPermissions);
 
         return permissions.toArray(new String[0]);
     }
 
-    public String getPermissionValue(String permission, String world, boolean inheritance) {
+    public String getOption(String permission, String world) {
         if ((world == null || world.isEmpty()) && this.commonOptions.containsKey(permission)) {
             return this.commonOptions.get(permission);
         }
@@ -191,18 +190,18 @@ public class SQLEntity {
         this.fetchPermissions();
     }
 
-    public void setParents(PermissionGroup[] parentGroups) {
+    public void setParents(String[] parentGroups) {
         try {
             // Clean out existing records
             this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
 
             List<Object[]> rows = new LinkedList<Object[]>();
-            for (PermissionGroup group : parentGroups) {
-                if (group == null || group.getName().isEmpty()) {
+            for (String group : parentGroups) {
+                if (group == null || group.isEmpty()) {
                     continue;
                 }
 
-                rows.add(new Object[]{this.name, group.getName(), this.type.ordinal()});
+                rows.add(new Object[]{this.name, group, this.type.ordinal()});
             }
 
             this.db.insert("permissions_inheritance", new String[]{"child", "parent", "type"}, rows);

@@ -27,11 +27,11 @@ import ru.tehkode.permissions.PermissionUser;
  *
  * @author code
  */
-public class SQLPermissionUser extends PermissionUser {
+public class SQLUser extends PermissionUser {
 
     protected SQLEntity backend;
 
-    public SQLPermissionUser(String name, PermissionManager manager, SQLConnectionManager sql) {
+    public SQLUser(String name, PermissionManager manager, SQLConnectionManager sql) {
         super(name, manager);
 
         this.backend = new SQLEntity(SQLEntity.Type.USER, name, sql);
@@ -76,7 +76,7 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void setGroups(PermissionGroup[] parentGroups) {
+    public void setGroups(String[] parentGroups) {
         backend.setParents(parentGroups);
         
         this.clearCache();
@@ -117,19 +117,16 @@ public class SQLPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getOption(String permission, String world, boolean inheritance) {
+    public String getOption(String permission, String world) {
         if (permission == null) {
             return "";
         }
 
-        String userValue = backend.getPermissionValue(permission, world, inheritance);
-        if (!userValue.isEmpty()) {
-            return userValue;
-        }
-
-        if (inheritance) {
+        String userValue = backend.getOption(permission, world);
+        
+        if (userValue == null || userValue.isEmpty()) {
             for (PermissionGroup group : this.getGroups()) {
-                String value = group.getOption(permission, world, inheritance);
+                String value = group.getOption(permission, world);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }
