@@ -41,23 +41,23 @@ public abstract class PermissionUser extends PermissionEntity {
     public PermissionUser(String playerName, PermissionManager manager) {
         super(playerName, manager);
     }
-    
+
     protected abstract String[] getOwnPermissions(String world);
-    
+
     public abstract void setGroups(String[] groups);
-    
+
     protected abstract String[] getGroupsNamesImpl();
-    
-    public void setGroups(PermissionGroup[] parentGroups){
+
+    public void setGroups(PermissionGroup[] parentGroups) {
         List<String> groups = new LinkedList<String>();
-        
-        for(PermissionGroup group : parentGroups){
+
+        for (PermissionGroup group : parentGroups) {
             groups.add(group.getName());
         }
-        
+
         this.setGroups(groups.toArray(new String[0]));
     }
-    
+
     public boolean inGroup(PermissionGroup group) {
         return this.inGroup(group.getName());
     }
@@ -99,14 +99,12 @@ public abstract class PermissionUser extends PermissionEntity {
         return groups.toArray(new String[0]);
     }
 
-    
-
     @Override
     public String[] getPermissions(String world) {
         if (!this.cachedPermissions.containsKey(world)) {
             List<String> permissions = new LinkedList<String>();
             this.getInheritedPermissions(world, permissions, true);
-            
+
             Logger.getLogger("Minecraft").info("Permissions: " + permissions);
 
             this.cachedPermissions.put(world, permissions.toArray(new String[0]));
@@ -119,13 +117,13 @@ public abstract class PermissionUser extends PermissionEntity {
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
         // World inheritance
-        for(String parentWorld : this.manager.getWorldInheritance(world)){
+        for (String parentWorld : this.manager.getWorldInheritance(world)) {
             getInheritedPermissions(parentWorld, permissions, false);
         }
-        
+
         // Common permissions
         permissions.addAll(Arrays.asList(this.getOwnPermissions(null)));
-        
+
         // Group inhertance
         if (groupInheritance) {
             for (PermissionGroup group : this.getGroups()) {
@@ -179,7 +177,7 @@ public abstract class PermissionUser extends PermissionEntity {
             return;
         }
 
-        List<PermissionGroup> groups = Arrays.asList(this.getGroups());
+        List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups()));
 
         if (groups.contains(group)) {
             groups.remove(group);
@@ -232,7 +230,6 @@ public abstract class PermissionUser extends PermissionEntity {
 
         return this.cachedSuffix;
     }
-
 
     @Override
     protected String getMatchingExpression(String permission, String world) {
