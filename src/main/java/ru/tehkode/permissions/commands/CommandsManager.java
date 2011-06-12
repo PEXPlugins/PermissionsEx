@@ -47,12 +47,11 @@ public class CommandsManager {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new HashMap<String, Map<CommandSyntax, CommandBinding>>();
     protected Plugin plugin;
-    
     protected List<Plugin> helpPlugins = new LinkedList<Plugin>();
 
     public CommandsManager(Plugin plugin) {
         this.plugin = plugin;
-        
+
         this.findCommandHelpPlugins();
     }
 
@@ -129,8 +128,8 @@ public class CommandsManager {
 
         return true;
     }
-    
-    protected void findCommandHelpPlugins(){
+
+    protected void findCommandHelpPlugins() {
         // Tkelly's Help plugin
         Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
         if (helpPlugin != null && helpPlugin instanceof Help) {
@@ -140,13 +139,13 @@ public class CommandsManager {
     }
 
     protected void registerCommandHelp(Command command) {
-        if(command.description().isEmpty()){
+        if (command.description().isEmpty()) {
             return;
         }
 
-        for(Plugin helpPlugin : this.helpPlugins){
-            if(helpPlugin instanceof Help){
-                ((Help)helpPlugin).registerCommand(command.name() + " " + command.syntax(), command.description(), plugin, command.isPrimary(), command.permission());
+        for (Plugin helpPlugin : this.helpPlugins) {
+            if (helpPlugin instanceof Help) {
+                ((Help) helpPlugin).registerCommand(command.name() + " " + command.syntax(), command.description(), plugin, command.isPrimary(), command.permission());
             }
         }
     }

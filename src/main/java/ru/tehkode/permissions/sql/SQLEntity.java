@@ -122,7 +122,7 @@ public class SQLEntity {
                 permissions.addAll(worldPermissions);
             }
         } else {
-            permissions.addAll(commonPermissions);
+            permissions = commonPermissions;
         }
 
         return permissions.toArray(new String[0]);
