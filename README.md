@@ -133,8 +133,6 @@ Here is the overview of available commands:
 /pex user <user> add <permission> [world] - Add permission to user. ("permissions.manage.users.permissions")
 /pex user <user> set <permission> <value> [world] - Set option to given value. ("permissions.manage.users.permissions")
 /pex user <user> remove <permission> [world] - Remove permission from user. ("permissions.manage.users.permissions")
-/pex promote <user> <group> - Set only group for user (remove from others). ("permissions.manage.membership")
-/pex demote <user> <group> - Remove user from specified group. ("permissions.manage.membership")
 /pex user <user> group add <group> - Add user to specified group. ("permissions.manage.membership")
 /pex user <user> group set <group> - Set only group for user (remove from others). ("permissions.manage.membership")
 /pex user <user> group remove <group> - Remove user from specified group. ("permissions.manage.membership")
