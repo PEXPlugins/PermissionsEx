@@ -22,6 +22,7 @@ import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.block.*;
@@ -97,13 +98,27 @@ public class ModifyworldManager {
         }
     }
 
-    protected String getEntityName(Entity entity) {
-        String entityName = entity.toString().substring(5).toLowerCase();
-
+    protected String getEntityName(Entity entity) {        
+        String entityName = entity.getClass().getSimpleName();
+        
+        if(entityName.startsWith("Craft")){
+            entityName = entityName.substring(5).toLowerCase();
+        }
+        
         if (entity instanceof Player) {
             entityName += "." + ((Player) entity).getName();
         }
 
+        if (entity instanceof Wolf){
+            Wolf wolf = (Wolf)entity;
+            
+            if(wolf.isTamed()){
+                entityName += ".untamed";
+            } else if (wolf.getOwner() instanceof Player) {
+                entityName += "." + ((Player)wolf.getOwner()).getName();
+            }
+        }
+        
         return entityName;
     }
 
