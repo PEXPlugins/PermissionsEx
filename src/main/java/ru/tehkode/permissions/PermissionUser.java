@@ -90,7 +90,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
             for (String group : this.getGroupsNamesImpl()) {
                 PermissionGroup parentGroup = this.manager.getGroup(group.trim());
-                if(parentGroup != null){
+                if (parentGroup != null) {
                     groups.add(parentGroup);
                 }
             }
@@ -108,7 +108,9 @@ public abstract class PermissionUser extends PermissionEntity {
     public String[] getGroupsNames() {
         List<String> groups = new LinkedList<String>();
         for (PermissionGroup group : this.getGroups()) {
-            groups.add(group.getName());
+            if (group != null) {
+                groups.add(group.getName());
+            }
         }
 
         return groups.toArray(new String[0]);
