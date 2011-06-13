@@ -98,25 +98,25 @@ public class ModifyworldManager {
         }
     }
 
-    protected String getEntityName(Entity entity) {        
-        String entityName = entity.getClass().getSimpleName();
-        
-        if(entityName.startsWith("Craft")){
-            entityName = entityName.substring(5).toLowerCase();
-        }
-        
+    protected String getEntityName(Entity entity) {
         if (entity instanceof Player) {
-            entityName += "." + ((Player) entity).getName();
+            return "player." + ((Player) entity).getName();
+        } else if (entity instanceof Wolf) {
+            Wolf wolf = (Wolf) entity;
+
+            if (wolf.isTamed()) {
+                return "wolf.untamed";
+            } else if (wolf.getOwner() instanceof Player) {
+                return "wolf." + ((Player) wolf.getOwner()).getName();
+            } else {
+                return "wolf";
+            }
         }
 
-        if (entity instanceof Wolf){
-            Wolf wolf = (Wolf)entity;
-            
-            if(wolf.isTamed()){
-                entityName += ".untamed";
-            } else if (wolf.getOwner() instanceof Player) {
-                entityName += "." + ((Player)wolf.getOwner()).getName();
-            }
+        String entityName = entity.getClass().getSimpleName();
+
+        if (entityName.startsWith("Craft")) {
+            entityName = entityName.substring(5).toLowerCase();
         }
         
         return entityName;
