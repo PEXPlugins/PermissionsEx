@@ -58,18 +58,30 @@ public abstract class PermissionUser extends PermissionEntity {
         this.setGroups(groups.toArray(new String[0]));
     }
 
-    public boolean inGroup(PermissionGroup group) {
-        return this.inGroup(group.getName());
-    }
+    public boolean inGroup(PermissionGroup group, boolean checkInheritance) {
+        for (PermissionGroup parentGroup : this.getGroups()) {
+            if (parentGroup.equals(group)) {
+                return true;
+            }
 
-    public boolean inGroup(String groupName) {
-        for (String matchingGroupName : this.getGroupsNames()) {
-            if (groupName.equalsIgnoreCase(matchingGroupName)) {
+            if (checkInheritance && parentGroup.isChildOf(parentGroup, true)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public boolean inGroup(String groupName, boolean checkInheritance) {
+        return this.inGroup(this.manager.getGroup(groupName), checkInheritance);
+    }
+
+    public boolean inGroup(PermissionGroup group) {
+        return this.inGroup(group, true);
+    }
+
+    public boolean inGroup(String groupName) {
+        return this.inGroup(this.manager.getGroup(groupName), true);
     }
 
     public PermissionGroup[] getGroups() {

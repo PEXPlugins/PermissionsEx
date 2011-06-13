@@ -114,16 +114,20 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public boolean isChildOf(String groupName, boolean checkInheritance) {
-        if (groupName == null || groupName.isEmpty()) {
+        return isChildOf(this.manager.getGroup(groupName), checkInheritance);
+    }
+    
+    public boolean isChildOf(PermissionGroup group, boolean checkInheritance){
+        if (group == null) {
             return false;
         }
 
-        for (PermissionGroup group : this.getParentGroups()) {
-            if (group.getName().equalsIgnoreCase(groupName)) {
+        for (PermissionGroup parentGroup : this.getParentGroups()) {
+            if (group.equals(parentGroup)) {
                 return true;
             }
 
-            if (checkInheritance && group.isChildOf(groupName, checkInheritance)) {
+            if (checkInheritance && group.isChildOf(parentGroup, checkInheritance)) {
                 return true;
             }
         }
