@@ -89,7 +89,10 @@ public abstract class PermissionUser extends PermissionEntity {
             Set<PermissionGroup> groups = new LinkedHashSet<PermissionGroup>();
 
             for (String group : this.getGroupsNamesImpl()) {
-                groups.add(this.manager.getGroup(group.trim()));
+                PermissionGroup parentGroup = this.manager.getGroup(group.trim());
+                if(parentGroup != null){
+                    groups.add(parentGroup);
+                }
             }
 
             if (groups.isEmpty()) {
@@ -116,8 +119,6 @@ public abstract class PermissionUser extends PermissionEntity {
         if (!this.cachedPermissions.containsKey(world)) {
             List<String> permissions = new LinkedList<String>();
             this.getInheritedPermissions(world, permissions, true);
-
-            Logger.getLogger("Minecraft").info("Permissions: " + permissions);
 
             this.cachedPermissions.put(world, permissions.toArray(new String[0]));
         }
