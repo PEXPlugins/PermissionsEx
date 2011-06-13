@@ -104,7 +104,7 @@ public class ModifyworldManager {
         } else if (entity instanceof Wolf) {
             Wolf wolf = (Wolf) entity;
 
-            if (wolf.isTamed()) {
+            if (!wolf.isTamed()) {
                 return "wolf.untamed";
             } else if (wolf.getOwner() instanceof Player) {
                 return "wolf." + ((Player) wolf.getOwner()).getName();
