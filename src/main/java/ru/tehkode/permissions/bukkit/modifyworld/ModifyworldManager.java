@@ -176,12 +176,16 @@ public class ModifyworldManager {
                 checkInventory = true;
                 pluginManager.registerEvent(Event.Type.PLAYER_ITEM_HELD, this, Priority.Low, pex);
                 pluginManager.registerEvent(Event.Type.INVENTORY_OPEN, this, Priority.Low, pex);
+                
+                Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld item restriction enabled.");
             }
             
             if (config.getBoolean("whitelist", false)) {
                 this.whitelistKickMessage = config.getString("whitelistMessage", this.whitelistKickMessage);
                 
                 pluginManager.registerEvent(Event.Type.PLAYER_PRELOGIN, this, Priority.Normal, pex);
+                
+                Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld Whitelisting enabled.");
             }
         }
 
