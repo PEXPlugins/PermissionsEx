@@ -66,7 +66,7 @@ public class FileEntity extends PermissionEntity {
     public String[] getPermissions(String world) {
         String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
-            permissionsNode = "world." + world + "." + permissionsNode;
+            permissionsNode = "worlds." + world + "." + permissionsNode;
         }
 
         return this.node.getStringList(permissionsNode, new LinkedList<String>()).toArray(new String[0]);
