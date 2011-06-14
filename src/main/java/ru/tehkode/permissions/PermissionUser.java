@@ -64,7 +64,7 @@ public abstract class PermissionUser extends PermissionEntity {
                 return true;
             }
 
-            if (checkInheritance && parentGroup.isChildOf(parentGroup, true)) {
+            if (checkInheritance && parentGroup.isChildOf(group, true)) {
                 return true;
             }
         }
