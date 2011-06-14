@@ -119,7 +119,7 @@ public class ModifyworldManager {
         if (entityName.startsWith("Craft")) {
             entityName = entityName.substring(5).toLowerCase();
         }
-        
+
         return entityName;
     }
 
@@ -151,9 +151,8 @@ public class ModifyworldManager {
     public class PlayerProtector extends org.bukkit.event.player.PlayerListener implements EventHandler {
 
         protected boolean checkInventory = false;
-        
         protected String whitelistKickMessage = "You are not allowed to join this server. Goodbye!";
-        
+
         @Override
         public void registerEvents(PluginManager pluginManager, PermissionsEx pex, ConfigurationNode config) {
             pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Priority.Low, pex);
@@ -176,30 +175,28 @@ public class ModifyworldManager {
                 checkInventory = true;
                 pluginManager.registerEvent(Event.Type.PLAYER_ITEM_HELD, this, Priority.Low, pex);
                 pluginManager.registerEvent(Event.Type.INVENTORY_OPEN, this, Priority.Low, pex);
-                
+
                 Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld item restriction enabled.");
             }
-            
+
             if (config.getBoolean("whitelist", false)) {
                 this.whitelistKickMessage = config.getString("whitelistMessage", this.whitelistKickMessage);
-                
-                pluginManager.registerEvent(Event.Type.PLAYER_PRELOGIN, this, Priority.Normal, pex);
-                
-                Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld Whitelisting enabled.");
+
+                pluginManager.registerEvent(Event.Type.PLAYER_PRELOGIN, this, Priority.Low, pex);
+
+                Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld whitelisting enabled.");
             }
         }
 
         @Override
         public void onPlayerPreLogin(PlayerPreLoginEvent event) {
             PermissionUser user = PermissionsEx.getPermissionManager().getUser(event.getName());
-            
-            if(user != null && !user.has("modifyworld.login", Bukkit.getServer().getWorlds().get(0).getName())){
+
+            if (user != null && !user.has("modifyworld.login", Bukkit.getServer().getWorlds().get(0).getName())) {
                 event.disallow(PlayerPreLoginEvent.Result.KICK_WHITELIST, whitelistKickMessage);
                 return;
             }
         }
-        
-        
 
         @Override
         public void onPlayerBedEnter(PlayerBedEnterEvent event) {

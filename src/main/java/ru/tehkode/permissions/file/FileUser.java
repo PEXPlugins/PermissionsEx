@@ -37,13 +37,9 @@ public class FileUser extends ProxyPermissionUser {
     protected ConfigurationNode node;
 
     public FileUser(String playerName, PermissionManager manager, FileBackend backend) {
-        super(new FileEntity(playerName, manager, backend, backend.permissions.getNode("users." + playerName)));
-
-        this.node = backend.permissions.getNode("users." + playerName);
-        if (this.node == null) {
-            this.node = Configuration.getEmptyNode();
-            this.virtual = true;
-        }
+        super(new FileEntity(playerName, manager, backend, "users"));
+        
+        this.node = ((FileEntity)this.backendEntity).getConfigNode();
     }
 
     @Override

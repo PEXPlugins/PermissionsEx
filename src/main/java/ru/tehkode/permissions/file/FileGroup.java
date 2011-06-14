@@ -20,11 +20,9 @@ package ru.tehkode.permissions.file;
 
 import java.util.*;
 
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionGroup;
 import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
@@ -36,13 +34,9 @@ public class FileGroup extends ProxyPermissionGroup {
     protected ConfigurationNode node;
 
     public FileGroup(String name, PermissionManager manager, FileBackend backend) {
-        super(new FileEntity(name, manager, backend, backend.permissions.getNode("groups." + name)));
-
-        this.node = backend.permissions.getNode("groups." + name);
-        if (this.node == null) {
-            this.node = Configuration.getEmptyNode();
-            this.virtual = true;
-        }
+        super(new FileEntity(name, manager, backend, "groups"));
+        
+        this.node = ((FileEntity)this.backendEntity).getConfigNode();
     }
 
     @Override
@@ -60,4 +54,16 @@ public class FileGroup extends ProxyPermissionGroup {
 
         this.save();
     }
+
+    @Override
+    protected void removeGroup() {        
+        super.removeGroup();
+    }
+
+    @Override
+    public void save() {
+        super.save();
+    }
+    
+    
 }
