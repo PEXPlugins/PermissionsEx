@@ -42,6 +42,7 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
         return root;
     }
 
+    @Override
     public void setProperty(String path, Object value) {
          if(value instanceof ConfigurationNode){
              value = ((ConfigurationNode)value).getRoot();

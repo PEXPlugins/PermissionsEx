@@ -34,13 +34,14 @@ public class FileEntity extends PermissionEntity {
     protected FileBackend backend;
     protected String baseNode;
 
-    public FileEntity(String playerName, PermissionManager manager, FileBackend backend, String baseNode) {
-        super(playerName, manager);
+    public FileEntity(String entityName, PermissionManager manager, FileBackend backend, String baseNode) {
+        super(entityName, manager);
 
         this.backend = backend;
-        this.baseNode = baseNode + ".";
-        
-        this.node = backend.permissions.getNode(baseNode + this.getName());
+        this.baseNode = baseNode + "." + entityName;
+
+        this.node = backend.permissions.getNode(this.baseNode);
+
         if (node == null) {
             node = new ConfigurationNode();
             this.virtual = true;
@@ -56,8 +57,8 @@ public class FileEntity extends PermissionEntity {
             this.suffix = "";
         }
     }
-    
-    public ConfigurationNode getConfigNode(){
+
+    public ConfigurationNode getConfigNode() {
         return this.node;
     }
 
@@ -243,7 +244,7 @@ public class FileEntity extends PermissionEntity {
 
     @Override
     public void save() {
-        this.backend.permissions.setProperty(baseNode + this.getName(), node);
+        this.backend.permissions.setProperty(baseNode, node);
 
         this.backend.permissions.save();
     }
@@ -254,7 +255,7 @@ public class FileEntity extends PermissionEntity {
         this.prefix = "";
         this.suffix = "";
 
-        this.backend.permissions.removeProperty(baseNode + this.getName());
+        this.backend.permissions.removeProperty(baseNode);
 
         this.backend.permissions.save();
     }
