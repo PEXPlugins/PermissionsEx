@@ -125,7 +125,7 @@ public abstract class PermissionGroup extends PermissionEntity {
         
         for (PermissionGroup parentGroup : this.getParentGroups()) {
             if (group.equals(parentGroup)) {
-                return false;
+                return true;
             }
             
             if (checkInheritance && parentGroup.isChildOf(group, checkInheritance)) {
