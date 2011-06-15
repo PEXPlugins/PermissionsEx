@@ -139,7 +139,7 @@ public abstract class PermissionEntity {
 
     @Override
     public String toString() {
-        return this.getName();
+        return this.getClass().getSimpleName() + "(" + this.getName() + ")";
     }
 
     public boolean isVirtual() {
