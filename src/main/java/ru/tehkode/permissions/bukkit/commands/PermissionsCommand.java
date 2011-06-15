@@ -132,15 +132,19 @@ public abstract class PermissionsCommand implements CommandListener {
             groups = parent.getChildGroups();
         }
 
+        Logger.getLogger("Minecraft").info("Childs of " + parent + " " + groups);
+
         for (PermissionGroup group : groups) {
             if (parent == null && group.getParentGroups().length > 0) {
                 continue;
             }
 
+            Logger.getLogger("Minecraft").info("DAT " + group + " " + Arrays.asList(group.getParentGroups()));
+
             buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
 
             // Groups
-            printHierarhy(group, level + 1);
+            buffer.append(printHierarhy(group, level + 1));
 
             for (PermissionUser user : group.getUsers()) {
                 buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");

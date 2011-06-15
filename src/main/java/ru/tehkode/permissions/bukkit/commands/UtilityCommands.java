@@ -114,9 +114,9 @@ public class UtilityCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "hierarchy",
     permission = "permissions.manage.users",
-    description = "Print complete user/group hierarhy")
+    description = "Print complete user/group hierarchy")
     public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        sender.sendMessage("Permission Inheritance Hierarhy:");
+        sender.sendMessage("User/Group inheritance hierarchy:");
         this.sendMessage(sender, this.printHierarhy(null, 0));
     }
 
