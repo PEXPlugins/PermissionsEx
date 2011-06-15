@@ -48,7 +48,9 @@ public class PermissionManager {
         this.groups.clear();
         this.defaultGroup = null;
 
-        this.backend.reload();
+        if (this.backend != null) {
+            this.backend.reload();
+        }
     }
 
     public PermissionUser getUser(String username) {
@@ -130,8 +132,8 @@ public class PermissionManager {
     public PermissionGroup[] getGroups() {
         return backend.getGroups();
     }
-    
-    public String[] getWorldInheritance(String worldName){
+
+    public String[] getWorldInheritance(String worldName) {
         return backend.getWorldInheritance(worldName);
     }
 
