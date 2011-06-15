@@ -35,7 +35,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "users list",
     permission = "permissions.manage.users",
-    description = "List all registred users")
+    description = "List all registered users")
     public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
 
@@ -48,7 +48,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "users",
     permission = "permissions.manage.users",
-    description = "List all registred users (alias)",
+    description = "List all registered users (alias)",
     isPrimary = true)
     public void userListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.usersList(plugin, sender, args);
@@ -57,7 +57,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user",
     permission = "permissions.manage.users",
-    description = "List all registred users (alias)")
+    description = "List all registered users (alias)")
     public void userListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.usersList(plugin, sender, args);
     }
