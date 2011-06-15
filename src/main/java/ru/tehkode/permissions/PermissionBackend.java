@@ -66,7 +66,7 @@ public abstract class PermissionBackend {
     }
 
     public abstract PermissionGroup getDefaultGroup();
-    
+
     public abstract String[] getWorldInheritance(String world);
 
     /**
@@ -76,16 +76,39 @@ public abstract class PermissionBackend {
     public abstract PermissionGroup[] getGroups();
 
     /**
-     * Return childs of specified group.
-     * If specified group have no child empty or not exists array will be returned
+     * Return all registed users
      *
      * @return
      */
-    public PermissionGroup[] getGroups(String groupName) {
+    public abstract PermissionUser[] getUsers();
+
+    
+    /**
+     * Return child groups of specified groups only.
+     * If specified group have no child empty or not exists empty array would be returned
+     * 
+     * @param groupName
+     * @return 
+     */
+    public PermissionGroup[] getGroups(String groupName){
+        return this.getGroups(groupName, false);
+    }
+    
+    /**
+     * Return child groups of specified group.
+     * If specified group have no child empty or not exists empty array would be returned
+     * 
+     * 
+     * @param groupName 
+     * @param inheritance - If true than full list of descendants would be returned. 
+     * 
+     * @return
+     */
+    public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
         for (PermissionGroup group : this.getGroups()) {
-            if (group.isChildOf(groupName)) {
+            if (group.isChildOf(groupName, inheritance)) {
                 groups.add(group);
             }
         }
@@ -94,24 +117,29 @@ public abstract class PermissionBackend {
     }
 
     /**
-     * Return all registed users
-     *
-     * @return
-     */
-    public abstract PermissionUser[] getUsers();
-
-    /**
-     * Return users of specified group.
+     * Return users of specified group only.
      * If there is no such group null will be returned
      *
      * @param groupName
      * @return
      */
     public PermissionUser[] getUsers(String groupName) {
+        return getUsers(groupName, false);
+    }
+
+    /**
+     * Return users of specified group (and child groups)
+     * If there is no such group null will be returned
+     *
+     * @param groupName
+     * @param inheritance - If true than returned users list of descendant groups. 
+     * @return
+     */
+    public PermissionUser[] getUsers(String groupName, boolean inheritance) {
         List<PermissionUser> users = new LinkedList<PermissionUser>();
 
         for (PermissionUser user : this.getUsers()) {
-            if (user.inGroup(groupName)) {
+            if (user.inGroup(groupName, inheritance)) {
                 users.add(user);
             }
         }
@@ -180,9 +208,9 @@ public abstract class PermissionBackend {
             Constructor<PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
             return (PermissionBackend) constructor.newInstance(manager, config);
         } catch (ClassNotFoundException e) {
-            
-            Logger.getLogger("Minecraft").warning("[PermissionsEx] Specified backend \"" + backendName + "\" are not found.");            
-            
+
+            Logger.getLogger("Minecraft").warning("[PermissionsEx] Specified backend \"" + backendName + "\" are not found.");
+
             if (fallBackBackend == null) {
                 throw new RuntimeException(e);
             }
