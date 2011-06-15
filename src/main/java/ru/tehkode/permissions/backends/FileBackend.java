@@ -189,7 +189,7 @@ public class FileBackend extends PermissionBackend {
         for (PermissionUser user : this.manager.getUsers()) {
             // Inheritance
             if (user.getGroupsNames().length > 0) {
-                root.setProperty("users." + user.getName() + ".group", StringUtils.implode(user.getGroupsNames(), ","));
+                root.setProperty("users." + user.getName() + ".group", Arrays.asList(user.getGroupsNames()));
             }
 
             // Prefix
