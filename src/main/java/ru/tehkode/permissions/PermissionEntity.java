@@ -71,7 +71,6 @@ public abstract class PermissionEntity {
         this.removePermission(permission, "");
     }
 
-
     public String getOption(String permission) {
         return this.getOption(permission, "");
     }
@@ -178,14 +177,16 @@ public abstract class PermissionEntity {
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!getClass().equals(obj.getClass())) {
             return false;
         }
+
+        if (this == obj) {
+            return true;
+        }
+
         final PermissionEntity other = (PermissionEntity) obj;
-        if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
-            return false;
-        }
-        return true;
+        return this.name.equals(other.name);
     }
 
     @Override
@@ -201,11 +202,11 @@ public abstract class PermissionEntity {
 
     public static boolean isMatches(String expression, String permission, boolean additionalChecks) {
         String localExpression = expression;
-        
-        if(localExpression.startsWith("-")){
+
+        if (localExpression.startsWith("-")) {
             localExpression = localExpression.substring(1);
         }
-        
+
         if (!patternCache.containsKey(localExpression)) {
             patternCache.put(localExpression, Pattern.compile(prepareRegexp(localExpression)));
         }
