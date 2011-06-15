@@ -144,20 +144,21 @@ public class PermissionManager {
     }
 
     private void initBackend() {
-        String backEnd = this.config.getString("permissions.backend");
+        String backendName = this.config.getString("permissions.backend");
 
-        if (backEnd == null || backEnd.isEmpty()) {
-            backEnd = PermissionBackend.defaultBackend; //Default backend
-            this.config.setProperty("permissions.backend", backEnd);
+        if (backendName == null || backendName.isEmpty()) {
+            backendName = PermissionBackend.defaultBackend; //Default backend
+            this.config.setProperty("permissions.backend", backendName);
             this.config.save();
         }
 
-        this.backend = PermissionBackend.getBackend(backEnd, this, config);
+        this.setBackend(backendName);
     }
 
-    public void setBackend(String backEnd) {
+    public void setBackend(String backendName) {
         this.reset();
-        this.backend = PermissionBackend.getBackend(backEnd, this, config);
+        this.backend = PermissionBackend.getBackend(backendName, this, config);
+        this.backend.initialize();
     }
 
     public String getBackend() {

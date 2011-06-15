@@ -42,6 +42,8 @@ public abstract class PermissionBackend {
         this.manager = manager;
         this.config = config;
     }
+    
+    public abstract void initialize();
 
     public abstract PermissionUser getUser(String name);
 

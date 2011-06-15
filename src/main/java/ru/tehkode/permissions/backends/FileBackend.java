@@ -50,7 +50,10 @@ public class FileBackend extends PermissionBackend {
 
     public FileBackend(PermissionManager manager, Configuration config) {
         super(manager, config);
+    }
 
+    @Override
+    public void initialize() {
         String permissionFilename = config.getString("permissions.backends.file.file");
 
         // Default settings
@@ -67,7 +70,7 @@ public class FileBackend extends PermissionBackend {
         permissions = new Configuration(permissionFile);
 
         if (!permissionFile.exists()) {
-            try {                
+            try {
                 permissionFile.createNewFile();
 
                 // Load default permissions
@@ -91,13 +94,13 @@ public class FileBackend extends PermissionBackend {
 
     @Override
     public String[] getWorldInheritance(String world) {
-        if(world != null && !world.isEmpty()){
+        if (world != null && !world.isEmpty()) {
             return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);
         }
-        
+
         return new String[0];
-    }    
-    
+    }
+
     @Override
     public PermissionUser getUser(String userName) {
         return new FileUser(userName, manager, this);

@@ -50,8 +50,10 @@ public class SQLBackend extends PermissionBackend {
 
     public SQLBackend(PermissionManager manager, Configuration config) {
         super(manager, config);
+    }
 
-
+    @Override
+    public void initialize() {
         String dbDriver = config.getString("permissions.backends.sql.driver", "mysql");
         String dbUri = config.getString("permissions.backends.sql.uri", "");
         String dbUser = config.getString("permissions.backends.sql.user", "");
