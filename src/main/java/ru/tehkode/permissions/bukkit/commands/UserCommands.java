@@ -25,6 +25,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
+import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
@@ -93,7 +94,7 @@ public class UserCommands extends PermissionsCommand {
         }
 
         sender.sendMessage(userName + "'s permissions:");
-        
+
         this.sendMessage(sender, this.mapPermissions(args.get("world"), user, 0));
         /*
         for (String permission : user.getOwnPermissions(args.get("world"))) {
@@ -233,8 +234,6 @@ public class UserCommands extends PermissionsCommand {
         sender.sendMessage(ChatColor.WHITE + "Permission removed!");
         this.informPlayer(plugin, userName, "Your permissions has been changed!");
     }
-    
-    
 
     /**
      * User's groups management
@@ -286,21 +285,37 @@ public class UserCommands extends PermissionsCommand {
     permission = "permissions.manage.membership",
     description = "Set specified group for user")
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        String userName = this.autoCompletePlayerName(args.get("user"));
-        String groupName = this.autoCompleteGroupName(args.get("group"));
+        PermissionManager manager = PermissionsEx.getPermissionManager();
 
-        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+        PermissionUser user = manager.getUser(this.autoCompletePlayerName(args.get("user")));
 
         if (user == null) {
             sender.sendMessage(ChatColor.RED + "No such user found");
             return;
         }
 
-        user.setGroups(new PermissionGroup[]{PermissionsEx.getPermissionManager().getGroup(groupName)});
+        String groupName = args.get("group");
+
+        PermissionGroup[] groups;
+
+        if (groupName.contains(",")) {
+            String[] groupsNames = groupName.split(",");
+            groups = new PermissionGroup[groupsNames.length];
+
+            for (int i = 0; i < groupsNames.length; i++) {
+                groups[i] = manager.getGroup(groupsNames[i]);
+            }
+
+        } else {
+            groupName = this.autoCompleteGroupName(groupName);
+            groups = new PermissionGroup[]{manager.getGroup(groupName)};
+        }
+
+        user.setGroups(groups);
 
         sender.sendMessage(ChatColor.WHITE + "User groups set!");
 
-        this.informPlayer(plugin, userName, "You are now only in \"" + groupName + "\" group");
+        this.informPlayer(plugin, user.getName(), "You are now only in \"" + groupName + "\" group");
     }
 
     @Command(name = "pex",
@@ -331,5 +346,4 @@ public class UserCommands extends PermissionsCommand {
 
         this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
     }
-    
 }
