@@ -201,6 +201,24 @@ public abstract class PermissionUser extends PermissionEntity {
         }
     }
 
+    public void promote(PermissionUser promoter) throws Exception {
+    }
+
+    public void demote(PermissionUser demoter) throws Exception {
+    }
+
+    public boolean isRanked() {
+        return (this.getRank() > 0);
+    }
+
+    public int getRank() {
+        return this.getOptionInteger("rank", "", 0);
+    }
+
+    public String getRankGroup() {
+        return this.getOption("rank-group");
+    }
+
     @Override
     public String getPrefix() {
         if (this.cachedPrefix == null) {

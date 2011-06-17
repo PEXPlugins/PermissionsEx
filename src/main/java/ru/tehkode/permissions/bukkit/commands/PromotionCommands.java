@@ -32,7 +32,7 @@ import ru.tehkode.utils.StringUtils;
 public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
-    syntax = "group <group> rank [rank]",
+    syntax = "group <group> rank [rank] [rankgroup]",
     description = "Promotes user to next group",
     isPrimary = true,
     permission = "permissions.groups.rank")
@@ -50,8 +50,7 @@ public class PromotionCommands extends PermissionsCommand {
             String newRank = args.get("rank").trim();
 
             try {
-                Integer.parseInt(newRank); // Just to check what this is legal integer number
-                group.setOption("rank", newRank);
+                group.setRank(Integer.parseInt(newRank));
             } catch (NumberFormatException e) {
                 sender.sendMessage("Wrong rank. Make sure it's number.");
             }

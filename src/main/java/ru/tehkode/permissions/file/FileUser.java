@@ -19,13 +19,10 @@
 package ru.tehkode.permissions.file;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionUser;
 import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
