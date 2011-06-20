@@ -35,7 +35,7 @@ public class FileUser extends ProxyPermissionUser {
 
     public FileUser(String playerName, PermissionManager manager, FileBackend backend) {
         super(new FileEntity(playerName, manager, backend, "users"));
-        
+
         this.node = ((FileEntity)this.backendEntity).getConfigNode();
     }
 

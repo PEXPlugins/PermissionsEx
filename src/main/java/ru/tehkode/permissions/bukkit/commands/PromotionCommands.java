@@ -65,10 +65,10 @@ public class PromotionCommands extends PermissionsCommand {
     }
 
     @Command(name = "pex",
-    syntax = "promote <user>",
+    syntax = "promote <user> [ladder]",
     description = "Promotes user to next group",
     isPrimary = true,
-    permission = "permissions.user.promote")
+    permissions = {"permissions.user.promote", "or", "permissions.user.promote.<ladder>"})
     public void promoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -132,7 +132,7 @@ public class PromotionCommands extends PermissionsCommand {
     }
 
     @Command(name = "pex",
-    syntax = "demote <user>",
+    syntax = "demote <user> [ladder]",
     description = "Demotes user to previous group",
     isPrimary = true,
     permission = "permissions.user.rank.demote")
@@ -211,7 +211,7 @@ public class PromotionCommands extends PermissionsCommand {
     syntax = "<user>",
     description = "Demotes user to previous group",
     isPrimary = true,
-    permission = "permissions.user.demote")
+    permission = "permissions.user.rank.demote")
     public void demoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.demoteUser(plugin, sender, args);
     }

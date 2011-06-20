@@ -38,7 +38,7 @@ public class FileGroup extends ProxyPermissionGroup {
         
         this.node = ((FileEntity)this.backendEntity).getConfigNode();
     }
-
+    
     @Override
     public String[] getParentGroupsNamesImpl() {
         return this.node.getStringList("inheritance", new LinkedList<String>()).toArray(new String[0]);

@@ -34,7 +34,47 @@ public abstract class PermissionGroup extends PermissionEntity {
         super(groupName, manager);
     }
 
-    protected abstract String[] getOwnPermissions(String world);
+    public abstract String[] getOwnPermissions(String world);
+    
+    public abstract String getOwnOption(String option, String world);
+    
+    public String getOwnOption(String option) {
+        return this.getOwnOption(option, "");
+    }
+
+    public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
+        String option = this.getOwnOption(optionName, world);
+
+        if ("false".equalsIgnoreCase(option)) {
+            return false;
+        } else if ("true".equalsIgnoreCase(option)) {
+            return true;
+        }
+
+        return defaultValue;
+    }
+
+    public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
+        String option = this.getOwnOption(optionName, world);
+
+        try {
+            return Integer.parseInt(option);
+        } catch (NumberFormatException e) {
+        }
+
+        return defaultValue;
+    }
+
+    public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
+        String option = this.getOwnOption(optionName, world);
+
+        try {
+            return Double.parseDouble(option);
+        } catch (NumberFormatException e) {
+        }
+
+        return defaultValue;
+    }
 
     protected abstract void removeGroup();
 
@@ -55,19 +95,19 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public int getRank() {
-        return this.getOptionInteger("rank", "", 0);
+        return this.getOwnOptionInteger("rank", "", 0);
     }
 
     public void setRank(int rank) {
         this.setOption("rank", Integer.toString(rank));
     }
 
-    public String getRankGroup() {
-        return this.getOption("rank-group");
+    public String getRankLadder() {
+        return this.getOption("rank-ladder");
     }
-
-    public void setRankGroup(String rankGroup) {
-        this.setOption("rank-group", rankGroup);
+    
+    public void setRankLadder(String rankGroup) {
+        this.setOption("rank-ladder", rankGroup);
     }
 
     @Override

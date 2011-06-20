@@ -35,6 +35,9 @@ public class SQLUser extends PermissionUser {
         super(name, manager);
 
         this.backend = new SQLEntity(SQLEntity.Type.USER, name, sql);
+
+        this.setName(this.backend.name);
+
         this.prefix = backend.getPrefix();
         this.suffix = backend.getSuffix();
     }
@@ -54,14 +57,14 @@ public class SQLUser extends PermissionUser {
     @Override
     public void setPermissions(String[] permissions, String world) {
         backend.setPermissions(permissions, world);
-        
+
         this.clearCache();
     }
 
     @Override
     public void setOption(String permission, String value, String world) {
         backend.setPermission(permission, value, world);
-        
+
         this.clearCache();
     }
 
@@ -78,14 +81,14 @@ public class SQLUser extends PermissionUser {
     @Override
     public void setGroups(String[] parentGroups) {
         backend.setParents(parentGroups);
-        
+
         this.clearCache();
     }
 
     @Override
     public void removePermission(String permission, String world) {
         backend.removePermission(permission, world);
-        
+
         this.clearCache();
     }
 
@@ -112,21 +115,26 @@ public class SQLUser extends PermissionUser {
     @Override
     public void addPermission(String permission, String world) {
         backend.addPermission(permission, world);
-        
+
         this.clearCache();
     }
 
     @Override
-    public String getOption(String permission, String world) {
-        if (permission == null) {
+    public String getOwnOption(String option, String world) {
+        return this.backend.getOption(option, world);
+    }
+
+    @Override
+    public String getOption(String option, String world) {
+        if (option == null) {
             return "";
         }
 
-        String userValue = backend.getOption(permission, world);
-        
+        String userValue = backend.getOption(option, world);
+
         if (userValue == null || userValue.isEmpty()) {
             for (PermissionGroup group : this.getGroups()) {
-                String value = group.getOption(permission, world);
+                String value = group.getOption(option, world);
                 if (value != null && !value.isEmpty()) {
                     return value;
                 }

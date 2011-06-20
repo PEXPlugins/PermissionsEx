@@ -23,8 +23,10 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import org.bukkit.Bukkit;
+import ru.tehkode.permissions.exceptions.RankingException;
 
 /**
  *
@@ -43,6 +45,46 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     protected abstract String[] getOwnPermissions(String world);
+
+    public abstract String getOwnOption(String option, String world);
+
+    public String getOwnOption(String option) {
+        return this.getOwnOption(option, "");
+    }
+
+    public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
+        String option = this.getOwnOption(optionName, world);
+
+        if ("false".equalsIgnoreCase(option)) {
+            return false;
+        } else if ("true".equalsIgnoreCase(option)) {
+            return true;
+        }
+
+        return defaultValue;
+    }
+
+    public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
+        String option = this.getOwnOption(optionName, world);
+
+        try {
+            return Integer.parseInt(option);
+        } catch (NumberFormatException e) {
+        }
+
+        return defaultValue;
+    }
+
+    public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
+        String option = this.getOwnOption(optionName, world);
+
+        try {
+            return Double.parseDouble(option);
+        } catch (NumberFormatException e) {
+        }
+
+        return defaultValue;
+    }
 
     public abstract void setGroups(String[] groups);
 
@@ -201,42 +243,71 @@ public abstract class PermissionUser extends PermissionEntity {
         }
     }
 
-    public void promote(PermissionUser promoter) throws Exception {
+    public void promote(PermissionUser promoter, String ladderName) throws RankingException {        
+        if (promoter != null) {
+            if(promoter.isRanked(ladderName)){
+                
+            } else if (ladderName != null) {
+                if(!promoter.has("permissions.user.promote."+ladderName)){
+                    throw new RankingException("Can't promote user from "+ladderName+" ladder!", this, promoter);
+                }
+                
+            } else {
+                
+            }
+        }
+
     }
 
-    public void demote(PermissionUser demoter) throws Exception {
+    public void demote(PermissionUser demoter, String ladder) throws RankingException {
     }
 
-    public boolean isRanked() {
-        return (this.getRank() > 0);
+    public boolean isRanked(String ladder) {
+        return (this.getRank(ladder) > 0);
     }
 
-    public int getRank() {
-        return this.getOptionInteger("rank", "", 0);
+    public int getRank(String ladder) {
+        Map<String, PermissionGroup> ladders = this.getRankLadders();
+
+        if (ladders.containsKey(ladder)) {
+            return ladders.get(ladder).getRank();
+        }
+
+        return 0;
     }
 
-    public String getRankGroup() {
-        return this.getOption("rank-group");
+    public Map<String, PermissionGroup> getRankLadders() {
+        Map<String, PermissionGroup> ladders = new HashMap<String, PermissionGroup>();
+
+        for (PermissionGroup group : this.getGroups()) {
+            if (!group.isRanked()) {
+                continue;
+            }
+
+            ladders.put(group.getRankLadder(), group);
+        }
+
+        return ladders;
     }
 
     @Override
     public String getPrefix() {
         if (this.cachedPrefix == null) {
-            String prefix = super.getPrefix();
-            if (prefix == null || prefix.isEmpty()) {
+            String localPrefix = super.getPrefix();
+            if (localPrefix == null || localPrefix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups()) {
-                    prefix = group.getPrefix();
-                    if (prefix != null && !prefix.isEmpty()) {
+                    localPrefix = group.getPrefix();
+                    if (localPrefix != null && !localPrefix.isEmpty()) {
                         break;
                     }
                 }
             }
 
-            if (prefix == null) { // just for NPE safety
-                prefix = "";
+            if (localPrefix == null) { // just for NPE safety
+                localPrefix = "";
             }
 
-            this.cachedPrefix = prefix;
+            this.cachedPrefix = localPrefix;
         }
 
         return this.cachedPrefix;
@@ -245,20 +316,20 @@ public abstract class PermissionUser extends PermissionEntity {
     @Override
     public String getSuffix() {
         if (this.cachedSuffix == null) {
-            String suffix = super.getSuffix();
-            if (suffix == null || suffix.isEmpty()) {
+            String localSuffix = super.getSuffix();
+            if (localSuffix == null || localSuffix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups()) {
-                    suffix = group.getSuffix();
-                    if (suffix != null && !suffix.isEmpty()) {
+                    localSuffix = group.getSuffix();
+                    if (localSuffix != null && !localSuffix.isEmpty()) {
                         break;
                     }
                 }
             }
 
-            if (suffix == null) { // just for NPE safety
-                suffix = "";
+            if (localSuffix == null) { // just for NPE safety
+                localSuffix = "";
             }
-            this.cachedSuffix = suffix;
+            this.cachedSuffix = localSuffix;
         }
 
         return this.cachedSuffix;

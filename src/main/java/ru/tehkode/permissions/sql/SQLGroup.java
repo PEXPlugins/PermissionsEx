@@ -30,28 +30,35 @@ public class SQLGroup extends PermissionGroup {
         super(name, manager);
 
         this.backend = new SQLEntity(SQLEntity.Type.GROUP, name, sql);
+
+        this.setName(this.backend.name);
+
         this.prefix = backend.getPrefix();
         this.suffix = backend.getSuffix();
     }
 
     @Override
-    public String getOption(String permission, String world) {
-        if (permission == null) {
+    public String getOwnOption(String option, String world) {
+        return this.backend.getOption(option, world);
+    }
+
+    @Override
+    public String getOption(String option, String world) {
+        if (option == null) {
             return "";
         }
 
-        String userValue = this.backend.getOption(permission, world);
+        String userValue = this.backend.getOption(option, world);
         if (!userValue.isEmpty()) {
             return userValue;
         }
 
         for (PermissionGroup group : this.getParentGroups()) {
-            String value = group.getOption(permission, world);
+            String value = group.getOption(option, world);
             if (value != null && !value.isEmpty()) {
                 return value;
             }
         }
-
 
         return userValue;
     }
