@@ -128,12 +128,18 @@ public class SQLEntity {
         return permissions.toArray(new String[0]);
     }
 
-    public String getOption(String permission, String world) {
-        if ((world == null || world.isEmpty()) && this.commonOptions.containsKey(permission)) {
-            return this.commonOptions.get(permission);
+    public String getOption(String option, String world, String defaultValue) {
+        if (world != null && !world.isEmpty() && this.worldsOptions.containsKey(world)) {
+            if (this.worldsOptions.get(world).containsKey(option)) {
+                return this.worldsOptions.get(world).get(option);
+            }
         }
 
-        return "";
+        if ((world == null || world.isEmpty()) && this.commonOptions.containsKey(option)) {
+            return this.commonOptions.get(option);
+        }
+
+        return defaultValue;
     }
 
     public void addPermission(String permission, String world) {

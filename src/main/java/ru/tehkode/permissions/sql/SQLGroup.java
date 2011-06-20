@@ -38,26 +38,25 @@ public class SQLGroup extends PermissionGroup {
     }
 
     @Override
-    public String getOwnOption(String option, String world) {
-        return this.backend.getOption(option, world);
+    public String getOwnOption(String option, String world, String defaultValue) {
+        return this.backend.getOption(option, world, defaultValue);
     }
 
     @Override
-    public String getOption(String option, String world) {
+    public String getOption(String option, String world, String defaultValue) {
         if (option == null) {
             return "";
         }
 
-        String userValue = this.backend.getOption(option, world);
-        if (!userValue.isEmpty()) {
-            return userValue;
-        }
-
-        for (PermissionGroup group : this.getParentGroups()) {
-            String value = group.getOption(option, world);
-            if (value != null && !value.isEmpty()) {
-                return value;
+        String userValue = this.getOwnOption(option, world, null);
+        if (userValue == null) {
+            for (PermissionGroup group : this.getParentGroups()) {
+                String value = group.getOption(option, world, null);
+                if (value != null) {
+                    return value;
+                }
             }
+            userValue = defaultValue;
         }
 
         return userValue;

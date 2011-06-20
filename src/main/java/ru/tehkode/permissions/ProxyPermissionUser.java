@@ -85,21 +85,23 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
     
     @Override
-    public String getOwnOption(String option, String world) {
-        return this.backendEntity.getOption(option, world);
+    public String getOwnOption(String option, String world, String defaultValue) {
+        return this.backendEntity.getOption(option, world, defaultValue);
     }    
     
     @Override
-    public String getOption(String optionName, String world) {
-        String option = this.getOwnOption(optionName, world);
+    public String getOption(String optionName, String world, String defaultValue) {
+        String option = this.getOwnOption(optionName, world, null);
         
-        if (option == null || option.isEmpty()) {
+        if (option == null) {
             for (PermissionGroup group : this.getGroups()) {
-                option = group.getOption(optionName, world);
-                if (option != null && !option.isEmpty()) {
+                option = group.getOption(optionName, world, null);
+                if (option != null) {
                     return option;
                 }
             }
+            
+            option = defaultValue;
         }
         
         return option;

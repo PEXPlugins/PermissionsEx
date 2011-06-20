@@ -81,11 +81,15 @@ public abstract class PermissionEntity {
     }
 
     public String getOption(String option) {
-        return this.getOption(option, "");
+        return this.getOption(option, "", "");
+    }
+    
+    public String getOption(String option, String world){
+        return this.getOption(option, world, "");
     }
 
     public boolean getOptionBoolean(String optionName, String world, boolean defaultValue) {
-        String option = this.getOption(optionName, world);
+        String option = this.getOption(optionName, world, Boolean.toString(defaultValue));
 
         if ("false".equalsIgnoreCase(option)) {
             return false;
@@ -97,7 +101,7 @@ public abstract class PermissionEntity {
     }
 
     public int getOptionInteger(String optionName, String world, int defaultValue) {
-        String option = this.getOption(optionName, world);
+        String option = this.getOption(optionName, world, Integer.toString(defaultValue));
 
         try {
             return Integer.parseInt(option);
@@ -108,7 +112,7 @@ public abstract class PermissionEntity {
     }
 
     public double getOptionDouble(String optionName, String world, double defaultValue) {
-        String option = this.getOption(optionName, world);
+        String option = this.getOption(optionName, world, Double.toString(defaultValue));
 
         try {
             return Double.parseDouble(option);
@@ -163,7 +167,7 @@ public abstract class PermissionEntity {
 
     public abstract Map<String, String> getOptions(String world);
 
-    public abstract String getOption(String option, String world);
+    public abstract String getOption(String option, String world, String defaultValue);
 
     public void setOption(String permission, String value) {
         this.setOption(permission, value, null);

@@ -152,7 +152,7 @@ public class FileEntity extends PermissionEntity {
     }
 
     @Override
-    public String getOption(String permission, String world) {
+    public String getOption(String permission, String world, String defaultValue) {
         if (world != null && !world.isEmpty()) {
             String worldPermission = this.node.getString("worlds." + world + ".options." + permission);
             if (worldPermission != null && !worldPermission.isEmpty()) {
@@ -165,7 +165,7 @@ public class FileEntity extends PermissionEntity {
             return commonPermission;
         }
 
-        return "";
+        return defaultValue;
     }
 
     @Override

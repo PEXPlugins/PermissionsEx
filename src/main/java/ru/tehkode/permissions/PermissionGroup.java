@@ -35,15 +35,19 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public abstract String[] getOwnPermissions(String world);
-    
-    public abstract String getOwnOption(String option, String world);
-    
+
+    public abstract String getOwnOption(String option, String world, String defaultValue);
+
     public String getOwnOption(String option) {
-        return this.getOwnOption(option, "");
+        return this.getOwnOption(option, "", "");
+    }
+
+    public String getOwnOption(String option, String world) {
+        return this.getOwnOption(option, world, "");
     }
 
     public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
-        String option = this.getOwnOption(optionName, world);
+        String option = this.getOwnOption(optionName, world, Boolean.toString(defaultValue));
 
         if ("false".equalsIgnoreCase(option)) {
             return false;
@@ -55,7 +59,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
-        String option = this.getOwnOption(optionName, world);
+        String option = this.getOwnOption(optionName, world, Integer.toString(defaultValue));
 
         try {
             return Integer.parseInt(option);
@@ -66,7 +70,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
-        String option = this.getOwnOption(optionName, world);
+        String option = this.getOwnOption(optionName, world, Double.toString(defaultValue));
 
         try {
             return Double.parseDouble(option);
@@ -105,7 +109,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     public String getRankLadder() {
         return this.getOption("rank-ladder");
     }
-    
+
     public void setRankLadder(String rankGroup) {
         this.setOption("rank-ladder", rankGroup);
     }
