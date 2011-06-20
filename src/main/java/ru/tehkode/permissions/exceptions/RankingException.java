@@ -22,17 +22,17 @@ import ru.tehkode.permissions.PermissionUser;
 
 public class RankingException extends Exception {
 
-    protected PermissionUser promotee = null;
+    protected PermissionUser target = null;
     protected PermissionUser promoter = null;
 
-    public RankingException(String message, PermissionUser promotee, PermissionUser promoter) {
+    public RankingException(String message, PermissionUser target, PermissionUser promoter) {
         super(message);
-        this.promotee = promotee;
+        this.target = target;
         this.promoter = promoter;
     }
 
-    public PermissionUser getPromotee() {
-        return promotee;
+    public PermissionUser getTarget() {
+        return target;
     }
 
     public PermissionUser getPromoter() {

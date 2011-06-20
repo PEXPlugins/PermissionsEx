@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.bukkit.Bukkit;
 import ru.tehkode.permissions.exceptions.RankingException;
 
 /**
@@ -46,14 +45,18 @@ public abstract class PermissionUser extends PermissionEntity {
 
     protected abstract String[] getOwnPermissions(String world);
 
-    public abstract String getOwnOption(String option, String world);
+    public abstract String getOwnOption(String option, String world, String defaultValue);
 
     public String getOwnOption(String option) {
-        return this.getOwnOption(option, "");
+        return this.getOwnOption(option, "", "");
+    }
+    
+    public String getOwnOption(String option, String world){
+        return this.getOwnOption(option, world, "");
     }
 
     public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
-        String option = this.getOwnOption(optionName, world);
+        String option = this.getOwnOption(optionName, world, Boolean.toString(defaultValue));
 
         if ("false".equalsIgnoreCase(option)) {
             return false;
@@ -65,7 +68,7 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
-        String option = this.getOwnOption(optionName, world);
+        String option = this.getOwnOption(optionName, world, Integer.toString(defaultValue));
 
         try {
             return Integer.parseInt(option);
@@ -76,7 +79,7 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
-        String option = this.getOwnOption(optionName, world);
+        String option = this.getOwnOption(optionName, world, Double.toString(defaultValue));
 
         try {
             return Double.parseDouble(option);
@@ -243,23 +246,103 @@ public abstract class PermissionUser extends PermissionEntity {
         }
     }
 
-    public void promote(PermissionUser promoter, String ladderName) throws RankingException {        
-        if (promoter != null) {
-            if(promoter.isRanked(ladderName)){
-                
-            } else if (ladderName != null) {
-                if(!promoter.has("permissions.user.promote."+ladderName)){
-                    throw new RankingException("Can't promote user from "+ladderName+" ladder!", this, promoter);
-                }
-                
-            } else {
-                
-            }
+    public void promote(PermissionUser promoter, String ladderName) throws RankingException {
+        if (ladderName == null) {
+            ladderName = "";
         }
+
+        int promoterRank = getPromoterRankAndCheck(promoter, ladderName);
+        int rank = this.getRank(ladderName);
+
+        PermissionGroup sourceGroup = this.getRankLadders().get(ladderName);
+        PermissionGroup targetGroup = null;
+
+        for (Map.Entry<Integer, PermissionGroup> entry : this.manager.getRankLadder(ladderName).entrySet()) {
+            int groupRank = entry.getValue().getRank();
+            if (groupRank >= rank) { // group have equal or lower than current rank
+                continue;
+            }
+
+            if (groupRank <= promoterRank) { // group have higher rank than promoter
+                continue;
+            }
+
+            if (targetGroup != null && groupRank <= targetGroup.getRank()) { // group have higher rank than target group
+                continue;
+            }
+
+            targetGroup = entry.getValue();
+        }
+
+        if (targetGroup == null) {
+            throw new RankingException("User are not promoteable", this, promoter);
+        }
+
+        this.swapGroups(sourceGroup, targetGroup);
+    }
+
+    public void demote(PermissionUser demoter, String ladderName) throws RankingException {
+        if (ladderName == null) {
+            ladderName = "";
+        }
+
+        int promoterRank = getPromoterRankAndCheck(demoter, ladderName);
+        int rank = this.getRank(ladderName);
+
+        PermissionGroup sourceGroup = this.getRankLadders().get(ladderName);
+        PermissionGroup targetGroup = null;
+
+        for (Map.Entry<Integer, PermissionGroup> entry : this.manager.getRankLadder(ladderName).entrySet()) {
+            int groupRank = entry.getValue().getRank();
+            if (groupRank <= rank) { // group have equal or higher than current rank
+                continue;
+            }
+
+            if (groupRank <= promoterRank) { // group have higher rank than promoter
+                continue;
+            }
+
+            if (targetGroup != null && groupRank >= targetGroup.getRank()) { // group have lower rank than target group
+                continue;
+            }
+
+            targetGroup = entry.getValue();
+        }
+
+        if (targetGroup == null) {
+            throw new RankingException("User are not demoteable", this, demoter);
+        }
+
+        this.swapGroups(sourceGroup, targetGroup);
 
     }
 
-    public void demote(PermissionUser demoter, String ladder) throws RankingException {
+    protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
+        if (!this.isRanked(ladderName)) { // not ranked
+            throw new RankingException("User are not in this ladder", this, promoter);
+        }
+
+        int rank = this.getRank(ladderName);
+        int promoterRank = 0;
+
+        if (promoter != null && promoter.isRanked(ladderName)) {
+            promoterRank = promoter.getRank(ladderName);
+
+            if (promoterRank >= rank) {
+                throw new RankingException("Promoter don't have high enough rank to change " + this.getName() + "'s rank", this, promoter);
+            }
+        }
+
+        return promoterRank;
+    }
+
+    protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
+        List<PermissionGroup> groups = Arrays.asList(this.getGroups());
+
+        groups.remove(src);
+        groups.add(dst);
+
+        this.setGroups(groups.toArray(new PermissionGroup[0]));
     }
 
     public boolean isRanked(String ladder) {
