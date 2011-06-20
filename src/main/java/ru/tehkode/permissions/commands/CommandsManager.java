@@ -274,6 +274,7 @@ public class CommandsManager {
                     }
                     
                     if ( i > 1 && isOR(permissions[i - 1]) && !isOR(permissions[i - 2]) && lastORValue){
+                        lastORValue = false;
                         continue;
                     }
                     
