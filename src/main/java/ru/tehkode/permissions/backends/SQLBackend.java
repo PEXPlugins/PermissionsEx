@@ -105,7 +105,7 @@ public class SQLBackend extends PermissionBackend {
 
     @Override
     public PermissionGroup[] getGroups() {
-        String[] groupNames = SQLEntity.getEntitiesNams(sql, SQLEntity.Type.GROUP, false);
+        String[] groupNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.GROUP, false);
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
         for (String groupName : groupNames) {
@@ -117,7 +117,7 @@ public class SQLBackend extends PermissionBackend {
 
     @Override
     public PermissionUser[] getUsers() {
-        String[] userNames = SQLEntity.getEntitiesNams(sql, SQLEntity.Type.USER, false);
+        String[] userNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.USER, false);
         PermissionUser[] users = new PermissionUser[userNames.length];
 
         int index = 0;

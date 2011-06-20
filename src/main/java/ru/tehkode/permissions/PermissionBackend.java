@@ -72,18 +72,18 @@ public abstract class PermissionBackend {
     public abstract String[] getWorldInheritance(String world);
 
     /**
-     * Return all registred groups
+     * Return all registered groups
      * @return
      */
     public abstract PermissionGroup[] getGroups();
 
     /**
-     * Return all registed users
+     * Return all registered users
      *
      * @return
      */
     public abstract PermissionUser[] getUsers();
-
+    
     
     /**
      * Return child groups of specified groups only.
@@ -117,7 +117,7 @@ public abstract class PermissionBackend {
 
         return groups.toArray(new PermissionGroup[]{});
     }
-
+    
     /**
      * Return users of specified group only.
      * If there is no such group null will be returned
@@ -148,7 +148,7 @@ public abstract class PermissionBackend {
 
         return users.toArray(new PermissionUser[]{});
     }
-
+    
     public abstract void reload();
     protected static Map<String, Class> registedAliases = new HashMap<String, Class>();
 

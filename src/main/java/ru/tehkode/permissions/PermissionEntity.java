@@ -21,6 +21,7 @@ package ru.tehkode.permissions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.bukkit.Bukkit;
 
 /**
  *
@@ -43,6 +44,14 @@ public abstract class PermissionEntity {
         return this.name;
     }
 
+    protected void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean has(String permission){
+        return this.has(permission, Bukkit.getServer().getWorlds().get(0).getName());
+    }
+    
     public boolean has(String permission, String world) {
         if (permission != null && permission.isEmpty()) { // empty permission for public access :)
             return true;
@@ -71,12 +80,12 @@ public abstract class PermissionEntity {
         this.removePermission(permission, "");
     }
 
-    public String getOption(String permission) {
-        return this.getOption(permission, "");
+    public String getOption(String option) {
+        return this.getOption(option, "");
     }
 
-    public boolean getOptionBoolean(String permission, String world, boolean defaultValue) {
-        String option = this.getOption(permission, world);
+    public boolean getOptionBoolean(String optionName, String world, boolean defaultValue) {
+        String option = this.getOption(optionName, world);
 
         if ("false".equalsIgnoreCase(option)) {
             return false;
@@ -87,8 +96,8 @@ public abstract class PermissionEntity {
         return defaultValue;
     }
 
-    public int getOptionInteger(String permission, String world, int defaultValue) {
-        String option = this.getOption(permission, world);
+    public int getOptionInteger(String optionName, String world, int defaultValue) {
+        String option = this.getOption(optionName, world);
 
         try {
             return Integer.parseInt(option);
@@ -98,8 +107,8 @@ public abstract class PermissionEntity {
         return defaultValue;
     }
 
-    public double getOptionDouble(String permission, String world, double defaultValue) {
-        String option = this.getOption(permission, world);
+    public double getOptionDouble(String optionName, String world, double defaultValue) {
+        String option = this.getOption(optionName, world);
 
         try {
             return Double.parseDouble(option);
@@ -154,13 +163,13 @@ public abstract class PermissionEntity {
 
     public abstract Map<String, String> getOptions(String world);
 
-    public abstract String getOption(String permission, String world);
+    public abstract String getOption(String option, String world);
 
     public void setOption(String permission, String value) {
         this.setOption(permission, value, null);
     }
 
-    public abstract void setOption(String permission, String value, String world);
+    public abstract void setOption(String option, String value, String world);
 
     public abstract void addPermission(String permission, String world);
 

@@ -51,7 +51,6 @@ public class PermissionsEx extends JavaPlugin {
     protected PermissionManager permissionsManager;
     protected CommandsManager commandsManager;
     protected Configuration config;
-    
     protected ModifyworldManager modifyworldManager;
 
     public PermissionsEx() {
@@ -77,7 +76,7 @@ public class PermissionsEx extends JavaPlugin {
         this.commandsManager.register(new UserCommands());
         this.commandsManager.register(new GroupCommands());
         this.commandsManager.register(new PromotionCommands());
-        
+
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Low, this);
 
         this.modifyworldManager.registerEvents();
@@ -94,16 +93,16 @@ public class PermissionsEx extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-        PluginDescriptionFile pdfFile = this.getDescription();
+        PluginDescriptionFile pdf = this.getDescription();
         if (args.length > 0) {
             return this.commandsManager.execute(sender, command, args);
         } else {
             if (sender instanceof Player) {
-                sender.sendMessage(ChatColor.WHITE + "[PermissionsEx]: Running (" + pdfFile.getVersion() + ")");
+                sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]");
 
                 return !this.permissionsManager.has((Player) sender, "permissions.manage");
             } else {
-                sender.sendMessage("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] loaded");
+                sender.sendMessage("[PermissionsEx] version [" + pdf.getVersion() + "]");
 
                 return false;
             }

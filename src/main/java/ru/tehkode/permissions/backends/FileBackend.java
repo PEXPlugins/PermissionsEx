@@ -38,7 +38,6 @@ import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
 import ru.tehkode.permissions.file.FileGroup;
 import ru.tehkode.permissions.file.FileUser;
-import ru.tehkode.utils.StringUtils;
 
 /**
  *

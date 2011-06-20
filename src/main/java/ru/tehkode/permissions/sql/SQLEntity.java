@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import ru.tehkode.permissions.PermissionGroup;
 
 /**
  *
@@ -38,6 +37,7 @@ import ru.tehkode.permissions.PermissionGroup;
 public class SQLEntity {
 
     public enum Type {
+
         GROUP, USER
     }
     protected SQLConnectionManager db;
@@ -62,7 +62,7 @@ public class SQLEntity {
         this.fetchInheritance();
     }
 
-    public static String[] getEntitiesNams(SQLConnectionManager sql, Type type, boolean defaultOnly) {
+    public static String[] getEntitiesNames(SQLConnectionManager sql, Type type, boolean defaultOnly) {
         try {
             List<String> entities = new LinkedList<String>();
 
@@ -243,12 +243,12 @@ public class SQLEntity {
         return allPermissions;
     }
 
-    public Map<String, Map<String, String>> getAllOptions(){
+    public Map<String, Map<String, String>> getAllOptions() {
         Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
 
         allOptions.put("", this.commonOptions);
 
-        for (Map.Entry<String, Map<String, String>> entry : this.worldsOptions.entrySet()){
+        for (Map.Entry<String, Map<String, String>> entry : this.worldsOptions.entrySet()) {
             allOptions.put(entry.getKey(), entry.getValue());
         }
 
@@ -364,10 +364,14 @@ public class SQLEntity {
 
     protected final void fetchInfo() {
         try {
-            ResultSet result = this.db.selectQuery("SELECT prefix, suffix FROM permissions_entity WHERE name = ? AND type = ? LIMIT 1", this.name, this.type.ordinal());
+            ResultSet result = this.db.selectQuery("SELECT name, prefix, suffix FROM permissions_entity WHERE name LIKE ? AND type = ? LIMIT 1", this.name, this.type.ordinal());
             if (result.next()) {
                 this.prefix = result.getString("prefix");
                 this.suffix = result.getString("suffix");
+
+                // For teh case-insensetivity
+                this.name = result.getString("name");
+
                 this.virtual = false;
             } else {
                 this.prefix = "";

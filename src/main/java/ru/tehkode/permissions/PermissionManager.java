@@ -30,7 +30,7 @@ import ru.tehkode.permissions.config.Configuration;
  */
 public class PermissionManager {
 
-    protected Logger logger = Logger.getLogger("Minecraft");
+    protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
     protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
     protected PermissionBackend backend = null;
@@ -58,12 +58,12 @@ public class PermissionManager {
             return null;
         }
 
-        PermissionUser user = users.get(username);
+        PermissionUser user = users.get(username.toLowerCase());
 
         if (user == null) {
             user = this.backend.getUser(username);
             if (user != null) {
-                this.users.put(username, user);
+                this.users.put(username.toLowerCase(), user);
             }
         }
 
@@ -75,12 +75,12 @@ public class PermissionManager {
             return null;
         }
 
-        PermissionGroup group = groups.get(groupname);
+        PermissionGroup group = groups.get(groupname.toLowerCase());
 
         if (group == null) {
             group = this.backend.getGroup(groupname);
             if (group != null) {
-                this.groups.put(groupname, group);
+                this.groups.put(groupname.toLowerCase(), group);
             }
         }
 
@@ -133,6 +133,22 @@ public class PermissionManager {
         return backend.getGroups();
     }
 
+    public Map<Integer, PermissionGroup> getRankLadder(String ladderName) {
+        Map<Integer, PermissionGroup> ladder = new HashMap<Integer, PermissionGroup>();
+
+        for (PermissionGroup group : this.getGroups()) {
+            if (!group.isRanked()) {
+                continue;
+            }
+
+            if (group.getRankLadder().equalsIgnoreCase(ladderName)) {
+                ladder.put(group.getRank(), group);
+            }
+        }
+
+        return ladder;
+    }
+
     public String[] getWorldInheritance(String worldName) {
         return backend.getWorldInheritance(worldName);
     }
@@ -145,6 +161,16 @@ public class PermissionManager {
         return this.defaultGroup;
     }
 
+    public void setBackend(String backendName) {
+        this.reset();
+        this.backend = PermissionBackend.getBackend(backendName, this, config);
+        this.backend.initialize();
+    }
+
+    public String getBackend() {
+        return PermissionBackend.getBackendAlias(this.backend.getClass());
+    }
+
     private void initBackend() {
         String backendName = this.config.getString("permissions.backend");
 
@@ -155,15 +181,5 @@ public class PermissionManager {
         }
 
         this.setBackend(backendName);
-    }
-
-    public void setBackend(String backendName) {
-        this.reset();
-        this.backend = PermissionBackend.getBackend(backendName, this, config);
-        this.backend.initialize();
-    }
-
-    public String getBackend() {
-        return PermissionBackend.getBackendAlias(this.backend.getClass());
     }
 }
