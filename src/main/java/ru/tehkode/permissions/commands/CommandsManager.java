@@ -34,6 +34,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
@@ -108,16 +109,14 @@ public class CommandsManager {
         }
 
         // Check permission
-        Command commandAnnotation = selectedBinding.getMethodAnnotation();
-        if (!commandAnnotation.permission().isEmpty() && sender instanceof Player) { // this method are not public and required permission
-            if (!PermissionsEx.getPermissionManager().has((Player) sender, commandAnnotation.permission())) {
+        if (sender instanceof Player) { // this method are not public and required permission
+            if (!selectedBinding.checkPermissions((Player) sender)) {
                 logger.warning("User " + ((Player) sender).getName() + " was tried to access chat command \"" + command.getName() + " " + arguments + "\","
-                        + " but have no rights (" + commandAnnotation.permission() + ") to do that.");
+                        + " but don't have permission to do this.");
                 sender.sendMessage(ChatColor.RED + "Sorry, you don't have enough permissions.");
                 return true;
             }
         }
-
 
         try {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
@@ -236,6 +235,61 @@ public class CommandsManager {
 
         public void setParams(Map<String, String> params) {
             this.params = params;
+        }
+
+        public boolean checkPermissions(Player player) {
+            String[] permissions = this.getMethodAnnotation().permissions();
+
+            if (permissions.length == 0 && !this.getMethodAnnotation().permission().isEmpty()) {
+                permissions = new String[]{this.getMethodAnnotation().permission()};
+            }
+
+            PermissionManager manager = PermissionsEx.getPermissionManager();
+            
+            boolean lastORValue = false;
+            for (int i = 0; i < permissions.length; i++) {
+                String permission = permissions[i];
+
+                if (isOR(permission)) {
+                    continue;
+                }
+
+                if (permission.contains("<")) {
+                    String originalPermission = permission.toString(); // Clone original permission
+                    for (Entry<String, String> entry : this.getParams().entrySet()) {
+                        if (entry.getValue() != null) {
+                            permission = permission.replace("<" + entry.getKey() + ">", entry.getValue());
+                        }
+                    }
+
+                    // Arguable code section
+                    if (permission.equals(originalPermission)) {
+                        continue;
+                    }
+                }
+
+                if (!manager.has(player, permission)) {
+                    if (i < permissions.length - 2 && isOR(permissions[i + 1]) && !isOR(permissions[i+2])) {
+                        continue;
+                    }
+                    
+                    if ( i > 1 && isOR(permissions[i - 1]) && !isOR(permissions[i - 2]) && lastORValue){
+                        continue;
+                    }
+                    
+                    return false;
+                } else {
+                    if (i < permissions.length - 2 && isOR(permissions[i + 1]) && !isOR(permissions[i+2])) {
+                        lastORValue = true;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        protected boolean isOR(String permission) {
+            return "OR".equalsIgnoreCase(permission) || "||".equals(permission);
         }
 
         public void call(Object... args) {
