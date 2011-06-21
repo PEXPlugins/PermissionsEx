@@ -383,7 +383,7 @@ public class GroupCommands extends PermissionsCommand {
     permission = "permissions.manage.membership",
     description = "Add users (single or comma-separated list) to specified group")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        String groupName = this.autoCompleteGroupName(args.get("group"));
+        String groupName = this.autoCompleteGroupName(args.get("group"));        
         String users[];
 
         if (!args.get("user").contains(",")) {

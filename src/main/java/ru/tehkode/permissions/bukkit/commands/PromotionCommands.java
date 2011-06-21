@@ -29,7 +29,6 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.exceptions.RankingException;
-import ru.tehkode.utils.StringUtils;
 
 public class PromotionCommands extends PermissionsCommand {
 

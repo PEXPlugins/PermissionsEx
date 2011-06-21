@@ -309,7 +309,7 @@ public class UserCommands extends PermissionsCommand {
             groups = new PermissionGroup[groupsNames.length];
 
             for (int i = 0; i < groupsNames.length; i++) {
-                groups[i] = manager.getGroup(groupsNames[i]);
+                groups[i] = manager.getGroup(this.autoCompleteGroupName(groupsNames[i]));
             }
 
         } else {
