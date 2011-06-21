@@ -40,7 +40,7 @@ public class UserCommands extends PermissionsCommand {
     public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
 
-        sender.sendMessage(ChatColor.WHITE + "Currently registred users: ");
+        sender.sendMessage(ChatColor.WHITE + "Currently registered users: ");
         for (PermissionUser user : users) {
             sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getGroupsNames(), ", ") + "]");
         }
@@ -64,7 +64,7 @@ public class UserCommands extends PermissionsCommand {
     }
 
     /**
-     * User's permissions management
+     * User permission management
      */
     @Command(name = "pex",
     syntax = "user <user>",
@@ -84,7 +84,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -117,14 +117,14 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> prefix [newprefix]",
     permission = "permissions.manage.users",
-    description = "Add permission to user")
+    description = "Change user prefix")
     public void userPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -138,14 +138,14 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> suffix [newsuffix]",
     permission = "permissions.manage.users",
-    description = "Add permission to user")
+    description = "Change user suffix")
     public void userSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -159,13 +159,13 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> delete",
     permission = "permissions.manage.users",
-    description = "Add permission to user")
+    description = "Resets user permissions")
     public void userDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -188,7 +188,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -196,7 +196,7 @@ public class UserCommands extends PermissionsCommand {
 
         sender.sendMessage(ChatColor.WHITE + "Permission added!");
 
-        this.informPlayer(plugin, userName, "Your permissions has been changed!");
+        this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
 
     @Command(name = "pex",
@@ -209,7 +209,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -217,7 +217,7 @@ public class UserCommands extends PermissionsCommand {
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
 
-        this.informPlayer(plugin, userName, "Your permissions has been changed!");
+        this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
 
     @Command(name = "pex",
@@ -230,14 +230,14 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
         user.removePermission(args.get("permission"), args.get("world"));
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed!");
-        this.informPlayer(plugin, userName, "Your permissions has been changed!");
+        this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
 
     /**
@@ -253,7 +253,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -274,7 +274,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -295,7 +295,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = manager.getUser(this.autoCompletePlayerName(args.get("user")));
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
@@ -334,7 +334,7 @@ public class UserCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage(ChatColor.RED + "No such user found");
+            sender.sendMessage(ChatColor.RED + "User does not exist");
             return;
         }
 
