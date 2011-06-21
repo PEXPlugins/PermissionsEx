@@ -56,6 +56,7 @@ public class FileEntity extends PermissionEntity {
         ConfigurationNode entityNode = backend.permissions.getNode(this.nodePath);
 
         if (entityNode != null) {
+            this.virtual = false;
             return entityNode;
         }
 
@@ -65,11 +66,14 @@ public class FileEntity extends PermissionEntity {
                 if (entity.equalsIgnoreCase(entityName)) {
                     this.setName(entity);
                     this.nodePath = baseNode + "." + entity;
+                    this.virtual = false;
                     return backend.permissions.getNode(this.nodePath);
                 }
             }
         }
 
+        this.virtual = true;
+        
         return new ConfigurationNode();
     }
 

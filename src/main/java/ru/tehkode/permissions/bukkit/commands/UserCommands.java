@@ -174,6 +174,8 @@ public class UserCommands extends PermissionsCommand {
         }
 
         user.remove();
+        
+        PermissionsEx.getPermissionManager().resetUser(userName);
 
         sender.sendMessage(ChatColor.WHITE + "User \"" + user.getName() + "\" removed!");
     }
