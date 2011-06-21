@@ -18,64 +18,21 @@
  */
 package ru.tehkode.permissions.sql;
 
-import java.util.Map;
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.ProxyPermissionUser;
 
 /**
  *
  * @author code
  */
-public class SQLUser extends PermissionUser {
+public class SQLUser extends ProxyPermissionUser {
 
     protected SQLEntity backend;
 
     public SQLUser(String name, PermissionManager manager, SQLConnectionManager sql) {
-        super(name, manager);
+        super(new SQLEntity(name, manager, SQLEntity.Type.USER, sql));
 
-        this.backend = new SQLEntity(SQLEntity.Type.USER, name, sql);
-
-        this.setName(this.backend.name);
-
-        this.prefix = backend.getPrefix();
-        this.suffix = backend.getSuffix();
-    }
-
-    @Override
-    public void setPrefix(String prefix) {
-        backend.setPrefix(prefix);
-        super.setPrefix(prefix);
-    }
-
-    @Override
-    public void setSuffix(String suffix) {
-        backend.setSuffix(suffix);
-        super.setSuffix(suffix);
-    }
-
-    @Override
-    public void setPermissions(String[] permissions, String world) {
-        backend.setPermissions(permissions, world);
-
-        this.clearCache();
-    }
-
-    @Override
-    public void setOption(String permission, String value, String world) {
-        backend.setPermission(permission, value, world);
-
-        this.clearCache();
-    }
-
-    @Override
-    public Map<String, Map<String, String>> getAllOptions() {
-        return this.backend.getAllOptions();
-    }
-
-    @Override
-    public Map<String, String[]> getAllPermissions() {
-        return this.backend.getAllPermissions();
+        this.backend = (SQLEntity) this.backendEntity;
     }
 
     @Override
@@ -86,71 +43,7 @@ public class SQLUser extends PermissionUser {
     }
 
     @Override
-    public void removePermission(String permission, String world) {
-        backend.removePermission(permission, world);
-
-        this.clearCache();
-    }
-
-    @Override
-    public boolean isVirtual() {
-        return backend.isVirtual();
-    }
-
-    @Override
-    public String[] getOwnPermissions(String world) {
-        return backend.getPermissions(world);
-    }
-
-    @Override
-    public Map<String, String> getOptions(String world) {
-        return backend.getOptions(world);
-    }
-
-    @Override
     protected String[] getGroupsNamesImpl() {
         return backend.getParentNames();
-    }
-
-    @Override
-    public void addPermission(String permission, String world) {
-        backend.addPermission(permission, world);
-
-        this.clearCache();
-    }
-
-    @Override
-    public String getOwnOption(String option, String world, String defaultValue) {
-        return this.backend.getOption(option, world, defaultValue);
-    }
-
-    @Override
-    public String getOption(String option, String world, String defaultValue) {
-        if (option == null) {
-            return "";
-        }
-
-        String userValue = this.getOwnOption(option, world, null);
-        if (userValue == null) {
-            for (PermissionGroup group : this.getGroups()) {
-                String value = group.getOption(option, world, null);
-                if (value != null) {
-                    return value;
-                }
-            }
-            userValue = defaultValue;
-        }
-
-        return userValue;
-    }
-
-    @Override
-    public void save() {
-        this.backend.save();
-    }
-
-    @Override
-    public void remove() {
-        this.backend.remove();
     }
 }

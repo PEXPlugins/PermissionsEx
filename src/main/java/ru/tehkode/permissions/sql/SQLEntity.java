@@ -29,32 +29,30 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import ru.tehkode.permissions.PermissionEntity;
+import ru.tehkode.permissions.PermissionManager;
 
 /**
  *
  * @author code
  */
-public class SQLEntity {
+public class SQLEntity extends PermissionEntity {
 
     public enum Type {
 
         GROUP, USER
     }
     protected SQLConnectionManager db;
-    protected String name;
-    protected boolean virtual;
     protected Map<String, List<String>> worldsPermissions = null;
     protected Map<String, Map<String, String>> worldsOptions = null;
     protected List<String> commonPermissions = null;
     protected Map<String, String> commonOptions = null;
     protected List<String> parents = null;
-    protected String prefix = null;
-    protected String suffix = null;
     protected Type type;
 
-    public SQLEntity(SQLEntity.Type type, String name, SQLConnectionManager db) {
+    public SQLEntity(String name, PermissionManager manager, SQLEntity.Type type, SQLConnectionManager db) {
+        super(name, manager);
         this.db = db;
-        this.name = name;
         this.type = type;
 
         this.fetchInfo();
@@ -77,28 +75,18 @@ public class SQLEntity {
         }
     }
 
-    public String getSuffix() {
-        return suffix;
-    }
-
-    public void setSuffix(String suffix) {
-        this.suffix = suffix;
-
-        this.updateInfo();
-    }
-
-    public String getPrefix() {
-        return prefix;
-    }
-
+    @Override
     public void setPrefix(String prefix) {
-        this.prefix = prefix;
+        super.setPrefix(prefix);
 
         this.updateInfo();
     }
 
-    public boolean isVirtual() {
-        return virtual;
+    @Override
+    public void setSuffix(String suffix) {
+        super.setSuffix(prefix);
+
+        this.updateInfo();
     }
 
     public String[] getParentNames() {
@@ -109,6 +97,7 @@ public class SQLEntity {
         return this.parents.toArray(new String[0]);
     }
 
+    @Override
     public String[] getPermissions(String world) {
         List<String> permissions = new LinkedList<String>();
 
@@ -128,6 +117,7 @@ public class SQLEntity {
         return permissions.toArray(new String[0]);
     }
 
+    @Override
     public String getOption(String option, String world, String defaultValue) {
         if (world != null && !world.isEmpty() && this.worldsOptions.containsKey(world)) {
             if (this.worldsOptions.get(world).containsKey(option)) {
@@ -142,25 +132,22 @@ public class SQLEntity {
         return defaultValue;
     }
 
-    public void addPermission(String permission, String world) {
-        this.setPermission(permission, null, world);
-    }
-
-    public void setPermission(String permission, String value, String world) {
-        if (permission == null || permission.isEmpty()) {
+    @Override
+    public void setOption(String option, String world, String value) {
+        if (option == null || option.isEmpty()) {
             return;
         }
 
         Boolean newOption = true;
-        if (this.worldsPermissions == null) {
+        if (this.commonOptions == null) {
             this.fetchPermissions();
         }
 
-        if (world != null && !world.isEmpty() && worldsOptions.get(world) != null && worldsOptions.get(world).containsKey(permission)) {
+        if (world != null && !world.isEmpty() && worldsOptions.get(world) != null && worldsOptions.get(world).containsKey(option)) {
             newOption = false;
         }
 
-        if (newOption && this.commonOptions.containsKey(permission)) {
+        if (newOption && this.commonOptions.containsKey(option)) {
             newOption = false;
         }
 
@@ -173,33 +160,23 @@ public class SQLEntity {
         }
 
         if (newOption) {
-            this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, ?, ?, ?)", this.name, permission, value, world, this.type.ordinal());
+            this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, ?, ?, ?)", this.getName(), option, value, world, this.type.ordinal());
         } else {
-            this.db.updateQuery("UPDATE permissions SET value = ? WHERE name = ? AND type = ? AND permission = ?", value, this.name, this.type.ordinal(), permission);
+            this.db.updateQuery("UPDATE permissions SET value = ? WHERE name = ? AND type = ? AND permission = ?", value, this.getName(), this.type.ordinal(), option);
         }
 
         if (this.isVirtual()) {
             this.save();
         }
 
-        // Refresh permissions
-        this.fetchPermissions();
-    }
-
-    public void removePermission(String permission, String world) {
-        if (world == null) {
-            world = "";
-        }
-
-        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND world = ? AND type = ?", this.name, permission, world, this.type.ordinal());
-
+        // Refresh options
         this.fetchPermissions();
     }
 
     public void setParents(String[] parentGroups) {
         try {
             // Clean out existing records
-            this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
+            this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.getName(), this.type.ordinal());
 
             List<Object[]> rows = new LinkedList<Object[]>();
             for (String group : parentGroups) {
@@ -207,7 +184,7 @@ public class SQLEntity {
                     continue;
                 }
 
-                rows.add(new Object[]{this.name, group, this.type.ordinal()});
+                rows.add(new Object[]{this.getName(), group, this.type.ordinal()});
             }
 
             this.db.insert("permissions_inheritance", new String[]{"child", "parent", "type"}, rows);
@@ -224,6 +201,7 @@ public class SQLEntity {
         this.fetchInheritance();
     }
 
+    @Override
     public Map<String, String> getOptions(String world) {
         Map<String, String> options = new HashMap<String, String>();
 
@@ -237,6 +215,7 @@ public class SQLEntity {
         return options;
     }
 
+    @Override
     public Map<String, String[]> getAllPermissions() {
         Map<String, String[]> allPermissions = new HashMap<String, String[]>();
 
@@ -249,6 +228,7 @@ public class SQLEntity {
         return allPermissions;
     }
 
+    @Override
     public Map<String, Map<String, String>> getAllOptions() {
         Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
 
@@ -261,10 +241,15 @@ public class SQLEntity {
         return allOptions;
     }
 
+    @Override
     public void setPermissions(String[] permissions, String world) {
-        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ? AND world = ? AND value = ''", this.name, this.type.ordinal(), world);
+        if (world == null) {
+            world = "";
+        }
+
+        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ? AND world = ? AND value = ''", this.getName(), this.type.ordinal(), world);
         for (String permission : permissions) {
-            this.setPermission(permission, "", world);
+            this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
         }
 
         if (this.isVirtual()) {
@@ -274,17 +259,29 @@ public class SQLEntity {
         this.fetchPermissions();
     }
 
+    @Override
+    public void addPermission(String permission, String world) {
+        this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
+    }
+
+    @Override
+    public void removePermission(String permission, String world) {
+        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ? AND value = ''", this.getName(), permission, this.type.ordinal(), world);
+    }
+
+    @Override
     public void save() {
         this.updateInfo();
     }
 
+    @Override
     public void remove() {
         // clear inheritance info
-        this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.name, this.type.ordinal());
+        this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.getName(), this.type.ordinal());
         // clear permissions
-        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ?", this.name, this.type.ordinal());
+        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ?", this.getName(), this.type.ordinal());
         // clear info
-        this.db.updateQuery("DELETE FROM permissions_entity WHERE name = ? AND type = ?", this.name, this.type.ordinal());
+        this.db.updateQuery("DELETE FROM permissions_entity WHERE name = ? AND type = ?", this.getName(), this.type.ordinal());
 
         this.virtual = true;
         this.commonOptions.clear();
@@ -304,7 +301,7 @@ public class SQLEntity {
             sql = "UPDATE permissions_entity SET prefix = ?, suffix = ? WHERE name = ? AND type = ?";
         }
 
-        this.db.updateQuery(sql, this.prefix, this.suffix, this.name, this.type.ordinal());
+        this.db.updateQuery(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
 
         this.virtual = false;
     }
@@ -316,7 +313,7 @@ public class SQLEntity {
         this.commonPermissions = new LinkedList<String>();
 
         try {
-            ResultSet results = this.db.selectQuery("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ? ORDER BY id DESC", this.name, this.type.ordinal());
+            ResultSet results = this.db.selectQuery("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ? ORDER BY id DESC", this.getName(), this.type.ordinal());
             while (results.next()) {
                 String permission = results.getString("permission").trim();
                 String world = results.getString("world").trim();
@@ -357,7 +354,7 @@ public class SQLEntity {
     protected final void fetchInheritance() {
         try {
             this.parents = new LinkedList<String>();
-            ResultSet results = this.db.selectQuery("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = ? ORDER BY id DESC", this.name, this.type.ordinal());
+            ResultSet results = this.db.selectQuery("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = ? ORDER BY id DESC", this.getName(), this.type.ordinal());
 
             while (results.next()) {
                 this.parents.add(results.getString("parent"));
@@ -370,13 +367,13 @@ public class SQLEntity {
 
     protected final void fetchInfo() {
         try {
-            ResultSet result = this.db.selectQuery("SELECT name, prefix, suffix FROM permissions_entity WHERE name LIKE ? AND type = ? LIMIT 1", this.name, this.type.ordinal());
+            ResultSet result = this.db.selectQuery("SELECT name, prefix, suffix FROM permissions_entity WHERE name LIKE ? AND type = ? LIMIT 1", this.getName(), this.type.ordinal());
             if (result.next()) {
                 this.prefix = result.getString("prefix");
                 this.suffix = result.getString("suffix");
 
                 // For teh case-insensetivity
-                this.name = result.getString("name");
+                this.setName(result.getString("name"));
 
                 this.virtual = false;
             } else {
