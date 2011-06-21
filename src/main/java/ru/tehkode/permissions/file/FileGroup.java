@@ -53,17 +53,6 @@ public class FileGroup extends ProxyPermissionGroup {
         this.node.setProperty("inheritance", Arrays.asList(parentGroups));
 
         this.save();
-    }
-
-    @Override
-    protected void removeGroup() {        
-        super.removeGroup();
-    }
-
-    @Override
-    public void save() {
-        super.save();
-    }
-    
+    }   
     
 }
