@@ -76,7 +76,8 @@ public class PermissionsEx extends JavaPlugin {
         this.commandsManager.register(new UserCommands());
         this.commandsManager.register(new GroupCommands());
         this.commandsManager.register(new PromotionCommands());
-
+        this.commandsManager.register(new WorldCommands());
+        
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Low, this);
 
         this.modifyworldManager.registerEvents();
