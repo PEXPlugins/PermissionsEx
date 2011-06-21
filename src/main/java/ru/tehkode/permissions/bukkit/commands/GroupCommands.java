@@ -44,6 +44,8 @@ public class GroupCommands extends PermissionsCommand {
             String rank = group.getOption("rank");
             if (rank.isEmpty()) {
                 rank = "not ranked";
+            } else {
+                rank += ":" + group.getRankLadder();
             }
 
             sender.sendMessage(" " + group.getName() + " (" + rank + ") " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(group.getParentGroupsNames(), ", ") + "]");

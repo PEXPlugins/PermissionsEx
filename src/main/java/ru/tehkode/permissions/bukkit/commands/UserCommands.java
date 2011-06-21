@@ -90,7 +90,12 @@ public class UserCommands extends PermissionsCommand {
 
         sender.sendMessage(userName + " are member of:");
         for (PermissionGroup group : user.getGroups()) {
-            sender.sendMessage("  " + group.getName());
+            String rank = "not ranked";
+            if (group.isRanked()) {
+                rank = "rank " + group.getRank() + " @ " + group.getRankLadder();
+            }
+
+            sender.sendMessage("  " + group.getName() + " (" + rank + ")");
         }
 
         sender.sendMessage(userName + "'s permissions:");
