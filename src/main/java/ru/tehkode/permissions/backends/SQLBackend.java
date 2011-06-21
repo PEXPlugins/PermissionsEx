@@ -210,7 +210,7 @@ public class SQLBackend extends PermissionBackend {
             // Permissions
             for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
                 for (String permission : entry.getValue()) {
-                    writer.append("INSERT INTO permissions ( name, type, permission, world ) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + entry.getKey() + "');\n");
+                    writer.append("INSERT INTO permissions ( name, type, permission, world, value ) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + entry.getKey() + "', '');\n");
                 }
             }
 
