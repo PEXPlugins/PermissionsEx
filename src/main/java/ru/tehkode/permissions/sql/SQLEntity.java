@@ -138,25 +138,24 @@ public class SQLEntity extends PermissionEntity {
             return;
         }
 
+        if (world == null) {
+            world = "";
+        }
+
+        if (value == null || value.isEmpty()) {
+            this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ?", this.getName(), option, this.type.ordinal(), world);
+            return;
+        }
+
         Boolean newOption = true;
         if (this.commonOptions == null) {
             this.fetchPermissions();
         }
 
-        if (world != null && !world.isEmpty() && worldsOptions.get(world) != null && worldsOptions.get(world).containsKey(option)) {
+        if (!world.isEmpty() && worldsOptions.containsKey(world) && worldsOptions.get(world).containsKey(option)) {
             newOption = false;
-        }
-
-        if (newOption && this.commonOptions.containsKey(option)) {
+        } else if (world.isEmpty() && commonOptions.containsKey(option)) {
             newOption = false;
-        }
-
-        if (value == null) {
-            value = "";
-        }
-
-        if (world == null) {
-            world = "";
         }
 
         if (newOption) {
@@ -169,7 +168,7 @@ public class SQLEntity extends PermissionEntity {
             this.save();
         }
 
-        // Refresh options
+        // Refetch options
         this.fetchPermissions();
     }
 
