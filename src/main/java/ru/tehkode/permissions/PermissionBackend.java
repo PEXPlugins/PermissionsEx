@@ -70,6 +70,8 @@ public abstract class PermissionBackend {
     public abstract PermissionGroup getDefaultGroup();
 
     public abstract String[] getWorldInheritance(String world);
+    
+    public abstract void setWorldInheritance(String world, String[] parentWorlds);
 
     /**
      * Return all registered groups

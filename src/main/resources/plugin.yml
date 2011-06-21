@@ -48,6 +48,9 @@ commands:
            /<command> group <group> remove <permission> [world] - Remove permission from group
            /<command> group <group> user add <users> - Add users (one or comma-separated list) to specified group
            /<command> group <group> user remove <users> - Add users (one or comma-separated list) to specified group
+           /<command> worlds - Print server worlds list
+           /<command> world <world> - Print world inheritance info
+           /<command> world <world> inherit <parentWorlds> - Set inheritance for world. parentWorlds can be comma-separated list.
   promote:
     description: Promotes user to next group
     usage: /<command> <user>
