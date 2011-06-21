@@ -241,6 +241,7 @@ public class GroupCommands extends PermissionsCommand {
     description = "List all group permissions")
     public void groupListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
 
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
@@ -250,10 +251,10 @@ public class GroupCommands extends PermissionsCommand {
         }
 
         sender.sendMessage("Group " + group.getName() + "'s permissions:\n"
-                + this.mapPermissions(args.get("world"), group, 0));
+                + this.mapPermissions(worldName, group, 0));
 
         sender.sendMessage("Group " + group.getName() + "'s Options: ");
-        for (Map.Entry<String, String> option : group.getOptions(args.get("world")).entrySet()) {
+        for (Map.Entry<String, String> option : group.getOptions(worldName).entrySet()) {
             sender.sendMessage("  " + option.getKey() + " = \"" + option.getValue() + "\"");
         }
     }
@@ -264,6 +265,7 @@ public class GroupCommands extends PermissionsCommand {
     description = "Add permission to group")
     public void groupAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
 
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
@@ -272,7 +274,7 @@ public class GroupCommands extends PermissionsCommand {
             return;
         }
 
-        group.addPermission(args.get("permission"), args.get("world"));
+        group.addPermission(args.get("permission"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Permission added to " + group.getName() + " !");
 
@@ -285,6 +287,7 @@ public class GroupCommands extends PermissionsCommand {
     description = "Set permission value for group")
     public void groupSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
 
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
@@ -293,7 +296,7 @@ public class GroupCommands extends PermissionsCommand {
             return;
         }
 
-        group.setOption(args.get("option"), args.get("value"), args.get("world"));
+        group.setOption(args.get("option"), args.get("value"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
 
@@ -306,6 +309,7 @@ public class GroupCommands extends PermissionsCommand {
     description = "Remove permission from group")
     public void groupRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
 
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
@@ -314,7 +318,7 @@ public class GroupCommands extends PermissionsCommand {
             return;
         }
 
-        group.removePermission(args.get("permission"), args.get("world"));
+        group.removePermission(args.get("permission"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed from " + group.getName() + " !");
 

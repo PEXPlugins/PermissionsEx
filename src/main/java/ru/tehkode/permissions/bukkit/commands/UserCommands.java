@@ -80,7 +80,8 @@ public class UserCommands extends PermissionsCommand {
     description = "List user permissions")
     public void userListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
-
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+        
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -100,15 +101,10 @@ public class UserCommands extends PermissionsCommand {
 
         sender.sendMessage(userName + "'s permissions:");
 
-        this.sendMessage(sender, this.mapPermissions(args.get("world"), user, 0));
-        /*
-        for (String permission : user.getOwnPermissions(args.get("world"))) {
-        sender.sendMessage("  " + permission);
-        }
-         */
+        this.sendMessage(sender, this.mapPermissions(worldName, user, 0));
 
         sender.sendMessage(userName + "'s options:");
-        for (Map.Entry<String, String> option : user.getOptions(args.get("world")).entrySet()) {
+        for (Map.Entry<String, String> option : user.getOptions(worldName).entrySet()) {
             sender.sendMessage("  " + option.getKey() + " = \"" + option.getValue() + "\"");
         }
 
@@ -174,7 +170,7 @@ public class UserCommands extends PermissionsCommand {
         }
 
         user.remove();
-        
+
         PermissionsEx.getPermissionManager().resetUser(userName);
 
         sender.sendMessage(ChatColor.WHITE + "User \"" + user.getName() + "\" removed!");
@@ -186,6 +182,7 @@ public class UserCommands extends PermissionsCommand {
     description = "Add permission to user")
     public void userAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
@@ -194,7 +191,7 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        user.addPermission(args.get("permission"), args.get("world"));
+        user.addPermission(args.get("permission"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Permission added!");
 
@@ -207,6 +204,7 @@ public class UserCommands extends PermissionsCommand {
     description = "Set permission setting to given value")
     public void userSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
@@ -215,7 +213,7 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        user.setOption(args.get("option"), args.get("value"), args.get("world"));
+        user.setOption(args.get("option"), args.get("value"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
 
@@ -228,7 +226,8 @@ public class UserCommands extends PermissionsCommand {
     description = "Remove permission from user")
     public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
-
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+        
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -236,7 +235,7 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        user.removePermission(args.get("permission"), args.get("world"));
+        user.removePermission(args.get("permission"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed!");
         this.informPlayer(plugin, userName, "Your permissions have been changed!");

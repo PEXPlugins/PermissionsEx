@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -93,9 +94,10 @@ public abstract class PermissionsCommand implements CommandListener {
             throw new AutoCompleteChoicesException(players.toArray(new String[0]), "user");
         } else if (players.size() == 1) {
             return players.get(0);
-        } else {
-            return playerName;
         }
+        
+        // Nothing found
+        return playerName;
     }
 
     protected String autoCompleteGroupName(String groupName) {
@@ -115,9 +117,36 @@ public abstract class PermissionsCommand implements CommandListener {
             throw new AutoCompleteChoicesException(groups.toArray(new String[0]), "group");
         } else if (groups.size() == 1) { // Found one name
             return groups.get(0);
-        } else { // Nothing found
-            return groupName;
         }
+        
+        // Nothing found
+        return groupName;
+    }
+    
+    protected String autoCompleteWorldName(String worldName){
+        if(worldName == null){
+            return worldName;
+        }
+        
+        List<String> worlds = new LinkedList<String>();
+
+        for (World world : Bukkit.getServer().getWorlds()) {
+            if (world.getName().equalsIgnoreCase(worldName)) {
+                return world.getName();
+            }
+
+            if (world.getName().toLowerCase().startsWith(worldName.toLowerCase()) && !worlds.contains(world.getName())) {
+                worlds.add(world.getName());
+            }
+        }
+
+        if (worlds.size() > 1) { // Found several choices
+            throw new AutoCompleteChoicesException(worlds.toArray(new String[0]), "world");
+        } else if (worlds.size() == 1) { // Found one name
+            return worlds.get(0);
+        }
+        
+        return worldName;
     }
 
     protected String printHierarchy(PermissionGroup parent, int level) {
