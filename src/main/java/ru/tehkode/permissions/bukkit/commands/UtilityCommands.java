@@ -105,7 +105,7 @@ public class UtilityCommands extends PermissionsCommand {
             if (e.getCause() instanceof ClassNotFoundException) {
                 sender.sendMessage(ChatColor.RED + "Specified backend not found.");
             } else {
-                sender.sendMessage(ChatColor.RED + "Error during backend initializtation:");
+                sender.sendMessage(ChatColor.RED + "Error during backend initialization:");
                 e.getCause().printStackTrace();
             }
         }
@@ -126,7 +126,7 @@ public class UtilityCommands extends PermissionsCommand {
     description = "Dump users/groups to selected <backend> format")
     public void dumpData(Plugin plugin, CommandSender sender, Map<String, String> args) {
         if (!(plugin instanceof PermissionsEx)) {
-            return; // User informing are disabled
+            return; // User informing is disabled
         }
 
         try {
