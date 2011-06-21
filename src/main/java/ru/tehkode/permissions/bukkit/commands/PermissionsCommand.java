@@ -62,12 +62,16 @@ public abstract class PermissionsCommand implements CommandListener {
     }
 
     protected String autoCompletePlayerName(String playerName) {
+        return autoCompletePlayerName(playerName, "user");
+    }
+
+    protected String autoCompletePlayerName(String playerName, String argName) {
         if (playerName == null) {
             return null;
         }
 
         List<String> players = new LinkedList<String>();
-        
+
         // Collect online Player names
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             if (player.getName().equalsIgnoreCase(playerName)) {
@@ -91,16 +95,20 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         if (players.size() > 1) {
-            throw new AutoCompleteChoicesException(players.toArray(new String[0]), "user");
+            throw new AutoCompleteChoicesException(players.toArray(new String[0]), argName);
         } else if (players.size() == 1) {
             return players.get(0);
         }
-        
+
         // Nothing found
         return playerName;
     }
 
     protected String autoCompleteGroupName(String groupName) {
+        return this.autoCompleteGroupName(groupName, "group");
+    }
+
+    protected String autoCompleteGroupName(String groupName, String argName) {
         List<String> groups = new LinkedList<String>();
 
         for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
@@ -114,20 +122,24 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         if (groups.size() > 1) { // Found several choices
-            throw new AutoCompleteChoicesException(groups.toArray(new String[0]), "group");
+            throw new AutoCompleteChoicesException(groups.toArray(new String[0]), argName);
         } else if (groups.size() == 1) { // Found one name
             return groups.get(0);
         }
-        
+
         // Nothing found
         return groupName;
     }
-    
-    protected String autoCompleteWorldName(String worldName){
-        if(worldName == null){
+
+    protected String autoCompleteWorldName(String worldName) {
+        return this.autoCompleteWorldName(worldName, "world");
+    }
+
+    protected String autoCompleteWorldName(String worldName, String argName) {
+        if (worldName == null) {
             return worldName;
         }
-        
+
         List<String> worlds = new LinkedList<String>();
 
         for (World world : Bukkit.getServer().getWorlds()) {
@@ -141,11 +153,11 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         if (worlds.size() > 1) { // Found several choices
-            throw new AutoCompleteChoicesException(worlds.toArray(new String[0]), "world");
+            throw new AutoCompleteChoicesException(worlds.toArray(new String[0]), argName);
         } else if (worlds.size() == 1) { // Found one name
             return worlds.get(0);
         }
-        
+
         return worldName;
     }
 
