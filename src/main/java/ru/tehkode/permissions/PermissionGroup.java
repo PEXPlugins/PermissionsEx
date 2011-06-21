@@ -107,10 +107,14 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public String getRankLadder() {
-        return this.getOption("rank-ladder");
+        return this.getOption("rank-ladder", "", "default");
     }
 
     public void setRankLadder(String rankGroup) {
+        if (rankGroup.isEmpty() || rankGroup.equals("default")) {
+            rankGroup = null;
+        }
+
         this.setOption("rank-ladder", rankGroup);
     }
 

@@ -19,6 +19,7 @@
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -27,12 +28,13 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
+import ru.tehkode.permissions.exceptions.RankingException;
 import ru.tehkode.utils.StringUtils;
 
 public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
-    syntax = "group <group> rank [rank] [rankgroup]",
+    syntax = "group <group> rank [rank] [ladder]",
     description = "Promotes user to next group",
     isPrimary = true,
     permission = "permissions.groups.rank")
@@ -56,19 +58,23 @@ public class PromotionCommands extends PermissionsCommand {
             }
         }
 
+        if (args.containsKey("ladder")) {
+            group.setRankLadder(args.get("ladder"));
+        }
+
         String rank = group.getOption("rank");
         if (rank.isEmpty()) {
             rank = "0";
         }
 
-        sender.sendMessage("Group " + group.getName() + " rank is " + rank);
+        sender.sendMessage("Group " + group.getName() + " (ladder:" + group.getRankLadder() + ") rank is " + rank);
     }
 
     @Command(name = "pex",
     syntax = "promote <user> [ladder]",
     description = "Promotes user to next group",
     isPrimary = true,
-    permissions = {"permissions.user.promote", "or", "permissions.user.promote.<ladder>"})
+    permissions = {"permissions.user.promote", "permissions.user.promote.<ladder>"})
     public void promoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -78,64 +84,32 @@ public class PromotionCommands extends PermissionsCommand {
             return;
         }
 
-        int srcRank = StringUtils.toInteger(user.getOption("rank"), 0);
-        if (srcRank == 0) {
-            sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not promoteable.");
-            return;
-        }
+        String promoterName = "console";
 
-        int promoterRank = 0;
+        PermissionUser promoter = null;
         if (sender instanceof Player) {
-            PermissionUser promoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
-
-            if (promoter.getName().equals(user.getName())) {
-                sender.sendMessage(ChatColor.RED + "You can't promote yourself!");
-                return;
-            }
-
-            promoterRank = StringUtils.toInteger(promoter.getOption("rank"), 0);
-            if (srcRank <= promoterRank) {
-                sender.sendMessage(ChatColor.RED + "You can't promote user who has higher or equal rank than you!");
-                return;
-            }
+            promoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            promoterName = promoter.getName();
         }
 
-        // Look for group
-        PermissionGroup targetGroup = null;
-        int targetGroupRank = 0;
+        try {
+            user.promote(promoter, args.get("ladder"));
 
-        for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
-            int groupRank = StringUtils.toInteger(group.getOption("rank"), 0);
+            PermissionGroup targetGroup = user.getRankLadderGroup(args.get("ladder"));
 
-            if (groupRank == 0 || groupRank >= srcRank || groupRank <= promoterRank) { // Group arent ranked or have lower rank than user rank
-                continue;
-            }
-
-            if (targetGroup != null && targetGroupRank > groupRank) {
-                continue;
-            }
-
-            targetGroup = group;
-            targetGroupRank = groupRank;
+            this.informPlayer(plugin, user.getName(), "You have been promoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getName() + " group");
+            sender.sendMessage("User " + user.getName() + " promoted to " + targetGroup.getName() + " group");
+            Logger.getLogger("Minecraft").info("User " + user.getName() + " has been promoted to " + targetGroup.getName() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
+        } catch (RankingException e) {
+            Logger.getLogger("Minecraft").severe("Ranking Error (" + promoterName + " > " + e.getTarget().getName() + "): " + e.getMessage());
         }
-
-
-        if (targetGroup == null) {
-            sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not promoteable.");
-            return;
-        }
-
-        user.setGroups(new PermissionGroup[]{targetGroup});
-
-        this.informPlayer(plugin, user.getName(), "You have been promoted to " + targetGroup.getName() + " group");
-        sender.sendMessage("User " + user.getName() + " promoted to " + targetGroup.getName() + " group");
     }
 
     @Command(name = "pex",
     syntax = "demote <user> [ladder]",
     description = "Demotes user to previous group",
     isPrimary = true,
-    permission = "permissions.user.rank.demote")
+    permissions = {"permissions.user.demote", "permissions.user.demote.<ladder>"})
     public void demoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -145,57 +119,25 @@ public class PromotionCommands extends PermissionsCommand {
             return;
         }
 
-        int srcRank = StringUtils.toInteger(user.getOption("rank"), 0);
-        if (srcRank == 0) {
-            sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not demoteable.");
-            return;
-        }
+        String demoterName = "console";
 
+        PermissionUser demoter = null;
         if (sender instanceof Player) {
-            PermissionUser demoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
-
-            if (demoter.getName().equals(user.getName())) {
-                sender.sendMessage(ChatColor.RED + "You can't demote yourself!");
-                return;
-            }
-
-            int promoterRank = StringUtils.toInteger(demoter.getOption("rank"), 0);
-            if (srcRank <= promoterRank) {
-                sender.sendMessage(ChatColor.RED + "You can't demote user who has equal or higher rank than you!");
-                return;
-            }
+            demoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            demoterName = demoter.getName();
         }
 
-        // Look for group
-        PermissionGroup targetGroup = null;
-        int targetGroupRank = 0;
+        try {
+            user.demote(demoter, args.get("ladder"));
 
-        for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
-            int groupRank = StringUtils.toInteger(group.getOption("rank"), 0);
+            PermissionGroup targetGroup = user.getRankLadderGroup(args.get("ladder"));
 
-            if (groupRank == 0 || groupRank <= srcRank) { // Group arent ranked or have higher rank than user rank
-                continue;
-            }
-
-            if (targetGroup != null && targetGroupRank < groupRank) {
-                continue;
-            }
-
-            targetGroup = group;
-            targetGroupRank = groupRank;
+            this.informPlayer(plugin, user.getName(), "You have been demoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getName() + " group");
+            sender.sendMessage("User " + user.getName() + " demoted to " + targetGroup.getName() + " group");
+            Logger.getLogger("Minecraft").info("User " + user.getName() + " has been demoted to " + targetGroup.getName() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
+        } catch (RankingException e) {
+            Logger.getLogger("Minecraft").severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getName() + "): " + e.getMessage());
         }
-
-
-        if (targetGroup == null) {
-            sender.sendMessage(ChatColor.RED + "User \"" + user.getName() + "\" are not demoteable.");
-            return;
-        }
-
-        user.setGroups(new PermissionGroup[]{targetGroup});
-
-        this.informPlayer(plugin, user.getName(), "You have been demoted to " + targetGroup.getName() + " group");
-
-        sender.sendMessage("User " + user.getName() + " demoted to " + targetGroup.getName() + " group");
     }
 
     @Command(name = "promote",

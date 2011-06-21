@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -50,8 +51,8 @@ public abstract class PermissionUser extends PermissionEntity {
     public String getOwnOption(String option) {
         return this.getOwnOption(option, "", "");
     }
-    
-    public String getOwnOption(String option, String world){
+
+    public String getOwnOption(String option, String world) {
         return this.getOwnOption(option, world, "");
     }
 
@@ -247,8 +248,8 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     public void promote(PermissionUser promoter, String ladderName) throws RankingException {
-        if (ladderName == null) {
-            ladderName = "";
+        if (ladderName == null || ladderName.isEmpty()) {
+            ladderName = "default";
         }
 
         int promoterRank = getPromoterRankAndCheck(promoter, ladderName);
@@ -282,8 +283,8 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     public void demote(PermissionUser demoter, String ladderName) throws RankingException {
-        if (ladderName == null) {
-            ladderName = "";
+        if (ladderName == null || ladderName.isEmpty()) {
+            ladderName = "default";
         }
 
         int promoterRank = getPromoterRankAndCheck(demoter, ladderName);
@@ -337,7 +338,7 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
-        List<PermissionGroup> groups = Arrays.asList(this.getGroups());
+        List<PermissionGroup> groups = new ArrayList<PermissionGroup>(Arrays.asList(this.getGroups()));
 
         groups.remove(src);
         groups.add(dst);
@@ -357,6 +358,14 @@ public abstract class PermissionUser extends PermissionEntity {
         }
 
         return 0;
+    }
+    
+    public PermissionGroup getRankLadderGroup(String ladder){
+        if(ladder == null || ladder.isEmpty()){
+            ladder = "default";
+        }
+        
+        return this.getRankLadders().get(ladder);
     }
 
     public Map<String, PermissionGroup> getRankLadders() {
