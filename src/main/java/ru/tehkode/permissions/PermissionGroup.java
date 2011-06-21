@@ -103,7 +103,12 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     public void setRank(int rank) {
-        this.setOption("rank", Integer.toString(rank));
+        if (rank > 0) {
+            this.setOption("rank", Integer.toString(rank));
+        } else {
+            this.setOption("rank", null);
+        }
+
     }
 
     public String getRankLadder() {
