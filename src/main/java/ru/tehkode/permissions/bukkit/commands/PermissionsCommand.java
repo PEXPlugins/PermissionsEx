@@ -48,7 +48,7 @@ public abstract class PermissionsCommand implements CommandListener {
 
     protected void informPlayer(Plugin plugin, String playerName, String message) {
         if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfigurationNode().getBoolean("permissions.informplayers.changes", false)) {
-            return; // User informing are disabled
+            return; // User informing is disabled
         }
 
         Player player = Bukkit.getServer().getPlayer(playerName);
@@ -78,7 +78,7 @@ public abstract class PermissionsCommand implements CommandListener {
             }
         }
 
-        // Collect registred PEX user names
+        // Collect registered PEX user names
         for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers()) {
             if (user.getName().equalsIgnoreCase(playerName)) {
                 return user.getName();
@@ -120,7 +120,7 @@ public abstract class PermissionsCommand implements CommandListener {
         }
     }
 
-    protected String printHierarhy(PermissionGroup parent, int level) {
+    protected String printHierarchy(PermissionGroup parent, int level) {
         StringBuilder buffer = new StringBuilder();
 
         PermissionGroup[] groups;
@@ -142,7 +142,7 @@ public abstract class PermissionsCommand implements CommandListener {
             buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
 
             // Groups
-            buffer.append(printHierarhy(group, level + 1));
+            buffer.append(printHierarchy(group, level + 1));
 
             for (PermissionUser user : group.getUsers()) {
                 buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
@@ -180,7 +180,7 @@ public abstract class PermissionsCommand implements CommandListener {
         } else if (entity instanceof PermissionGroup) {
             parents = ((PermissionGroup) entity).getParentGroups();
         } else {
-            throw new RuntimeException("Unknown class in hierarhy. Nag t3hk0d3 pls.");
+            throw new RuntimeException("Unknown class in hierarchy. Nag t3hk0d3 please.");
         }
 
         level++; // Just increment level once
