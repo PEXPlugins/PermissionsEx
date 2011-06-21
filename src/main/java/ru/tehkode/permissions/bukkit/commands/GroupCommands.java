@@ -35,7 +35,7 @@ public class GroupCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "groups list",
     permission = "permissions.manage.groups",
-    description = "List all registred groups")
+    description = "List all registered groups")
     public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
 
@@ -55,7 +55,7 @@ public class GroupCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "groups",
     permission = "permissions.manage.groups",
-    description = "List all registred groups (alias)")
+    description = "List all registered groups (alias)")
     public void groupsListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupsList(plugin, sender, args);
     }
@@ -63,7 +63,7 @@ public class GroupCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "group",
     permission = "permissions.manage.groups",
-    description = "List all registred groups (alias)")
+    description = "List all registered groups (alias)")
     public void groupsListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupsList(plugin, sender, args);
     }
@@ -78,7 +78,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -99,7 +99,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -118,7 +118,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -153,7 +153,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -177,7 +177,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -204,7 +204,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -245,7 +245,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -268,7 +268,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -276,7 +276,7 @@ public class GroupCommands extends PermissionsCommand {
 
         sender.sendMessage(ChatColor.WHITE + "Permission added to " + group.getName() + " !");
 
-        this.informGroup(plugin, group, "Your permissions has been changed");
+        this.informGroup(plugin, group, "Your permissions have been changed");
     }
 
     @Command(name = "pex",
@@ -289,7 +289,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -310,7 +310,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
         if (group == null) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
             return;
         }
 
@@ -318,7 +318,7 @@ public class GroupCommands extends PermissionsCommand {
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed from " + group.getName() + " !");
 
-        this.informGroup(plugin, group, "Your permissions has been changed");
+        this.informGroup(plugin, group, "Your permissions have been changed");
     }
 
     /**
@@ -334,7 +334,7 @@ public class GroupCommands extends PermissionsCommand {
         PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers(groupName);
 
         if (users == null || users.length == 0) {
-            sender.sendMessage(ChatColor.RED + "No such group found");
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
         }
 
         sender.sendMessage("Group " + groupName + " users:");
@@ -363,7 +363,7 @@ public class GroupCommands extends PermissionsCommand {
             PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
             if (user == null) {
-                sender.sendMessage(ChatColor.RED + "No such users found");
+                sender.sendMessage(ChatColor.RED + "User does not exist");
                 return;
             }
 
@@ -393,7 +393,7 @@ public class GroupCommands extends PermissionsCommand {
             PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
             if (user == null) {
-                sender.sendMessage(ChatColor.RED + "No such users found");
+                sender.sendMessage(ChatColor.RED + "User does not exist");
                 return;
             }
 
