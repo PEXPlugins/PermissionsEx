@@ -77,7 +77,7 @@ public class UtilityCommands extends PermissionsCommand {
                 sender.sendMessage(" - " + item);
             }
         } else {
-            sender.sendMessage("Node \"" + nodeName + "\" = \"" + node.toString() + "\"");
+            sender.sendMessage("Node \"" + nodeName + "\" = \"" + node + "\"");
         }
     }
 
