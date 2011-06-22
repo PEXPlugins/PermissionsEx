@@ -21,8 +21,10 @@ package ru.tehkode.permissions.bukkit.commands;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -81,7 +83,7 @@ public class UserCommands extends PermissionsCommand {
     public void userListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
-        
+
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -98,7 +100,7 @@ public class UserCommands extends PermissionsCommand {
 
             sender.sendMessage("  " + group.getName() + " (" + rank + ")");
         }
-
+        
         sender.sendMessage(userName + "'s permissions:");
 
         this.sendMessage(sender, this.mapPermissions(worldName, user, 0));
@@ -199,6 +201,83 @@ public class UserCommands extends PermissionsCommand {
     }
 
     @Command(name = "pex",
+    syntax = "user <user> remove <permission> [world]",
+    permission = "permissions.manage.users.permissions",
+    description = "Remove permission from user")
+    public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String userName = this.autoCompletePlayerName(args.get("user"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "User does not exist");
+            return;
+        }
+
+        user.removePermission(args.get("permission"), worldName);
+
+        sender.sendMessage(ChatColor.WHITE + "Permission removed!");
+        this.informPlayer(plugin, userName, "Your permissions have been changed!");
+    }
+
+    @Command(name = "pex",
+    syntax = "user <user> timed add <permission> [lifetime] [world]",
+    permission = "permissions.manage.users.permissions.timed",
+    description = "Add permission to user")
+    public void userAddTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String userName = this.autoCompletePlayerName(args.get("user"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+
+        int lifetime = 0;
+
+        if (args.containsKey("lifetime")) {
+            try {
+                lifetime = Integer.parseInt(args.get("lifetime"));
+            } catch (NumberFormatException e) {
+                sender.sendMessage(ChatColor.RED + "lifetime should be integer number");
+                return;
+            }
+        }
+
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "User does not exist");
+            return;
+        }
+
+        user.addTimedPermission(args.get("permission"), worldName, lifetime);
+
+        sender.sendMessage(ChatColor.WHITE + "Timed permission added!");
+        this.informPlayer(plugin, userName, "Your permissions have been changed!");
+
+        Logger.getLogger("Minecraft").info("User " + userName + " get timed permission \"" + args.get("permission") + "\" "
+                + (lifetime > 0 ? "for " + lifetime + "seconds " : " ") + "from " + getSenderName(sender));
+    }
+
+    @Command(name = "pex",
+    syntax = "user <user> timed remove <permission> [world]",
+    permission = "permissions.manage.users.permissions.timed",
+    description = "Remove permission from user")
+    public void userRemoveTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String userName = this.autoCompletePlayerName(args.get("user"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "User does not exist");
+            return;
+        }
+
+        user.removePermission(args.get("permission"), worldName);
+
+        sender.sendMessage(ChatColor.WHITE + "Permission removed!");
+        this.informPlayer(plugin, userName, "Your permissions have been changed!");
+    }
+
+    @Command(name = "pex",
     syntax = "user <user> set <option> <value> [world]",
     permission = "permissions.manage.users.permissions",
     description = "Set permission setting to given value")
@@ -217,27 +296,6 @@ public class UserCommands extends PermissionsCommand {
 
         sender.sendMessage(ChatColor.WHITE + "Option set!");
 
-        this.informPlayer(plugin, userName, "Your permissions have been changed!");
-    }
-
-    @Command(name = "pex",
-    syntax = "user <user> remove <permission> [world]",
-    permission = "permissions.manage.users.permissions",
-    description = "Remove permission from user")
-    public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
-        String userName = this.autoCompletePlayerName(args.get("user"));
-        String worldName = this.autoCompleteWorldName(args.get("world"));
-        
-        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
-
-        if (user == null) {
-            sender.sendMessage(ChatColor.RED + "User does not exist");
-            return;
-        }
-
-        user.removePermission(args.get("permission"), worldName);
-
-        sender.sendMessage(ChatColor.WHITE + "Permission removed!");
         this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
 

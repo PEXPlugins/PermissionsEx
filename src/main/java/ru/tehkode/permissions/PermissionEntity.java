@@ -19,7 +19,10 @@
 package ru.tehkode.permissions;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 
@@ -34,6 +37,8 @@ public abstract class PermissionEntity {
     protected boolean virtual = true;
     protected String prefix = "";
     protected String suffix = "";
+    protected HashMap<String, List<String>> timedPermissions = new HashMap<String, List<String>>();
+    protected HashMap<String, Long> timedPermissionsTime = new HashMap<String, Long>();
 
     public PermissionEntity(String name, PermissionManager manager) {
         this.manager = manager;
@@ -48,10 +53,10 @@ public abstract class PermissionEntity {
         this.name = name;
     }
 
-    public boolean has(String permission){
+    public boolean has(String permission) {
         return this.has(permission, Bukkit.getServer().getWorlds().get(0).getName());
     }
-    
+
     public boolean has(String permission, String world) {
         if (permission != null && permission.isEmpty()) { // empty permission for public access :)
             return true;
@@ -59,11 +64,14 @@ public abstract class PermissionEntity {
 
         String expression = getMatchingExpression(permission, world);
         return this.explainExpression(expression);
-
     }
 
     protected String getMatchingExpression(String permission, String world) {
-        for (String expression : this.getPermissions(world)) {
+        return this.getMatchingExpression(this.getPermissions(world), permission);
+    }
+
+    protected String getMatchingExpression(String[] permissions, String permission) {
+        for (String expression : permissions) {
             if (isMatches(expression, permission, true)) {
                 return expression;
             }
@@ -83,8 +91,8 @@ public abstract class PermissionEntity {
     public String getOption(String option) {
         return this.getOption(option, "", "");
     }
-    
-    public String getOption(String option, String world){
+
+    public String getOption(String option, String world) {
         return this.getOption(option, world, "");
     }
 
@@ -157,6 +165,62 @@ public abstract class PermissionEntity {
 
     public boolean isVirtual() {
         return this.virtual;
+    }
+
+    public String[] getTimedPermissions(String world) {
+        if (world == null) {
+            world = "";
+        }
+
+        if (!this.timedPermissions.containsKey(world)) {
+            return new String[0];
+        }
+
+        return this.timedPermissions.get(world).toArray(new String[0]);
+    }
+
+    public int getTimedPermissionLifetime(String permission, String world){
+        if(!this.timedPermissionsTime.containsKey(world +":" +permission)){
+            return 0;
+        }
+        
+        return (int)(this.timedPermissionsTime.get(world +":" +permission).longValue() - (System.currentTimeMillis() / 1000L));
+    }
+    
+    public void addTimedPermission(final String permission, String world, int lifeTime) {
+        if (world == null) {
+            world = "";
+        }
+
+        if (!this.timedPermissions.containsKey(world)) {
+            this.timedPermissions.put(world, new LinkedList<String>());
+        }
+
+        this.timedPermissions.get(world).add(permission);
+
+        final String finalWorld = world;
+
+        if (lifeTime > 0) {
+            TimerTask task = new TimerTask() {
+
+                @Override
+                public void run() {
+                    removeTimedPermission(permission, finalWorld);
+                }
+            };
+
+            this.manager.registerTask(task, lifeTime);
+
+            this.timedPermissionsTime.put(world + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime);
+        }
+    }
+
+    public void removeTimedPermission(String permission, String world) {
+        if (!this.timedPermissions.containsKey(world)) {
+            return;
+        }
+
+        this.timedPermissions.get(world).remove(permission);
     }
 
     public abstract String[] getPermissions(String world);

@@ -175,6 +175,7 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     protected void getInheritedPermissions(String world, List<String> permissions, boolean groupInheritance) {
+        permissions.addAll(Arrays.asList(this.getTimedPermissions(world)));
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
         // World inheritance
@@ -183,6 +184,7 @@ public abstract class PermissionUser extends PermissionEntity {
         }
 
         // Common permissions
+        permissions.addAll(Arrays.asList(this.getTimedPermissions(null)));
         permissions.addAll(Arrays.asList(this.getOwnPermissions(null)));
 
         // Group inhertance
@@ -191,6 +193,13 @@ public abstract class PermissionUser extends PermissionEntity {
                 group.getInheritedPermissions(world, permissions, true);
             }
         }
+    }
+
+    @Override
+    public void removeTimedPermission(String permission, String world) {
+        super.removeTimedPermission(permission, world);
+
+        this.clearCache();
     }
 
     public void addGroup(String groupName) {
@@ -359,12 +368,12 @@ public abstract class PermissionUser extends PermissionEntity {
 
         return 0;
     }
-    
-    public PermissionGroup getRankLadderGroup(String ladder){
-        if(ladder == null || ladder.isEmpty()){
+
+    public PermissionGroup getRankLadderGroup(String ladder) {
+        if (ladder == null || ladder.isEmpty()) {
             ladder = "default";
         }
-        
+
         return this.getRankLadders().get(ladder);
     }
 

@@ -20,6 +20,8 @@ package ru.tehkode.permissions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.config.Configuration;
@@ -30,16 +32,17 @@ import ru.tehkode.permissions.config.Configuration;
  */
 public class PermissionManager {
 
+    public final static int TRANSIENT_PERMISSION = 0;
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
     protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
     protected PermissionBackend backend = null;
     protected PermissionGroup defaultGroup = null;
     protected Configuration config;
+    protected Timer timer = new Timer("PermissionsCleaner");
 
     public PermissionManager(Configuration config) {
         this.config = config;
-
         this.initBackend();
     }
 
@@ -47,6 +50,7 @@ public class PermissionManager {
         this.users.clear();
         this.groups.clear();
         this.defaultGroup = null;
+        timer.cancel();
 
         if (this.backend != null) {
             this.backend.reload();
@@ -117,20 +121,28 @@ public class PermissionManager {
         return backend.removeGroup(groupName);
     }
 
+    public PermissionUser[] getUsers() {
+        return backend.getUsers();
+    }
+
     public PermissionUser[] getUsers(String groupName) {
         return backend.getUsers(groupName);
     }
 
-    public PermissionUser[] getUsers() {
-        return backend.getUsers();
+    public PermissionUser[] getUsers(String groupName, boolean inheritance) {
+        return backend.getUsers(groupName, inheritance);
+    }
+
+    public PermissionGroup[] getGroups() {
+        return backend.getGroups();
     }
 
     public PermissionGroup[] getGroups(String groupName) {
         return backend.getGroups(groupName);
     }
 
-    public PermissionGroup[] getGroups() {
-        return backend.getGroups();
+    public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
+        return backend.getGroups(groupName, inheritance);
     }
 
     public Map<Integer, PermissionGroup> getRankLadder(String ladderName) {
@@ -173,6 +185,14 @@ public class PermissionManager {
 
     public String getBackend() {
         return PermissionBackend.getBackendAlias(this.backend.getClass());
+    }
+
+    public void registerTask(TimerTask task, int lifeTime) {
+        if (lifeTime == TRANSIENT_PERMISSION) {
+            return;
+        }
+
+        timer.schedule(task, lifeTime * 1000);
     }
 
     private void initBackend() {

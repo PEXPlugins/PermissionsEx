@@ -57,7 +57,7 @@ public class WorldCommands extends PermissionsCommand {
     
     @Command(name = "pex",
     syntax = "world <world>",
-    description = "Prints world inheritance info",
+    description = "Print world inheritance info",
     permission = "permissions.manage.worlds")
     public void worldPrintInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String worldName = this.autoCompleteWorldName(args.get("world"));

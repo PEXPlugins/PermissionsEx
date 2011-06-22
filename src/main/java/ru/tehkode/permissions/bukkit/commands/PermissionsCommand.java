@@ -103,6 +103,14 @@ public abstract class PermissionsCommand implements CommandListener {
         // Nothing found
         return playerName;
     }
+    
+    protected String getSenderName(CommandSender sender){
+        if(sender instanceof Player){
+            return ((Player)sender).getName();
+        }
+                
+        return "console";
+    }
 
     protected String autoCompleteGroupName(String groupName) {
         return this.autoCompleteGroupName(groupName, "group");
