@@ -133,7 +133,7 @@ public class SQLEntity extends PermissionEntity {
     }
 
     @Override
-    public void setOption(String option, String world, String value) {
+    public void setOption(String option, String value, String world) {
         if (option == null || option.isEmpty()) {
             return;
         }
@@ -260,19 +260,19 @@ public class SQLEntity extends PermissionEntity {
 
     @Override
     public void addPermission(String permission, String world) {
-        if(world == null){
+        if (world == null) {
             world = "";
         }
-        
+
         this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
     }
 
     @Override
     public void removePermission(String permission, String world) {
-        if(world == null){
+        if (world == null) {
             world = "";
         }
-        
+
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ? AND value = ''", this.getName(), permission, this.type.ordinal(), world);
     }
 

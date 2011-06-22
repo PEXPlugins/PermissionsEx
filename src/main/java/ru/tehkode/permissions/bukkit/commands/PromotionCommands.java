@@ -66,7 +66,7 @@ public class PromotionCommands extends PermissionsCommand {
             rank = "0";
         }
 
-        sender.sendMessage("Group " + group.getName() + " (ladder:" + group.getRankLadder() + ") rank is " + rank);
+        sender.sendMessage("Group " + group.getName() + " rank is " + rank + " (ladder = " + group.getRankLadder() + ")");
     }
 
     @Command(name = "pex",
