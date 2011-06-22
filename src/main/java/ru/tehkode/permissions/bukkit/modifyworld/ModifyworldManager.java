@@ -217,7 +217,7 @@ public class ModifyworldManager {
 
         @Override
         public void onPlayerBucketFill(PlayerBucketFillEvent event) {
-            String materialName = event.getBlockClicked().getType().toString().toLowerCase().replace("stationaty_", ""); // STATIONARY_WATER -> water
+            String materialName = event.getBlockClicked().getType().toString().toLowerCase().replace("stationary_", ""); // STATIONARY_WATER -> water
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill." + materialName)) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
