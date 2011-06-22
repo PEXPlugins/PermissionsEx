@@ -208,7 +208,8 @@ public class ModifyworldManager {
 
         @Override
         public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.empty")) {
+            String bucketName = event.getBucket().toString().toLowerCase().replace("_bucket", ""); // WATER_BUCKET -> water
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.empty." + bucketName)) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
@@ -216,7 +217,8 @@ public class ModifyworldManager {
 
         @Override
         public void onPlayerBucketFill(PlayerBucketFillEvent event) {
-            if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill")) {
+            String materialName = event.getBlockClicked().getType().toString().toLowerCase().replace("stationaty_", ""); // STATIONARY_WATER -> water
+            if (!permissionsManager.has(event.getPlayer(), "modifyworld.bucket.fill." + materialName)) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
