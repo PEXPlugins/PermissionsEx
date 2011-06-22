@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 
@@ -37,8 +38,9 @@ public abstract class PermissionEntity {
     protected boolean virtual = true;
     protected String prefix = "";
     protected String suffix = "";
-    protected HashMap<String, List<String>> timedPermissions = new HashMap<String, List<String>>();
-    protected HashMap<String, Long> timedPermissionsTime = new HashMap<String, Long>();
+    
+    protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
+    protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
 
     public PermissionEntity(String name, PermissionManager manager) {
         this.manager = manager;
