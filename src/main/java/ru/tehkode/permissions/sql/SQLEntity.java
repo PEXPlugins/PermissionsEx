@@ -260,11 +260,19 @@ public class SQLEntity extends PermissionEntity {
 
     @Override
     public void addPermission(String permission, String world) {
+        if(world == null){
+            world = "";
+        }
+        
         this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
     }
 
     @Override
     public void removePermission(String permission, String world) {
+        if(world == null){
+            world = "";
+        }
+        
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ? AND value = ''", this.getName(), permission, this.type.ordinal(), world);
     }
 
