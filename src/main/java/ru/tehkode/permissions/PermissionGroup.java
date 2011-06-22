@@ -172,13 +172,14 @@ public abstract class PermissionGroup extends PermissionEntity {
         permissions.addAll(Arrays.asList(this.getTimedPermissions(world)));
         permissions.addAll(Arrays.asList(this.getOwnPermissions(world)));
 
-        // World inheritance
-        for (String parentWorld : this.manager.getWorldInheritance(world)) {
-            getInheritedPermissions(parentWorld, permissions, false);
+        if (world != null) {
+            // World inheritance
+            for (String parentWorld : this.manager.getWorldInheritance(world)) {
+                getInheritedPermissions(parentWorld, permissions, false);
+            }
+            // Common permission
+            this.getInheritedPermissions(null, permissions, false);
         }
-        // Common permission
-        permissions.addAll(Arrays.asList(this.getTimedPermissions(null)));
-        permissions.addAll(Arrays.asList(this.getOwnPermissions(null)));
 
         // Group inhertance
         if (groupInheritance) {
@@ -189,10 +190,21 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     @Override
+    public void addTimedPermission(String permission, String world, int lifeTime) {
+        super.addTimedPermission(permission, world, lifeTime);
+
+        this.clearMembersCache();
+    }
+
+    @Override
     public void removeTimedPermission(String permission, String world) {
         super.removeTimedPermission(permission, world);
-        
-        for(PermissionUser user : this.manager.getUsers(this.getName(), true)){
+
+        this.clearMembersCache();
+    }
+
+    protected void clearMembersCache() {
+        for (PermissionUser user : this.manager.getUsers(this.getName(), true)) {
             user.clearCache();
         }
     }

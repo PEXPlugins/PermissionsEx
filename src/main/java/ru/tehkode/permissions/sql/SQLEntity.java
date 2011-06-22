@@ -105,7 +105,7 @@ public class SQLEntity extends PermissionEntity {
             this.fetchPermissions();
         }
 
-        if (world != null && !world.isEmpty() && this.worldsPermissions != null) {
+        if (world != null && !world.isEmpty()) {
             List<String> worldPermissions = this.worldsPermissions.get(world);
             if (worldPermissions != null) {
                 permissions.addAll(worldPermissions);

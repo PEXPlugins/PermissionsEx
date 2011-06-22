@@ -50,7 +50,10 @@ public class PermissionManager {
         this.users.clear();
         this.groups.clear();
         this.defaultGroup = null;
+        
+        // Close old timed Permission Timer
         timer.cancel();
+        timer = new Timer("PermissionsCleaner");
 
         if (this.backend != null) {
             this.backend.reload();

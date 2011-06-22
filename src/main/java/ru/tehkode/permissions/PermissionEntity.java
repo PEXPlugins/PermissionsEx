@@ -179,14 +179,14 @@ public abstract class PermissionEntity {
         return this.timedPermissions.get(world).toArray(new String[0]);
     }
 
-    public int getTimedPermissionLifetime(String permission, String world){
-        if(!this.timedPermissionsTime.containsKey(world +":" +permission)){
+    public int getTimedPermissionLifetime(String permission, String world) {
+        if (!this.timedPermissionsTime.containsKey(world + ":" + permission)) {
             return 0;
         }
-        
-        return (int)(this.timedPermissionsTime.get(world +":" +permission).longValue() - (System.currentTimeMillis() / 1000L));
+
+        return (int) (this.timedPermissionsTime.get(world + ":" + permission).longValue() - (System.currentTimeMillis() / 1000L));
     }
-    
+
     public void addTimedPermission(final String permission, String world, int lifeTime) {
         if (world == null) {
             world = "";
@@ -221,6 +221,7 @@ public abstract class PermissionEntity {
         }
 
         this.timedPermissions.get(world).remove(permission);
+        this.timedPermissions.remove(world + ":" + permission);
     }
 
     public abstract String[] getPermissions(String world);

@@ -54,7 +54,6 @@ public abstract class PermissionsCommand implements CommandListener {
 
         Player player = Bukkit.getServer().getPlayer(playerName);
         if (player == null) {
-            // @todo mb Logger.inform ?
             return;
         }
 
