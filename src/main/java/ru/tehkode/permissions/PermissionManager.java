@@ -40,17 +40,20 @@ public class PermissionManager {
     protected PermissionGroup defaultGroup = null;
     protected Configuration config;
     protected Timer timer = new Timer("PermissionsCleaner");
+    protected boolean debugMode = false;
 
     public PermissionManager(Configuration config) {
         this.config = config;
         this.initBackend();
+
+        this.debugMode = config.getBoolean("permissions.debug", false);
     }
 
     public void reset() {
         this.users.clear();
         this.groups.clear();
         this.defaultGroup = null;
-        
+
         // Close old timed Permission Timer
         timer.cancel();
         timer = new Timer("PermissionsCleaner");
@@ -58,6 +61,14 @@ public class PermissionManager {
         if (this.backend != null) {
             this.backend.reload();
         }
+    }
+
+    public void setDebug(boolean debug) {
+        this.debugMode = debug;
+    }
+
+    public boolean isDebug() {
+        return this.debugMode;
     }
 
     public PermissionUser getUser(String username) {

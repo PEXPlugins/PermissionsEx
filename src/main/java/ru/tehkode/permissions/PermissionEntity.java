@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 
@@ -38,7 +39,6 @@ public abstract class PermissionEntity {
     protected boolean virtual = true;
     protected String prefix = "";
     protected String suffix = "";
-    
     protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
     protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
 
@@ -65,6 +65,11 @@ public abstract class PermissionEntity {
         }
 
         String expression = getMatchingExpression(permission, world);
+
+        if (this.manager.isDebug()) {
+            Logger.getLogger("Minecraft").info("User " + this.getName() + " checked for \"" + permission + "\", \"" + expression + "\" found");
+        }
+
         return this.explainExpression(expression);
     }
 

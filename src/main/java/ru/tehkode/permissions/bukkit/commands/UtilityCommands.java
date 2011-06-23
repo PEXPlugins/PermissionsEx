@@ -28,22 +28,23 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionBackend;
+import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.config.Configuration;
 
 public class UtilityCommands extends PermissionsCommand {
-
+    
     @Command(name = "pex",
     syntax = "reload",
     permission = "permissions.manage.reload",
     description = "Reload permissions")
     public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionsEx.getPermissionManager().reset();
-
+        
         sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
     }
-
+    
     @Command(name = "pex",
     syntax = "config <node> [value]",
     permission = "permissions.manage.config",
@@ -52,19 +53,19 @@ public class UtilityCommands extends PermissionsCommand {
         if (!(plugin instanceof PermissionsEx)) {
             return;
         }
-
+        
         String nodeName = args.get("node");
         if (nodeName == null || nodeName.isEmpty()) {
             return;
         }
-
+        
         Configuration config = ((PermissionsEx) plugin).getConfigurationNode();
-
+        
         if (args.get("value") != null) {
             config.setProperty(nodeName, this.parseValue(args.get("value")));
             config.save();
         }
-
+        
         Object node = config.getProperty(nodeName);
         if (node instanceof Map) {
             sender.sendMessage("Node \"" + nodeName + "\": ");
@@ -80,7 +81,7 @@ public class UtilityCommands extends PermissionsCommand {
             sender.sendMessage("Node \"" + nodeName + "\" = \"" + node + "\"");
         }
     }
-
+    
     @Command(name = "pex",
     syntax = "backend",
     permission = "permissions.manage.backend",
@@ -88,7 +89,7 @@ public class UtilityCommands extends PermissionsCommand {
     public void getBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
         sender.sendMessage("Current backend: " + PermissionsEx.getPermissionManager().getBackend());
     }
-
+    
     @Command(name = "pex",
     syntax = "backend <backend>",
     permission = "permissions.manage.backend",
@@ -97,7 +98,7 @@ public class UtilityCommands extends PermissionsCommand {
         if (args.get("backend") == null) {
             return;
         }
-
+        
         try {
             PermissionsEx.getPermissionManager().setBackend(args.get("backend"));
             sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
@@ -110,7 +111,7 @@ public class UtilityCommands extends PermissionsCommand {
             }
         }
     }
-
+    
     @Command(name = "pex",
     syntax = "hierarchy",
     permission = "permissions.manage.users",
@@ -119,7 +120,7 @@ public class UtilityCommands extends PermissionsCommand {
         sender.sendMessage("User/Group inheritance hierarchy:");
         this.sendMessage(sender, this.printHierarchy(null, 0));
     }
-
+    
     @Command(name = "pex",
     syntax = "dump <backend> <filename>",
     permission = "permissions.dump",
@@ -128,18 +129,18 @@ public class UtilityCommands extends PermissionsCommand {
         if (!(plugin instanceof PermissionsEx)) {
             return; // User informing is disabled
         }
-
+        
         try {
             PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfigurationNode(), null);
-
+            
             File dstFile = new File("plugins/PermissionsEx/", args.get("filename"));
-
+            
             FileOutputStream outStream = new FileOutputStream(dstFile);
-
+            
             backend.dumpData(new OutputStreamWriter(outStream, "UTF-8"));
-
+            
             outStream.close();
-
+            
             sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data dumped in \"" + dstFile.getName() + "\" ");
         } catch (RuntimeException e) {
             if (e.getCause() instanceof ClassNotFoundException) {
@@ -148,9 +149,25 @@ public class UtilityCommands extends PermissionsCommand {
                 sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
                 logger.severe("Error: " + e.getMessage());
                 e.printStackTrace();
-            } 
+            }
         } catch (IOException e) {
             sender.sendMessage(ChatColor.RED + "IO Error: " + e.getMessage());
+        }
+    }
+    
+    @Command(name = "pex",
+    syntax = "toggle debug",
+    permission = "permissions.manage",
+    description = "Enable/disable debug mode")
+    public void toggleFeature(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        PermissionManager manager = PermissionsEx.getPermissionManager();
+        
+        manager.setDebug(!manager.isDebug());
+        
+        if (manager.isDebug()) {
+            sender.sendMessage("Debug mode enabled");
+        } else {
+            sender.sendMessage("Debug mode disabled");
         }
     }
 }
