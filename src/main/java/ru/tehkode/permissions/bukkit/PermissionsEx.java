@@ -81,7 +81,7 @@ public class PermissionsEx extends JavaPlugin {
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Low, this);
 
         this.modifyworldManager.registerEvents();
-
+        
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
     }
 
