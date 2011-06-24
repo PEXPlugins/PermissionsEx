@@ -187,6 +187,10 @@ public abstract class PermissionEntity {
     }
 
     public int getTimedPermissionLifetime(String permission, String world) {
+        if (world == null) {
+            world = "";
+        }
+
         if (!this.timedPermissionsTime.containsKey(world + ":" + permission)) {
             return 0;
         }
@@ -223,6 +227,10 @@ public abstract class PermissionEntity {
     }
 
     public void removeTimedPermission(String permission, String world) {
+        if (world == null) {
+            world = "";
+        }
+
         if (!this.timedPermissions.containsKey(world)) {
             return;
         }
