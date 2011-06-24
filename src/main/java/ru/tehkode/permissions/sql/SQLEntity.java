@@ -265,6 +265,8 @@ public class SQLEntity extends PermissionEntity {
         }
 
         this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
+        
+        this.fetchPermissions();
     }
 
     @Override
@@ -274,6 +276,8 @@ public class SQLEntity extends PermissionEntity {
         }
 
         this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ? AND value = ''", this.getName(), permission, this.type.ordinal(), world);
+    
+        this.fetchPermissions();
     }
 
     @Override
