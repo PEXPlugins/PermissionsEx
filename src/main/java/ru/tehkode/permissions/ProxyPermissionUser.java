@@ -62,6 +62,8 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     @Override
     public void addPermission(String permission, String world) {
         this.backendEntity.addPermission(permission, world);
+        
+        this.clearCache();
     }
     
     @Override
@@ -77,6 +79,8 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     @Override
     public void removePermission(String permission, String world) {
         this.backendEntity.removePermission(permission, world);
+        
+        this.clearCache();
     }
     
     @Override
