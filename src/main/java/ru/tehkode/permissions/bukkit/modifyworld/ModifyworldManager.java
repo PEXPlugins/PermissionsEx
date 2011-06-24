@@ -183,6 +183,7 @@ public class ModifyworldManager {
                 this.whitelistKickMessage = config.getString("whitelistMessage", this.whitelistKickMessage);
 
                 pluginManager.registerEvent(Event.Type.PLAYER_PRELOGIN, this, Priority.Low, pex);
+                pluginManager.registerEvent(Event.Type.PLAYER_LOGIN, this, Priority.Low, pex);
 
                 Logger.getLogger("Minecraft").info("[PermissionsEx] Modifyworld whitelisting enabled.");
             }
