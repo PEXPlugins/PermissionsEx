@@ -199,6 +199,16 @@ public class ModifyworldManager {
         }
 
         @Override
+        public void onPlayerLogin(PlayerLoginEvent event) {
+            PermissionUser user = PermissionsEx.getPermissionManager().getUser(event.getPlayer());
+
+            if (user != null && !user.has("modifyworld.login", Bukkit.getServer().getWorlds().get(0).getName())) {
+                event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, whitelistKickMessage);
+                return;
+            }
+        }
+
+        @Override
         public void onPlayerBedEnter(PlayerBedEnterEvent event) {
             if (!permissionsManager.has(event.getPlayer(), "modifyworld.usebeds")) {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
@@ -246,6 +256,8 @@ public class ModifyworldManager {
                 informUser(event.getPlayer(), ChatColor.RED + "Sorry, you don't have enough permissions");
                 event.setCancelled(true);
             }
+
+            this.checkPlayerInventory(event.getPlayer());
         }
 
         @Override
