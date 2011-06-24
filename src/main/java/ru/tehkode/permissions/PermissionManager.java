@@ -87,6 +87,10 @@ public class PermissionManager {
 
         return user;
     }
+    
+    public PermissionUser getUser(Player player){
+        return this.getUser(player.getName());
+    }
 
     public PermissionGroup getGroup(String groupname) {
         if (groupname == null || groupname.isEmpty()) {
@@ -103,6 +107,10 @@ public class PermissionManager {
         }
 
         return group;
+    }
+
+    public PermissionGroup getGroup(Player player) {
+        return this.getGroup(player.getName());
     }
 
     public boolean has(Player player, String permission) {
