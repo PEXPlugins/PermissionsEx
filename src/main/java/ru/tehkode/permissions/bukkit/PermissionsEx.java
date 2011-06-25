@@ -71,7 +71,7 @@ public class PermissionsEx extends JavaPlugin {
     }
 
     @Override
-    public void onEnable() {
+    public void onEnable() {       
         this.commandsManager.register(new UtilityCommands());
         this.commandsManager.register(new UserCommands());
         this.commandsManager.register(new GroupCommands());
@@ -82,12 +82,17 @@ public class PermissionsEx extends JavaPlugin {
 
         this.modifyworldManager.registerEvents();
         
+        //register service
+        this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
+        
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
     }
 
     @Override
     public void onDisable() {
         this.permissionsManager.reset();
+        
+        this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
 
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
     }
