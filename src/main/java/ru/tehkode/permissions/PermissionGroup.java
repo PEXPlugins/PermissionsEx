@@ -281,7 +281,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     @Override
     public final void remove() {
         for (PermissionGroup group : this.manager.getGroups(this.getName())) {
-            List<PermissionGroup> parentGroups = Arrays.asList(group.getParentGroups());
+            List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups()));
             parentGroups.remove(this);
             group.setParentGroups(parentGroups.toArray(new PermissionGroup[0]));
         }
