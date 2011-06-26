@@ -64,7 +64,7 @@ public class SQLEntity extends PermissionEntity {
         try {
             List<String> entities = new LinkedList<String>();
 
-            ResultSet result = sql.selectQuery("SELECT name FROM permissions_entity WHERE type = ? " + (defaultOnly ? " AND default = 1" : ""), type.ordinal());
+            ResultSet result = sql.selectQuery("SELECT name FROM `permissions_entity` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal());
             while (result.next()) {
                 entities.add(result.getString("name"));
             }
@@ -143,7 +143,7 @@ public class SQLEntity extends PermissionEntity {
         }
 
         if (value == null || value.isEmpty()) {
-            this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ?", this.getName(), option, this.type.ordinal(), world);
+            this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ?", this.getName(), option, this.type.ordinal(), world);
             return;
         }
 
@@ -159,9 +159,9 @@ public class SQLEntity extends PermissionEntity {
         }
 
         if (newOption) {
-            this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, ?, ?, ?)", this.getName(), option, value, world, this.type.ordinal());
+            this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, ?, ?, ?)", this.getName(), option, value, world, this.type.ordinal());
         } else {
-            this.db.updateQuery("UPDATE permissions SET value = ? WHERE name = ? AND type = ? AND permission = ?", value, this.getName(), this.type.ordinal(), option);
+            this.db.updateQuery("UPDATE `permissions` SET `value` = ? WHERE `name` = ? AND `type` = ? AND `permission` = ?", value, this.getName(), this.type.ordinal(), option);
         }
 
         if (this.isVirtual()) {
@@ -175,7 +175,7 @@ public class SQLEntity extends PermissionEntity {
     public void setParents(String[] parentGroups) {
         try {
             // Clean out existing records
-            this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.getName(), this.type.ordinal());
+            this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ?", this.getName(), this.type.ordinal());
 
             List<Object[]> rows = new LinkedList<Object[]>();
             for (String group : parentGroups) {
@@ -246,9 +246,9 @@ public class SQLEntity extends PermissionEntity {
             world = "";
         }
 
-        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ? AND world = ? AND value = ''", this.getName(), this.type.ordinal(), world);
+        this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), this.type.ordinal(), world);
         for (String permission : permissions) {
-            this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
+            this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
         }
 
         if (this.isVirtual()) {
@@ -274,7 +274,7 @@ public class SQLEntity extends PermissionEntity {
             return;
         }
         
-        this.db.updateQuery("INSERT INTO permissions (name, permission, value, world, type) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
+        this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
         
         this.fetchPermissions();
     }
@@ -285,7 +285,7 @@ public class SQLEntity extends PermissionEntity {
             world = "";
         }
 
-        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND permission = ? AND type = ? AND world = ? AND value = ''", this.getName(), permission, this.type.ordinal(), world);
+        this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), permission, this.type.ordinal(), world);
     
         this.fetchPermissions();
     }
@@ -298,11 +298,11 @@ public class SQLEntity extends PermissionEntity {
     @Override
     public void remove() {
         // clear inheritance info
-        this.db.updateQuery("DELETE FROM permissions_inheritance WHERE child = ? AND type = ?", this.getName(), this.type.ordinal());
+        this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ?", this.getName(), this.type.ordinal());
         // clear permissions
-        this.db.updateQuery("DELETE FROM permissions WHERE name = ? AND type = ?", this.getName(), this.type.ordinal());
+        this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ?", this.getName(), this.type.ordinal());
         // clear info
-        this.db.updateQuery("DELETE FROM permissions_entity WHERE name = ? AND type = ?", this.getName(), this.type.ordinal());
+        this.db.updateQuery("DELETE FROM `permissions_entity` WHERE `name` = ? AND `type` = ?", this.getName(), this.type.ordinal());
 
         this.virtual = true;
         this.commonOptions.clear();
@@ -317,9 +317,9 @@ public class SQLEntity extends PermissionEntity {
     protected void updateInfo() {
         String sql;
         if (this.isVirtual()) { // This section are suspicious, here was problem which are resolved mysticaly. Keep eye on it.
-            sql = "INSERT INTO permissions_entity (prefix, suffix, name, type) VALUES (?, ?, ?, ?)";
+            sql = "INSERT INTO `permissions_entity` (`prefix`, `suffix`, `name`, `type`) VALUES (?, ?, ?, ?)";
         } else {
-            sql = "UPDATE permissions_entity SET prefix = ?, suffix = ? WHERE name = ? AND type = ?";
+            sql = "UPDATE `permissions_entity` SET `prefix` = ?, `suffix` = ? WHERE `name` = ? AND `type` = ?";
         }
 
         this.db.updateQuery(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
@@ -334,7 +334,7 @@ public class SQLEntity extends PermissionEntity {
         this.commonPermissions = new LinkedList<String>();
 
         try {
-            ResultSet results = this.db.selectQuery("SELECT permission, world, value FROM permissions WHERE name = ? AND type = ? ORDER BY id DESC", this.getName(), this.type.ordinal());
+            ResultSet results = this.db.selectQuery("SELECT `permission`, `world`, `value` FROM `permissions` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
             while (results.next()) {
                 String permission = results.getString("permission").trim();
                 String world = results.getString("world").trim();
@@ -375,7 +375,7 @@ public class SQLEntity extends PermissionEntity {
     protected final void fetchInheritance() {
         try {
             this.parents = new LinkedList<String>();
-            ResultSet results = this.db.selectQuery("SELECT parent FROM permissions_inheritance WHERE child = ? AND type = ? ORDER BY id DESC", this.getName(), this.type.ordinal());
+            ResultSet results = this.db.selectQuery("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
 
             while (results.next()) {
                 this.parents.add(results.getString("parent"));
@@ -388,7 +388,7 @@ public class SQLEntity extends PermissionEntity {
 
     protected final void fetchInfo() {
         try {
-            ResultSet result = this.db.selectQuery("SELECT name, prefix, suffix FROM permissions_entity WHERE name LIKE ? AND type = ? LIMIT 1", this.getName(), this.type.ordinal());
+            ResultSet result = this.db.selectQuery("SELECT `name`, `prefix`, `suffix` FROM `permissions_entity` WHERE `name` LIKE ? AND `type` = ? LIMIT 1", this.getName(), this.type.ordinal());
             if (result.next()) {
                 this.prefix = result.getString("prefix");
                 this.suffix = result.getString("suffix");
