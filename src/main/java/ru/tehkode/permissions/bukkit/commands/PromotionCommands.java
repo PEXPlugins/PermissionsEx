@@ -34,7 +34,7 @@ public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "group <group> rank [rank] [ladder]",
-    description = "Promotes user to next group",
+    description = "Get or set <group> [rank] [ladder]",
     isPrimary = true,
     permission = "permissions.groups.rank")
     public void rankGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -71,7 +71,7 @@ public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "promote <user> [ladder]",
-    description = "Promotes user to next group",
+    description = "Promotes <user> to next group or [ladder]",
     isPrimary = true,
     permissions = {"permissions.user.promote", "permissions.user.promote.<ladder>"})
     public void promoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -106,7 +106,7 @@ public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "demote <user> [ladder]",
-    description = "Demotes user to previous group",
+    description = "Demotes <user> to previous group or [ladder]",
     isPrimary = true,
     permissions = {"permissions.user.demote", "permissions.user.demote.<ladder>"})
     public void demoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -141,7 +141,7 @@ public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "promote",
     syntax = "<user>",
-    description = "Promotes user to next group",
+    description = "Promotes <user> to next group",
     isPrimary = true,
     permission = "permissions.user.rank.promote")
     public void promoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -150,7 +150,7 @@ public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "demote",
     syntax = "<user>",
-    description = "Demotes user to previous group",
+    description = "Demotes <user> to previous group",
     isPrimary = true,
     permission = "permissions.user.rank.demote")
     public void demoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
