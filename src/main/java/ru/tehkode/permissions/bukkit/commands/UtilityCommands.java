@@ -39,7 +39,7 @@ public class UtilityCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "reload",
     permission = "permissions.manage.reload",
-    description = "Reload permissions")
+    description = "Reload environment")
     public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionsEx.getPermissionManager().reset();
 
@@ -49,7 +49,7 @@ public class UtilityCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "config <node> [value]",
     permission = "permissions.manage.config",
-    description = "Print <node> value from plugin configuration. Specify [value] to set new value.")
+    description = "Print or set <node> [value]")
     public void config(Plugin plugin, CommandSender sender, Map<String, String> args) {
         if (!(plugin instanceof PermissionsEx)) {
             return;
