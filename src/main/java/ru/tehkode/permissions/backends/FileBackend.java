@@ -44,13 +44,13 @@ import ru.tehkode.permissions.file.FileUser;
  * @author code
  */
 public class FileBackend extends PermissionBackend {
-    
+
     public Configuration permissions;
-    
+
     public FileBackend(PermissionManager manager, Configuration config) {
         super(manager, config);
     }
-    
+
     @Override
     public void initialize() {
         String permissionFilename = config.getString("permissions.backends.file.file");
@@ -61,112 +61,112 @@ public class FileBackend extends PermissionBackend {
             config.setProperty("permissions.backends.file.file", "permissions.yml");
             config.save();
         }
-        
+
         String baseDir = config.getString("permissions.basedir");
-        
+
         File permissionFile = new File(baseDir, permissionFilename);
-        
+
         permissions = new Configuration(permissionFile);
-        
+
         if (!permissionFile.exists()) {
             try {
                 permissionFile.createNewFile();
 
                 // Load default permissions
                 permissions.setProperty("groups.default.default", true);
-                
-                
+
+
                 List<String> defaultPermissions = new LinkedList<String>();
                 // Specify here default permissions
                 defaultPermissions.add("modifyworld.*");
-                
+
                 permissions.setProperty("groups.default.permissions", defaultPermissions);
-                
+
                 permissions.save();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        
+
         permissions.load();
     }
-    
+
     @Override
     public String[] getWorldInheritance(String world) {
         if (world != null && !world.isEmpty()) {
             return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);
         }
-        
+
         return new String[0];
     }
-    
+
     @Override
     public void setWorldInheritance(String world, String[] parentWorlds) {
         if (world == null && world.isEmpty()) {
             return;
         }
-        
+
         this.permissions.setProperty("worlds." + world + ".inheritance", Arrays.asList(parentWorlds));
     }
-    
+
     @Override
     public PermissionUser getUser(String userName) {
         return new FileUser(userName, manager, this);
     }
-    
+
     @Override
     public PermissionGroup getGroup(String groupName) {
         return new FileGroup(groupName, manager, this);
     }
-    
+
     @Override
     public PermissionGroup getDefaultGroup() {
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
-        
+
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             if (entry.getValue().getBoolean("default", false)) {
                 return this.manager.getGroup(entry.getKey());
             }
         }
-        
+
         throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
     }
-    
+
     @Override
     public PermissionGroup[] getGroups() {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
-        
+
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             groups.add(this.manager.getGroup(entry.getKey()));
         }
-        
+
         return groups.toArray(new PermissionGroup[0]);
     }
-    
+
     @Override
     public PermissionUser[] getUsers() {
         List<PermissionUser> users = new LinkedList<PermissionUser>();
         Map<String, ConfigurationNode> userMap = this.permissions.getNodesMap("users");
-        
+
         if (userMap != null) {
             for (Map.Entry<String, ConfigurationNode> entry : userMap.entrySet()) {
                 users.add(this.manager.getUser(entry.getKey()));
             }
         }
-        
+
         return users.toArray(new PermissionUser[]{});
     }
-    
+
     @Override
     public void reload() {
         this.permissions.load();
     }
-    
+
     public static Map<String, String> collectOptions(Map<String, Object> root) {
         return collectOptions(root, "", new HashMap<String, String>());
     }
-    
+
     protected static Map<String, String> collectOptions(Map<String, Object> root, String baseKey, Map<String, String> collector) {
         for (Map.Entry<String, Object> entry : root.entrySet()) {
             String newKey = entry.getKey();
@@ -182,18 +182,18 @@ public class FileBackend extends PermissionBackend {
                 collector.put(newKey, (String) entry.getValue());
             }
         }
-        
+
         return collector;
     }
-    
+
     @Override
     public void dumpData(OutputStreamWriter writer) throws IOException {
         DumperOptions options = new DumperOptions();
         options.setIndent(4);
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        
+
         Yaml yaml = new Yaml(new SafeConstructor(), new Representer(), options);
-        
+
         ConfigurationNode root = new ConfigurationNode();
 
         // Users setup
@@ -220,7 +220,7 @@ public class FileBackend extends PermissionBackend {
                     nodePath += ".worlds." + entry.getKey();
                 }
                 nodePath += ".permissions";
-                
+
                 if (entry.getValue().length > 0) {
                     root.setProperty(nodePath, Arrays.asList(entry.getValue()));
                 }
@@ -233,14 +233,14 @@ public class FileBackend extends PermissionBackend {
                     nodePath += "worlds." + entry.getKey();
                 }
                 nodePath += ".options";
-                
+
                 if (entry.getValue().size() > 0) {
                     root.setProperty(nodePath, entry.getValue());
                 }
             }
         }
-        
-        
+
+
         PermissionGroup defaultGroup = this.manager.getDefaultGroup();
 
         // Groups
@@ -260,7 +260,7 @@ public class FileBackend extends PermissionBackend {
             if (group.getOwnSuffix() != null && !group.getOwnSuffix().isEmpty()) {
                 root.setProperty("groups." + group.getName() + ".suffix", group.getOwnSuffix());
             }
-            
+
             if (group.equals(defaultGroup)) {
                 root.setProperty("groups." + group.getName() + ".default", true);
             }
@@ -272,7 +272,7 @@ public class FileBackend extends PermissionBackend {
                     nodePath += ".worlds." + entry.getKey();
                 }
                 nodePath += ".permissions";
-                
+
                 if (entry.getValue().length > 0) {
                     root.setProperty(nodePath, Arrays.asList(entry.getValue()));
                 }
@@ -285,14 +285,14 @@ public class FileBackend extends PermissionBackend {
                     nodePath += "worlds." + entry.getKey();
                 }
                 nodePath += ".options";
-                
+
                 if (entry.getValue().size() > 0) {
                     root.setProperty(nodePath, entry.getValue());
                 }
             }
         }
-        
-        
+
+
         yaml.dump(root.getRoot(), writer);
     }
 }

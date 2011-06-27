@@ -47,6 +47,12 @@ public abstract class PermissionEntity {
         this.name = name;
     }
 
+    /**
+     * Returns native name of permission entity (User or Group)
+     * In case of User should be equal to Player's name on server
+     * 
+     * @return Name of Entity 
+     */
     public String getName() {
         return this.name;
     }
@@ -55,10 +61,59 @@ public abstract class PermissionEntity {
         this.name = name;
     }
 
+    /**
+     * Returns prefix of entity
+     * 
+     * @return prefix 
+     */
+    public String getPrefix() {
+        return this.prefix;
+    }
+
+    /**
+     * Set prefix to specified value
+     * 
+     * @param prefix 
+     */
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    /**
+     * Returns suffix of this entity
+     * 
+     * @return suffix
+     */
+    public String getSuffix() {
+        return this.suffix;
+    }
+
+    /**
+     * Set suffix to specified value
+     * 
+     * @param suffix 
+     */
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
+
+    /**
+     * Checks if entity have specified permission in default server world
+     * 
+     * @param permission Permission to check
+     * @return true if this entity have such permission, false otherwise
+     */
     public boolean has(String permission) {
         return this.has(permission, Bukkit.getServer().getWorlds().get(0).getName());
     }
 
+    /**
+     * Check if entity have specified permission in specified world
+     * 
+     * @param permission Permission to check
+     * @param world World to check permission in
+     * @return true if this entity have such permission, false otherwise
+     */
     public boolean has(String permission, String world) {
         if (permission != null && permission.isEmpty()) { // empty permission for public access :)
             return true;
@@ -73,48 +128,117 @@ public abstract class PermissionEntity {
         return this.explainExpression(expression);
     }
 
-    protected String getMatchingExpression(String permission, String world) {
-        return this.getMatchingExpression(this.getPermissions(world), permission);
+    /**
+     * Returns all entity permissions in specified world
+     * 
+     * @param world
+     * @return Array of permission expressions
+     */
+    public abstract String[] getPermissions(String world);
+
+    /**
+     * Returns permissions for all worlds
+     * Common permissions stored as "" (empty string) world.
+     * 
+     * @return Map with world name as key and permissions array as value
+     */
+    public abstract Map<String, String[]> getAllPermissions();
+
+    /**
+     * Add permissions for specified world
+     * 
+     * @param permission
+     * @param world 
+     */
+    public abstract void addPermission(String permission, String world);
+
+    /**
+     * Add permission in common space (all worlds)
+     * 
+     * @param permission 
+     */
+    public void addPermission(String permission) {
+        this.addPermission(permission, "");
     }
 
-    protected String getMatchingExpression(String[] permissions, String permission) {
-        for (String expression : permissions) {
-            if (isMatches(expression, permission, true)) {
-                return expression;
-            }
-        }
+    /**
+     * Remove specified permission from world
+     * 
+     * @param permission
+     * @param world 
+     */
+    public abstract void removePermission(String permission, String world);
 
-        return null;
-    }
-
-    public void setPermission(String permission, String value) {
-        this.setOption(permission, value, "");
-    }
-
+    /**
+     * Remove specified permission from all worlds
+     * 
+     * @param permission 
+     */
     public void removePermission(String permission) {
-        this.removePermission(permission, "");
+        for (String world : this.getAllPermissions().keySet()) {
+            this.removePermission(permission, world);
+        }
     }
 
+    /**
+     * Set specified permissions for specified world
+     * 
+     * @param permissions Array of permissions to set
+     * @param world World to set permissions for
+     */
+    public abstract void setPermissions(String[] permissions, String world);
+
+    /**
+     * Set specified permissions in common space (all world)
+     * 
+     * @param permission 
+     */
+    public void setPermissions(String[] permission) {
+        this.setPermissions(permission, "");
+    }
+
+    /**
+     * Get option with specified name for specified world
+     * 
+     * @param option Name of option
+     * @param world World to look for
+     * @param defaultValue Default value to fallback if such option is not found
+     * @return Value of option as String
+     */
+    public abstract String getOption(String option, String world, String defaultValue);
+
+    /**
+     * Return specified option.
+     * Option would be looked in common options
+     * 
+     * @param option Option name
+     * @return option value, or empty string if option not found
+     */
     public String getOption(String option) {
+        // @todo Replace empty string with null
         return this.getOption(option, "", "");
     }
 
+    /**
+     * Return specified option for specified world
+     * 
+     * @param option Option name
+     * @param world World to look in
+     * @return option value, or empty string if option not found
+     */
     public String getOption(String option, String world) {
+        // @todo Replace empty string with null
         return this.getOption(option, world, "");
     }
-
-    public boolean getOptionBoolean(String optionName, String world, boolean defaultValue) {
-        String option = this.getOption(optionName, world, Boolean.toString(defaultValue));
-
-        if ("false".equalsIgnoreCase(option)) {
-            return false;
-        } else if ("true".equalsIgnoreCase(option)) {
-            return true;
-        }
-
-        return defaultValue;
-    }
-
+    
+        /**
+     * Return integer value of specified permission
+     * 
+     * @param optionName
+     * @param world
+     * @param defaultValue
+     * @return option value, or specified defaultValue if option not found or not integer number
+     */
     public int getOptionInteger(String optionName, String world, int defaultValue) {
         String option = this.getOption(optionName, world, Integer.toString(defaultValue));
 
@@ -126,6 +250,14 @@ public abstract class PermissionEntity {
         return defaultValue;
     }
 
+    /**
+     * Returns double value of specified option
+     * 
+     * @param optionName
+     * @param world
+     * @param defaultValue
+     * @return option value, or specified defaultValue if option is not found or not double number
+     */
     public double getOptionDouble(String optionName, String world, double defaultValue) {
         String option = this.getOption(optionName, world, Double.toString(defaultValue));
 
@@ -137,43 +269,86 @@ public abstract class PermissionEntity {
         return defaultValue;
     }
 
-    protected boolean explainExpression(String expression) {
-        if (expression == null || expression.isEmpty()) {
+    /**
+     * Returns boolean value of specified option
+     * 
+     * @param optionName
+     * @param world
+     * @param defaultValue
+     * @return option value, or specified defaultValue if option not found or value is not boolean
+     */
+    public boolean getOptionBoolean(String optionName, String world, boolean defaultValue) {
+        String option = this.getOption(optionName, world, Boolean.toString(defaultValue));
+
+        if ("false".equalsIgnoreCase(option)) {
             return false;
+        } else if ("true".equalsIgnoreCase(option)) {
+            return true;
         }
 
-        return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
+        return defaultValue;
+    }
+    
+    /**
+     * Set specified option for specified world
+     * 
+     * @param option Option name
+     * @param value Value to set, null to remove
+     * @param world World name
+     */
+    public abstract void setOption(String option, String value, String world);
+
+    /**
+     * Set specified option for all worlds, can be overriden by world specific option
+     * 
+     * @param option Option name
+     * @param value Value to set, null to remove
+     */
+    public void setOption(String permission, String value) {
+        this.setOption(permission, value, "");
     }
 
-    public void setPermissions(String[] permission) {
-        this.setPermissions(permission, null);
-    }
+    /**
+     * Get options for specified world
+     * 
+     * @param world
+     * @return Option value in string
+     */
+    public abstract Map<String, String> getOptions(String world);
 
-    public String getPrefix() {
-        return this.prefix;
-    }
+    /**
+     * Returns options for all worlds
+     * Common options stored as "" (empty string) world.
+     * 
+     * @return Map with world name as key and map of options as value
+     */
+    public abstract Map<String, Map<String, String>> getAllOptions();
 
-    public String getSuffix() {
-        return this.suffix;
-    }
+    /**
+     * Save in-memory data to storage backend
+     */
+    public abstract void save();
 
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-    }
+    /**
+     * Remove entity data from backend
+     */
+    public abstract void remove();
 
-    public void setSuffix(String postfix) {
-        this.suffix = postfix;
-    }
-
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + "(" + this.getName() + ")";
-    }
-
+    /**
+     * Return state of entity
+     * 
+     * @return true if entity is only in-memory
+     */
     public boolean isVirtual() {
         return this.virtual;
     }
 
+    /**
+     * Return entity timed (temporary) permission for specified world
+     * 
+     * @param world
+     * @return Array of permissions
+     */
     public String[] getTimedPermissions(String world) {
         if (world == null) {
             world = "";
@@ -186,6 +361,13 @@ public abstract class PermissionEntity {
         return this.timedPermissions.get(world).toArray(new String[0]);
     }
 
+    /**
+     * Returns remaining lifetime of specified permission in specified world
+     * 
+     * @param permission Name of permission
+     * @param world
+     * @return seconds of remaining lifetime of timed permission, 0 if permission is transient
+     */
     public int getTimedPermissionLifetime(String permission, String world) {
         if (world == null) {
             world = "";
@@ -198,6 +380,13 @@ public abstract class PermissionEntity {
         return (int) (this.timedPermissionsTime.get(world + ":" + permission).longValue() - (System.currentTimeMillis() / 1000L));
     }
 
+    /**
+     * Adds timed permission to specified world for specified amount of seconds
+     * 
+     * @param permission
+     * @param world
+     * @param lifeTime Lifetime of permission in seconds, 0 for transient permission (world disappear only after server reload)
+     */
     public void addTimedPermission(final String permission, String world, int lifeTime) {
         if (world == null) {
             world = "";
@@ -226,6 +415,12 @@ public abstract class PermissionEntity {
         }
     }
 
+    /**
+     * Removes specified timed permission from specified world
+     * 
+     * @param permission
+     * @param world 
+     */
     public void removeTimedPermission(String permission, String world) {
         if (world == null) {
             world = "";
@@ -238,32 +433,6 @@ public abstract class PermissionEntity {
         this.timedPermissions.get(world).remove(permission);
         this.timedPermissions.remove(world + ":" + permission);
     }
-
-    public abstract String[] getPermissions(String world);
-
-    public abstract Map<String, String[]> getAllPermissions();
-
-    public abstract Map<String, Map<String, String>> getAllOptions();
-
-    public abstract Map<String, String> getOptions(String world);
-
-    public abstract String getOption(String option, String world, String defaultValue);
-
-    public void setOption(String permission, String value) {
-        this.setOption(permission, value, null);
-    }
-
-    public abstract void setOption(String option, String value, String world);
-
-    public abstract void addPermission(String permission, String world);
-
-    public abstract void removePermission(String permission, String world);
-
-    public abstract void setPermissions(String[] permissions, String world);
-
-    public abstract void save();
-
-    public abstract void remove();
 
     @Override
     public boolean equals(Object obj) {
@@ -288,11 +457,50 @@ public abstract class PermissionEntity {
         hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + this.getName() + ")";
+    }
+
+    protected boolean explainExpression(String expression) {
+        if (expression == null || expression.isEmpty()) {
+            return false;
+        }
+
+        return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
+    }
+
+    protected String getMatchingExpression(String permission, String world) {
+        return this.getMatchingExpression(this.getPermissions(world), permission);
+    }
+
+    protected String getMatchingExpression(String[] permissions, String permission) {
+        for (String expression : permissions) {
+            if (isMatches(expression, permission, true)) {
+                return expression;
+            }
+        }
+
+        return null;
+    }
+
+    protected static String prepareRegexp(String expression) {
+        return expression.replace(".", "\\.").replace("*", "(.*)");
+    }
     /**
      * Pattern cache
      */
     protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
 
+    /**
+     * Checks if specified permission matches specified permission expression
+     * 
+     * @param expression permission expression - what user have in his permissions list (permission.nodes.*)
+     * @param permission permission which are checking for (permission.node.some.subnode)
+     * @param additionalChecks check for parent node matching
+     * @return 
+     */
     public static boolean isMatches(String expression, String permission, boolean additionalChecks) {
         String localExpression = expression;
 
@@ -317,9 +525,5 @@ public abstract class PermissionEntity {
         }
          */
         return false;
-    }
-
-    protected static String prepareRegexp(String expression) {
-        return expression.replace(".", "\\.").replace("*", "(.*)");
     }
 }

@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.Configuration;
 
 /**
@@ -43,16 +44,44 @@ public abstract class PermissionBackend {
         this.config = config;
     }
     
+    /**
+     * Actual backend initialization should be done here
+     */
     public abstract void initialize();
 
+    /**
+     * Returns new PermissionUser object for specified player name
+     * 
+     * @param name Player name
+     * @return Return PermissionUser for specified player, or null if there is error.
+     */
     public abstract PermissionUser getUser(String name);
 
+    /**
+     * Returns new PermissionGroup object for specified group name
+     * 
+     * @param name Group name
+     * @return PermissionGroup object, or null if something is wrong
+     */
     public abstract PermissionGroup getGroup(String name);
 
+    /*
+     * Creates new group with specified name, or returns PermissionGroup object,
+     * if there is such group already exists.
+     * 
+     * @param name Group name
+     * @returns PermissionGroup instance for specified group 
+     */
     public PermissionGroup createGroup(String name) {
-        return this.getGroup(name);
+        return this.manager.getGroup(name);
     }
 
+    /**
+     * Removes group with specified group name
+     * 
+     * @param groupName Name of group which should be removed
+     * @return true if group actually removed, false if group have child groups
+     */
     public boolean removeGroup(String groupName) {
         if (this.getGroups(groupName).length > 0) {
             return false;
@@ -67,10 +96,27 @@ public abstract class PermissionBackend {
         return true;
     }
 
+    /**
+     * Returns default group, group which are assigned to users without specified group
+     * 
+     * @return Default group instance
+     */
     public abstract PermissionGroup getDefaultGroup();
 
+    /**
+     * Returns array with of world names which specified world inherit
+     * 
+     * @param world World name
+     * @return Array of parent world, if there is no such than just empty array
+     */
     public abstract String[] getWorldInheritance(String world);
     
+    /**
+     * Set world inheritance parents for specified world 
+     * 
+     * @param world world name which inheritance should be set
+     * @param parentWorlds array of world names
+     */
     public abstract void setWorldInheritance(String world, String[] parentWorlds);
 
     /**
@@ -100,8 +146,8 @@ public abstract class PermissionBackend {
     
     /**
      * Return child groups of specified group.
-     * If specified group have no child empty or not exists empty array would be returned
-     * 
+     * If specified group have no child empty or not exists empty array would be
+     * returned
      * 
      * @param groupName 
      * @param inheritance - If true than full list of descendants would be returned. 
@@ -151,9 +197,31 @@ public abstract class PermissionBackend {
         return users.toArray(new PermissionUser[]{});
     }
     
+    /**
+     * Reload backend (reread permissions file, reconnect to database, etc)
+     */
     public abstract void reload();
-    protected static Map<String, Class> registedAliases = new HashMap<String, Class>();
+    
+    /**
+     * Dump data in native for backend format
+     * 
+     * @param writer Writer where dumped data should be written
+     * @throws IOException 
+     */
+    public abstract void dumpData(OutputStreamWriter writer) throws IOException;
+    
+    /**
+     * Array of backend aliases
+     */
+    protected static Map<String, Class<? extends PermissionBackend>> registedAliases = new HashMap<String, Class<? extends PermissionBackend>>();
 
+    /**
+     * Return class name specified alias, if there is no class found than alias
+     * would be returned
+     * 
+     * @param alias
+     * @return
+     */
     public static String getBackendClassName(String alias) {
 
         if (registedAliases.containsKey(alias)) {
@@ -163,6 +231,14 @@ public abstract class PermissionBackend {
         return alias;
     }
 
+    /**
+     * Returns Class object for specified alias, if there is no alias registered
+     * than trying to find it using Class.forName(alias)
+     * 
+     * @param alias
+     * @return 
+     * @throws ClassNotFoundException 
+     */
     public static Class getBackendClass(String alias) throws ClassNotFoundException {
         if (!registedAliases.containsKey(alias)) {
             return Class.forName(alias);
@@ -171,7 +247,13 @@ public abstract class PermissionBackend {
         return registedAliases.get(alias);
     }
 
-    public static void registerBackendAlias(String alias, Class<?> backendClass) {
+    /**
+     * Register new alias for specified Backend class
+     * 
+     * @param alias
+     * @param backendClass 
+     */
+    public static void registerBackendAlias(String alias, Class<? extends PermissionBackend> backendClass) {
         if (!PermissionBackend.class.isAssignableFrom(backendClass)) {
             throw new RuntimeException("Provided class should be subclass of PermissionBackend");
         }
@@ -181,7 +263,15 @@ public abstract class PermissionBackend {
         Logger.getLogger("Minecraft").info("[PermissionsEx] " + alias + " backend registered!");
     }
 
-    public static String getBackendAlias(Class<?> backendClass) {
+    /**
+     * Return alias for specified Backend class
+     * If there is no such class registered, than fullname of such class would
+     * be returned using backendClass.getName();
+     * 
+     * @param backendClass
+     * @return 
+     */
+    public static String getBackendAlias(Class<? extends PermissionBackend> backendClass) {
         if (registedAliases.containsValue(backendClass)) {
             for (String alias : registedAliases.keySet()) { // Is there better way to find key by value?
                 if (registedAliases.get(alias).equals(backendClass)) {
@@ -192,11 +282,39 @@ public abstract class PermissionBackend {
 
         return backendClass.getName();
     }
+    
+    /**
+     * Returns new Backend class instance for specified backendName
+     * 
+     * @param backendName Class name or alias of backend
+     * @param config Configuration object to access backend settings
+     * @return new instance of PermissionBackend object
+     */
+    public static PermissionBackend getBackend(String backendName, Configuration config){
+        return getBackend(backendName, PermissionsEx.getPermissionManager(), config, defaultBackend);
+    }
 
+    /**
+     * Returns new Backend class instance for specified backendName
+     * 
+     * @param backendName Class name or alias of backend
+     * @param manager PermissionManager object
+     * @param config Configuration object to access backend settings
+     * @return new instance of PermissionBackend object
+     */
     public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config) {
         return getBackend(backendName, manager, config, defaultBackend);
     }
 
+    /**
+     * Returns new Backend class instance for specified backendName
+     * 
+     * @param backendName Class name or alias of backend
+     * @param manager PermissionManager object
+     * @param config Configuration object to access backend settings
+     * @param fallBackBackend name of backend which should be used if specified backend not found or failed to initialize
+     * @return 
+     */
     public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config, String fallBackBackend) {
         if (backendName == null || backendName.isEmpty()) {
             backendName = defaultBackend;
@@ -228,6 +346,4 @@ public abstract class PermissionBackend {
             throw new RuntimeException(e);
         }
     }
-
-    public abstract void dumpData(OutputStreamWriter writer) throws IOException;
 }

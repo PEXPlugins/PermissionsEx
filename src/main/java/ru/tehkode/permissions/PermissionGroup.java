@@ -34,8 +34,22 @@ public abstract class PermissionGroup extends PermissionEntity {
         super(groupName, manager);
     }
 
+    /**
+     * Returns own (without inheritance) permissions of group for specified world
+     * @param world
+     * @return Array of permissions
+     */
     public abstract String[] getOwnPermissions(String world);
 
+    /**
+     * Returns specified option value in specified world without inheritance
+     * This mean option value wouldn't be inherited from parent groups
+     * 
+     * @param option
+     * @param world
+     * @param defaultValue
+     * @return option value, or defaultValue if option is not found in own options
+     */
     public abstract String getOwnOption(String option, String world, String defaultValue);
 
     public String getOwnOption(String option) {
@@ -80,28 +94,28 @@ public abstract class PermissionGroup extends PermissionEntity {
         return defaultValue;
     }
 
-    protected abstract void removeGroup();
-
-    public abstract void setParentGroups(String[] parentGroups);
-
-    public void setParentGroups(PermissionGroup[] parentGroups) {
-        List<String> groups = new LinkedList<String>();
-
-        for (PermissionGroup group : parentGroups) {
-            groups.add(group.getName());
-        }
-
-        this.setParentGroups(groups.toArray(new String[0]));
-    }
-
+    /**
+     * Checks if group participating in ranking system
+     * @return 
+     */
     public boolean isRanked() {
         return (this.getRank() > 0);
     }
 
+    /**
+     * Returns rank in ranking system, 0 if group are not ranked
+     * 
+     * @return 
+     */
     public int getRank() {
         return this.getOwnOptionInteger("rank", "", 0);
     }
 
+    /**
+     * Set rank for this group
+     * 
+     * @param rank Rank for group, specify 0 to remove group from ranking
+     */
     public void setRank(int rank) {
         if (rank > 0) {
             this.setOption("rank", Integer.toString(rank));
@@ -111,18 +125,173 @@ public abstract class PermissionGroup extends PermissionEntity {
 
     }
 
+    /**
+     * Returns ranking ladder where this group participating
+     * 
+     * @return 
+     */
     public String getRankLadder() {
         return this.getOption("rank-ladder", "", "default");
     }
 
-    public void setRankLadder(String rankGroup) {
-        if (rankGroup.isEmpty() || rankGroup.equals("default")) {
-            rankGroup = null;
+    /**
+     * Set rank ladder for this group
+     * 
+     * @param rankLadder 
+     */
+    public void setRankLadder(String rankLadder) {
+        if (rankLadder.isEmpty() || rankLadder.equals("default")) {
+            rankLadder = null;
         }
 
-        this.setOption("rank-ladder", rankGroup);
+        this.setOption("rank-ladder", rankLadder);
+    }
+    
+    protected abstract String[] getParentGroupsNamesImpl();
+
+    /**
+     * Returns array of parent groups objects
+     * 
+     * @return array of groups objects
+     */
+    public PermissionGroup[] getParentGroups() {
+        Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
+
+        for (String parentGroup : this.getParentGroupsNamesImpl()) {
+
+            // Yeah horrible thing, i know, that just safety from invoking empty named groups
+            parentGroup = parentGroup.trim();
+            if (parentGroup.isEmpty()) {
+                continue;
+            }
+
+            if (parentGroup.equals(this.getName())) {
+                continue;
+            }
+
+            PermissionGroup group = this.manager.getGroup(parentGroup);
+            if (!group.isChildOf(this, true)) { // To prevent cyclic inheritance
+                parentGroups.add(group);
+            }
+        }
+
+        return parentGroups.toArray(new PermissionGroup[0]);
+    }
+    
+    /**
+     * Returns direct parents names of this group
+     * 
+     * @return array of group names
+     */
+    public String[] getParentGroupsNames() {
+        List<String> groups = new LinkedList<String>();
+        for (PermissionGroup group : this.getParentGroups()) {
+            groups.add(group.getName());
+        }
+
+        return groups.toArray(new String[0]);
     }
 
+    /**
+     * Set parent groups
+     * 
+     * @param parentGroups Array of parent groups names
+     */
+    public abstract void setParentGroups(String[] parentGroups);
+
+    /**
+     * Set parent groups
+     * 
+     * @param parentGroups Array of parent groups objects
+     */
+    public void setParentGroups(PermissionGroup[] parentGroups) {
+        List<String> groups = new LinkedList<String>();
+
+        for (PermissionGroup group : parentGroups) {
+            groups.add(group.getName());
+        }
+
+        this.setParentGroups(groups.toArray(new String[0]));
+    }
+    
+    protected abstract void removeGroup();
+
+    /**
+     * Check if this group are descendant of specified group 
+     * 
+     * @param group group object of parent
+     * @param checkInheritance set false to check only the direct inheritance
+     * @return true if this group are descendant or direct parent of specified group
+     */
+    public boolean isChildOf(PermissionGroup group, boolean checkInheritance) {
+        if (group == null) {
+            return false;
+        }
+
+        for (PermissionGroup parentGroup : this.getParentGroups()) {
+            if (group.equals(parentGroup)) {
+                return true;
+            }
+
+            if (checkInheritance && parentGroup.isChildOf(group, checkInheritance)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this group are descendant of specified group 
+     * 
+     * @param groupName name of group to check for
+     * @param checkInheritance set false to check only the direct inheritance
+     * @return 
+     */
+    public boolean isChildOf(String groupName, boolean checkInheritance) {
+        return isChildOf(this.manager.getGroup(groupName), checkInheritance);
+    }
+
+    /**
+     * Check if specified group are direct parent of this group
+     * 
+     * @param groupName
+     * @return 
+     */
+    public boolean isChildOf(String groupName) {
+        return this.isChildOf(groupName, false);
+    }
+
+    /**
+     * Return array of direct child group objects
+     * 
+     * @return 
+     */
+    public PermissionGroup[] getChildGroups() {
+        return this.manager.getGroups(this.getName(), false);
+    }
+
+    /**
+     * Return array of descendant group objects
+     * 
+     * @return 
+     */
+    public PermissionGroup[] getDescendantGroups() {
+        return this.manager.getGroups(this.getName(), true);
+    }
+
+    /**
+     * Return array of direct members (users) of this group
+     * 
+     * @return 
+     */
+    public PermissionUser[] getUsers() {
+        return this.manager.getUsers(this.getName(), false);
+    }
+
+    /**
+     * Overriden methods
+     */
     @Override
     public String getPrefix() {
         String localPrefix = super.getPrefix();
@@ -208,75 +377,6 @@ public abstract class PermissionGroup extends PermissionEntity {
             user.clearCache();
         }
     }
-
-    public boolean isChildOf(String groupName, boolean checkInheritance) {
-        return isChildOf(this.manager.getGroup(groupName), checkInheritance);
-    }
-
-    public boolean isChildOf(PermissionGroup group, boolean checkInheritance) {
-        if (group == null) {
-            return false;
-        }
-
-        for (PermissionGroup parentGroup : this.getParentGroups()) {
-            if (group.equals(parentGroup)) {
-                return true;
-            }
-
-            if (checkInheritance && parentGroup.isChildOf(group, checkInheritance)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public PermissionGroup[] getParentGroups() {
-        Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
-
-        for (String parentGroup : this.getParentGroupsNamesImpl()) {
-
-            // Yeah horrible thing, i know, that just safety from invoking empty named groups
-            parentGroup = parentGroup.trim();
-            if (parentGroup.isEmpty()) {
-                continue;
-            }
-
-            if (parentGroup.equals(this.getName())) {
-                continue;
-            }
-
-            PermissionGroup group = this.manager.getGroup(parentGroup);
-            if (!group.isChildOf(this, true)) { // To prevent cyclic inheritance
-                parentGroups.add(group);
-            }
-        }
-
-        return parentGroups.toArray(new PermissionGroup[0]);
-    }
-
-    public PermissionGroup[] getChildGroups() {
-        return this.manager.getGroups(this.getName());
-    }
-
-    public PermissionUser[] getUsers() {
-        return this.manager.getUsers(this.getName());
-    }
-
-    public String[] getParentGroupsNames() {
-        List<String> groups = new LinkedList<String>();
-        for (PermissionGroup group : this.getParentGroups()) {
-            groups.add(group.getName());
-        }
-
-        return groups.toArray(new String[0]);
-    }
-
-    public boolean isChildOf(String groupName) {
-        return this.isChildOf(groupName, false);
-    }
-
-    protected abstract String[] getParentGroupsNamesImpl();
 
     @Override
     public final void remove() {
