@@ -35,7 +35,7 @@ public class WorldCommands extends PermissionsCommand {
     
     @Command(name = "pex",
     syntax = "worlds",
-    description = "Print server worlds list",
+    description = "Print loaded worlds",
     isPrimary = true,
     permission = "permissions.manage.worlds")
     public void worldsTree(Plugin plugin, CommandSender sender, Map<String, String> args) {
@@ -44,7 +44,7 @@ public class WorldCommands extends PermissionsCommand {
         PermissionManager manager = PermissionsEx.getPermissionManager();
         
         sender.sendMessage("Worlds on server: ");
-        for (World world : Bukkit.getServer().getWorlds()) {
+        for (World world : worlds) {
             String[] parentWorlds = manager.getWorldInheritance(world.getName());
             String output = "  " + world.getName();
             if (parentWorlds.length > 0) {
@@ -57,7 +57,7 @@ public class WorldCommands extends PermissionsCommand {
     
     @Command(name = "pex",
     syntax = "world <world>",
-    description = "Print world inheritance info",
+    description = "Print <world> inheritance info",
     permission = "permissions.manage.worlds")
     public void worldPrintInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -88,7 +88,7 @@ public class WorldCommands extends PermissionsCommand {
     
     @Command(name = "pex",
     syntax = "world <world> inherit <parentWorlds>",
-    description = "Set inheritance for world",
+    description = "Set <parentWorlds> for <world>",
     permission = "permissions.manage.worlds.inheritance")
     public void worldSetInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String worldName = this.autoCompleteWorldName(args.get("world"));
