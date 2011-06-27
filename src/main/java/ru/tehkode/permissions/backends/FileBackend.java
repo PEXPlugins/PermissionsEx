@@ -64,6 +64,15 @@ public class FileBackend extends PermissionBackend {
 
         String baseDir = config.getString("permissions.basedir");
 
+        if(baseDir.contains("\\") && !"\\".equals(File.separator)){
+            baseDir = baseDir.replace("\\", File.separator);
+        }
+        
+        File baseDirectory = new File(baseDir);
+        if(!baseDirectory.exists()){
+            baseDirectory.mkdirs();
+        }
+        
         File permissionFile = new File(baseDir, permissionFilename);
 
         permissions = new Configuration(permissionFile);

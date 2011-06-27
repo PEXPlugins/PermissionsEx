@@ -127,7 +127,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> prefix [newprefix]",
     permission = "permissions.manage.users",
-    description = "Change user prefix")
+    description = "Get or set <user> prefix")
     public void userPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
 
@@ -148,7 +148,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> suffix [newsuffix]",
     permission = "permissions.manage.users",
-    description = "Change user suffix")
+    description = "Get or set <user> suffix")
     public void userSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
 
@@ -169,7 +169,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> delete",
     permission = "permissions.manage.users",
-    description = "Resets user permissions")
+    description = "Remove <user>")
     public void userDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -193,7 +193,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> add <permission> [world]",
     permission = "permissions.manage.users.permissions",
-    description = "Add permission to user")
+    description = "Add <permission> to <user> in [world]")
     public void userAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -215,7 +215,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> remove <permission> [world]",
     permission = "permissions.manage.users.permissions",
-    description = "Remove permission from user")
+    description = "Remove permission from <user> in [world]")
     public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -237,7 +237,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> timed add <permission> [lifetime] [world]",
     permission = "permissions.manage.users.permissions.timed",
-    description = "Add permission to user")
+    description = "Add timed <permissions> to <user> with [lifetime] in [world]")
     public void userAddTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -272,7 +272,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> timed remove <permission> [world]",
     permission = "permissions.manage.users.permissions.timed",
-    description = "Remove permission from user")
+    description = "Remove timed <permission> from <user> in [world]")
     public void userRemoveTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -293,7 +293,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> set <option> <value> [world]",
     permission = "permissions.manage.users.permissions",
-    description = "Set permission setting to given value")
+    description = "Set <option> to <value> in [world]")
     public void userSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -318,7 +318,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> group list",
     permission = "permissions.manage.membership",
-    description = "List all user groups")
+    description = "List all <user> groups")
     public void userListGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
 
@@ -338,7 +338,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> group add <group>",
     permission = "permissions.manage.membership",
-    description = "Add user to specified group")
+    description = "Add <user> to <group>")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
@@ -360,7 +360,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> group set <group>",
     permission = "permissions.manage.membership",
-    description = "Set specified group for user")
+    description = "Set <group> for <user>")
     public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         PermissionManager manager = PermissionsEx.getPermissionManager();
 
@@ -398,7 +398,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> group remove <group>",
     permission = "permissions.manage.membership",
-    description = "Remove user from specified group")
+    description = "Remove <user> from <group>")
     public void userRemoveGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
