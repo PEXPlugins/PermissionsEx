@@ -106,6 +106,14 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
+    public void setDefaultGroup(PermissionGroup group) {
+        // Reset default flag
+        this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+        // Set default flag
+        this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+    }
+
+    @Override
     public PermissionGroup[] getGroups() {
         String[] groupNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.GROUP, false);
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();

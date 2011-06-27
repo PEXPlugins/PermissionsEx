@@ -229,6 +229,19 @@ public class PermissionManager {
     }
 
     /**
+     * Set default group to specified group
+     * 
+     * @param group 
+     */
+    public void setDefaultGroup(PermissionGroup group) {
+        if (group == null || group.equals(this.defaultGroup)) {
+            return;
+        }
+
+        backend.setDefaultGroup(group);
+    }
+
+    /**
      * Reset in-memory object of specified group
      * 
      * @param groupName 

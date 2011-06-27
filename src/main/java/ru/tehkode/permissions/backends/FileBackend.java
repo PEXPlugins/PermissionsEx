@@ -133,6 +133,22 @@ public class FileBackend extends PermissionBackend {
     }
 
     @Override
+    public void setDefaultGroup(PermissionGroup group) {
+        Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
+
+        for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
+            if (!entry.getKey().equalsIgnoreCase(group.getName()) &&
+                entry.getValue().getBoolean("default", false)) {
+                entry.getValue().removeProperty("default");
+            }
+            
+            if(entry.getKey().equalsIgnoreCase(group.getName())){
+                entry.getValue().setProperty("default", true);
+            }
+        }
+    }
+
+    @Override
     public PermissionGroup[] getGroups() {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");

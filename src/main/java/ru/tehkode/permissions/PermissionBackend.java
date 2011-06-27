@@ -102,6 +102,13 @@ public abstract class PermissionBackend {
      * @return Default group instance
      */
     public abstract PermissionGroup getDefaultGroup();
+    
+    /**
+     * Set specified group as default
+     * 
+     * @param group 
+     */
+    public abstract void setDefaultGroup(PermissionGroup group);
 
     /**
      * Returns array with of world names which specified world inherit
