@@ -107,8 +107,10 @@ public class UtilityCommands extends PermissionsCommand {
             if (e.getCause() instanceof ClassNotFoundException) {
                 sender.sendMessage(ChatColor.RED + "Specified backend not found.");
             } else {
-                sender.sendMessage(ChatColor.RED + "Error during backend initialization:");
-                e.getCause().printStackTrace();
+                sender.sendMessage(ChatColor.RED + "Error during backend initialization.");
+                if (e.getCause() != null) {
+                    e.getCause().printStackTrace();
+                }
             }
         }
     }
@@ -170,7 +172,7 @@ public class UtilityCommands extends PermissionsCommand {
         if (sender instanceof Player) {
             sender.sendMessage(debugStatusMessage);
         }
-        
+
         logger.warning(debugStatusMessage);
     }
 }
