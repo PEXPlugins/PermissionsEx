@@ -33,7 +33,6 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.config.Configuration;
-import ru.tehkode.permissions.config.ConfigurationNode;
 import ru.tehkode.permissions.sql.SQLConnectionManager;
 import ru.tehkode.permissions.sql.SQLEntity;
 import ru.tehkode.permissions.sql.SQLGroup;

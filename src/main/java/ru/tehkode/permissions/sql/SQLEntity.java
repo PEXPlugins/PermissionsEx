@@ -37,7 +37,7 @@ import ru.tehkode.permissions.PermissionManager;
  * @author code
  */
 public class SQLEntity extends PermissionEntity {
-
+    
     public enum Type {
 
         GROUP, USER

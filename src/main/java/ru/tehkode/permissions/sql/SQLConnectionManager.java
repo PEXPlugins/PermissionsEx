@@ -172,7 +172,7 @@ public class SQLConnectionManager {
         } else if (alias.equals("postgre")) {
             alias = "org.postgresql.Driver";
         }
-
+        
         return alias;
     }
 
