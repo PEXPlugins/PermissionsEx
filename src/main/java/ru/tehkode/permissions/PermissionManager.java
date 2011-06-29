@@ -315,8 +315,8 @@ public class PermissionManager {
      * 
      * @return 
      */
-    public String getBackend() {
-        return PermissionBackend.getBackendAlias(this.backend.getClass());
+    public PermissionBackend getBackend() {
+        return this.backend;
     }
 
     /**

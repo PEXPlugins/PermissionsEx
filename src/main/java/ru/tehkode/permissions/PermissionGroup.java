@@ -35,6 +35,39 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
+     * Renames group
+     * 
+     * @param newName 
+     */
+    @Override
+    public void setName(String newName) {
+        String oldName = this.getName();
+
+
+    }
+
+    /**
+     * Copy group
+     * 
+     * @param name
+     * @return Copy of group with specifed name
+     */
+    public PermissionGroup copy(String name) {
+        try {
+            PermissionGroup copy = (PermissionGroup) this.clone();
+            
+            copy.setName(name);
+            copy.save();
+            
+            
+            
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Returns own (without inheritance) permissions of group for specified world
      * @param world
      * @return Array of permissions
@@ -146,7 +179,7 @@ public abstract class PermissionGroup extends PermissionEntity {
 
         this.setOption("rank-ladder", rankLadder);
     }
-    
+
     protected abstract String[] getParentGroupsNamesImpl();
 
     /**
@@ -177,7 +210,7 @@ public abstract class PermissionGroup extends PermissionEntity {
 
         return parentGroups.toArray(new PermissionGroup[0]);
     }
-    
+
     /**
      * Returns direct parents names of this group
      * 
@@ -213,7 +246,7 @@ public abstract class PermissionGroup extends PermissionEntity {
 
         this.setParentGroups(groups.toArray(new String[0]));
     }
-    
+
     protected abstract void removeGroup();
 
     /**

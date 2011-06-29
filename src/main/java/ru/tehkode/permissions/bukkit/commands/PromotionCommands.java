@@ -55,18 +55,19 @@ public class PromotionCommands extends PermissionsCommand {
             } catch (NumberFormatException e) {
                 sender.sendMessage("Wrong rank. Make sure it's number.");
             }
+
+            if (args.containsKey("ladder")) {
+                group.setRankLadder(args.get("ladder"));
+            }
         }
 
-        if (args.containsKey("ladder")) {
-            group.setRankLadder(args.get("ladder"));
-        }
+        int rank = group.getRank();
 
-        String rank = group.getOption("rank");
-        if (rank.isEmpty()) {
-            rank = "0";
+        if (rank > 0) {
+            sender.sendMessage("Group " + group.getName() + " rank is " + rank + " (ladder = " + group.getRankLadder() + ")");
+        } else {
+            sender.sendMessage("Group " + group.getName() + " is unranked");
         }
-
-        sender.sendMessage("Group " + group.getName() + " rank is " + rank + " (ladder = " + group.getRankLadder() + ")");
     }
 
     @Command(name = "pex",
