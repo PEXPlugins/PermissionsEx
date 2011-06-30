@@ -80,7 +80,7 @@ public class Configuration extends ConfigurationNode {
     /**
      * Saves the configuration to disk. All errors are clobbered.
      *
-     * @return true if it was successful
+     * @return true if it was successful saved
      */
     public boolean save() {
         FileOutputStream stream = null;
@@ -123,7 +123,7 @@ public class Configuration extends ConfigurationNode {
     /**
      * This method returns an empty ConfigurationNode for using as a
      * default in methods that select a node from a node list.
-     * @return
+     * @return empty ConfigurationNode
      */
     public static ConfigurationNode getEmptyNode() {
         return new ConfigurationNode();
