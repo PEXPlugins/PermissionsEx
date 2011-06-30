@@ -50,35 +50,35 @@ public class PermissionManager {
     }
 
     /**
-     * Checks if specified player have specified permission
+     * Check if specified player has specified permission
      * 
-     * @param player
-     * @param permission
-     * @return 
+     * @param player player object
+     * @param permission permission string to check against
+     * @return true on success false otherwise
      */
     public boolean has(Player player, String permission) {
         return this.has(player.getName(), permission, player.getWorld().getName());
     }
 
     /**
-     * Checks if player have specified permission in specified world
+     * Check if player has specified permission in world
      * 
-     * @param player
-     * @param permission
-     * @param world
-     * @return 
+     * @param player player object
+     * @param permission permission as string to check against
+     * @param world world's name as string
+     * @return true on success false otherwise
      */
     public boolean has(Player player, String permission, String world) {
         return this.has(player.getName(), permission, world);
     }
 
     /**
-     * Check if player with specified name have permission in specified world
+     * Check if player with name has permission in world
      * 
-     * @param playerName
-     * @param permission
-     * @param world
-     * @return 
+     * @param player player object
+     * @param permission permission as string to check against
+     * @param world world's name as string
+     * @return true on success false otherwise
      */
     public boolean has(String playerName, String permission, String world) {
         PermissionUser user = this.getUser(playerName);
@@ -91,10 +91,10 @@ public class PermissionManager {
     }
 
     /**
-     * Returns user's object
+     * Return user's object
      * 
-     * @param username
-     * @return 
+     * @param username get PermissionUser with given name
+     * @return PermissionUser instance
      */
     public PermissionUser getUser(String username) {
         if (username == null || username.isEmpty()) {
@@ -114,40 +114,40 @@ public class PermissionManager {
     }
 
     /**
-     * Returns object of specified player
+     * Return object of specified player
      * 
-     * @param player
-     * @return 
+     * @param player player object
+     * @return PermissionUser instance
      */
     public PermissionUser getUser(Player player) {
         return this.getUser(player.getName());
     }
 
     /**
-     * Returns all registered users objects
+     * Return all registered user objects
      * 
-     * @return 
+     * @return PermissionUser array
      */
     public PermissionUser[] getUsers() {
         return backend.getUsers();
     }
 
     /**
-     * Returns all users of specified group
+     * Return all users in group
      * 
-     * @param groupName
-     * @return 
+     * @param groupName group's name
+     * @return PermissionUser array
      */
     public PermissionUser[] getUsers(String groupName) {
         return backend.getUsers(groupName);
     }
 
     /**
-     * Returns all users of specified group and descendant groups 
+     * Return all users in group and descendant groups 
      * 
-     * @param groupName
-     * @param inheritance if true return members of descendant groups of specified group
-     * @return 
+     * @param groupName group's name
+     * @param inheritance true return members of descendant groups of specified group
+     * @return PermissionUser array for groupnName
      */
     public PermissionUser[] getUsers(String groupName, boolean inheritance) {
         return backend.getUsers(groupName, inheritance);
@@ -156,17 +156,17 @@ public class PermissionManager {
     /**
      * Reset in-memory object of specified group
      * 
-     * @param userName 
+     * @param userName user's name
      */
     public void resetUser(String userName) {
         this.users.remove(userName);
     }
 
     /**
-     * Return object of specified group
+     * Return object for specified group
      * 
-     * @param groupname
-     * @return 
+     * @param groupname group's name
+     * @return PermissionGroup object
      */
     public PermissionGroup getGroup(String groupname) {
         if (groupname == null || groupname.isEmpty()) {
@@ -186,39 +186,39 @@ public class PermissionManager {
     }
 
     /**
-     * Returns all groups
+     * Return all groups
      * 
-     * @return 
+     * @return PermissionGroup array
      */
     public PermissionGroup[] getGroups() {
         return backend.getGroups();
     }
 
     /**
-     * Returns all child groups of specified group
+     * Return all child groups of specified group
      * 
-     * @param groupName
-     * @return 
+     * @param groupName group's name
+     * @return PermissionGroup array
      */
     public PermissionGroup[] getGroups(String groupName) {
         return backend.getGroups(groupName);
     }
 
     /**
-     * Return all descendant or child groups of specified group
+     * Return all descendants or child groups for groupName
      * 
-     * @param groupName
-     * @param inheritance If true only direct child groups would be returned
-     * @return 
+     * @param groupName group's name
+     * @param inheritance true: only direct child groups would be returned
+     * @return PermissionGroup array for specified groupName
      */
     public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
         return backend.getGroups(groupName, inheritance);
     }
 
     /**
-     * Returns default group object
+     * Return default group object
      * 
-     * @return default group object, null if not specified
+     * @return default group object. null if not specified
      */
     public PermissionGroup getDefaultGroup() {
         if (this.defaultGroup == null) {
@@ -231,7 +231,7 @@ public class PermissionManager {
     /**
      * Set default group to specified group
      * 
-     * @param group 
+     * @param group PermissionGroup group object
      */
     public void setDefaultGroup(PermissionGroup group) {
         if (group == null || group.equals(this.defaultGroup)) {
@@ -242,27 +242,27 @@ public class PermissionManager {
     }
 
     /**
-     * Reset in-memory object of specified group
+     * Reset in-memory object for groupName
      * 
-     * @param groupName 
+     * @param groupName group's name
      */
     public void resetGroup(String groupName) {
         this.groups.remove(groupName);
     }
 
     /**
-     * Toggles debug mode
+     * Set debug mode
      * 
-     * @param debug Set true to enable debug mode, false to disable
+     * @param debug true enables debug mode, false disables
      */
     public void setDebug(boolean debug) {
         this.debugMode = debug;
     }
 
     /**
-     * Returns state of debug mode
+     * Return current state of debug mode
      * 
-     * @return true if debug mode enabled, false if disabled
+     * @return true debug is enabled, false if disabled
      */
     public boolean isDebug() {
         return this.debugMode;
@@ -272,7 +272,7 @@ public class PermissionManager {
      * Return groups of specified rank ladder
      * 
      * @param ladderName
-     * @return Map of ladder, key - rank of group, value - group object. Empty map if no such ladder exists
+     * @return Map of ladder, key - rank of group, value - group object. Empty map if ladder does not exist
      */
     public Map<Integer, PermissionGroup> getRankLadder(String ladderName) {
         Map<Integer, PermissionGroup> ladder = new HashMap<Integer, PermissionGroup>();
@@ -291,29 +291,29 @@ public class PermissionManager {
     }
 
     /**
-     * Returns array with of world names which specified world inherit
+     * Return array of world names who has world inheritance
      * 
      * @param world World name
-     * @return Array of parent world, if there is no such than just empty array
+     * @return Array of parent world, if world does not exist return empty array
      */
     public String[] getWorldInheritance(String worldName) {
         return backend.getWorldInheritance(worldName);
     }
 
     /**
-     * Set world inheritance parents for specified world 
+     * Set world inheritance parents for world 
      * 
      * @param world world name which inheritance should be set
-     * @param parentWorlds array of world names
+     * @param parentWorlds array of parent world names
      */
     public void setWorldInheritance(String world, String[] parentWorlds) {
         backend.setWorldInheritance(world, parentWorlds);
     }
 
     /**
-     * Returns current backend
+     * Return current backend
      * 
-     * @return 
+     * @return current backend object
      */
     public PermissionBackend getBackend() {
         return this.backend;
@@ -321,9 +321,9 @@ public class PermissionManager {
 
     /**
      * Set backend to specified backend.
-     * This would also lead to resetting.
+     * This would also cause backend resetting.
      * 
-     * @param backendName 
+     * @param backendName name of backend to set to
      */
     public void setBackend(String backendName) {
         this.reset();
@@ -334,8 +334,8 @@ public class PermissionManager {
     /**
      * Register new timer task
      * 
-     * @param task
-     * @param delay 
+     * @param task TimerTask object
+     * @param delay delay in seconds
      */
     public void registerTask(TimerTask task, int delay) {
         if (delay == TRANSIENT_PERMISSION) {

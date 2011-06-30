@@ -45,50 +45,50 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Returns non-inherited user prefix.
-     * This means if user don't have own prefix
-     * than empty string or null would be returned
+     * Return non-inherited user prefix.
+     * This means if a user don't have has own prefix
+     * then empty string or null would be returned
      * 
-     * @return 
+     * @return prefix as string
      */
     public String getOwnPrefix() {
         return this.prefix;
     }
 
     /**
-     * Returns non-inherited suffix prefix.
-     * This means if user don't have own suffix
-     * than empty string or null would be returned
+     * Return non-inherited suffix prefix.
+     * This means if a user don't has own suffix
+     * then empty string or null would be returned
      * 
-     * @return 
+     * @return suffix as string
      */
     public String getOwnSuffix() {
         return this.suffix;
     }
 
     /**
-     * Returns non-inherited permissions of user in specified world
+     * Return non-inherited permissions of a user in world
      * 
-     * @param world
-     * @return 
+     * @param world world's name
+     * @return String array of owned Permissions
      */
     protected abstract String[] getOwnPermissions(String world);
 
     /**
-     * Returns non-inherited value of specified option of user in specified world
+     * Return non-inherited value of specified option for user in world
      * 
-     * @param option
-     * @param world
-     * @param defaultValue
-     * @return option value, if option is not set than defaultValue would be returned
+     * @param option option string
+     * @param world world's name
+     * @param defaultValue default value
+     * @return option value or defaultValue if option is not set
      */
     public abstract String getOwnOption(String option, String world, String defaultValue);
 
     /**
-     * Returns non-inherited value of specified option in common space (all worlds).
+     * Return non-inherited value of specified option in common space (all worlds).
      * 
      * @param option
-     * @return option value, or empty string if option are not set
+     * @return option value or empty string if option is not set
      */
     public String getOwnOption(String option) {
         return this.getOwnOption(option, "", "");
@@ -135,9 +135,9 @@ public abstract class PermissionUser extends PermissionEntity {
     protected abstract String[] getGroupsNamesImpl();
 
     /**
-     * Get groups of this user
+     * Get groups for this user
      * 
-     * @return 
+     * @return PermissionGroup groups
      */
     public PermissionGroup[] getGroups() {
         if (this.cachedGroups == null) {
@@ -161,9 +161,9 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Get groups names of this user
+     * Get group names for this user
      * 
-     * @return 
+     * @return String array of user's group names
      */
     public String[] getGroupsNames() {
         List<String> groups = new LinkedList<String>();
@@ -177,14 +177,14 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Set parent groups of specified user
+     * Set parent groups for user
      * 
      * @param groups array of parent group names
      */
     public abstract void setGroups(String[] groups);
 
     /**
-     * Set parent groups of specified user
+     * Set parent groups for user
      * 
      * @param groups array of parent group objects
      */
@@ -199,9 +199,9 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Add user to specified group
+     * Add user to group
      * 
-     * @param groupName 
+     * @param groupName group's name as String
      */
     public void addGroup(String groupName) {
         if (groupName == null || groupName.isEmpty()) {
@@ -212,9 +212,9 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Add user to specified group
+     * Add user to group
      * 
-     * @param group 
+     * @param group as PermissionGroup object
      */
     public void addGroup(PermissionGroup group) {
         if (group == null) {
@@ -239,9 +239,9 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Removes user from specified group
+     * Remove user from group
      * 
-     * @param groupName 
+     * @param groupName group's name as String
      */
     public void removeGroup(String groupName) {
         if (groupName == null || groupName.isEmpty()) {
@@ -254,9 +254,9 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Removes user from specified group
+     * Remove user from group
      * 
-     * @param group
+     * @param group group as PermissionGroup object
      */
     public void removeGroup(PermissionGroup group) {
         if (group == null) {
@@ -273,11 +273,11 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Checks if this user are member of specified group or one of descendant groups (optionally)
+     * Check if this user is member of group or one of its descendant groups (optionally)
      * 
-     * @param group
-     * @param checkInheritance if true than descendant groups of specified group would be checked too 
-     * @return 
+     * @param group group as PermissionGroup object
+     * @param checkInheritance if true then descendant groups of the given group would be checked too 
+     * @return true on success, false otherwise
      */
     public boolean inGroup(PermissionGroup group, boolean checkInheritance) {
         for (PermissionGroup parentGroup : this.getGroups()) {
@@ -294,46 +294,46 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Checks if this user are member of specified group or one of descendant groups (optionally)
+     * Check if this user is member of group or one of its descendant groups (optionally)
      * 
-     * @param groupName
+     * @param groupName group's name to check
      * @param checkInheritance if true than descendant groups of specified group would be checked too 
-     * @return 
+     * @return true on success, false otherwise
      */
     public boolean inGroup(String groupName, boolean checkInheritance) {
         return this.inGroup(this.manager.getGroup(groupName), checkInheritance);
     }
 
     /**
-     * Checks if this user are member of specified group or one of descendant groups
+     * Check if this user is member of group or one of its descendant groups
      * 
      * @param group
-     * @return 
+     * @return true on success, false otherwise
      */
     public boolean inGroup(PermissionGroup group) {
         return this.inGroup(group, true);
     }
 
     /**
-     * Checks if this user are member of specified group or one of descendant groups
+     * Checks if this user is member of specified group or one of its descendant groups
      * 
-     * @param group
-     * @return 
+     * @param group group's name
+     * @return true on success, false otherwise
      */
     public boolean inGroup(String groupName) {
         return this.inGroup(this.manager.getGroup(groupName), true);
     }
 
     /**
-     * Promotes user on specified ladder.
-     * If user are not member of ladder RankingException would be thrown
-     * If promoter are not null and he is member of ladder and 
-     * his rank lower than user's than RankingException would be thrown
-     * If there is no group to promote user in than RankingException would be thrown
+     * Promotes user in specified ladder.
+     * If user is not member of the ladder RankingException will be thrown
+     * If promoter is not null and he is member of the ladder and 
+     * his rank is lower then user's RankingException will be thrown too.
+     * If there is no group to promote the user to RankingException would be thrown
      * 
      * 
-     * @param promoter Specify null if action performed from console or by plugin
-     * @param ladderName
+     * @param promoter null if action is performed from console or by a plugin
+     * @param ladderName ladder's name
      * @throws RankingException 
      */
     public void promote(PermissionUser promoter, String ladderName) throws RankingException {
@@ -372,11 +372,11 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Demotes user on specified ladder.
-     * If user are not member of ladder RankingException would be thrown
-     * If demoter are not null and he is member of ladder and 
-     * his rank lower than user's than RankingException would be thrown
-     * If there is no group to demote user in than RankingException would be thrown
+     * Demotes user in specified ladder.
+     * If user is not member of the ladder RankingException will be thrown
+     * If demoter is not null and he is member of the ladder and 
+     * his rank is lower then user's RankingException will be thrown too.
+     * If there is no group to demote the user to RankingException would be thrown
      * 
      * @param promoter Specify null if action performed from console or by plugin
      * @param ladderName
@@ -419,20 +419,20 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Check if user are in specified ladder
+     * Check if the user is in the specified ladder
      * 
-     * @param ladder
-     * @return 
+     * @param ladder ladder's name
+     * @return true on success, false otherwise
      */
     public boolean isRanked(String ladder) {
         return (this.getRank(ladder) > 0);
     }
 
     /**
-     * Returns user rank on specified ladder
+     * Return user rank in specified ladder
      * 
-     * @param ladder
-     * @return 
+     * @param ladder ladder's name
+     * @return rank as int
      */
     public int getRank(String ladder) {
         Map<String, PermissionGroup> ladders = this.getRankLadders();
@@ -445,10 +445,10 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Returns user's group on specified ladder 
+     * Return user's group in specified ladder 
      * 
-     * @param ladder
-     * @return 
+     * @param ladder ladder's name
+     * @return PermissionGroup object of ranked ladder group
      */
     public PermissionGroup getRankLadderGroup(String ladder) {
         if (ladder == null || ladder.isEmpty()) {
@@ -459,7 +459,7 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     /**
-     * Returns all ladders where user participating
+     * Return all ladders the user is participating in
      * 
      * @return Map, key - name of ladder, group - corresponding group of that ladder
      */

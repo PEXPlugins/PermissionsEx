@@ -52,11 +52,11 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
      }
 
     /**
-     * Gets a list of nodes. Non-valid entries will not be in the list.
+     * Get a list of nodes. Non-valid entries will not be in the list.
      * There will be no null slots. If the list is not defined, the
      * default will be returned. 'null' can be passed for the default
      * and an empty list will be returned instead. The node must be
-     * an actual node and cannot be just a boolean,
+     * an actual node and cannot be just a boolean.
      *
      * @param path path to node (dot notation)
      * @param def default value or null for an empty list as default
@@ -86,8 +86,8 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
      * path does not lead to a node, null will be returned. A node has
      * key/value mappings.
      *
-     * @param path
-     * @return node or null
+     * @param path path to node (dot notation)
+     * @return ConfigurationNode or null
      */
     @Override
     public ConfigurationNode getNode(String path) {

@@ -35,9 +35,9 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Renames group
+     * Rename group
      * 
-     * @param newName 
+     * @param newName new group name
      */
     @Override
     public void setName(String newName) {
@@ -49,7 +49,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     /**
      * Copy group
      * 
-     * @param name
+     * @param name name of group to copy
      * @return Copy of group with specifed name
      */
     public PermissionGroup copy(String name) {
@@ -68,20 +68,21 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Returns own (without inheritance) permissions of group for specified world
-     * @param world
-     * @return Array of permissions
+     * Returns own (without inheritance) permissions of group for world
+     * 
+     * @param world world's world name
+     * @return Array of permissions for world
      */
     public abstract String[] getOwnPermissions(String world);
 
     /**
-     * Returns specified option value in specified world without inheritance
+     * Returns option value in specified world without inheritance
      * This mean option value wouldn't be inherited from parent groups
      * 
      * @param option
      * @param world
      * @param defaultValue
-     * @return option value, or defaultValue if option is not found in own options
+     * @return option value or defaultValue if option was not found in own options
      */
     public abstract String getOwnOption(String option, String world, String defaultValue);
 
@@ -128,7 +129,8 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Checks if group participating in ranking system
+     * Checks if group is participating in ranking system
+     * 
      * @return 
      */
     public boolean isRanked() {
@@ -136,7 +138,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Returns rank in ranking system, 0 if group are not ranked
+     * Returns rank in ranking system. 0 if group is not ranked
      * 
      * @return 
      */
@@ -147,7 +149,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     /**
      * Set rank for this group
      * 
-     * @param rank Rank for group, specify 0 to remove group from ranking
+     * @param rank Rank for group. Specify 0 to remove group from ranking
      */
     public void setRank(int rank) {
         if (rank > 0) {
@@ -159,9 +161,9 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Returns ranking ladder where this group participating
+     * Returns ranking ladder where this group is participating in
      * 
-     * @return 
+     * @return Name of rank ladder as String
      */
     public String getRankLadder() {
         return this.getOption("rank-ladder", "", "default");
@@ -170,7 +172,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     /**
      * Set rank ladder for this group
      * 
-     * @param rankLadder 
+     * @param rankLadder Name of rank ladder
      */
     public void setRankLadder(String rankLadder) {
         if (rankLadder.isEmpty() || rankLadder.equals("default")) {
@@ -214,7 +216,7 @@ public abstract class PermissionGroup extends PermissionEntity {
     /**
      * Returns direct parents names of this group
      * 
-     * @return array of group names
+     * @return array of parents group names
      */
     public String[] getParentGroupsNames() {
         List<String> groups = new LinkedList<String>();
@@ -228,14 +230,14 @@ public abstract class PermissionGroup extends PermissionEntity {
     /**
      * Set parent groups
      * 
-     * @param parentGroups Array of parent groups names
+     * @param parentGroups Array of parent groups names to set
      */
     public abstract void setParentGroups(String[] parentGroups);
 
     /**
      * Set parent groups
      * 
-     * @param parentGroups Array of parent groups objects
+     * @param parentGroups Array of parent groups objects to set
      */
     public void setParentGroups(PermissionGroup[] parentGroups) {
         List<String> groups = new LinkedList<String>();
@@ -250,11 +252,11 @@ public abstract class PermissionGroup extends PermissionEntity {
     protected abstract void removeGroup();
 
     /**
-     * Check if this group are descendant of specified group 
+     * Check if this group is descendant of specified group 
      * 
      * @param group group object of parent
-     * @param checkInheritance set false to check only the direct inheritance
-     * @return true if this group are descendant or direct parent of specified group
+     * @param checkInheritance set to false to check only the direct inheritance
+     * @return true if this group is descendant or direct parent of specified group
      */
     public boolean isChildOf(PermissionGroup group, boolean checkInheritance) {
         if (group == null) {
@@ -275,10 +277,10 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Check if this group are descendant of specified group 
+     * Check if this group is descendant of specified group 
      * 
-     * @param groupName name of group to check for
-     * @param checkInheritance set false to check only the direct inheritance
+     * @param groupName name of group to check against
+     * @param checkInheritance set to false to check only the direct inheritance
      * @return 
      */
     public boolean isChildOf(String groupName, boolean checkInheritance) {
@@ -286,9 +288,9 @@ public abstract class PermissionGroup extends PermissionEntity {
     }
 
     /**
-     * Check if specified group are direct parent of this group
+     * Check if specified group is direct parent of this group
      * 
-     * @param groupName
+     * @param groupName to check against
      * @return 
      */
     public boolean isChildOf(String groupName) {
