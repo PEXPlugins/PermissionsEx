@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.List;
 
 public class StringUtils {
 
@@ -38,6 +39,28 @@ public class StringUtils {
         }
 
         return buffer.substring(separator.length()).trim();
+    }
+
+    public static String implode(List<?> list, String separator) {
+        if (list.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        int lastElement = list.size() - 1;
+        for (int i = 0; i < list.size(); i++) {
+            builder.append(list.get(0).toString());
+
+            if (i < lastElement) {
+                builder.append(separator);
+            }
+        }
+        for (Object obj : list) {
+            builder.append(obj.toString()).append(separator);
+        }
+
+        return builder.toString();
     }
 
     public static String readStream(InputStream is) throws Exception {
@@ -72,10 +95,10 @@ public class StringUtils {
     }
 
     public static int toInteger(String value, int defaultValue) {
-        if(value == null || value.isEmpty()){
+        if (value == null || value.isEmpty()) {
             return defaultValue;
         }
-        
+
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {

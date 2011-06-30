@@ -246,9 +246,9 @@ public abstract class PermissionBackend {
      * @return 
      * @throws ClassNotFoundException 
      */
-    public static Class getBackendClass(String alias) throws ClassNotFoundException {
+    public static Class<? extends PermissionBackend> getBackendClass(String alias) throws ClassNotFoundException {
         if (!registedAliases.containsKey(alias)) {
-            return Class.forName(alias);
+            return (Class<? extends PermissionBackend>)Class.forName(alias);
         }
 
         return registedAliases.get(alias);
@@ -330,11 +330,11 @@ public abstract class PermissionBackend {
         String className = getBackendClassName(backendName);
 
         try {
-            Class backendClass = getBackendClass(backendName);
+            Class<? extends PermissionBackend> backendClass = getBackendClass(backendName);
 
             Logger.getLogger("Minecraft").info("[PermissionsEx] Initializing " + backendName + " backend");
 
-            Constructor<PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
+            Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
             return (PermissionBackend) constructor.newInstance(manager, config);
         } catch (ClassNotFoundException e) {
 
