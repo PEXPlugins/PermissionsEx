@@ -117,8 +117,8 @@ public class PermissionsEx extends JavaPlugin {
 
     public static PermissionManager getPermissionManager() {
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
-        if (plugin == null || !(plugin instanceof PermissionsEx)) {
-            throw new RuntimeException("Permissions manager is not accessable. Is the PermissionsEx plugin disabled?");
+        if (plugin == null || !(plugin instanceof PermissionsEx) || ((PermissionsEx)plugin).permissionsManager == null) {
+            throw new RuntimeException("Permissions manager is not accessable. Is the PermissionsEx plugin enabled?");
         }
 
         return ((PermissionsEx) plugin).permissionsManager;
