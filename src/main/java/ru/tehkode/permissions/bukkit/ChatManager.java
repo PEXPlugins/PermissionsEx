@@ -35,15 +35,15 @@ public class ChatManager extends PlayerListener {
     protected String format = "<%prefix%player%suffix> %message";
     protected String globalFormat = "<%prefix%player%suffix> &e%message";
     protected boolean isEnabled = false;
-    protected boolean forceLocal = false;
-    protected double localDistance = 100;
+    protected boolean forceRangedChat = false;
+    protected double chatRange = 100;
 
     public ChatManager(Plugin plugin, Configuration config) {
         this.isEnabled = config.getBoolean("permissions.chat.enable", this.isEnabled);
         this.format = config.getString("permissions.chat.format", this.format);
         this.globalFormat = config.getString("permissions.chat.global-format", this.globalFormat);
-        this.forceLocal = config.getBoolean("permissions.chat.force-local", this.forceLocal);
-        this.localDistance = config.getDouble("permissions.chat.local-distance", this.localDistance);
+        this.forceRangedChat = config.getBoolean("permissions.chat.force-ranged", this.forceRangedChat);
+        this.chatRange = config.getDouble("permissions.chat.chat-range", this.chatRange);
 
         config.save();
     }
@@ -68,7 +68,7 @@ public class ChatManager extends PlayerListener {
         }
 
         String message = user.getOption("message-format", player.getWorld().getName(), this.format);
-        boolean localChat = user.getOptionBoolean("force-local-chat", player.getWorld().getName(), this.forceLocal);
+        boolean localChat = user.getOptionBoolean("force-ranged-chat", player.getWorld().getName(), this.forceRangedChat);
 
         String chatMessage = event.getMessage();
         if (chatMessage.startsWith("!") && user.has("permissions.chat.global", player.getWorld().getName())) {
@@ -93,7 +93,7 @@ public class ChatManager extends PlayerListener {
         message = this.replaceTime(message);
 
         if (localChat) {
-            broadcastLocalMessage(player, message, user.getOptionDouble("local-chat-distance", player.getWorld().getName(), localDistance));
+            broadcastLocalMessage(player, message, user.getOptionDouble("chat-range", player.getWorld().getName(), chatRange));
         } else {
             Bukkit.getServer().broadcastMessage(message);
         }
@@ -101,9 +101,9 @@ public class ChatManager extends PlayerListener {
         event.setCancelled(true);
     }
 
-    protected void broadcastLocalMessage(Player sender, String message, double distance) {
+    protected void broadcastLocalMessage(Player sender, String message, double range) {
         Location playerLocation = sender.getLocation();
-        double squaredDistance = Math.pow(distance, 2);
+        double squaredDistance = Math.pow(range, 2);
         for (Player recipient : Bukkit.getServer().getOnlinePlayers()) {
             // Recipient are not from same world
             if (!recipient.getWorld().equals(sender.getWorld())) {
