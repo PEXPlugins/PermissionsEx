@@ -86,9 +86,11 @@ public class ChatManager extends PlayerListener {
 
         message = message.replace("%prefix", this.colorize(user.getPrefix()));
         message = message.replace("%suffix", this.colorize(user.getSuffix()));
+        
+        message = message.replace("%world", player.getWorld().getName());
 
         message = message.replace("%message", chatMessage);
-        message = message.replace("%player", event.getPlayer().getName());
+        message = message.replace("%player", player.getName());
 
         message = this.replaceTime(message);
 
