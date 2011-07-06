@@ -29,6 +29,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.*;
@@ -52,6 +53,7 @@ public class PermissionsEx extends JavaPlugin {
     protected CommandsManager commandsManager;
     protected Configuration config;
     protected ModifyworldManager modifyworldManager;
+    protected ChatManager chatManager;
 
     public PermissionsEx() {
         super();
@@ -68,30 +70,37 @@ public class PermissionsEx extends JavaPlugin {
         this.commandsManager = new CommandsManager(this);
         this.permissionsManager = new PermissionManager(this.config);
         this.modifyworldManager = new ModifyworldManager(this);
+        this.chatManager = new ChatManager(this, config);
     }
 
     @Override
-    public void onEnable() {       
+    public void onEnable() {
+        // Register commands
         this.commandsManager.register(new UtilityCommands());
         this.commandsManager.register(new UserCommands());
         this.commandsManager.register(new GroupCommands());
         this.commandsManager.register(new PromotionCommands());
         this.commandsManager.register(new WorldCommands());
-        
-        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Low, this);
 
+        // Register Player permissions cleaner
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Normal, this);
+
+        // Modifyworld
         this.modifyworldManager.registerEvents();
-        
+
+        // Chat prefixes/suffixes
+        this.chatManager.registerEvents();
+
         //register service
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
-        
+
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
     }
 
     @Override
     public void onDisable() {
         this.permissionsManager.reset();
-        
+
         this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
 
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
@@ -117,7 +126,7 @@ public class PermissionsEx extends JavaPlugin {
 
     public static PermissionManager getPermissionManager() {
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
-        if (plugin == null || !(plugin instanceof PermissionsEx) || ((PermissionsEx)plugin).permissionsManager == null) {
+        if (plugin == null || !(plugin instanceof PermissionsEx) || ((PermissionsEx) plugin).permissionsManager == null) {
             throw new RuntimeException("Permissions manager is not accessable. Is the PermissionsEx plugin enabled?");
         }
 
