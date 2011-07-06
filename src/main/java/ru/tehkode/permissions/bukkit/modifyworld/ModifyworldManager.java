@@ -323,6 +323,10 @@ public class ModifyworldManager {
             if (entity instanceof Player) {
                 PermissionUser entityUser = permissionsManager.getUser(((Player) entity).getName());
 
+                if(entityUser == null){
+                    return false;
+                }
+                
                 for (PermissionGroup group : entityUser.getGroups()) {
                     if (permissionsManager.has(player, basePermission + "group." + group.getName())) {
                         return true;
