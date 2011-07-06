@@ -37,7 +37,7 @@ import ru.tehkode.permissions.PermissionManager;
  * @author code
  */
 public class SQLEntity extends PermissionEntity {
-    
+
     public enum Type {
 
         GROUP, USER
@@ -266,16 +266,16 @@ public class SQLEntity extends PermissionEntity {
 
         // Checks to avoid permission duplication
         // Maybe another behavior is better: delete permission and after add again ? This would popup permission on top of list
-        if((world == null || world.isEmpty()) && this.commonPermissions.contains(permission)){
+        if ((world == null || world.isEmpty()) && this.commonPermissions.contains(permission)) {
             return;
-        } else if ( world != null && !world.isEmpty() &&
-                this.worldsPermissions.containsKey(world) &&
-                this.worldsPermissions.get(world).contains(permission)){
+        } else if (world != null && !world.isEmpty()
+                && this.worldsPermissions.containsKey(world)
+                && this.worldsPermissions.get(world).contains(permission)) {
             return;
         }
-        
+
         this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
-        
+
         this.fetchPermissions();
     }
 
@@ -286,7 +286,7 @@ public class SQLEntity extends PermissionEntity {
         }
 
         this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), permission, this.type.ordinal(), world);
-    
+
         this.fetchPermissions();
     }
 
@@ -322,7 +322,16 @@ public class SQLEntity extends PermissionEntity {
             sql = "UPDATE `permissions_entity` SET `prefix` = ?, `suffix` = ? WHERE `name` = ? AND `type` = ?";
         }
 
-        this.db.updateQuery(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
+        try {
+            this.db.updateQuery(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
+        } catch (RuntimeException e) {
+            if(e.getCause() instanceof SQLException && this.isVirtual()){
+                this.virtual = false;
+                this.updateInfo(); // try update
+            }
+            
+            throw e;
+        }
 
         this.virtual = false;
     }
