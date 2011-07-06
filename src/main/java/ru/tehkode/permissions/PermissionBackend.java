@@ -21,6 +21,7 @@ package ru.tehkode.permissions;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -167,6 +168,8 @@ public abstract class PermissionBackend {
                 groups.add(group);
             }
         }
+        
+        Collections.sort(groups);
 
         return groups.toArray(new PermissionGroup[]{});
     }

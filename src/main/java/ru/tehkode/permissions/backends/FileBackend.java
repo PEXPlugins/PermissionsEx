@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -165,6 +166,8 @@ public class FileBackend extends PermissionBackend {
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             groups.add(this.manager.getGroup(entry.getKey()));
         }
+        
+        Collections.sort(groups);
 
         return groups.toArray(new PermissionGroup[0]);
     }

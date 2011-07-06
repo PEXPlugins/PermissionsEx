@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -120,6 +121,8 @@ public class SQLBackend extends PermissionBackend {
         for (String groupName : groupNames) {
             groups.add(this.manager.getGroup(groupName));
         }
+
+        Collections.sort(groups);
 
         return groups.toArray(new PermissionGroup[0]);
     }

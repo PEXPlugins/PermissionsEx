@@ -20,12 +20,11 @@ package ru.tehkode.permissions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import ru.tehkode.permissions.exceptions.RankingException;
 
 /**
@@ -141,7 +140,7 @@ public abstract class PermissionUser extends PermissionEntity {
      */
     public PermissionGroup[] getGroups() {
         if (this.cachedGroups == null) {
-            Set<PermissionGroup> groups = new LinkedHashSet<PermissionGroup>();
+            List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
             for (String group : this.getGroupsNamesImpl()) {
                 PermissionGroup parentGroup = this.manager.getGroup(group.trim());
@@ -153,6 +152,8 @@ public abstract class PermissionUser extends PermissionEntity {
             if (groups.isEmpty()) {
                 groups.add(this.manager.getDefaultGroup());
             }
+            
+            Collections.<PermissionGroup>sort(groups);
 
             this.cachedGroups = groups.toArray(new PermissionGroup[]{});
         }

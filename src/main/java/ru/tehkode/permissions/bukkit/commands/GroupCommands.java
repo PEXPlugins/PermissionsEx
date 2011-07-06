@@ -42,14 +42,12 @@ public class GroupCommands extends PermissionsCommand {
         
         sender.sendMessage(ChatColor.WHITE + "Registred groups: ");
         for (PermissionGroup group : groups) {
-            String rank = group.getOption("rank");
-            if (rank.isEmpty()) {
-                rank = "not ranked";
-            } else {
-                rank += ":" + group.getRankLadder();
+            String rank = "";
+            if (group.isRanked()) {
+                rank = " (rank: " + group.getRank() + "@" + group.getRankLadder() + ") ";
             }
             
-            sender.sendMessage(" " + group.getName() + " (" + rank + ") " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(group.getParentGroupsNames(), ", ") + "]");
+            sender.sendMessage(String.format("  %s %s %s %s[%s]", group.getName(), " #" + group.getWeight(), rank, ChatColor.DARK_GREEN, StringUtils.implode(group.getParentGroupsNames(), ", ")));
         }
     }
     
@@ -67,6 +65,32 @@ public class GroupCommands extends PermissionsCommand {
     description = "List all registered groups (alias)")
     public void groupsListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupsList(plugin, sender, args);
+    }
+    
+    @Command(name = "pex",
+    syntax = "group <group> weight [weight]",
+    permission = "permissions.manage.groups",
+    description = "Print or set group weight")
+    public void groupPrintSetWeight(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String groupName = this.autoCompleteGroupName(args.get("group"));
+        
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+        
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+            return;
+        }
+        
+        if (args.containsKey("weight")) {
+            try {
+                group.setWeight(Integer.parseInt(args.get("weight")));
+            } catch (NumberFormatException e) {
+                sender.sendMessage("Error! Weight should be integer value.");
+                return;
+            }
+        }
+        
+        sender.sendMessage("Group " + group.getName() + " have " + group.getWeight() + " calories.");
     }
     
     @Command(name = "pex",
@@ -174,7 +198,7 @@ public class GroupCommands extends PermissionsCommand {
     description = "List parents for <group> (alias)")
     public void groupListParentsAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
         this.groupListParents(plugin, sender, args);
-    }    
+    }
     
     @Command(name = "pex",
     syntax = "group <group> parents list",
@@ -202,7 +226,7 @@ public class GroupCommands extends PermissionsCommand {
         }
         
     }
-       
+    
     @Command(name = "pex",
     syntax = "group <group> parents set <parents>",
     permission = "permissions.manage.groups.inheritance",

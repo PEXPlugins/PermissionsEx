@@ -19,52 +19,18 @@
 package ru.tehkode.permissions;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
  * @author code
  */
-public abstract class PermissionGroup extends PermissionEntity {
+public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
 
     public PermissionGroup(String groupName, PermissionManager manager) {
         super(groupName, manager);
-    }
-
-    /**
-     * Rename group
-     * 
-     * @param newName new group name
-     */
-    @Override
-    public void setName(String newName) {
-        String oldName = this.getName();
-
-
-    }
-
-    /**
-     * Copy group
-     * 
-     * @param name name of group to copy
-     * @return Copy of group with specifed name
-     */
-    public PermissionGroup copy(String name) {
-        try {
-            PermissionGroup copy = (PermissionGroup) this.clone();
-            
-            copy.setName(name);
-            copy.save();
-            
-            
-            
-            return copy;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -126,6 +92,16 @@ public abstract class PermissionGroup extends PermissionEntity {
         }
 
         return defaultValue;
+    }
+
+    public int getWeight() {
+        return this.getOptionInteger("weight", "", 0);
+    }
+
+    public void setWeight(int weight) {
+        this.setOption("weight", Integer.toString(weight));
+
+        this.clearMembersCache();
     }
 
     /**
@@ -190,7 +166,7 @@ public abstract class PermissionGroup extends PermissionEntity {
      * @return array of groups objects
      */
     public PermissionGroup[] getParentGroups() {
-        Set<PermissionGroup> parentGroups = new HashSet<PermissionGroup>();
+        List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>();
 
         for (String parentGroup : this.getParentGroupsNamesImpl()) {
 
@@ -209,6 +185,9 @@ public abstract class PermissionGroup extends PermissionEntity {
                 parentGroups.add(group);
             }
         }
+
+        // Sort collections according weight
+        Collections.<PermissionGroup>sort(parentGroups);
 
         return parentGroups.toArray(new PermissionGroup[0]);
     }
@@ -438,5 +417,10 @@ public abstract class PermissionGroup extends PermissionEntity {
 
     public String getOwnSuffix() {
         return this.suffix;
+    }
+
+    @Override
+    public int compareTo(PermissionGroup o) {
+        return this.getWeight() - o.getWeight();
     }
 }
