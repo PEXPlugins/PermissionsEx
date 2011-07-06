@@ -89,7 +89,7 @@ public class PermissionsEx extends JavaPlugin {
         this.modifyworldManager.registerEvents();
 
         // Chat prefixes/suffixes
-        this.chatManager.registerEvents();
+        this.chatManager.registerEvents(this);
 
         //register service
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);

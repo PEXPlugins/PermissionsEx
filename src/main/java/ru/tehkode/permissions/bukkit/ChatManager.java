@@ -34,14 +34,11 @@ public class ChatManager extends PlayerListener {
 
     protected String format = "<%prefix%player%suffix> %message";
     protected String globalFormat = "<%prefix%player%suffix> &e%message";
-    protected Plugin plugin;
     protected boolean isEnabled = false;
     protected boolean forceLocal = false;
     protected double localDistance = 100;
 
     public ChatManager(Plugin plugin, Configuration config) {
-        this.plugin = plugin;
-
         this.isEnabled = config.getBoolean("permissions.chat.enable", this.isEnabled);
         this.format = config.getString("permissions.chat.format", this.format);
         this.globalFormat = config.getString("permissions.chat.global-format", this.globalFormat);
@@ -51,9 +48,9 @@ public class ChatManager extends PlayerListener {
         config.save();
     }
 
-    public void registerEvents() {
+    public void registerEvents(Plugin plugin) {
         if (this.isEnabled) {
-            Bukkit.getServer().getPluginManager().registerEvent(Type.PLAYER_CHAT, this, Priority.Normal, plugin);
+            plugin.getServer().getPluginManager().registerEvent(Type.PLAYER_CHAT, this, Priority.Normal, plugin);
         }
     }
 
@@ -77,10 +74,10 @@ public class ChatManager extends PlayerListener {
         if (chatMessage.startsWith("!") && user.has("permissions.chat.global", player.getWorld().getName())) {
             localChat = false;
             chatMessage = chatMessage.substring(1);
-            
+
             message = user.getOption("global-message-format", player.getWorld().getName(), this.globalFormat);
         }
-        
+
         message = this.colorize(message);
 
         if (user.has("permissions.chat.color", player.getWorld().getName())) {
@@ -96,26 +93,29 @@ public class ChatManager extends PlayerListener {
         message = this.replaceTime(message);
 
         if (localChat) {
-            Location playerLocation = player.getLocation();
-            double squaredDistance = Math.pow(user.getOptionDouble("local-chat-distance", player.getWorld().getName(), localDistance), 2);
-
-            for (Player recipient : Bukkit.getServer().getOnlinePlayers()) {
-                // Recipient are not from same world
-                if (!recipient.getWorld().equals(player.getWorld())) {
-                    continue;
-                }
-
-                if (playerLocation.distanceSquared(recipient.getLocation()) > squaredDistance) {
-                    continue;
-                }
-
-                recipient.sendMessage(message);
-            }
+            broadcastLocalMessage(player, message, user.getOptionDouble("local-chat-distance", player.getWorld().getName(), localDistance));
         } else {
             Bukkit.getServer().broadcastMessage(message);
         }
 
         event.setCancelled(true);
+    }
+
+    protected void broadcastLocalMessage(Player sender, String message, double distance) {
+        Location playerLocation = sender.getLocation();
+        double squaredDistance = Math.pow(distance, 2);
+        for (Player recipient : Bukkit.getServer().getOnlinePlayers()) {
+            // Recipient are not from same world
+            if (!recipient.getWorld().equals(sender.getWorld())) {
+                continue;
+            }
+
+            if (playerLocation.distanceSquared(recipient.getLocation()) > squaredDistance) {
+                continue;
+            }
+
+            recipient.sendMessage(message);
+        }
     }
 
     protected String replaceTime(String message) {
