@@ -93,17 +93,17 @@ public class FileEntity extends PermissionEntity {
 
     @Override
     public void addPermission(String permission, String world) {
-        String nodePath = "permissions";
+        String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath = "worlds." + world + "." + nodePath;
+            permissionsNode = "worlds." + world + "." + permissionsNode;
         }
 
 
-        List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
+        List<String> permissions = this.node.getStringList(permissionsNode, new LinkedList<String>());
         if (!permissions.contains(permission)) {
             permissions.add(0, permission); // Add permission to begining
         }
-        this.node.setProperty(nodePath, permissions);
+        this.node.setProperty(permissionsNode, permissions);
 
         this.save();
     }
@@ -147,7 +147,7 @@ public class FileEntity extends PermissionEntity {
 
         // Override
         if (world != null && !world.isEmpty()) {
-            ConfigurationNode worldNode = this.node.getNode("world." + world + ".options");
+            ConfigurationNode worldNode = this.node.getNode("worlds." + world + ".options");
             if (worldNode != null) {
                 result.putAll(FileBackend.collectOptions(worldNode.getRoot()));
             }
@@ -229,7 +229,7 @@ public class FileEntity extends PermissionEntity {
         List<String> worlds = this.node.getKeys("worlds");
         if (worlds != null) {
             for (String world : worlds) {
-                List<String> worldPermissions = this.node.getStringList("world." + world + ".permissions", null);
+                List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null);
                 if (commonPermissions != null) {
                     allPermissions.put(world, worldPermissions.toArray(new String[0]));
                 }
@@ -251,7 +251,7 @@ public class FileEntity extends PermissionEntity {
         List<String> worlds = this.node.getKeys("worlds");
         if (worlds != null) {
             for (String world : worlds) {
-                ConfigurationNode worldOptionsNode = this.node.getNode("world." + world + ".permissions");
+                ConfigurationNode worldOptionsNode = this.node.getNode("worlds." + world + ".permissions");
                 if (worldOptionsNode != null) {
                     allOptions.put(world, FileBackend.collectOptions(worldOptionsNode.getRoot()));
                 }
