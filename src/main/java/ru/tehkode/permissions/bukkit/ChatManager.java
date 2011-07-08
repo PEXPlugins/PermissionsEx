@@ -19,6 +19,8 @@
 package ru.tehkode.permissions.bukkit;
 
 import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -91,18 +93,20 @@ public class ChatManager extends PlayerListener {
                          .replace("%player", player.getName());
         
         message = this.replaceTime(message);
+        
+        
+        event.setFormat("%2$s");
+        event.setMessage(message);
 
         if (localChat) {
-            broadcastLocalMessage(player, message, user.getOptionDouble("chat-range", player.getWorld().getName(), chatRange));
-        } else {
-            Bukkit.getServer().broadcastMessage(message);
+            event.getRecipients().clear();
+            event.getRecipients().addAll(this.getLocalRecipients(player, message, user.getOptionDouble("chat-range", player.getWorld().getName(), chatRange)));
         }
-
-        event.setCancelled(true);
     }
 
-    protected void broadcastLocalMessage(Player sender, String message, double range) {
+    protected List<Player> getLocalRecipients(Player sender, String message, double range) {
         Location playerLocation = sender.getLocation();
+        List<Player> recipients = new LinkedList<Player>();
         double squaredDistance = Math.pow(range, 2);
         for (Player recipient : Bukkit.getServer().getOnlinePlayers()) {
             // Recipient are not from same world
@@ -114,8 +118,9 @@ public class ChatManager extends PlayerListener {
                 continue;
             }
 
-            recipient.sendMessage(message);
+            recipients.add(recipient);
         }
+        return recipients;
     }
 
     protected String replaceTime(String message) {
