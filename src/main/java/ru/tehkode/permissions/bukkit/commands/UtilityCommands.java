@@ -108,9 +108,7 @@ public class UtilityCommands extends PermissionsCommand {
                 sender.sendMessage(ChatColor.RED + "Specified backend not found.");
             } else {
                 sender.sendMessage(ChatColor.RED + "Error during backend initialization.");
-                if (e.getCause() != null) {
-                    e.getCause().printStackTrace();
-                }
+                e.printStackTrace();
             }
         }
     }
