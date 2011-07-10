@@ -23,8 +23,12 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.config.Configuration;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
+import ru.tehkode.permissions.events.PermissionEvent;
+import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 /**
  *
@@ -239,6 +243,8 @@ public class PermissionManager {
         }
 
         backend.setDefaultGroup(group);
+        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED));
+        this.callEvent(new PermissionEntityEvent(group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
     }
 
     /**
@@ -257,6 +263,7 @@ public class PermissionManager {
      */
     public void setDebug(boolean debug) {
         this.debugMode = debug;
+        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.DEBUGMODE_TOGGLE));
     }
 
     /**
@@ -286,7 +293,7 @@ public class PermissionManager {
                 ladder.put(group.getRank(), group);
             }
         }
-
+        
         return ladder;
     }
 
@@ -308,6 +315,7 @@ public class PermissionManager {
      */
     public void setWorldInheritance(String world, String[] parentWorlds) {
         backend.setWorldInheritance(world, parentWorlds);
+        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED));
     }
 
     /**
@@ -329,6 +337,8 @@ public class PermissionManager {
         this.reset();
         this.backend = PermissionBackend.getBackend(backendName, this, config);
         this.backend.initialize();
+        
+        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.BACKEND_CHANGED));
     }
 
     /**
@@ -337,7 +347,7 @@ public class PermissionManager {
      * @param task TimerTask object
      * @param delay delay in seconds
      */
-    public void registerTask(TimerTask task, int delay) {
+    protected void registerTask(TimerTask task, int delay) {
         if (delay == TRANSIENT_PERMISSION) {
             return;
         }
@@ -360,6 +370,7 @@ public class PermissionManager {
         if (this.backend != null) {
             this.backend.reload();
         }
+        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.RELOADED));
     }
 
     private void initBackend() {
@@ -372,5 +383,9 @@ public class PermissionManager {
         }
 
         this.setBackend(backendName);
+    }
+    
+    protected void callEvent(PermissionEvent event){
+        Bukkit.getServer().getPluginManager().callEvent(event);
     }
 }

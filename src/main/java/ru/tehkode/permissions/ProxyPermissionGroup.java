@@ -19,6 +19,7 @@
 package ru.tehkode.permissions;
 
 import java.util.Map;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 public abstract class ProxyPermissionGroup extends PermissionGroup {
 
@@ -30,7 +31,7 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
         this.backendEntity = backendEntity;
 
         this.setName(backendEntity.getName());
-        
+
         this.prefix = backendEntity.getPrefix();
         this.suffix = backendEntity.getSuffix();
         this.virtual = backendEntity.isVirtual();
@@ -51,11 +52,6 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public boolean isVirtual() {
         return backendEntity.isVirtual();
-    }
-
-    @Override
-    public void addPermission(String permission, String world) {
-        this.backendEntity.addPermission(permission, world);
     }
 
     @Override
@@ -89,7 +85,7 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
                     return option;
                 }
             }
-            
+
             option = defaultValue;
         }
 
@@ -102,13 +98,9 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public void removePermission(String permission, String world) {
-        this.backendEntity.removePermission(permission, world);
-    }
-
-    @Override
     public void save() {
         this.backendEntity.save();
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.SAVED));
     }
 
     @Override
@@ -119,10 +111,24 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public void setOption(String permission, String value, String world) {
         this.backendEntity.setOption(permission, value, world);
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.OPTIONS_CHANGED));
     }
 
     @Override
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+    }
+
+    @Override
+    public void addPermission(String permission, String world) {
+        this.backendEntity.addPermission(permission, world);
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+    }
+
+    @Override
+    public void removePermission(String permission, String world) {
+        this.backendEntity.removePermission(permission, world);
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
     }
 }

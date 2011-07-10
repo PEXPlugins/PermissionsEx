@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
@@ -77,6 +79,8 @@ public abstract class PermissionEntity {
      */
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INFO_CHANGED));
     }
 
     /**
@@ -95,6 +99,8 @@ public abstract class PermissionEntity {
      */
     public void setSuffix(String suffix) {
         this.suffix = suffix;
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INFO_CHANGED));
     }
 
     /**
@@ -150,7 +156,11 @@ public abstract class PermissionEntity {
      * @param permission Permission to add
      * @param world World name to add permission to
      */
-    public abstract void addPermission(String permission, String world);
+    public void addPermission(String permission, String world) {
+        List<String> permissions = new LinkedList<String>(Arrays.asList(this.getPermissions(world)));
+        permissions.add(0, permission);
+        this.setPermissions(permissions.toArray(new String[0]), world);
+    }
 
     /**
      * Add permission in common space (all worlds)
@@ -167,7 +177,11 @@ public abstract class PermissionEntity {
      * @param permission Permission to remove
      * @param world World name to remove permission for
      */
-    public abstract void removePermission(String permission, String world);
+    public void removePermission(String permission, String world) {
+        List<String> permissions = new LinkedList<String>(Arrays.asList(this.getPermissions(world)));
+        permissions.remove(permission);
+        this.setPermissions(permissions.toArray(new String[0]), world);
+    }
 
     /**
      * Remove specified permission from all worlds
@@ -230,7 +244,7 @@ public abstract class PermissionEntity {
         // @todo Replace empty string with null
         return this.getOption(option, world, "");
     }
-    
+
     /**
      * Return integer value for option
      * 
@@ -288,7 +302,7 @@ public abstract class PermissionEntity {
 
         return defaultValue;
     }
-    
+
     /**
      * Set specified option in world
      * 
@@ -413,6 +427,8 @@ public abstract class PermissionEntity {
 
             this.timedPermissionsTime.put(world + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime);
         }
+
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
     }
 
     /**
@@ -432,6 +448,12 @@ public abstract class PermissionEntity {
 
         this.timedPermissions.get(world).remove(permission);
         this.timedPermissions.remove(world + ":" + permission);
+
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+    }
+    
+    protected void callEvent(PermissionEntityEvent event){
+        manager.callEvent(event);
     }
 
     @Override

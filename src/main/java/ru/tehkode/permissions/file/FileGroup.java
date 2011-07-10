@@ -24,6 +24,7 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionGroup;
 import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.ConfigurationNode;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
@@ -53,6 +54,8 @@ public class FileGroup extends ProxyPermissionGroup {
         this.node.setProperty("inheritance", Arrays.asList(parentGroups));
 
         this.save();
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
     }   
     
 }

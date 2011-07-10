@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
 /**
@@ -370,6 +371,8 @@ public abstract class PermissionUser extends PermissionEntity {
         }
 
         this.swapGroups(sourceGroup, targetGroup);
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.RANK_CHANGED));
     }
 
     /**
@@ -416,7 +419,8 @@ public abstract class PermissionUser extends PermissionEntity {
         }
 
         this.swapGroups(sourceGroup, targetGroup);
-
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.RANK_CHANGED));
     }
 
     /**
@@ -633,10 +637,14 @@ public abstract class PermissionUser extends PermissionEntity {
     @Override
     public void remove() {
         this.clearCache();
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.REMOVED));
     }
 
     @Override
     public void save() {
         this.clearCache();
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.SAVED));
     }
 }

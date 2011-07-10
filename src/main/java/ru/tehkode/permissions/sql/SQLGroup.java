@@ -43,5 +43,7 @@ public class SQLGroup extends ProxyPermissionGroup {
         }
 
         this.backend.setParents(parentGroups);
+        
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
     }
 }

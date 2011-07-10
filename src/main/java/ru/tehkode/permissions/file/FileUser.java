@@ -24,6 +24,7 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionUser;
 import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.ConfigurationNode;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
@@ -73,5 +74,6 @@ public class FileUser extends ProxyPermissionUser {
         this.node.setProperty("group", Arrays.asList(groups));
 
         this.save();
+        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
     }
 }
