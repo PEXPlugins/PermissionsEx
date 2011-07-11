@@ -66,7 +66,7 @@ public abstract class ProxyPermissionUser extends PermissionUser {
         
         this.clearCache();
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
     
     @Override
@@ -78,7 +78,7 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
     
     @Override
@@ -86,7 +86,7 @@ public abstract class ProxyPermissionUser extends PermissionUser {
         this.backendEntity.removePermission(permission, world);
         
         this.clearCache();
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
     
     @Override
@@ -126,7 +126,7 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     public void setOption(String permission, String value, String world) {
         this.backendEntity.setOption(permission, value, world);
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.OPTIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
     }
     
     @Override

@@ -55,7 +55,7 @@ public class FileGroup extends ProxyPermissionGroup {
 
         this.save();
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }   
     
 }

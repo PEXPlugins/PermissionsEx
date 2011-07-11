@@ -74,6 +74,6 @@ public class FileUser extends ProxyPermissionUser {
         this.node.setProperty("group", Arrays.asList(groups));
 
         this.save();
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }
 }

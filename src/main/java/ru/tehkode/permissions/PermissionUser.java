@@ -372,7 +372,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
         this.swapGroups(sourceGroup, targetGroup);
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.RANK_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
     }
 
     /**
@@ -420,7 +420,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
         this.swapGroups(sourceGroup, targetGroup);
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.RANK_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
     }
 
     /**
@@ -638,13 +638,13 @@ public abstract class PermissionUser extends PermissionEntity {
     public void remove() {
         this.clearCache();
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.REMOVED));
+        this.callEvent(PermissionEntityEvent.Action.REMOVED);
     }
 
     @Override
     public void save() {
         this.clearCache();
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.SAVED));
+        this.callEvent(PermissionEntityEvent.Action.SAVED);
     }
 }

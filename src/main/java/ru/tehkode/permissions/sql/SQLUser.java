@@ -42,7 +42,7 @@ public class SQLUser extends ProxyPermissionUser {
 
         this.clearCache();
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }
 
     @Override

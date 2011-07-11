@@ -243,7 +243,7 @@ public class PermissionManager {
         }
 
         backend.setDefaultGroup(group);
-        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED));
+        this.callEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED);
         this.callEvent(new PermissionEntityEvent(group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
     }
 
@@ -263,7 +263,7 @@ public class PermissionManager {
      */
     public void setDebug(boolean debug) {
         this.debugMode = debug;
-        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.DEBUGMODE_TOGGLE));
+        this.callEvent(PermissionSystemEvent.Action.DEBUGMODE_TOGGLE);
     }
 
     /**
@@ -315,7 +315,7 @@ public class PermissionManager {
      */
     public void setWorldInheritance(String world, String[] parentWorlds) {
         backend.setWorldInheritance(world, parentWorlds);
-        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED));
+        this.callEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED);
     }
 
     /**
@@ -338,7 +338,7 @@ public class PermissionManager {
         this.backend = PermissionBackend.getBackend(backendName, this, config);
         this.backend.initialize();
         
-        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.BACKEND_CHANGED));
+        this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
     }
 
     /**
@@ -370,7 +370,7 @@ public class PermissionManager {
         if (this.backend != null) {
             this.backend.reload();
         }
-        this.callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.RELOADED));
+        this.callEvent(PermissionSystemEvent.Action.RELOADED);
     }
 
     private void initBackend() {
@@ -387,5 +387,9 @@ public class PermissionManager {
     
     protected void callEvent(PermissionEvent event){
         Bukkit.getServer().getPluginManager().callEvent(event);
+    }
+    
+    protected void callEvent(PermissionSystemEvent.Action action){
+        this.callEvent(new PermissionSystemEvent(action));
     }
 }

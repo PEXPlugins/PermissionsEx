@@ -80,7 +80,7 @@ public abstract class PermissionEntity {
     public void setPrefix(String prefix) {
         this.prefix = prefix;
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INFO_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
     }
 
     /**
@@ -100,7 +100,7 @@ public abstract class PermissionEntity {
     public void setSuffix(String suffix) {
         this.suffix = suffix;
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INFO_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
     }
 
     /**
@@ -428,7 +428,7 @@ public abstract class PermissionEntity {
             this.timedPermissionsTime.put(world + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime);
         }
 
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
 
     /**
@@ -449,11 +449,15 @@ public abstract class PermissionEntity {
         this.timedPermissions.get(world).remove(permission);
         this.timedPermissions.remove(world + ":" + permission);
 
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
     
     protected void callEvent(PermissionEntityEvent event){
         manager.callEvent(event);
+    }
+    
+    protected void callEvent(PermissionEntityEvent.Action action){
+        this.callEvent(new PermissionEntityEvent(this, action));
     }
 
     @Override

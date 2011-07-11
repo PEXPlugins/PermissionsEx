@@ -100,7 +100,7 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public void save() {
         this.backendEntity.save();
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.SAVED));
+        this.callEvent(PermissionEntityEvent.Action.SAVED);
     }
 
     @Override
@@ -111,24 +111,24 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public void setOption(String permission, String value, String world) {
         this.backendEntity.setOption(permission, value, world);
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.OPTIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
     }
 
     @Override
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
 
     @Override
     public void addPermission(String permission, String world) {
         this.backendEntity.addPermission(permission, world);
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
 
     @Override
     public void removePermission(String permission, String world) {
         this.backendEntity.removePermission(permission, world);
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.PERMISSIONS_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
 }

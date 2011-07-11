@@ -103,7 +103,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
         this.setOption("weight", Integer.toString(weight));
 
         this.clearMembersCache();
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.WEIGHT_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.WEIGHT_CHANGED);
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
             this.setOption("rank", null);
         }
 
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.RANK_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
     }
 
     /**
@@ -160,7 +160,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
         this.setOption("rank-ladder", rankLadder);
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.RANK_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
     }
 
     protected abstract String[] getParentGroupsNamesImpl();
@@ -232,7 +232,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
         this.setParentGroups(groups.toArray(new String[0]));
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.INHERITANCE_CHANGED));
+        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }
 
     protected abstract void removeGroup();
@@ -417,7 +417,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
         this.removeGroup();
         
-        this.callEvent(new PermissionEntityEvent(this, PermissionEntityEvent.Action.REMOVED));
+        this.callEvent(PermissionEntityEvent.Action.REMOVED);
     }
 
     public String getOwnPrefix() {
