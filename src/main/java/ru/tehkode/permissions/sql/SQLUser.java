@@ -20,6 +20,7 @@ package ru.tehkode.permissions.sql;
 
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionUser;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *

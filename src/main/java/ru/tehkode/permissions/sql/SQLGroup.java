@@ -20,6 +20,7 @@ package ru.tehkode.permissions.sql;
 
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionGroup;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 public class SQLGroup extends ProxyPermissionGroup {
 
