@@ -65,15 +65,15 @@ public class FileBackend extends PermissionBackend {
 
         String baseDir = config.getString("permissions.basedir");
 
-        if(baseDir.contains("\\") && !"\\".equals(File.separator)){
+        if (baseDir.contains("\\") && !"\\".equals(File.separator)) {
             baseDir = baseDir.replace("\\", File.separator);
         }
-        
+
         File baseDirectory = new File(baseDir);
-        if(!baseDirectory.exists()){
+        if (!baseDirectory.exists()) {
             baseDirectory.mkdirs();
         }
-        
+
         File permissionFile = new File(baseDir, permissionFilename);
 
         permissions = new Configuration(permissionFile);
@@ -133,6 +133,10 @@ public class FileBackend extends PermissionBackend {
     public PermissionGroup getDefaultGroup() {
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
+        if (groupsMap == null || groupsMap.isEmpty()) {
+            throw new RuntimeException("No groups defined. Check your permissions file.");
+        }
+
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             if (entry.getValue().getBoolean("default", false)) {
                 return this.manager.getGroup(entry.getKey());
@@ -147,12 +151,12 @@ public class FileBackend extends PermissionBackend {
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-            if (!entry.getKey().equalsIgnoreCase(group.getName()) &&
-                entry.getValue().getBoolean("default", false)) {
+            if (!entry.getKey().equalsIgnoreCase(group.getName())
+                    && entry.getValue().getBoolean("default", false)) {
                 entry.getValue().removeProperty("default");
             }
-            
-            if(entry.getKey().equalsIgnoreCase(group.getName())){
+
+            if (entry.getKey().equalsIgnoreCase(group.getName())) {
                 entry.getValue().setProperty("default", true);
             }
         }
@@ -166,7 +170,7 @@ public class FileBackend extends PermissionBackend {
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             groups.add(this.manager.getGroup(entry.getKey()));
         }
-        
+
         Collections.sort(groups);
 
         return groups.toArray(new PermissionGroup[0]);
