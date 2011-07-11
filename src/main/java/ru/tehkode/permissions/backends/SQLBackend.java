@@ -263,7 +263,7 @@ public class SQLBackend extends PermissionBackend {
                 LinkedList<String> worldParents = new LinkedList<String>();
 
                 while (result.next()) {
-                    worldParents.add(result.getString(0));
+                    worldParents.add(result.getString("parent"));
                 }
 
                 this.worldInheritanceCache.put(world, worldParents.toArray(new String[0]));
