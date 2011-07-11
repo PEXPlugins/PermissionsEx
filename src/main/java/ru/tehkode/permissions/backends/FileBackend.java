@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -323,8 +325,18 @@ public class FileBackend extends PermissionBackend {
                 }
             }
         }
+        
+        // World inheritance
+        for(World world : Bukkit.getServer().getWorlds()){
+            String[] parentWorlds = this.getWorldInheritance(world.getName());
+            if(parentWorlds.length == 0){
+                continue;
+            }
+            
+            root.setProperty("worlds." + world.getName() + ".inheritance", Arrays.asList(parentWorlds));
+        }
 
-
+        // Write data to writer
         yaml.dump(root.getRoot(), writer);
     }
 }

@@ -29,6 +29,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -244,6 +246,18 @@ public class SQLBackend extends PermissionBackend {
                     String value = option.getValue().replace("'", "\\'");
                     writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + entry.getKey() + "', '" + value + "' );\n");
                 }
+            }
+        }
+        
+        // World-inheritance
+        for(World world : Bukkit.getServer().getWorlds()){
+            String[] parentWorlds = this.getWorldInheritance(world.getName());
+            if(parentWorlds.length == 0){
+                continue;
+            }
+            
+            for(String parentWorld : parentWorlds){
+                writer.append("INSERT INTO `permissions_inheritance` ( `child`, `parent`, `type` ) VALUES ( '" + world.getName() + "', '" + parentWorld + "',  2);\n");
             }
         }
 
