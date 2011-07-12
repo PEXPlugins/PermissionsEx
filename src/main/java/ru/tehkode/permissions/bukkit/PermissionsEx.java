@@ -29,7 +29,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.*;
@@ -141,7 +140,7 @@ public class PermissionsEx extends JavaPlugin {
         return this.permissionsManager.has(player, permission, world);
     }
 
-    public Configuration getConfigurationNode() {
+    public Configuration getConfig() {
         return this.config;
     }
 
@@ -174,7 +173,7 @@ public class PermissionsEx extends JavaPlugin {
         return configuration;
     }
 
-    public class PlayerEventsListener extends PlayerListener {
+    protected class PlayerEventsListener extends PlayerListener {
 
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {

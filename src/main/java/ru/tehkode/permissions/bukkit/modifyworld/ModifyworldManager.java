@@ -52,13 +52,13 @@ public class ModifyworldManager {
 
     public final void registerEvents() {
         // Migration code 1.0x to 1.10
-        if (this.pex.getConfigurationNode().getProperty("permissions.modifyworld") instanceof Boolean) { //Migrate from 1.06 to 1.10
-            this.pex.getConfigurationNode().setProperty("permissions.modifyworld.enable", this.pex.getConfigurationNode().getBoolean("permissions.modifyworld", false));
-            this.pex.getConfigurationNode().setProperty("permissions.modifyworld.itemRestrictions", false);
-            this.pex.getConfigurationNode().save();
+        if (this.pex.getConfig().getProperty("permissions.modifyworld") instanceof Boolean) { //Migrate from 1.06 to 1.10
+            this.pex.getConfig().setProperty("permissions.modifyworld.enable", this.pex.getConfig().getBoolean("permissions.modifyworld", false));
+            this.pex.getConfig().setProperty("permissions.modifyworld.itemRestrictions", false);
+            this.pex.getConfig().save();
         }
 
-        ConfigurationNode config = this.pex.getConfigurationNode().getNode("permissions.modifyworld");
+        ConfigurationNode config = this.pex.getConfig().getNode("permissions.modifyworld");
         if (config == null) {
             config = Configuration.getEmptyNode();
         }
@@ -94,7 +94,7 @@ public class ModifyworldManager {
     }
 
     protected void informUser(Player player, String message) {
-        if (this.pex.getConfigurationNode().getBoolean("permissions.informplayers.modifyworld", false)) {
+        if (this.pex.getConfig().getBoolean("permissions.informplayers.modifyworld", false)) {
             player.sendMessage(message);
         }
     }

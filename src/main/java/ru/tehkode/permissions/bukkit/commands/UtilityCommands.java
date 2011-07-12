@@ -60,7 +60,7 @@ public class UtilityCommands extends PermissionsCommand {
             return;
         }
 
-        Configuration config = ((PermissionsEx) plugin).getConfigurationNode();
+        Configuration config = ((PermissionsEx) plugin).getConfig();
 
         if (args.get("value") != null) {
             config.setProperty(nodeName, this.parseValue(args.get("value")));
@@ -132,7 +132,7 @@ public class UtilityCommands extends PermissionsCommand {
         }
 
         try {
-            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfigurationNode(), null);
+            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfig(), null);
 
             File dstFile = new File("plugins/PermissionsEx/", args.get("filename"));
 
