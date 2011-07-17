@@ -58,7 +58,7 @@ public class SQLConnectionManager {
 
             this.connect();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
