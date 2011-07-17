@@ -39,13 +39,12 @@ import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.bukkit.modifyworld.ModifyworldManager;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
-import com.sk89q.bukkit.migration.PermissionsProvider;
 
 /**
  *
  * @author code
  */
-public class PermissionsEx extends JavaPlugin implements PermissionsProvider {
+public class PermissionsEx extends JavaPlugin {
 
     protected static final String configFile = "config.yml";
     protected static final Logger logger = Logger.getLogger("Minecraft");
@@ -172,23 +171,6 @@ public class PermissionsEx extends JavaPlugin implements PermissionsProvider {
             configuration.load();
         }
         return configuration;
-    }
-    
-    // WEPIF
-    public boolean hasPermission(String name, String permission) {
-        return this.permissionsManager.has(getServer().getPlayer(name), permission);
-    }
-    
-    public boolean hasPermission(String world, String name, String permission) {
-        return this.permissionsManager.has(name, permission, world);
-    }
-    
-    public boolean inGroup(String player, String group) {
-        return this.permissionsManager.getUser(player).inGroup(group);
-    }
-    
-    public String[] getGroups(String player) {
-        return this.permissionsManager.getUser(player).getGroupsNames();
     }
 
     protected class PlayerEventsListener extends PlayerListener {
