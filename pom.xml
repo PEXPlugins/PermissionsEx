@@ -27,6 +27,34 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>com.sk89q:worldedit</artifact>
+                                     <includes>
+                                        <include>com/sk89q/bukkit/migration/PermissionsProvider.class</include>
+                                    </includes>
+                                </filter>
+                            </filters>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.sk89q:worldedit</include>
+                                </includes>
+                            </artifactSet>
+                    </configuration>
+          </execution>
+        </executions>
+      </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
@@ -45,6 +73,12 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+        <id>sk89q-mvn2</id>
+        <url>http://mvn2.sk89q.com/repo</url>
+    </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.bukkit</groupId>
@@ -62,6 +96,13 @@
             <groupId>me.taylorkelly.help</groupId>
             <artifactId>Help</artifactId>
             <version>[0.2,)</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sk89q</groupId>
+            <artifactId>worldedit</artifactId>
+            <version>4.7-SNAPSHOT</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
