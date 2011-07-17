@@ -251,7 +251,7 @@ public class SQLBackend extends PermissionBackend {
         
         // World-inheritance
         for(World world : Bukkit.getServer().getWorlds()){
-            String[] parentWorlds = this.getWorldInheritance(world.getName());
+            String[] parentWorlds = manager.getWorldInheritance(world.getName());
             if(parentWorlds.length == 0){
                 continue;
             }

@@ -106,7 +106,7 @@ public class FileBackend extends PermissionBackend {
     @Override
     public String[] getWorldInheritance(String world) {
         if (world != null && !world.isEmpty()) {
-            return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);
+                return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);           
         }
 
         return new String[0];
@@ -328,7 +328,7 @@ public class FileBackend extends PermissionBackend {
         
         // World inheritance
         for(World world : Bukkit.getServer().getWorlds()){
-            String[] parentWorlds = this.getWorldInheritance(world.getName());
+            String[] parentWorlds = manager.getWorldInheritance(world.getName());
             if(parentWorlds.length == 0){
                 continue;
             }
