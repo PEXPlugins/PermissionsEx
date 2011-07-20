@@ -350,7 +350,7 @@ public class GroupCommands extends PermissionsCommand {
             return;
         }
         
-        group.removePermission(args.get("permission"), worldName);
+        group.removePermission(this.autoCompletePermission(group, args.get("permission"), worldName), worldName);
         group.removeTimedPermission(args.get("permission"), worldName);
         
         sender.sendMessage(ChatColor.WHITE + "Permission removed from " + group.getName() + " !");

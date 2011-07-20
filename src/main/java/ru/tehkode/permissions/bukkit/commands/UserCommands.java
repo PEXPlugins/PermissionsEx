@@ -227,7 +227,7 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        user.removePermission(args.get("permission"), worldName);
+        user.removePermission(this.autoCompletePermission(user, args.get("permission"), worldName), worldName);
         user.removeTimedPermission(args.get("permission"), worldName);
 
         sender.sendMessage(ChatColor.WHITE + "Permission removed!");
