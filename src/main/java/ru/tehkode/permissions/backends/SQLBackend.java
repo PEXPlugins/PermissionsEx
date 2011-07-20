@@ -36,10 +36,10 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.config.Configuration;
-import ru.tehkode.permissions.sql.SQLConnectionManager;
-import ru.tehkode.permissions.sql.SQLEntity;
-import ru.tehkode.permissions.sql.SQLGroup;
-import ru.tehkode.permissions.sql.SQLUser;
+import ru.tehkode.permissions.backends.sql.SQLConnectionManager;
+import ru.tehkode.permissions.backends.sql.SQLEntity;
+import ru.tehkode.permissions.backends.sql.SQLGroup;
+import ru.tehkode.permissions.backends.sql.SQLUser;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -159,6 +159,14 @@ public class SQLBackend extends PermissionBackend {
 
     protected final void deployTables(String driver) {
         if (this.sql.isTableExist("permissions")) {
+
+            if (!this.sql.isFieldExists("permissions_inheritance", "world")) {
+                Logger.getLogger("Minecraft").info("[PermissionsEx] Migration to newer database schema format");
+                this.sql.updateQuery("ALTER TABLE `permissions_inheritance` ADD `world` VARCHAR(50) NULL");
+                this.sql.updateQuery("ALTER TABLE `permissions_inheritance` DROP INDEX  `child` , ADD UNIQUE  `child` (`child`, `parent`, `type`, `world`)");
+
+            }
+
             return;
         }
 
@@ -248,15 +256,15 @@ public class SQLBackend extends PermissionBackend {
                 }
             }
         }
-        
+
         // World-inheritance
-        for(World world : Bukkit.getServer().getWorlds()){
+        for (World world : Bukkit.getServer().getWorlds()) {
             String[] parentWorlds = manager.getWorldInheritance(world.getName());
-            if(parentWorlds.length == 0){
+            if (parentWorlds.length == 0) {
                 continue;
             }
-            
-            for(String parentWorld : parentWorlds){
+
+            for (String parentWorld : parentWorlds) {
                 writer.append("INSERT INTO `permissions_inheritance` ( `child`, `parent`, `type` ) VALUES ( '" + world.getName() + "', '" + parentWorld + "',  2);\n");
             }
         }

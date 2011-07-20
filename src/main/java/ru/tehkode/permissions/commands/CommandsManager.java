@@ -120,7 +120,11 @@ public class CommandsManager {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
         } catch (RuntimeException e) {
             logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appropriate plugin is update?)");
-            e.printStackTrace();
+            if(e.getCause() != null){
+                e.getCause().printStackTrace();
+            } else {
+                e.printStackTrace();
+            }
         }
 
         return true;

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.file;
+package ru.tehkode.permissions.backends.file;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,37 +29,27 @@ import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
 public class FileEntity extends PermissionEntity {
-
+    
     protected ConfigurationNode node;
     protected FileBackend backend;
     protected String nodePath;
-
+    
     public FileEntity(String entityName, PermissionManager manager, FileBackend backend, String baseNode) {
         super(entityName, manager);
-
+        
         this.backend = backend;
         this.node = this.getNode(baseNode, this.getName());
-
-        this.prefix = this.node.getString("prefix");
-        if (this.prefix == null) {
-            this.prefix = "";
-        }
-
-        this.suffix = this.node.getString("suffix");
-        if (this.suffix == null) {
-            this.suffix = "";
-        }
     }
-
+    
     protected final ConfigurationNode getNode(String baseNode, String entityName) {
         this.nodePath = baseNode + "." + entityName;
         ConfigurationNode entityNode = backend.permissions.getNode(this.nodePath);
-
+        
         if (entityNode != null) {
             this.virtual = false;
             return entityNode;
         }
-
+        
         List<String> entities = backend.permissions.getKeys(baseNode);
         if (entities != null) {
             for (String entity : entities) {
@@ -71,75 +61,85 @@ public class FileEntity extends PermissionEntity {
                 }
             }
         }
-
+        
         this.virtual = true;
         
         return new ConfigurationNode();
     }
-
+    
     public ConfigurationNode getConfigNode() {
         return this.node;
     }
-
+    
     @Override
     public String[] getPermissions(String world) {
         String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
             permissionsNode = "worlds." + world + "." + permissionsNode;
         }
-
+        
         return this.node.getStringList(permissionsNode, new LinkedList<String>()).toArray(new String[0]);
     }
-
+    
     @Override
     public void addPermission(String permission, String world) {
         String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
             permissionsNode = "worlds." + world + "." + permissionsNode;
         }
-
-
+        
+        
         List<String> permissions = this.node.getStringList(permissionsNode, new LinkedList<String>());
         if (!permissions.contains(permission)) {
             permissions.add(0, permission); // Add permission to begining
         }
         this.node.setProperty(permissionsNode, permissions);
-
+        
         this.save();
     }
-
+    
     @Override
     public void removePermission(String permission, String world) {
         String nodePath = "permissions";
         if (world != null && !world.isEmpty()) {
             nodePath = "worlds." + world + "." + nodePath;
         }
-
+        
         List<String> permissions = this.node.getStringList(nodePath, new LinkedList<String>());
         if (permissions.contains(permission)) {
             permissions.remove(permission);
             this.node.setProperty(nodePath, permissions);
         }
-
+        
         this.save();
     }
-
+    
     @Override
     public void setPermissions(String[] permissions, String world) {
         String nodePath = "permissions";
         if (world != null && !world.isEmpty()) {
             nodePath = "worlds." + world + "." + nodePath;
         }
-
+        
         this.node.setProperty(nodePath, new LinkedList<String>(Arrays.asList(permissions)));
-
+        
         this.save();
     }
-
+    
+    @Override
+    public String[] getWorlds() {
+        List<String> worlds = this.node.getKeys("worlds");
+        if (worlds == null) {
+            return null;
+        }
+        
+        return worlds.toArray(new String[0]);
+    }
+    
     @Override
     public Map<String, String> getOptions(String world) {
         Map<String, String> result = new HashMap<String, String>();
-
+        
         ConfigurationNode commonOptions = this.node.getNode("options");
         if (commonOptions != null) {
             result.putAll(FileBackend.collectOptions(commonOptions.getRoot()));
@@ -154,7 +154,7 @@ public class FileEntity extends PermissionEntity {
         }
         return result;
     }
-
+    
     @Override
     public String getOption(String permission, String world, String defaultValue) {
         if (world != null && !world.isEmpty()) {
@@ -163,58 +163,88 @@ public class FileEntity extends PermissionEntity {
                 return worldPermission;
             }
         }
-
+        
         String commonPermission = this.node.getString("options." + permission);
         if (commonPermission != null && !commonPermission.isEmpty()) {
             return commonPermission;
         }
-
+        
         return defaultValue;
     }
-
+    
     @Override
     public void setOption(String permission, String value, String world) {
         String nodePath = "options";
         if (world != null && !world.isEmpty()) {
             nodePath = "worlds." + world + "." + nodePath;
         }
-
+        
         if (value != null && !value.isEmpty()) {
             nodePath += "." + permission;
             this.node.setProperty(nodePath, value);
         } else {
             this.node.removeProperty(nodePath);
         }
-
+        
         this.save();
     }
-
+    
     @Override
-    public void setPrefix(String prefix) {
+    public String getPrefix(String worldName) {
+        String prefixNode = "prefix";
+        
+        if (worldName != null && !worldName.isEmpty()) {
+            prefixNode = "worlds." + worldName + "." + prefixNode;
+        }
+        
+        return this.node.getString(prefixNode);
+    }
+    
+    @Override
+    public String getSuffix(String worldName) {
+        String suffixNode = "suffix";
+        
+        if (worldName != null && !worldName.isEmpty()) {
+            suffixNode = "worlds." + worldName + "." + suffixNode;
+        }
+        
+        return this.node.getString(suffixNode);
+    }
+    
+    @Override
+    public void setPrefix(String prefix, String worldName) {
+        String prefixNode = "prefix";
+        
+        if (worldName != null && !worldName.isEmpty()) {
+            prefixNode = "worlds." + worldName + "." + prefixNode;
+        }
+        
         if (prefix != null && !prefix.isEmpty()) {
-            this.node.setProperty("prefix", prefix);
+            this.node.setProperty(prefixNode, prefix);
         } else {
-            this.node.removeProperty("prefix");
+            this.node.removeProperty(prefixNode);
         }
-
+        
         this.save();
-
-        super.setPrefix(prefix);
     }
-
+    
     @Override
-    public void setSuffix(String suffix) {
-        if (suffix != null && !suffix.isEmpty()) {
-            this.node.setProperty("suffix", suffix);
-        } else {
-            this.node.removeProperty("suffix");
+    public void setSuffix(String suffix, String worldName) {
+        String suffixNode = "suffix";
+        
+        if (worldName != null && !worldName.isEmpty()) {
+            suffixNode = "worlds." + worldName + "." + suffixNode;
         }
-
+        
+        if (suffix != null && !suffix.isEmpty()) {
+            this.node.setProperty(suffixNode, suffix);
+        } else {
+            this.node.removeProperty(suffixNode);
+        }
+        
         this.save();
-
-        super.setSuffix(suffix);
     }
-
+    
     @Override
     public Map<String, String[]> getAllPermissions() {
         Map<String, String[]> allPermissions = new HashMap<String, String[]>();
@@ -235,19 +265,19 @@ public class FileEntity extends PermissionEntity {
                 }
             }
         }
-
+        
         return allPermissions;
     }
-
+    
     @Override
     public Map<String, Map<String, String>> getAllOptions() {
         Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
-
+        
         ConfigurationNode commonOptionsNode = this.node.getNode("options");
         if (commonOptionsNode != null) {
             allOptions.put("", FileBackend.collectOptions(commonOptionsNode.getRoot()));
         }
-
+        
         List<String> worlds = this.node.getKeys("worlds");
         if (worlds != null) {
             for (String world : worlds) {
@@ -257,25 +287,23 @@ public class FileEntity extends PermissionEntity {
                 }
             }
         }
-
+        
         return allOptions;
     }
-
+    
     @Override
     public void save() {
         this.backend.permissions.setProperty(nodePath, node);
-
+        
         this.backend.permissions.save();
     }
-
+    
     @Override
     public void remove() {
         this.node.getRoot().clear();
-        this.prefix = "";
-        this.suffix = "";
-
+        
         this.backend.permissions.removeProperty(nodePath);
-
+        
         this.backend.permissions.save();
     }
 }

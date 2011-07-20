@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `permissions_inheritance` (
   `child` varchar(50) NOT NULL,
   `parent` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
+  `world` varchar(50) NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `child` (`child`,`parent`,`type`),
   KEY `child_2` (`child`,`type`),

@@ -16,46 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.file;
-
-import java.util.*;
+package ru.tehkode.permissions.backends.sql;
 
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionGroup;
-import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.config.ConfigurationNode;
+import ru.tehkode.permissions.ProxyPermissionUser;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
  * @author code
  */
-public class FileGroup extends ProxyPermissionGroup {
+public class SQLUser extends ProxyPermissionUser {
 
-    protected ConfigurationNode node;
+    protected SQLEntity backend;
 
-    public FileGroup(String name, PermissionManager manager, FileBackend backend) {
-        super(new FileEntity(name, manager, backend, "groups"));
-        
-        this.node = ((FileEntity)this.backendEntity).getConfigNode();
-    }
-    
-    @Override
-    public String[] getParentGroupsNamesImpl() {
-        return this.node.getStringList("inheritance", new LinkedList<String>()).toArray(new String[0]);
+    public SQLUser(String name, PermissionManager manager, SQLConnectionManager sql) {
+        super(new SQLEntity(name, manager, SQLEntity.Type.USER, sql));
+
+        this.backend = (SQLEntity) this.backendEntity;
     }
 
     @Override
-    public void setParentGroups(String[] parentGroups) {
-        if (parentGroups == null) {
-            return;
-        }
+    public void setGroups(String[] parentGroups, String worldName) {
+        backend.setParents(parentGroups, worldName);
 
-        this.node.setProperty("inheritance", Arrays.asList(parentGroups));
-
-        this.save();
+        this.clearCache();
         
         this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
-    }   
-    
+    }
+
+    @Override
+    protected String[] getGroupsNamesImpl(String worldName) {
+        return backend.getParentNames(worldName);
+    }
 }

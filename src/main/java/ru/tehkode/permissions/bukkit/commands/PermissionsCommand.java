@@ -18,7 +18,6 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -66,6 +65,17 @@ public abstract class PermissionsCommand implements CommandListener {
         return autoCompletePlayerName(playerName, "user");
     }
 
+    protected void printEntityInheritance(CommandSender sender, PermissionGroup[] groups) {
+        for (PermissionGroup group : groups) {
+            String rank = "not ranked";
+            if (group.isRanked()) {
+                rank = "rank " + group.getRank() + " @ " + group.getRankLadder();
+            }
+
+            sender.sendMessage("   " + group.getName() + " (" + rank + ")");
+        }
+    }
+
     protected String autoCompletePlayerName(String playerName, String argName) {
         if (playerName == null) {
             return null;
@@ -104,12 +114,12 @@ public abstract class PermissionsCommand implements CommandListener {
         // Nothing found
         return playerName;
     }
-    
-    protected String getSenderName(CommandSender sender){
-        if(sender instanceof Player){
-            return ((Player)sender).getName();
+
+    protected String getSenderName(CommandSender sender) {
+        if (sender instanceof Player) {
+            return ((Player) sender).getName();
         }
-                
+
         return "console";
     }
 
@@ -169,84 +179,83 @@ public abstract class PermissionsCommand implements CommandListener {
 
         return worldName;
     }
-    
-    protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName){
+
+    protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName) {
         return this.autoCompletePermission(entity, permission, worldName, "permission");
     }
-    
-    protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName, String argName){
+
+    protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName, String argName) {
         if (permission == null) {
             return permission;
         }
-        
-        Set<String> permissions = new HashSet<String> ();
-        for(String currentPermission : entity.getPermissions(worldName)){
-            if(currentPermission.equalsIgnoreCase(permission)){
+
+        Set<String> permissions = new HashSet<String>();
+        for (String currentPermission : entity.getPermissions(worldName)) {
+            if (currentPermission.equalsIgnoreCase(permission)) {
                 return currentPermission;
             }
-            
-            if(currentPermission.toLowerCase().startsWith(permission.toLowerCase())){
+
+            if (currentPermission.toLowerCase().startsWith(permission.toLowerCase())) {
                 permissions.add(currentPermission);
             }
         }
-        
-        if(permissions.size() > 0){
+
+        if (permissions.size() > 0) {
             String[] permissionArray = permissions.toArray(new String[0]);
-            
-            if(permissionArray.length == 1){
+
+            if (permissionArray.length == 1) {
                 return permissionArray[0];
             }
-            
+
             throw new AutoCompleteChoicesException(permissionArray, argName);
         }
-        
-        return permission;        
+
+        return permission;
     }
-    
-    
+
     protected int getPosition(String permission, String[] permissions) {
         try {
             // permission is permission index
             int position = Integer.parseInt(permission) - 1;
-            
-            if(position < 0 || position >= permissions.length){
+
+            if (position < 0 || position >= permissions.length) {
                 throw new RuntimeException("Wrong permission index specified!");
             }
-            
+
             return position;
         } catch (NumberFormatException e) {
             // permission is permission text
             for (int i = 0; i < permissions.length; i++) {
-                if(permission.equalsIgnoreCase(permissions[i])){
+                if (permission.equalsIgnoreCase(permissions[i])) {
                     return i;
                 }
-            }            
+            }
         }
 
-        throw new RuntimeException("Specified permission not found");        
+        throw new RuntimeException("Specified permission not found");
     }
 
-    protected String printHierarchy(PermissionGroup parent, int level) {
+    protected String printHierarchy(PermissionGroup parent, String worldName, int level) {
         StringBuilder buffer = new StringBuilder();
 
         PermissionGroup[] groups;
         if (parent == null) {
             groups = PermissionsEx.getPermissionManager().getGroups();
         } else {
-            groups = parent.getChildGroups();
+            groups = parent.getChildGroups(worldName);
         }
 
         for (PermissionGroup group : groups) {
-            if (parent == null && group.getParentGroups().length > 0) {
+            if (parent == null && group.getParentGroups(worldName).length > 0) {
                 continue;
             }
 
             buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
 
             // Groups
-            buffer.append(printHierarchy(group, level + 1));
+            buffer.append(printHierarchy(group, worldName, level + 1));
 
-            for (PermissionUser user : group.getUsers()) {
+            for (PermissionUser user : group.getUsers(worldName)) {
                 buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
             }
         }
@@ -254,12 +263,12 @@ public abstract class PermissionsCommand implements CommandListener {
         return buffer.toString();
     }
 
-    protected String mapPermissions(String world, PermissionEntity entity, int level) {
+    protected String mapPermissions(String worldName, PermissionEntity entity, int level) {
         StringBuilder builder = new StringBuilder();
 
 
         int index = 1;
-        for (String permission : this.getPermissionsTree(entity, world, 0)) {
+        for (String permission : this.getPermissionsTree(entity, worldName, 0)) {
             if (level > 0) {
                 builder.append("   ");
             } else {
@@ -278,16 +287,16 @@ public abstract class PermissionsCommand implements CommandListener {
         PermissionGroup[] parents;
 
         if (entity instanceof PermissionUser) {
-            parents = ((PermissionUser) entity).getGroups();
+            parents = ((PermissionUser) entity).getGroups(worldName);
         } else if (entity instanceof PermissionGroup) {
-            parents = ((PermissionGroup) entity).getParentGroups();
+            parents = ((PermissionGroup) entity).getParentGroups(worldName);
         } else {
             throw new RuntimeException("Unknown class in hierarchy. Nag t3hk0d3 please.");
         }
 
         level++; // Just increment level once
         for (PermissionGroup group : parents) {
-            builder.append(mapPermissions(world, group, level));
+            builder.append(mapPermissions(worldName, group, level));
         }
 
         return builder.toString();

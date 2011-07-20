@@ -114,12 +114,12 @@ public class UtilityCommands extends PermissionsCommand {
     }
 
     @Command(name = "pex",
-    syntax = "hierarchy",
+    syntax = "hierarchy [world]",
     permission = "permissions.manage.users",
     description = "Print complete user/group hierarchy")
     public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
         sender.sendMessage("User/Group inheritance hierarchy:");
-        this.sendMessage(sender, this.printHierarchy(null, 0));
+        this.sendMessage(sender, this.printHierarchy(null, this.autoCompleteWorldName(args.get("world")), 0));
     }
 
     @Command(name = "pex",

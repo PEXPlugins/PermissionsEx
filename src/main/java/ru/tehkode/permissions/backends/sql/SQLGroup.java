@@ -16,37 +16,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.sql;
+package ru.tehkode.permissions.backends.sql;
 
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionUser;
+import ru.tehkode.permissions.ProxyPermissionGroup;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
-/**
- *
- * @author code
- */
-public class SQLUser extends ProxyPermissionUser {
+public class SQLGroup extends ProxyPermissionGroup {
 
     protected SQLEntity backend;
 
-    public SQLUser(String name, PermissionManager manager, SQLConnectionManager sql) {
-        super(new SQLEntity(name, manager, SQLEntity.Type.USER, sql));
+    public SQLGroup(String name, PermissionManager manager, SQLConnectionManager sql) {
+        super(new SQLEntity(name, manager, SQLEntity.Type.GROUP, sql));
 
         this.backend = (SQLEntity) this.backendEntity;
     }
 
     @Override
-    public void setGroups(String[] parentGroups) {
-        backend.setParents(parentGroups);
-
-        this.clearCache();
-        
-        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+    protected String[] getParentGroupsNamesImpl(String worldName) {
+        return this.backend.getParentNames(worldName);
     }
 
     @Override
-    protected String[] getGroupsNamesImpl() {
-        return backend.getParentNames();
+    public void setParentGroups(String[] parentGroups, String worldName) {
+        if (parentGroups == null) {
+            return;
+        }
+
+        this.backend.setParents(parentGroups, worldName);
+        
+        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }
 }

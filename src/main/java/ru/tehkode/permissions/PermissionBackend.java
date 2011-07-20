@@ -21,12 +21,16 @@ package ru.tehkode.permissions;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -44,7 +48,7 @@ public abstract class PermissionBackend {
         this.manager = manager;
         this.config = config;
     }
-    
+
     /**
      * Backend initialization should be done here
      */
@@ -103,7 +107,7 @@ public abstract class PermissionBackend {
      * @return Default group instance
      */
     public abstract PermissionGroup getDefaultGroup();
-    
+
     /**
      * Set group as default group
      * 
@@ -118,7 +122,7 @@ public abstract class PermissionBackend {
      * @return Array of parent worlds. If there is no parent world return empty array
      */
     public abstract String[] getWorldInheritance(String world);
-    
+
     /**
      * Set world inheritance parents for specified world 
      * 
@@ -140,40 +144,54 @@ public abstract class PermissionBackend {
      * @return
      */
     public abstract PermissionUser[] getUsers();
-    
-    
+
     /**
      * Return child groups of specified group
      * 
      * @param groupName
-     * @return empty array if group has no childs, is empty or does not exist
+     * @return empty array if group has no children, empty or not exist
      */
-    public PermissionGroup[] getGroups(String groupName){
-        return this.getGroups(groupName, false);
+    public PermissionGroup[] getGroups(String groupName) {
+        return this.getGroups(groupName, null);
     }
-    
+
+    public PermissionGroup[] getGroups(String groupName, String worldName) {
+        return this.getGroups(groupName, worldName, false);
+    }
+
     /**
      * Return child groups of specified group.
      * 
      * @param groupName 
      * @param inheritance - If true a full list of descendants will be returned 
      * 
-     * @return empty array if group has no childs, is empty or does not exist
+     * @return empty array if group has no children, empty or not exist
      */
     public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
+        Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
+
+        for (World world : Bukkit.getServer().getWorlds()) {
+            groups.addAll(Arrays.asList(getGroups(groupName, world.getName(), inheritance)));
+        }
+
+        // Common space users
+        groups.addAll(Arrays.asList(getGroups(groupName, null, inheritance)));
+        
+        return groups.toArray(new PermissionGroup[0]);
+    }
+
+    public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
         for (PermissionGroup group : this.getGroups()) {
-            if (group.isChildOf(groupName, inheritance)) {
+            if (!groups.contains(group) && group.isChildOf(groupName, worldName, inheritance)) {
                 groups.add(group);
             }
         }
-        
-        Collections.sort(groups);
 
-        return groups.toArray(new PermissionGroup[]{});
+        return groups.toArray(new PermissionGroup[0]);
     }
-    
+
     /**
      * Return users of specified group.
      *
@@ -184,6 +202,10 @@ public abstract class PermissionBackend {
         return getUsers(groupName, false);
     }
 
+    public PermissionUser[] getUsers(String groupName, String worldName) {
+        return getUsers(groupName, worldName, false);
+    }
+
     /**
      * Return users of specified group (and child groups)
      *
@@ -192,22 +214,35 @@ public abstract class PermissionBackend {
      * @return null if there is no such group
      */
     public PermissionUser[] getUsers(String groupName, boolean inheritance) {
+        Set<PermissionUser> users = new HashSet<PermissionUser>();
+
+        for (World world : Bukkit.getServer().getWorlds()) {
+            users.addAll(Arrays.asList(getUsers(groupName, world.getName(), inheritance)));
+        }
+
+        // Common space users
+        users.addAll(Arrays.asList(getUsers(groupName, null, inheritance)));
+
+        return users.toArray(new PermissionUser[0]);
+    }
+
+    public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
         List<PermissionUser> users = new LinkedList<PermissionUser>();
 
         for (PermissionUser user : this.getUsers()) {
-            if (user.inGroup(groupName, inheritance)) {
+            if (user.inGroup(groupName, worldName, inheritance)) {
                 users.add(user);
             }
         }
 
-        return users.toArray(new PermissionUser[]{});
+        return users.toArray(new PermissionUser[0]);
     }
-    
+
     /**
      * Reload backend (reread permissions file, reconnect to database, etc)
      */
     public abstract void reload();
-    
+
     /**
      * Dump data to native backend format
      * 
@@ -215,7 +250,6 @@ public abstract class PermissionBackend {
      * @throws IOException 
      */
     public abstract void dumpData(OutputStreamWriter writer) throws IOException;
-    
     /**
      * Array of backend aliases
      */
@@ -246,7 +280,7 @@ public abstract class PermissionBackend {
      */
     public static Class<? extends PermissionBackend> getBackendClass(String alias) throws ClassNotFoundException {
         if (!registedAliases.containsKey(alias)) {
-            return (Class<? extends PermissionBackend>)Class.forName(alias);
+            return (Class<? extends PermissionBackend>) Class.forName(alias);
         }
 
         return registedAliases.get(alias);
@@ -287,7 +321,7 @@ public abstract class PermissionBackend {
 
         return backendClass.getName();
     }
-    
+
     /**
      * Returns new backend class instance for specified backendName
      * 
@@ -295,7 +329,7 @@ public abstract class PermissionBackend {
      * @param config Configuration object to access backend settings
      * @return new instance of PermissionBackend object
      */
-    public static PermissionBackend getBackend(String backendName, Configuration config){
+    public static PermissionBackend getBackend(String backendName, Configuration config) {
         return getBackend(backendName, PermissionsEx.getPermissionManager(), config, defaultBackend);
     }
 

@@ -21,14 +21,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ru.tehkode.permissions.sql;
+package ru.tehkode.permissions.backends.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionManager;
 
@@ -47,8 +49,10 @@ public class SQLEntity extends PermissionEntity {
     protected Map<String, Map<String, String>> worldsOptions = null;
     protected List<String> commonPermissions = null;
     protected Map<String, String> commonOptions = null;
-    protected List<String> parents = null;
+    protected Map<String, Set<String>> parents = null;
     protected Type type;
+    protected String prefix;
+    protected String suffix;
 
     public SQLEntity(String name, PermissionManager manager, SQLEntity.Type type, SQLConnectionManager db) {
         super(name, manager);
@@ -76,25 +80,61 @@ public class SQLEntity extends PermissionEntity {
     }
 
     @Override
-    public void setPrefix(String prefix) {
-        super.setPrefix(prefix);
+    public String[] getWorlds() {
+        Set<String> worlds = new HashSet<String>();
 
-        this.updateInfo();
+        worlds.addAll(worldsOptions.keySet());
+        worlds.addAll(worldsPermissions.keySet());
+        worlds.addAll(parents.keySet());
+
+
+        return worlds.toArray(new String[0]);
     }
 
     @Override
-    public void setSuffix(String suffix) {
-        super.setSuffix(prefix);
-
-        this.updateInfo();
+    public String getPrefix(String worldName) {
+        return (worldName == null || worldName.isEmpty()) ? this.prefix : this.getOption("prefix", worldName);
     }
 
-    public String[] getParentNames() {
+    @Override
+    public String getSuffix(String worldName) {
+        return (worldName == null || worldName.isEmpty()) ? this.suffix : this.getOption("suffix", worldName);
+    }
+
+    @Override
+    public void setPrefix(String prefix, String worldName) {
+        if (worldName == null || worldName.isEmpty()) {
+            this.prefix = prefix;
+            this.updateInfo();
+        } else {
+            this.setOption("prefix", prefix, worldName);
+        }
+    }
+
+    @Override
+    public void setSuffix(String suffix, String worldName) {
+        if (worldName == null || worldName.isEmpty()) {
+            this.suffix = suffix;
+            this.updateInfo();
+        } else {
+            this.setOption("suffix", suffix, worldName);
+        }
+    }
+
+    public String[] getParentNames(String worldName) {
         if (this.parents == null) {
             this.fetchInheritance();
         }
 
-        return this.parents.toArray(new String[0]);
+        if (worldName == null) {
+            worldName = "@common"; // magic word, yeah
+        }
+                
+        if (this.parents.containsKey(worldName)) {
+            return this.parents.get(worldName).toArray(new String[0]);
+        }
+
+        return new String[0];
     }
 
     @Override
@@ -172,10 +212,10 @@ public class SQLEntity extends PermissionEntity {
         this.fetchPermissions();
     }
 
-    public void setParents(String[] parentGroups) {
+    public void setParents(String[] parentGroups, String worldName) {
         try {
             // Clean out existing records
-            this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ?", this.getName(), this.type.ordinal());
+            this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND world = ?", this.getName(), this.type.ordinal(), worldName);
 
             List<Object[]> rows = new LinkedList<Object[]>();
             for (String group : parentGroups) {
@@ -183,10 +223,10 @@ public class SQLEntity extends PermissionEntity {
                     continue;
                 }
 
-                rows.add(new Object[]{this.getName(), group, this.type.ordinal()});
+                rows.add(new Object[]{this.getName(), group, this.type.ordinal(), worldName});
             }
 
-            this.db.insert("permissions_inheritance", new String[]{"child", "parent", "type"}, rows);
+            this.db.insert("permissions_inheritance", new String[]{"child", "parent", "type", "world"}, rows);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -310,8 +350,6 @@ public class SQLEntity extends PermissionEntity {
         this.worldsOptions.clear();
         this.worldsPermissions.clear();
         this.parents.clear();
-        this.prefix = "";
-        this.suffix = "";
     }
 
     protected void updateInfo() {
@@ -325,11 +363,11 @@ public class SQLEntity extends PermissionEntity {
         try {
             this.db.updateQuery(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
         } catch (RuntimeException e) {
-            if(e.getCause() instanceof SQLException && this.isVirtual()){
+            if (e.getCause() instanceof SQLException && this.isVirtual()) {
                 this.virtual = false;
                 this.updateInfo(); // try update
             }
-            
+
             throw e;
         }
 
@@ -383,11 +421,23 @@ public class SQLEntity extends PermissionEntity {
 
     protected final void fetchInheritance() {
         try {
-            this.parents = new LinkedList<String>();
-            ResultSet results = this.db.selectQuery("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
+            this.parents = new HashMap<String, Set<String>>();
+            
+            ResultSet results = this.db.selectQuery("SELECT `parent`, `world` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
 
             while (results.next()) {
-                this.parents.add(results.getString("parent"));
+                String parentName = results.getString(1);
+                String worldName = results.getString(2);
+
+                if (worldName == null) {
+                    worldName = "@common"; // magic word, yeah
+                }
+
+                if (!this.parents.containsKey(worldName)) {
+                    this.parents.put(worldName, new HashSet<String>());
+                }
+
+                this.parents.get(worldName).add(parentName);
             }
 
         } catch (SQLException e) {

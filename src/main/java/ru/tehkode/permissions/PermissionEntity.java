@@ -39,8 +39,6 @@ public abstract class PermissionEntity {
     protected PermissionManager manager;
     private String name;
     protected boolean virtual = true;
-    protected String prefix = "";
-    protected String suffix = "";
     protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
     protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
 
@@ -66,30 +64,36 @@ public abstract class PermissionEntity {
     /**
      * Returns entity prefix
      * 
+     * @param worldName
      * @return prefix
      */
-    public String getPrefix() {
-        return this.prefix;
+    public abstract String getPrefix(String worldName);
+    
+    public String getPrefix(){
+        return this.getPrefix(null);
     }
+    
+    /**
+     * Returns entity prefix
+     * 
+     */
 
     /**
      * Set prefix to value
      * 
      * @param prefix new prefix
      */
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-        
-        this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
-    }
+    public abstract void setPrefix(String prefix, String worldName);
 
     /**
      * Return entity suffix
      * 
      * @return suffix
      */
-    public String getSuffix() {
-        return this.suffix;
+    public abstract String getSuffix(String worldName);
+    
+    public String getSuffix(){
+        return getSuffix(null);
     }
 
     /**
@@ -97,11 +101,7 @@ public abstract class PermissionEntity {
      * 
      * @param suffix new suffix
      */
-    public void setSuffix(String suffix) {
-        this.suffix = suffix;
-        
-        this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
-    }
+    public abstract void setSuffix(String suffix, String worldName);
 
     /**
      * Checks if entity has specified permission in default world
@@ -356,6 +356,13 @@ public abstract class PermissionEntity {
     public boolean isVirtual() {
         return this.virtual;
     }
+    
+    /**
+     * Return world names where entity have permissions/options/etc
+     * 
+     * @return 
+     */
+    public abstract String[] getWorlds();
 
     /**
      * Return entity timed (temporary) permission for world

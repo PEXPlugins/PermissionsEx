@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.sql;
+package ru.tehkode.permissions.backends.sql;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -142,6 +142,17 @@ public class SQLConnectionManager {
             this.checkConnection();
 
             return this.db.getMetaData().getTables(null, null, this.getAlias(tableName), null).next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public boolean isFieldExists(String tableName, String fieldName){
+        try {
+            this.checkConnection();
+            
+            
+            return this.db.getMetaData().getColumns(null, null, this.getAlias(tableName), fieldName).next();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

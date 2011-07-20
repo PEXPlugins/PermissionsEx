@@ -142,6 +142,10 @@ public class PermissionManager {
      * @param groupName group's name
      * @return PermissionUser array
      */
+    public PermissionUser[] getUsers(String groupName, String worldName) {
+        return backend.getUsers(groupName, worldName);
+    }
+
     public PermissionUser[] getUsers(String groupName) {
         return backend.getUsers(groupName);
     }
@@ -153,6 +157,10 @@ public class PermissionManager {
      * @param inheritance true return members of descendant groups of specified group
      * @return PermissionUser array for groupnName
      */
+    public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
+        return backend.getUsers(groupName, worldName, inheritance);
+    }
+
     public PermissionUser[] getUsers(String groupName, boolean inheritance) {
         return backend.getUsers(groupName, inheritance);
     }
@@ -204,6 +212,10 @@ public class PermissionManager {
      * @param groupName group's name
      * @return PermissionGroup array
      */
+    public PermissionGroup[] getGroups(String groupName, String worldName) {
+        return backend.getGroups(groupName, worldName);
+    }
+
     public PermissionGroup[] getGroups(String groupName) {
         return backend.getGroups(groupName);
     }
@@ -215,6 +227,10 @@ public class PermissionManager {
      * @param inheritance true: only direct child groups would be returned
      * @return PermissionGroup array for specified groupName
      */
+    public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
+        return backend.getGroups(groupName, worldName, inheritance);
+    }
+
     public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
         return backend.getGroups(groupName, inheritance);
     }
@@ -293,7 +309,7 @@ public class PermissionManager {
                 ladder.put(group.getRank(), group);
             }
         }
-        
+
         return ladder;
     }
 
@@ -337,7 +353,7 @@ public class PermissionManager {
         this.reset();
         this.backend = PermissionBackend.getBackend(backendName, this, config);
         this.backend.initialize();
-        
+
         this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
     }
 
@@ -384,12 +400,12 @@ public class PermissionManager {
 
         this.setBackend(backendName);
     }
-    
-    protected void callEvent(PermissionEvent event){
+
+    protected void callEvent(PermissionEvent event) {
         Bukkit.getServer().getPluginManager().callEvent(event);
     }
-    
-    protected void callEvent(PermissionSystemEvent.Action action){
+
+    protected void callEvent(PermissionSystemEvent.Action action) {
         this.callEvent(new PermissionSystemEvent(action));
     }
 }

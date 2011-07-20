@@ -32,21 +32,36 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
 
         this.setName(backendEntity.getName());
 
-        this.prefix = backendEntity.getPrefix();
-        this.suffix = backendEntity.getSuffix();
         this.virtual = backendEntity.isVirtual();
     }
 
     @Override
-    public void setPrefix(String prefix) {
-        this.backendEntity.setPrefix(prefix);
-        super.setPrefix(prefix);
+    public String[] getWorlds() {
+        return backendEntity.getWorlds();
     }
 
     @Override
-    public void setSuffix(String postfix) {
-        this.backendEntity.setSuffix(postfix);
-        super.setSuffix(postfix);
+    public String getOwnPrefix(String worldName) {
+        return backendEntity.getPrefix(worldName);
+    }
+
+    @Override
+    public String getOwnSuffix(String worldName) {
+        return backendEntity.getSuffix(worldName);
+    }
+
+    @Override
+    public void setPrefix(String prefix, String worldName) {
+        this.backendEntity.setPrefix(prefix, worldName);
+
+        this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
+    }
+
+    @Override
+    public void setSuffix(String suffix, String worldName) {
+        this.backendEntity.setSuffix(suffix, worldName);
+
+        this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
     }
 
     @Override
@@ -75,12 +90,12 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     }
 
     @Override
-    public String getOption(String optionName, String world, String defaultValue) {
-        String option = this.getOwnOption(optionName, world, null);
+    public String getOption(String optionName, String worldName, String defaultValue) {
+        String option = this.getOwnOption(optionName, worldName, null);
 
         if (option == null || option.isEmpty()) {
-            for (PermissionGroup group : this.getParentGroups()) {
-                option = group.getOption(optionName, world, null);
+            for (PermissionGroup group : this.getParentGroups(worldName)) {
+                option = group.getOption(optionName, worldName, null);
                 if (option != null) {
                     return option;
                 }
