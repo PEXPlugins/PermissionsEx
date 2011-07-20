@@ -235,6 +235,40 @@ public class UserCommands extends PermissionsCommand {
     }
 
     @Command(name = "pex",
+    syntax = "user <user> swap <permission> <targetPermission> [world]",
+    permission = "permissions.manage.users.permissions",
+    description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself")
+    public void userSwapPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String userName = this.autoCompletePlayerName(args.get("user"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));        
+        
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "User does not exist");
+            return;
+        }
+
+        String[] permissions = user.getOwnPermissions(worldName);
+
+        try {
+            int sourceIndex = this.getPosition(this.autoCompletePermission(user, args.get("permission"), worldName, "permission"), permissions);
+            int targetIndex = this.getPosition(this.autoCompletePermission(user, args.get("targetPermission"), worldName, "targetPermission"), permissions);
+                                    
+            String targetPermission = permissions[targetIndex];            
+            
+            permissions[targetIndex] = permissions[sourceIndex];
+            permissions[sourceIndex] = targetPermission;
+            
+            user.setPermissions(permissions, worldName);
+            
+            sender.sendMessage("Permissions swapped!");          
+        } catch (Throwable e){
+            sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
+        }
+    }
+
+    @Command(name = "pex",
     syntax = "user <user> timed add <permission> [lifetime] [world]",
     permission = "permissions.manage.users.permissions.timed",
     description = "Add timed <permissions> to <user> with [lifetime] in [world]")

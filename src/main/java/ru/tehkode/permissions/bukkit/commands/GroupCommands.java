@@ -21,7 +21,6 @@ package ru.tehkode.permissions.bukkit.commands;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -357,6 +356,41 @@ public class GroupCommands extends PermissionsCommand {
         sender.sendMessage(ChatColor.WHITE + "Permission removed from " + group.getName() + " !");
         
         this.informGroup(plugin, group, "Your permissions have been changed");
+    }
+    
+    @Command(name = "pex",
+    syntax = "group <group> swap <permission> <targetPermission> [world]",
+    permission = "permissions.manage.users.permissions",
+    description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself")
+    public void userSwapPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+        
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+        
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+            return;
+        }
+        
+
+        String[] permissions = group.getOwnPermissions(worldName);
+
+        try {
+            int sourceIndex = this.getPosition(this.autoCompletePermission(group, args.get("permission"), worldName, "permission"), permissions);
+            int targetIndex = this.getPosition(this.autoCompletePermission(group, args.get("targetPermission"), worldName, "targetPermission"), permissions);
+                                    
+            String targetPermission = permissions[targetIndex];            
+            
+            permissions[targetIndex] = permissions[sourceIndex];
+            permissions[sourceIndex] = targetPermission;
+            
+            group.setPermissions(permissions, worldName);
+            
+            sender.sendMessage("Permissions swapped!");          
+        } catch (Throwable e){
+            sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
+        }
     }
     
     @Command(name = "pex",
