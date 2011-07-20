@@ -58,12 +58,5 @@
             <version>1.7</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>me.taylorkelly.help</groupId>
-            <artifactId>Help</artifactId>
-            <version>[0.2,)</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 </project>

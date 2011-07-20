@@ -28,8 +28,6 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import me.taylorkelly.help.Help;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -129,12 +127,7 @@ public class CommandsManager {
     }
 
     protected void findCommandHelpPlugins() {
-        // Tkelly's Help plugin
-        Plugin helpPlugin = Bukkit.getServer().getPluginManager().getPlugin("Help");
-        if (helpPlugin != null && helpPlugin instanceof Help) {
-            logger.info("[PermissionsEx] Help plugin detected. Support enabled.");
-            this.helpPlugins.add(helpPlugin);
-        }
+        // Nothing here
     }
 
     protected void registerCommandHelp(Command command) {
@@ -142,11 +135,7 @@ public class CommandsManager {
             return;
         }
 
-        for (Plugin helpPlugin : this.helpPlugins) {
-            if (helpPlugin instanceof Help) {
-                ((Help) helpPlugin).registerCommand(command.name() + " " + command.syntax(), command.description(), plugin, command.isPrimary(), command.permission());
-            }
-        }
+        // Nothing here
     }
 
     protected class CommandSyntax {
