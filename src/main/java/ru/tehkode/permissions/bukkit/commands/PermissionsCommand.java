@@ -19,9 +19,11 @@
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -166,6 +168,62 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         return worldName;
+    }
+    
+    protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName){
+        return this.autoCompletePermission(entity, permission, worldName, "permission");
+    }
+    
+    protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName, String argName){
+        if (permission == null) {
+            return permission;
+        }
+        
+        Set<String> permissions = new HashSet<String> ();
+        for(String currentPermission : entity.getPermissions(worldName)){
+            if(currentPermission.equalsIgnoreCase(permission)){
+                return currentPermission;
+            }
+            
+            if(currentPermission.toLowerCase().startsWith(permission.toLowerCase())){
+                permissions.add(currentPermission);
+            }
+        }
+        
+        if(permissions.size() > 0){
+            String[] permissionArray = permissions.toArray(new String[0]);
+            
+            if(permissionArray.length == 1){
+                return permissionArray[0];
+            }
+            
+            throw new AutoCompleteChoicesException(permissionArray, argName);
+        }
+        
+        return permission;        
+    }
+    
+    
+    protected int getPosition(String permission, String[] permissions) {
+        try {
+            // permission is permission index
+            int position = Integer.parseInt(permission) - 1;
+            
+            if(position < 0 || position >= permissions.length){
+                throw new RuntimeException("Wrong permission index specified!");
+            }
+            
+            return position;
+        } catch (NumberFormatException e) {
+            // permission is permission text
+            for (int i = 0; i < permissions.length; i++) {
+                if(permission.equalsIgnoreCase(permissions[i])){
+                    return i;
+                }
+            }            
+        }
+
+        throw new RuntimeException("Specified permission not found");        
     }
 
     protected String printHierarchy(PermissionGroup parent, int level) {
