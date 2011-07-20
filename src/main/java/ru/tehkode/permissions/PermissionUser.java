@@ -72,7 +72,7 @@ public abstract class PermissionUser extends PermissionEntity {
      * @param world world's name
      * @return String array of owned Permissions
      */
-    protected abstract String[] getOwnPermissions(String world);
+    public abstract String[] getOwnPermissions(String world);
 
     /**
      * Return non-inherited value of specified option for user in world
