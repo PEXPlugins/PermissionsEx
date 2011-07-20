@@ -72,9 +72,8 @@ public class PromotionCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "promote <user> [ladder]",
-    description = "Promotes <user> to next group or [ladder]",
-    isPrimary = true,
-    permissions = {"permissions.user.promote", "permissions.user.promote.<ladder>"})
+    description = "Promotes <user> to next group on [ladder]",
+    isPrimary = true)
     public void promoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -85,17 +84,25 @@ public class PromotionCommands extends PermissionsCommand {
         }
 
         String promoterName = "console";
-
+        String ladder = "default";
+        
+        if(args.containsKey("ladder")){
+            ladder = args.get("ladder");
+        }
+        
         PermissionUser promoter = null;
         if (sender instanceof Player) {
             promoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            if(promoter == null || !promoter.has("permissions.user.promote." + ladder)){
+                sender.sendMessage("You don't have enough permissions to promote on this ladder");
+                return;
+            }
+            
             promoterName = promoter.getName();
         }
 
         try {
-            user.promote(promoter, args.get("ladder"));
-
-            PermissionGroup targetGroup = user.getRankLadderGroup(args.get("ladder"));
+            PermissionGroup targetGroup = user.promote(promoter, ladder);
 
             this.informPlayer(plugin, user.getName(), "You have been promoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getName() + " group");
             sender.sendMessage("User " + user.getName() + " promoted to " + targetGroup.getName() + " group");
@@ -108,8 +115,7 @@ public class PromotionCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "demote <user> [ladder]",
     description = "Demotes <user> to previous group or [ladder]",
-    isPrimary = true,
-    permissions = {"permissions.user.demote", "permissions.user.demote.<ladder>"})
+    isPrimary = true)
     public void demoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -120,17 +126,26 @@ public class PromotionCommands extends PermissionsCommand {
         }
 
         String demoterName = "console";
+        String ladder = "default";
+        
+        if(args.containsKey("ladder")){
+            ladder = args.get("ladder");
+        }
 
         PermissionUser demoter = null;
         if (sender instanceof Player) {
             demoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            
+            if(demoter == null || !demoter.has("permissions.user.demote." + ladder)){
+                sender.sendMessage("You don't have enough permissions to demote on this ladder");
+                return;
+            }
+            
             demoterName = demoter.getName();
         }
 
         try {
-            user.demote(demoter, args.get("ladder"));
-
-            PermissionGroup targetGroup = user.getRankLadderGroup(args.get("ladder"));
+            PermissionGroup targetGroup = user.demote(demoter, args.get("ladder"));
 
             this.informPlayer(plugin, user.getName(), "You have been demoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getName() + " group");
             sender.sendMessage("User " + user.getName() + " demoted to " + targetGroup.getName() + " group");

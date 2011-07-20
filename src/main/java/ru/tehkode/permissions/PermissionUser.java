@@ -338,7 +338,7 @@ public abstract class PermissionUser extends PermissionEntity {
      * @param ladderName ladder's name
      * @throws RankingException 
      */
-    public void promote(PermissionUser promoter, String ladderName) throws RankingException {
+    public PermissionGroup promote(PermissionUser promoter, String ladderName) throws RankingException {
         if (ladderName == null || ladderName.isEmpty()) {
             ladderName = "default";
         }
@@ -371,8 +371,10 @@ public abstract class PermissionUser extends PermissionEntity {
         }
 
         this.swapGroups(sourceGroup, targetGroup);
-        
+                
         this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
+        
+        return targetGroup;
     }
 
     /**
@@ -386,7 +388,7 @@ public abstract class PermissionUser extends PermissionEntity {
      * @param ladderName
      * @throws RankingException 
      */
-    public void demote(PermissionUser demoter, String ladderName) throws RankingException {
+    public PermissionGroup demote(PermissionUser demoter, String ladderName) throws RankingException {
         if (ladderName == null || ladderName.isEmpty()) {
             ladderName = "default";
         }
@@ -421,6 +423,8 @@ public abstract class PermissionUser extends PermissionEntity {
         this.swapGroups(sourceGroup, targetGroup);
         
         this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
+        
+        return targetGroup;
     }
 
     /**
