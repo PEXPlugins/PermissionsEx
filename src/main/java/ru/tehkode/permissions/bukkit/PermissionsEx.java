@@ -36,7 +36,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.*;
 import ru.tehkode.permissions.backends.*;
 import ru.tehkode.permissions.bukkit.commands.*;
-import ru.tehkode.permissions.bukkit.modifyworld.ModifyworldManager;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -51,8 +50,6 @@ public class PermissionsEx extends JavaPlugin {
     protected PermissionManager permissionsManager;
     protected CommandsManager commandsManager;
     protected Configuration config;
-    protected ModifyworldManager modifyworldManager;
-    protected ChatManager chatManager;
 
     public PermissionsEx() {
         super();
@@ -68,8 +65,6 @@ public class PermissionsEx extends JavaPlugin {
         this.config = this.loadConfig(configFile);
         this.commandsManager = new CommandsManager(this);
         this.permissionsManager = new PermissionManager(this.config);
-        this.modifyworldManager = new ModifyworldManager(this);
-        this.chatManager = new ChatManager(this, config);
     }
 
     @Override
@@ -83,12 +78,6 @@ public class PermissionsEx extends JavaPlugin {
 
         // Register Player permissions cleaner
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Normal, this);
-
-        // Modifyworld
-        this.modifyworldManager.registerEvents();
-
-        // Chat prefixes/suffixes
-        this.chatManager.registerEvents(this);
 
         //register service
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
