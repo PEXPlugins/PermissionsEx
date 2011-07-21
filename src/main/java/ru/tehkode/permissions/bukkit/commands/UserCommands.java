@@ -207,7 +207,7 @@ public class UserCommands extends PermissionsCommand {
 
         user.addPermission(args.get("permission"), worldName);
 
-        sender.sendMessage(ChatColor.WHITE + "Permission added!");
+        sender.sendMessage(ChatColor.WHITE + "Permission \"" + args.get("permission") + "\" added!");
 
         this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
@@ -227,10 +227,12 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        user.removePermission(this.autoCompletePermission(user, args.get("permission"), worldName), worldName);
-        user.removeTimedPermission(args.get("permission"), worldName);
+        String permission = this.autoCompletePermission(user, args.get("permission"), worldName);
 
-        sender.sendMessage(ChatColor.WHITE + "Permission removed!");
+        user.removePermission(permission, worldName);
+        user.removeTimedPermission(permission, worldName);
+
+        sender.sendMessage(ChatColor.WHITE + "Permission \"" + permission + "\" removed!");
         this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
 
@@ -294,9 +296,11 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        user.addTimedPermission(args.get("permission"), worldName, lifetime);
+        String permission = args.get("permission");
 
-        sender.sendMessage(ChatColor.WHITE + "Timed permission added!");
+        user.addTimedPermission(permission, worldName, lifetime);
+
+        sender.sendMessage(ChatColor.WHITE + "Timed permission \"" + permission + "\" added!");
         this.informPlayer(plugin, userName, "Your permissions have been changed!");
 
         logger.info("User " + userName + " get timed permission \"" + args.get("permission") + "\" "
@@ -310,6 +314,7 @@ public class UserCommands extends PermissionsCommand {
     public void userRemoveTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
+        String permission = args.get("permission");
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
@@ -320,7 +325,7 @@ public class UserCommands extends PermissionsCommand {
 
         user.removeTimedPermission(args.get("permission"), worldName);
 
-        sender.sendMessage(ChatColor.WHITE + "Permission removed!");
+        sender.sendMessage(ChatColor.WHITE + "Timed permission \"" + permission + "\" removed!");
         this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
 
@@ -341,7 +346,7 @@ public class UserCommands extends PermissionsCommand {
 
         user.setOption(args.get("option"), args.get("value"), worldName);
 
-        sender.sendMessage(ChatColor.WHITE + "Option set!");
+        sender.sendMessage(ChatColor.WHITE + "Option \"" + args.get("option") + "\" set!");
 
         this.informPlayer(plugin, userName, "Your permissions have been changed!");
     }
@@ -388,8 +393,7 @@ public class UserCommands extends PermissionsCommand {
 
         user.addGroup(groupName, worldName);
 
-        sender.sendMessage(ChatColor.WHITE + "User added to group!");
-
+        sender.sendMessage(ChatColor.WHITE + "User added to group \"" + groupName + "\"!");
         this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
     }
 
