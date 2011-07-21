@@ -433,7 +433,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
      */
     @Override
     public String getPrefix(String worldName) {
-        String localPrefix = super.getPrefix();
+        String localPrefix = this.getOwnPrefix(worldName);
         if (localPrefix == null || localPrefix.isEmpty()) {
             for (PermissionGroup group : this.getParentGroups(worldName)) {
                 localPrefix = group.getPrefix();
@@ -452,7 +452,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
     @Override
     public String getSuffix(String worldName) {
-        String localSuffix = super.getSuffix();
+        String localSuffix = this.getOwnSuffix(worldName);
         if (localSuffix == null || localSuffix.isEmpty()) {
             for (PermissionGroup group : this.getParentGroups(worldName)) {
                 localSuffix = group.getSuffix();

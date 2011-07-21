@@ -690,7 +690,7 @@ public abstract class PermissionUser extends PermissionEntity {
     @Override
     public String getPrefix(String worldName) {
         if (this.cachedPrefix == null) {
-            String localPrefix = super.getPrefix();
+            String localPrefix = this.getOwnPrefix(worldName);
             if (localPrefix == null || localPrefix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups(worldName)) {
                     localPrefix = group.getPrefix();
@@ -713,7 +713,7 @@ public abstract class PermissionUser extends PermissionEntity {
     @Override
     public String getSuffix(String worldName) {
         if (this.cachedSuffix == null) {
-            String localSuffix = super.getSuffix();
+            String localSuffix = this.getOwnSuffix(worldName);
             if (localSuffix == null || localSuffix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups(worldName)) {
                     localSuffix = group.getSuffix();
