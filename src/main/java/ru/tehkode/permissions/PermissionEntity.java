@@ -68,16 +68,15 @@ public abstract class PermissionEntity {
      * @return prefix
      */
     public abstract String getPrefix(String worldName);
-    
-    public String getPrefix(){
+
+    public String getPrefix() {
         return this.getPrefix(null);
     }
-    
+
     /**
      * Returns entity prefix
      * 
      */
-
     /**
      * Set prefix to value
      * 
@@ -91,8 +90,8 @@ public abstract class PermissionEntity {
      * @return suffix
      */
     public abstract String getSuffix(String worldName);
-    
-    public String getSuffix(){
+
+    public String getSuffix() {
         return getSuffix(null);
     }
 
@@ -131,7 +130,7 @@ public abstract class PermissionEntity {
             Logger.getLogger("Minecraft").info("User " + this.getName() + " checked for \"" + permission + "\", \"" + expression + "\" found");
         }
 
-        return this.explainExpression(expression);
+        return explainExpression(expression);
     }
 
     /**
@@ -356,7 +355,7 @@ public abstract class PermissionEntity {
     public boolean isVirtual() {
         return this.virtual;
     }
-    
+
     /**
      * Return world names where entity have permissions/options/etc
      * 
@@ -458,12 +457,12 @@ public abstract class PermissionEntity {
 
         this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
-    
-    protected void callEvent(PermissionEntityEvent event){
+
+    protected void callEvent(PermissionEntityEvent event) {
         manager.callEvent(event);
     }
-    
-    protected void callEvent(PermissionEntityEvent.Action action){
+
+    protected void callEvent(PermissionEntityEvent.Action action) {
         this.callEvent(new PermissionEntityEvent(this, action));
     }
 
@@ -496,19 +495,11 @@ public abstract class PermissionEntity {
         return this.getClass().getSimpleName() + "(" + this.getName() + ")";
     }
 
-    protected boolean explainExpression(String expression) {
-        if (expression == null || expression.isEmpty()) {
-            return false;
-        }
-
-        return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
-    }
-
-    protected String getMatchingExpression(String permission, String world) {
+    public String getMatchingExpression(String permission, String world) {
         return this.getMatchingExpression(this.getPermissions(world), permission);
     }
 
-    protected String getMatchingExpression(String[] permissions, String permission) {
+    public String getMatchingExpression(String[] permissions, String permission) {
         for (String expression : permissions) {
             if (isMatches(expression, permission, true)) {
                 return expression;
@@ -558,5 +549,13 @@ public abstract class PermissionEntity {
         }
          */
         return false;
+    }
+
+    public static boolean explainExpression(String expression) {
+        if (expression == null || expression.isEmpty()) {
+            return false;
+        }
+
+        return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
     }
 }
