@@ -50,6 +50,7 @@ public class PermissionsEx extends JavaPlugin {
     protected PermissionManager permissionsManager;
     protected CommandsManager commandsManager;
     protected Configuration config;
+    protected BukkitPermissions superms;
 
     public PermissionsEx() {
         super();
@@ -81,6 +82,9 @@ public class PermissionsEx extends JavaPlugin {
 
         //register service
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
+        
+        // Bukkit permissions
+        this.superms = new BukkitPermissions(this);
 
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
     }
