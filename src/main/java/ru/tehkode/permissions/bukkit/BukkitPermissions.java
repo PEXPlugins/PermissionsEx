@@ -80,8 +80,6 @@ public class BukkitPermissions {
         for (Plugin plugin : Bukkit.getServer().getPluginManager().getPlugins()) {
             registeredPermissions.addAll(plugin.getDescription().getPermissions());
         }
-
-        System.out.println("Registered permissions: \n " + registeredPermissions);
     }
 
     protected void updatePermissions(Player player) {
@@ -104,14 +102,9 @@ public class BukkitPermissions {
             }
 
             attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
-
-            System.out.println("Permissions " + permission + " = " + PermissionEntity.explainExpression(matchingExpression));
         }
         
-        player.recalculatePermissions();
-        
-        System.out.println( player.getName() + " permissions: " + player.getEffectivePermissions());
-        
+        player.recalculatePermissions();        
     }
 
     protected void updateAllPlayers() {
