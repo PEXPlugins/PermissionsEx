@@ -27,11 +27,18 @@ import ru.tehkode.permissions.PermissionEntity;
 public class PermissionEntityEvent extends PermissionEvent {
 
     protected PermissionEntity entity;
+    
+    protected Action action;
 
     public PermissionEntityEvent(PermissionEntity entity, Action action) {
         super(action.toString());
 
         this.entity = entity;
+        this.action = action;
+    }
+    
+    public Action getAction(){
+        return this.action;
     }
 
     public PermissionEntity getEntity() {

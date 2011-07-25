@@ -24,8 +24,16 @@ package ru.tehkode.permissions.events;
  */
 public class PermissionSystemEvent extends PermissionEvent {
 
+    protected Action action;
+    
     public PermissionSystemEvent(Action action) {
         super(action.toString());
+        
+        this.action = action;
+    }
+    
+    public Action getAction(){
+        return this.action;
     }
     
     public enum Action {
