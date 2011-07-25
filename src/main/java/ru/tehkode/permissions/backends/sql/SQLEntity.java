@@ -299,38 +299,6 @@ public class SQLEntity extends PermissionEntity {
     }
 
     @Override
-    public void addPermission(String permission, String world) {
-        if (world == null) {
-            world = "";
-        }
-
-        // Checks to avoid permission duplication
-        // Maybe another behavior is better: delete permission and after add again ? This would popup permission on top of list
-        if ((world == null || world.isEmpty()) && this.commonPermissions.contains(permission)) {
-            return;
-        } else if (world != null && !world.isEmpty()
-                && this.worldsPermissions.containsKey(world)
-                && this.worldsPermissions.get(world).contains(permission)) {
-            return;
-        }
-
-        this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
-
-        this.fetchPermissions();
-    }
-
-    @Override
-    public void removePermission(String permission, String world) {
-        if (world == null) {
-            world = "";
-        }
-
-        this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), permission, this.type.ordinal(), world);
-
-        this.fetchPermissions();
-    }
-
-    @Override
     public void save() {
         this.updateInfo();
     }

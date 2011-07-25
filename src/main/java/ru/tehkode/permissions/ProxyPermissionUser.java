@@ -72,15 +72,6 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
 
     @Override
-    public void addPermission(String permission, String world) {
-        this.backendEntity.addPermission(permission, world);
-
-        this.clearCache();
-
-        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
-    }
-
-    @Override
     public Map<String, String[]> getAllPermissions() {
         return this.backendEntity.getAllPermissions();
     }
@@ -89,14 +80,6 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
 
-        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
-    }
-
-    @Override
-    public void removePermission(String permission, String world) {
-        this.backendEntity.removePermission(permission, world);
-
-        this.clearCache();
         this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
 
