@@ -33,6 +33,9 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
@@ -74,9 +77,15 @@ public class BukkitPermissions {
         CustomEventListener customEventListener = new PEXEvents();
 
         manager.registerEvent(Event.Type.CUSTOM_EVENT, customEventListener, Event.Priority.Normal, plugin);
+        
+        ServerListener serverListener = new BukkitEvents();
+        
+        manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverListener, Event.Priority.Normal, plugin);
+        manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverListener, Event.Priority.Normal, plugin);
     }
 
     private void collectPermissions() {
+        registeredPermissions.clear();
         for (Plugin plugin : Bukkit.getServer().getPluginManager().getPlugins()) {
             registeredPermissions.addAll(plugin.getDescription().getPermissions());
         }
@@ -103,8 +112,8 @@ public class BukkitPermissions {
 
             attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
         }
-        
-        player.recalculatePermissions();        
+
+        player.recalculatePermissions();
     }
 
     protected void updateAllPlayers() {
@@ -143,6 +152,21 @@ public class BukkitPermissions {
         @Override
         public void onPlayerKick(PlayerKickEvent event) {
             attachments.remove(event.getPlayer());
+        }
+    }
+
+    protected class BukkitEvents extends ServerListener {
+
+        @Override
+        public void onPluginEnable(PluginEnableEvent event) {
+            collectPermissions();
+            updateAllPlayers();
+        }
+
+        @Override
+        public void onPluginDisable(PluginDisableEvent event) {
+            collectPermissions();
+            updateAllPlayers();
         }
     }
 
