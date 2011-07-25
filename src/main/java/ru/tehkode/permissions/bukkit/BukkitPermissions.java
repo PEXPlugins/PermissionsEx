@@ -77,9 +77,9 @@ public class BukkitPermissions {
         CustomEventListener customEventListener = new PEXEvents();
 
         manager.registerEvent(Event.Type.CUSTOM_EVENT, customEventListener, Event.Priority.Normal, plugin);
-        
+
         ServerListener serverListener = new BukkitEvents();
-        
+
         manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverListener, Event.Priority.Normal, plugin);
         manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverListener, Event.Priority.Normal, plugin);
     }
@@ -111,6 +111,19 @@ public class BukkitPermissions {
             }
 
             attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
+        }
+
+        // Add all permissions to user
+        for (String permission : permissions) {
+            Boolean value = true;
+            if (permission.startsWith("-")) {
+                permission = permission.substring(1); // cut off -
+                value = false;
+            }
+
+            if (!attachment.getPermissions().containsKey(permission)) {
+                attachment.setPermission(permission, value);
+            }
         }
 
         player.recalculatePermissions();
