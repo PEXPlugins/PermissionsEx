@@ -29,7 +29,7 @@ CREATE TABLE `permissions_inheritance` (
   `parent`  varchar(50) NULL,
 );
 
-CREATE INDEX `permissions_inheritance_Index01` ON `permissions_inheritance` (`child`, `type`);
+CREATE INDEX `permissions_inheritance_Index01` ON `permissions_inheritance` (`child`, `type`, `world`);
 
 CREATE INDEX `permissions_inheritance_Index02` ON `permissions_inheritance` (`parent`, `type`);
 
