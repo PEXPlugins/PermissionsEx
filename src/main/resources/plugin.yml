@@ -21,28 +21,28 @@ commands:
            /<command> users - List all registered users (alias)
            /<command> user <user> - List user permissions (alias)
            /<command> user <user> list [world] - List user permissions
-           /<command> user <user> prefix [newprefix] - Get or set <user> prefix
-           /<command> user <user> suffix [newsuffix] - get or set <user> suffix
+           /<command> user <user> prefix [newprefix] [world] - Get or set <user> prefix
+           /<command> user <user> suffix [newsuffix] [world] - get or set <user> suffix
            /<command> user <user> delete - Remove <user>
            /<command> user <user> add <permission> [world] - Add <permission> to <user> in [world]
            /<command> user <user> remove <permission> [world] - Remove <permission> from <user> in [world]
            /<command> user <user> timed add <permission> [lifetime] [world] - Add timed <permission> to <user> with [lifetime] in [world]
            /<command> user <user> timed add <permission> [lifetime] [world] - Remove timed <permission> from <user> in [world]
            /<command> user <user> set <option> <value> [world] - Set <option> to <value> in [world]
-           /<command> user <user> group list - List all user groups
-           /<command> user <user> group add <group> - Add <user> to <group>
-           /<command> user <user> group set <group> - Set <group> for <user>
-           /<command> user <user> group remove <group> - Remove <user> from <group>
+           /<command> user <user> group list [world] - List all user groups
+           /<command> user <user> group add <group> [world] - Add <user> to <group>
+           /<command> user <user> group set <group> [world] - Set <group> for <user>
+           /<command> user <user> group remove <group> [world] - Remove <user> from <group>
            /<command> groups list - List all registered groups
            /<command> groups - List all registered groups (alias)
            /<command> group - List all registered groups (alias)
-           /<command> group <group> prefix [newprefix] - Get or set <group> prefix
-           /<command> group <group> suffix [newsuffix] - Get or set <group> suffix
+           /<command> group <group> prefix [newprefix] [world] - Get or set <group> prefix
+           /<command> group <group> suffix [newsuffix] [world] - Get or set <group> suffix
            /<command> group <group> create [parents] - Create <group> and/or set [parents]
            /<command> group <group> delete - Remove <group>
-           /<command> group <group> parents - List parents for <group> (alias)
-           /<command> group <group> parents list - List parents for <group>
-           /<command> group <group> parents set <parents> - Set parent(s) for <group> (single or comma-separated list)
+           /<command> group <group> parents [world] - List parents for <group> (alias)
+           /<command> group <group> parents list [world] - List parents for <group>
+           /<command> group <group> parents set <parents> [world] - Set parent(s) for <group> (single or comma-separated list)
            /<command> group <group> - List all <group> permissions (alias)
            /<command> group <group> list [world] - List all <group> permissions in [world]
            /<command> group <group> add <permission> [world] - Add <permission> to <group> in [world] 
@@ -51,8 +51,8 @@ commands:
            /<command> group <group> timed add <permission> [lifetime] [world] - Add timed <permission> to <group> with [lifetime] in [world]
            /<command> group <group> timed remove <permission> [world] - Remove timed <permission> for <group> in [world]
            /<command> group <group> users - List all users in <group>
-           /<command> group <group> user add <user> - Add <user> (single or comma-separated list) to <group>
-           /<command> group <group> user remove <user> - Remove <user> (single or comma-separated list) to <group>
+           /<command> group <group> user add <user> [world] - Add <user> (single or comma-separated list) to <group>
+           /<command> group <group> user remove <user> [world] - Remove <user> (single or comma-separated list) to <group>
            /<command> group <group> rank [rank] [ladder] - Get or set <group> [rank] [ladder]
            /<command> promote <user> <group> [ladder] - Promotes <user> to next group or [ladder]
            /<command> demote <user> <group> [ladder] - Demotes <user> to previous group or [ladder]
