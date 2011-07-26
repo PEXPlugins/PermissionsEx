@@ -106,7 +106,7 @@ public class FileBackend extends PermissionBackend {
     @Override
     public String[] getWorldInheritance(String world) {
         if (world != null && !world.isEmpty()) {
-                return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);           
+            return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);
         }
 
         return new String[0];
@@ -132,34 +132,48 @@ public class FileBackend extends PermissionBackend {
     }
 
     @Override
-    public PermissionGroup getDefaultGroup() {
+    public PermissionGroup getDefaultGroup(String worldName) {
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
         if (groupsMap == null || groupsMap.isEmpty()) {
             throw new RuntimeException("No groups defined. Check your permissions file.");
         }
 
+        String defaultGroupProperty = "default";
+        if (worldName != null) {
+            defaultGroupProperty = "worlds." + worldName + "." + defaultGroupProperty;
+        }
+
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-            if (entry.getValue().getBoolean("default", false)) {
+            if (entry.getValue().getBoolean(defaultGroupProperty, false)) {
                 return this.manager.getGroup(entry.getKey());
             }
         }
 
-        throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
+        if (worldName == null) {
+            throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
+        }
+
+        return null;
     }
 
     @Override
-    public void setDefaultGroup(PermissionGroup group) {
+    public void setDefaultGroup(PermissionGroup group, String worldName) {
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
+
+        String defaultGroupProperty = "default";
+        if (worldName != null) {
+            defaultGroupProperty = "worlds." + worldName + "." + defaultGroupProperty;
+        }
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             if (!entry.getKey().equalsIgnoreCase(group.getName())
-                    && entry.getValue().getBoolean("default", false)) {
-                entry.getValue().removeProperty("default");
+                    && entry.getValue().getBoolean(defaultGroupProperty, false)) {
+                entry.getValue().removeProperty(defaultGroupProperty);
             }
 
             if (entry.getKey().equalsIgnoreCase(group.getName())) {
-                entry.getValue().setProperty("default", true);
+                entry.getValue().setProperty(defaultGroupProperty, true);
             }
         }
     }
@@ -325,14 +339,14 @@ public class FileBackend extends PermissionBackend {
                 }
             }
         }
-        
+
         // World inheritance
-        for(World world : Bukkit.getServer().getWorlds()){
+        for (World world : Bukkit.getServer().getWorlds()) {
             String[] parentWorlds = manager.getWorldInheritance(world.getName());
-            if(parentWorlds.length == 0){
+            if (parentWorlds.length == 0) {
                 continue;
             }
-            
+
             root.setProperty("worlds." + world.getName() + ".inheritance", Arrays.asList(parentWorlds));
         }
 

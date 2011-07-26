@@ -93,26 +93,43 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
-    public PermissionGroup getDefaultGroup() {
+    public PermissionGroup getDefaultGroup(String worldName) {
         try {
-            ResultSet result = this.sql.selectQuery("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+            ResultSet result;
 
-            if (!result.next()) {
-                throw new RuntimeException("There is no default group set, this is serious issue");
+            if (worldName == null) {
+                result = this.sql.selectQuery("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+
+                if (!result.next()) {
+                    throw new RuntimeException("There is no default group set, this is serious issue");
+                }
+            } else {
+                result = this.sql.selectQuery("SELECT `name` FROM `permissions` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
+                        SQLEntity.Type.GROUP.ordinal(), worldName);
+
+                if (!result.next()) {
+                    return null;
+                }
             }
-
+            
             return this.manager.getGroup(result.getString("name"));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-
+    
     @Override
-    public void setDefaultGroup(PermissionGroup group) {
-        // Reset default flag
-        this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
-        // Set default flag
-        this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+    public void setDefaultGroup(PermissionGroup group, String worldName) {
+        if (worldName == null) {
+            // Reset default flag
+            this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+            // Set default flag
+            this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+        } else {
+            this.sql.updateQuery("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
+            this.sql.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
+                    group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName);
+        }
     }
 
     @Override

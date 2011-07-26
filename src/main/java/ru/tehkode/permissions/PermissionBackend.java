@@ -106,14 +106,14 @@ public abstract class PermissionBackend {
      * 
      * @return Default group instance
      */
-    public abstract PermissionGroup getDefaultGroup();
+    public abstract PermissionGroup getDefaultGroup(String worldName);
 
     /**
      * Set group as default group
      * 
      * @param group 
      */
-    public abstract void setDefaultGroup(PermissionGroup group);
+    public abstract void setDefaultGroup(PermissionGroup group, String worldName);
 
     /**
      * Returns an array of world names of specified world name

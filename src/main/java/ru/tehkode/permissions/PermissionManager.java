@@ -40,8 +40,8 @@ public class PermissionManager {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
     protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
+    protected Map<String, PermissionGroup> defaultGroups = new HashMap<String, PermissionGroup>();
     protected PermissionBackend backend = null;
-    protected PermissionGroup defaultGroup = null;
     protected Configuration config;
     protected Timer timer = new Timer("PermissionsCleaner");
     protected boolean debugMode = false;
@@ -240,12 +240,42 @@ public class PermissionManager {
      * 
      * @return default group object. null if not specified
      */
-    public PermissionGroup getDefaultGroup() {
-        if (this.defaultGroup == null) {
-            this.defaultGroup = this.backend.getDefaultGroup();
+    public PermissionGroup getDefaultGroup(String worldName) {
+        String worldIndex = worldName != null ? worldName : "";
+
+        if (!this.defaultGroups.containsKey(worldIndex)) {
+            this.defaultGroups.put(worldIndex, this.getDefaultGroup(worldName, this.getDefaultGroup(null, null)));
         }
 
-        return this.defaultGroup;
+        return this.defaultGroups.get(worldIndex);
+    }
+
+    public PermissionGroup getDefaultGroup() {
+        return this.getDefaultGroup(null);
+    }
+
+    protected PermissionGroup getDefaultGroup(String worldName, PermissionGroup fallback) {
+        PermissionGroup defaultGroup = this.backend.getDefaultGroup(worldName);
+
+        if (defaultGroup == null && worldName == null) {
+            throw new IllegalStateException("No default group defined. Use \"pex group <group> default set\" to define default group.");
+        }
+
+        if (defaultGroup != null) {
+            return defaultGroup;
+        }
+
+        if (worldName != null) {
+            // check world-inheritance
+            for (String parentWorld : this.getWorldInheritance(worldName)) {
+                defaultGroup = this.getDefaultGroup(parentWorld, null);
+                if (defaultGroup != null) {
+                    return defaultGroup;
+                }
+            }
+        }
+
+        return fallback;
     }
 
     /**
@@ -253,14 +283,21 @@ public class PermissionManager {
      * 
      * @param group PermissionGroup group object
      */
-    public void setDefaultGroup(PermissionGroup group) {
-        if (group == null || group.equals(this.defaultGroup)) {
+    public void setDefaultGroup(PermissionGroup group, String worldName) {
+        if (group == null || group.equals(this.defaultGroups)) {
             return;
         }
 
-        backend.setDefaultGroup(group);
+        backend.setDefaultGroup(group, worldName);
+
+        this.defaultGroups.clear();
+
         this.callEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED);
         this.callEvent(new PermissionEntityEvent(group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
+    }
+
+    public void setDefaultGroup(PermissionGroup group) {
+        this.setDefaultGroup(group, null);
     }
 
     /**
@@ -350,9 +387,11 @@ public class PermissionManager {
      * @param backendName name of backend to set to
      */
     public void setBackend(String backendName) {
-        this.reset();
-        this.backend = PermissionBackend.getBackend(backendName, this, config);
-        this.backend.initialize();
+        synchronized (this) {
+            this.clearCache();
+            this.backend = PermissionBackend.getBackend(backendName, this, config);
+            this.backend.initialize();
+        }
 
         this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
     }
@@ -375,18 +414,22 @@ public class PermissionManager {
      * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
      */
     public void reset() {
-        this.users.clear();
-        this.groups.clear();
-        this.defaultGroup = null;
-
-        // Close old timed Permission Timer
-        timer.cancel();
-        timer = new Timer("PermissionsCleaner");
+        this.clearCache();
 
         if (this.backend != null) {
             this.backend.reload();
         }
         this.callEvent(PermissionSystemEvent.Action.RELOADED);
+    }
+
+    protected void clearCache() {
+        this.users.clear();
+        this.groups.clear();
+        this.defaultGroups.clear();
+
+        // Close old timed Permission Timer
+        timer.cancel();
+        timer = new Timer("PermissionsCleaner");
     }
 
     private void initBackend() {

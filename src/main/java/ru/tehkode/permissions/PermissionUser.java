@@ -175,7 +175,7 @@ public abstract class PermissionUser extends PermissionEntity {
                 }
             }
 
-            if (worldName != null) { // check world-inheritance also
+            if (worldName != null) { // also check world-inheritance
                 // world inheritance
                 for (String world : this.manager.getWorldInheritance(worldName)) {
                     groups.addAll(Arrays.asList(this.getGroups(world)));
@@ -184,11 +184,11 @@ public abstract class PermissionUser extends PermissionEntity {
                 // common groups
                 groups.addAll(Arrays.asList(this.getGroups(null)));
             }
-
+            
             if (groups.isEmpty()) {
-                groups.add(this.manager.getDefaultGroup());
+                groups.add(this.manager.getDefaultGroup(worldName));
             }
-
+            
             Collections.sort(groups);
 
             this.cachedGroups.put(worldIndex, groups);
@@ -309,7 +309,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups(worldName)));
 
-        if (this.getGroupsNamesImpl(worldName).length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup())) {
+        if (this.getGroupsNamesImpl(worldName).length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup(worldName))) {
             groups.clear(); // clean out default group
         }
 
@@ -639,8 +639,8 @@ public abstract class PermissionUser extends PermissionEntity {
 
         // Group inhertance
         if (groupInheritance) {
-            for (PermissionGroup group : this.getGroups(worldName)) {
-                group.getInheritedPermissions(worldName, permissions, true);
+            for (PermissionGroup parentGroup : this.getGroups(worldName)) {
+                parentGroup.getInheritedPermissions(worldName, permissions, true);
             }
         }
     }
