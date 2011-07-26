@@ -61,10 +61,5 @@ commands:
            /<command> worlds - Print loaded worlds
            /<command> world <world> - Print <world> inheritance info
            /<command> world <world> inherit <parentWorlds> - Set <parentWorlds> for <world>
-  promote:
-    description: Promotes <user> to next group
-    usage: /<command> <user>
-    
-  demote:
-    description: Demotes <user> to previous group
-    usage: /<command> <user>
+           /<command> default group [world] - Print default group for specified world.
+           /<command> set default group <group> [world] - Set default group for specified world
