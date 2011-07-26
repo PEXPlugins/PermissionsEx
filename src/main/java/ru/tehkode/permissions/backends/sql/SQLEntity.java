@@ -129,7 +129,7 @@ public class SQLEntity extends PermissionEntity {
         if (worldName == null) {
             worldName = "@common"; // magic word, yeah
         }
-                
+
         if (this.parents.containsKey(worldName)) {
             return this.parents.get(worldName).toArray(new String[0]);
         }
@@ -215,7 +215,12 @@ public class SQLEntity extends PermissionEntity {
     public void setParents(String[] parentGroups, String worldName) {
         try {
             // Clean out existing records
-            this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND world = ?", this.getName(), this.type.ordinal(), worldName);
+            if (worldName != null) { // damn NULL
+                this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getName(), this.type.ordinal(), worldName);
+            } else {
+                this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND ISNULL(`world`)", this.getName(), this.type.ordinal());
+            }
+
 
             List<Object[]> rows = new LinkedList<Object[]>();
             for (String group : parentGroups) {
@@ -390,7 +395,7 @@ public class SQLEntity extends PermissionEntity {
     protected final void fetchInheritance() {
         try {
             this.parents = new HashMap<String, Set<String>>();
-            
+
             ResultSet results = this.db.selectQuery("SELECT `parent`, `world` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
 
             while (results.next()) {
