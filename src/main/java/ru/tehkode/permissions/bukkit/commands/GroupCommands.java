@@ -561,7 +561,7 @@ public class GroupCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "default group [world]",
     permission = "permissions.manage.groups.inheritance",
-    description = "Checks if specified group are default in specified world")
+    description = "Print default group for specified world")
     public void groupDefaultCheck(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String worldName = this.autoCompleteWorldName(args.get("world"));
 
@@ -580,7 +580,7 @@ public class GroupCommands extends PermissionsCommand {
 
         PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
 
-        if (group == null) {
+        if (group == null || group.isVirtual()) {
             sender.sendMessage(ChatColor.RED + "Specified group doesn't exist");
             return;
         }
