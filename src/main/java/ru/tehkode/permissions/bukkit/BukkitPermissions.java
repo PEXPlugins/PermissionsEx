@@ -38,6 +38,7 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.permissions.PermissionEntity;
@@ -74,9 +75,7 @@ public class BukkitPermissions {
         manager.registerEvent(Event.Type.PLAYER_TELEPORT, playerEventListener, Event.Priority.Normal, plugin);
         manager.registerEvent(Event.Type.PLAYER_PORTAL, playerEventListener, Event.Priority.Normal, plugin);
 
-        CustomEventListener customEventListener = new PEXEvents();
-
-        manager.registerEvent(Event.Type.CUSTOM_EVENT, customEventListener, Event.Priority.Normal, plugin);
+        manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Normal, plugin);
 
         ServerListener serverListener = new BukkitEvents();
 
@@ -86,12 +85,16 @@ public class BukkitPermissions {
 
     private void collectPermissions() {
         registeredPermissions.clear();
-        for (Plugin plugin : Bukkit.getServer().getPluginManager().getPlugins()) {
-            registeredPermissions.addAll(plugin.getDescription().getPermissions());
+        for (Plugin bukkitPlugin : Bukkit.getServer().getPluginManager().getPlugins()) {
+            registeredPermissions.addAll(bukkitPlugin.getDescription().getPermissions());
         }
     }
 
     protected void updatePermissions(Player player) {
+        if (player == null) {
+            return;
+        }
+
         if (!this.attachments.containsKey(player)) {
             this.attachments.put(player, player.addAttachment(plugin));
         }
@@ -101,8 +104,12 @@ public class BukkitPermissions {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
         String permissions[] = user.getPermissions(player.getWorld().getName());
 
-        attachment.getPermissions().clear();
+        // clear permissions
+        for (String permission : attachment.getPermissions().keySet()) {
+            attachment.unsetPermission(permission);
+        }
 
+        // find matching permissions
         for (Permission permission : registeredPermissions) {
             String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
 
@@ -113,7 +120,7 @@ public class BukkitPermissions {
             attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
         }
 
-        // Add all permissions to user
+        // all permissions
         for (String permission : permissions) {
             Boolean value = true;
             if (permission.startsWith("-")) {
@@ -127,6 +134,15 @@ public class BukkitPermissions {
         }
 
         player.recalculatePermissions();
+
+        PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " permissions updated!");
+
+        if (PermissionsEx.getPermissionManager().isDebug()) {
+            PermissionsEx.logger.info("[PermissionsEx] Player " + player.getName() + " dinnerperms:");
+            for (PermissionAttachmentInfo permission : player.getEffectivePermissions()) {
+                PermissionsEx.logger.info("[PermissionsEx]   " + permission.getPermission() + " = " + permission.getValue());
+            }
+        }
     }
 
     protected void updateAllPlayers() {
@@ -154,7 +170,9 @@ public class BukkitPermissions {
 
         @Override
         public void onPlayerTeleport(PlayerTeleportEvent event) { // can be teleported into another world
-            updatePermissions(event.getPlayer());
+            if (!event.getFrom().getWorld().equals(event.getTo().getWorld())) { // only if world actually changed
+                updatePermissions(event.getPlayer());
+            }
         }
 
         @Override
@@ -187,33 +205,18 @@ public class BukkitPermissions {
 
         @Override
         public void onCustomEvent(Event event) {
-            if (event instanceof PermissionSystemEvent) {
-                // have to update all players
-                updateAllPlayers();
-            } else if (event instanceof PermissionEntityEvent) {
+            if (event instanceof PermissionEntityEvent) {
                 PermissionEntityEvent pee = (PermissionEntityEvent) event;
 
                 if (pee.getEntity() instanceof PermissionUser) { // update user only
-                    PermissionUser user = (PermissionUser) pee.getEntity();
-
-                    Player player = Bukkit.getServer().getPlayer(user.getName());
-
-                    if (player != null) {
-                        updatePermissions(player);
-                    }
+                    updatePermissions(Bukkit.getServer().getPlayer(pee.getEntity().getName()));
                 } else if (pee.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-                    PermissionGroup group = (PermissionGroup) pee.getEntity();
-
-                    PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers(group.getName(), true);
-
-                    for (PermissionUser user : users) {
-                        Player player = Bukkit.getServer().getPlayer(user.getName());
-
-                        if (player != null) {
-                            updatePermissions(player);
-                        }
+                    for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(pee.getEntity().getName(), true)) {
+                        updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
                     }
                 }
+            } else if (event instanceof PermissionSystemEvent) {
+                updateAllPlayers();
             }
         }
     }
