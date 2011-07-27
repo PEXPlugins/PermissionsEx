@@ -97,7 +97,7 @@ public class FileEntity extends PermissionEntity {
     public String[] getWorlds() {
         List<String> worlds = this.node.getKeys("worlds");
         if (worlds == null) {
-            return null;
+            return new String[0];
         }
         
         return worlds.toArray(new String[0]);
