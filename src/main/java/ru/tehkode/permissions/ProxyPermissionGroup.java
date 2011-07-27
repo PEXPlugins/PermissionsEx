@@ -53,6 +53,8 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public void setPrefix(String prefix, String worldName) {
         this.backendEntity.setPrefix(prefix, worldName);
+        
+        this.clearMembersCache();
 
         this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
     }
@@ -60,6 +62,8 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public void setSuffix(String suffix, String worldName) {
         this.backendEntity.setSuffix(suffix, worldName);
+        
+        this.clearMembersCache();
 
         this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
     }
@@ -126,12 +130,18 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
     @Override
     public void setOption(String permission, String value, String world) {
         this.backendEntity.setOption(permission, value, world);
+        
+        this.clearMembersCache();
+        
         this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
     }
 
     @Override
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
+        
+        this.clearMembersCache();
+        
         this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
 }

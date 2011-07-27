@@ -54,11 +54,15 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     @Override
     public void setPrefix(String prefix, String worldName) {
         this.backendEntity.setPrefix(prefix, worldName);
+
+        this.clearCache();
     }
 
     @Override
     public void setSuffix(String suffix, String worldName) {
         this.backendEntity.setSuffix(suffix, worldName);
+
+        this.clearCache();
     }
 
     @Override
@@ -79,6 +83,8 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     @Override
     public void setPermissions(String[] permissions, String world) {
         this.backendEntity.setPermissions(permissions, world);
+
+        this.clearCache();
 
         this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
     }
@@ -119,6 +125,8 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     @Override
     public void setOption(String permission, String value, String world) {
         this.backendEntity.setOption(permission, value, world);
+
+        this.clearCache();
 
         this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
     }
