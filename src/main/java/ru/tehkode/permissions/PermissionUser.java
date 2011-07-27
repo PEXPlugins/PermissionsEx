@@ -184,11 +184,11 @@ public abstract class PermissionUser extends PermissionEntity {
                 // common groups
                 groups.addAll(Arrays.asList(this.getGroups(null)));
             }
-            
+
             if (groups.isEmpty()) {
                 groups.add(this.manager.getDefaultGroup(worldName));
             }
-            
+
             Collections.sort(groups);
 
             this.cachedGroups.put(worldIndex, groups);
@@ -621,6 +621,26 @@ public abstract class PermissionUser extends PermissionEntity {
         }
 
         return this.cachedPermissions.get(world);
+    }
+
+    @Override
+    public void addPermission(String permission, String worldName) {
+        List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
+
+        if (!permission.contains(permission)) {
+            permissions.add(0, permission);
+        }
+
+        this.setPermissions(permissions.toArray(new String[0]), worldName);
+    }
+
+    @Override
+    public void removePermission(String permission, String worldName) {
+        List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
+
+        permissions.remove(permission);
+
+        this.setPermissions(permissions.toArray(new String[0]), worldName);
     }
 
     protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance) {

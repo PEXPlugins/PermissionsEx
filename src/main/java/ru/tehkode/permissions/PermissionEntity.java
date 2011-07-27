@@ -156,9 +156,7 @@ public abstract class PermissionEntity {
      * @param world World name to add permission to
      */
     public void addPermission(String permission, String world) {
-        List<String> permissions = new LinkedList<String>(Arrays.asList(this.getPermissions(world)));
-        permissions.add(0, permission);
-        this.setPermissions(permissions.toArray(new String[0]), world);
+        throw new UnsupportedOperationException("You shouldn't call this method");
     }
 
     /**
@@ -176,10 +174,8 @@ public abstract class PermissionEntity {
      * @param permission Permission to remove
      * @param world World name to remove permission for
      */
-    public void removePermission(String permission, String world) {
-        List<String> permissions = new LinkedList<String>(Arrays.asList(this.getPermissions(world)));
-        permissions.remove(permission);
-        this.setPermissions(permissions.toArray(new String[0]), world);
+    public void removePermission(String permission, String worldName) {
+        throw new UnsupportedOperationException("You shouldn't call this method");
     }
 
     /**
