@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.Configuration;
 
@@ -139,13 +140,6 @@ public abstract class PermissionBackend {
     public abstract PermissionGroup[] getGroups();
 
     /**
-     * Return all registered users
-     *
-     * @return
-     */
-    public abstract PermissionUser[] getUsers();
-
-    /**
      * Return child groups of specified group
      * 
      * @param groupName
@@ -176,7 +170,7 @@ public abstract class PermissionBackend {
 
         // Common space users
         groups.addAll(Arrays.asList(getGroups(groupName, null, inheritance)));
-        
+
         return groups.toArray(new PermissionGroup[0]);
     }
 
@@ -191,6 +185,28 @@ public abstract class PermissionBackend {
 
         return groups.toArray(new PermissionGroup[0]);
     }
+
+    /**
+     * Return all registered and online users
+     *
+     * @return
+     */
+    public PermissionUser[] getUsers() {
+        Set<PermissionUser> users = new HashSet<PermissionUser>();
+
+        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+            users.add(this.manager.getUser(player));
+        }
+
+        return users.toArray(new PermissionUser[0]);
+    }
+
+    /**
+     * Return all registered users
+     *
+     * @return
+     */
+    public abstract PermissionUser[] getRegisteredUsers();
 
     /**
      * Return users of specified group.
@@ -211,23 +227,22 @@ public abstract class PermissionBackend {
      *
      * @param groupName
      * @param inheritance - If true return users list of descendant groups too 
-     * @return null if there is no such group
+     * @return
      */
     public PermissionUser[] getUsers(String groupName, boolean inheritance) {
         Set<PermissionUser> users = new HashSet<PermissionUser>();
 
-        for (World world : Bukkit.getServer().getWorlds()) {
-            users.addAll(Arrays.asList(getUsers(groupName, world.getName(), inheritance)));
+        for (PermissionUser user : this.getUsers()) {
+            if (user.inGroup(groupName, inheritance)) {
+                users.add(user);
+            }
         }
-
-        // Common space users
-        users.addAll(Arrays.asList(getUsers(groupName, null, inheritance)));
 
         return users.toArray(new PermissionUser[0]);
     }
 
     public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
-        List<PermissionUser> users = new LinkedList<PermissionUser>();
+        Set<PermissionUser> users = new HashSet<PermissionUser>();
 
         for (PermissionUser user : this.getUsers()) {
             if (user.inGroup(groupName, worldName, inheritance)) {

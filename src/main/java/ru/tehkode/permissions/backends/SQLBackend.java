@@ -147,7 +147,7 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
-    public PermissionUser[] getUsers() {
+    public PermissionUser[] getRegisteredUsers() {
         String[] userNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.USER, false);
         PermissionUser[] users = new PermissionUser[userNames.length];
 

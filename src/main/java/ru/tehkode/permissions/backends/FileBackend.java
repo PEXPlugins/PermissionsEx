@@ -193,7 +193,7 @@ public class FileBackend extends PermissionBackend {
     }
 
     @Override
-    public PermissionUser[] getUsers() {
+    public PermissionUser[] getRegisteredUsers() {
         List<PermissionUser> users = new LinkedList<PermissionUser>();
         Map<String, ConfigurationNode> userMap = this.permissions.getNodesMap("users");
 
