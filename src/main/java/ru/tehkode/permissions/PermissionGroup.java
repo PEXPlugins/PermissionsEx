@@ -433,7 +433,26 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
      */
     @Override
     public String getPrefix(String worldName) {
+        // @TODO This method should be refactored
+        
         String localPrefix = this.getOwnPrefix(worldName);
+
+        if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
+            // World-inheritance
+            for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
+                String prefix = this.getOwnPrefix(parentWorld);
+                if (prefix != null || prefix.isEmpty()) {
+                    localPrefix = prefix;
+                    break;
+                }
+            }
+
+            // Common space
+            if (localPrefix == null || localPrefix.isEmpty()) {
+                localPrefix = this.getOwnPrefix(null);
+            }
+        }
+
         if (localPrefix == null || localPrefix.isEmpty()) {
             for (PermissionGroup group : this.getParentGroups(worldName)) {
                 localPrefix = group.getPrefix();
@@ -452,7 +471,26 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
     @Override
     public String getSuffix(String worldName) {
+        // @TODO This method should be refactored
+        
         String localSuffix = this.getOwnSuffix(worldName);
+        
+        if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
+                // World-inheritance
+                for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
+                    String suffix = this.getOwnSuffix(parentWorld);
+                    if (suffix != null || suffix.isEmpty()) {
+                        localSuffix = suffix;
+                        break;
+                    }
+                }
+
+                // Common space
+                if (localSuffix == null || localSuffix.isEmpty()) {
+                    localSuffix = this.getOwnSuffix(null);
+                }
+            }
+        
         if (localSuffix == null || localSuffix.isEmpty()) {
             for (PermissionGroup group : this.getParentGroups(worldName)) {
                 localSuffix = group.getSuffix();
@@ -479,7 +517,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
     @Override
     public void addPermission(String permission, String worldName) {
         List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
-        
+
         if (!permissions.contains(permission)) {
             permissions.add(0, permission);
         }

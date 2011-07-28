@@ -34,10 +34,10 @@ import ru.tehkode.permissions.exceptions.RankingException;
  */
 public abstract class PermissionUser extends PermissionEntity {
 
-    protected HashMap<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
-    protected HashMap<String, String[]> cachedPermissions = new HashMap<String, String[]>();
-    protected String cachedPrefix = null;
-    protected String cachedSuffix = null;
+    protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
+    protected Map<String, String[]> cachedPermissions = new HashMap<String, String[]>();
+    protected Map<String, String> cachedPrefix = new HashMap<String, String>();
+    protected Map<String, String> cachedSuffix = new HashMap<String, String>();
     protected HashMap<String, String> cachedAnwsers = new HashMap<String, String>();
 
     public PermissionUser(String playerName, PermissionManager manager) {
@@ -709,8 +709,30 @@ public abstract class PermissionUser extends PermissionEntity {
 
     @Override
     public String getPrefix(String worldName) {
-        if (this.cachedPrefix == null) {
+        // @TODO This method should be refactored
+        
+        String worldIndex = worldName != null ? worldName : "@common";   
+        
+        if (this.cachedPrefix.containsKey(worldIndex)) {
             String localPrefix = this.getOwnPrefix(worldName);
+
+
+            if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
+                // World-inheritance
+                for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
+                    String prefix = this.getOwnPrefix(parentWorld);
+                    if (prefix != null || prefix.isEmpty()) {
+                        localPrefix = prefix;
+                        break;
+                    }
+                }
+
+                // Common space
+                if (localPrefix == null || localPrefix.isEmpty()) {
+                    localPrefix = this.getOwnPrefix(null);
+                }
+            }
+
             if (localPrefix == null || localPrefix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups(worldName)) {
                     localPrefix = group.getPrefix();
@@ -724,16 +746,36 @@ public abstract class PermissionUser extends PermissionEntity {
                 localPrefix = "";
             }
 
-            this.cachedPrefix = localPrefix;
+            this.cachedPrefix.put(worldIndex, localPrefix);
         }
 
-        return this.cachedPrefix;
+        return this.cachedPrefix.get(worldIndex);
     }
 
     @Override
     public String getSuffix(String worldName) {
-        if (this.cachedSuffix == null) {
+        // @TODO This method should be refactored
+        String worldIndex = worldName != null ? worldName : "@common";        
+        
+        if (this.cachedSuffix.containsKey(worldIndex)) {
             String localSuffix = this.getOwnSuffix(worldName);
+
+            if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
+                // World-inheritance
+                for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
+                    String suffix = this.getOwnSuffix(parentWorld);
+                    if (suffix != null || suffix.isEmpty()) {
+                        localSuffix = suffix;
+                        break;
+                    }
+                }
+
+                // Common space
+                if (localSuffix == null || localSuffix.isEmpty()) {
+                    localSuffix = this.getOwnSuffix(null);
+                }
+            }
+
             if (localSuffix == null || localSuffix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups(worldName)) {
                     localSuffix = group.getSuffix();
@@ -746,10 +788,10 @@ public abstract class PermissionUser extends PermissionEntity {
             if (localSuffix == null) { // just for NPE safety
                 localSuffix = "";
             }
-            this.cachedSuffix = localSuffix;
+            this.cachedSuffix.put(worldIndex, localSuffix);
         }
 
-        return this.cachedSuffix;
+        return this.cachedSuffix.get(worldIndex);
     }
 
     @Override
@@ -763,8 +805,8 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     protected void clearCache() {
-        this.cachedPrefix = null;
-        this.cachedSuffix = null;
+        this.cachedPrefix.clear();
+        this.cachedSuffix.clear();
 
         this.cachedGroups.clear();
         this.cachedPermissions.clear();
