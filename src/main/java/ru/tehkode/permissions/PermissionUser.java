@@ -713,10 +713,9 @@ public abstract class PermissionUser extends PermissionEntity {
         
         String worldIndex = worldName != null ? worldName : "@common";   
         
-        if (this.cachedPrefix.containsKey(worldIndex)) {
+        if (!this.cachedPrefix.containsKey(worldIndex)) {
             String localPrefix = this.getOwnPrefix(worldName);
-
-
+            
             if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
                 // World-inheritance
                 for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -757,7 +756,7 @@ public abstract class PermissionUser extends PermissionEntity {
         // @TODO This method should be refactored
         String worldIndex = worldName != null ? worldName : "@common";        
         
-        if (this.cachedSuffix.containsKey(worldIndex)) {
+        if (!this.cachedSuffix.containsKey(worldIndex)) {
             String localSuffix = this.getOwnSuffix(worldName);
 
             if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
