@@ -135,13 +135,8 @@ public class BukkitPermissions {
 
         player.recalculatePermissions();
 
-        PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " permissions updated!");
-
         if (PermissionsEx.getPermissionManager().isDebug()) {
-            PermissionsEx.logger.info("[PermissionsEx] Player " + player.getName() + " dinnerperms:");
-            for (PermissionAttachmentInfo permission : player.getEffectivePermissions()) {
-                PermissionsEx.logger.info("[PermissionsEx]   " + permission.getPermission() + " = " + permission.getValue());
-            }
+            PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " permissions updated!");
         }
     }
 
