@@ -40,11 +40,11 @@ import ru.tehkode.permissions.config.Configuration;
  * @author code
  */
 public abstract class PermissionBackend {
-
+    
     protected final static String defaultBackend = "file";
     protected PermissionManager manager;
     protected Configuration config;
-
+    
     protected PermissionBackend(PermissionManager manager, Configuration config) {
         this.manager = manager;
         this.config = config;
@@ -92,13 +92,13 @@ public abstract class PermissionBackend {
         if (this.getGroups(groupName).length > 0) {
             return false;
         }
-
+        
         for (PermissionUser user : this.getUsers(groupName)) {
             user.removeGroup(groupName);
         }
-
+        
         this.manager.getGroup(groupName).remove();
-
+        
         return true;
     }
 
@@ -148,7 +148,7 @@ public abstract class PermissionBackend {
     public PermissionGroup[] getGroups(String groupName) {
         return this.getGroups(groupName, null);
     }
-
+    
     public PermissionGroup[] getGroups(String groupName, String worldName) {
         return this.getGroups(groupName, worldName, false);
     }
@@ -163,26 +163,26 @@ public abstract class PermissionBackend {
      */
     public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
         Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
-
+        
         for (World world : Bukkit.getServer().getWorlds()) {
             groups.addAll(Arrays.asList(getGroups(groupName, world.getName(), inheritance)));
         }
 
         // Common space users
         groups.addAll(Arrays.asList(getGroups(groupName, null, inheritance)));
-
+        
         return groups.toArray(new PermissionGroup[0]);
     }
-
+    
     public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-
+        
         for (PermissionGroup group : this.getGroups()) {
             if (!groups.contains(group) && group.isChildOf(groupName, worldName, inheritance)) {
                 groups.add(group);
             }
         }
-
+        
         return groups.toArray(new PermissionGroup[0]);
     }
 
@@ -193,11 +193,13 @@ public abstract class PermissionBackend {
      */
     public PermissionUser[] getUsers() {
         Set<PermissionUser> users = new HashSet<PermissionUser>();
-
+        
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             users.add(this.manager.getUser(player));
         }
-
+        
+        users.addAll(Arrays.asList(this.getRegisteredUsers()));
+        
         return users.toArray(new PermissionUser[0]);
     }
 
@@ -217,7 +219,7 @@ public abstract class PermissionBackend {
     public PermissionUser[] getUsers(String groupName) {
         return getUsers(groupName, false);
     }
-
+    
     public PermissionUser[] getUsers(String groupName, String worldName) {
         return getUsers(groupName, worldName, false);
     }
@@ -231,25 +233,25 @@ public abstract class PermissionBackend {
      */
     public PermissionUser[] getUsers(String groupName, boolean inheritance) {
         Set<PermissionUser> users = new HashSet<PermissionUser>();
-
+        
         for (PermissionUser user : this.getUsers()) {
             if (user.inGroup(groupName, inheritance)) {
                 users.add(user);
             }
         }
-
+        
         return users.toArray(new PermissionUser[0]);
     }
-
+    
     public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
         Set<PermissionUser> users = new HashSet<PermissionUser>();
-
+        
         for (PermissionUser user : this.getUsers()) {
             if (user.inGroup(groupName, worldName, inheritance)) {
                 users.add(user);
             }
         }
-
+        
         return users.toArray(new PermissionUser[0]);
     }
 
@@ -277,11 +279,11 @@ public abstract class PermissionBackend {
      * @return Class name if found or alias if there is no such class name present
      */
     public static String getBackendClassName(String alias) {
-
+        
         if (registedAliases.containsKey(alias)) {
             return registedAliases.get(alias).getName();
         }
-
+        
         return alias;
     }
 
@@ -297,7 +299,7 @@ public abstract class PermissionBackend {
         if (!registedAliases.containsKey(alias)) {
             return (Class<? extends PermissionBackend>) Class.forName(alias);
         }
-
+        
         return registedAliases.get(alias);
     }
 
@@ -311,9 +313,9 @@ public abstract class PermissionBackend {
         if (!PermissionBackend.class.isAssignableFrom(backendClass)) {
             throw new RuntimeException("Provided class should be subclass of PermissionBackend");
         }
-
+        
         registedAliases.put(alias, backendClass);
-
+        
         Logger.getLogger("Minecraft").info("[PermissionsEx] " + alias + " backend registered!");
     }
 
@@ -333,7 +335,7 @@ public abstract class PermissionBackend {
                 }
             }
         }
-
+        
         return backendClass.getName();
     }
 
@@ -373,24 +375,24 @@ public abstract class PermissionBackend {
         if (backendName == null || backendName.isEmpty()) {
             backendName = defaultBackend;
         }
-
+        
         String className = getBackendClassName(backendName);
-
+        
         try {
             Class<? extends PermissionBackend> backendClass = getBackendClass(backendName);
-
+            
             Logger.getLogger("Minecraft").info("[PermissionsEx] Initializing " + backendName + " backend");
-
+            
             Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
             return (PermissionBackend) constructor.newInstance(manager, config);
         } catch (ClassNotFoundException e) {
-
+            
             Logger.getLogger("Minecraft").warning("[PermissionsEx] Specified backend \"" + backendName + "\" are not found.");
-
+            
             if (fallBackBackend == null) {
                 throw new RuntimeException(e);
             }
-
+            
             if (!className.equals(getBackendClassName(fallBackBackend))) {
                 return getBackend(fallBackBackend, manager, config, null);
             } else {
