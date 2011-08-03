@@ -258,7 +258,7 @@ public class PermissionManager {
         PermissionGroup defaultGroup = this.backend.getDefaultGroup(worldName);
 
         if (defaultGroup == null && worldName == null) {
-            throw new IllegalStateException("No default group defined. Use \"pex default group set <group> [world]\" to define default group.");
+            throw new IllegalStateException("No default group defined. Use \"pex set default group <group> [world]\" to define default group.");
         }
 
         if (defaultGroup != null) {
