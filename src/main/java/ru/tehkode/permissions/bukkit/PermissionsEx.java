@@ -29,8 +29,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
+import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.*;
@@ -79,10 +83,14 @@ public class PermissionsEx extends JavaPlugin {
 
         // Register Player permissions cleaner
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Normal, this);
+        // Multiworld cache cleaner
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN,  new PlayerEventsListener(), Priority.Lowest, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_TELEPORT, new PlayerEventsListener(), Priority.Lowest, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_PORTAL,   new PlayerEventsListener(), Priority.Lowest, this);
 
         //register service
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
-        
+
         // Bukkit permissions
         this.superms = new BukkitPermissions(this);
 
@@ -171,6 +179,25 @@ public class PermissionsEx extends JavaPlugin {
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {
             getPermissionManager().resetUser(event.getPlayer().getName());
+        }
+
+        protected void clearUserCache(PlayerEvent event) {
+            getPermissionManager().clearUserCache(event.getPlayer());
+        }
+
+        @Override
+        public void onPlayerPortal(PlayerPortalEvent event) {
+            this.clearUserCache(event);
+        }
+
+        @Override
+        public void onPlayerRespawn(PlayerRespawnEvent event) {
+            this.clearUserCache(event);
+        }
+
+        @Override
+        public void onPlayerTeleport(PlayerTeleportEvent event) {
+            this.clearUserCache(event);
         }
     }
 }
