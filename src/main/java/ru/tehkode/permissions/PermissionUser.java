@@ -201,28 +201,32 @@ public abstract class PermissionUser extends PermissionEntity {
         Map<String, PermissionGroup[]> allGroups = new HashMap<String, PermissionGroup[]>();
 
         for (String worldName : this.getWorlds()) {
-            List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+            allGroups.put(worldName, this.getWorldGroups(worldName));
+        }
 
-            for (String groupName : this.getGroupsNamesImpl(worldName)) {
-                if (groupName == null || groupName.isEmpty()) {
-                    continue;
-                }
+        allGroups.put("@common", this.getWorldGroups(null));
 
-                PermissionGroup group = this.manager.getGroup(groupName);
+        return allGroups;
+    }
 
-                if (!groups.contains(group)) {
-                    groups.add(group);
-                }
+    protected PermissionGroup[] getWorldGroups(String worldName) {
+        List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+
+        for (String groupName : this.getGroupsNamesImpl(worldName)) {
+            if (groupName == null || groupName.isEmpty()) {
+                continue;
             }
 
-            Collections.sort(groups);
+            PermissionGroup group = this.manager.getGroup(groupName);
 
-            if (groups.size() > 0) {
-                allGroups.put(worldName, groups.toArray(new PermissionGroup[0]));
+            if (!groups.contains(group)) {
+                groups.add(group);
             }
         }
 
-        return allGroups;
+        Collections.sort(groups);
+
+        return groups.toArray(new PermissionGroup[0]);
     }
 
     /**
@@ -710,12 +714,12 @@ public abstract class PermissionUser extends PermissionEntity {
     @Override
     public String getPrefix(String worldName) {
         // @TODO This method should be refactored
-        
-        String worldIndex = worldName != null ? worldName : "@common";   
-        
+
+        String worldIndex = worldName != null ? worldName : "@common";
+
         if (!this.cachedPrefix.containsKey(worldIndex)) {
             String localPrefix = this.getOwnPrefix(worldName);
-            
+
             if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
                 // World-inheritance
                 for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -754,8 +758,8 @@ public abstract class PermissionUser extends PermissionEntity {
     @Override
     public String getSuffix(String worldName) {
         // @TODO This method should be refactored
-        String worldIndex = worldName != null ? worldName : "@common";        
-        
+        String worldIndex = worldName != null ? worldName : "@common";
+
         if (!this.cachedSuffix.containsKey(worldIndex)) {
             String localSuffix = this.getOwnSuffix(worldName);
 
