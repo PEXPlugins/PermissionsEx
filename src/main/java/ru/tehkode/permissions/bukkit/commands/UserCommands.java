@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -377,13 +378,22 @@ public class UserCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "user <user> group add <group> [world]",
-    permission = "permissions.manage.membership",
     description = "Add <user> to <group>")
     public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
 
+        PermissionUser player = null;
+        if (sender instanceof Player) {
+        	player = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            
+            if(player == null || !player.has("permissions.manage.membership." + groupName)){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions manage this group");
+                return;
+            }
+        }
+        
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
@@ -438,13 +448,22 @@ public class UserCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "user <user> group remove <group> [world]",
-    permission = "permissions.manage.membership",
     description = "Remove <user> from <group>")
     public void userRemoveGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String groupName = this.autoCompleteGroupName(args.get("group"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
 
+        PermissionUser player = null;
+        if (sender instanceof Player) {
+        	player = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            
+            if(player == null || !player.has("permissions.manage.membership." + groupName)){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions manage this group");
+                return;
+            }
+        }
+        
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
