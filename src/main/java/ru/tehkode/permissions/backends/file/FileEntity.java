@@ -83,14 +83,14 @@ public class FileEntity extends PermissionEntity {
         
     @Override
     public void setPermissions(String[] permissions, String world) {
-        String nodePath = "permissions";
+        String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
-            nodePath = "worlds." + world + "." + nodePath;
+            permissionsNode = "worlds." + world + "." + permissionsNode;
         }
-        
-        this.node.setProperty(nodePath, new LinkedList<String>(Arrays.asList(permissions)));
-        
-        this.save();
+
+        if (permissions.length > 0) {
+            this.node.setProperty(permissionsNode, Arrays.asList(permissions));
+        } else {            this.node.removeProperty(permissionsNode);        }        this.save();
     }
     
     @Override
