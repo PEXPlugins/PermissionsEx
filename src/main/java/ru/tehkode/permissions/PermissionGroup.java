@@ -244,7 +244,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
             allGroups.put(worldName, this.getWorldGroups(worldName));
         }
         
-        allGroups.put("@common", this.getWorldGroups(null));
+        allGroups.put(null, this.getWorldGroups(null));
 
         return allGroups;
     }

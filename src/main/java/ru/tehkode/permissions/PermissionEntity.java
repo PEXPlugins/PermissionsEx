@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
@@ -109,16 +108,7 @@ public abstract class PermissionEntity {
      * @return true if entity has this permission otherwise false
      */
     public boolean has(String permission) {
-        String world = null;
-        Player player = Bukkit.getServer().getPlayer(this.getName());
-        
-        if(player == null){ // for sake of perfomance
-            world = Bukkit.getServer().getWorlds().get(0).getName();
-        } else {
-            world = player.getWorld().getName();
-        }
-        
-        return this.has(permission, world);
+        return this.has(permission, Bukkit.getServer().getWorlds().get(0).getName());
     }
 
     /**

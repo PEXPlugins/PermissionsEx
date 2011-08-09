@@ -126,10 +126,6 @@ public class SQLEntity extends PermissionEntity {
             this.fetchInheritance();
         }
 
-        if (worldName == null) {
-            worldName = "@common"; // magic word, yeah
-        }
-
         if (this.parents.containsKey(worldName)) {
             return this.parents.get(worldName).toArray(new String[0]);
         }
@@ -401,10 +397,6 @@ public class SQLEntity extends PermissionEntity {
             while (results.next()) {
                 String parentName = results.getString(1);
                 String worldName = results.getString(2);
-
-                if (worldName == null) {
-                    worldName = "@common"; // magic word, yeah
-                }
 
                 if (!this.parents.containsKey(worldName)) {
                     this.parents.put(worldName, new HashSet<String>());

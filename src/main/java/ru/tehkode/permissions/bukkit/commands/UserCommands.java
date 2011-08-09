@@ -85,6 +85,10 @@ public class UserCommands extends PermissionsCommand {
         printEntityInheritance(sender, user.getGroups());
 
         for (String world : user.getAllGroups().keySet()) {
+            if (world == null) {
+                continue;
+            }
+
             sender.sendMessage("  @" + world + ":");
             printEntityInheritance(sender, user.getAllGroups().get(world));
         }
@@ -369,7 +373,7 @@ public class UserCommands extends PermissionsCommand {
             return;
         }
 
-        sender.sendMessage("User " + args.get("user") + " currently in:");
+        sender.sendMessage("User " + args.get("user") + " @" + worldName + " currently in:");
         for (PermissionGroup group : user.getGroups(worldName)) {
             sender.sendMessage("  " + group.getName());
         }
