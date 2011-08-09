@@ -18,7 +18,6 @@
  */
 package ru.tehkode.permissions;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
@@ -109,7 +109,16 @@ public abstract class PermissionEntity {
      * @return true if entity has this permission otherwise false
      */
     public boolean has(String permission) {
-        return this.has(permission, Bukkit.getServer().getWorlds().get(0).getName());
+        String world = null;
+        Player player = Bukkit.getServer().getPlayer(this.getName());
+        
+        if(player == null){ // for sake of perfomance
+            world = Bukkit.getServer().getWorlds().get(0).getName();
+        } else {
+            world = player.getWorld().getName();
+        }
+        
+        return this.has(permission, world);
     }
 
     /**
@@ -308,7 +317,7 @@ public abstract class PermissionEntity {
     public abstract void setOption(String option, String value, String world);
 
     /**
-     * Set option for all worlds. Can be overrwritten by world specific option
+     * Set option for all worlds. Can be overwritten by world specific option
      * 
      * @param option Option name
      * @param value Value to set, null to remove
