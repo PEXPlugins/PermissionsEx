@@ -93,8 +93,8 @@ public class PromotionCommands extends PermissionsCommand {
         PermissionUser promoter = null;
         if (sender instanceof Player) {
             promoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
-            if(promoter == null || !promoter.has("permissions.user.promote." + ladder)){
-                sender.sendMessage("You don't have enough permissions to promote on this ladder");
+            if(promoter == null || !promoter.has("permissions.user.promote." + ladder, ((Player)sender).getWorld().getName())){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions to promote on this ladder");
                 return;
             }
             
@@ -108,6 +108,7 @@ public class PromotionCommands extends PermissionsCommand {
             sender.sendMessage("User " + user.getName() + " promoted to " + targetGroup.getName() + " group");
             Logger.getLogger("Minecraft").info("User " + user.getName() + " has been promoted to " + targetGroup.getName() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
         } catch (RankingException e) {
+            sender.sendMessage(ChatColor.RED + "Promotion error: " + e.getMessage());
             Logger.getLogger("Minecraft").severe("Ranking Error (" + promoterName + " > " + e.getTarget().getName() + "): " + e.getMessage());
         }
     }
@@ -121,7 +122,7 @@ public class PromotionCommands extends PermissionsCommand {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
 
         if (user == null) {
-            sender.sendMessage("Specified user \"" + args.get("user") + "\" not found!");
+            sender.sendMessage(ChatColor.RED + "Specified user \"" + args.get("user") + "\" not found!");
             return;
         }
 
@@ -136,8 +137,8 @@ public class PromotionCommands extends PermissionsCommand {
         if (sender instanceof Player) {
             demoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
             
-            if(demoter == null || !demoter.has("permissions.user.demote." + ladder)){
-                sender.sendMessage("You don't have enough permissions to demote on this ladder");
+            if(demoter == null || !demoter.has("permissions.user.demote." + ladder, ((Player)sender).getWorld().getName())){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions to demote on this ladder");
                 return;
             }
             
@@ -151,6 +152,7 @@ public class PromotionCommands extends PermissionsCommand {
             sender.sendMessage("User " + user.getName() + " demoted to " + targetGroup.getName() + " group");
             Logger.getLogger("Minecraft").info("User " + user.getName() + " has been demoted to " + targetGroup.getName() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
         } catch (RankingException e) {
+            sender.sendMessage(ChatColor.RED + "Demotion error: " + e.getMessage());
             Logger.getLogger("Minecraft").severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getName() + "): " + e.getMessage());
         }
     }
