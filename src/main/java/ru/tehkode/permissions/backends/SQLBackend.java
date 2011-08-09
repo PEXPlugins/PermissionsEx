@@ -111,13 +111,13 @@ public class SQLBackend extends PermissionBackend {
                     return null;
                 }
             }
-            
+
             return this.manager.getGroup(result.getString("name"));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Override
     public void setDefaultGroup(PermissionGroup group, String worldName) {
         if (worldName == null) {
@@ -223,7 +223,9 @@ public class SQLBackend extends PermissionBackend {
         // Users
         for (PermissionUser user : this.manager.getUsers()) {
             // Basic info (Prefix/Suffix)
-            writer.append("INSERT INTO `permissions_entity` ( `name`, `type`, `prefix`, `suffix` ) VALUES ( '" + user.getName() + "', 1, '" + user.getOwnPrefix() + "','" + user.getOwnSuffix() + "' );\n");
+            String prefix = user.getOwnPrefix();
+            String suffix = user.getOwnSuffix();
+            writer.append("INSERT INTO `permissions_entity` ( `name`, `type`, `prefix`, `suffix` ) VALUES ( '" + user.getName() + "', 1, '" + (prefix == null ? "" : prefix) + "','" + (suffix == null ? "" : suffix) + "' );\n");
 
             // Inheritance
             for (String group : user.getGroupsNames()) {
