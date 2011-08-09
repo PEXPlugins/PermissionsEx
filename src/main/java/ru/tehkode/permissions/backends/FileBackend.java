@@ -21,6 +21,7 @@ package ru.tehkode.permissions.backends;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -168,7 +169,7 @@ public class FileBackend extends PermissionBackend {
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
             if (!entry.getKey().equalsIgnoreCase(group.getName())
-                    && entry.getValue().getBoolean(defaultGroupProperty, false)) {
+                    && entry.getValue().getProperty(defaultGroupProperty) != null) {
                 entry.getValue().removeProperty(defaultGroupProperty);
             }
 
@@ -176,6 +177,8 @@ public class FileBackend extends PermissionBackend {
                 entry.getValue().setProperty(defaultGroupProperty, true);
             }
         }
+        
+        this.permissions.save();
     }
 
     @Override
