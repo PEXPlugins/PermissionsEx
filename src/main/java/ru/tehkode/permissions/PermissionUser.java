@@ -616,24 +616,27 @@ public abstract class PermissionUser extends PermissionEntity {
     }
 
     @Override
-    public String[] getPermissions(String world) {
-        if (!this.cachedPermissions.containsKey(world)) {
+    public String[] getPermissions(String worldName) {
+        if (!this.cachedPermissions.containsKey(worldName)) {
             List<String> permissions = new LinkedList<String>();
-            this.getInheritedPermissions(world, permissions, true);
+            this.getInheritedPermissions(worldName, permissions, true);
 
-            this.cachedPermissions.put(world, permissions.toArray(new String[0]));
+            this.cachedPermissions.put(worldName, permissions.toArray(new String[0]));
         }
 
-        return this.cachedPermissions.get(world);
+        return this.cachedPermissions.get(worldName);
     }
 
     @Override
     public void addPermission(String permission, String worldName) {
         List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
 
-        if (!permission.contains(permission)) {
-            permissions.add(0, permission);
+        if (permissions.contains(permission)) { // remove old permission
+            permissions.remove(permission);
         }
+
+        // add permission on the top of list
+        permissions.add(0, permission);
 
         this.setPermissions(permissions.toArray(new String[0]), worldName);
     }
