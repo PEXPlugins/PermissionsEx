@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
@@ -154,47 +156,47 @@ public abstract class PermissionUser extends PermissionEntity {
      * @return PermissionGroup groups
      */
     public PermissionGroup[] getGroups(String worldName) {
-        String worldIndex = worldName;
-
-        if (worldName == null || worldName.isEmpty()) {
-            worldIndex = "@common";
+        if (!this.cachedGroups.containsKey(worldName)) {
+            this.cachedGroups.put(worldName, this.getGroups(worldName, this.manager.getDefaultGroup(worldName)));
         }
 
-        if (!this.cachedGroups.containsKey(worldIndex)) {
-            List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+        return this.cachedGroups.get(worldName).toArray(new PermissionGroup[0]);
+    }
 
-            for (String groupName : this.getGroupsNamesImpl(worldName)) {
-                if (groupName == null || groupName.isEmpty()) {
-                    continue;
-                }
+    private List<PermissionGroup> getGroups(String worldName, PermissionGroup fallback) {
+        List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-                PermissionGroup group = this.manager.getGroup(groupName);
-
-                if (!groups.contains(group)) {
-                    groups.add(group);
-                }
+        for (String groupName : this.getGroupsNamesImpl(worldName)) {
+            if (groupName == null || groupName.isEmpty()) {
+                continue;
             }
 
-            if (worldName != null) { // also check world-inheritance
-                // world inheritance
-                for (String world : this.manager.getWorldInheritance(worldName)) {
-                    groups.addAll(Arrays.asList(this.getGroups(world)));
-                }
+            PermissionGroup group = this.manager.getGroup(groupName);
 
-                // common groups
-                groups.addAll(Arrays.asList(this.getGroups(null)));
+            if (!groups.contains(group)) {
+                groups.add(group);
+            }
+        }
+
+        if (worldName != null) { // also check world-inheritance
+            // world inheritance
+            for (String world : this.manager.getWorldInheritance(worldName)) {
+                groups.addAll(this.getGroups(world, null));
             }
 
-            if (groups.isEmpty()) {
-                groups.add(this.manager.getDefaultGroup(worldName));
-            }
+            // common groups
+            groups.addAll(this.getGroups(null, null));
+        }
 
+        if (groups.isEmpty() && fallback != null) {
+            groups.add(fallback);
+        }
+
+        if (groups.size() > 1) {
             Collections.sort(groups);
-
-            this.cachedGroups.put(worldIndex, groups);
         }
-
-        return this.cachedGroups.get(worldIndex).toArray(new PermissionGroup[0]);
+        
+        return groups;
     }
 
     public Map<String, PermissionGroup[]> getAllGroups() {
@@ -204,7 +206,7 @@ public abstract class PermissionUser extends PermissionEntity {
             allGroups.put(worldName, this.getWorldGroups(worldName));
         }
 
-        allGroups.put("@common", this.getWorldGroups(null));
+        allGroups.put(null, this.getWorldGroups(null));
 
         return allGroups;
     }
@@ -718,9 +720,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public String getPrefix(String worldName) {
         // @TODO This method should be refactored
 
-        String worldIndex = worldName != null ? worldName : "@common";
-
-        if (!this.cachedPrefix.containsKey(worldIndex)) {
+        if (!this.cachedPrefix.containsKey(worldName)) {
             String localPrefix = this.getOwnPrefix(worldName);
 
             if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
@@ -752,18 +752,26 @@ public abstract class PermissionUser extends PermissionEntity {
                 localPrefix = "";
             }
 
-            this.cachedPrefix.put(worldIndex, localPrefix);
+            this.cachedPrefix.put(worldName, localPrefix);
         }
 
-        return this.cachedPrefix.get(worldIndex);
+        return this.cachedPrefix.get(worldName);
+    }
+
+    @Override
+    public boolean has(String permission) {
+        Player player = Bukkit.getServer().getPlayer(this.getName());
+        if (player != null) {
+            return this.has(permission, player.getWorld().getName());
+        }
+
+        return super.has(permission);
     }
 
     @Override
     public String getSuffix(String worldName) {
         // @TODO This method should be refactored
-        String worldIndex = worldName != null ? worldName : "@common";
-
-        if (!this.cachedSuffix.containsKey(worldIndex)) {
+        if (!this.cachedSuffix.containsKey(worldName)) {
             String localSuffix = this.getOwnSuffix(worldName);
 
             if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
@@ -794,10 +802,10 @@ public abstract class PermissionUser extends PermissionEntity {
             if (localSuffix == null) { // just for NPE safety
                 localSuffix = "";
             }
-            this.cachedSuffix.put(worldIndex, localSuffix);
+            this.cachedSuffix.put(worldName, localSuffix);
         }
 
-        return this.cachedSuffix.get(worldIndex);
+        return this.cachedSuffix.get(worldName);
     }
 
     @Override

@@ -35,7 +35,7 @@ import ru.tehkode.permissions.events.PermissionSystemEvent;
  * @author code
  */
 public class PermissionManager {
-    
+
     public final static int TRANSIENT_PERMISSION = 0;
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
@@ -45,11 +45,11 @@ public class PermissionManager {
     protected Configuration config;
     protected Timer timer = new Timer("PermissionsCleaner");
     protected boolean debugMode = false;
-    
+
     public PermissionManager(Configuration config) {
         this.config = config;
         this.initBackend();
-        
+
         this.debugMode = config.getBoolean("permissions.debug", false);
     }
 
@@ -86,11 +86,11 @@ public class PermissionManager {
      */
     public boolean has(String playerName, String permission, String world) {
         PermissionUser user = this.getUser(playerName);
-        
+
         if (user == null) {
             return false;
         }
-        
+
         return user.has(permission, world);
     }
 
@@ -104,16 +104,16 @@ public class PermissionManager {
         if (username == null || username.isEmpty()) {
             return null;
         }
-        
+
         PermissionUser user = users.get(username.toLowerCase());
-        
+
         if (user == null) {
             user = this.backend.getUser(username);
             if (user != null) {
                 this.users.put(username.toLowerCase(), user);
             }
         }
-        
+
         return user;
     }
 
@@ -145,7 +145,7 @@ public class PermissionManager {
     public PermissionUser[] getUsers(String groupName, String worldName) {
         return backend.getUsers(groupName, worldName);
     }
-    
+
     public PermissionUser[] getUsers(String groupName) {
         return backend.getUsers(groupName);
     }
@@ -160,7 +160,7 @@ public class PermissionManager {
     public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
         return backend.getUsers(groupName, worldName, inheritance);
     }
-    
+
     public PermissionUser[] getUsers(String groupName, boolean inheritance) {
         return backend.getUsers(groupName, inheritance);
     }
@@ -181,7 +181,7 @@ public class PermissionManager {
      */
     public void clearUserCache(String userName) {
         PermissionUser user = this.getUser(userName);
-        
+
         if (user != null) {
             user.clearCache();
         }
@@ -206,16 +206,16 @@ public class PermissionManager {
         if (groupname == null || groupname.isEmpty()) {
             return null;
         }
-        
+
         PermissionGroup group = groups.get(groupname.toLowerCase());
-        
+
         if (group == null) {
             group = this.backend.getGroup(groupname);
             if (group != null) {
                 this.groups.put(groupname.toLowerCase(), group);
             }
         }
-        
+
         return group;
     }
 
@@ -237,7 +237,7 @@ public class PermissionManager {
     public PermissionGroup[] getGroups(String groupName, String worldName) {
         return backend.getGroups(groupName, worldName);
     }
-    
+
     public PermissionGroup[] getGroups(String groupName) {
         return backend.getGroups(groupName);
     }
@@ -252,7 +252,7 @@ public class PermissionManager {
     public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
         return backend.getGroups(groupName, worldName, inheritance);
     }
-    
+
     public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
         return backend.getGroups(groupName, inheritance);
     }
@@ -264,29 +264,29 @@ public class PermissionManager {
      */
     public PermissionGroup getDefaultGroup(String worldName) {
         String worldIndex = worldName != null ? worldName : "";
-        
+
         if (!this.defaultGroups.containsKey(worldIndex)) {
             this.defaultGroups.put(worldIndex, this.getDefaultGroup(worldName, this.getDefaultGroup(null, null)));
         }
-        
+
         return this.defaultGroups.get(worldIndex);
     }
-    
+
     public PermissionGroup getDefaultGroup() {
         return this.getDefaultGroup(null);
     }
-    
-    protected PermissionGroup getDefaultGroup(String worldName, PermissionGroup fallback) {
+
+    private PermissionGroup getDefaultGroup(String worldName, PermissionGroup fallback) {
         PermissionGroup defaultGroup = this.backend.getDefaultGroup(worldName);
         
         if (defaultGroup == null && worldName == null) {
             throw new IllegalStateException("No default group defined. Use \"pex set default group <group> [world]\" to define default group.");
         }
-        
+
         if (defaultGroup != null) {
             return defaultGroup;
         }
-        
+
         if (worldName != null) {
             // check world-inheritance
             for (String parentWorld : this.getWorldInheritance(worldName)) {
@@ -296,7 +296,7 @@ public class PermissionManager {
                 }
             }
         }
-        
+
         return fallback;
     }
 
@@ -309,15 +309,15 @@ public class PermissionManager {
         if (group == null || group.equals(this.defaultGroups)) {
             return;
         }
-        
+
         backend.setDefaultGroup(group, worldName);
-        
+
         this.defaultGroups.clear();
-        
+
         this.callEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED);
         this.callEvent(new PermissionEntityEvent(group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
     }
-    
+
     public void setDefaultGroup(PermissionGroup group) {
         this.setDefaultGroup(group, null);
     }
@@ -358,17 +358,17 @@ public class PermissionManager {
      */
     public Map<Integer, PermissionGroup> getRankLadder(String ladderName) {
         Map<Integer, PermissionGroup> ladder = new HashMap<Integer, PermissionGroup>();
-        
+
         for (PermissionGroup group : this.getGroups()) {
             if (!group.isRanked()) {
                 continue;
             }
-            
+
             if (group.getRankLadder().equalsIgnoreCase(ladderName)) {
                 ladder.put(group.getRank(), group);
             }
         }
-        
+
         return ladder;
     }
 
@@ -414,7 +414,7 @@ public class PermissionManager {
             this.backend = PermissionBackend.getBackend(backendName, this, config);
             this.backend.initialize();
         }
-        
+
         this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
     }
 
@@ -428,7 +428,7 @@ public class PermissionManager {
         if (delay == TRANSIENT_PERMISSION) {
             return;
         }
-        
+
         timer.schedule(task, delay * 1000);
     }
 
@@ -437,13 +437,13 @@ public class PermissionManager {
      */
     public void reset() {
         this.clearCache();
-        
+
         if (this.backend != null) {
             this.backend.reload();
         }
         this.callEvent(PermissionSystemEvent.Action.RELOADED);
     }
-    
+
     protected void clearCache() {
         this.users.clear();
         this.groups.clear();
@@ -453,23 +453,23 @@ public class PermissionManager {
         timer.cancel();
         timer = new Timer("PermissionsCleaner");
     }
-    
+
     private void initBackend() {
         String backendName = this.config.getString("permissions.backend");
-        
+
         if (backendName == null || backendName.isEmpty()) {
             backendName = PermissionBackend.defaultBackend; //Default backend
             this.config.setProperty("permissions.backend", backendName);
             this.config.save();
         }
-        
+
         this.setBackend(backendName);
     }
-    
+
     protected void callEvent(PermissionEvent event) {
         Bukkit.getServer().getPluginManager().callEvent(event);
     }
-    
+
     protected void callEvent(PermissionSystemEvent.Action action) {
         this.callEvent(new PermissionSystemEvent(action));
     }
