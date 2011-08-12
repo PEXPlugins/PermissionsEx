@@ -221,8 +221,8 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
         if (worldName != null) {
             // World Inheritance
-            for (String world : this.manager.getWorldInheritance(worldName)) {
-                parentGroups.addAll(Arrays.asList(getParentGroups(worldName)));
+            for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
+                parentGroups.addAll(Arrays.asList(getParentGroups(parentWorld)));
             }
 
             parentGroups.addAll(Arrays.asList(getParentGroups(null)));

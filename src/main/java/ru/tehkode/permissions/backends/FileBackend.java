@@ -120,6 +120,7 @@ public class FileBackend extends PermissionBackend {
         }
 
         this.permissions.setProperty("worlds." + world + ".inheritance", Arrays.asList(parentWorlds));
+        this.permissions.save();
     }
 
     @Override
