@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.CustomEventListener;
@@ -38,28 +39,43 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.config.ConfigurationNode;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 public class BukkitPermissions {
+    
+    protected static final Logger logger = Logger.getLogger("Minecraft");
 
     protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
     protected Set<Permission> registeredPermissions = new HashSet<Permission>();
     protected Plugin plugin;
+    
+    protected boolean dumpAllPermissions = true;
+    protected boolean dumpMatchedPermissions = true;
 
-    public BukkitPermissions(Plugin plugin) {
+    public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
         this.plugin = plugin;
+        
+        if(!config.getBoolean("enable", true)){
+            logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
+            return;
+        }
+        
+        this.dumpAllPermissions = config.getBoolean("raw-permissions", dumpAllPermissions);
+        this.dumpMatchedPermissions = config.getBoolean("matched-permissions", dumpMatchedPermissions);
 
         this.collectPermissions();
         this.registerEvents();
 
         this.updateAllPlayers();
+        
+        logger.info("[PermissionsEx] Superperms support enabled.");
     }
 
     private void registerEvents() {
@@ -109,27 +125,31 @@ public class BukkitPermissions {
             attachment.unsetPermission(permission);
         }
 
-        // find matching permissions
-        for (Permission permission : registeredPermissions) {
-            String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
+        if (dumpMatchedPermissions) {
+            // find matching permissions
+            for (Permission permission : registeredPermissions) {
+                String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
 
-            if (matchingExpression == null) { // Not found, skip this one
-                continue;
+                if (matchingExpression == null) { // Not found, skip this one
+                    continue;
+                }
+
+                attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
             }
-
-            attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
         }
 
-        // all permissions
-        for (String permission : permissions) {
-            Boolean value = true;
-            if (permission.startsWith("-")) {
-                permission = permission.substring(1); // cut off -
-                value = false;
-            }
+        if (dumpAllPermissions) {
+            // all permissions
+            for (String permission : permissions) {
+                Boolean value = true;
+                if (permission.startsWith("-")) {
+                    permission = permission.substring(1); // cut off -
+                    value = false;
+                }
 
-            if (!attachment.getPermissions().containsKey(permission)) {
-                attachment.setPermission(permission, value);
+                if (!attachment.getPermissions().containsKey(permission)) {
+                    attachment.setPermission(permission, value);
+                }
             }
         }
 

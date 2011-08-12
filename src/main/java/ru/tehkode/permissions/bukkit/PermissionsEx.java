@@ -42,6 +42,7 @@ import ru.tehkode.permissions.backends.*;
 import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.config.Configuration;
+import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
  *
@@ -92,7 +93,16 @@ public class PermissionsEx extends JavaPlugin {
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
 
         // Bukkit permissions
-        this.superms = new BukkitPermissions(this);
+        ConfigurationNode dinnerpermsConfig = this.config.getNode("permissions.superperms");
+        
+        if(dinnerpermsConfig == null){
+            dinnerpermsConfig = Configuration.getEmptyNode();
+            this.config.setProperty("permissions.superperms", dinnerpermsConfig);
+        }
+        
+        this.superms = new BukkitPermissions(this, dinnerpermsConfig);
+        
+        this.config.save();
 
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
     }
