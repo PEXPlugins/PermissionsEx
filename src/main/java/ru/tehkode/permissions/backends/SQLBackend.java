@@ -317,23 +317,23 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
-    public void setWorldInheritance(String world, String[] parentWorlds) {
-        if (world == null || world.isEmpty()) {
+    public void setWorldInheritance(String worldName, String[] parentWorlds) {
+        if (worldName == null || worldName.isEmpty()) {
             return;
         }
 
         try {
-            this.sql.updateQuery("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2", world);
+            this.sql.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2", worldName);
 
             List<Object[]> records = new LinkedList<Object[]>();
 
             for (String parentWorld : parentWorlds) {
-                records.add(new Object[]{world, parentWorld, 2});
+                records.add(new Object[]{worldName, parentWorld, 2});
             }
 
             this.sql.insert("permissions_inheritance", new String[]{"child", "parent", "type"}, records);
 
-            this.worldInheritanceCache.put(world, parentWorlds);
+            this.worldInheritanceCache.put(worldName, parentWorlds);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
