@@ -49,32 +49,32 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 public class BukkitPermissions {
-    
-    protected static final Logger logger = Logger.getLogger("Minecraft");
 
+    protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
     protected Set<Permission> registeredPermissions = new HashSet<Permission>();
     protected Plugin plugin;
-    
     protected boolean dumpAllPermissions = true;
     protected boolean dumpMatchedPermissions = true;
+    protected boolean disableByDefault = false;
 
     public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
         this.plugin = plugin;
-        
-        if(!config.getBoolean("enable", true)){
+
+        if (!config.getBoolean("enable", true)) {
             logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
             return;
         }
-        
+
         this.dumpAllPermissions = config.getBoolean("raw-permissions", dumpAllPermissions);
         this.dumpMatchedPermissions = config.getBoolean("matched-permissions", dumpMatchedPermissions);
+        this.disableByDefault = config.getBoolean("disable-unmatched", disableByDefault);
 
         this.collectPermissions();
         this.registerEvents();
 
         this.updateAllPlayers();
-        
+
         logger.info("[PermissionsEx] Superperms support enabled.");
     }
 
@@ -129,12 +129,13 @@ public class BukkitPermissions {
             // find matching permissions
             for (Permission permission : registeredPermissions) {
                 String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
+                boolean permissionValue = PermissionEntity.explainExpression(matchingExpression);
 
-                if (matchingExpression == null) { // Not found, skip this one
+                if (!disableByDefault && matchingExpression == null) { // not found, skip
                     continue;
                 }
 
-                attachment.setPermission(permission, PermissionEntity.explainExpression(matchingExpression));
+                attachment.setPermission(permission, permissionValue);
             }
         }
 
