@@ -39,6 +39,7 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.permissions.PermissionEntity;
@@ -105,8 +106,12 @@ public class BukkitPermissions {
             registeredPermissions.addAll(bukkitPlugin.getDescription().getPermissions());
         }
     }
-
-    protected void updatePermissions(Player player) {
+    
+    protected void updatePermissions(Player player){
+        this.updatePermissions(player, null);
+    }
+    
+    protected void updatePermissions(Player player, String world) {
         if (player == null) {
             return;
         }
@@ -115,10 +120,14 @@ public class BukkitPermissions {
             this.attachments.put(player, player.addAttachment(plugin));
         }
 
+        if(world == null){
+            world = player.getWorld().getName();
+        }
+        
         PermissionAttachment attachment = this.attachments.get(player);
 
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
-        String permissions[] = user.getPermissions(player.getWorld().getName());
+        String permissions[] = user.getPermissions(world);
 
         // clear permissions
         for (String permission : attachment.getPermissions().keySet()) {
@@ -157,7 +166,7 @@ public class BukkitPermissions {
         player.recalculatePermissions();
 
         if (PermissionsEx.getPermissionManager().isDebug()) {
-            PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " permissions updated!");
+            PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " for \"" + player.getWorld().getName() + "\" world permissions updated!");
         }
     }
 
@@ -176,18 +185,18 @@ public class BukkitPermissions {
 
         @Override
         public void onPlayerPortal(PlayerPortalEvent event) { // will portal into another world
-            updatePermissions(event.getPlayer());
+            updatePermissions(event.getPlayer(), event.getTo().getWorld().getName());
         }
 
         @Override
         public void onPlayerRespawn(PlayerRespawnEvent event) { // can be respawned in another world
-            updatePermissions(event.getPlayer());
+            updatePermissions(event.getPlayer(), event.getRespawnLocation().getWorld().getName());
         }
 
         @Override
         public void onPlayerTeleport(PlayerTeleportEvent event) { // can be teleported into another world
             if (!event.getFrom().getWorld().equals(event.getTo().getWorld())) { // only if world actually changed
-                updatePermissions(event.getPlayer());
+                updatePermissions(event.getPlayer(), event.getTo().getWorld().getName());
             }
         }
 
