@@ -147,7 +147,8 @@ public class FileBackend extends PermissionBackend {
         }
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-            if (entry.getValue().getBoolean(defaultGroupProperty, false)) {
+            Object property = entry.getValue().getProperty(defaultGroupProperty);
+            if(property instanceof Boolean && ((Boolean)property)){
                 return this.manager.getGroup(entry.getKey());
             }
         }
