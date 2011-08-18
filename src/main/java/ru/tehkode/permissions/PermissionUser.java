@@ -850,4 +850,18 @@ public abstract class PermissionUser extends PermissionEntity {
 
         this.callEvent(PermissionEntityEvent.Action.SAVED);
     }
+
+    @Override
+    public boolean explainExpression(String expression) {
+        if(expression == null && this.manager.allowOps){
+            Player player = Bukkit.getServer().getPlayer(this.getName());
+            if(player != null && player.isOp()){
+                return true;
+            }
+        }
+        
+        return super.explainExpression(expression);
+    }
+    
+    
 }

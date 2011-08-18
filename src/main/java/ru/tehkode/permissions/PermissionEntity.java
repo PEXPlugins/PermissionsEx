@@ -546,7 +546,7 @@ public abstract class PermissionEntity {
         return false;
     }
 
-    public static boolean explainExpression(String expression) {
+    public boolean explainExpression(String expression) {
         if (expression == null || expression.isEmpty()) {
             return false;
         }

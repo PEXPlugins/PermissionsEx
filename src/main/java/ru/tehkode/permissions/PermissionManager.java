@@ -44,13 +44,16 @@ public class PermissionManager {
     protected PermissionBackend backend = null;
     protected Configuration config;
     protected Timer timer = new Timer("PermissionsCleaner");
+    
     protected boolean debugMode = false;
-
+    protected boolean allowOps = false;
+    
     public PermissionManager(Configuration config) {
         this.config = config;
         this.initBackend();
 
-        this.debugMode = config.getBoolean("permissions.debug", false);
+        this.debugMode = config.getBoolean("permissions.debug", debugMode);
+        this.allowOps = config.getBoolean("permissions.allowOps", allowOps);
     }
 
     /**
@@ -349,7 +352,7 @@ public class PermissionManager {
     public boolean isDebug() {
         return this.debugMode;
     }
-
+   
     /**
      * Return groups of specified rank ladder
      * 

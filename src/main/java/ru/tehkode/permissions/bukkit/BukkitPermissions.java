@@ -39,7 +39,6 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.permissions.PermissionEntity;
@@ -138,7 +137,7 @@ public class BukkitPermissions {
             // find matching permissions
             for (Permission permission : registeredPermissions) {
                 String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
-                boolean permissionValue = PermissionEntity.explainExpression(matchingExpression);
+                boolean permissionValue = user.explainExpression(matchingExpression);
 
                 if (!disableByDefault && matchingExpression == null) { // not found, skip
                     continue;

@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS `permissions` (
   KEY `world` (`world`,`name`,`type`)
 );
 
-INSERT INTO `permissions` (`id`, `name`, `type`, `permission`, `world`, `value`) VALUES
-(1, 'default', 0, 'modifyworld.*', '', '');
+
 
 CREATE TABLE IF NOT EXISTS `permissions_entity` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -26,9 +25,6 @@ CREATE TABLE IF NOT EXISTS `permissions_entity` (
   KEY `default` (`default`)
 );
 
-INSERT INTO `permissions_entity` (`id`, `name`, `type`, `prefix`, `suffix`, `default`) VALUES
-(1, 'default', 0, '', '', 1);
-
 CREATE TABLE IF NOT EXISTS `permissions_inheritance` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `child` varchar(50) NOT NULL,
@@ -40,3 +36,6 @@ CREATE TABLE IF NOT EXISTS `permissions_inheritance` (
   KEY `child_2` (`child`,`type`),
   KEY `parent` (`parent`,`type`)
 );
+
+INSERT INTO `permissions` (`id`, `name`, `type`, `permission`, `world`, `value`) VALUES (1, 'default', 0, 'modifyworld.*', '', '');
+INSERT INTO `permissions_entity` (`id`, `name`, `type`, `prefix`, `suffix`, `default`) VALUES (1, 'default', 0, '', '', 1);
