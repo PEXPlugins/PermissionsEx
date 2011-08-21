@@ -32,6 +32,9 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  */
 public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
 
+    protected int weight = 0; 
+    protected boolean dirtyWeight = true;
+    
     public PermissionGroup(String groupName, PermissionManager manager) {
         super(groupName, manager);
     }
@@ -124,11 +127,18 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
     }
 
     public int getWeight() {
-        return this.getOptionInteger("weight", "", 0);
+        if(this.dirtyWeight){
+            this.weight = this.getOptionInteger("weight", "", 0);
+            this.dirtyWeight = false;
+        }
+        
+        return this.weight;
     }
 
     public void setWeight(int weight) {
         this.setOption("weight", Integer.toString(weight));
+        
+        this.dirtyWeight = true;
 
         this.clearMembersCache();
         this.callEvent(PermissionEntityEvent.Action.WEIGHT_CHANGED);
