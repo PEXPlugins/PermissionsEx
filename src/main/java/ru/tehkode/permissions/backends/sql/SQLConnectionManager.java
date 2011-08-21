@@ -200,6 +200,10 @@ public class SQLConnectionManager {
         while (match.find()) {
             sql = sql.replace(match.group(0), "`" + this.getAlias(match.group(1)) + "`");
         }
+        
+        if(this.dbDriver.contains("sqlite")){ // SQLite compatibility fixture
+            sql = sql.replace("ISNULL", "IFNULL");
+        }
 
         return sql;
     }
