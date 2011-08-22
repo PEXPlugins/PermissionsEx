@@ -118,9 +118,17 @@ public class CommandsManager {
 
         try {
             selectedBinding.call(this.plugin, sender, selectedBinding.getParams());
-        } catch (RuntimeException e) {
+        } catch (InvocationTargetException e) {
+            if (e.getTargetException() instanceof AutoCompleteChoicesException) {
+                AutoCompleteChoicesException autocomplete = (AutoCompleteChoicesException) e.getTargetException();
+                sender.sendMessage("Autocomplete for <" + autocomplete.getArgName() + ">:");
+                sender.sendMessage("    " + StringUtils.implode(autocomplete.getChoices(), "   "));
+            } else {
+                throw new RuntimeException(e.getTargetException());
+            }
+        } catch (Exception e) {
             logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appropriate plugin is update?)");
-            if(e.getCause() != null){
+            if (e.getCause() != null) {
                 e.getCause().printStackTrace();
             } else {
                 e.printStackTrace();
@@ -238,7 +246,7 @@ public class CommandsManager {
             }
 
             PermissionManager manager = PermissionsEx.getPermissionManager();
-            
+
             boolean lastORValue = false;
             for (int i = 0; i < permissions.length; i++) {
                 String permission = permissions[i];
@@ -262,18 +270,18 @@ public class CommandsManager {
                 }
 
                 if (!manager.has(player, permission)) {
-                    if (i < permissions.length - 2 && isOR(permissions[i + 1]) && !isOR(permissions[i+2])) {
+                    if (i < permissions.length - 2 && isOR(permissions[i + 1]) && !isOR(permissions[i + 2])) {
                         continue;
                     }
-                    
-                    if ( i > 1 && isOR(permissions[i - 1]) && !isOR(permissions[i - 2]) && lastORValue){
+
+                    if (i > 1 && isOR(permissions[i - 1]) && !isOR(permissions[i - 2]) && lastORValue) {
                         lastORValue = false;
                         continue;
                     }
-                    
+
                     return false;
                 } else {
-                    if (i < permissions.length - 2 && isOR(permissions[i + 1]) && !isOR(permissions[i+2])) {
+                    if (i < permissions.length - 2 && isOR(permissions[i + 1]) && !isOR(permissions[i + 2])) {
                         lastORValue = true;
                     }
                 }
@@ -286,19 +294,8 @@ public class CommandsManager {
             return "OR".equalsIgnoreCase(permission) || "||".equals(permission);
         }
 
-        public void call(Object... args) {
-            try {
-                this.method.invoke(object, args);
-            } catch (InvocationTargetException e) {
-                if (e.getTargetException() instanceof AutoCompleteChoicesException) {
-                    AutoCompleteChoicesException autocomplete = (AutoCompleteChoicesException) e.getTargetException();
-                    logger.info("Autocomplete for <" + autocomplete.getArgName() + ">:\n  " + StringUtils.implode(autocomplete.getChoices(), "   "));
-                } else {
-                    throw new RuntimeException(e.getTargetException());
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        public void call(Object... args) throws Exception {
+            this.method.invoke(object, args);
         }
     }
 }
