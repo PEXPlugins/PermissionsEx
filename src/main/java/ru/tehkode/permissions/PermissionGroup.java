@@ -618,6 +618,25 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
             user.removeGroup(this, worldName);
         }
     }
+    
+    
+    @Override
+    public String getOption(String optionName, String worldName, String defaultValue) {
+        String option = this.getOwnOption(optionName, worldName, null);
+
+        if (option == null || option.isEmpty()) {
+            for (PermissionGroup group : this.getParentGroups(worldName)) {
+                option = group.getOption(optionName, worldName, null);
+                if (option != null) {
+                    return option;
+                }
+            }
+
+            option = defaultValue;
+        }
+
+        return option;
+    }
 
     @Override
     public int compareTo(PermissionGroup o) {
