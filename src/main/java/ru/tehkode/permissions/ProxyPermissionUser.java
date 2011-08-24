@@ -100,24 +100,6 @@ public abstract class ProxyPermissionUser extends PermissionUser {
     }
 
     @Override
-    public String getOption(String optionName, String worldName, String defaultValue) {
-        String option = this.getOwnOption(optionName, worldName, null);
-
-        if (option == null) {
-            for (PermissionGroup group : this.getGroups(worldName)) {
-                option = group.getOption(optionName, worldName, null);
-                if (option != null) {
-                    return option;
-                }
-            }
-
-            option = defaultValue;
-        }
-
-        return option;
-    }
-
-    @Override
     public Map<String, String> getOptions(String world) {
         return this.backendEntity.getOptions(world);
     }

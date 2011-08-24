@@ -41,6 +41,7 @@ public abstract class PermissionUser extends PermissionEntity {
     protected Map<String, String> cachedPrefix = new HashMap<String, String>();
     protected Map<String, String> cachedSuffix = new HashMap<String, String>();
     protected HashMap<String, String> cachedAnwsers = new HashMap<String, String>();
+    protected HashMap<String, String> cachedOptions = new HashMap<String, String>();
 
     public PermissionUser(String playerName, PermissionManager manager) {
         super(playerName, manager);
@@ -79,6 +80,33 @@ public abstract class PermissionUser extends PermissionEntity {
      * @return String array of owned Permissions
      */
     public abstract String[] getOwnPermissions(String world);
+    
+    @Override
+    public String getOption(String optionName, String worldName, String defaultValue) {
+        String cacheIndex = worldName + "|" + optionName;
+        
+        if(this.cachedOptions.containsKey(cacheIndex)){
+            return this.cachedOptions.get(cacheIndex);
+        }
+        
+        String option = this.getOwnOption(optionName, worldName, null);
+        
+        if (option == null) {
+            for (PermissionGroup group : this.getGroups(worldName)) {
+                option = group.getOption(optionName, worldName, null);
+                if (option != null) {
+                    this.cachedOptions.put(cacheIndex, option); // put into cache inherited value
+                    return option;
+                }
+            }
+
+            option = defaultValue;
+        } else { // put into cache, avoid default value in cache
+            this.cachedOptions.put(cacheIndex, option);
+        }
+
+        return option;
+    }
 
     /**
      * Return non-inherited value of specified option for user in world
@@ -825,6 +853,7 @@ public abstract class PermissionUser extends PermissionEntity {
         this.cachedGroups.clear();
         this.cachedPermissions.clear();
         this.cachedAnwsers.clear();
+        this.cachedOptions.clear();
     }
 
     @Override
