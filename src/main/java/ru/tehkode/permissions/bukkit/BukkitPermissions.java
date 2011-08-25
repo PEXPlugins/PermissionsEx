@@ -41,7 +41,6 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
-import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.config.ConfigurationNode;
@@ -111,7 +110,7 @@ public class BukkitPermissions {
     }
     
     protected void updatePermissions(Player player, String world) {
-        if (player == null) {
+        if (player == null || !this.plugin.isEnabled()) {
             return;
         }
 
