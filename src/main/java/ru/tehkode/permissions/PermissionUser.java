@@ -755,7 +755,7 @@ public abstract class PermissionUser extends PermissionEntity {
                 // World-inheritance
                 for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
                     String prefix = this.getOwnPrefix(parentWorld);
-                    if (prefix != null || prefix.isEmpty()) {
+                    if (prefix != null && !prefix.isEmpty()) {
                         localPrefix = prefix;
                         break;
                     }
@@ -806,7 +806,7 @@ public abstract class PermissionUser extends PermissionEntity {
                 // World-inheritance
                 for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
                     String suffix = this.getOwnSuffix(parentWorld);
-                    if (suffix != null || suffix.isEmpty()) {
+                    if (suffix != null && !suffix.isEmpty()) {
                         localSuffix = suffix;
                         break;
                     }
