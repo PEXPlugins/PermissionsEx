@@ -39,6 +39,7 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.permissions.PermissionGroup;
@@ -56,7 +57,8 @@ public class BukkitPermissions {
     protected boolean dumpAllPermissions = true;
     protected boolean dumpMatchedPermissions = true;
     protected boolean disableByDefault = false;
-
+    protected boolean debugMode = false;
+    
     public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
         this.plugin = plugin;
 
@@ -68,6 +70,7 @@ public class BukkitPermissions {
         this.dumpAllPermissions = config.getBoolean("raw-permissions", dumpAllPermissions);
         this.dumpMatchedPermissions = config.getBoolean("matched-permissions", dumpMatchedPermissions);
         this.disableByDefault = config.getBoolean("disable-unmatched", disableByDefault);
+        this.debugMode = config.getBoolean("debug", debugMode);
 
         this.collectPermissions();
         this.registerEvents();
@@ -160,11 +163,23 @@ public class BukkitPermissions {
                 }
             }
         }
-
+        
         player.recalculatePermissions();
 
-        if (PermissionsEx.getPermissionManager().isDebug()) {
+        if (PermissionsEx.getPermissionManager().isDebug() || this.debugMode) {
             PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " for \"" + player.getWorld().getName() + "\" world permissions updated!");
+            
+            if(this.debugMode){
+                PermissionsEx.logger.info("Attachment Permissions:");
+                for(Map.Entry<String, Boolean> entry : attachment.getPermissions().entrySet()){
+                    PermissionsEx.logger.info("   " + entry.getKey() + " = " + entry.getValue());
+                }
+
+                PermissionsEx.logger.info("Effective Permissions:");
+                for(PermissionAttachmentInfo info : player.getEffectivePermissions()){
+                    PermissionsEx.logger.info("   " + info.getPermission() + " = " + info.getValue());
+                }
+            }
         }
     }
 
