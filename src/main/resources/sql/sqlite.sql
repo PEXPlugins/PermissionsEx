@@ -26,7 +26,7 @@ CREATE TABLE `permissions_inheritance` (
   `child`   varchar(50) NOT NULL,
   `parent`  varchar(50) NOT NULL,
   `type`    int NOT NULL,
-  `parent`  varchar(50) NULL,
+  `world`  varchar(50) NULL
 );
 
 CREATE INDEX `permissions_inheritance_Index01` ON `permissions_inheritance` (`child`, `type`, `world`);
