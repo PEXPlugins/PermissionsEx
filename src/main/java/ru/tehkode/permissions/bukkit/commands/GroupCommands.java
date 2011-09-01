@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
@@ -473,11 +474,20 @@ public class GroupCommands extends PermissionsCommand {
      */
     @Command(name = "pex",
     syntax = "group <group> users",
-    permission = "permissions.manage.membership",
     description = "List all users in <group>")
     public void groupUsersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
 
+        PermissionUser player = null;
+        if (sender instanceof Player) {
+        	player = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            
+            if(player == null || !player.has("permissions.manage.membership." + groupName)){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions manage this group");
+                return;
+            }
+        }
+        
         PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers(groupName);
 
         if (users == null || users.length == 0) {
@@ -493,12 +503,21 @@ public class GroupCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "group <group> user add <user> [world]",
-    permission = "permissions.manage.membership",
     description = "Add <user> (single or comma-separated list) to <group>")
     public void groupUsersAdd(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
 
+        PermissionUser player = null;
+        if (sender instanceof Player) {
+        	player = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            
+            if(player == null || !player.has("permissions.manage.membership." + groupName)){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions manage this group");
+                return;
+            }
+        }
+        
         String users[];
 
         if (!args.get("user").contains(",")) {
@@ -525,12 +544,21 @@ public class GroupCommands extends PermissionsCommand {
 
     @Command(name = "pex",
     syntax = "group <group> user remove <user> [world]",
-    permission = "permissions.manage.membership",
     description = "Add <user> (single or comma-separated list) to <group>")
     public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
 
+        PermissionUser player = null;
+        if (sender instanceof Player) {
+        	player = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+            
+            if(player == null || !player.has("permissions.manage.membership." + groupName)){
+                sender.sendMessage(ChatColor.RED + "You don't have enough permissions manage this group");
+                return;
+            }
+        }
+        
         String users[];
 
         if (!args.get("user").contains(",")) {
