@@ -35,14 +35,14 @@ import ru.tehkode.permissions.exceptions.RankingException;
  * @author code
  */
 public abstract class PermissionUser extends PermissionEntity {
-
+    
     protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
     protected Map<String, String[]> cachedPermissions = new HashMap<String, String[]>();
     protected Map<String, String> cachedPrefix = new HashMap<String, String>();
     protected Map<String, String> cachedSuffix = new HashMap<String, String>();
     protected HashMap<String, String> cachedAnwsers = new HashMap<String, String>();
     protected HashMap<String, String> cachedOptions = new HashMap<String, String>();
-
+    
     public PermissionUser(String playerName, PermissionManager manager) {
         super(playerName, manager);
     }
@@ -57,7 +57,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public String getOwnPrefix() {
         return this.getOwnPrefix(null);
     }
-
+    
     public abstract String getOwnPrefix(String worldName);
 
     /**
@@ -70,7 +70,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public final String getOwnSuffix() {
         return this.getOwnSuffix(null);
     }
-
+    
     public abstract String getOwnSuffix(String worldName);
 
     /**
@@ -85,7 +85,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public String getOption(String optionName, String worldName, String defaultValue) {
         String cacheIndex = worldName + "|" + optionName;
         
-        if(this.cachedOptions.containsKey(cacheIndex)){
+        if (this.cachedOptions.containsKey(cacheIndex)) {
             return this.cachedOptions.get(cacheIndex);
         }
         
@@ -99,12 +99,12 @@ public abstract class PermissionUser extends PermissionEntity {
                     return option;
                 }
             }
-
+            
             option = defaultValue;
         } else { // put into cache, avoid default value in cache
             this.cachedOptions.put(cacheIndex, option);
         }
-
+        
         return option;
     }
 
@@ -127,45 +127,45 @@ public abstract class PermissionUser extends PermissionEntity {
     public String getOwnOption(String option) {
         return this.getOwnOption(option, "", "");
     }
-
+    
     public String getOwnOption(String option, String world) {
         return this.getOwnOption(option, world, "");
     }
-
+    
     public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
         String option = this.getOwnOption(optionName, world, Integer.toString(defaultValue));
-
+        
         try {
             return Integer.parseInt(option);
         } catch (NumberFormatException e) {
         }
-
+        
         return defaultValue;
     }
-
+    
     public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
         String option = this.getOwnOption(optionName, world, Boolean.toString(defaultValue));
-
+        
         if ("false".equalsIgnoreCase(option)) {
             return false;
         } else if ("true".equalsIgnoreCase(option)) {
             return true;
         }
-
+        
         return defaultValue;
     }
-
+    
     public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
         String option = this.getOwnOption(optionName, world, Double.toString(defaultValue));
-
+        
         try {
             return Double.parseDouble(option);
         } catch (NumberFormatException e) {
         }
-
+        
         return defaultValue;
     }
-
+    
     protected abstract String[] getGroupsNamesImpl(String worldName);
 
     /**
@@ -187,25 +187,25 @@ public abstract class PermissionUser extends PermissionEntity {
         if (!this.cachedGroups.containsKey(worldName)) {
             this.cachedGroups.put(worldName, this.getGroups(worldName, this.manager.getDefaultGroup(worldName)));
         }
-
+        
         return this.cachedGroups.get(worldName).toArray(new PermissionGroup[0]);
     }
-
+    
     private List<PermissionGroup> getGroups(String worldName, PermissionGroup fallback) {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-
+        
         for (String groupName : this.getGroupsNamesImpl(worldName)) {
             if (groupName == null || groupName.isEmpty()) {
                 continue;
             }
-
+            
             PermissionGroup group = this.manager.getGroup(groupName);
-
+            
             if (!groups.contains(group)) {
                 groups.add(group);
             }
         }
-
+        
         if (worldName != null) { // also check world-inheritance
             // world inheritance
             for (String world : this.manager.getWorldInheritance(worldName)) {
@@ -215,47 +215,47 @@ public abstract class PermissionUser extends PermissionEntity {
             // common groups
             groups.addAll(this.getGroups(null, null));
         }
-
+        
         if (groups.isEmpty() && fallback != null) {
             groups.add(fallback);
         }
-
+        
         if (groups.size() > 1) {
             Collections.sort(groups);
         }
         
         return groups;
     }
-
+    
     public Map<String, PermissionGroup[]> getAllGroups() {
         Map<String, PermissionGroup[]> allGroups = new HashMap<String, PermissionGroup[]>();
-
+        
         for (String worldName : this.getWorlds()) {
             allGroups.put(worldName, this.getWorldGroups(worldName));
         }
-
+        
         allGroups.put(null, this.getWorldGroups(null));
-
+        
         return allGroups;
     }
-
+    
     protected PermissionGroup[] getWorldGroups(String worldName) {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-
+        
         for (String groupName : this.getGroupsNamesImpl(worldName)) {
             if (groupName == null || groupName.isEmpty()) {
                 continue;
             }
-
+            
             PermissionGroup group = this.manager.getGroup(groupName);
-
+            
             if (!groups.contains(group)) {
                 groups.add(group);
             }
         }
-
+        
         Collections.sort(groups);
-
+        
         return groups.toArray(new PermissionGroup[0]);
     }
 
@@ -280,7 +280,7 @@ public abstract class PermissionUser extends PermissionEntity {
                 groups.add(group.getName());
             }
         }
-
+        
         return groups.toArray(new String[0]);
     }
 
@@ -290,7 +290,7 @@ public abstract class PermissionUser extends PermissionEntity {
      * @param groups array of parent group names
      */
     public abstract void setGroups(String[] groups, String worldName);
-
+    
     public void setGroups(String[] groups) {
         this.setGroups(groups, null);
     }
@@ -302,14 +302,14 @@ public abstract class PermissionUser extends PermissionEntity {
      */
     public void setGroups(PermissionGroup[] parentGroups, String worldName) {
         List<String> groups = new LinkedList<String>();
-
+        
         for (PermissionGroup group : parentGroups) {
             groups.add(group.getName());
         }
-
+        
         this.setGroups(groups.toArray(new String[0]), worldName);
     }
-
+    
     public void setGroups(PermissionGroup[] parentGroups) {
         this.setGroups(parentGroups, null);
     }
@@ -323,10 +323,18 @@ public abstract class PermissionUser extends PermissionEntity {
         if (groupName == null || groupName.isEmpty()) {
             return;
         }
-
-        this.addGroup(this.manager.getGroup(groupName), worldName);
+        
+        List<String> groups = new ArrayList<String>(Arrays.asList(this.getGroupsNamesImpl(worldName)));
+        
+        if (groups.contains(groupName)) {
+            return;
+        }
+        
+        groups.add(groupName);
+        
+        this.setGroups(groups.toArray(new String[0]), worldName);
     }
-
+    
     public void addGroup(String groupName) {
         this.addGroup(groupName, null);
     }
@@ -340,24 +348,10 @@ public abstract class PermissionUser extends PermissionEntity {
         if (group == null) {
             return;
         }
-
-        List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups(worldName)));
-
-        if (this.getGroupsNamesImpl(worldName).length == 0 && groups.size() == 1 && groups.contains(this.manager.getDefaultGroup(worldName))) {
-            groups.clear(); // clean out default group
-        }
-
-        if (group.isVirtual()) {
-            group.save();
-        }
-
-        if (!groups.contains(group)) {
-            groups.add(group);
-            this.clearCache();
-            this.setGroups(groups.toArray(new PermissionGroup[0]), worldName);
-        }
+        
+        this.addGroup(group.getName(), worldName);
     }
-
+    
     public void addGroup(PermissionGroup group) {
         this.addGroup(group, null);
     }
@@ -371,10 +365,18 @@ public abstract class PermissionUser extends PermissionEntity {
         if (groupName == null || groupName.isEmpty()) {
             return;
         }
-
-        this.removeGroup(this.manager.getGroup(groupName), worldName);
+                
+        List<String> groups = new ArrayList<String>(Arrays.asList(this.getGroupsNamesImpl(worldName)));
+        
+        if (!groups.contains(groupName)) {
+            return;
+        }
+        
+        groups.remove(groupName);
+        
+        this.setGroups(groups.toArray(new String[0]), worldName);
     }
-
+    
     public void removeGroup(String groupName) {
         this.removeGroup(this.manager.getGroup(groupName));
     }
@@ -388,23 +390,15 @@ public abstract class PermissionUser extends PermissionEntity {
         if (group == null) {
             return;
         }
-
-        List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(this.getGroups(worldName)));
-
-        if (groups.contains(group)) {
-            groups.remove(group);
-            this.clearCache();
-            this.setGroups(groups.toArray(new PermissionGroup[]{}), worldName);
-        }
-
-        this.clearCache();
+        
+        this.removeGroup(group.getName(), worldName);
     }
-
+    
     public void removeGroup(PermissionGroup group) {
         for (String worldName : this.getWorlds()) {
             this.removeGroup(group, worldName);
         }
-
+        
         this.removeGroup(group, null);
     }
 
@@ -421,22 +415,22 @@ public abstract class PermissionUser extends PermissionEntity {
             if (parentGroup.equals(group)) {
                 return true;
             }
-
+            
             if (checkInheritance && parentGroup.isChildOf(group, worldName, true)) {
                 return true;
             }
         }
-
+        
         return false;
     }
-
+    
     public boolean inGroup(PermissionGroup group, boolean checkInheritance) {
         for (String worldName : this.getWorlds()) {
             if (this.inGroup(group, worldName, checkInheritance)) {
                 return true;
             }
         }
-
+        
         return this.inGroup(group, null, checkInheritance);
     }
 
@@ -451,7 +445,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public boolean inGroup(String groupName, String worldName, boolean checkInheritance) {
         return this.inGroup(this.manager.getGroup(groupName), worldName, checkInheritance);
     }
-
+    
     public boolean inGroup(String groupName, boolean checkInheritance) {
         return this.inGroup(this.manager.getGroup(groupName), checkInheritance);
     }
@@ -466,7 +460,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public boolean inGroup(PermissionGroup group, String worldName) {
         return this.inGroup(group, worldName, true);
     }
-
+    
     public boolean inGroup(PermissionGroup group) {
         return this.inGroup(group, true);
     }
@@ -480,7 +474,7 @@ public abstract class PermissionUser extends PermissionEntity {
     public boolean inGroup(String groupName, String worldName) {
         return this.inGroup(this.manager.getGroup(groupName), worldName, true);
     }
-
+    
     public boolean inGroup(String groupName) {
         return this.inGroup(groupName, true);
     }
@@ -501,38 +495,38 @@ public abstract class PermissionUser extends PermissionEntity {
         if (ladderName == null || ladderName.isEmpty()) {
             ladderName = "default";
         }
-
+        
         int promoterRank = getPromoterRankAndCheck(promoter, ladderName);
         int rank = this.getRank(ladderName);
-
+        
         PermissionGroup sourceGroup = this.getRankLadders().get(ladderName);
         PermissionGroup targetGroup = null;
-
+        
         for (Map.Entry<Integer, PermissionGroup> entry : this.manager.getRankLadder(ladderName).entrySet()) {
             int groupRank = entry.getValue().getRank();
             if (groupRank >= rank) { // group have equal or lower than current rank
                 continue;
             }
-
+            
             if (groupRank <= promoterRank) { // group have higher rank than promoter
                 continue;
             }
-
+            
             if (targetGroup != null && groupRank <= targetGroup.getRank()) { // group have higher rank than target group
                 continue;
             }
-
+            
             targetGroup = entry.getValue();
         }
-
+        
         if (targetGroup == null) {
             throw new RankingException("User are not promoteable", this, promoter);
         }
-
+        
         this.swapGroups(sourceGroup, targetGroup);
-
+        
         this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
-
+        
         return targetGroup;
     }
 
@@ -551,38 +545,38 @@ public abstract class PermissionUser extends PermissionEntity {
         if (ladderName == null || ladderName.isEmpty()) {
             ladderName = "default";
         }
-
+        
         int promoterRank = getPromoterRankAndCheck(demoter, ladderName);
         int rank = this.getRank(ladderName);
-
+        
         PermissionGroup sourceGroup = this.getRankLadders().get(ladderName);
         PermissionGroup targetGroup = null;
-
+        
         for (Map.Entry<Integer, PermissionGroup> entry : this.manager.getRankLadder(ladderName).entrySet()) {
             int groupRank = entry.getValue().getRank();
             if (groupRank <= rank) { // group have equal or higher than current rank
                 continue;
             }
-
+            
             if (groupRank <= promoterRank) { // group have higher rank than promoter
                 continue;
             }
-
+            
             if (targetGroup != null && groupRank >= targetGroup.getRank()) { // group have lower rank than target group
                 continue;
             }
-
+            
             targetGroup = entry.getValue();
         }
-
+        
         if (targetGroup == null) {
             throw new RankingException("User are not demoteable", this, demoter);
         }
-
+        
         this.swapGroups(sourceGroup, targetGroup);
-
+        
         this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
-
+        
         return targetGroup;
     }
 
@@ -604,11 +598,11 @@ public abstract class PermissionUser extends PermissionEntity {
      */
     public int getRank(String ladder) {
         Map<String, PermissionGroup> ladders = this.getRankLadders();
-
+        
         if (ladders.containsKey(ladder)) {
             return ladders.get(ladder).getRank();
         }
-
+        
         return 0;
     }
 
@@ -622,7 +616,7 @@ public abstract class PermissionUser extends PermissionEntity {
         if (ladder == null || ladder.isEmpty()) {
             ladder = "default";
         }
-
+        
         return this.getRankLadders().get(ladder);
     }
 
@@ -633,57 +627,57 @@ public abstract class PermissionUser extends PermissionEntity {
      */
     public Map<String, PermissionGroup> getRankLadders() {
         Map<String, PermissionGroup> ladders = new HashMap<String, PermissionGroup>();
-
+        
         for (PermissionGroup group : this.getGroups()) {
             if (!group.isRanked()) {
                 continue;
             }
-
+            
             ladders.put(group.getRankLadder(), group);
         }
-
+        
         return ladders;
     }
-
+    
     @Override
     public String[] getPermissions(String worldName) {
         if (!this.cachedPermissions.containsKey(worldName)) {
             List<String> permissions = new LinkedList<String>();
             this.getInheritedPermissions(worldName, permissions, true);
-
+            
             this.cachedPermissions.put(worldName, permissions.toArray(new String[0]));
         }
-
+        
         return this.cachedPermissions.get(worldName);
     }
-
+    
     @Override
     public void addPermission(String permission, String worldName) {
         List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
-
+        
         if (permissions.contains(permission)) { // remove old permission
             permissions.remove(permission);
         }
 
         // add permission on the top of list
         permissions.add(0, permission);
-
+        
         this.setPermissions(permissions.toArray(new String[0]), worldName);
     }
-
+    
     @Override
     public void removePermission(String permission, String worldName) {
         List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
-
+        
         permissions.remove(permission);
-
+        
         this.setPermissions(permissions.toArray(new String[0]), worldName);
     }
-
+    
     protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance) {
         permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
         permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
-
+        
         if (worldName != null) {
             // World inheritance
             for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -701,56 +695,56 @@ public abstract class PermissionUser extends PermissionEntity {
             }
         }
     }
-
+    
     @Override
     public void addTimedPermission(String permission, String world, int lifeTime) {
         super.addTimedPermission(permission, world, lifeTime);
-
+        
         this.clearCache();
     }
-
+    
     @Override
     public void removeTimedPermission(String permission, String world) {
         super.removeTimedPermission(permission, world);
-
+        
         this.clearCache();
     }
-
+    
     protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
         if (!this.isRanked(ladderName)) { // not ranked
             throw new RankingException("User are not in this ladder", this, promoter);
         }
-
+        
         int rank = this.getRank(ladderName);
         int promoterRank = 0;
-
+        
         if (promoter != null && promoter.isRanked(ladderName)) {
             promoterRank = promoter.getRank(ladderName);
-
+            
             if (promoterRank >= rank) {
                 throw new RankingException("Promoter don't have high enough rank to change " + this.getName() + "'s rank", this, promoter);
             }
         }
-
+        
         return promoterRank;
     }
-
+    
     protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
         List<PermissionGroup> groups = new ArrayList<PermissionGroup>(Arrays.asList(this.getGroups()));
-
+        
         groups.remove(src);
         groups.add(dst);
-
+        
         this.setGroups(groups.toArray(new PermissionGroup[0]));
     }
-
+    
     @Override
     public String getPrefix(String worldName) {
         // @TODO This method should be refactored
 
         if (!this.cachedPrefix.containsKey(worldName)) {
             String localPrefix = this.getOwnPrefix(worldName);
-
+            
             if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
                 // World-inheritance
                 for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -766,7 +760,7 @@ public abstract class PermissionUser extends PermissionEntity {
                     localPrefix = this.getOwnPrefix(null);
                 }
             }
-
+            
             if (localPrefix == null || localPrefix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups(worldName)) {
                     localPrefix = group.getPrefix();
@@ -775,33 +769,33 @@ public abstract class PermissionUser extends PermissionEntity {
                     }
                 }
             }
-
+            
             if (localPrefix == null) { // just for NPE safety
                 localPrefix = "";
             }
-
+            
             this.cachedPrefix.put(worldName, localPrefix);
         }
-
+        
         return this.cachedPrefix.get(worldName);
     }
-
+    
     @Override
     public boolean has(String permission) {
         Player player = Bukkit.getServer().getPlayer(this.getName());
         if (player != null) {
             return this.has(permission, player.getWorld().getName());
         }
-
+        
         return super.has(permission);
     }
-
+    
     @Override
     public String getSuffix(String worldName) {
         // @TODO This method should be refactored
         if (!this.cachedSuffix.containsKey(worldName)) {
             String localSuffix = this.getOwnSuffix(worldName);
-
+            
             if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
                 // World-inheritance
                 for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -817,7 +811,7 @@ public abstract class PermissionUser extends PermissionEntity {
                     localSuffix = this.getOwnSuffix(null);
                 }
             }
-
+            
             if (localSuffix == null || localSuffix.isEmpty()) {
                 for (PermissionGroup group : this.getGroups(worldName)) {
                     localSuffix = group.getSuffix();
@@ -826,71 +820,69 @@ public abstract class PermissionUser extends PermissionEntity {
                     }
                 }
             }
-
+            
             if (localSuffix == null) { // just for NPE safety
                 localSuffix = "";
             }
             this.cachedSuffix.put(worldName, localSuffix);
         }
-
+        
         return this.cachedSuffix.get(worldName);
     }
-
+    
     @Override
     public String getMatchingExpression(String permission, String world) {
         String cacheId = world + ":" + permission;
         if (!this.cachedAnwsers.containsKey(cacheId)) {
             this.cachedAnwsers.put(cacheId, super.getMatchingExpression(permission, world));
         }
-
+        
         return this.cachedAnwsers.get(cacheId);
     }
-
+    
     protected void clearCache() {
         this.cachedPrefix.clear();
         this.cachedSuffix.clear();
-
+        
         this.cachedGroups.clear();
         this.cachedPermissions.clear();
         this.cachedAnwsers.clear();
         this.cachedOptions.clear();
     }
-
+    
     @Override
     public void setPrefix(String prefix, String worldName) {
         this.clearCache();
     }
-
+    
     @Override
     public void setSuffix(String postfix, String worldName) {
         this.clearCache();
     }
-
+    
     @Override
     public void remove() {
         this.clearCache();
-
+        
         this.callEvent(PermissionEntityEvent.Action.REMOVED);
     }
-
+    
     @Override
     public void save() {
         this.clearCache();
-
+        
         this.callEvent(PermissionEntityEvent.Action.SAVED);
     }
-
+    
     @Override
     public boolean explainExpression(String expression) {
-        if(expression == null && this.manager.allowOps){
+        if (expression == null && this.manager.allowOps) {
             Player player = Bukkit.getServer().getPlayer(this.getName());
-            if(player != null && player.isOp()){
+            if (player != null && player.isOp()) {
                 return true;
             }
         }
         
         return super.explainExpression(expression);
     }
-    
-    
 }
