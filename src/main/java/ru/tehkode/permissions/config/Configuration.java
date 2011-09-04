@@ -38,19 +38,19 @@ import org.yaml.snakeyaml.representer.Representer;
  * @author code
  */
 public class Configuration extends ConfigurationNode {
-
+    
     protected Yaml yaml;
     protected File file;
-
+    
     public Configuration(File file) {
         super(new HashMap<String, Object>());
-
+        
         DumperOptions options = new DumperOptions();
         options.setIndent(4);
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-
+        
         yaml = new Yaml(new SafeConstructor(), new ConfigurationRepresenter(), options);
-
+        
         this.file = file;
     }
 
@@ -59,7 +59,7 @@ public class Configuration extends ConfigurationNode {
      */
     public void load() {
         FileInputStream stream = null;
-
+        
         try {
             stream = new FileInputStream(file);
             read(yaml.load(new UnicodeReader(stream)));
@@ -82,31 +82,35 @@ public class Configuration extends ConfigurationNode {
      *
      * @return true if it was successful saved
      */
-    public boolean save() {
+    public boolean save() {        
         FileOutputStream stream = null;
-
+        
         File parent = file.getParentFile();
         if (parent != null) {
             parent.mkdirs();
         }
-
+        
+        boolean success = true;
+        
         try {
             stream = new FileOutputStream(file);
             yaml.dump(root, new OutputStreamWriter(stream, "UTF-8"));
             return true;
         } catch (IOException e) {
+            success = false;
         } finally {
             try {
                 if (stream != null) {
                     stream.close();
                 }
             } catch (IOException e) {
+                success = false;
             }
         }
-
-        return false;
+                
+        return success;
     }
-
+    
     @SuppressWarnings("unchecked")
     private void read(Object input) throws ConfigurationException {
         try {
@@ -128,9 +132,9 @@ public class Configuration extends ConfigurationNode {
     public static ConfigurationNode getEmptyNode() {
         return new ConfigurationNode();
     }
-
+    
     protected class ConfigurationRepresenter extends Representer {
-
+        
         @Override
         protected Node representData(Object data) {
             if (data instanceof ConfigurationNode) {
@@ -138,7 +142,7 @@ public class Configuration extends ConfigurationNode {
                 return this.representData(node.getRoot());
                 //return representMapping(Tag.MAP, node.getRoot(), null);
             }
-
+            
             return super.representData(data);
         }
     }
