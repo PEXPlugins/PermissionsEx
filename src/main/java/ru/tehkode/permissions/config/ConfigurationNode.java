@@ -92,6 +92,29 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 		}
 
 	}
+	
+	@Override
+	public void removeProperty(String path) {
+        if (!path.contains(".")) {
+            root.remove(path);
+            return;
+        }
+
+        String[] parts = this.splitPath(path);
+        Map<String, Object> node = root;
+
+        for (int i = 0; i < parts.length; i++) {
+            Object o = node.get(parts[i]);
+
+            // Found our target!
+            if (i == parts.length - 1) {
+                node.remove(parts[i]);
+                return;
+            }
+
+            node = (Map<String, Object>) o;
+        }
+    }
 
 	@Override
 	public Object getProperty(String path) {
