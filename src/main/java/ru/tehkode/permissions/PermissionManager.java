@@ -113,6 +113,7 @@ public class PermissionManager {
         if (user == null) {
             user = this.backend.getUser(username);
             if (user != null) {
+				user.initialize();
                 this.users.put(username.toLowerCase(), user);
             }
         }
@@ -215,6 +216,7 @@ public class PermissionManager {
         if (group == null) {
             group = this.backend.getGroup(groupname);
             if (group != null) {
+				group.initialize();
                 this.groups.put(groupname.toLowerCase(), group);
             }
         }

@@ -92,6 +92,25 @@ public class GroupCommands extends PermissionsCommand {
 
         sender.sendMessage("Group " + group.getName() + " have " + group.getWeight() + " calories.");
     }
+	
+	@Command(name = "pex",
+    syntax = "group <group> toggle debug",
+    permission = "permissions.manage",
+    description = "Toggle debug mode for group")
+    public void groupToggleDebug(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String groupName = this.autoCompleteGroupName(args.get("group"));
+
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+            return;
+        }
+
+        group.setDebug(!group.isDebug());
+
+        sender.sendMessage("Debug mode for group " + group.getName() + " have been " + (group.isDebug() ? "enabled" : "disabled") + "!");
+    }
 
     @Command(name = "pex",
     syntax = "group <group> prefix [newprefix] [world]",

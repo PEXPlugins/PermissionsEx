@@ -40,11 +40,21 @@ public abstract class PermissionEntity {
     protected boolean virtual = true;
     protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
     protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
+	
+	protected boolean debugMode = false;
 
     public PermissionEntity(String name, PermissionManager manager) {
         this.manager = manager;
         this.name = name;
     }
+	
+	/**
+	 * This method 100% run after all constructors have been run and entity
+	 * object, and entity object are completely ready to operate
+	 */
+	public void initialize(){
+		this.debugMode = this.getOptionBoolean("debug", null, this.debugMode);
+	}
 
     /**
      * Return name of permission entity (User or Group)
@@ -125,7 +135,7 @@ public abstract class PermissionEntity {
 
         String expression = getMatchingExpression(permission, world);
 
-        if (this.manager.isDebug()) {
+        if (debugMode || this.manager.isDebug()) {
             Logger.getLogger("Minecraft").info("User " + this.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
         }
 
@@ -553,4 +563,12 @@ public abstract class PermissionEntity {
 
         return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
     }
+	
+	public boolean isDebug(){
+		return this.debugMode;
+	}
+	
+	public void setDebug(boolean debug){
+		this.debugMode = debug;
+	}
 }

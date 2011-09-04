@@ -169,6 +169,25 @@ public class UserCommands extends PermissionsCommand {
 
         sender.sendMessage(user.getName() + "'s suffix = \"" + user.getSuffix() + "\"");
     }
+	
+	@Command(name = "pex",
+    syntax = "user <user> toggle debug",
+    permission = "permissions.manage",
+    description = "Toggle debug only for <user>")
+	public void userToggleDebug(Plugin plugin, CommandSender sender, Map<String, String> args) {
+		String userName = this.autoCompletePlayerName(args.get("user"));
+
+        PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+
+        if (user == null) {
+            sender.sendMessage(ChatColor.RED + "User does not exist");
+            return;
+        }
+		
+		user.setDebug(!user.isDebug());
+		
+		sender.sendMessage("Debug mode for user " + userName + " " + (user.isDebug() ? "enabled" : "disabled" ) + "!");
+	}
 
     @Command(name = "pex",
     syntax = "user <user> delete",

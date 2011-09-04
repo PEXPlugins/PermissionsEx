@@ -166,7 +166,7 @@ public class BukkitPermissions {
         
         player.recalculatePermissions();
 
-        if (PermissionsEx.getPermissionManager().isDebug() || this.debugMode) {
+        if (user.isDebug() || PermissionsEx.getPermissionManager().isDebug()) {
             PermissionsEx.logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " for \"" + player.getWorld().getName() + "\" world permissions updated!");
             
             if(this.debugMode){

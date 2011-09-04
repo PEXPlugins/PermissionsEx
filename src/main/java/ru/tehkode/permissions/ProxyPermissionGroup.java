@@ -33,7 +33,15 @@ public abstract class ProxyPermissionGroup extends PermissionGroup {
         this.setName(backendEntity.getName());
 
         this.virtual = backendEntity.isVirtual();
+		
+		this.backendEntity.initialize();
     }
+
+	@Override
+	public void initialize() {
+		super.initialize();
+		this.backendEntity.initialize();
+	}	
 
     @Override
     public String[] getWorlds() {

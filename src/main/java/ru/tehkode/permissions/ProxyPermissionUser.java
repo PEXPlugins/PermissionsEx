@@ -35,6 +35,12 @@ public abstract class ProxyPermissionUser extends PermissionUser {
         this.virtual = backendEntity.isVirtual();
 
     }
+	
+	@Override
+	public void initialize() {
+		super.initialize();
+		this.backendEntity.initialize();
+	}	
 
     @Override
     public String[] getWorlds() {
