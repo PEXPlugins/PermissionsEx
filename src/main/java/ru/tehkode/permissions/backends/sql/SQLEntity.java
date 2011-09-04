@@ -214,7 +214,7 @@ public class SQLEntity extends PermissionEntity {
             if (worldName != null) { // damn NULL
                 this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getName(), this.type.ordinal(), worldName);
             } else {
-                this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND ISNULL(`world`)", this.getName(), this.type.ordinal());
+                this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND IFNULL(`world`, true)", this.getName(), this.type.ordinal());
             }
 
 
