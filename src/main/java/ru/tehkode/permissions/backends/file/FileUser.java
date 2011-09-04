@@ -33,12 +33,27 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 public class FileUser extends ProxyPermissionUser {
 
     protected ConfigurationNode node;
-
+	protected FileBackend backend;
+	
+	
     public FileUser(String playerName, PermissionManager manager, FileBackend backend) {
         super(new FileEntity(playerName, manager, backend, "users"));
+		
+		this.backend = backend;
 
         this.node = ((FileEntity)this.backendEntity).getConfigNode();
     }
+
+	@Override
+	public void initialize() {
+		super.initialize();
+		
+		if(this.backend.doUserRecordsSpamming() && this.isVirtual()){
+			this.setGroups(this.getGroups(null), null);
+			
+			this.save();
+		}
+	}
 
     @Override
     protected String[] getGroupsNamesImpl(String worldName) {

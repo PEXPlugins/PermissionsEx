@@ -49,6 +49,8 @@ import ru.tehkode.permissions.backends.file.FileUser;
 public class FileBackend extends PermissionBackend {
 
     public Configuration permissions;
+	
+	protected boolean spamUserRecords = false;
 
     public FileBackend(PermissionManager manager, Configuration config) {
         super(manager, config);
@@ -99,9 +101,15 @@ public class FileBackend extends PermissionBackend {
                 throw new RuntimeException(e);
             }
         }
+		
+		this.spamUserRecords = config.getBoolean("permissions.backends.file.userSpam", this.spamUserRecords);
 
         permissions.load();
     }
+	
+	public boolean doUserRecordsSpamming(){
+		return this.spamUserRecords;
+	}
 
     @Override
     public String[] getWorldInheritance(String world) {
