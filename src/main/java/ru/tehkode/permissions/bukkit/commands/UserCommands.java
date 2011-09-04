@@ -277,7 +277,7 @@ public class UserCommands extends PermissionsCommand {
     @Command(name = "pex",
     syntax = "user <user> timed add <permission> [lifetime] [world]",
     permission = "permissions.manage.users.permissions.timed",
-    description = "Add timed <permissions> to <user> with [lifetime] in [world]")
+    description = "Add timed <permissions> to <user> for [lifetime] seconds in [world]")
     public void userAddTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String userName = this.autoCompletePlayerName(args.get("user"));
         String worldName = this.autoCompleteWorldName(args.get("world"));
