@@ -42,7 +42,7 @@ public class FileEntity extends PermissionEntity {
     }
     
     protected final ConfigurationNode getNode(String baseNode, String entityName) {
-        this.nodePath = baseNode + "." + entityName;
+        this.nodePath = baseNode + ".`" + entityName + "`";
         ConfigurationNode entityNode = backend.permissions.getNode(this.nodePath);
         
         if (entityNode != null) {
@@ -55,7 +55,7 @@ public class FileEntity extends PermissionEntity {
             for (String entity : entities) {
                 if (entity.equalsIgnoreCase(entityName)) {
                     this.setName(entity);
-                    this.nodePath = baseNode + "." + entity;
+                    this.nodePath = baseNode + ".`" + entity + "`";
                     this.virtual = false;
                     return backend.permissions.getNode(this.nodePath);
                 }
@@ -75,7 +75,7 @@ public class FileEntity extends PermissionEntity {
     public String[] getPermissions(String world) {
         String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
-            permissionsNode = "worlds." + world + "." + permissionsNode;
+            permissionsNode = "worlds.`" + world + "`." + permissionsNode;
         }
         
         return this.node.getStringList(permissionsNode, new LinkedList<String>()).toArray(new String[0]);
@@ -85,12 +85,16 @@ public class FileEntity extends PermissionEntity {
     public void setPermissions(String[] permissions, String world) {
         String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
-            permissionsNode = "worlds." + world + "." + permissionsNode;
+            permissionsNode = "worlds.`" + world + "`." + permissionsNode;
         }
 
         if (permissions.length > 0) {
             this.node.setProperty(permissionsNode, Arrays.asList(permissions));
-        } else {            this.node.removeProperty(permissionsNode);        }        this.save();
+        } else {            
+            this.node.removeProperty(permissionsNode);        
+        }
+        
+        this.save();
     }
     
     @Override
@@ -114,7 +118,7 @@ public class FileEntity extends PermissionEntity {
 
         // Override
         if (world != null && !world.isEmpty()) {
-            ConfigurationNode worldNode = this.node.getNode("worlds." + world + ".options");
+            ConfigurationNode worldNode = this.node.getNode("worlds.`" + world + "`.options");
             if (worldNode != null) {
                 result.putAll(FileBackend.collectOptions(worldNode.getRoot()));
             }
@@ -125,13 +129,13 @@ public class FileEntity extends PermissionEntity {
     @Override
     public String getOption(String permission, String world, String defaultValue) {
         if (world != null && !world.isEmpty()) {
-            String worldPermission = this.node.getString("worlds." + world + ".options." + permission);
+            String worldPermission = this.node.getString("worlds.`" + world + "`.options.`" + permission + "`");
             if (worldPermission != null && !worldPermission.isEmpty()) {
                 return worldPermission;
             }
         }
         
-        String commonPermission = this.node.getString("options." + permission);
+        String commonPermission = this.node.getString("options.`" + permission + "`");
         if (commonPermission != null && !commonPermission.isEmpty()) {
             return commonPermission;
         }
@@ -143,11 +147,11 @@ public class FileEntity extends PermissionEntity {
     public void setOption(String permission, String value, String world) {
         String nodePath = "options";
         if (world != null && !world.isEmpty()) {
-            nodePath = "worlds." + world + "." + nodePath;
+            nodePath = "worlds.`" + world + "`." + nodePath;
         }
         
         if (value != null && !value.isEmpty()) {
-            nodePath += "." + permission;
+            nodePath += ".`" + permission + "`";
             this.node.setProperty(nodePath, value);
         } else {
             this.node.removeProperty(nodePath);
@@ -161,7 +165,7 @@ public class FileEntity extends PermissionEntity {
         String prefixNode = "prefix";
         
         if (worldName != null && !worldName.isEmpty()) {
-            prefixNode = "worlds." + worldName + "." + prefixNode;
+            prefixNode = "worlds.`" + worldName + "`." + prefixNode;
         }
         
         return this.node.getString(prefixNode);
@@ -172,7 +176,7 @@ public class FileEntity extends PermissionEntity {
         String suffixNode = "suffix";
         
         if (worldName != null && !worldName.isEmpty()) {
-            suffixNode = "worlds." + worldName + "." + suffixNode;
+            suffixNode = "worlds.`" + worldName + "`." + suffixNode;
         }
         
         return this.node.getString(suffixNode);
@@ -183,7 +187,7 @@ public class FileEntity extends PermissionEntity {
         String prefixNode = "prefix";
         
         if (worldName != null && !worldName.isEmpty()) {
-            prefixNode = "worlds." + worldName + "." + prefixNode;
+            prefixNode = "worlds.`" + worldName + "`." + prefixNode;
         }
         
         if (prefix != null && !prefix.isEmpty()) {
@@ -200,7 +204,7 @@ public class FileEntity extends PermissionEntity {
         String suffixNode = "suffix";
         
         if (worldName != null && !worldName.isEmpty()) {
-            suffixNode = "worlds." + worldName + "." + suffixNode;
+            suffixNode = "worlds.`" + worldName + "`." + suffixNode;
         }
         
         if (suffix != null && !suffix.isEmpty()) {
@@ -226,7 +230,7 @@ public class FileEntity extends PermissionEntity {
         List<String> worlds = this.node.getKeys("worlds");
         if (worlds != null) {
             for (String world : worlds) {
-                List<String> worldPermissions = this.node.getStringList("worlds." + world + ".permissions", null);
+                List<String> worldPermissions = this.node.getStringList("worlds.`" + world + "`.permissions", null);
                 if (commonPermissions != null) {
                     allPermissions.put(world, worldPermissions.toArray(new String[0]));
                 }
@@ -248,7 +252,7 @@ public class FileEntity extends PermissionEntity {
         List<String> worlds = this.node.getKeys("worlds");
         if (worlds != null) {
             for (String world : worlds) {
-                ConfigurationNode worldOptionsNode = this.node.getNode("worlds." + world + ".permissions");
+                ConfigurationNode worldOptionsNode = this.node.getNode("worlds.`" + world + "`.permissions");
                 if (worldOptionsNode != null) {
                     allOptions.put(world, FileBackend.collectOptions(worldOptionsNode.getRoot()));
                 }

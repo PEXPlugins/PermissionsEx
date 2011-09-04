@@ -45,7 +45,7 @@ public class FileUser extends ProxyPermissionUser {
         String inheritanceNode = "group";
         
         if(worldName != null && !worldName.isEmpty()){
-            inheritanceNode = "worlds." + worldName + "." + inheritanceNode;
+            inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
         }
         
         Object groups = this.node.getProperty(inheritanceNode);
@@ -80,7 +80,7 @@ public class FileUser extends ProxyPermissionUser {
         String inheritanceNode = "group";
         
         if(worldName != null && !worldName.isEmpty()){
-            inheritanceNode = "worlds." + worldName + "." + inheritanceNode;
+            inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
         }
 
         this.node.setProperty(inheritanceNode, Arrays.asList(groups));

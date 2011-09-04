@@ -45,7 +45,7 @@ public class FileGroup extends ProxyPermissionGroup {
         String inheritanceNode = "inheritance";
         
         if(worldName != null && !worldName.isEmpty()){
-            inheritanceNode = "worlds." + worldName + "." + inheritanceNode;
+            inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
         }
         
         return this.node.getStringList(inheritanceNode, new LinkedList<String>()).toArray(new String[0]);
@@ -60,7 +60,7 @@ public class FileGroup extends ProxyPermissionGroup {
         String inheritanceNode = "inheritance";
         
         if(worldName != null && !worldName.isEmpty()){
-            inheritanceNode = "worlds." + worldName + "." + inheritanceNode;
+            inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
         }
 
         this.node.setProperty(inheritanceNode, Arrays.asList(parentGroups));

@@ -21,7 +21,6 @@ package ru.tehkode.permissions.backends;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -107,7 +106,7 @@ public class FileBackend extends PermissionBackend {
     @Override
     public String[] getWorldInheritance(String world) {
         if (world != null && !world.isEmpty()) {
-            return this.permissions.getStringList("worlds." + world + ".inheritance", new LinkedList<String>()).toArray(new String[0]);
+            return this.permissions.getStringList("worlds.`" + world + "`.inheritance", new LinkedList<String>()).toArray(new String[0]);
         }
 
         return new String[0];
@@ -119,7 +118,7 @@ public class FileBackend extends PermissionBackend {
             return;
         }
 
-        this.permissions.setProperty("worlds." + world + ".inheritance", Arrays.asList(parentWorlds));
+        this.permissions.setProperty("worlds.`" + world + "`.inheritance", Arrays.asList(parentWorlds));
         this.permissions.save();
     }
 
@@ -143,7 +142,7 @@ public class FileBackend extends PermissionBackend {
 
         String defaultGroupProperty = "default";
         if (worldName != null) {
-            defaultGroupProperty = "worlds." + worldName + "." + defaultGroupProperty;
+            defaultGroupProperty = "worlds.`" + worldName + "`." + defaultGroupProperty;
         }
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
@@ -166,7 +165,7 @@ public class FileBackend extends PermissionBackend {
 
         String defaultGroupProperty = "default";
         if (worldName != null) {
-            defaultGroupProperty = "worlds." + worldName + "." + defaultGroupProperty;
+            defaultGroupProperty = "worlds.`" + worldName + "`." + defaultGroupProperty;
         }
 
         for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
@@ -188,8 +187,8 @@ public class FileBackend extends PermissionBackend {
         List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
         Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
 
-        for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-            groups.add(this.manager.getGroup(entry.getKey()));
+        for (String groupName : groupsMap.keySet()) {
+            groups.add(this.manager.getGroup(groupName));
         }
 
         Collections.sort(groups);
@@ -253,24 +252,24 @@ public class FileBackend extends PermissionBackend {
         for (PermissionUser user : this.manager.getUsers()) {
             // Inheritance
             if (user.getGroupsNames().length > 0) {
-                root.setProperty("users." + user.getName() + ".group", Arrays.asList(user.getGroupsNames()));
+                root.setProperty("users.`" + user.getName() + "`.group", Arrays.asList(user.getGroupsNames()));
             }
 
             // Prefix
             if (user.getOwnPrefix() != null && !user.getOwnPrefix().isEmpty()) {
-                root.setProperty("users." + user.getName() + ".prefix", user.getOwnPrefix());
+                root.setProperty("users.`" + user.getName() + "`.prefix", user.getOwnPrefix());
             }
 
             //Suffix
             if (user.getOwnSuffix() != null && !user.getOwnSuffix().isEmpty()) {
-                root.setProperty("users." + user.getName() + ".suffix", user.getOwnSuffix());
+                root.setProperty("users.`" + user.getName() + "`.suffix", user.getOwnSuffix());
             }
 
             // Permissions
             for (Map.Entry<String, String[]> entry : user.getAllPermissions().entrySet()) {
-                String nodePath = "users." + user.getName();
+                String nodePath = "users.`" + user.getName() + "`";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += ".worlds." + entry.getKey();
+                    nodePath += ".worlds.`" + entry.getKey() + "`";
                 }
                 nodePath += ".permissions";
 
@@ -281,9 +280,9 @@ public class FileBackend extends PermissionBackend {
 
             // Options
             for (Map.Entry<String, Map<String, String>> entry : user.getAllOptions().entrySet()) {
-                String nodePath = "users." + user.getName();
+                String nodePath = "users.`" + user.getName() + "`";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += "worlds." + entry.getKey();
+                    nodePath += "worlds.`" + entry.getKey() + "`";
                 }
                 nodePath += ".options";
 
@@ -300,29 +299,29 @@ public class FileBackend extends PermissionBackend {
         for (PermissionGroup group : this.manager.getGroups()) {
             // Inheritance
             if (group.getParentGroupsNames().length > 0) {
-                root.setProperty("groups." + group.getName() + ".inheritance", Arrays.asList(group.getParentGroupsNames()));
+                root.setProperty("groups.`" + group.getName() + "`.inheritance", Arrays.asList(group.getParentGroupsNames()));
             }
 
 
             // Prefix
             if (group.getOwnPrefix() != null && !group.getOwnPrefix().isEmpty()) {
-                root.setProperty("groups." + group.getName() + ".prefix", group.getOwnPrefix());
+                root.setProperty("groups.`" + group.getName() + "`.prefix", group.getOwnPrefix());
             }
 
             //Suffix
             if (group.getOwnSuffix() != null && !group.getOwnSuffix().isEmpty()) {
-                root.setProperty("groups." + group.getName() + ".suffix", group.getOwnSuffix());
+                root.setProperty("groups.`" + group.getName() + "`.suffix", group.getOwnSuffix());
             }
 
             if (group.equals(defaultGroup)) {
-                root.setProperty("groups." + group.getName() + ".default", true);
+                root.setProperty("groups.`" + group.getName() + "`.default", true);
             }
 
             // Permissions
             for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
-                String nodePath = "groups." + group.getName();
+                String nodePath = "groups.`" + group.getName() + "`";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += ".worlds." + entry.getKey();
+                    nodePath += ".worlds.`" + entry.getKey() + "`";
                 }
                 nodePath += ".permissions";
 
@@ -333,9 +332,9 @@ public class FileBackend extends PermissionBackend {
 
             // Options
             for (Map.Entry<String, Map<String, String>> entry : group.getAllOptions().entrySet()) {
-                String nodePath = "groups." + group.getName();
+                String nodePath = "groups.`" + group.getName() + "`";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += "worlds." + entry.getKey();
+                    nodePath += "worlds.`" + entry.getKey() + "`";
                 }
                 nodePath += ".options";
 
@@ -352,7 +351,7 @@ public class FileBackend extends PermissionBackend {
                 continue;
             }
 
-            root.setProperty("worlds." + world.getName() + ".inheritance", Arrays.asList(parentWorlds));
+            root.setProperty("worlds.`" + world.getName() + "`.inheritance", Arrays.asList(parentWorlds));
         }
 
         // Write data to writer
