@@ -309,6 +309,8 @@ public class FileBackend extends PermissionBackend {
 					
 					groups.add(group.getName());
 				}
+				
+				if(groups.isEmpty()) continue;
 								
 				userNode.setProperty("worlds.`" + entry.getKey() + "`.group", groups);
 			}
@@ -387,6 +389,8 @@ public class FileBackend extends PermissionBackend {
 					
 					groups.add(parentGroup.getName());
 				}
+				
+				if(groups.isEmpty()) continue;
 				
 				groupNode.setProperty("worlds.`" + entry.getKey() + "`.inheritance", groups);
 			}
