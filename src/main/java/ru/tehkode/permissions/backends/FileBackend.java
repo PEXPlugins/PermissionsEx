@@ -21,6 +21,7 @@ package ru.tehkode.permissions.backends;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -258,98 +259,156 @@ public class FileBackend extends PermissionBackend {
 
         // Users setup
         for (PermissionUser user : this.manager.getUsers()) {
+			ConfigurationNode userNode = new ConfigurationNode();
             // Inheritance
             if (user.getGroupsNames().length > 0) {
-                root.setProperty("users.`" + user.getName() + "`.group", Arrays.asList(user.getGroupsNames()));
+                userNode.setProperty("group", Arrays.asList(user.getGroupsNames()));
             }
 
             // Prefix
             if (user.getOwnPrefix() != null && !user.getOwnPrefix().isEmpty()) {
-                root.setProperty("users.`" + user.getName() + "`.prefix", user.getOwnPrefix());
+                userNode.setProperty("prefix", user.getOwnPrefix());
             }
 
             //Suffix
             if (user.getOwnSuffix() != null && !user.getOwnSuffix().isEmpty()) {
-                root.setProperty("users.`" + user.getName() + "`.suffix", user.getOwnSuffix());
+                userNode.setProperty("suffix", user.getOwnSuffix());
             }
-
+			
             // Permissions
             for (Map.Entry<String, String[]> entry : user.getAllPermissions().entrySet()) {
-                String nodePath = "users.`" + user.getName() + "`";
+				if (entry.getValue().length == 0) continue;
+				
+                String nodePath = "permissions";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += ".worlds.`" + entry.getKey() + "`";
+                    nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
-                nodePath += ".permissions";
 
-                if (entry.getValue().length > 0) {
-                    root.setProperty(nodePath, Arrays.asList(entry.getValue()));
-                }
+                userNode.setProperty(nodePath, Arrays.asList(entry.getValue()));
             }
 
             // Options
             for (Map.Entry<String, Map<String, String>> entry : user.getAllOptions().entrySet()) {
-                String nodePath = "users.`" + user.getName() + "`";
+				if(entry.getValue().isEmpty()) continue;
+				
+                String nodePath = "options";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += "worlds.`" + entry.getKey() + "`";
+                    nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
-                nodePath += ".options";
 
-                if (entry.getValue().size() > 0) {
-                    root.setProperty(nodePath, entry.getValue());
-                }
+                userNode.setProperty(nodePath, entry.getValue());
             }
+			
+			// world-specific inheritance
+			for(Map.Entry<String, PermissionGroup[]> entry : user.getAllGroups().entrySet()){		
+				if(entry.getKey() == null) continue;
+				
+				List<String> groups = new ArrayList<String>();
+				for(PermissionGroup group : entry.getValue()){
+					if(group == null){ continue; }
+					
+					groups.add(group.getName());
+				}
+								
+				userNode.setProperty("worlds.`" + entry.getKey() + "`.group", groups);
+			}
+			
+			// world specific stuff
+			for (String worldName : user.getWorlds()){
+				if(worldName == null) continue;
+				
+				String worldPath = "worlds.`" + worldName + "`.";
+				// world-specific prefix
+				String prefix = user.getOwnPrefix(worldName);
+				if(prefix != null && !prefix.isEmpty()){
+					userNode.setProperty(worldPath + "prefix", prefix);
+				}
+				
+				String suffix = user.getOwnSuffix(worldName);
+				if(suffix != null && !suffix.isEmpty()){
+					userNode.setProperty(worldPath + "suffix", suffix);
+				}
+			}
+			
+			root.setProperty("users.`" + user.getName() + "`", userNode);
         }
 
-
-        PermissionGroup defaultGroup = this.manager.getDefaultGroup();
-
+		
         // Groups
         for (PermissionGroup group : this.manager.getGroups()) {
+			ConfigurationNode groupNode = new ConfigurationNode();
+			
             // Inheritance
             if (group.getParentGroupsNames().length > 0) {
-                root.setProperty("groups.`" + group.getName() + "`.inheritance", Arrays.asList(group.getParentGroupsNames()));
+                groupNode.setProperty("groups.`" + group.getName() + "`.inheritance", Arrays.asList(group.getParentGroupsNames()));
             }
-
 
             // Prefix
             if (group.getOwnPrefix() != null && !group.getOwnPrefix().isEmpty()) {
-                root.setProperty("groups.`" + group.getName() + "`.prefix", group.getOwnPrefix());
+                groupNode.setProperty("prefix", group.getOwnPrefix());
             }
 
             //Suffix
             if (group.getOwnSuffix() != null && !group.getOwnSuffix().isEmpty()) {
-                root.setProperty("groups.`" + group.getName() + "`.suffix", group.getOwnSuffix());
+                groupNode.setProperty("suffix", group.getOwnSuffix());
             }
-
-            if (group.equals(defaultGroup)) {
-                root.setProperty("groups.`" + group.getName() + "`.default", true);
-            }
-
+			
             // Permissions
             for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
-                String nodePath = "groups.`" + group.getName() + "`";
+				if (entry.getValue().length == 0) continue;
+				
+                String nodePath = "permissions";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += ".worlds.`" + entry.getKey() + "`";
+                    nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
-                nodePath += ".permissions";
 
-                if (entry.getValue().length > 0) {
-                    root.setProperty(nodePath, Arrays.asList(entry.getValue()));
-                }
+                groupNode.setProperty(nodePath, Arrays.asList(entry.getValue()));
             }
 
             // Options
             for (Map.Entry<String, Map<String, String>> entry : group.getAllOptions().entrySet()) {
-                String nodePath = "groups.`" + group.getName() + "`";
+				if(entry.getValue().isEmpty()) continue;
+				
+                String nodePath = "options";
                 if (!entry.getKey().isEmpty()) {
-                    nodePath += "worlds.`" + entry.getKey() + "`";
+                    nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
-                nodePath += ".options";
 
-                if (entry.getValue().size() > 0) {
-                    root.setProperty(nodePath, entry.getValue());
-                }
+                groupNode.setProperty(nodePath, entry.getValue());
             }
+			
+			// world-specific inheritance
+			for(Map.Entry<String, PermissionGroup[]> entry : group.getAllParentGroups().entrySet()){
+				if(entry.getKey() == null) continue;
+				
+				List<String> groups = new ArrayList<String>();
+				for(PermissionGroup parentGroup : entry.getValue()){
+					if(parentGroup == null){ continue; }
+					
+					groups.add(parentGroup.getName());
+				}
+				
+				groupNode.setProperty("worlds.`" + entry.getKey() + "`.inheritance", groups);
+			}
+			
+			// world specific stuff
+			for (String worldName : group.getWorlds()){
+				if(worldName == null) continue;
+				
+				String worldPath = "worlds.`" + worldName + "`.";
+				// world-specific prefix
+				String prefix = group.getOwnPrefix(worldName);
+				if(prefix != null && !prefix.isEmpty()){
+					groupNode.setProperty(worldPath + "prefix", prefix);
+				}
+				
+				String suffix = group.getOwnSuffix(worldName);
+				if(suffix != null && !suffix.isEmpty()){
+					groupNode.setProperty(worldPath + "suffix", suffix);
+				}
+			}
+			
+			root.setProperty("groups.`" + group.getName() + "`", groupNode);
         }
 
         // World inheritance

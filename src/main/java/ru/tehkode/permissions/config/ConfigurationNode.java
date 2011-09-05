@@ -68,6 +68,10 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 			root.put(path, value);
 			return;
 		}
+		
+		if(value instanceof ConfigurationNode){
+			value = ((ConfigurationNode)value).root;
+		}
 
 		String[] parts = this.splitPath(path);
 		
