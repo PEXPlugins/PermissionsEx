@@ -26,7 +26,7 @@ public class SQLGroup extends ProxyPermissionGroup {
 
     protected SQLEntity backend;
 
-    public SQLGroup(String name, PermissionManager manager, SQLConnectionManager sql) {
+    public SQLGroup(String name, PermissionManager manager, SQLConnection sql) {
         super(new SQLEntity(name, manager, SQLEntity.Type.GROUP, sql));
 
         this.backend = (SQLEntity) this.backendEntity;

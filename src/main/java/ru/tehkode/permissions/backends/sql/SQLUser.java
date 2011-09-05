@@ -30,7 +30,7 @@ public class SQLUser extends ProxyPermissionUser {
 
     protected SQLEntity backend;
 
-    public SQLUser(String name, PermissionManager manager, SQLConnectionManager sql) {
+    public SQLUser(String name, PermissionManager manager, SQLConnection sql) {
         super(new SQLEntity(name, manager, SQLEntity.Type.USER, sql));
 
         this.backend = (SQLEntity) this.backendEntity;

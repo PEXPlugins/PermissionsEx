@@ -44,7 +44,7 @@ public class SQLEntity extends PermissionEntity {
 
         GROUP, USER
     }
-    protected SQLConnectionManager db;
+    protected SQLConnection db;
     protected Map<String, List<String>> worldsPermissions = null;
     protected Map<String, Map<String, String>> worldsOptions = null;
     protected List<String> commonPermissions = null;
@@ -54,7 +54,7 @@ public class SQLEntity extends PermissionEntity {
     protected String prefix;
     protected String suffix;
 
-    public SQLEntity(String name, PermissionManager manager, SQLEntity.Type type, SQLConnectionManager db) {
+    public SQLEntity(String name, PermissionManager manager, SQLEntity.Type type, SQLConnection db) {
         super(name, manager);
         this.db = db;
         this.type = type;
@@ -64,7 +64,7 @@ public class SQLEntity extends PermissionEntity {
         this.fetchInheritance();
     }
 
-    public static String[] getEntitiesNames(SQLConnectionManager sql, Type type, boolean defaultOnly) {
+    public static String[] getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) {
         try {
             List<String> entities = new LinkedList<String>();
 
@@ -86,7 +86,6 @@ public class SQLEntity extends PermissionEntity {
         worlds.addAll(worldsOptions.keySet());
         worlds.addAll(worldsPermissions.keySet());
         worlds.addAll(parents.keySet());
-
 
         return worlds.toArray(new String[0]);
     }

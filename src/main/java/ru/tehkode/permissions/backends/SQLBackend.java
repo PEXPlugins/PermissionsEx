@@ -36,7 +36,7 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.config.Configuration;
-import ru.tehkode.permissions.backends.sql.SQLConnectionManager;
+import ru.tehkode.permissions.backends.sql.SQLConnection;
 import ru.tehkode.permissions.backends.sql.SQLEntity;
 import ru.tehkode.permissions.backends.sql.SQLGroup;
 import ru.tehkode.permissions.backends.sql.SQLUser;
@@ -49,7 +49,7 @@ import ru.tehkode.utils.StringUtils;
 public class SQLBackend extends PermissionBackend {
 
     protected Map<String, String[]> worldInheritanceCache = new HashMap<String, String[]>();
-    public SQLConnectionManager sql;
+    public SQLConnection sql;
 
     public SQLBackend(PermissionManager manager, Configuration config) {
         super(manager, config);
@@ -74,7 +74,7 @@ public class SQLBackend extends PermissionBackend {
             throw new RuntimeException("SQL Connection are not configured, check config.yml");
         }
 
-        sql = new SQLConnectionManager(dbUri, dbUser, dbPassword, dbDriver);
+        sql = new SQLConnection(dbUri, dbUser, dbPassword, dbDriver);
 
         Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Successfuly connected to database");
 
