@@ -342,7 +342,7 @@ public class FileBackend extends PermissionBackend {
 			
             // Inheritance
             if (group.getParentGroupsNames().length > 0) {
-                groupNode.setProperty("groups.`" + group.getName() + "`.inheritance", Arrays.asList(group.getParentGroupsNames()));
+                groupNode.setProperty("inheritance", Arrays.asList(group.getParentGroupsNames()));
             }
 
             // Prefix
