@@ -622,20 +622,36 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
     
     @Override
     public String getOption(String optionName, String worldName, String defaultValue) {
-        String option = this.getOwnOption(optionName, worldName, null);
+		String option = this.getOwnOption(optionName, worldName, null);
+		if (option != null) {
+			return option;
+		}
 
-        if (option == null || option.isEmpty()) {
-            for (PermissionGroup group : this.getParentGroups(worldName)) {
-                option = group.getOption(optionName, worldName, null);
-                if (option != null) {
-                    return option;
-                }
-            }
+		if (worldName != null) { // world inheritance
+			for (String world : manager.getWorldInheritance(worldName)) {
+				option = this.getOption(option, world);
+				if (option != null) {
+					return option;
+				}
+			}
 
-            option = defaultValue;
-        }
+			// Check common space
+			option = this.getOption(option, null);
+			if (option != null) {
+				return option;
+			}
+		}
 
-        return option;
+		// Inheritance
+		for (PermissionGroup group : this.getParentGroups(worldName)) {
+			option = group.getOption(optionName, worldName, null);
+			if (option != null) {
+				return option;
+			}
+		}
+
+		// Nothing found
+		return defaultValue;
     }
 
     @Override
