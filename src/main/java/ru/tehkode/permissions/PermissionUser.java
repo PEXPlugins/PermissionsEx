@@ -89,35 +89,35 @@ public abstract class PermissionUser extends PermissionEntity {
 			return this.cachedOptions.get(cacheIndex);
 		}
 
-		String option = this.getOwnOption(optionName, worldName, null);
-		if (option != null) {
-			this.cachedOptions.put(cacheIndex, option);
-			return option;
+		String value = this.getOwnOption(optionName, worldName, null);
+		if (value != null) {
+			this.cachedOptions.put(cacheIndex, value);
+			return value;
 		}
 
 		if (worldName != null) { // world inheritance
 			for (String world : manager.getWorldInheritance(worldName)) {
-				option = this.getOption(option, world);
-				if (option != null) {
-					this.cachedOptions.put(cacheIndex, option);
-					return option;
+				value = this.getOption(optionName, world, null);
+				if (value != null) {
+					this.cachedOptions.put(cacheIndex, value);
+					return value;
 				}
 			}
 
 			// Check common space
-			option = this.getOption(option, null);
-			if (option != null) {
-				this.cachedOptions.put(cacheIndex, option);
-				return option;
+			value = this.getOption(optionName, null, null);
+			if (value != null) {
+				this.cachedOptions.put(cacheIndex, value);
+				return value;
 			}
 		}
 
 		// Inheritance
 		for (PermissionGroup group : this.getGroups(worldName)) {
-			option = group.getOption(optionName, worldName, null);
-			if (option != null) {
-				this.cachedOptions.put(cacheIndex, option); // put into cache inherited value
-				return option;
+			value = group.getOption(optionName, worldName, null);
+			if (value != null) {
+				this.cachedOptions.put(cacheIndex, value); // put into cache inherited value
+				return value;
 			}
 		}
 
