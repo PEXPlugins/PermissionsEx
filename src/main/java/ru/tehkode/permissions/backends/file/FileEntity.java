@@ -51,7 +51,7 @@ public class FileEntity extends PermissionEntity {
         }
         
         List<String> entities = backend.permissions.getKeys(baseNode);
-        if (entities != null) {
+        if (entities != null || !entities.isEmpty()) {
             for (String entity : entities) {
                 if (entity.equalsIgnoreCase(entityName)) {
                     this.setName(entity);
