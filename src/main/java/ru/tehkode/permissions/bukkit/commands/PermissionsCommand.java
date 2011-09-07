@@ -179,6 +179,20 @@ public abstract class PermissionsCommand implements CommandListener {
 
         return worldName;
     }
+	
+	protected String getSafeWorldName(String worldName, String userName){
+		if (worldName == null) {
+			Player player = Bukkit.getServer().getPlayer(userName);
+
+			if (player != null) {
+				worldName = player.getWorld().getName();
+			} else {
+				worldName = Bukkit.getServer().getWorlds().get(0).getName();
+			}
+		}
+		
+		return worldName;
+	}
 
     protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName) {
         return this.autoCompletePermission(entity, permission, worldName, "permission");
