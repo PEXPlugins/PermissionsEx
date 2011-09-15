@@ -235,7 +235,13 @@ public class SQLBackend extends PermissionBackend {
             // Permissions
             for (Map.Entry<String, String[]> entry : user.getAllPermissions().entrySet()) {
                 for (String permission : entry.getValue()) {
-                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + permission + "', '" + entry.getKey() + "', ''); \n");
+					String world = entry.getKey();
+					
+					if(world == null){
+						world = "";
+					}
+					
+                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + permission + "', '" + world + "', ''); \n");
                 }
             }
 
@@ -243,7 +249,13 @@ public class SQLBackend extends PermissionBackend {
             for (Map.Entry<String, Map<String, String>> entry : user.getAllOptions().entrySet()) {
                 for (Map.Entry<String, String> option : entry.getValue().entrySet()) {
                     String value = option.getValue().replace("'", "\\'");
-                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + option.getKey() + "', '" + entry.getKey() + "', '" + value + "' );\n");
+					String world = entry.getKey();
+					
+					if(world == null){
+						world = "";
+					}
+					
+                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
                 }
             }
         }
@@ -263,7 +275,13 @@ public class SQLBackend extends PermissionBackend {
             // Permissions
             for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
                 for (String permission : entry.getValue()) {
-                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value`) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + entry.getKey() + "', '');\n");
+					String world = entry.getKey();
+					
+					if(world == null){
+						world = "";
+					}
+					
+                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value`) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + world + "', '');\n");
                 }
             }
 
@@ -271,7 +289,13 @@ public class SQLBackend extends PermissionBackend {
             for (Map.Entry<String, Map<String, String>> entry : group.getAllOptions().entrySet()) {
                 for (Map.Entry<String, String> option : entry.getValue().entrySet()) {
                     String value = option.getValue().replace("'", "\\'");
-                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + entry.getKey() + "', '" + value + "' );\n");
+					String world = entry.getKey();
+					
+					if(world == null){
+						world = "";
+					}
+					
+                    writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
                 }
             }
         }

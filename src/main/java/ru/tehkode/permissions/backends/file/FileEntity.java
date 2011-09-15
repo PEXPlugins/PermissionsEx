@@ -51,7 +51,7 @@ public class FileEntity extends PermissionEntity {
         }
         
         List<String> entities = backend.permissions.getKeys(baseNode);
-        if (entities != null || !entities.isEmpty()) {
+        if (entities != null && !entities.isEmpty()) {
             for (String entity : entities) {
                 if (entity.equalsIgnoreCase(entityName)) {
                     this.setName(entity);
@@ -127,17 +127,19 @@ public class FileEntity extends PermissionEntity {
     }
     
     @Override
-    public String getOption(String permission, String world, String defaultValue) {
+    public String getOption(String option, String world, String defaultValue) {
+		String value;
+		
         if (world != null && !world.isEmpty()) {
-            String worldPermission = this.node.getString("worlds.`" + world + "`.options.`" + permission + "`");
-            if (worldPermission != null && !worldPermission.isEmpty()) {
-                return worldPermission;
+            value = this.node.getString("worlds.`" + world + "`.options.`" + option + "`");
+            if (value != null && !value.isEmpty()) {
+                return value;
             }
         }
         
-        String commonPermission = this.node.getString("options.`" + permission + "`");
-        if (commonPermission != null && !commonPermission.isEmpty()) {
-            return commonPermission;
+        value = this.node.getString("options.`" + option + "`");
+        if (value != null && !value.isEmpty()) {
+            return value;
         }
         
         return defaultValue;
@@ -223,7 +225,7 @@ public class FileEntity extends PermissionEntity {
         // Common permissions
         List<String> commonPermissions = this.node.getStringList("permissions", null);
         if (commonPermissions != null) {
-            allPermissions.put("", commonPermissions.toArray(new String[0]));
+            allPermissions.put(null, commonPermissions.toArray(new String[0]));
         }
 
         //World-specific permissions
@@ -246,7 +248,7 @@ public class FileEntity extends PermissionEntity {
         
         ConfigurationNode commonOptionsNode = this.node.getNode("options");
         if (commonOptionsNode != null) {
-            allOptions.put("", FileBackend.collectOptions(commonOptionsNode.getRoot()));
+            allOptions.put(null, FileBackend.collectOptions(commonOptionsNode.getRoot()));
         }
         
         List<String> worlds = this.node.getKeys("worlds");

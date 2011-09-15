@@ -280,7 +280,7 @@ public class FileBackend extends PermissionBackend {
 				if (entry.getValue().length == 0) continue;
 				
                 String nodePath = "permissions";
-                if (!entry.getKey().isEmpty()) {
+                if (entry.getKey() != null && !entry.getKey().isEmpty()) {
                     nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
 
@@ -292,7 +292,7 @@ public class FileBackend extends PermissionBackend {
 				if(entry.getValue().isEmpty()) continue;
 				
                 String nodePath = "options";
-                if (!entry.getKey().isEmpty()) {
+                if (entry.getKey() != null && !entry.getKey().isEmpty()) {
                     nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
 
@@ -360,7 +360,7 @@ public class FileBackend extends PermissionBackend {
 				if (entry.getValue().length == 0) continue;
 				
                 String nodePath = "permissions";
-                if (!entry.getKey().isEmpty()) {
+                if (entry.getKey() != null && !entry.getKey().isEmpty()) {
                     nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
 
@@ -372,7 +372,7 @@ public class FileBackend extends PermissionBackend {
 				if(entry.getValue().isEmpty()) continue;
 				
                 String nodePath = "options";
-                if (!entry.getKey().isEmpty()) {
+                if (entry.getKey() != null && !entry.getKey().isEmpty()) {
                     nodePath = "worlds.`" + entry.getKey() + "`." + nodePath;
                 }
 

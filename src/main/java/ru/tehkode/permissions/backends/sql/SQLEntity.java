@@ -258,7 +258,7 @@ public class SQLEntity extends PermissionEntity {
     public Map<String, String[]> getAllPermissions() {
         Map<String, String[]> allPermissions = new HashMap<String, String[]>();
 
-        allPermissions.put("", this.commonPermissions.toArray(new String[0]));
+        allPermissions.put(null, this.commonPermissions.toArray(new String[0]));
 
         for (Map.Entry<String, List<String>> entry : this.worldsPermissions.entrySet()) {
             allPermissions.put(entry.getKey(), entry.getValue().toArray(new String[0]));
@@ -271,7 +271,7 @@ public class SQLEntity extends PermissionEntity {
     public Map<String, Map<String, String>> getAllOptions() {
         Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
 
-        allOptions.put("", this.commonOptions);
+        allOptions.put(null, this.commonOptions);
 
         for (Map.Entry<String, Map<String, String>> entry : this.worldsOptions.entrySet()) {
             allOptions.put(entry.getKey(), entry.getValue());
