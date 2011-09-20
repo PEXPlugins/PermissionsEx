@@ -52,7 +52,6 @@ public class BukkitPermissions {
 
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
-    protected Set<Permission> registeredPermissions = new HashSet<Permission>();
     protected Plugin plugin;
     protected boolean dumpAllPermissions = true;
     protected boolean dumpMatchedPermissions = true;
@@ -72,7 +71,6 @@ public class BukkitPermissions {
         this.disableByDefault = config.getBoolean("disable-unmatched", disableByDefault);
         this.debugMode = config.getBoolean("debug", debugMode);
 
-        this.collectPermissions();
         this.registerEvents();
 
         this.updateAllPlayers();
@@ -99,13 +97,6 @@ public class BukkitPermissions {
 
         manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverListener, Event.Priority.Normal, plugin);
         manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverListener, Event.Priority.Normal, plugin);
-    }
-
-    private void collectPermissions() {
-        registeredPermissions.clear();
-        for (Plugin bukkitPlugin : Bukkit.getServer().getPluginManager().getPlugins()) {
-            registeredPermissions.addAll(bukkitPlugin.getDescription().getPermissions());
-        }
     }
     
     protected void updatePermissions(Player player){
@@ -137,6 +128,7 @@ public class BukkitPermissions {
 
         if (dumpMatchedPermissions) {
             // find matching permissions
+			Set<Permission> registeredPermissions = Bukkit.getServer().getPluginManager().getPermissions();
             for (Permission permission : registeredPermissions) {
                 String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
                 boolean permissionValue = user.explainExpression(matchingExpression);
@@ -232,13 +224,11 @@ public class BukkitPermissions {
 
         @Override
         public void onPluginEnable(PluginEnableEvent event) {
-            collectPermissions();
             updateAllPlayers();
         }
 
         @Override
         public void onPluginDisable(PluginDisableEvent event) {
-            collectPermissions();
             updateAllPlayers();
         }
     }
