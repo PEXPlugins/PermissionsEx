@@ -82,8 +82,10 @@ public class BukkitPermissions {
         PluginManager manager = plugin.getServer().getPluginManager();
 
         PlayerEvents playerEventListener = new PlayerEvents();
-
-        manager.registerEvent(Event.Type.PLAYER_JOIN, playerEventListener, Event.Priority.Normal, plugin);
+        
+        // Priority set to Lowest so that plugins can handle the PlayerJoinEvent with updated permissions
+        manager.registerEvent(Event.Type.PLAYER_JOIN, playerEventListener, Event.Priority.Lowest, plugin);
+        
         manager.registerEvent(Event.Type.PLAYER_KICK, playerEventListener, Event.Priority.Normal, plugin);
         manager.registerEvent(Event.Type.PLAYER_QUIT, playerEventListener, Event.Priority.Normal, plugin);
 
