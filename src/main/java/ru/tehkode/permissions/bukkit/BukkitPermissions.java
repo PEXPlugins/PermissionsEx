@@ -19,7 +19,6 @@
 package ru.tehkode.permissions.bukkit;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -83,20 +82,20 @@ public class BukkitPermissions {
 
         PlayerEvents playerEventListener = new PlayerEvents();
 
-        manager.registerEvent(Event.Type.PLAYER_JOIN, playerEventListener, Event.Priority.Normal, plugin);
-        manager.registerEvent(Event.Type.PLAYER_KICK, playerEventListener, Event.Priority.Normal, plugin);
-        manager.registerEvent(Event.Type.PLAYER_QUIT, playerEventListener, Event.Priority.Normal, plugin);
+        manager.registerEvent(Event.Type.PLAYER_JOIN, playerEventListener, Event.Priority.Low, plugin);
+        manager.registerEvent(Event.Type.PLAYER_KICK, playerEventListener, Event.Priority.Low, plugin);
+        manager.registerEvent(Event.Type.PLAYER_QUIT, playerEventListener, Event.Priority.Low, plugin);
 
-        manager.registerEvent(Event.Type.PLAYER_RESPAWN, playerEventListener, Event.Priority.Normal, plugin);
-        manager.registerEvent(Event.Type.PLAYER_TELEPORT, playerEventListener, Event.Priority.Normal, plugin);
-        manager.registerEvent(Event.Type.PLAYER_PORTAL, playerEventListener, Event.Priority.Normal, plugin);
+        manager.registerEvent(Event.Type.PLAYER_RESPAWN, playerEventListener, Event.Priority.Low, plugin);
+        manager.registerEvent(Event.Type.PLAYER_TELEPORT, playerEventListener, Event.Priority.Low, plugin);
+        manager.registerEvent(Event.Type.PLAYER_PORTAL, playerEventListener, Event.Priority.Low, plugin);
 
-        manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Normal, plugin);
+        manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
 
         ServerListener serverListener = new BukkitEvents();
 
-        manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverListener, Event.Priority.Normal, plugin);
-        manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverListener, Event.Priority.Normal, plugin);
+        manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverListener, Event.Priority.Low, plugin);
+        manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverListener, Event.Priority.Low, plugin);
     }
     
     protected void updatePermissions(Player player){
