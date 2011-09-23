@@ -47,6 +47,17 @@ public abstract class PermissionUser extends PermissionEntity {
 		super(playerName, manager);
 	}
 
+	@Override
+	public void initialize() {
+		if(this.manager.getBackend().isCreateUserRecords() && this.isVirtual()){
+			this.setGroups(this.getGroups(null), null);
+			
+			this.save();
+		}
+	}
+	
+	
+
 	/**
 	 * Return non-inherited user prefix.
 	 * This means if a user don't have has own prefix

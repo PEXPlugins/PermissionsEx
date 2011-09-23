@@ -44,10 +44,13 @@ public abstract class PermissionBackend {
     protected final static String defaultBackend = "file";
     protected PermissionManager manager;
     protected Configuration config;
+	protected boolean createUserRecords = false;
     
     protected PermissionBackend(PermissionManager manager, Configuration config) {
         this.manager = manager;
         this.config = config;
+		
+		this.createUserRecords = config.getBoolean("permissions.createUserRecords", this.createUserRecords);
     }
 
     /**
@@ -402,4 +405,8 @@ public abstract class PermissionBackend {
             throw new RuntimeException(e);
         }
     }
+
+	public boolean isCreateUserRecords() {
+		return this.createUserRecords;
+	}
 }

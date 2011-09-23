@@ -36,6 +36,13 @@ public class SQLUser extends ProxyPermissionUser {
         this.backend = (SQLEntity) this.backendEntity;
     }
 
+	@Override
+	public void initialize() {
+		super.initialize();
+		
+		
+	}
+	
     @Override
     public void setGroups(String[] parentGroups, String worldName) {
         backend.setParents(parentGroups, worldName);

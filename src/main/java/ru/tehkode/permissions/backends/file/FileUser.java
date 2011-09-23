@@ -44,17 +44,6 @@ public class FileUser extends ProxyPermissionUser {
         this.node = ((FileEntity)this.backendEntity).getConfigNode();
     }
 
-	@Override
-	public void initialize() {
-		super.initialize();
-		
-		if(this.backend.doUserRecordsSpamming() && this.isVirtual()){
-			this.setGroups(this.getGroups(null), null);
-			
-			this.save();
-		}
-	}
-
     @Override
     protected String[] getGroupsNamesImpl(String worldName) {
         String inheritanceNode = "group";
