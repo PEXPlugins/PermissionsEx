@@ -69,9 +69,9 @@ public class SQLBackend extends PermissionBackend {
 
             config.save();
 
-            Logger.getLogger("Minecraft").severe("SQL Connection are not configured, check config.yml");
+            Logger.getLogger("Minecraft").severe("SQL Connection is not configured, check config.yml");
 
-            throw new RuntimeException("SQL Connection are not configured, check config.yml");
+            throw new RuntimeException("SQL Connection is not configured, check config.yml");
         }
 
         sql = new SQLConnection(dbUri, dbUser, dbPassword, dbDriver);
@@ -101,7 +101,7 @@ public class SQLBackend extends PermissionBackend {
                 result = this.sql.selectQuery("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
 
                 if (!result.next()) {
-                    throw new RuntimeException("There is no default group set, this is serious issue");
+                    throw new RuntimeException("There is no default group set, this is a serious issue");
                 }
             } else {
                 result = this.sql.selectQuery("SELECT `name` FROM `permissions` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
@@ -191,7 +191,7 @@ public class SQLBackend extends PermissionBackend {
             InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + driver + ".sql");
 
             if (databaseDumpStream == null) {
-                throw new Exception("Can't find apporiate database dump for used database (" + driver + "). Is it bundled?");
+                throw new Exception("Can't find appropriate database dump for used database (" + driver + "). Is it bundled?");
             }
 
             String deploySQL = StringUtils.readStream(databaseDumpStream);
@@ -213,7 +213,7 @@ public class SQLBackend extends PermissionBackend {
 
         } catch (Exception e) {
             Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
-            Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please init database manually using " + driver + ".sql");
+            Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please initialize database manually using " + driver + ".sql");
         }
     }
 
