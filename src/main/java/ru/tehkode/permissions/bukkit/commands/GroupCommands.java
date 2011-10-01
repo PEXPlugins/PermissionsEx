@@ -383,6 +383,8 @@ public class GroupCommands extends PermissionsCommand {
         printEntityInheritance(sender, group.getParentGroups());
 
         for (String world : group.getAllParentGroups().keySet()) {
+			if(world == null) continue;
+			
 			sender.sendMessage("  @" + world + ":");
             printEntityInheritance(sender, group.getAllParentGroups().get(world));
         }

@@ -346,7 +346,7 @@ public abstract class PermissionsCommand implements CommandListener {
         }
 
         for (String permission : permissions) {
-            permissionList.add(permission + " @" + world);
+            permissionList.add(permission + (world != null ? " @" + world : ""));
         }
 
         return permissionList;
