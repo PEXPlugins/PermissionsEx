@@ -154,7 +154,7 @@ public class FileBackend extends PermissionBackend {
         }
 
         if (worldName == null) {
-            throw new RuntimeException("Default user group are not defined. Please select one using \"default: true\" property");
+            throw new RuntimeException("Default user group is not defined. Please select one using the \"default: true\" property");
         }
 
         return null;
