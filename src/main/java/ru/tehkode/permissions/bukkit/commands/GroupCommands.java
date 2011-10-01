@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -269,11 +270,79 @@ public class GroupCommands extends PermissionsCommand {
             List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
             for (String parent : parents) {
-                PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(parent);
+                PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
 
                 if (parentGroup != null && !groups.contains(parentGroup)) {
                     groups.add(parentGroup);
                 }
+            }
+
+            group.setParentGroups(groups.toArray(new PermissionGroup[0]), worldName);
+
+            sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
+
+            group.save();
+        }
+    }
+	
+	@Command(name = "pex",
+    syntax = "group <group> parents add <parents> [world]",
+    permission = "permissions.manage.groups.inheritance",
+    description = "Set parent(s) for <group> (single or comma-separated list)")
+    public void groupAddParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+            return;
+        }
+
+        if (args.get("parents") != null) {
+            String[] parents = args.get("parents").split(",");
+            List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+
+            for (String parent : parents) {
+                PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
+
+                if (parentGroup != null && !groups.contains(parentGroup)) {
+                    groups.add(parentGroup);
+                }
+            }
+
+            group.setParentGroups(groups.toArray(new PermissionGroup[0]), worldName);
+
+            sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
+
+            group.save();
+        }
+    }
+	
+	@Command(name = "pex",
+    syntax = "group <group> parents remove <parents> [world]",
+    permission = "permissions.manage.groups.inheritance",
+    description = "Set parent(s) for <group> (single or comma-separated list)")
+    public void groupRemoveParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+        String groupName = this.autoCompleteGroupName(args.get("group"));
+        String worldName = this.autoCompleteWorldName(args.get("world"));
+
+        PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+
+        if (group == null) {
+            sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+            return;
+        }
+
+        if (args.get("parents") != null) {
+            String[] parents = args.get("parents").split(",");
+            List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+
+            for (String parent : parents) {
+                PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
+
+                groups.remove(parentGroup);
             }
 
             group.setParentGroups(groups.toArray(new PermissionGroup[0]), worldName);
@@ -314,7 +383,7 @@ public class GroupCommands extends PermissionsCommand {
         printEntityInheritance(sender, group.getParentGroups());
 
         for (String world : group.getAllParentGroups().keySet()) {
-            sender.sendMessage("  @" + world + ":");
+			sender.sendMessage("  @" + world + ":");
             printEntityInheritance(sender, group.getAllParentGroups().get(world));
         }
 
