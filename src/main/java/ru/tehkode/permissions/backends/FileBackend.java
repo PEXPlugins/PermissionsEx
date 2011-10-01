@@ -402,6 +402,14 @@ public class FileBackend extends PermissionBackend {
 				if(suffix != null && !suffix.isEmpty()){
 					groupNode.setProperty(worldPath + "suffix", suffix);
 				}
+				
+				if(group.isDefault(worldName)){
+					groupNode.setProperty(worldPath + "default", true);
+				}
+			}
+			
+			if(group.isDefault(null)){
+				groupNode.setProperty("default", true);
 			}
 			
 			root.setProperty("groups.`" + group.getName() + "`", groupNode);
