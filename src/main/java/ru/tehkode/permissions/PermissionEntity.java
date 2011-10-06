@@ -258,10 +258,8 @@ public abstract class PermissionEntity {
      * @return option value or defaultValue if option was not found or is not integer
      */
     public int getOptionInteger(String optionName, String world, int defaultValue) {
-        String option = this.getOption(optionName, world, Integer.toString(defaultValue));
-
         try {
-            return Integer.parseInt(option);
+            return Integer.parseInt(this.getOption(optionName, world, Integer.toString(defaultValue)));
         } catch (NumberFormatException e) {
         }
 
