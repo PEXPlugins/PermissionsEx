@@ -85,23 +85,23 @@ public class PermissionsEx extends JavaPlugin {
         // Register Player permissions cleaner
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Normal, this);
         // Multiworld cache cleaner
-        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN,  new PlayerEventsListener(), Priority.Lowest, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN, new PlayerEventsListener(), Priority.Lowest, this);
         this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_TELEPORT, new PlayerEventsListener(), Priority.Lowest, this);
-        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_PORTAL,   new PlayerEventsListener(), Priority.Lowest, this);
+        this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_PORTAL, new PlayerEventsListener(), Priority.Lowest, this);
 
         //register service
         this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
 
         // Bukkit permissions
         ConfigurationNode dinnerpermsConfig = this.config.getNode("permissions.superperms");
-        
-        if(dinnerpermsConfig == null){
+
+        if (dinnerpermsConfig == null) {
             dinnerpermsConfig = Configuration.getEmptyNode();
             this.config.setProperty("permissions.superperms", dinnerpermsConfig);
         }
-        
+
         this.superms = new BukkitPermissions(this, dinnerpermsConfig);
-        
+
         this.config.save();
 
         logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
@@ -143,12 +143,20 @@ public class PermissionsEx extends JavaPlugin {
         return ((PermissionsEx) plugin).permissionsManager;
     }
 
-    public boolean has(Player player, String permission) {
-        return this.permissionsManager.has(player, permission);
+    public static PermissionUser getUser(Player player) {
+        return getPermissionManager().getUser(player);
     }
 
-    public boolean has(Player player, String permission, String world) {
-        return this.permissionsManager.has(player, permission, world);
+    public static PermissionUser getUser(String name) {
+        return getPermissionManager().getUser(name);
+    }
+
+    public static boolean has(Player player, String permission) {
+        return getPermissionManager().has(player, permission);
+    }
+
+    public static boolean has(Player player, String permission, String world) {
+        return getPermissionManager().has(player, permission, world);
     }
 
     public Configuration getConfig() {
