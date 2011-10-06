@@ -98,24 +98,22 @@ public class BukkitPermissions {
 		if (player == null || !this.plugin.isEnabled()) {
 			return;
 		}
-		
-		if (!this.attachments.containsKey(player)) {
-			this.attachments.put(player, player.addAttachment(plugin));
-		}
-		
+        		
 		if (world == null) {
 			world = player.getWorld().getName();
 		}
+        
+        // Remove attachment
+        if(this.attachments.containsKey(player)){
+            this.attachments.get(player).remove();
+        }
 		
-		PermissionAttachment attachment = this.attachments.get(player);
-		
+		PermissionAttachment attachment = player.addAttachment(plugin);
+        
+        this.attachments.put(player, attachment);
+        
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
 		String permissions[] = user.getPermissions(world);
-
-		// clear permissions
-		for (String permission : attachment.getPermissions().keySet()) {
-			attachment.unsetPermission(permission);
-		}
 		
 		if (dumpMatchedPermissions) { // find matching permissions
 			Set<Permission> registeredPermissions = Bukkit.getServer().getPluginManager().getPermissions();
