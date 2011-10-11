@@ -51,7 +51,7 @@ public class FileBackend extends PermissionBackend {
 
     public Configuration permissions;
 
-    public FileBackend(PermissionManager manager, Configuration config) {
+    public FileBackend(PermissionManager manager, org.bukkit.util.config.Configuration config) {
         super(manager, config);
     }
 

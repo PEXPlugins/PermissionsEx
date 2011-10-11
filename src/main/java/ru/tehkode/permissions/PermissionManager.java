@@ -25,7 +25,7 @@ import java.util.TimerTask;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import ru.tehkode.permissions.config.Configuration;
+import org.bukkit.util.config.Configuration;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;

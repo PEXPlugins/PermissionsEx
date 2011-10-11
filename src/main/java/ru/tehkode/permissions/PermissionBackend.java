@@ -32,8 +32,8 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.util.config.Configuration;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.config.Configuration;
 
 /**
  *

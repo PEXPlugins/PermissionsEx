@@ -37,12 +37,12 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.config.Configuration;
+import org.bukkit.util.config.ConfigurationNode;
 import ru.tehkode.permissions.*;
 import ru.tehkode.permissions.backends.*;
 import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.commands.CommandsManager;
-import ru.tehkode.permissions.config.Configuration;
-import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
  *
@@ -159,10 +159,11 @@ public class PermissionsEx extends JavaPlugin {
         return getPermissionManager().has(player, permission, world);
     }
 
-    public Configuration getConfig() {
+    @Override
+    public org.bukkit.util.config.Configuration getConfiguration() {
         return this.config;
     }
-
+    
     protected final Configuration loadConfig(String name) {
         File dataFolder = getDataFolder();
 

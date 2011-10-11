@@ -29,7 +29,6 @@ import org.bukkit.util.config.ConfigurationException;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.reader.UnicodeReader;
 import org.yaml.snakeyaml.representer.Representer;
 
@@ -134,16 +133,6 @@ public class Configuration extends ConfigurationNode {
     }
     
     protected class ConfigurationRepresenter extends Representer {
-        
-        @Override
-        protected Node representData(Object data) {
-            if (data instanceof ConfigurationNode) {
-                ConfigurationNode node = (ConfigurationNode) data;
-                return this.representData(node.getRoot());
-                //return representMapping(Tag.MAP, node.getRoot(), null);
-            }
-            
-            return super.representData(data);
-        }
+
     }
 }

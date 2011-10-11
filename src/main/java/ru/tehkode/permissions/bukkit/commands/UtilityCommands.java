@@ -28,11 +28,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.config.Configuration;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
-import ru.tehkode.permissions.config.Configuration;
 
 public class UtilityCommands extends PermissionsCommand {
 
@@ -60,8 +60,8 @@ public class UtilityCommands extends PermissionsCommand {
             return;
         }
 
-        Configuration config = ((PermissionsEx) plugin).getConfig();
-
+        Configuration config = ((PermissionsEx) plugin).getConfiguration();
+        
         if (args.get("value") != null) {
             config.setProperty(nodeName, this.parseValue(args.get("value")));
             config.save();
@@ -132,7 +132,7 @@ public class UtilityCommands extends PermissionsCommand {
         }
 
         try {
-            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfig(), null);
+            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfiguration(), null);
 
             File dstFile = new File("plugins/PermissionsEx/", args.get("filename"));
 
