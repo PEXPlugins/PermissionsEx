@@ -671,7 +671,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	public String[] getPermissions(String worldName) {
 		if (!this.cachedPermissions.containsKey(worldName)) {
 			List<String> permissions = new LinkedList<String>();
-			this.getInheritedPermissions(worldName, permissions, true);
+			this.getInheritedPermissions(worldName, permissions, true, false);
 
 			this.cachedPermissions.put(worldName, permissions.toArray(new String[0]));
 		}
@@ -702,24 +702,26 @@ public abstract class PermissionUser extends PermissionEntity {
 		this.setPermissions(permissions.toArray(new String[0]), worldName);
 	}
 
-	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance) {
+	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance) {
 		permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
 		permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
 
 		if (worldName != null) {
 			// World inheritance
 			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				getInheritedPermissions(parentWorld, permissions, false);
+				getInheritedPermissions(parentWorld, permissions, false, true);
 			}
 
 			// Common permissions
-			getInheritedPermissions(null, permissions, false);
+            if(!worldInheritance) { // skip common world permissions if we are inside world-inheritance tree
+                getInheritedPermissions(null, permissions, false, true);
+            }
 		}
 
 		// Group inhertance
 		if (groupInheritance) {
 			for (PermissionGroup parentGroup : this.getGroups(worldName)) {
-				parentGroup.getInheritedPermissions(worldName, permissions, true);
+				parentGroup.getInheritedPermissions(worldName, permissions, true, false);
 			}
 		}
 	}

@@ -528,7 +528,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	@Override
 	public String[] getPermissions(String world) {
 		List<String> permissions = new LinkedList<String>();
-		this.getInheritedPermissions(world, permissions, true);
+		this.getInheritedPermissions(world, permissions, true, false);
 		return permissions.toArray(new String[0]);
 	}
 
@@ -552,23 +552,25 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		this.setPermissions(permissions.toArray(new String[0]), worldName);
 	}
 
-	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance) {
+	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance) {
 		permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
 		permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
 
 		if (worldName != null) {
 			// World inheritance
 			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				getInheritedPermissions(parentWorld, permissions, false);
+				getInheritedPermissions(parentWorld, permissions, false, true);
 			}
 			// Common permission
-			this.getInheritedPermissions(null, permissions, false);
+            if (!worldInheritance) {
+                this.getInheritedPermissions(null, permissions, false, true);
+            }
 		}
 
 		// Group inhertance
 		if (groupInheritance) {
 			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				group.getInheritedPermissions(worldName, permissions, true);
+				group.getInheritedPermissions(worldName, permissions, true, false);
 			}
 		}
 	}
