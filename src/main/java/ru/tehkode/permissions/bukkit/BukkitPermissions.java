@@ -20,7 +20,6 @@ package ru.tehkode.permissions.bukkit;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -49,7 +48,7 @@ public class BukkitPermissions {
 	protected static final Logger logger = Logger.getLogger("Minecraft");
 	protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
 	protected Plugin plugin;
-	protected boolean dumpAllPermissions = true;
+	protected boolean dumpAllPermissions = false;
 	protected boolean dumpMatchedPermissions = true;
 	protected boolean disableByDefault = false;
 	protected boolean debugMode = false;
@@ -68,9 +67,7 @@ public class BukkitPermissions {
 		this.debugMode = config.getBoolean("debug", debugMode);
 		
 		this.registerEvents();
-		
-		this.updateAllPlayers();
-		
+				
 		logger.info("[PermissionsEx] Superperms support enabled.");
 	}
 	
@@ -90,11 +87,11 @@ public class BukkitPermissions {
 		manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
 	}
 	
-	protected void updatePermissions(Player player) {
+	public void updatePermissions(Player player) {
 		this.updatePermissions(player, null);
 	}
 	
-	protected void updatePermissions(Player player, String world) {
+	public void updatePermissions(Player player, String world) {
 		if (player == null || !this.plugin.isEnabled()) {
 			return;
 		}
@@ -115,22 +112,19 @@ public class BukkitPermissions {
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
 		String permissions[] = user.getPermissions(world);
 		
-		if (dumpMatchedPermissions) { // find matching permissions
-			Set<Permission> registeredPermissions = Bukkit.getServer().getPluginManager().getPermissions();
-			
-			for (Permission permission : registeredPermissions) {
+		if (dumpMatchedPermissions) { // find matching permissions		
+			for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
 				String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
-				boolean permissionValue = user.explainExpression(matchingExpression);
 				
 				if (!disableByDefault && matchingExpression == null) { // not found, skip
 					continue;
 				}
 				
-				attachment.setPermission(permission, permissionValue);
+				attachment.setPermission(permission, user.explainExpression(matchingExpression));
 			}
 		}
 		
-		if (dumpAllPermissions) { // upload raw permissions
+		if (dumpAllPermissions) { // upload raw permissions, now disabled by default
 			
 			for (String permission : permissions) {
 				Boolean value = true;
@@ -166,7 +160,7 @@ public class BukkitPermissions {
 		
 	}
 	
-	protected void updateAllPlayers() {
+	public void updateAllPlayers() {
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 			updatePermissions(player);
 		}

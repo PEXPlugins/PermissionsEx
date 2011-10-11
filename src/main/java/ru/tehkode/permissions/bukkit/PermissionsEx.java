@@ -101,6 +101,8 @@ public class PermissionsEx extends JavaPlugin {
         }
 
         this.superms = new BukkitPermissions(this, dinnerpermsConfig);
+        
+        this.superms.updateAllPlayers();
 
         this.config.save();
 
