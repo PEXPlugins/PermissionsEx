@@ -20,6 +20,7 @@ package ru.tehkode.permissions.bukkit;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
@@ -96,8 +97,8 @@ public class PermissionsEx extends JavaPlugin {
         ConfigurationNode dinnerpermsConfig = this.config.getNode("permissions.superperms");
 
         if (dinnerpermsConfig == null) {
-            dinnerpermsConfig = Configuration.getEmptyNode();
-            this.config.setProperty("permissions.superperms", dinnerpermsConfig);
+            this.config.setProperty("permissions.superperms", new HashMap<String, Object>());
+            dinnerpermsConfig = this.config.getNode("permissions.superperms");
         }
 
         this.superms = new BukkitPermissions(this, dinnerpermsConfig);
