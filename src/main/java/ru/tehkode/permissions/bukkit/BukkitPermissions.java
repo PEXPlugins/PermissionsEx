@@ -25,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -83,8 +84,11 @@ public class BukkitPermissions {
 		manager.registerEvent(Event.Type.PLAYER_RESPAWN, playerEventListener, Event.Priority.Low, plugin);
 		manager.registerEvent(Event.Type.PLAYER_TELEPORT, playerEventListener, Event.Priority.Low, plugin);
 		manager.registerEvent(Event.Type.PLAYER_PORTAL, playerEventListener, Event.Priority.Low, plugin);
-		
+		manager.registerEvent(Event.Type.PLAYER_CHANGED_WORLD, playerEventListener, Event.Priority.Low, plugin);;
+        
 		manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
+        
+        
 	}
 	
 	public void updatePermissions(Player player) {
@@ -167,7 +171,12 @@ public class BukkitPermissions {
 	}
 	
 	protected class PlayerEvents extends PlayerListener {
-		
+
+        @Override
+        public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+            updatePermissions(event.getPlayer());
+        }
+        
 		@Override
 		public void onPlayerJoin(PlayerJoinEvent event) {
 			updatePermissions(event.getPlayer());
