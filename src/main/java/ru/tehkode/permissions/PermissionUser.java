@@ -774,7 +774,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 		if (!this.cachedPrefix.containsKey(worldName)) {
 			String localPrefix = this.getOwnPrefix(worldName);
-
+            
 			if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
 				// World-inheritance
 				for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -793,7 +793,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 			if (localPrefix == null || localPrefix.isEmpty()) {
 				for (PermissionGroup group : this.getGroups(worldName)) {
-					localPrefix = group.getPrefix();
+					localPrefix = group.getPrefix(worldName);
 					if (localPrefix != null && !localPrefix.isEmpty()) {
 						break;
 					}

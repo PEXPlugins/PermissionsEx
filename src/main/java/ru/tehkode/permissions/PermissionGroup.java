@@ -473,7 +473,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 		if (localPrefix == null || localPrefix.isEmpty()) {
 			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				localPrefix = group.getPrefix();
+				localPrefix = group.getPrefix(worldName);
 				if (localPrefix != null && !localPrefix.isEmpty()) {
 					break;
 				}
