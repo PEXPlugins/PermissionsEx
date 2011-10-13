@@ -844,7 +844,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 			if (localSuffix == null || localSuffix.isEmpty()) {
 				for (PermissionGroup group : this.getGroups(worldName)) {
-					localSuffix = group.getSuffix();
+					localSuffix = group.getSuffix(worldName);
 					if (localSuffix != null && !localSuffix.isEmpty()) {
 						break;
 					}

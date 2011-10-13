@@ -511,7 +511,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 		if (localSuffix == null || localSuffix.isEmpty()) {
 			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				localSuffix = group.getSuffix();
+				localSuffix = group.getSuffix(worldName);
 				if (localSuffix != null && !localSuffix.isEmpty()) {
 					break;
 				}
