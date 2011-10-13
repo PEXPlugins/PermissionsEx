@@ -49,8 +49,6 @@ public class BukkitPermissions {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
     protected Plugin plugin;
-    protected boolean dumpAllPermissions = false;
-    protected boolean dumpMatchedPermissions = true;
     protected boolean disableByDefault = false;
     protected boolean debugMode = false;
 
@@ -62,8 +60,10 @@ public class BukkitPermissions {
             return;
         }
 
-        this.dumpAllPermissions = config.getBoolean("raw-permissions", dumpAllPermissions);
-        this.dumpMatchedPermissions = config.getBoolean("matched-permissions", dumpMatchedPermissions);
+        // Remove old unused options
+        config.removeProperty("raw-permissions");
+        config.removeProperty("matched-permissions");
+        
         this.disableByDefault = config.getBoolean("disable-unmatched", disableByDefault);
         this.debugMode = config.getBoolean("debug", debugMode);
 
@@ -116,32 +116,28 @@ public class BukkitPermissions {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
         String permissions[] = user.getPermissions(world);
 
-        if (dumpMatchedPermissions) { // find matching permissions		
-            for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
-                String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
+        for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
+            String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
 
-                if (!disableByDefault && matchingExpression == null) { // not found, skip
-                    continue;
-                }
-
-                attachment.setPermission(permission, user.explainExpression(matchingExpression));
+            if (!disableByDefault && matchingExpression == null) { // not found, skip
+                continue;
             }
+
+            attachment.setPermission(permission, user.explainExpression(matchingExpression));
         }
 
-        if (dumpAllPermissions) { // upload raw permissions, now disabled by default
-
-            for (String permission : permissions) {
-                Boolean value = true;
-                if (permission.startsWith("-")) {
-                    permission = permission.substring(1); // cut off -
-                    value = false;
-                }
-
-                if (!attachment.getPermissions().containsKey(permission)) {
-                    attachment.setPermission(permission, value);
-                }
+        /*
+        for (String permission : permissions) {
+            Boolean value = true;
+            if (permission.startsWith("-")) {
+                permission = permission.substring(1); // cut off -
+                value = false;
             }
-        }
+        
+            if (!attachment.getPermissions().containsKey(permission)) {
+                attachment.setPermission(permission, value);
+            }
+        } */
 
         player.recalculatePermissions();
 
