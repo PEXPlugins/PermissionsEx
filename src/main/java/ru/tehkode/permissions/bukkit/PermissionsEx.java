@@ -154,12 +154,12 @@ public class PermissionsEx extends JavaPlugin {
         return getPermissionManager().getUser(name);
     }
 
-    public static boolean has(Player player, String permission) {
-        return getPermissionManager().has(player, permission);
+    public boolean has(Player player, String permission) {
+        return this.permissionsManager.has(player, permission);
     }
 
-    public static boolean has(Player player, String permission, String world) {
-        return getPermissionManager().has(player, permission, world);
+    public boolean has(Player player, String permission, String world) {
+        return this.permissionsManager.has(player, permission, world);
     }
 
     @Override
