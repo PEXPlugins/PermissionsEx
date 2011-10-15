@@ -51,6 +51,9 @@ public class BukkitPermissions {
     protected Plugin plugin;
     protected boolean disableByDefault = false;
     protected boolean debugMode = false;
+    
+    protected boolean enableWildcards = true;
+    protected boolean compatiblityMode = false;
 
     public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
         this.plugin = plugin;
@@ -59,13 +62,12 @@ public class BukkitPermissions {
             logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
             return;
         }
-
-        // Remove old unused options
-        config.removeProperty("raw-permissions");
-        config.removeProperty("matched-permissions");
         
         this.disableByDefault = config.getBoolean("disable-unmatched", disableByDefault);
         this.debugMode = config.getBoolean("debug", debugMode);
+        
+        this.enableWildcards = config.getBoolean("enable-wildcards", enableWildcards);
+        this.compatiblityMode = config.getBoolean("compatibility-mode", compatiblityMode);
 
         this.registerEvents();
 
@@ -116,48 +118,35 @@ public class BukkitPermissions {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
         String permissions[] = user.getPermissions(world);
 
-        for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
-            String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
+        if (this.enableWildcards) { // Permissions-style compatible permissions (with wildcards)
+            for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
+                String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
 
-            if (!disableByDefault && matchingExpression == null) { // not found, skip
-                continue;
+                if (!disableByDefault && matchingExpression == null) { // not found, skip
+                    continue;
+                }
+
+                attachment.setPermission(permission, user.explainExpression(matchingExpression));
             }
-
-            attachment.setPermission(permission, user.explainExpression(matchingExpression));
-        }
-
-        /*
-        for (String permission : permissions) {
-            Boolean value = true;
-            if (permission.startsWith("-")) {
-                permission = permission.substring(1); // cut off -
-                value = false;
-            }
+        } 
         
-            if (!attachment.getPermissions().containsKey(permission)) {
-                attachment.setPermission(permission, value);
+        if (this.compatiblityMode || !this.enableWildcards){ // Work like any other superperms manager - dumb uploading
+            for (String permission : permissions) {            
+                Boolean value = true;
+                if (permission.startsWith("-")) {
+                    permission = permission.substring(1); // cut off -
+                    value = false;
+                }
+
+                if(!permission.startsWith("superperms.")){
+                    continue;
+                }
+
+                attachment.setPermission(permission.substring(11), value);
             }
-        } */
+        }
 
         player.recalculatePermissions();
-
-        if (user.isDebug() || PermissionsEx.getPermissionManager().isDebug()) {
-            logger.info("[PermissionsEx-Dinnerperms] Player " + player.getName() + " for \"" + player.getWorld().getName() + "\" world permissions updated!");
-
-            if (this.debugMode) {
-                logger.info("Attachment Permissions:");
-                for (Map.Entry<String, Boolean> entry : attachment.getPermissions().entrySet()) {
-                    logger.info("   " + entry.getKey() + " = " + entry.getValue());
-                }
-
-                logger.info("Effective Permissions:");
-                for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
-                    logger.info("   " + info.getPermission() + " = " + info.getValue());
-
-                }
-            }
-        }
-
     }
 
     public void updateAllPlayers() {
