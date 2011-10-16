@@ -135,7 +135,7 @@ public abstract class PermissionEntity {
 
         String expression = getMatchingExpression(permission, world);
 
-        if (debugMode || this.manager.isDebug()) {
+        if (this.isDebug()) {
             Logger.getLogger("Minecraft").info("User " + this.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
         }
 
@@ -563,7 +563,7 @@ public abstract class PermissionEntity {
     }
 	
 	public boolean isDebug(){
-		return this.debugMode;
+		return this.debugMode || this.manager.isDebug();
 	}
 	
 	public void setDebug(boolean debug){
