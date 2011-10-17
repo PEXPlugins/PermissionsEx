@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
@@ -35,26 +36,26 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  */
 public abstract class PermissionEntity {
 
+    protected static Pattern rangeExpression = Pattern.compile("(\\d+)-(\\d+)");
     protected PermissionManager manager;
     private String name;
     protected boolean virtual = true;
     protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
     protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
-	
-	protected boolean debugMode = false;
+    protected boolean debugMode = false;
 
     public PermissionEntity(String name, PermissionManager manager) {
         this.manager = manager;
         this.name = name;
     }
-	
-	/**
-	 * This method 100% run after all constructors have been run and entity
-	 * object, and entity object are completely ready to operate
-	 */
-	public void initialize(){
-		this.debugMode = this.getOptionBoolean("debug", null, this.debugMode);
-	}
+
+    /**
+     * This method 100% run after all constructors have been run and entity
+     * object, and entity object are completely ready to operate
+     */
+    public void initialize() {
+        this.debugMode = this.getOptionBoolean("debug", null, this.debugMode);
+    }
 
     /**
      * Return name of permission entity (User or Group)
@@ -513,7 +514,36 @@ public abstract class PermissionEntity {
     }
 
     protected static String prepareRegexp(String expression) {
-        return expression.replace(".", "\\.").replace("*", "(.*)");
+        String regexp = expression.replace(".", "\\.").replace("*", "(.*)");
+
+        try {
+            Matcher rangeMatcher = rangeExpression.matcher(regexp);
+            while (rangeMatcher.find()) {
+                StringBuilder range = new StringBuilder();
+                int from = Integer.parseInt(rangeMatcher.group(1));
+                int to = Integer.parseInt(rangeMatcher.group(2));
+
+                if (from > to) {
+                    int temp = from;
+                    from = to;
+                    to = temp;
+                } // swap them
+
+                range.append("(");
+                
+                for (int i = from; i <= to; i++) {
+                    range.append(i);
+                    if (i < to ) range.append("|");
+                }
+                
+                range.append(")");
+                
+                regexp = regexp.replace(rangeMatcher.group(0), range);
+            }
+        } catch (Throwable e) {
+        }
+
+        return regexp;
     }
     /**
      * Pattern cache
@@ -553,7 +583,7 @@ public abstract class PermissionEntity {
          */
         return false;
     }
-
+    
     public boolean explainExpression(String expression) {
         if (expression == null || expression.isEmpty()) {
             return false;
@@ -561,12 +591,12 @@ public abstract class PermissionEntity {
 
         return !expression.startsWith("-"); // If expression have - (minus) before then that mean expression are negative
     }
-	
-	public boolean isDebug(){
-		return this.debugMode || this.manager.isDebug();
-	}
-	
-	public void setDebug(boolean debug){
-		this.debugMode = debug;
-	}
+
+    public boolean isDebug() {
+        return this.debugMode || this.manager.isDebug();
+    }
+
+    public void setDebug(boolean debug) {
+        this.debugMode = debug;
+    }
 }
