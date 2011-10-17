@@ -117,12 +117,19 @@ public class BukkitPermissions {
         PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
         String permissions[] = user.getPermissions(world);
 
+        if(this.debugMode && user.isDebug()){
+            System.out.println("Player " + player.getName() + " superperms:");
+        }
         if (this.enableWildcards) { // Permissions-style compatible permissions (with wildcards)
             for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
                 String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
 
                 if (!disableByDefault && matchingExpression == null) { // not found, skip
                     continue;
+                }
+                
+                if(this.debugMode && user.isDebug()){
+                    System.out.println("  " + permission.getName() + " = " + user.explainExpression(matchingExpression) + " from " + matchingExpression);
                 }
 
                 attachment.setPermission(permission, user.explainExpression(matchingExpression));
@@ -139,6 +146,10 @@ public class BukkitPermissions {
 
                 if(!permission.startsWith("superperms.")){
                     continue;
+                }
+                
+                if(this.debugMode && user.isDebug()){
+                    System.out.println("  " + permission.substring(11) + " = " + value + " from " + permission);
                 }
 
                 attachment.setPermission(permission.substring(11), value);
