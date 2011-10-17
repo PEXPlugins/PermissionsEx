@@ -158,18 +158,6 @@ public class BukkitPermissions {
         }
         
         player.recalculatePermissions();
-        
-        System.out.println("Attachment: ");
-        for(Map.Entry<String, Boolean> perm : attachment.getPermissions().entrySet()){
-            System.out.println(" '" + perm.getKey() + "' = " + perm.getValue());
-        }
-        
-        System.out.println("Attachment hash code: " + Integer.toHexString(attachment.hashCode()) );
-        
-        System.out.println("Effective: ");
-        for(PermissionAttachmentInfo info : player.getEffectivePermissions()){
-            System.out.println(" '" + info.getPermission() + "' = " + info.getValue() + " from " + info.getAttachment().getPlugin().getDescription().getName() + " (" + Integer.toHexString(info.getAttachment().hashCode()) + ")");
-        }
     }
 
     public void updateAllPlayers() {
