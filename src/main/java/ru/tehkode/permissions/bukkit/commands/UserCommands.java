@@ -145,7 +145,13 @@ public class UserCommands extends PermissionsCommand {
         sender.sendMessage(userName + "'s superperms:");
 
         for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
-            sender.sendMessage(" '" + ChatColor.GREEN + info.getPermission() + ChatColor.WHITE + "' = " + ChatColor.BLUE + info.getValue() + ChatColor.WHITE + " by " + ChatColor.DARK_GREEN + info.getAttachment().getPlugin().getDescription().getName());
+            String pluginName = "built-in";
+
+            if (info.getAttachment() != null && info.getAttachment().getPlugin() != null) {
+                pluginName = info.getAttachment().getPlugin().getDescription().getName();
+            }
+
+            sender.sendMessage(" '" + ChatColor.GREEN + info.getPermission() + ChatColor.WHITE + "' = " + ChatColor.BLUE + info.getValue() + ChatColor.WHITE + " by " + ChatColor.DARK_GREEN + pluginName );
         }
     }
 
