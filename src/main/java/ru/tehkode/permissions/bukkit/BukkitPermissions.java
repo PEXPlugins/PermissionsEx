@@ -35,6 +35,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.config.ConfigurationNode;
@@ -155,8 +156,20 @@ public class BukkitPermissions {
                 attachment.setPermission(permission.substring(11), value);
             }
         }
-
+        
         player.recalculatePermissions();
+        
+        System.out.println("Attachment: ");
+        for(Map.Entry<String, Boolean> perm : attachment.getPermissions().entrySet()){
+            System.out.println(" '" + perm.getKey() + "' = " + perm.getValue());
+        }
+        
+        System.out.println("Attachment hash code: " + Integer.toHexString(attachment.hashCode()) );
+        
+        System.out.println("Effective: ");
+        for(PermissionAttachmentInfo info : player.getEffectivePermissions()){
+            System.out.println(" '" + info.getPermission() + "' = " + info.getValue() + " from " + info.getAttachment().getPlugin().getDescription().getName() + " (" + Integer.toHexString(info.getAttachment().hashCode()) + ")");
+        }
     }
 
     public void updateAllPlayers() {
