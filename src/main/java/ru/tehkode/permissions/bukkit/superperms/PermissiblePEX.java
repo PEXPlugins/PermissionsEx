@@ -36,7 +36,7 @@ public class PermissiblePEX extends PermissibleBase {
         super(opable);
 
         this.strictMode = disableUnmatched;
-        
+
         if (opable instanceof Player) {
             this.player = (Player) opable;
         }
@@ -44,7 +44,6 @@ public class PermissiblePEX extends PermissibleBase {
 
     public static void inject(Player player, boolean strictMode) {
         if (player.hasPermission("permissionsex.handler.injected")) { // already injected
-            Logger.getLogger("Minecraft").warning("[PermissionsEx] Already injected");
             return;
         }
 
@@ -77,6 +76,7 @@ public class PermissiblePEX extends PermissibleBase {
             // Inject permissible
             permField.set(player, newBase);
 
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " injected");
         } catch (Throwable e) {
             Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
         }
@@ -93,9 +93,9 @@ public class PermissiblePEX extends PermissibleBase {
                 PermissionUser user = PermissionsEx.getUser(this.player);
                 if (user != null) {
 
-                    
+
                     String expression = user.getMatchingExpression(inName, player.getWorld().getName());
-                    
+
                     if (user.isDebug()) {
                         Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
                     }
