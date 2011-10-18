@@ -33,14 +33,13 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.config.ConfigurationNode;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
@@ -49,11 +48,7 @@ public class BukkitPermissions {
     protected static final Logger logger = Logger.getLogger("Minecraft");
     protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
     protected Plugin plugin;
-    protected boolean disableByDefault = false;
-    protected boolean debugMode = false;
-    
-    protected boolean enableWildcards = true;
-    protected boolean compatiblityMode = false;
+    protected boolean strictMode = false;
 
     public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
         this.plugin = plugin;
@@ -62,12 +57,8 @@ public class BukkitPermissions {
             logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
             return;
         }
-        
-        this.disableByDefault = config.getBoolean("disable-unmatched", disableByDefault);
-        this.debugMode = config.getBoolean("debug", debugMode);
-        
-        this.enableWildcards = config.getBoolean("enable-wildcards", enableWildcards);
-        this.compatiblityMode = config.getBoolean("compatibility-mode", compatiblityMode);
+
+        this.strictMode = config.getBoolean("strict-mode", strictMode);
 
         this.registerEvents();
 
@@ -86,11 +77,9 @@ public class BukkitPermissions {
         manager.registerEvent(Event.Type.PLAYER_RESPAWN, playerEventListener, Event.Priority.Low, plugin);
         manager.registerEvent(Event.Type.PLAYER_TELEPORT, playerEventListener, Event.Priority.Low, plugin);
         manager.registerEvent(Event.Type.PLAYER_PORTAL, playerEventListener, Event.Priority.Low, plugin);
-        manager.registerEvent(Event.Type.PLAYER_CHANGED_WORLD, playerEventListener, Event.Priority.Low, plugin);;
+        manager.registerEvent(Event.Type.PLAYER_CHANGED_WORLD, playerEventListener, Event.Priority.Low, plugin);
 
         manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
-
-
     }
 
     public void updatePermissions(Player player) {
@@ -102,62 +91,7 @@ public class BukkitPermissions {
             return;
         }
 
-        if (world == null) {
-            world = player.getWorld().getName();
-        }
-
-        // Remove attachment
-        if (this.attachments.containsKey(player)) {
-            this.attachments.get(player).remove();
-        }
-
-        PermissionAttachment attachment = player.addAttachment(plugin);
-
-        this.attachments.put(player, attachment);
-
-        PermissionUser user = PermissionsEx.getPermissionManager().getUser(player);
-        String permissions[] = user.getPermissions(world);
-
-        if(this.debugMode && user.isDebug()){
-            System.out.println("Player " + player.getName() + " superperms:");
-        }
-        if (this.enableWildcards) { // Permissions-style compatible permissions (with wildcards)
-            for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
-                String matchingExpression = user.getMatchingExpression(permissions, permission.getName());
-
-                if (!disableByDefault && matchingExpression == null) { // not found, skip
-                    continue;
-                }
-                
-                if(this.debugMode && user.isDebug()){
-                    System.out.println("  " + permission.getName() + " = " + user.explainExpression(matchingExpression) + " from " + matchingExpression);
-                }
-
-                attachment.setPermission(permission, user.explainExpression(matchingExpression));
-            }
-        } 
-        
-        if (this.compatiblityMode || !this.enableWildcards){ // Work like any other superperms manager - dumb uploading
-            for (String permission : permissions) {            
-                Boolean value = true;
-                if (permission.startsWith("-")) {
-                    permission = permission.substring(1); // cut off -
-                    value = false;
-                }
-
-                if(!permission.startsWith("superperms.")){
-                    continue;
-                }
-                
-                if(this.debugMode && user.isDebug()){
-                    System.out.println("  " + permission.substring(11) + " = " + value + " from " + permission);
-                }
-
-                attachment.setPermission(permission.substring(11), value);
-            }
-        }
-        
-        player.recalculatePermissions();
+        PermissiblePEX.inject(player, strictMode);
     }
 
     public void updateAllPlayers() {
