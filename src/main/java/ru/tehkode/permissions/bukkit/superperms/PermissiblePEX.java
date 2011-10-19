@@ -21,9 +21,9 @@ package ru.tehkode.permissions.bukkit.superperms;
 import java.lang.reflect.Field;
 import java.util.logging.Logger;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.ServerOperator;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
@@ -32,63 +32,83 @@ public class PermissiblePEX extends PermissibleBase {
     protected Player player = null;
     protected boolean strictMode = false;
 
-    protected PermissiblePEX(ServerOperator opable, boolean disableUnmatched) {
+    protected PermissiblePEX(Player opable, boolean disableUnmatched) {
         super(opable);
 
         this.strictMode = disableUnmatched;
-
-        if (opable instanceof Player) {
-            this.player = (Player) opable;
-        }
+        this.player = opable;
     }
 
     public static void inject(Player player, boolean strictMode) {
         if (player.hasPermission("permissionsex.handler.injected")) { // already injected
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Already injected ======================");
             return;
         }
 
         try {
-            Class humanEntity = Class.forName("org.bukkit.craftbukkit.entity.CraftHumanEntity");
-
-            if (player.getClass().isAssignableFrom(humanEntity)) { // Not CraftBukkit?
-                return;
+            Permissible permissible = new PermissiblePEX(player, strictMode);
+            
+            if (player.getClass().getName().contains("Spout")) { // we have spout installed
+                Logger.getLogger("Minecraft").warning("[PermissionsEx] Spout server plugin detected. Taking additional measures.");
+                injectSpout(player, permissible);
+            } else {
+                injectCraftBukkit(player, permissible);
             }
-
-            Field permField = humanEntity.getDeclaredField("perm");
-            // Make it public for reflection
-            permField.setAccessible(true);
-
-            PermissibleBase oldBase = (PermissibleBase) permField.get(player);
-            PermissibleBase newBase = new PermissiblePEX(player, strictMode);
-
-            // Copy permissions and attachments from old Permissible
-
-            // Attachments
-            Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
-            attachmentField.setAccessible(true);
-            attachmentField.set(newBase, attachmentField.get(oldBase));
-
-            // Permissions
-            Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
-            permissionsField.setAccessible(true);
-            permissionsField.set(newBase, permissionsField.get(oldBase));
-
-            // Inject permissible
-            permField.set(player, newBase);
+            
+            permissible.recalculatePermissions();
 
             Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " injected");
         } catch (Throwable e) {
             Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
+            e.printStackTrace();
         }
+    }
+
+    protected static void injectCraftBukkit(Player player, Permissible permissible) throws Throwable {
+        Class humanEntity = Class.forName("org.bukkit.craftbukkit.entity.CraftHumanEntity");
+
+        if (!player.getClass().isAssignableFrom(humanEntity)) { // Not CraftBukkit?
+            Logger.getLogger("Minecraft").warning("[PermissionsEx] CraftBukkit required for injection");
+            return;
+        }
+
+        Field permField = humanEntity.getDeclaredField("perm");
+        // Make it public for reflection
+        permField.setAccessible(true);
+
+        PermissibleBase oldBase = (PermissibleBase) permField.get(player);
+
+        // Copy permissions and attachments from old Permissible
+
+        // Attachments
+        Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
+        attachmentField.setAccessible(true);
+        attachmentField.set(permissible, attachmentField.get(oldBase));
+
+        // Permissions
+        Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
+        permissionsField.setAccessible(true);
+        permissionsField.set(permissible, permissionsField.get(oldBase));
+        
+        // Inject permissible
+        permField.set(player, permissible);
+    }
+
+    protected static void injectSpout(Player player, Permissible permissible) throws Throwable {
+        Class humanEntity = Class.forName("org.getspout.spout.player.SpoutCraftPlayer");        
+        Field permField = humanEntity.getDeclaredField("perm");
+        permField.setAccessible(true);
+        
+        permField.set(player, permissible);
     }
 
     @Override
     public boolean hasPermission(String inName) {
-        if (inName.equals("permissionsex.handler.injected")) {
-            return true;
-        }
-
         if (this.player != null) {
+            if (inName.equals("permissionsex.handler.injected")) {
+                return true;
+            }
+
             try {
                 PermissionUser user = PermissionsEx.getUser(this.player);
                 if (user != null) {
@@ -104,7 +124,8 @@ public class PermissiblePEX extends PermissibleBase {
                         return user.explainExpression(expression);
                     }
                 }
-            } catch (Throwable e) { // pex failed
+            } catch (Throwable e) { // pex failed    
+                e.printStackTrace();
             }
         }
 
@@ -120,6 +141,7 @@ public class PermissiblePEX extends PermissibleBase {
                     return true;
                 }
             } catch (Throwable e) { // pex failed
+                e.printStackTrace();
             }
         }
 
