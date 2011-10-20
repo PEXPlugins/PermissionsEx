@@ -136,10 +136,17 @@ public class PermissionsEx extends JavaPlugin {
             }
         }
     }
+    
+    public static boolean isAvailable(){
+        Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
+        
+        return !(plugin == null || !(plugin instanceof PermissionsEx) || ((PermissionsEx) plugin).permissionsManager == null);
+    }
 
     public static PermissionManager getPermissionManager() {
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
-        if (plugin == null || !(plugin instanceof PermissionsEx) || ((PermissionsEx) plugin).permissionsManager == null) {
+        
+        if (!isAvailable()) {
             throw new RuntimeException("Permissions manager is not accessable. Is the PermissionsEx plugin enabled?");
         }
 

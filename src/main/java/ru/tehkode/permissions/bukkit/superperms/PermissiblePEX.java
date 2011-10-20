@@ -24,6 +24,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
@@ -46,14 +47,13 @@ public class PermissiblePEX extends PermissibleBase {
 
         try {
             Permissible permissible = new PermissiblePEX(player, strictMode);
-            
+
             if (player.getClass().getName().contains("Spout")) { // we have spout installed
-                Logger.getLogger("Minecraft").warning("[PermissionsEx] Spout plugin detected. Taking additional measures.");
                 injectSpout(player, permissible);
             } else {
                 injectCraftBukkit(player, permissible);
             }
-            
+
             permissible.recalculatePermissions();
 
             Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " injected");
@@ -88,72 +88,56 @@ public class PermissiblePEX extends PermissibleBase {
         Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
         permissionsField.setAccessible(true);
         permissionsField.set(permissible, permissionsField.get(oldBase));
-        
+
         // Inject permissible
         permField.set(player, permissible);
     }
 
     protected static void injectSpout(Player player, Permissible permissible) throws Throwable {
-        Class humanEntity = Class.forName("org.getspout.spout.player.SpoutCraftPlayer");        
+        Class humanEntity = Class.forName("org.getspout.spout.player.SpoutCraftPlayer");
         Field permField = humanEntity.getDeclaredField("perm");
         permField.setAccessible(true);
-        
+
         permField.set(player, permissible);
     }
 
     @Override
     public boolean hasPermission(String inName) {
-        if (this.player != null) {
-            if (inName.equals("permissionsex.handler.injected")) {
+        if (inName.equals("permissionsex.handler.injected")) {
+            return PermissionsEx.isAvailable();
+        }
+
+        try {
+            PermissionUser user = PermissionsEx.getUser(this.player);
+            if (user == null) {
+                return super.hasPermission(inName);
+            }
+
+            if (!strictMode && super.hasPermission(inName)) {
+                if (user.isDebug()) {
+                    Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", found by superperms");
+                }
+
                 return true;
             }
 
-            try {
-                PermissionUser user = PermissionsEx.getUser(this.player);
-                if (user != null) {
 
+            String expression = user.getMatchingExpression(inName, player.getWorld().getName());
 
-                    String expression = user.getMatchingExpression(inName, player.getWorld().getName());
-
-                    if (user.isDebug()) {
-                        Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
-                    }
-
-                    if (expression != null || strictMode) {
-                        return user.explainExpression(expression);
-                    }
-                }
-            } catch (Throwable e) { // pex failed    
-                e.printStackTrace();
+            if (user.isDebug()) {
+                Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
             }
+
+            return user.explainExpression(expression);
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
 
-        return super.hasPermission(inName);
-    }
-
-    @Override
-    public boolean isPermissionSet(String name) {
-        if (this.player != null) {
-            try {
-                PermissionUser user = PermissionsEx.getUser(this.player);
-                if (user != null && user.getMatchingExpression(name, player.getWorld().getName()) != null) {
-                    return true;
-                }
-            } catch (Throwable e) { // pex failed
-                e.printStackTrace();
-            }
-        }
-
-        return super.isPermissionSet(name);
+        return false;
     }
 
     @Override
     public boolean hasPermission(Permission perm) {
         return this.hasPermission(perm.getName().toLowerCase());
-    }
-
-    @Override
-    public boolean isPermissionSet(Permission perm) {
-        return this.isPermissionSet(perm.getName().toLowerCase());
     }
 }
