@@ -41,7 +41,6 @@ public class PermissiblePEX extends PermissibleBase {
 
     public static void inject(Player player, boolean strictMode) {
         if (player.hasPermission("permissionsex.handler.injected")) { // already injected
-            Logger.getLogger("Minecraft").info("[PermissionsEx] Already injected ======================");
             return;
         }
 
@@ -49,7 +48,7 @@ public class PermissiblePEX extends PermissibleBase {
             Permissible permissible = new PermissiblePEX(player, strictMode);
             
             if (player.getClass().getName().contains("Spout")) { // we have spout installed
-                Logger.getLogger("Minecraft").warning("[PermissionsEx] Spout server plugin detected. Taking additional measures.");
+                Logger.getLogger("Minecraft").warning("[PermissionsEx] Spout plugin detected. Taking additional measures.");
                 injectSpout(player, permissible);
             } else {
                 injectCraftBukkit(player, permissible);
