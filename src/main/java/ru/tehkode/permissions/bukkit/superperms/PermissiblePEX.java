@@ -62,7 +62,7 @@ public class PermissiblePEX extends PermissibleBase {
             
             permissible.recalculatePermissions();
             
-            Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " injected");
+            Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
         } catch (Throwable e) {
             Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
             e.printStackTrace();
@@ -71,12 +71,7 @@ public class PermissiblePEX extends PermissibleBase {
     
     protected static void injectCraftBukkit(Player player, Permissible permissible) throws Throwable {
         Class humanEntity = Class.forName("org.bukkit.craftbukkit.entity.CraftHumanEntity");
-        
-        if (!player.getClass().isAssignableFrom(humanEntity)) { // Not CraftBukkit?
-            Logger.getLogger("Minecraft").warning("[PermissionsEx] CraftBukkit required for injection");
-            return;
-        }
-        
+                
         Field permField = humanEntity.getDeclaredField("perm");
         // Make it public for reflection
         permField.setAccessible(true);
