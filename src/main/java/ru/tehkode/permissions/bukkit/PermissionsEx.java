@@ -112,7 +112,9 @@ public class PermissionsEx extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        this.permissionsManager.reset();
+		if(this.permissionsManager != null){
+			this.permissionsManager.reset();
+		}
 
         this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
 
@@ -207,7 +209,7 @@ public class PermissionsEx extends JavaPlugin {
         return configuration;
     }
 
-    protected class PlayerEventsListener extends PlayerListener {
+    public class PlayerEventsListener extends PlayerListener {
 
         @Override
         public void onPlayerQuit(PlayerQuitEvent event) {
