@@ -284,11 +284,12 @@ public class SQLEntity extends PermissionEntity {
     public void setPermissions(String[] permissions, String world) {
         if (world == null) {
             world = "";
-        }
-
+		}
+		
         this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), this.type.ordinal(), world);
-        for (String permission : permissions) {
-            this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permission, world, this.type.ordinal());
+		
+		for( int i = permissions.length - 1 ; i >= 0 ; i--) { // insert in reverse order
+            this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permissions[i], world, this.type.ordinal());
         }
 
         if (this.isVirtual()) {
