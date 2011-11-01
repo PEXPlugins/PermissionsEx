@@ -37,7 +37,7 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 /**
  *
- * @author code
+ * @author t3hk0d3
  */
 public abstract class PermissionBackend {
     

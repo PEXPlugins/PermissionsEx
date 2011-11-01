@@ -32,7 +32,7 @@ import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 /**
  *
- * @author code
+ * @author t3hk0d3
  */
 public class PermissionManager {
 
