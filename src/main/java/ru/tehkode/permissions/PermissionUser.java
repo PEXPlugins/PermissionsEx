@@ -927,7 +927,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	}
 
 	protected boolean checkMembership(PermissionGroup group, String worldName) {
-		int groupLifetime = this.getOptionInteger("group-" + group.getName() + "-until", worldName, 0);
+		int groupLifetime = this.getOwnOptionInteger("group-" + group.getName() + "-until", worldName, 0);
 
 		if (groupLifetime > 0 && groupLifetime < System.currentTimeMillis() / 1000) { // check for expiration
 			this.setOption("group-" + group.getName() + "-until", null, worldName); // remove option
