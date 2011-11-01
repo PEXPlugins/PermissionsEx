@@ -536,9 +536,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	public void addPermission(String permission, String worldName) {
 		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
 
-		if (!permissions.contains(permission)) {
-			permissions.add(0, permission);
+		if (permissions.contains(permission)) {
+			permissions.remove(permission);
 		}
+		
+		permissions.add(0, permission);
 
 		this.setPermissions(permissions.toArray(new String[0]), worldName);
 	}
