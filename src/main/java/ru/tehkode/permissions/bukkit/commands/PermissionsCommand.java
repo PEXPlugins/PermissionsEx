@@ -155,8 +155,8 @@ public abstract class PermissionsCommand implements CommandListener {
     }
 
     protected String autoCompleteWorldName(String worldName, String argName) {
-        if (worldName == null) {
-            return worldName;
+        if (worldName == null || worldName.isEmpty()) {
+            return null;
         }
 
         List<String> worlds = new LinkedList<String>();

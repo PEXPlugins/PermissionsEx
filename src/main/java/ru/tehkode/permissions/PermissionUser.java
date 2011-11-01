@@ -49,14 +49,12 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void initialize() {
-		if(this.manager.getBackend().isCreateUserRecords() && this.isVirtual()){
+		if (this.manager.getBackend().isCreateUserRecords() && this.isVirtual()) {
 			this.setGroups(this.getGroups(null), null);
-			
+
 			this.save();
 		}
 	}
-	
-	
 
 	/**
 	 * Return non-inherited user prefix.
@@ -229,6 +227,10 @@ public abstract class PermissionUser extends PermissionEntity {
 
 			PermissionGroup group = this.manager.getGroup(groupName);
 
+			if (!this.checkMembership(group, worldName)) {
+				continue;
+			}
+
 			if (!groups.contains(group)) {
 				groups.add(group);
 			}
@@ -382,6 +384,14 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	public void addGroup(PermissionGroup group) {
 		this.addGroup(group, null);
+	}
+
+	public void addGroup(String groupName, String worldName, long lifetime) {
+		this.addGroup(groupName, worldName);
+
+		if (lifetime > 0) {
+			this.setOption("group-" + groupName + "-until", Long.toString(System.currentTimeMillis() / 1000 + lifetime), worldName);
+		}
 	}
 
 	/**
@@ -713,9 +723,9 @@ public abstract class PermissionUser extends PermissionEntity {
 			}
 
 			// Common permissions
-            if(!worldInheritance) { // skip common world permissions if we are inside world-inheritance tree
-                getInheritedPermissions(null, permissions, false, true);
-            }
+			if (!worldInheritance) { // skip common world permissions if we are inside world-inheritance tree
+				getInheritedPermissions(null, permissions, false, true);
+			}
 		}
 
 		// Group inhertance
@@ -774,7 +784,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 		if (!this.cachedPrefix.containsKey(worldName)) {
 			String localPrefix = this.getOwnPrefix(worldName);
-            
+
 			if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
 				// World-inheritance
 				for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
@@ -914,5 +924,18 @@ public abstract class PermissionUser extends PermissionEntity {
 		}
 
 		return super.explainExpression(expression);
+	}
+
+	protected boolean checkMembership(PermissionGroup group, String worldName) {
+		int groupLifetime = this.getOptionInteger("group-" + group.getName() + "-until", worldName, 0);
+
+		if (groupLifetime > 0 && groupLifetime < System.currentTimeMillis() / 1000) { // check for expiration
+			this.setOption("group-" + group.getName() + "-until", null, worldName); // remove option
+			this.removeGroup(group, worldName); // remove membership
+			// @TODO Make notification of player about expired memebership
+			return false;
+		}
+
+		return true;
 	}
 }
