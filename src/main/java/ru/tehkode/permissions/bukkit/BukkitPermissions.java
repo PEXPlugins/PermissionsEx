@@ -23,148 +23,126 @@ import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
-import org.bukkit.event.player.PlayerPortalEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.event.server.ServerListener;
+import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.config.ConfigurationNode;
-import ru.tehkode.permissions.PermissionGroup;
-import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
-import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 public class BukkitPermissions {
 
-    protected static final Logger logger = Logger.getLogger("Minecraft");
-    protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
-    protected Plugin plugin;
-    protected boolean strictMode = false;
+	protected static final Logger logger = Logger.getLogger("Minecraft");
+	protected Map<Player, PermissionAttachment> attachments = new HashMap<Player, PermissionAttachment>();
+	protected Plugin plugin;
+	protected boolean strictMode = false;
+	protected boolean enableParentNodes = true;
+	protected Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
 
-    public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
-        this.plugin = plugin;
+	public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
+		this.plugin = plugin;
 
-        if (!config.getBoolean("enable", true)) {
-            logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
-            return;
-        }
+		if (!config.getBoolean("enable", true)) {
+			logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
+			return;
+		}
 
-        this.strictMode = config.getBoolean("strict-mode", strictMode);
+		this.strictMode = config.getBoolean("strict-mode", strictMode);
+		this.enableParentNodes = config.getBoolean("parent-nodes", this.enableParentNodes);
 
-        this.registerEvents();
+		this.registerEvents();
 
-        logger.info("[PermissionsEx] Superperms support enabled.");
-    }
+		if (this.enableParentNodes) {
+			this.calculateParentPermissions();
+		}
 
-    private void registerEvents() {
-        PluginManager manager = plugin.getServer().getPluginManager();
+		logger.info("[PermissionsEx] Superperms support enabled.");
+	}
 
-        PlayerEvents playerEventListener = new PlayerEvents();
+	public Map<String, Map<String, Boolean>> getChildPermissions() {
+		return childPermissions;
+	}
 
-        manager.registerEvent(Event.Type.PLAYER_JOIN, playerEventListener, Event.Priority.Low, plugin);
-        manager.registerEvent(Event.Type.PLAYER_KICK, playerEventListener, Event.Priority.Low, plugin);
-        manager.registerEvent(Event.Type.PLAYER_QUIT, playerEventListener, Event.Priority.Low, plugin);
+	public boolean isStrictMode() {
+		return strictMode;
+	}
 
-        manager.registerEvent(Event.Type.PLAYER_RESPAWN, playerEventListener, Event.Priority.Low, plugin);
-        manager.registerEvent(Event.Type.PLAYER_TELEPORT, playerEventListener, Event.Priority.Low, plugin);
-        manager.registerEvent(Event.Type.PLAYER_PORTAL, playerEventListener, Event.Priority.Low, plugin);
-        manager.registerEvent(Event.Type.PLAYER_CHANGED_WORLD, playerEventListener, Event.Priority.Low, plugin);
+	public boolean isEnableParentNodes() {
+		return enableParentNodes;
+	}
 
-        manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
-    }
+	public Plugin getPlugin() {
+		return plugin;
+	}
 
-    public void updatePermissions(Player player) {
-        this.updatePermissions(player, null);
-    }
+	protected void calculateParentPermissions() {
+		for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
+			for (Map.Entry<String, Boolean> child : permission.getChildren().entrySet()) {
+				Map<String, Boolean> map = this.childPermissions.get(child.getKey().toLowerCase());
+				if (map == null) {
+					this.childPermissions.put(child.getKey().toLowerCase(), map = new HashMap<String, Boolean>());
+				}
 
-    public void updatePermissions(Player player, String world) {
-        if (player == null || !this.plugin.isEnabled()) {
-            return;
-        }
+				map.put(permission.getName(), child.getValue());
+			}
+		}
+	}
 
-        PermissiblePEX.inject(player, strictMode);
-    }
+	private void registerEvents() {
+		PluginManager manager = plugin.getServer().getPluginManager();
 
-    public void updateAllPlayers() {
-        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            updatePermissions(player);
-        }
-    }
+		manager.registerEvent(Event.Type.PLAYER_JOIN, new PlayerEvents(), Event.Priority.Low, plugin);
 
-    protected class PlayerEvents extends PlayerListener {
+		if (this.enableParentNodes) {
+			ServerListener serverEvents = new ServerEvents();
 
-        @Override
-        public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-            updatePermissions(event.getPlayer());
-        }
+			manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverEvents, Event.Priority.Low, plugin);
+			manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverEvents, Event.Priority.Low, plugin);
+		}
+	}
 
-        @Override
-        public void onPlayerJoin(PlayerJoinEvent event) {
-            updatePermissions(event.getPlayer());
-        }
+	public void updatePermissions(Player player) {
+		this.updatePermissions(player, null);
+	}
 
-        @Override
-        public void onPlayerPortal(PlayerPortalEvent event) { // will portal into another world
-            if (event.getTo() == null || event.getPlayer().getWorld().equals(event.getTo().getWorld())) { // only if were world actually changed
-                return;
-            }
+	public void updatePermissions(Player player, String world) {
+		if (player == null || !this.plugin.isEnabled()) {
+			return;
+		}
 
-            updatePermissions(event.getPlayer(), event.getTo().getWorld().getName());
-        }
+		PermissiblePEX.inject(player, this);
+	}
 
-        @Override
-        public void onPlayerRespawn(PlayerRespawnEvent event) { // can be respawned in another world
-            updatePermissions(event.getPlayer(), event.getRespawnLocation().getWorld().getName());
-        }
+	public void updateAllPlayers() {
+		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+			updatePermissions(player);
+		}
+	}
 
-        @Override
-        public void onPlayerTeleport(PlayerTeleportEvent event) { // can be teleported into another world
-            if (!event.getFrom().getWorld().equals(event.getTo().getWorld())) { // only if world actually changed
-                updatePermissions(event.getPlayer(), event.getTo().getWorld().getName());
-            }
-        }
+	protected class PlayerEvents extends PlayerListener {
 
-        @Override
-        public void onPlayerQuit(PlayerQuitEvent event) {
-            attachments.remove(event.getPlayer());
-        }
+		@Override
+		public void onPlayerJoin(PlayerJoinEvent event) {
+			updatePermissions(event.getPlayer());
+		}
+	}
 
-        @Override
-        public void onPlayerKick(PlayerKickEvent event) {
-            attachments.remove(event.getPlayer());
-        }
-    }
+	protected class ServerEvents extends ServerListener {
 
-    protected class PEXEvents extends CustomEventListener {
+		@Override
+		public void onPluginDisable(PluginDisableEvent event) {
+			calculateParentPermissions();
+		}
 
-        @Override
-        public void onCustomEvent(Event event) {
-            if (event instanceof PermissionEntityEvent) {
-                PermissionEntityEvent pee = (PermissionEntityEvent) event;
-
-                if (pee.getEntity() instanceof PermissionUser) { // update user only
-                    updatePermissions(Bukkit.getServer().getPlayer(pee.getEntity().getName()));
-                } else if (pee.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-                    for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(pee.getEntity().getName(), true)) {
-                        updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
-                    }
-                }
-            } else if (event instanceof PermissionSystemEvent) {
-                if (((PermissionSystemEvent) event).getAction().equals(PermissionSystemEvent.Action.DEBUGMODE_TOGGLE)) {
-                    return;
-                }
-
-                updateAllPlayers();
-            }
-        }
-    }
+		@Override
+		public void onPluginEnable(PluginEnableEvent event) {
+			calculateParentPermissions();
+		}
+	}
 }

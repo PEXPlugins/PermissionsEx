@@ -31,155 +31,194 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.bukkit.BukkitPermissions;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 public class PermissiblePEX extends PermissibleBase {
-    
-    protected Player player = null;
-    protected boolean strictMode = false;
-    protected boolean injectMetadata = true;
 
-    protected PermissiblePEX(Player opable, boolean disableUnmatched) {
-        super(opable);
-        
-        this.strictMode = disableUnmatched;
-        this.player = opable;
-    }
-    
-    public static void inject(Player player, boolean strictMode) {
-        if (player.hasPermission("permissionsex.handler.injected")) { // already injected
-            return;
-        }
-        
-        try {
-            Permissible permissible = new PermissiblePEX(player, strictMode);
-            
-            if (player.getClass().getName().contains("Spout")) { // we have spout installed
-                injectSpout(player, permissible);
-            } else {
-                injectCraftBukkit(player, permissible);
-            }
-            
-            permissible.recalculatePermissions();
-            
-            Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
-        } catch (Throwable e) {
-            Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
-            e.printStackTrace();
-        }
-    }
-    
-    protected static void injectCraftBukkit(Player player, Permissible permissible) throws Throwable {
-        Class humanEntity = Class.forName("org.bukkit.craftbukkit.entity.CraftHumanEntity");
-                
-        Field permField = humanEntity.getDeclaredField("perm");
-        // Make it public for reflection
-        permField.setAccessible(true);
-        
-        PermissibleBase oldBase = (PermissibleBase) permField.get(player);
+	protected Player player = null;
+	protected boolean strictMode = false;
+	protected boolean injectMetadata = true;
+	protected BukkitPermissions bridge;
 
-        // Copy permissions and attachments from old Permissible
+	protected PermissiblePEX(Player player, BukkitPermissions bridge) {
+		super(player);
 
-        // Attachments
-        Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
-        attachmentField.setAccessible(true);
-        attachmentField.set(permissible, attachmentField.get(oldBase));
+		this.bridge = bridge;
 
-        // Permissions
-        Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
-        permissionsField.setAccessible(true);
-        permissionsField.set(permissible, permissionsField.get(oldBase));
+		this.strictMode = bridge.isStrictMode();
+		this.player = player;
+	}
 
-        // Inject permissible
-        permField.set(player, permissible);
-    }
-    
-    protected static void injectSpout(Player player, Permissible permissible) throws Throwable {
-        Class humanEntity = Class.forName("org.getspout.spout.player.SpoutCraftPlayer");
-        Field permField = humanEntity.getDeclaredField("perm");
-        permField.setAccessible(true);
-        
-        permField.set(player, permissible);
-    }
-    
-    @Override
-    public boolean hasPermission(String inName) {
-        if (inName.equals("permissionsex.handler.injected")) {
-            return PermissionsEx.isAvailable();
-        }
-        
-        try {
-            PermissionUser user = PermissionsEx.getUser(this.player);
-            if (user == null) {
-                return super.hasPermission(inName);
-            }
-            
-            if (!strictMode && super.hasPermission(inName)) {
-                if (user.isDebug()) {
-                    Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", found by superperms");
-                }
-                
-                return true;
-            }
-            
-            return user.has(inName, player.getWorld().getName());
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        
-        return false;
-    }
-    
-    @Override
-    public boolean hasPermission(Permission perm) {
-        return this.hasPermission(perm.getName().toLowerCase());
-    }
-    
-    @Override
-    public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-        if (!this.injectMetadata) {
-            return super.getEffectivePermissions();
-        }
-        
-        Set<PermissionAttachmentInfo> infoSet = super.getEffectivePermissions();
+	public static void inject(Player player, BukkitPermissions bridge) {
+		if (player.hasPermission("permissionsex.handler.injected")) { // already injected
+			return;
+		}
 
-        // Injecting metadata into output
-        try {
-            PermissionUser user = PermissionsEx.getUser(this.player);
-            String world = this.player.getWorld().getName();
-            
-            PermissionAttachment attachment = new PermissionAttachment(PermissionsEx.getPlugin(), this.player);
+		try {
+			Permissible permissible = new PermissiblePEX(player, bridge);
 
-            // Groups
-            for (PermissionGroup group : user.getGroups(world)) {
-                infoSet.add(new PermissionAttachmentInfo(this.player, "groups." + group.getName(), attachment, true));
-            }
+			if (player.getClass().getName().contains("Spout")) { // we have spout installed
+				injectSpout(player, permissible);
+			} else {
+				injectCraftBukkit(player, permissible);
+			}
 
-            // Options
-            for (Map.Entry<String, String> option : user.getOptions(world).entrySet()) {
-                infoSet.add(new PermissionAttachmentInfo(this.player, "options." + option.getKey() + "." + option.getValue(), attachment, true));
-            }
+			permissible.recalculatePermissions();
 
-            // Prefix and Suffix
-            infoSet.add(new PermissionAttachmentInfo(this.player, "prefix." + user.getPrefix(world), attachment, true));
-            infoSet.add(new PermissionAttachmentInfo(this.player, "suffix." + user.getSuffix(world), attachment, true));
+			Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
+		} catch (Throwable e) {
+			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
+			e.printStackTrace();
+		}
+	}
 
-            // Permissions
-            for (Permission perm : Bukkit.getServer().getPluginManager().getPermissions()) {
-                if (super.isPermissionSet(perm)) {
-                    continue;
-                }
-                
-                String expression = user.getMatchingExpression(perm.getName(), world);
-                if (expression != null) {
-                    infoSet.add(new PermissionAttachmentInfo(this.player, perm.getName(), attachment, user.explainExpression(expression)));
-                }
-            }
-            
-        } catch (Throwable e) {
-            // do nothing
-        }
-        
-        return infoSet;
-    }
+	protected static void injectCraftBukkit(Player player, Permissible permissible) throws Throwable {
+		Class humanEntity = Class.forName("org.bukkit.craftbukkit.entity.CraftHumanEntity");
+
+		Field permField = humanEntity.getDeclaredField("perm");
+		// Make it public for reflection
+		permField.setAccessible(true);
+
+		PermissibleBase oldBase = (PermissibleBase) permField.get(player);
+
+		// Copy permissions and attachments from old Permissible
+
+		// Attachments
+		Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
+		attachmentField.setAccessible(true);
+		attachmentField.set(permissible, attachmentField.get(oldBase));
+
+		// Permissions
+		Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
+		permissionsField.setAccessible(true);
+		permissionsField.set(permissible, permissionsField.get(oldBase));
+
+		// Inject permissible
+		permField.set(player, permissible);
+	}
+
+	protected static void injectSpout(Player player, Permissible permissible) throws Throwable {
+		Class humanEntity = Class.forName("org.getspout.spout.player.SpoutCraftPlayer");
+		Field permField = humanEntity.getDeclaredField("perm");
+		permField.setAccessible(true);
+
+		permField.set(player, permissible);
+	}
+
+	@Override
+	public boolean hasPermission(String inName) {
+		if (inName.equals("permissionsex.handler.injected")) {
+			return PermissionsEx.isAvailable();
+		}
+
+		String worldName = player.getWorld().getName();
+
+		try {
+			PermissionUser user = PermissionsEx.getUser(this.player);
+			if (user == null) {
+				return super.hasPermission(inName);
+			}
+
+			// Check using PEX
+			String expression = user.getMatchingExpression(inName.toLowerCase(), worldName);
+
+			if (expression != null || this.strictMode) {
+				if (user.isDebug()) {
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
+				}
+
+				return user.explainExpression(expression);
+			}
+
+			if (this.bridge.isEnableParentNodes()) {
+				// check using parent nodes
+				Map<String, Boolean> parentNodes = this.bridge.getChildPermissions().get(inName.toLowerCase());
+
+				if (parentNodes != null) {
+					for (String parentPermission : parentNodes.keySet()) {
+						if (user.has(parentPermission, worldName)) {
+							if (user.isDebug()) {
+								Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : " found from \"" + parentPermission + "\""));
+							}
+
+							return parentNodes.get(parentPermission).booleanValue();
+						}
+					}
+				}
+			}
+
+			// Pass check to superperms
+			if (super.hasPermission(inName)) {
+				if (user.isDebug()) {
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", found in superperms");
+				}
+
+				return true;
+			}
+
+			// No permission found
+			if (user.isDebug()) {
+				Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", no permission found");
+			}
+		} catch (Throwable e) {
+			// This should stay so if something will gone wrong user have chance to understand whats wrong actually
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean hasPermission(Permission perm) {
+		return this.hasPermission(perm.getName().toLowerCase());
+	}
+
+	@Override
+	public Set<PermissionAttachmentInfo> getEffectivePermissions() {
+		if (!this.injectMetadata) {
+			return super.getEffectivePermissions();
+		}
+
+		Set<PermissionAttachmentInfo> infoSet = super.getEffectivePermissions();
+
+		// Injecting metadata into output
+		try {
+			PermissionUser user = PermissionsEx.getUser(this.player);
+			String world = this.player.getWorld().getName();
+
+			PermissionAttachment attachment = new PermissionAttachment(PermissionsEx.getPlugin(), this.player);
+
+			// Groups
+			for (PermissionGroup group : user.getGroups(world)) {
+				infoSet.add(new PermissionAttachmentInfo(this.player, "groups." + group.getName(), attachment, true));
+			}
+
+			// Options
+			for (Map.Entry<String, String> option : user.getOptions(world).entrySet()) {
+				infoSet.add(new PermissionAttachmentInfo(this.player, "options." + option.getKey() + "." + option.getValue(), attachment, true));
+			}
+
+			// Prefix and Suffix
+			infoSet.add(new PermissionAttachmentInfo(this.player, "prefix." + user.getPrefix(world), attachment, true));
+			infoSet.add(new PermissionAttachmentInfo(this.player, "suffix." + user.getSuffix(world), attachment, true));
+
+			// Permissions
+			for (Permission perm : Bukkit.getServer().getPluginManager().getPermissions()) {
+				if (super.isPermissionSet(perm)) {
+					continue;
+				}
+
+				String expression = user.getMatchingExpression(perm.getName(), world);
+				if (expression != null) {
+					infoSet.add(new PermissionAttachmentInfo(this.player, perm.getName(), attachment, user.explainExpression(expression)));
+				}
+			}
+
+		} catch (Throwable e) {
+			// do nothing
+		}
+
+		return infoSet;
+	}
 }
