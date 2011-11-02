@@ -137,7 +137,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 				if (parentNodes != null) {
 					for (String parentPermission : parentNodes.keySet()) {
-						if (user.has(parentPermission, worldName)) {
+						if (this.hasPermission(parentPermission)) {
 							if (user.isDebug()) {
 								Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : " found from \"" + parentPermission + "\""));
 							}
