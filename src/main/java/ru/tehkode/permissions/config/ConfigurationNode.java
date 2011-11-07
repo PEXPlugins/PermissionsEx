@@ -225,11 +225,14 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 			Map<String, ConfigurationNode> nodes =
 					new HashMap<String, ConfigurationNode>();
 
-			for (Map.Entry<String, Object> entry : ((Map<String, Object>) o).entrySet()) {
+			for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) o).entrySet()) {
+                                if (!(entry.getKey() instanceof String))
+                                    continue;
+
 				if (entry.getValue() instanceof ConfigurationNode) {
-					nodes.put(entry.getKey(), (ConfigurationNode) entry.getValue());
+					nodes.put((String) entry.getKey(), (ConfigurationNode) entry.getValue());
 				} else if (entry.getValue() instanceof Map) {
-					nodes.put(entry.getKey(), new ConfigurationNode((Map<String, Object>) entry.getValue()));
+					nodes.put((String) entry.getKey(), new ConfigurationNode((Map<String, Object>) entry.getValue()));
 				}
 			}
 
