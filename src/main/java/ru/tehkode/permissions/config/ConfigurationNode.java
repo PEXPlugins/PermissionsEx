@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Iterator;
 
 /**
  *
@@ -128,6 +129,42 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 			if (val == null) {
 				return null;
 			}
+
+                        // Check, if we didn't get some Integers, Doubles
+                        // for our mapping stuff.
+
+                        else if (val instanceof Map) {
+                           Map<String, Object> toAdd = new HashMap<String, Object>();
+                           Iterator it = ((Map<Object, Object>) val).keySet().iterator();
+                           while ( it.hasNext())
+                           {
+                               Object Key = it.next();
+                               Map<Object, Object> itemMap = (Map<Object,Object>) val;
+                               String item;
+                               try {
+                                   item = (String) Key;
+                               }
+                               catch (ClassCastException e)
+                               {
+                                   Object Value;
+                                   if (e.getMessage().contains("Integer"))
+                                   {
+                                       Value = itemMap.get(Key);
+                                       item = Integer.toString((Integer) Key);
+                                       toAdd.put(item, Value);
+                                       it.remove();
+                                   }
+                                   else if (e.getMessage().contains("Double"))
+                                   {
+                                       it.remove();
+                                   }
+                               }
+
+                           }
+                           for (String Key : toAdd.keySet())
+                                ((Map<String, Object>) val).put(Key, toAdd.get(Key));
+
+                        }
 			return val;
 		}
 
@@ -225,14 +262,12 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 			Map<String, ConfigurationNode> nodes =
 					new HashMap<String, ConfigurationNode>();
 
-			for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) o).entrySet()) {
-                                if (!(entry.getKey() instanceof String))
-                                    continue;
+			for (Map.Entry<String, Object> entry : ((Map<String, Object>) o).entrySet()) {
 
 				if (entry.getValue() instanceof ConfigurationNode) {
-					nodes.put((String) entry.getKey(), (ConfigurationNode) entry.getValue());
+					nodes.put(entry.getKey() , (ConfigurationNode) entry.getValue());
 				} else if (entry.getValue() instanceof Map) {
-					nodes.put((String) entry.getKey(), new ConfigurationNode((Map<String, Object>) entry.getValue()));
+					nodes.put(entry.getKey() , new ConfigurationNode((Map<String, Object>) entry.getValue()));
 				}
 			}
 
