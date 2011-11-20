@@ -19,6 +19,7 @@
 package ru.tehkode.permissions.bukkit.superperms;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -40,6 +41,7 @@ public class PermissiblePEX extends PermissibleBase {
 	protected boolean strictMode = false;
 	protected boolean injectMetadata = true;
 	protected BukkitPermissions bridge;
+	protected Map<String, Boolean> cache = new HashMap<String, Boolean>();
 
 	protected PermissiblePEX(Player player, BukkitPermissions bridge) {
 		super(player);
@@ -66,7 +68,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 			permissible.recalculatePermissions();
 
-			Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
+			// Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
 		} catch (Throwable e) {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
 			e.printStackTrace();
@@ -107,25 +109,34 @@ public class PermissiblePEX extends PermissibleBase {
 	}
 
 	@Override
-	public boolean hasPermission(String inName) {
-		if (inName.equals("permissionsex.handler.injected")) {
-			return PermissionsEx.isAvailable();
+	public boolean hasPermission(String permission) {
+		String worldName = player.getWorld().getName();
+		String cid = worldName + ":" + permission;
+		
+		if (!this.cache.containsKey(cid)) {
+			this.cache.put(cid, this.performCheck(permission, worldName));
 		}
 
-		String worldName = player.getWorld().getName();
+		return this.cache.get(cid);
+	}
+
+	public boolean performCheck(String permission, String worldName) {
+		if (permission.equals("permissionsex.handler.injected")) {
+			return PermissionsEx.isAvailable();
+		}
 
 		try {
 			PermissionUser user = PermissionsEx.getUser(this.player);
 			if (user == null) {
-				return super.hasPermission(inName);
+				return super.hasPermission(permission);
 			}
 
 			// Check using PEX
-			String expression = user.getMatchingExpression(inName.toLowerCase(), worldName);
+			String expression = user.getMatchingExpression(permission.toLowerCase(), worldName);
 
 			if (expression != null || this.strictMode) {
 				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
 				}
 
 				return user.explainExpression(expression);
@@ -133,13 +144,13 @@ public class PermissiblePEX extends PermissibleBase {
 
 			if (this.bridge.isEnableParentNodes()) {
 				// check using parent nodes
-				Map<String, Boolean> parentNodes = this.bridge.getChildPermissions().get(inName.toLowerCase());
+				Map<String, Boolean> parentNodes = this.bridge.getChildPermissions().get(permission.toLowerCase());
 
 				if (parentNodes != null) {
 					for (String parentPermission : parentNodes.keySet()) {
 						if (this.hasPermission(parentPermission)) {
 							if (user.isDebug()) {
-								Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", " + (expression == null ? "no permission found" : " found from \"" + parentPermission + "\""));
+								Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : " found from \"" + parentPermission + "\""));
 							}
 
 							return parentNodes.get(parentPermission).booleanValue();
@@ -149,9 +160,9 @@ public class PermissiblePEX extends PermissibleBase {
 			}
 
 			// Pass check to superperms
-			if (super.hasPermission(inName)) {
+			if (super.hasPermission(permission)) {
 				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", found in superperms");
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", found in superperms");
 				}
 
 				return true;
@@ -159,7 +170,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 			// No permission found
 			if (user.isDebug()) {
-				Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + inName + "\", no permission found");
+				Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", no permission found");
 			}
 		} catch (Throwable e) {
 			// This should stay so if something will gone wrong user have chance to understand whats wrong actually
@@ -167,6 +178,17 @@ public class PermissiblePEX extends PermissibleBase {
 		}
 
 		return false;
+	}
+
+	@Override
+	public void recalculatePermissions() {
+		super.recalculatePermissions();
+
+		System.out.println("Cache cleared!");
+		
+		if (this.cache != null) {
+			this.cache.clear();
+		}
 	}
 
 	@Override

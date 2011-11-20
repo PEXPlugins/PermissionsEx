@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -34,7 +35,11 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.config.ConfigurationNode;
+import ru.tehkode.permissions.PermissionGroup;
+import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
+import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 public class BukkitPermissions {
 
@@ -98,6 +103,8 @@ public class BukkitPermissions {
 		PluginManager manager = plugin.getServer().getPluginManager();
 
 		manager.registerEvent(Event.Type.PLAYER_JOIN, new PlayerEvents(), Event.Priority.Low, plugin);
+		
+		manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
 
 		if (this.enableParentNodes) {
 			ServerListener serverEvents = new ServerEvents();
@@ -108,15 +115,13 @@ public class BukkitPermissions {
 	}
 
 	public void updatePermissions(Player player) {
-		this.updatePermissions(player, null);
-	}
-
-	public void updatePermissions(Player player, String world) {
 		if (player == null || !this.plugin.isEnabled()) {
 			return;
 		}
 
 		PermissiblePEX.inject(player, this);
+
+		player.recalculatePermissions();
 	}
 
 	public void updateAllPlayers() {
@@ -143,6 +148,30 @@ public class BukkitPermissions {
 		@Override
 		public void onPluginEnable(PluginEnableEvent event) {
 			calculateParentPermissions();
+		}
+	}
+
+	protected class PEXEvents extends CustomEventListener {
+
+		@Override
+		public void onCustomEvent(Event event) {
+			if (event instanceof PermissionEntityEvent) {
+				PermissionEntityEvent pee = (PermissionEntityEvent) event;
+
+				if (pee.getEntity() instanceof PermissionUser) { // update user only
+					updatePermissions(Bukkit.getServer().getPlayer(pee.getEntity().getName()));
+				} else if (pee.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
+					for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(pee.getEntity().getName(), true)) {
+						updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
+					}
+				}
+			} else if (event instanceof PermissionSystemEvent) {
+				if(((PermissionSystemEvent)event).getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE){
+					return;
+				}
+				
+				updateAllPlayers();
+			}
 		}
 	}
 }
