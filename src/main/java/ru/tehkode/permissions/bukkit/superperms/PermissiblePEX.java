@@ -183,8 +183,6 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public void recalculatePermissions() {
 		super.recalculatePermissions();
-
-		System.out.println("Cache cleared!");
 		
 		if (this.cache != null) {
 			this.cache.clear();
