@@ -37,6 +37,5 @@ public @interface Command {
     String syntax();
     String description();
     String permission() default "";
-    String[] permissions() default {};
     boolean isPrimary() default false;
 }

@@ -36,7 +36,7 @@ public class PromotionCommands extends PermissionsCommand {
     syntax = "group <group> rank [rank] [ladder]",
     description = "Get or set <group> [rank] [ladder]",
     isPrimary = true,
-    permission = "permissions.groups.rank")
+    permission = "permissions.groups.rank.<group>")
     public void rankGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
         String groupName = this.autoCompleteGroupName(args.get("group"));
 
