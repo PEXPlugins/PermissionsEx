@@ -112,7 +112,7 @@ public class PermissiblePEX extends PermissibleBase {
 	public boolean hasPermission(String permission) {
 		String worldName = player.getWorld().getName();
 		String cid = worldName + ":" + permission;
-		
+
 		if (!this.cache.containsKey(cid)) {
 			this.cache.put(cid, this.performCheck(permission, worldName));
 		}
@@ -183,7 +183,7 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public void recalculatePermissions() {
 		super.recalculatePermissions();
-		
+
 		if (this.cache != null) {
 			this.cache.clear();
 		}
@@ -192,6 +192,22 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public boolean hasPermission(Permission perm) {
 		return this.hasPermission(perm.getName().toLowerCase());
+	}
+
+	@Override
+	public boolean isPermissionSet(String permission) {
+		PermissionUser user = PermissionsEx.getUser(this.player);
+
+		if (user != null && user.getMatchingExpression(permission, this.player.getWorld().getName()) != null) {
+			return true;
+		}
+
+		return super.hasPermission(permission);
+	}
+
+	@Override
+	public boolean isPermissionSet(Permission perm) {
+		return this.isPermissionSet(perm.getName().toLowerCase());
 	}
 
 	@Override
