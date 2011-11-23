@@ -45,8 +45,8 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 	public Map<String, Object> getRoot() {
 		return root;
 	}
-	
-	protected String[] splitPath(String path){
+
+	protected String[] splitPath(String path) {
 		String[] parts;
 		if (path.contains("`")) {
 			List<String> foundParts = new ArrayList<String>();
@@ -58,7 +58,7 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 		} else {
 			parts = path.split("\\.");
 		}
-		
+
 		return parts;
 	}
 
@@ -68,13 +68,13 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 			root.put(path, value);
 			return;
 		}
-		
-		if(value instanceof ConfigurationNode){
-			value = ((ConfigurationNode)value).root;
+
+		if (value instanceof ConfigurationNode) {
+			value = ((ConfigurationNode) value).root;
 		}
 
 		String[] parts = this.splitPath(path);
-		
+
 		Map<String, Object> node = root;
 
 		for (int i = 0; i < parts.length; i++) {
@@ -96,29 +96,29 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 		}
 
 	}
-	
+
 	@Override
 	public void removeProperty(String path) {
-        if (!path.contains(".")) {
-            root.remove(path);
-            return;
-        }
+		if (!path.contains(".")) {
+			root.remove(path);
+			return;
+		}
 
-        String[] parts = this.splitPath(path);
-        Map<String, Object> node = root;
+		String[] parts = this.splitPath(path);
+		Map<String, Object> node = root;
 
-        for (int i = 0; i < parts.length; i++) {
-            Object o = node.get(parts[i]);
+		for (int i = 0; i < parts.length; i++) {
+			Object o = node.get(parts[i]);
 
-            // Found our target!
-            if (i == parts.length - 1) {
-                node.remove(parts[i]);
-                return;
-            }
+			// Found our target!
+			if (i == parts.length - 1) {
+				node.remove(parts[i]);
+				return;
+			}
 
-            node = (Map<String, Object>) o;
-        }
-    }
+			node = (Map<String, Object>) o;
+		}
+	}
 
 	@Override
 	public Object getProperty(String path) {
@@ -132,7 +132,7 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 		}
 
 		String[] parts = this.splitPath(path);
-		
+
 		Map<String, Object> node = root;
 
 		for (int i = 0; i < parts.length; i++) {
@@ -225,15 +225,35 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 			Map<String, ConfigurationNode> nodes =
 					new HashMap<String, ConfigurationNode>();
 
-			for (Map.Entry<String, Object> entry : ((Map<String, Object>) o).entrySet()) {
+			for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) o).entrySet()) {
+				String key = entry.getKey().toString();
+
 				if (entry.getValue() instanceof ConfigurationNode) {
-					nodes.put(entry.getKey(), (ConfigurationNode) entry.getValue());
+					nodes.put(key, (ConfigurationNode) entry.getValue());
 				} else if (entry.getValue() instanceof Map) {
-					nodes.put(entry.getKey(), new ConfigurationNode((Map<String, Object>) entry.getValue()));
+					nodes.put(key, new ConfigurationNode((Map<String, Object>) entry.getValue()));
 				}
 			}
 
 			return nodes;
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public List<String> getKeys(String path) {
+		if (path == null) {
+			return new ArrayList<String>(root.keySet());
+		}
+		Object o = getProperty(path);
+
+		if (o instanceof Map) {
+			ArrayList<String> keys = new ArrayList<String>();
+			for (Object key : ((Map<Object, Object>) o).keySet()) {
+				keys.add(o.toString());
+			}
+			return keys;
 		} else {
 			return null;
 		}
