@@ -19,6 +19,7 @@
 package ru.tehkode.permissions.bukkit;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
@@ -27,7 +28,6 @@ import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
-import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
@@ -64,7 +64,7 @@ public class BukkitPermissions {
 		this.registerEvents();
 
 		if (this.enableParentNodes) {
-			this.calculateParentPermissions();
+			this.calculateAllParentPermissions();
 		}
 
 		logger.info("[PermissionsEx] Superperms support enabled.");
@@ -86,16 +86,20 @@ public class BukkitPermissions {
 		return plugin;
 	}
 
-	protected void calculateParentPermissions() {
+	protected void calculateAllParentPermissions() {
 		for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
-			for (Map.Entry<String, Boolean> child : permission.getChildren().entrySet()) {
-				Map<String, Boolean> map = this.childPermissions.get(child.getKey().toLowerCase());
-				if (map == null) {
-					this.childPermissions.put(child.getKey().toLowerCase(), map = new HashMap<String, Boolean>());
-				}
+			this.calculatePermissionChildren(permission);
+		}
+	}
 
-				map.put(permission.getName(), child.getValue());
+	protected void calculatePermissionChildren(Permission permission) {
+		for (Map.Entry<String, Boolean> child : permission.getChildren().entrySet()) {
+			Map<String, Boolean> map = this.childPermissions.get(child.getKey().toLowerCase());
+			if (map == null) {
+				this.childPermissions.put(child.getKey().toLowerCase(), map = new HashMap<String, Boolean>());
 			}
+
+			map.put(permission.getName(), child.getValue());
 		}
 	}
 
@@ -103,14 +107,13 @@ public class BukkitPermissions {
 		PluginManager manager = plugin.getServer().getPluginManager();
 
 		manager.registerEvent(Event.Type.PLAYER_JOIN, new PlayerEvents(), Event.Priority.Low, plugin);
-		
+
 		manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
 
 		if (this.enableParentNodes) {
 			ServerListener serverEvents = new ServerEvents();
 
 			manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverEvents, Event.Priority.Low, plugin);
-			manager.registerEvent(Event.Type.PLUGIN_DISABLE, serverEvents, Event.Priority.Low, plugin);
 		}
 	}
 
@@ -141,13 +144,12 @@ public class BukkitPermissions {
 	protected class ServerEvents extends ServerListener {
 
 		@Override
-		public void onPluginDisable(PluginDisableEvent event) {
-			calculateParentPermissions();
-		}
-
-		@Override
 		public void onPluginEnable(PluginEnableEvent event) {
-			calculateParentPermissions();
+			List<Permission> pluginPermissions = event.getPlugin().getDescription().getPermissions();
+			
+			for(Permission permission : pluginPermissions) {
+				calculatePermissionChildren(permission);
+			}
 		}
 	}
 
@@ -166,10 +168,10 @@ public class BukkitPermissions {
 					}
 				}
 			} else if (event instanceof PermissionSystemEvent) {
-				if(((PermissionSystemEvent)event).getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE){
+				if (((PermissionSystemEvent) event).getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
 					return;
 				}
-				
+
 				updateAllPlayers();
 			}
 		}
