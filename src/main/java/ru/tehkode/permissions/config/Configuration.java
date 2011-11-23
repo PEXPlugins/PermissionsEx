@@ -31,108 +31,108 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.reader.UnicodeReader;
 import org.yaml.snakeyaml.representer.Representer;
+import org.yaml.snakeyaml.resolver.Resolver;
 
 /**
  *
  * @author code
  */
 public class Configuration extends ConfigurationNode {
-    
-    protected Yaml yaml;
-    protected File file;
-    
-    public Configuration(File file) {
-        super(new HashMap<String, Object>());
-        
-        DumperOptions options = new DumperOptions();
-        options.setIndent(4);
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        
-        yaml = new Yaml(new SafeConstructor(), new ConfigurationRepresenter(), options);
-        
-        this.file = file;
-    }
 
-    /**
-     * Loads the configuration file. All errors are thrown away.
-     */
-    public void load() {
-        FileInputStream stream = null;
-        
-        try {
-            stream = new FileInputStream(file);
-            read(yaml.load(new UnicodeReader(stream)));
-        } catch (IOException e) {
-            root = new HashMap<String, Object>();
-        } catch (ConfigurationException e) {
-            root = new HashMap<String, Object>();
-        } finally {
-            try {
-                if (stream != null) {
-                    stream.close();
-                }
-            } catch (IOException e) {
-            }
-        }
-    }
+	protected Yaml yaml;
+	protected File file;
 
-    /**
-     * Saves the configuration to disk. All errors are clobbered.
-     *
-     * @return true if it was successful saved
-     */
-    public boolean save() {        
-        FileOutputStream stream = null;
-        
-        File parent = file.getParentFile();
-        if (parent != null) {
-            parent.mkdirs();
-        }
-        
-        boolean success = true;
-        
-        try {
-            stream = new FileOutputStream(file);
-            yaml.dump(root, new OutputStreamWriter(stream, "UTF-8"));
-            return true;
-        } catch (IOException e) {
-            success = false;
-        } finally {
-            try {
-                if (stream != null) {
-                    stream.close();
-                }
-            } catch (IOException e) {
-                success = false;
-            }
-        }
-                
-        return success;
-    }
-    
-    @SuppressWarnings("unchecked")
-    private void read(Object input) throws ConfigurationException {
-        try {
-            if (null == input) {
-                root = new HashMap<String, Object>();
-            } else {
-                root = (Map<String, Object>) input;
-            }
-        } catch (ClassCastException e) {
-            throw new ConfigurationException("Root document must be an key-value structure");
-        }
-    }
+	public Configuration(File file) {
+		super(new HashMap<String, Object>());
 
-    /**
-     * This method returns an empty ConfigurationNode for using as a
-     * default in methods that select a node from a node list.
-     * @return empty ConfigurationNode
-     */
-    public static ConfigurationNode getEmptyNode() {
-        return new ConfigurationNode();
-    }
-    
-    protected class ConfigurationRepresenter extends Representer {
+		DumperOptions options = new DumperOptions();
+		options.setIndent(4);
+		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
-    }
+		yaml = new Yaml(new SafeConstructor(), new ConfigurationRepresenter(), options);
+
+		this.file = file;
+	}
+
+	/**
+	 * Loads the configuration file. All errors are thrown away.
+	 */
+	public void load() {
+		FileInputStream stream = null;
+
+		try {
+			stream = new FileInputStream(file);
+			read(yaml.load(new UnicodeReader(stream)));
+		} catch (IOException e) {
+			root = new HashMap<String, Object>();
+		} catch (ConfigurationException e) {
+			root = new HashMap<String, Object>();
+		} finally {
+			try {
+				if (stream != null) {
+					stream.close();
+				}
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	/**
+	 * Saves the configuration to disk. All errors are clobbered.
+	 *
+	 * @return true if it was successful saved
+	 */
+	public boolean save() {
+		FileOutputStream stream = null;
+
+		File parent = file.getParentFile();
+		if (parent != null) {
+			parent.mkdirs();
+		}
+
+		boolean success = true;
+
+		try {
+			stream = new FileOutputStream(file);
+			yaml.dump(root, new OutputStreamWriter(stream, "UTF-8"));
+			return true;
+		} catch (IOException e) {
+			success = false;
+		} finally {
+			try {
+				if (stream != null) {
+					stream.close();
+				}
+			} catch (IOException e) {
+				success = false;
+			}
+		}
+
+		return success;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void read(Object input) throws ConfigurationException {
+		try {
+			if (null == input) {
+				root = new HashMap<String, Object>();
+			} else {
+				root = (Map<String, Object>) input;
+			}
+		} catch (ClassCastException e) {
+			throw new ConfigurationException("Root document must be an key-value structure");
+		}
+	}
+
+	/**
+	 * This method returns an empty ConfigurationNode for using as a
+	 * default in methods that select a node from a node list.
+	 * @return empty ConfigurationNode
+	 */
+	public static ConfigurationNode getEmptyNode() {
+		return new ConfigurationNode();
+	}
+
+	protected class ConfigurationRepresenter extends Representer {
+	}
 }
