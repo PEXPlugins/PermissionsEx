@@ -202,7 +202,7 @@ public class PermissiblePEX extends PermissibleBase {
 			return true;
 		}
 
-		return super.hasPermission(permission);
+		return super.isPermissionSet(permission);
 	}
 
 	@Override
