@@ -251,7 +251,7 @@ public class ConfigurationNode extends org.bukkit.util.config.ConfigurationNode 
 		if (o instanceof Map) {
 			ArrayList<String> keys = new ArrayList<String>();
 			for (Object key : ((Map<Object, Object>) o).keySet()) {
-				keys.add(o.toString());
+				keys.add(key.toString());
 			}
 			return keys;
 		} else {
