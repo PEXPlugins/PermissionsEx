@@ -110,6 +110,10 @@ public class PermissiblePEX extends PermissibleBase {
 
 	@Override
 	public boolean hasPermission(String permission) {
+		if (permission.equals("permissionsex.handler.injected")) {
+			return PermissionsEx.isAvailable();
+		}
+		
 		String worldName = player.getWorld().getName();
 		String cid = worldName + ":" + permission;
 
@@ -121,10 +125,6 @@ public class PermissiblePEX extends PermissibleBase {
 	}
 
 	public boolean performCheck(String permission, String worldName) {
-		if (permission.equals("permissionsex.handler.injected")) {
-			return PermissionsEx.isAvailable();
-		}
-
 		try {
 			PermissionUser user = PermissionsEx.getUser(this.player);
 			if (user == null) {
