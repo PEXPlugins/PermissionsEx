@@ -175,7 +175,7 @@ public class PermissionManager {
      * @param userName user's name
      */
     public void resetUser(String userName) {
-        this.users.remove(userName);
+        this.users.remove(userName.toLowerCase());
     }
 
     /**
