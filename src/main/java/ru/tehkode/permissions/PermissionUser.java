@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
@@ -49,10 +50,16 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void initialize() {
+		super.initialize();
+		
 		if (this.manager.getBackend().isCreateUserRecords() && this.isVirtual()) {
 			this.setGroups(this.getGroups(null), null);
 
 			this.save();
+		}
+		
+		if (this.isDebug()) {
+			Logger.getLogger("Minecraft").info("[PermissionsEx] User " + this.getName() + " initialized");
 		}
 	}
 

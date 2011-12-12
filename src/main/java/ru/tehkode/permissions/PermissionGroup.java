@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
@@ -38,6 +39,15 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	public PermissionGroup(String groupName, PermissionManager manager) {
 		super(groupName, manager);
 	}
+
+	@Override
+	public void initialize() {
+		super.initialize();
+		
+		if (this.isDebug()) {
+			Logger.getLogger("Minecraft").info("[PermissionsEx] Group " + this.getName() + " initialized");
+		}
+	}	
 
 	/**
 	 * Return non-inherited group prefix.
