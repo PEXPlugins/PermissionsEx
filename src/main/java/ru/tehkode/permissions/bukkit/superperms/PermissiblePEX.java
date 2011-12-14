@@ -53,7 +53,7 @@ public class PermissiblePEX extends PermissibleBase {
 	}
 
 	public static void inject(Player player, BukkitPermissions bridge) {
-		if (player.hasPermission("permissionsex.handler.injected")) { // already injected
+		if (player.isPermissionSet("permissionsex.handler.injected")) { // already injected
 			return;
 		}
 
@@ -68,7 +68,9 @@ public class PermissiblePEX extends PermissibleBase {
 
 			permissible.recalculatePermissions();
 
-			// Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
+			if (PermissionsEx.getPermissionManager().isDebug()) {
+				Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
+			}
 		} catch (Throwable e) {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
 			e.printStackTrace();
@@ -113,7 +115,7 @@ public class PermissiblePEX extends PermissibleBase {
 		if (permission.equals("permissionsex.handler.injected")) {
 			return PermissionsEx.isAvailable();
 		}
-		
+
 		String worldName = player.getWorld().getName();
 		String cid = worldName + ":" + permission;
 
@@ -196,6 +198,10 @@ public class PermissiblePEX extends PermissibleBase {
 
 	@Override
 	public boolean isPermissionSet(String permission) {
+		if (permission.equals("permissionsex.handler.injected")) {
+			return PermissionsEx.isAvailable();
+		}
+		
 		PermissionUser user = PermissionsEx.getUser(this.player);
 
 		if (user != null && user.getMatchingExpression(permission, this.player.getWorld().getName()) != null) {
