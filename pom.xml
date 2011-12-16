@@ -61,7 +61,7 @@
     <repositories>
         <repository>
             <id>bukkit-repo</id>
-            <repo>http://repo.bukkit.org/content/groups/repo</repo>
+            <url>http://repo.bukkit.org/content/groups/repo</url>
         </repository>
     </repositories>
 </project>
