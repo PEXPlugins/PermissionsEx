@@ -109,7 +109,7 @@ public class PermissionsEx extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		if (this.permissionsManager != null) {
-			this.permissionsManager.reset();
+			this.permissionsManager.end();
 		}
 
 		this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);

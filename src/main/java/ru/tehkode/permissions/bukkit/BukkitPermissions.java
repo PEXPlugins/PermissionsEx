@@ -28,6 +28,7 @@ import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.permissions.Permission;
@@ -106,7 +107,7 @@ public class BukkitPermissions {
 	private void registerEvents() {
 		PluginManager manager = plugin.getServer().getPluginManager();
 
-		manager.registerEvent(Event.Type.PLAYER_JOIN, new PlayerEvents(), Event.Priority.Low, plugin);
+		manager.registerEvent(Event.Type.PLAYER_LOGIN, new PlayerEvents(), Event.Priority.Lowest, plugin);
 
 		manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
 
@@ -136,7 +137,7 @@ public class BukkitPermissions {
 	protected class PlayerEvents extends PlayerListener {
 
 		@Override
-		public void onPlayerJoin(PlayerJoinEvent event) {
+		public void onPlayerLogin(PlayerLoginEvent event) {
 			updatePermissions(event.getPlayer());
 		}
 	}
