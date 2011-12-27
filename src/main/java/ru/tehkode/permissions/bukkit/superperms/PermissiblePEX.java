@@ -18,7 +18,6 @@
  */
 package ru.tehkode.permissions.bukkit.superperms;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,14 +33,23 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.BukkitPermissions;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.*;
 
 public class PermissiblePEX extends PermissibleBase {
+
+	protected static PermissibleInjector[] injectors = new PermissibleInjector[] {
+		new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
+		new ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
+		new ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "Spout"),
+		new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit")
+	};
 
 	protected Player player = null;
 	protected boolean strictMode = false;
 	protected boolean injectMetadata = true;
 	protected BukkitPermissions bridge;
 	protected Map<String, Boolean> cache = new HashMap<String, Boolean>();
+
 
 	protected PermissiblePEX(Player player, BukkitPermissions bridge) {
 		super(player);
@@ -60,10 +68,18 @@ public class PermissiblePEX extends PermissibleBase {
 		try {
 			Permissible permissible = new PermissiblePEX(player, bridge);
 
-			if (player.getClass().getName().contains("Spout")) { // we have spout installed
-				injectSpout(player, permissible);
-			} else {
-				injectCraftBukkit(player, permissible);
+			boolean success = false;
+			for (PermissibleInjector injector : injectors) {
+				if (injector.isApplicable(player)) {
+					if (injector.inject(player, permissible)) {
+						success = true;
+						break;
+					}
+				}
+			}
+			
+			if (!success) {
+				Logger.getLogger("Mineraft").warning("[PermissionsEx] No Permissible injector found for your server implementation!");
 			}
 
 			permissible.recalculatePermissions();
@@ -75,40 +91,7 @@ public class PermissiblePEX extends PermissibleBase {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
 			e.printStackTrace();
 		}
-	}
-
-	protected static void injectCraftBukkit(Player player, Permissible permissible) throws Throwable {
-		Class humanEntity = Class.forName("org.bukkit.craftbukkit.entity.CraftHumanEntity");
-
-		Field permField = humanEntity.getDeclaredField("perm");
-		// Make it public for reflection
-		permField.setAccessible(true);
-
-		PermissibleBase oldBase = (PermissibleBase) permField.get(player);
-
-		// Copy permissions and attachments from old Permissible
-
-		// Attachments
-		Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
-		attachmentField.setAccessible(true);
-		attachmentField.set(permissible, attachmentField.get(oldBase));
-
-		// Permissions
-		Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
-		permissionsField.setAccessible(true);
-		permissionsField.set(permissible, permissionsField.get(oldBase));
-
-		// Inject permissible
-		permField.set(player, permissible);
-	}
-
-	protected static void injectSpout(Player player, Permissible permissible) throws Throwable {
-		Class humanEntity = Class.forName("org.getspout.spout.player.SpoutCraftPlayer");
-		Field permField = humanEntity.getDeclaredField("perm");
-		permField.setAccessible(true);
-
-		permField.set(player, permissible);
-	}
+}
 
 	@Override
 	public boolean hasPermission(String permission) {

@@ -82,7 +82,7 @@ public class PermissionManager {
     /**
      * Check if player with name has permission in world
      * 
-     * @param player player object
+     * @param playerName player name
      * @param permission permission as string to check against
      * @param world world's name as string
      * @return true on success false otherwise
@@ -380,7 +380,7 @@ public class PermissionManager {
     /**
      * Return array of world names who has world inheritance
      * 
-     * @param world World name
+     * @param worldName World name
      * @return Array of parent world, if world does not exist return empty array
      */
     public String[] getWorldInheritance(String worldName) {
@@ -447,6 +447,11 @@ public class PermissionManager {
             this.backend.reload();
         }
         this.callEvent(PermissionSystemEvent.Action.RELOADED);
+    }
+
+    public void end() {
+        reset();
+        timer.cancel();
     }
 
     protected void clearCache() {
