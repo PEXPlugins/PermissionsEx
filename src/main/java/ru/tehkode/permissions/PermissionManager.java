@@ -43,7 +43,7 @@ public class PermissionManager {
 	protected Map<String, PermissionGroup> defaultGroups = new HashMap<String, PermissionGroup>();
 	protected PermissionBackend backend = null;
 	protected Configuration config;
-	protected Timer timer = new Timer("PermissionsCleaner");
+	protected Timer timer;
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 
@@ -429,7 +429,7 @@ public class PermissionManager {
 	 * @param delay delay in seconds
 	 */
 	protected void registerTask(TimerTask task, int delay) {
-		if (delay == TRANSIENT_PERMISSION) {
+		if (timer == null || delay == TRANSIENT_PERMISSION) {
 			return;
 		}
 
@@ -452,6 +452,14 @@ public class PermissionManager {
 		reset();
 		timer.cancel();
 	}
+	
+	public void initTimer() {
+		if (timer != null) {
+			timer.cancel();
+		}
+		
+		timer = new Timer("PermissionsEx-Cleaner");
+	}
 
 	protected void clearCache() {
 		this.users.clear();
@@ -459,8 +467,7 @@ public class PermissionManager {
 		this.defaultGroups.clear();
 
 		// Close old timed Permission Timer
-		timer.cancel();
-		timer = new Timer("PermissionsCleaner");
+		this.initTimer();
 	}
 
 	private void initBackend() {

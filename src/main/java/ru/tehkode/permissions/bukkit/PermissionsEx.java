@@ -30,12 +30,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
-import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerListener;
-import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
@@ -102,6 +98,9 @@ public class PermissionsEx extends JavaPlugin {
 		this.superms.updateAllPlayers();
 
 		this.config.save();
+		
+		// Start timed permissions cleaner timer
+		this.permissionsManager.initTimer();
 
 		logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
 	}
