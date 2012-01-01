@@ -151,9 +151,9 @@ public class FileEntity extends PermissionEntity {
         if (world != null && !world.isEmpty()) {
             nodePath = "worlds.`" + world + "`." + nodePath;
         }
-        
+
+        nodePath += ".`" + permission + "`";        
         if (value != null && !value.isEmpty()) {
-            nodePath += ".`" + permission + "`";
             this.node.setProperty(nodePath, value);
         } else {
             this.node.removeProperty(nodePath);
