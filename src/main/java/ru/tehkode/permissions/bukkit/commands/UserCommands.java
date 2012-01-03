@@ -597,4 +597,37 @@ public class UserCommands extends PermissionsCommand {
 
 		this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
 	}
+
+	@Command(name = "pex",
+	syntax = "users cleanup <group> [threshold]",
+	permission = "permissions.manage.users.cleanup",
+	description = "Clean users of specified group, which last login was before threshold (in days). By default threshold is 30 days.")
+	public void usersCleanup(Plugin plugin, CommandSender sender, Map<String, String> args) {
+		long threshold = 2304000;
+
+		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+
+		if (args.containsKey("threshold")) {
+			try {
+				threshold = Integer.parseInt(args.get("threshold")) * 86400; // 86400 - seconds in one day
+			} catch (NumberFormatException e) {
+				sender.sendMessage(ChatColor.RED + "Threshold should be number (in days)");
+				return;
+			}
+		}
+
+		int removed = 0;
+
+		Long deadline = (System.currentTimeMillis() / 1000L) - threshold;
+		for (PermissionUser user : group.getUsers()) {
+			int lastLogin = user.getOwnOptionInteger("last-login-time", null, 0);
+
+			if (lastLogin > 0 && lastLogin < deadline) {
+				user.remove();
+				removed++;
+			}
+		}
+		
+		sender.sendMessage("Cleaned " + removed + " users");				
+	}
 }
