@@ -114,6 +114,8 @@ public class PermissionManager {
 			if (user != null) {
 				user.initialize();
 				this.users.put(username.toLowerCase(), user);
+			} else {
+				throw new IllegalStateException("User " + username + " is null");
 			}
 		}
 
@@ -217,6 +219,8 @@ public class PermissionManager {
 			if (group != null) {
 				group.initialize();
 				this.groups.put(groupname.toLowerCase(), group);
+			} else {
+				throw new IllegalStateException("Group " + groupname + " is null");
 			}
 		}
 

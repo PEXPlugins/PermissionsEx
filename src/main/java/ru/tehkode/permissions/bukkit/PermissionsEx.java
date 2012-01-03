@@ -31,6 +31,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -80,7 +81,10 @@ public class PermissionsEx extends JavaPlugin {
 		this.commandsManager.register(new WorldCommands());
 
 		// Register Player permissions cleaner
-		this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, new PlayerEventsListener(), Priority.Normal, this);
+		PlayerEventsListener cleaner = new PlayerEventsListener();
+		cleaner.logLastPlayerLogin = this.config.getBoolean("permissions.log-players", cleaner.logLastPlayerLogin);
+		this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_LOGIN, cleaner, Priority.Normal, this);
+		this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, cleaner, Priority.Normal, this);
 
 		//register service
 		this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
@@ -98,7 +102,7 @@ public class PermissionsEx extends JavaPlugin {
 		this.superms.updateAllPlayers();
 
 		this.config.save();
-		
+
 		// Start timed permissions cleaner timer
 		this.permissionsManager.initTimer();
 
@@ -206,8 +210,26 @@ public class PermissionsEx extends JavaPlugin {
 
 	public class PlayerEventsListener extends PlayerListener {
 
+		protected boolean logLastPlayerLogin = false;
+
+		@Override
+		public void onPlayerLogin(PlayerLoginEvent event) {
+			if (!logLastPlayerLogin) {
+				return;
+			}
+
+			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
+			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
+			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
+		}
+
 		@Override
 		public void onPlayerQuit(PlayerQuitEvent event) {
+			if (logLastPlayerLogin) {
+				getPermissionManager().getUser(event.getPlayer())
+						.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
+			}
+
 			getPermissionManager().resetUser(event.getPlayer().getName());
 		}
 	}
