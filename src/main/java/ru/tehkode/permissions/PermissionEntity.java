@@ -566,6 +566,10 @@ public abstract class PermissionEntity {
 		if (localExpression.startsWith("-")) {
 			localExpression = localExpression.substring(1);
 		}
+		
+		if (localExpression.startsWith("#")) {
+			localExpression = localExpression.substring(1);
+		}
 
 		if (!patternCache.containsKey(localExpression)) {
 			patternCache.put(localExpression, Pattern.compile(prepareRegexp(localExpression)));

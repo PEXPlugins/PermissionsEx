@@ -32,6 +32,8 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  * @author t3hk0d3
  */
 public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
+	
+	protected final static String NON_INHERITABLE_PREFIX = "#";
 
 	protected int weight = 0;
 	protected boolean dirtyWeight = true;
@@ -538,7 +540,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	@Override
 	public String[] getPermissions(String world) {
 		List<String> permissions = new LinkedList<String>();
-		this.getInheritedPermissions(world, permissions, true, false);
+		this.getInheritedPermissions(world, permissions, true, false, true);
 		return permissions.toArray(new String[0]);
 	}
 
@@ -564,26 +566,40 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		this.setPermissions(permissions.toArray(new String[0]), worldName);
 	}
 
-	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance) {
-		permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
-		permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
-
+	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance, boolean firstStep) {
+		if (firstStep) {
+			permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
+			permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));		
+		} else { // filter permissions for ancestors groups			
+			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getTimedPermissions(worldName));			
+			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getOwnPermissions(worldName));		
+		}
+		
 		if (worldName != null) {
 			// World inheritance
 			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				getInheritedPermissions(parentWorld, permissions, false, true);
+				getInheritedPermissions(parentWorld, permissions, false, true, firstStep);
 			}
 			// Common permission
-            if (!worldInheritance) {
-                this.getInheritedPermissions(null, permissions, false, true);
-            }
+			if (!worldInheritance) {
+				this.getInheritedPermissions(null, permissions, false, true, firstStep);
+			}
 		}
 
 		// Group inhertance
 		if (groupInheritance) {
 			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				group.getInheritedPermissions(worldName, permissions, true, false);
+				group.getInheritedPermissions(worldName, permissions, true, false, false);
 			}
+		}
+	}
+
+	protected void copyFilterPermissions(String filterPrefix, List<String> to, String[] from) {
+		for (String permission : from) {
+			if (permission.startsWith(filterPrefix)) {
+				continue;
+			}
+			to.add(permission);
 		}
 	}
 

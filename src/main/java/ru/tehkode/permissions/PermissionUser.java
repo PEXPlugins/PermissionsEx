@@ -738,7 +738,7 @@ public abstract class PermissionUser extends PermissionEntity {
 		// Group inhertance
 		if (groupInheritance) {
 			for (PermissionGroup parentGroup : this.getGroups(worldName)) {
-				parentGroup.getInheritedPermissions(worldName, permissions, true, false);
+				parentGroup.getInheritedPermissions(worldName, permissions, true, false, true);
 			}
 		}
 	}
