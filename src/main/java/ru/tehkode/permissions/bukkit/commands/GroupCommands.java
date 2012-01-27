@@ -41,7 +41,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		sender.sendMessage(ChatColor.WHITE + "Registred groups: ");
+		sender.sendMessage(ChatColor.WHITE + "Registered groups: ");
 		for (PermissionGroup group : groups) {
 			String rank = "";
 			if (group.isRanked()) {
