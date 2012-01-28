@@ -43,4 +43,15 @@ public class PermissionSystemEvent extends PermissionEvent {
         DEFAULTGROUP_CHANGED,
         DEBUGMODE_TOGGLE,
     }
+
+    private static final HandlerList handlers = new HandlerList();
+
+    @Override
+    public HandlerList getHandlers() {
+        return handlers;
+    }
+
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
 }
