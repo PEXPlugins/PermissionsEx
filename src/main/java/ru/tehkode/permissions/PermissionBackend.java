@@ -21,18 +21,14 @@ package ru.tehkode.permissions;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.util.config.Configuration;
+import ru.tehkode.permissions.backends.GroupDataProvider;
+import ru.tehkode.permissions.backends.UserDataProvider;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 /**
@@ -91,16 +87,14 @@ public abstract class PermissionBackend {
      * @param groupName Name of the group which should be removed
      * @return true if group was removed, false if group has child groups
      */
-    public boolean removeGroup(String groupName) {
-        if (this.getGroups(groupName).length > 0) {
-            return false;
+    public boolean removeGroup(String groupName) {		
+		PermissionGroup group = this.manager.getGroup(groupName);
+        
+        for (PermissionUser user : group.getUsersList()) {
+            user.removeGroup(group);
         }
         
-        for (PermissionUser user : this.getUsers(groupName)) {
-            user.removeGroup(groupName);
-        }
-        
-        this.manager.getGroup(groupName).remove();
+        group.remove();
         
         return true;
     }
@@ -125,7 +119,7 @@ public abstract class PermissionBackend {
      * @param world world name
      * @return Array of parent worlds. If there is no parent world return empty array
      */
-    public abstract String[] getWorldInheritance(String world);
+    public abstract List<String> getWorldInheritance(String world);
 
     /**
      * Set world inheritance parents for specified world 
@@ -133,130 +127,26 @@ public abstract class PermissionBackend {
      * @param world world name which inheritance should be set
      * @param parentWorlds array of parent world names
      */
-    public abstract void setWorldInheritance(String world, String[] parentWorlds);
+    public abstract void setWorldInheritance(String world, List<String> parentWorlds);
 
     /**
      * Return all registered groups
      * 
      * @return
      */
-    public abstract PermissionGroup[] getGroups();
+    public abstract Set<PermissionGroup> getGroups();
 
-    /**
-     * Return child groups of specified group
-     * 
-     * @param groupName
-     * @return empty array if group has no children, empty or not exist
-     */
-    public PermissionGroup[] getGroups(String groupName) {
-        return this.getGroups(groupName, null);
-    }
-    
-    public PermissionGroup[] getGroups(String groupName, String worldName) {
-        return this.getGroups(groupName, worldName, false);
-    }
-
-    /**
-     * Return child groups of specified group.
-     * 
-     * @param groupName 
-     * @param inheritance - If true a full list of descendants will be returned 
-     * 
-     * @return empty array if group has no children, empty or not exist
-     */
-    public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
-        Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
-        
-        for (World world : Bukkit.getServer().getWorlds()) {
-            groups.addAll(Arrays.asList(getGroups(groupName, world.getName(), inheritance)));
-        }
-
-        // Common space users
-        groups.addAll(Arrays.asList(getGroups(groupName, null, inheritance)));
-        
-        return groups.toArray(new PermissionGroup[0]);
-    }
-    
-    public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
-        List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-        
-        for (PermissionGroup group : this.getGroups()) {
-            if (!groups.contains(group) && group.isChildOf(groupName, worldName, inheritance)) {
-                groups.add(group);
-            }
-        }
-        
-        return groups.toArray(new PermissionGroup[0]);
-    }
-
-    /**
-     * Return all registered and online users
-     *
-     * @return
-     */
-    public PermissionUser[] getUsers() {
-        Set<PermissionUser> users = new HashSet<PermissionUser>();
-        
-        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            users.add(this.manager.getUser(player));
-        }
-        
-        users.addAll(Arrays.asList(this.getRegisteredUsers()));
-        
-        return users.toArray(new PermissionUser[0]);
-    }
 
     /**
      * Return all registered users
      *
      * @return
      */
-    public abstract PermissionUser[] getRegisteredUsers();
+    public abstract Set<PermissionUser> getRegisteredUsers();
 
-    /**
-     * Return users of specified group.
-     *
-     * @param groupName
-     * @return null if there is no such group
-     */
-    public PermissionUser[] getUsers(String groupName) {
-        return getUsers(groupName, false);
-    }
-    
-    public PermissionUser[] getUsers(String groupName, String worldName) {
-        return getUsers(groupName, worldName, false);
-    }
-
-    /**
-     * Return users of specified group (and child groups)
-     *
-     * @param groupName
-     * @param inheritance - If true return users list of descendant groups too 
-     * @return
-     */
-    public PermissionUser[] getUsers(String groupName, boolean inheritance) {
-        Set<PermissionUser> users = new HashSet<PermissionUser>();
-        
-        for (PermissionUser user : this.getUsers()) {
-            if (user.inGroup(groupName, inheritance)) {
-                users.add(user);
-            }
-        }
-        
-        return users.toArray(new PermissionUser[0]);
-    }
-    
-    public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
-        Set<PermissionUser> users = new HashSet<PermissionUser>();
-        
-        for (PermissionUser user : this.getUsers()) {
-            if (user.inGroup(groupName, worldName, inheritance)) {
-                users.add(user);
-            }
-        }
-        
-        return users.toArray(new PermissionUser[0]);
-    }
+	public abstract UserDataProvider getUserDataProvider(String userName);
+	
+	public abstract GroupDataProvider getGroupDataProvider(String groupName);
 
     /**
      * Reload backend (reread permissions file, reconnect to database, etc)

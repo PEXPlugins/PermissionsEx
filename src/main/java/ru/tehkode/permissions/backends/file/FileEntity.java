@@ -18,17 +18,12 @@
  */
 package ru.tehkode.permissions.backends.file;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
-public class FileEntity extends PermissionEntity {
+public abstract class FileEntity extends PermissionEntity {
     
     protected ConfigurationNode node;
     protected FileBackend backend;
@@ -40,6 +35,8 @@ public class FileEntity extends PermissionEntity {
         this.backend = backend;
         this.node = this.getNode(baseNode, this.getName());
     }
+	
+	
     
     protected final ConfigurationNode getNode(String baseNode, String entityName) {
         this.nodePath = baseNode + ".`" + entityName + "`";
@@ -70,15 +67,16 @@ public class FileEntity extends PermissionEntity {
     public ConfigurationNode getConfigNode() {
         return this.node;
     }
-    
-    @Override
+	
+	
+ /*
     public String[] getPermissions(String world) {
         String permissionsNode = "permissions";
         if (world != null && !world.isEmpty()) {
             permissionsNode = "worlds.`" + world + "`." + permissionsNode;
         }
         
-        return this.node.getStringList(permissionsNode, new LinkedList<String>()).toArray(new String[0]);
+        return this.node.getStringList(permissionsNode, new ArrayList<String>()).toArray(new String[0]);
     }
         
     @Override
@@ -96,7 +94,7 @@ public class FileEntity extends PermissionEntity {
         
         this.save();
     }
-    
+
     @Override
     public String[] getWorlds() {
         List<String> worlds = this.node.getKeys("worlds");
@@ -107,6 +105,7 @@ public class FileEntity extends PermissionEntity {
         return worlds.toArray(new String[0]);
     }
     
+	
     @Override
     public Map<String, String> getOptions(String world) {
         Map<String, String> result = new HashMap<String, String>();
@@ -279,4 +278,6 @@ public class FileEntity extends PermissionEntity {
         
         this.backend.permissions.save();
     }
+	* 
+	*/
 }

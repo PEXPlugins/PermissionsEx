@@ -25,12 +25,7 @@ package ru.tehkode.permissions.backends.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionManager;
 
@@ -66,7 +61,7 @@ public class SQLEntity extends PermissionEntity {
 
 	public static String[] getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) {
 		try {
-			List<String> entities = new LinkedList<String>();
+			List<String> entities = new ArrayList<String>();
 
 			ResultSet result = sql.selectQuery("SELECT name FROM `permissions_entity` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal());
 			while (result.next()) {
@@ -80,14 +75,14 @@ public class SQLEntity extends PermissionEntity {
 	}
 
 	@Override
-	public String[] getWorlds() {
+	public Set<String> getWorldsList() {
 		Set<String> worlds = new HashSet<String>();
 
 		worlds.addAll(worldsOptions.keySet());
 		worlds.addAll(worldsPermissions.keySet());
 		worlds.addAll(parents.keySet());
 
-		return worlds.toArray(new String[0]);
+		return worlds;
 	}
 
 	@Override
@@ -134,7 +129,7 @@ public class SQLEntity extends PermissionEntity {
 
 	@Override
 	public String[] getPermissions(String world) {
-		List<String> permissions = new LinkedList<String>();
+		List<String> permissions = new ArrayList<String>();
 
 		if (commonPermissions == null) {
 			this.fetchPermissions();
@@ -224,7 +219,7 @@ public class SQLEntity extends PermissionEntity {
 			}
 
 
-			List<Object[]> rows = new LinkedList<Object[]>();
+			List<Object[]> rows = new ArrayList<Object[]>();
 			for (String group : parentGroups) {
 				if (group == null || group.isEmpty()) {
 					continue;
@@ -354,7 +349,7 @@ public class SQLEntity extends PermissionEntity {
 		this.worldsOptions = new HashMap<String, Map<String, String>>();
 		this.worldsPermissions = new HashMap<String, List<String>>();
 		this.commonOptions = new HashMap<String, String>();
-		this.commonPermissions = new LinkedList<String>();
+		this.commonPermissions = new ArrayList<String>();
 
 		try {
 			ResultSet results = this.db.selectQuery("SELECT `permission`, `world`, `value` FROM `permissions` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
@@ -368,7 +363,7 @@ public class SQLEntity extends PermissionEntity {
 					if (!world.isEmpty()) {
 						List<String> worldPermissions = this.worldsPermissions.get(world);
 						if (worldPermissions == null) {
-							worldPermissions = new LinkedList<String>();
+							worldPermissions = new ArrayList<String>();
 							this.worldsPermissions.put(world, worldPermissions);
 						}
 
@@ -406,7 +401,7 @@ public class SQLEntity extends PermissionEntity {
 				String worldName = results.getString(2);
 
 				if (!this.parents.containsKey(worldName)) {
-					this.parents.put(worldName, new HashSet<String>());
+					this.parents.put(worldName, new LinkedHashSet<String>());
 				}
 
 				this.parents.get(worldName).add(parentName);

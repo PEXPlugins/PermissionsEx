@@ -18,6 +18,8 @@
  */
 package ru.tehkode.permissions.bukkit;
 
+import ru.tehkode.permissions.backends.sql.SQLBackend;
+import ru.tehkode.permissions.backends.file.FileBackend;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;

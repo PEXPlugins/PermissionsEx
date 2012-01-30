@@ -18,23 +18,19 @@
  */
 package ru.tehkode.permissions;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
  * @author t3hk0d3
  */
-public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
-	
-	protected final static String NON_INHERITABLE_PREFIX = "#";
+public abstract class PermissionGroup extends PermissionNode implements Comparable<PermissionGroup> {
 
+	protected final static String NON_INHERITABLE_PREFIX = "#";
 	protected int weight = 0;
 	protected boolean dirtyWeight = true;
 
@@ -45,97 +41,72 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		if (this.isDebug()) {
 			Logger.getLogger("Minecraft").info("[PermissionsEx] Group " + this.getName() + " initialized");
 		}
+	}
+
+	@Override
+	protected List<String> calculatePermissionInheritance(String worldName) {
+		List<String> permissionsList = this.calculatePermissions(worldName, true);
+		
+		for (PermissionGroup parentGroup : this.getParents(worldName)) {
+			List<String> parentPermissions = parentGroup.getPermissionsList(worldName);
+			
+			for (String permission : parentPermissions) {
+				
+			}
+		}
+		
+		return permissionsList;
 	}	
+	
+	@Override
+	protected List<PermissionGroup> calculateParentInheritance(String worldName) {
+		List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>();
+
+		for (PermissionGroup parentGroup : this.getOwnParents(worldName)) {
+			List<PermissionGroup> groups = parentGroup.getParents(worldName);
+
+			groups.remove(this); // to prevent cyclic inheritance
+
+			parentGroups.addAll(groups);
+		}
+
+		return parentGroups;
+	}
 
 	/**
-	 * Return non-inherited group prefix.
-	 * This means if a group don't have has own prefix
-	 * then empty string or null would be returned
-	 * 
+	 * Return non-inherited group prefix. This means if a group don't have has
+	 * own prefix then empty string or null would be returned
+	 *
 	 * @return prefix as string
 	 */
+	@Deprecated
 	public String getOwnPrefix() {
 		return this.getOwnPrefix(null);
 	}
 
-	public abstract String getOwnPrefix(String worldName);
-
 	/**
-	 * Return non-inherited suffix prefix.
-	 * This means if a group don't has own suffix
-	 * then empty string or null would be returned
-	 * 
+	 * Return non-inherited suffix prefix. This means if a group don't has own
+	 * suffix then empty string or null would be returned
+	 *
 	 * @return suffix as string
 	 */
+	@Deprecated
 	public final String getOwnSuffix() {
 		return this.getOwnSuffix(null);
 	}
 
-	public abstract String getOwnSuffix(String worldName);
+	@Deprecated
+	public final String[] getOwnPermissions(String world) {
+		return this.getOwnPermissionsList(world).toArray(new String[0]);
+	}
 
-	/**
-	 * Returns own (without inheritance) permissions of group for world
-	 * 
-	 * @param world world's world name
-	 * @return Array of permissions for world
-	 */
-	public abstract String[] getOwnPermissions(String world);
-
-	/**
-	 * Returns option value in specified world without inheritance
-	 * This mean option value wouldn't be inherited from parent groups
-	 * 
-	 * @param option
-	 * @param world
-	 * @param defaultValue
-	 * @return option value or defaultValue if option was not found in own options
-	 */
-	public abstract String getOwnOption(String option, String world, String defaultValue);
-
+	@Deprecated
 	public String getOwnOption(String option) {
-		return this.getOwnOption(option, "", "");
-	}
-
-	public String getOwnOption(String option, String world) {
-		return this.getOwnOption(option, world, "");
-	}
-
-	public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
-		String option = this.getOwnOption(optionName, world, Boolean.toString(defaultValue));
-
-		if ("false".equalsIgnoreCase(option)) {
-			return false;
-		} else if ("true".equalsIgnoreCase(option)) {
-			return true;
-		}
-
-		return defaultValue;
-	}
-
-	public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
-		String option = this.getOwnOption(optionName, world, Integer.toString(defaultValue));
-
-		try {
-			return Integer.parseInt(option);
-		} catch (NumberFormatException e) {
-		}
-
-		return defaultValue;
-	}
-
-	public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
-		String option = this.getOwnOption(optionName, world, Double.toString(defaultValue));
-
-		try {
-			return Double.parseDouble(option);
-		} catch (NumberFormatException e) {
-		}
-
-		return defaultValue;
+		return this.getOwnOption(option, null, "");
 	}
 
 	public int getWeight() {
@@ -158,27 +129,30 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Checks if group is participating in ranking system
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
+	@Deprecated
 	public boolean isRanked() {
 		return (this.getRank() > 0);
 	}
 
 	/**
 	 * Returns rank in ranking system. 0 if group is not ranked
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
+	@Deprecated
 	public int getRank() {
 		return this.getOwnOptionInteger("rank", "", 0);
 	}
 
 	/**
 	 * Set rank for this group
-	 * 
+	 *
 	 * @param rank Rank for group. Specify 0 to remove group from ranking
 	 */
+	@Deprecated
 	public void setRank(int rank) {
 		if (rank > 0) {
 			this.setOption("rank", Integer.toString(rank));
@@ -191,18 +165,20 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Returns ranking ladder where this group is participating in
-	 * 
+	 *
 	 * @return Name of rank ladder as String
 	 */
+	@Deprecated
 	public String getRankLadder() {
-		return this.getOption("rank-ladder", "", "default");
+		return this.getOption("rank-ladder", null, "default");
 	}
 
 	/**
 	 * Set rank ladder for this group
-	 * 
+	 *
 	 * @param rankLadder Name of rank ladder
 	 */
+	@Deprecated
 	public void setRankLadder(String rankLadder) {
 		if (rankLadder.isEmpty() || rankLadder.equals("default")) {
 			rankLadder = null;
@@ -213,388 +189,270 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
 	}
 
-	protected abstract String[] getParentGroupsNamesImpl(String worldName);
+	// some api sugar
+	public boolean isParentOf(PermissionNode group, String worldName) {
+		return group.isChildOf(this, worldName);
+	}
+
+	public boolean isAncestorOf(PermissionNode group, String worldName) {
+		return group.isDescendantOf(this, worldName);
+	}
 
 	/**
 	 * Returns array of parent groups objects
-	 * 
+	 *
 	 * @return array of groups objects
 	 */
-	public PermissionGroup[] getParentGroups(String worldName) {
-		List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>();
-
-		for (String parentGroup : this.getParentGroupsNamesImpl(worldName)) {
-
-			// Yeah horrible thing, i know, that just safety from invoking empty named groups
-			parentGroup = parentGroup.trim();
-			if (parentGroup.isEmpty()) {
-				continue;
-			}
-
-			if (parentGroup.equals(this.getName())) {
-				continue;
-			}
-
-			PermissionGroup group = this.manager.getGroup(parentGroup);
-			if (!parentGroups.contains(group) && !group.isChildOf(this, worldName, true)) { // To prevent cyclic inheritance
-				parentGroups.add(group);
-			}
-		}
-
-		if (worldName != null) {
-			// World Inheritance
-			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				parentGroups.addAll(Arrays.asList(getParentGroups(parentWorld)));
-			}
-
-			parentGroups.addAll(Arrays.asList(getParentGroups(null)));
-		}
-
-		Collections.sort(parentGroups);
-
-		return parentGroups.toArray(new PermissionGroup[0]);
+	@Deprecated
+	public final PermissionGroup[] getParentGroups(String worldName) {
+		return this.getParents(worldName).toArray(new PermissionGroup[0]);
 	}
 
-	public PermissionGroup[] getParentGroups() {
+	@Deprecated
+	public final PermissionGroup[] getParentGroups() {
 		return this.getParentGroups(null);
 	}
 
-	public Map<String, PermissionGroup[]> getAllParentGroups() {
-		Map<String, PermissionGroup[]> allGroups = new HashMap<String, PermissionGroup[]>();
-
-		for (String worldName : this.getWorlds()) {
-			allGroups.put(worldName, this.getWorldGroups(worldName));
-		}
-
-		allGroups.put(null, this.getWorldGroups(null));
-
-		return allGroups;
-	}
-
-	protected PermissionGroup[] getWorldGroups(String worldName) {
-		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-
-		for (String groupName : this.getParentGroupsNamesImpl(worldName)) {
-			if (groupName == null || groupName.isEmpty() || groupName.equalsIgnoreCase(this.getName())) {
-				continue;
-			}
-
-			PermissionGroup group = this.manager.getGroup(groupName);
-
-			if (!groups.contains(group)) {
-				groups.add(group);
-			}
-		}
-
-		Collections.sort(groups);
-
-		return groups.toArray(new PermissionGroup[0]);
+	@Deprecated
+	public final Map<String, PermissionGroup[]> getAllParentGroups() {
+		return this.convertMap(this.getParentMap(), new PermissionGroup[0]);
 	}
 
 	/**
 	 * Returns direct parents names of this group
-	 * 
+	 *
 	 * @return array of parents group names
 	 */
-	public String[] getParentGroupsNames(String worldName) {
-		List<String> groups = new LinkedList<String>();
-		for (PermissionGroup group : this.getParentGroups(worldName)) {
-			groups.add(group.getName());
-		}
-
-		return groups.toArray(new String[0]);
+	@Deprecated
+	public final String[] getParentGroupsNames(String worldName) {
+		return this.getParentNames(worldName).toArray(new String[0]);
 	}
 
-	public String[] getParentGroupsNames() {
+	@Deprecated
+	public final String[] getParentGroupsNames() {
 		return this.getParentGroupsNames(null);
 	}
 
 	/**
 	 * Set parent groups
-	 * 
+	 *
 	 * @param parentGroups Array of parent groups names to set
 	 */
-	public abstract void setParentGroups(String[] parentGroups, String worldName);
+	@Deprecated
+	public final void setParentGroups(String[] parentGroups, String worldName) {
+		List<PermissionGroup> groups = new ArrayList<PermissionGroup>();
 
+		for (String group : parentGroups) {
+			groups.add(manager.getGroup(group));
+		}
+
+		this.setParents(groups, worldName);
+	}
+
+	@Deprecated
 	public void setParentGroups(String[] parentGroups) {
 		this.setParentGroups(parentGroups, null);
 	}
 
 	/**
 	 * Set parent groups
-	 * 
+	 *
 	 * @param parentGroups Array of parent groups objects to set
 	 */
-	public void setParentGroups(PermissionGroup[] parentGroups, String worldName) {
-		List<String> groups = new LinkedList<String>();
-
-		for (PermissionGroup group : parentGroups) {
-			groups.add(group.getName());
-		}
-
-		this.setParentGroups(groups.toArray(new String[0]), worldName);
-
-		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+	@Deprecated
+	public final void setParentGroups(PermissionGroup[] parentGroups, String worldName) {
+		this.setParents(Arrays.asList(parentGroups), worldName);
 	}
 
-	public void setParentGroups(PermissionGroup[] parentGroups) {
+	@Deprecated
+	public final void setParentGroups(PermissionGroup[] parentGroups) {
 		this.setParentGroups(parentGroups, null);
 	}
 
-	protected abstract void removeGroup();
+	@Deprecated
+	public boolean isChildOf(PermissionGroup group, String worldName, boolean deep) {
+		return deep ? isChildOf(group, worldName) : isDescendantOf(group, worldName);
+	}
 
-	/**
-	 * Check if this group is descendant of specified group 
-	 * 
-	 * @param group group object of parent
-	 * @param checkInheritance set to false to check only the direct inheritance
-	 * @return true if this group is descendant or direct parent of specified group
-	 */
-	public boolean isChildOf(PermissionGroup group, String worldName, boolean checkInheritance) {
-		if (group == null) {
-			return false;
-		}
-
-		for (PermissionGroup parentGroup : this.getParentGroups(worldName)) {
-			if (group.equals(parentGroup)) {
-				return true;
-			}
-
-			if (checkInheritance && parentGroup.isChildOf(group, worldName, checkInheritance)) {
+	@Deprecated
+	public boolean isChildOf(PermissionGroup group, boolean deep) {
+		for (String worldName : this.getWorldsList()) {
+			if (this.isChildOf(group, worldName, deep)) {
 				return true;
 			}
 		}
 
-		return false;
+		return this.isChildOf(group, null, deep);
 	}
 
-	public boolean isChildOf(PermissionGroup group, boolean checkInheritance) {
-		for (String worldName : this.getWorlds()) {
-			if (this.isChildOf(group, worldName, checkInheritance)) {
-				return true;
-			}
-		}
-
-		return this.isChildOf(group, null, checkInheritance);
-	}
-
-	public boolean isChildOf(PermissionGroup group, String worldName) {
-		return isChildOf(group, worldName, false);
-	}
-
+	@Deprecated
 	public boolean isChildOf(PermissionGroup group) {
 		return isChildOf(group, false);
 	}
 
 	/**
-	 * Check if this group is descendant of specified group 
-	 * 
+	 * Check if this group is descendant of specified group
+	 *
 	 * @param groupName name of group to check against
 	 * @param checkInheritance set to false to check only the direct inheritance
-	 * @return 
+	 * @return
 	 */
-	public boolean isChildOf(String groupName, String worldName, boolean checkInheritance) {
-		return isChildOf(this.manager.getGroup(groupName), worldName, checkInheritance);
+	@Deprecated
+	public boolean isChildOf(String groupName, String worldName, boolean deep) {
+		return deep ? isChildOf(this.manager.getGroup(groupName), worldName) : isDescendantOf(this.manager.getGroup(groupName), worldName);
 	}
 
+	@Deprecated
 	public boolean isChildOf(String groupName, boolean checkInheritance) {
 		return isChildOf(this.manager.getGroup(groupName), checkInheritance);
 	}
 
 	/**
 	 * Check if specified group is direct parent of this group
-	 * 
+	 *
 	 * @param groupName to check against
-	 * @return 
+	 * @return
 	 */
+	@Deprecated
 	public boolean isChildOf(String groupName, String worldName) {
 		return this.isChildOf(groupName, worldName, false);
 	}
 
+	@Deprecated
 	public boolean isChildOf(String groupName) {
 		return this.isChildOf(groupName, false);
 	}
 
 	/**
 	 * Return array of direct child group objects
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
-	public PermissionGroup[] getChildGroups(String worldName) {
-		return this.manager.getGroups(this.getName(), worldName, false);
+	@Deprecated
+	public final PermissionGroup[] getChildGroups(String worldName) {
+		return this.getParents(worldName).toArray(new PermissionGroup[0]);
 	}
 
-	public PermissionGroup[] getChildGroups() {
-		return this.manager.getGroups(this.getName(), false);
+	@Deprecated
+	public final PermissionGroup[] getChildGroups() {
+		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+
+		for (String parentWorld : this.getWorldsList()) {
+			groups.addAll(this.getParents(parentWorld));
+		}
+
+		return groups.toArray(new PermissionGroup[0]);
 	}
 
 	/**
 	 * Return array of descendant group objects
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
-	public PermissionGroup[] getDescendantGroups(String worldName) {
-		return this.manager.getGroups(this.getName(), worldName, true);
+	public Set<PermissionGroup> getChildList(String worldName) {
+		Set<PermissionGroup> groups = new HashSet<PermissionGroup>(this.manager.getGroupsList());
+
+		for (PermissionGroup group : groups) {
+			if (!group.isChildOf(this, worldName)) {
+				groups.remove(group);
+			}
+		}
+
+		return groups;
 	}
 
+	public Set<PermissionGroup> getChildList() {
+		Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
+
+		for (World world : Bukkit.getWorlds()) {
+			groups.addAll(this.getChildList(world.getName()));
+		}
+
+		return groups;
+	}
+
+	public Set<PermissionGroup> getDescendantList(String worldName) {
+		Set<PermissionGroup> groups = new HashSet<PermissionGroup>(this.manager.getGroupsList());
+
+		for (PermissionGroup group : groups) {
+			if (!group.isChildOf(this, worldName, true)) {
+				groups.remove(group);
+			}
+		}
+
+		return groups;
+	}
+
+	public Set<PermissionGroup> getDescendantList() {
+		Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
+
+		for (World world : Bukkit.getWorlds()) {
+			groups.addAll(this.getDescendantList(world.getName()));
+		}
+
+		return groups;
+	}
+
+	@Deprecated
+	public PermissionGroup[] getDescendantGroups(String worldName) {
+		return this.getDescendantList(worldName).toArray(new PermissionGroup[0]);
+	}
+
+	@Deprecated
 	public PermissionGroup[] getDescendantGroups() {
-		return this.manager.getGroups(this.getName(), true);
+		return this.getDescendantList().toArray(new PermissionGroup[0]);
 	}
 
 	/**
 	 * Return array of direct members (users) of this group
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
-	public PermissionUser[] getUsers(String worldName) {
-		return this.manager.getUsers(this.getName(), worldName, false);
+	public Set<PermissionUser> getUsersList(String worldName) {
+		return this.getUsersList(worldName, false);
 	}
 
+	public Set<PermissionUser> getUsersList(String worldName, boolean deep) {
+		Set<PermissionUser> usersSet = new HashSet<PermissionUser>();
+
+		for (PermissionUser user : this.manager.getUserList()) {
+			if (user.inGroup(this, worldName, deep)) {
+				usersSet.add(user);
+			}
+		}
+
+		return usersSet;
+	}
+
+	public Set<PermissionUser> getUsersList() {
+		return this.getUsersList(false);
+	}
+
+	public Set<PermissionUser> getUsersList(boolean deep) {
+		Set<PermissionUser> users = new HashSet<PermissionUser>();
+
+		for (World world : Bukkit.getWorlds()) {
+			users.addAll(this.getUsersList(world.getName(), deep));
+		}
+
+		return users;
+	}
+
+	@Deprecated
+	public PermissionUser[] getUsers(String worldName) {
+		return this.getUsersList(worldName, false).toArray(new PermissionUser[0]);
+	}
+
+	@Deprecated
 	public PermissionUser[] getUsers() {
-		return this.manager.getUsers(this.getName());
+		return this.getUsersList(false).toArray(new PermissionUser[0]);
 	}
 
 	public boolean isDefault(String worldName) {
 		return this.equals(this.manager.getDefaultGroup(worldName));
 	}
 
-	/**
-	 * Overriden methods
-	 */
-	@Override
-	public String getPrefix(String worldName) {
-		// @TODO This method should be refactored
-
-		String localPrefix = this.getOwnPrefix(worldName);
-
-		if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
-			// World-inheritance
-			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				String prefix = this.getOwnPrefix(parentWorld);
-				if (prefix != null && !prefix.isEmpty()) {
-					localPrefix = prefix;
-					break;
-				}
-			}
-
-			// Common space
-			if (localPrefix == null || localPrefix.isEmpty()) {
-				localPrefix = this.getOwnPrefix(null);
-			}
-		}
-
-		if (localPrefix == null || localPrefix.isEmpty()) {
-			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				localPrefix = group.getPrefix(worldName);
-				if (localPrefix != null && !localPrefix.isEmpty()) {
-					break;
-				}
-			}
-		}
-
-		if (localPrefix == null) { // NPE safety
-			localPrefix = "";
-		}
-
-		return localPrefix;
-	}
-
-	@Override
-	public String getSuffix(String worldName) {
-		// @TODO This method should be refactored
-
-		String localSuffix = this.getOwnSuffix(worldName);
-
-		if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
-			// World-inheritance
-			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				String suffix = this.getOwnSuffix(parentWorld);
-				if (suffix != null && !suffix.isEmpty()) {
-					localSuffix = suffix;
-					break;
-				}
-			}
-
-			// Common space
-			if (localSuffix == null || localSuffix.isEmpty()) {
-				localSuffix = this.getOwnSuffix(null);
-			}
-		}
-
-		if (localSuffix == null || localSuffix.isEmpty()) {
-			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				localSuffix = group.getSuffix(worldName);
-				if (localSuffix != null && !localSuffix.isEmpty()) {
-					break;
-				}
-			}
-		}
-
-		if (localSuffix == null) { // NPE safety
-			localSuffix = "";
-		}
-
-		return localSuffix;
-	}
-
-	@Override
-	public String[] getPermissions(String world) {
-		List<String> permissions = new LinkedList<String>();
-		this.getInheritedPermissions(world, permissions, true, false, true);
-		return permissions.toArray(new String[0]);
-	}
-
-	@Override
-	public void addPermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
-
-		if (permissions.contains(permission)) {
-			permissions.remove(permission);
-		}
-		
-		permissions.add(0, permission);
-
-		this.setPermissions(permissions.toArray(new String[0]), worldName);
-	}
-
-	@Override
-	public void removePermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
-
-		permissions.remove(permission);
-
-		this.setPermissions(permissions.toArray(new String[0]), worldName);
-	}
-
-	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance, boolean firstStep) {
-		if (firstStep) {
-			permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
-			permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));		
-		} else { // filter permissions for ancestors groups			
-			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getTimedPermissions(worldName));			
-			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getOwnPermissions(worldName));		
-		}
-		
-		if (worldName != null) {
-			// World inheritance
-			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				getInheritedPermissions(parentWorld, permissions, false, true, firstStep);
-			}
-			// Common permission
-			if (!worldInheritance) {
-				this.getInheritedPermissions(null, permissions, false, true, firstStep);
-			}
-		}
-
-		// Group inhertance
-		if (groupInheritance) {
-			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				group.getInheritedPermissions(worldName, permissions, true, false, false);
-			}
-		}
-	}
-
-	protected void copyFilterPermissions(String filterPrefix, List<String> to, String[] from) {
+	protected void copyFilterPermissions(String filterPrefix, List<String> to, List<String> from) {
 		for (String permission : from) {
 			if (permission.startsWith(filterPrefix)) {
 				continue;
@@ -624,63 +482,27 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	}
 
 	@Override
-	public final void remove() {
-		for (String world : this.getWorlds()) {
+	public void remove() {
+		for (String world : this.getWorldsList()) {
 			this.clearChildren(world);
 		}
 
 		this.clearChildren(null);
 
-		this.removeGroup();
-
 		this.callEvent(PermissionEntityEvent.Action.REMOVED);
 	}
 
 	private void clearChildren(String worldName) {
-		for (PermissionGroup group : this.getChildGroups(worldName)) {
-			List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+		for (PermissionGroup group : this.getChildList(worldName)) {
+			List<PermissionGroup> parentGroups = new ArrayList<PermissionGroup>(group.getParents(worldName));
 			parentGroups.remove(this);
 
-			group.setParentGroups(parentGroups.toArray(new PermissionGroup[0]), worldName);
+			group.setParents(parentGroups, worldName);
 		}
 
 		for (PermissionUser user : this.getUsers(worldName)) {
 			user.removeGroup(this, worldName);
 		}
-	}
-
-	@Override
-	public String getOption(String optionName, String worldName, String defaultValue) {
-		String value = this.getOwnOption(optionName, worldName, null);
-		if (value != null) {
-			return value;
-		}
-
-		if (worldName != null) { // world inheritance
-			for (String world : manager.getWorldInheritance(worldName)) {
-				value = this.getOption(optionName, world, null);
-				if (value != null) {
-					return value;
-				}
-			}
-
-			// Check common space
-			value = this.getOption(optionName, null, null);
-			if (value != null) {
-				return value;
-			}
-		}
-
-		// Inheritance
-		for (PermissionGroup group : this.getParentGroups(worldName)) {
-			value = group.getOption(optionName, worldName, null);
-			if (value != null) {
-				return value;
-			}
-		}
-
-		// Nothing found
-		return defaultValue;
 	}
 
 	@Override

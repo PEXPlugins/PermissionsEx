@@ -18,11 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -81,7 +77,7 @@ public abstract class PermissionsCommand implements CommandListener {
             return null;
         }
 
-        List<String> players = new LinkedList<String>();
+        List<String> players = new ArrayList<String>();
 
         // Collect online Player names
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
@@ -128,7 +124,7 @@ public abstract class PermissionsCommand implements CommandListener {
     }
 
     protected String autoCompleteGroupName(String groupName, String argName) {
-        List<String> groups = new LinkedList<String>();
+        List<String> groups = new ArrayList<String>();
 
         for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
             if (group.getName().equalsIgnoreCase(groupName)) {
@@ -159,7 +155,7 @@ public abstract class PermissionsCommand implements CommandListener {
             return null;
         }
 
-        List<String> worlds = new LinkedList<String>();
+        List<String> worlds = new ArrayList<String>();
 
         for (World world : Bukkit.getServer().getWorlds()) {
             if (world.getName().equalsIgnoreCase(worldName)) {
@@ -317,7 +313,7 @@ public abstract class PermissionsCommand implements CommandListener {
     }
 
     protected List<String> getPermissionsTree(PermissionEntity entity, String world, int level) {
-        List<String> permissions = new LinkedList<String>();
+        List<String> permissions = new ArrayList<String>();
         Map<String, String[]> allPermissions = entity.getAllPermissions();
 
         String[] worldsPermissions = allPermissions.get(world);
@@ -339,7 +335,7 @@ public abstract class PermissionsCommand implements CommandListener {
     }
 
     protected List<String> sprintPermissions(String world, String[] permissions) {
-        List<String> permissionList = new LinkedList<String>();
+        List<String> permissionList = new ArrayList<String>();
 
         if (permissions == null) {
             return permissionList;

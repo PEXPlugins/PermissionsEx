@@ -18,10 +18,7 @@
  */
 package ru.tehkode.permissions;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -57,7 +54,7 @@ public class PermissionManager {
 
 	/**
 	 * Check if specified player has specified permission
-	 * 
+	 *
 	 * @param player player object
 	 * @param permission permission string to check against
 	 * @return true on success false otherwise
@@ -68,7 +65,7 @@ public class PermissionManager {
 
 	/**
 	 * Check if player has specified permission in world
-	 * 
+	 *
 	 * @param player player object
 	 * @param permission permission as string to check against
 	 * @param world world's name as string
@@ -80,7 +77,7 @@ public class PermissionManager {
 
 	/**
 	 * Check if player with name has permission in world
-	 * 
+	 *
 	 * @param playerName player name
 	 * @param permission permission as string to check against
 	 * @param world world's name as string
@@ -98,7 +95,7 @@ public class PermissionManager {
 
 	/**
 	 * Return user's object
-	 * 
+	 *
 	 * @param username get PermissionUser with given name
 	 * @return PermissionUser instance
 	 */
@@ -124,7 +121,7 @@ public class PermissionManager {
 
 	/**
 	 * Return object of specified player
-	 * 
+	 *
 	 * @param player player object
 	 * @return PermissionUser instance
 	 */
@@ -133,46 +130,63 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Return all registered user objects
-	 * 
-	 * @return PermissionUser array
+	 * Return all registered and online users
+	 *
+	 * @return
 	 */
+	public List<PermissionUser> getUserList() {
+		List<PermissionUser> userSet = new ArrayList<PermissionUser>();
+
+		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+			userSet.add(this.getUser(player));
+		}
+
+		userSet.addAll(backend.getRegisteredUsers());
+
+		return userSet;
+	}
+
 	public PermissionUser[] getUsers() {
-		return backend.getUsers();
+		return this.getUserList().toArray(new PermissionUser[0]);
 	}
 
 	/**
 	 * Return all users in group
-	 * 
+	 *
 	 * @param groupName group's name
 	 * @return PermissionUser array
 	 */
+	@Deprecated
 	public PermissionUser[] getUsers(String groupName, String worldName) {
-		return backend.getUsers(groupName, worldName);
+		return this.getGroup(groupName).getUsers(worldName);
 	}
 
+	@Deprecated
 	public PermissionUser[] getUsers(String groupName) {
-		return backend.getUsers(groupName);
+		return this.getGroup(groupName).getUsers();
 	}
 
 	/**
-	 * Return all users in group and descendant groups 
-	 * 
+	 * Return all users in group and descendant groups
+	 *
 	 * @param groupName group's name
-	 * @param inheritance true return members of descendant groups of specified group
+	 * @param deep true return members of descendant groups of specified
+	 * group
 	 * @return PermissionUser array for groupnName
 	 */
-	public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
-		return backend.getUsers(groupName, worldName, inheritance);
+	@Deprecated
+	public PermissionUser[] getUsers(String groupName, String worldName, boolean deep) {
+		return this.getGroup(groupName).getUsersList(worldName, deep).toArray(new PermissionUser[0]);
 	}
 
-	public PermissionUser[] getUsers(String groupName, boolean inheritance) {
-		return backend.getUsers(groupName, inheritance);
+	@Deprecated
+	public PermissionUser[] getUsers(String groupName, boolean deep) {
+		return this.getGroup(groupName).getUsersList(deep).toArray(new PermissionUser[0]);
 	}
 
 	/**
 	 * Reset in-memory object of specified user
-	 * 
+	 *
 	 * @param userName user's name
 	 */
 	public void resetUser(String userName) {
@@ -181,7 +195,7 @@ public class PermissionManager {
 
 	/**
 	 * Clear cache for specified user
-	 * 
+	 *
 	 * @param userName
 	 */
 	public void clearUserCache(String userName) {
@@ -194,7 +208,7 @@ public class PermissionManager {
 
 	/**
 	 * Clear cache for specified player
-	 * 
+	 *
 	 * @param player
 	 */
 	public void clearUserCache(Player player) {
@@ -203,7 +217,7 @@ public class PermissionManager {
 
 	/**
 	 * Return object for specified group
-	 * 
+	 *
 	 * @param groupname group's name
 	 * @return PermissionGroup object
 	 */
@@ -229,45 +243,54 @@ public class PermissionManager {
 
 	/**
 	 * Return all groups
-	 * 
+	 *
 	 * @return PermissionGroup array
 	 */
+	public Set<PermissionGroup> getGroupsList() {
+		return this.backend.getGroups();
+	}
+
+	@Deprecated
 	public PermissionGroup[] getGroups() {
-		return backend.getGroups();
+		return this.getGroupsList().toArray(new PermissionGroup[0]);
 	}
 
 	/**
 	 * Return all child groups of specified group
-	 * 
+	 *
 	 * @param groupName group's name
 	 * @return PermissionGroup array
 	 */
+	@Deprecated
 	public PermissionGroup[] getGroups(String groupName, String worldName) {
-		return backend.getGroups(groupName, worldName);
+		return this.getGroup(groupName).getChildList(worldName).toArray(new PermissionGroup[0]);
 	}
 
+	@Deprecated
 	public PermissionGroup[] getGroups(String groupName) {
-		return backend.getGroups(groupName);
+		return this.getGroup(groupName).getChildList().toArray(new PermissionGroup[0]);
 	}
 
 	/**
 	 * Return all descendants or child groups for groupName
-	 * 
+	 *
 	 * @param groupName group's name
 	 * @param inheritance true: only direct child groups would be returned
 	 * @return PermissionGroup array for specified groupName
 	 */
-	public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
-		return backend.getGroups(groupName, worldName, inheritance);
+	@Deprecated
+	public PermissionGroup[] getGroups(String groupName, String worldName, boolean deep) {
+		return ((deep) ? this.getGroup(groupName).getDescendantList(worldName) : this.getGroup(groupName).getChildList(worldName)).toArray(new PermissionGroup[0]);
 	}
 
-	public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
-		return backend.getGroups(groupName, inheritance);
+	@Deprecated
+	public PermissionGroup[] getGroups(String groupName, boolean deep) {
+		return ((deep) ? this.getGroup(groupName).getDescendantList() : this.getGroup(groupName).getChildList()).toArray(new PermissionGroup[0]);
 	}
 
 	/**
 	 * Return default group object
-	 * 
+	 *
 	 * @return default group object. null if not specified
 	 */
 	public PermissionGroup getDefaultGroup(String worldName) {
@@ -310,7 +333,7 @@ public class PermissionManager {
 
 	/**
 	 * Set default group to specified group
-	 * 
+	 *
 	 * @param group PermissionGroup group object
 	 */
 	public void setDefaultGroup(PermissionGroup group, String worldName) {
@@ -332,7 +355,7 @@ public class PermissionManager {
 
 	/**
 	 * Reset in-memory object for groupName
-	 * 
+	 *
 	 * @param groupName group's name
 	 */
 	public void resetGroup(String groupName) {
@@ -341,7 +364,7 @@ public class PermissionManager {
 
 	/**
 	 * Set debug mode
-	 * 
+	 *
 	 * @param debug true enables debug mode, false disables
 	 */
 	public void setDebug(boolean debug) {
@@ -351,7 +374,7 @@ public class PermissionManager {
 
 	/**
 	 * Return current state of debug mode
-	 * 
+	 *
 	 * @return true debug is enabled, false if disabled
 	 */
 	public boolean isDebug() {
@@ -360,10 +383,12 @@ public class PermissionManager {
 
 	/**
 	 * Return groups of specified rank ladder
-	 * 
+	 *
 	 * @param ladderName
-	 * @return Map of ladder, key - rank of group, value - group object. Empty map if ladder does not exist
+	 * @return Map of ladder, key - rank of group, value - group object. Empty
+	 * map if ladder does not exist
 	 */
+	@Deprecated
 	public Map<Integer, PermissionGroup> getRankLadder(String ladderName) {
 		Map<Integer, PermissionGroup> ladder = new HashMap<Integer, PermissionGroup>();
 
@@ -382,28 +407,38 @@ public class PermissionManager {
 
 	/**
 	 * Return array of world names who has world inheritance
-	 * 
+	 *
 	 * @param worldName World name
 	 * @return Array of parent world, if world does not exist return empty array
 	 */
-	public String[] getWorldInheritance(String worldName) {
+	public List<String> getWorldInheritanceList(String worldName) {
 		return backend.getWorldInheritance(worldName);
 	}
 
+	@Deprecated
+	public String[] getWorldInheritance(String worldName) {
+		return this.getWorldInheritanceList(worldName).toArray(new String[0]);
+	}
+
 	/**
-	 * Set world inheritance parents for world 
-	 * 
+	 * Set world inheritance parents for world
+	 *
 	 * @param world world name which inheritance should be set
 	 * @param parentWorlds array of parent world names
 	 */
-	public void setWorldInheritance(String world, String[] parentWorlds) {
+	public void setWorldInheritance(String world, List<String> parentWorlds) {
 		backend.setWorldInheritance(world, parentWorlds);
 		this.callEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED);
 	}
 
+	@Deprecated
+	public void setWorldInheritance(String world, String[] parentWorlds) {
+		this.setWorldInheritance(world, Arrays.asList(parentWorlds));
+	}
+
 	/**
 	 * Return current backend
-	 * 
+	 *
 	 * @return current backend object
 	 */
 	public PermissionBackend getBackend() {
@@ -411,9 +446,9 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Set backend to specified backend.
-	 * This would also cause backend resetting.
-	 * 
+	 * Set backend to specified backend. This would also cause backend
+	 * resetting.
+	 *
 	 * @param backendName name of backend to set to
 	 */
 	public void setBackend(String backendName) {
@@ -428,7 +463,7 @@ public class PermissionManager {
 
 	/**
 	 * Register new timer task
-	 * 
+	 *
 	 * @param task TimerTask object
 	 * @param delay delay in seconds
 	 */
@@ -441,9 +476,14 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
+	 * Reset all in-memory groups and users, clean up runtime stuff, reloads
+	 * backend
 	 */
+	@Deprecated
 	public void reset() {
+	}
+
+	public void reload() {
 		this.clearCache();
 
 		if (this.backend != null) {
@@ -456,12 +496,12 @@ public class PermissionManager {
 		reset();
 		timer.cancel();
 	}
-	
+
 	public void initTimer() {
 		if (timer != null) {
 			timer.cancel();
 		}
-		
+
 		timer = new Timer("PermissionsEx-Cleaner");
 	}
 

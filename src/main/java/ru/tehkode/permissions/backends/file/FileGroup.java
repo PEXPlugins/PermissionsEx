@@ -18,28 +18,24 @@
  */
 package ru.tehkode.permissions.backends.file;
 
-import java.util.*;
+import ru.tehkode.permissions.GenericPermissionGroup;
 
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionGroup;
-import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.config.ConfigurationNode;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
  * @author code
  */
-public class FileGroup extends ProxyPermissionGroup {
+public class FileGroup extends GenericPermissionGroup {
 
     protected ConfigurationNode node;
 
     public FileGroup(String name, PermissionManager manager, FileBackend backend) {
-        super(new FileEntity(name, manager, backend, "groups"));
-        
-        this.node = ((FileEntity)this.backendEntity).getConfigNode();
+        super(name, manager, backend.getGroupDataProvider(name));
     }
     
+	/*
     @Override
     public String[] getParentGroupsNamesImpl(String worldName) {
         String inheritanceNode = "inheritance";
@@ -48,7 +44,7 @@ public class FileGroup extends ProxyPermissionGroup {
             inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
         }
         
-        return this.node.getStringList(inheritanceNode, new LinkedList<String>()).toArray(new String[0]);
+        return this.node.getStringList(inheritanceNode, new ArrayList<String>()).toArray(new String[0]);
     }
 
     @Override
@@ -69,5 +65,6 @@ public class FileGroup extends ProxyPermissionGroup {
         
         this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }   
+	*/
     
 }

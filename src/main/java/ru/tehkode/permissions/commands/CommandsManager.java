@@ -20,10 +20,7 @@ package ru.tehkode.permissions.commands;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -46,7 +43,7 @@ public class CommandsManager {
 	protected static final Logger logger = Logger.getLogger("Minecraft");
 	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new HashMap<String, Map<CommandSyntax, CommandBinding>>();
 	protected Plugin plugin;
-	protected List<Plugin> helpPlugins = new LinkedList<Plugin>();
+	protected List<Plugin> helpPlugins = new ArrayList<Plugin>();
 
 	public CommandsManager(Plugin plugin) {
 		this.plugin = plugin;
@@ -154,7 +151,7 @@ public class CommandsManager {
 
 		protected String originalSyntax;
 		protected String regexp;
-		protected List<String> arguments = new LinkedList<String>();
+		protected List<String> arguments = new ArrayList<String>();
 
 		public CommandSyntax(String syntax) {
 			this.originalSyntax = syntax;

@@ -18,10 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -176,7 +173,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+			List<PermissionGroup> groups = new ArrayList<PermissionGroup>();
 
 			for (String parent : parents) {
 				groups.add(PermissionsEx.getPermissionManager().getGroup(parent));
@@ -267,7 +264,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+			List<PermissionGroup> groups = new ArrayList<PermissionGroup>();
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
@@ -302,7 +299,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+			List<PermissionGroup> groups = new ArrayList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
@@ -337,7 +334,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+			List<PermissionGroup> groups = new ArrayList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));

@@ -18,11 +18,11 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionGroup;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
-public class SQLGroup extends ProxyPermissionGroup {
+public class SQLGroup extends PermissionGroup {
 
     protected SQLEntity backend;
 

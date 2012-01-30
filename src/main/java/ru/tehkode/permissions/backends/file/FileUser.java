@@ -18,31 +18,21 @@
  */
 package ru.tehkode.permissions.backends.file;
 
-import java.util.Arrays;
-import java.util.List;
+import ru.tehkode.permissions.GenericPermissionUser;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionUser;
-import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.config.ConfigurationNode;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
  * @author code
  */
-public class FileUser extends ProxyPermissionUser {
-
-    protected ConfigurationNode node;
-	protected FileBackend backend;
+public class FileUser extends GenericPermissionUser {
 	
 	
     public FileUser(String playerName, PermissionManager manager, FileBackend backend) {
-        super(new FileEntity(playerName, manager, backend, "users"));
-		
-		this.backend = backend;
-
-        this.node = ((FileEntity)this.backendEntity).getConfigNode();
+        super(playerName, manager, backend.getUserDataProvider(playerName));		
     }
+	
+	/*
 
     @Override
     protected String[] getGroupsNamesImpl(String worldName) {
@@ -92,4 +82,6 @@ public class FileUser extends ProxyPermissionUser {
         this.save();
         this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }
+	* 
+	* */ 
 }

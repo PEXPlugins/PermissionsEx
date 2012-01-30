@@ -16,18 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.backends;
+package ru.tehkode.permissions.backends.sql;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -48,7 +44,7 @@ import ru.tehkode.utils.StringUtils;
  */
 public class SQLBackend extends PermissionBackend {
 
-    protected Map<String, String[]> worldInheritanceCache = new HashMap<String, String[]>();
+    protected Map<String, List<String>> worldInheritanceCache = new HashMap<String, List<String>>();
     public SQLConnection sql;
 
     public SQLBackend(PermissionManager manager, Configuration config) {
@@ -133,27 +129,24 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
-    public PermissionGroup[] getGroups() {
+    public Set<PermissionGroup> getGroups() {
         String[] groupNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.GROUP, false);
-        List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+        Set<PermissionGroup> groups = new HashSet<PermissionGroup> ();
 
         for (String groupName : groupNames) {
             groups.add(this.manager.getGroup(groupName));
         }
 
-        Collections.sort(groups);
-
-        return groups.toArray(new PermissionGroup[0]);
+        return groups;
     }
 
     @Override
-    public PermissionUser[] getRegisteredUsers() {
+    public Set<PermissionUser> getRegisteredUsers() {
         String[] userNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.USER, false);
-        PermissionUser[] users = new PermissionUser[userNames.length];
+        Set<PermissionUser> users = new HashSet<PermissionUser> ();
 
-        int index = 0;
         for (String groupName : userNames) {
-            users[index++] = this.manager.getUser(groupName);
+            users.add(this.manager.getUser(groupName));
         }
 
         return users;
@@ -317,21 +310,21 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
-    public String[] getWorldInheritance(String world) {
+    public List<String> getWorldInheritance(String world) {
         if (world == null || world.isEmpty()) {
-            return new String[0];
+            return new ArrayList<String>();
         }
 
         if (!worldInheritanceCache.containsKey(world)) {
             try {
                 ResultSet result = this.sql.selectQuery("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2;", world);
-                LinkedList<String> worldParents = new LinkedList<String>();
+                ArrayList<String> worldParents = new ArrayList<String>();
 
                 while (result.next()) {
                     worldParents.add(result.getString("parent"));
                 }
 
-                this.worldInheritanceCache.put(world, worldParents.toArray(new String[0]));
+                this.worldInheritanceCache.put(world, worldParents);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -341,7 +334,7 @@ public class SQLBackend extends PermissionBackend {
     }
 
     @Override
-    public void setWorldInheritance(String worldName, String[] parentWorlds) {
+    public void setWorldInheritance(String worldName, List<String> parentWorlds) {
         if (worldName == null || worldName.isEmpty()) {
             return;
         }
@@ -349,7 +342,7 @@ public class SQLBackend extends PermissionBackend {
         try {
             this.sql.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2", worldName);
 
-            List<Object[]> records = new LinkedList<Object[]>();
+            List<Object[]> records = new ArrayList<Object[]>();
 
             for (String parentWorld : parentWorlds) {
                 records.add(new Object[]{worldName, parentWorld, 2});
