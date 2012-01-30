@@ -184,7 +184,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " created!");
 
-		group.save();
+		group.commit(true);
 	}
 
 	@Command(name = "pex",
@@ -278,7 +278,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
-			group.save();
+			group.commit(true);
 		}
 	}
 
@@ -313,7 +313,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
-			group.save();
+			group.commit(true);
 		}
 	}
 
@@ -346,7 +346,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
-			group.save();
+			group.commit(true);
 		}
 	}
 

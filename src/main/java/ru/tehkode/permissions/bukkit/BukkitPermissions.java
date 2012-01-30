@@ -23,9 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -50,7 +53,7 @@ public class BukkitPermissions {
 	protected boolean enableParentNodes = true;
 	protected Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
 
-	public BukkitPermissions(Plugin plugin, ConfigurationNode config) {
+	public BukkitPermissions(Plugin plugin, ConfigurationSection config) {
 		this.plugin = plugin;
 
 		if (!config.getBoolean("enable", true)) {
@@ -103,18 +106,8 @@ public class BukkitPermissions {
 		}
 	}
 
-	private void registerEvents() {
-		PluginManager manager = plugin.getServer().getPluginManager();
-
-		manager.registerEvent(Event.Type.PLAYER_LOGIN, new PlayerEvents(), Event.Priority.Lowest, plugin);
-
-		manager.registerEvent(Event.Type.CUSTOM_EVENT, new PEXEvents(), Event.Priority.Low, plugin);
-
-		if (this.enableParentNodes) {
-			ServerListener serverEvents = new ServerEvents();
-
-			manager.registerEvent(Event.Type.PLUGIN_ENABLE, serverEvents, Event.Priority.Low, plugin);
-		}
+	private void registerEvents() {		
+		Bukkit.getPluginManager().registerEvents(new PlayerEvents(), plugin);
 	}
 
 	public void updatePermissions(Player player) {
@@ -133,29 +126,23 @@ public class BukkitPermissions {
 		}
 	}
 
-	protected class PlayerEvents extends PlayerListener {
+	protected class PlayerEvents extends Listener {
 
-		@Override
+		@EventHandler(priority = EventPriority.LOWEST)
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			updatePermissions(event.getPlayer());
 		}
-	}
 
-	protected class ServerEvents extends ServerListener {
-
-		@Override
+		@EventHandler(priority = EventPriority.LOW)
 		public void onPluginEnable(PluginEnableEvent event) {
 			List<Permission> pluginPermissions = event.getPlugin().getDescription().getPermissions();
-			
-			for(Permission permission : pluginPermissions) {
+
+			for (Permission permission : pluginPermissions) {
 				calculatePermissionChildren(permission);
 			}
 		}
-	}
 
-	protected class PEXEvents extends CustomEventListener {
-
-		@Override
+		@EventHandler(priority = EventPriority.LOW)
 		public void onCustomEvent(Event event) {
 			if (event instanceof PermissionEntityEvent) {
 				PermissionEntityEvent pee = (PermissionEntityEvent) event;

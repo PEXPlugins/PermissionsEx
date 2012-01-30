@@ -132,7 +132,7 @@ public class UtilityCommands extends PermissionsCommand {
         }
 
         try {
-            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfiguration(), null);
+            PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), ((PermissionsEx) plugin).getConfig(), null);
 
             File dstFile = new File("plugins/PermissionsEx/", args.get("filename"));
 

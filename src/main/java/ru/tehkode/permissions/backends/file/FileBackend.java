@@ -24,6 +24,9 @@ import java.io.OutputStreamWriter;
 import java.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -34,7 +37,6 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.GroupDataProvider;
 import ru.tehkode.permissions.backends.UserDataProvider;
-import ru.tehkode.permissions.config.Configuration;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
@@ -43,26 +45,19 @@ import ru.tehkode.permissions.config.ConfigurationNode;
  */
 public class FileBackend extends PermissionBackend {
 
-	public Configuration permissions;
-	
-	public FileBackend(PermissionManager manager, org.bukkit.util.config.Configuration config) {
+	public FileConfiguration permissions;
+		
+	public FileBackend(PermissionManager manager, ConfigurationSection config) {
 		super(manager, config);
 	}
 
 	@Override
 	public void initialize() {
-		String permissionFilename = config.getString("permissions.backends.file.file");
-
-		// Default settings
-		if (permissionFilename == null) {
-			permissionFilename = "permissions.yml";
-			config.setProperty("permissions.backends.file.file", "permissions.yml");
-			config.save();
-		}
+		String permissionFilename = config.getString("file.file", "permissions.yml");
 
 		String baseDir = config.getString("permissions.basedir", "plugins/PermissionsEx");
 
-		if (baseDir.contains("\\") && !"\\".equals(File.separator)) {
+		if (baseDir.contains("\\") && !"\\".equals(File.separator)) { // windows paths compatibility
 			baseDir = baseDir.replace("\\", File.separator);
 		}
 
@@ -73,35 +68,19 @@ public class FileBackend extends PermissionBackend {
 
 		File permissionFile = new File(baseDir, permissionFilename);
 
-		permissions = new Configuration(permissionFile);
+		
 
 		if (!permissionFile.exists()) {
-			try {
-				permissionFile.createNewFile();
-
-				// Load default permissions
-				permissions.setProperty("groups.default.default", true);
-
-
-				List<String> defaultPermissions = new ArrayList<String>();
-				// Specify here default permissions
-				defaultPermissions.add("modifyworld.*");
-
-				permissions.setProperty("groups.default.permissions", defaultPermissions);
-
-				permissions.save();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			// copy from bundled
 		}
 
-		permissions.load();
+		permissions = YamlConfiguration.loadConfiguration(permissionFile);
 	}
 
 	@Override
 	public List<String> getWorldInheritance(String world) {
 		if (world != null && !world.isEmpty()) {
-			return this.permissions.getStringList("worlds.`" + world + "`.inheritance", new ArrayList<String>());
+			return this.permissions.getStringList("worlds." + world + ".inheritance");
 		}
 
 		return new ArrayList<String>();
@@ -115,8 +94,7 @@ public class FileBackend extends PermissionBackend {
 			return;
 		}
 
-		this.permissions.setProperty("worlds.`" + world + "`.inheritance", parentWorlds);
-		this.permissions.save();
+		this.permissions.set("worlds." + world + ".inheritance", parentWorlds);
 	}
 
 	@Override

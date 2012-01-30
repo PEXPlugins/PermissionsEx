@@ -23,10 +23,8 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.logging.Logger;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.backends.GroupDataProvider;
 import ru.tehkode.permissions.backends.UserDataProvider;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
@@ -39,10 +37,10 @@ public abstract class PermissionBackend {
     
     protected final static String defaultBackend = "file";
     protected PermissionManager manager;
-    protected Configuration config;
+    protected ConfigurationSection config;
 	protected boolean createUserRecords = false;
     
-    protected PermissionBackend(PermissionManager manager, Configuration config) {
+    protected PermissionBackend(PermissionManager manager, ConfigurationSection config) {
         this.manager = manager;
         this.config = config;
 		

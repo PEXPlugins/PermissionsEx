@@ -21,8 +21,8 @@ package ru.tehkode.permissions;
 import java.util.*;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.util.config.Configuration;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
@@ -39,12 +39,12 @@ public class PermissionManager {
 	protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
 	protected Map<String, PermissionGroup> defaultGroups = new HashMap<String, PermissionGroup>();
 	protected PermissionBackend backend = null;
-	protected Configuration config;
+	protected FileConfiguration config;
 	protected Timer timer;
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 
-	public PermissionManager(Configuration config) {
+	public PermissionManager(FileConfiguration config) {
 		this.config = config;
 		this.initBackend();
 
@@ -519,8 +519,7 @@ public class PermissionManager {
 
 		if (backendName == null || backendName.isEmpty()) {
 			backendName = PermissionBackend.defaultBackend; //Default backend
-			this.config.setProperty("permissions.backend", backendName);
-			this.config.save();
+			this.config.set("permissions.backend", backendName);
 		}
 
 		this.setBackend(backendName);
