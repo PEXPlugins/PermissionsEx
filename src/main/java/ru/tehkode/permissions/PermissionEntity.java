@@ -566,8 +566,9 @@ public abstract class PermissionEntity {
 		if (localExpression.startsWith("-")) {
 			localExpression = localExpression.substring(1);
 		}
-		
-		if (localExpression.startsWith("#")) {
+		#==BEGIN PULL REQUEST
+		if (localExpression.startsWith("~")) {
+		#==END PULL REQUEST
 			localExpression = localExpression.substring(1);
 		}
 
