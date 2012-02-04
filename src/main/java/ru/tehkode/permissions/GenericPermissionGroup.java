@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import ru.tehkode.permissions.backends.GroupDataProvider;
 
-public abstract class GenericPermissionGroup extends PermissionGroup {
+public class GenericPermissionGroup extends PermissionGroup {
 
 	protected GroupDataProvider provider;
 

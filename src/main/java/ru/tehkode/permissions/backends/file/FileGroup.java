@@ -21,18 +21,19 @@ package ru.tehkode.permissions.backends.file;
 import ru.tehkode.permissions.GenericPermissionGroup;
 
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.backends.GroupDataProvider;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
  *
- * @author code
+ * @author t3hk0d3
  */
 public class FileGroup extends GenericPermissionGroup {
 
     protected ConfigurationNode node;
 
-    public FileGroup(String name, PermissionManager manager, FileBackend backend) {
-        super(name, manager, backend.getGroupDataProvider(name));
+    public FileGroup(String name, PermissionManager manager, GroupDataProvider data) {
+        super(name, manager, data);
     }
     
 	/*

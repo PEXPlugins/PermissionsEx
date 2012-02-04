@@ -107,7 +107,7 @@ public class PermissionManager {
 		PermissionUser user = users.get(username.toLowerCase());
 
 		if (user == null) {
-			user = this.backend.getUser(username);
+			user = new GenericPermissionUser(username, this, this.backend.getUserDataProvider(username));
 			if (user != null) {
 				user.initialize();
 				this.users.put(username.toLowerCase(), user);
@@ -134,18 +134,21 @@ public class PermissionManager {
 	 *
 	 * @return
 	 */
-	public List<PermissionUser> getUserList() {
-		List<PermissionUser> userSet = new ArrayList<PermissionUser>();
+	public Set<PermissionUser> getUserList() {
+		Set<PermissionUser> userSet = new HashSet<PermissionUser>();
 
+		for (String playerName : backend.getRegisteredUsers()) {
+			userSet.add(this.getUser(playerName));
+		}
+		
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 			userSet.add(this.getUser(player));
 		}
-
-		userSet.addAll(backend.getRegisteredUsers());
-
+		
 		return userSet;
 	}
 
+	@Deprecated
 	public PermissionUser[] getUsers() {
 		return this.getUserList().toArray(new PermissionUser[0]);
 	}
@@ -225,11 +228,11 @@ public class PermissionManager {
 		if (groupname == null || groupname.isEmpty()) {
 			return null;
 		}
-
+		
 		PermissionGroup group = groups.get(groupname.toLowerCase());
 
 		if (group == null) {
-			group = this.backend.getGroup(groupname);
+			group = new GenericPermissionGroup(groupname, this, this.backend.getGroupDataProvider(groupname));
 			if (group != null) {
 				group.initialize();
 				this.groups.put(groupname.toLowerCase(), group);
@@ -247,7 +250,13 @@ public class PermissionManager {
 	 * @return PermissionGroup array
 	 */
 	public Set<PermissionGroup> getGroupsList() {
-		return this.backend.getGroups();
+		Set<PermissionGroup> groupList = new HashSet<PermissionGroup>();
+		
+		for (String groupName : this.backend.getGroups()) {
+			groupList.add(this.getGroup(groupName));
+		}
+		
+		return groupList;
 	}
 
 	@Deprecated
@@ -308,22 +317,22 @@ public class PermissionManager {
 	}
 
 	private PermissionGroup getDefaultGroup(String worldName, PermissionGroup fallback) {
-		PermissionGroup defaultGroup = this.backend.getDefaultGroup(worldName);
-
-		if (defaultGroup == null && worldName == null) {
+		String defaultGroup = this.backend.getDefaultGroup(worldName);
+		
+		if (defaultGroup == null && worldName == null) { // fail fast
 			throw new IllegalStateException("No default group defined. Use \"pex set default group <group> [world]\" to define default group.");
 		}
 
 		if (defaultGroup != null) {
-			return defaultGroup;
+			return this.getGroup(defaultGroup);
 		}
 
 		if (worldName != null) {
 			// check world-inheritance
-			for (String parentWorld : this.getWorldInheritance(worldName)) {
-				defaultGroup = this.getDefaultGroup(parentWorld, null);
-				if (defaultGroup != null) {
-					return defaultGroup;
+			for (String parentWorld : this.getWorldInheritanceList(worldName)) {
+				PermissionGroup group = this.getDefaultGroup(parentWorld, null);
+				if (group != null) {
+					return group;
 				}
 			}
 		}
@@ -341,7 +350,7 @@ public class PermissionManager {
 			return;
 		}
 
-		backend.setDefaultGroup(group, worldName);
+		backend.setDefaultGroup(group.getName(), worldName);
 
 		this.defaultGroups.clear();
 

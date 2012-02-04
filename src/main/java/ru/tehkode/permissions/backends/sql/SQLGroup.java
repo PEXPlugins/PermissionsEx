@@ -22,8 +22,8 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
-public class SQLGroup extends PermissionGroup {
-
+public class SQLGroup {
+/*
     protected SQLEntity backend;
 
     public SQLGroup(String name, PermissionManager manager, SQLConnection sql) {
@@ -47,4 +47,6 @@ public class SQLGroup extends PermissionGroup {
         
         this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
     }
+	* 
+	*/
 }

@@ -18,10 +18,13 @@
  */
 package ru.tehkode.permissions.backends.file;
 
+import ru.tehkode.permissions.backends.file.data.FileUserDataProvider;
+import ru.tehkode.permissions.backends.file.data.FileGroupDataProvider;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
@@ -37,56 +40,183 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.GroupDataProvider;
 import ru.tehkode.permissions.backends.UserDataProvider;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.ConfigurationNode;
 
 /**
  *
- * @author code
+ * @author t3hk0d3
  */
 public class FileBackend extends PermissionBackend {
 
-	public FileConfiguration permissions;
-		
+	protected Map<String, FileGroupDataProvider> groups = new HashMap<String, FileGroupDataProvider>();
+	protected Map<String, FileUserDataProvider> users = new HashMap<String, FileUserDataProvider>();
+	protected Map<String, List<String>> worldInheritanceMap = new HashMap<String, List<String>>();
+	protected Map<String, String> defaultGroups = new HashMap<String, String>();
+	// File containing permissions
+	protected Map<File, FileConfiguration> permissionFiles = new HashMap<File, FileConfiguration>();
+	// Configuration file where PEX would save new players
+	protected FileConfiguration mainUserConfig = null;
+	// Configuration file where PEX would save new groups
+	protected FileConfiguration mainGroupConfig = null;
+
 	public FileBackend(PermissionManager manager, ConfigurationSection config) {
 		super(manager, config);
 	}
 
 	@Override
 	public void initialize() {
-		String permissionFilename = config.getString("file.file", "permissions.yml");
-
-		String baseDir = config.getString("permissions.basedir", "plugins/PermissionsEx");
-
-		if (baseDir.contains("\\") && !"\\".equals(File.separator)) { // windows paths compatibility
-			baseDir = baseDir.replace("\\", File.separator);
-		}
-
-		File baseDirectory = new File(baseDir);
+		File baseDirectory = PermissionsEx.getPlugin().getDataFolder();
 		if (!baseDirectory.exists()) {
 			baseDirectory.mkdirs();
 		}
 
-		File permissionFile = new File(baseDir, permissionFilename);
-
-		
-
-		if (!permissionFile.exists()) {
-			// copy from bundled
+		if (this.config.isList("file.files")) {
+			this.loadPermissions(baseDirectory, this.config.getStringList("file.files"));
 		}
 
-		permissions = YamlConfiguration.loadConfiguration(permissionFile);
+		if (this.config.isString("file.file")) {
+			this.loadPermissions(new File(baseDirectory, this.config.getString("file.file", "permissions.yml")));
+		}
+
+		if (this.permissionFiles.isEmpty()) { // deploy default file
+			Logger.getLogger("Minecraft").warning("[PermissionsEx] Valid permissions files not found! Deploying default one.");
+			PermissionsEx.getPlugin().saveResource("permissions.yml", false);
+			this.loadPermissions(new File(baseDirectory, "permissions.yml"));
+		}
+
+		if (this.permissionFiles.size() > 0) {
+			if (this.mainUserConfig == null) {
+				this.mainUserConfig = findConfiguration();
+			}
+
+			if (this.mainGroupConfig == null) {
+				this.mainGroupConfig = findConfiguration();
+			}
+		}
+
+		assert this.mainUserConfig != null && this.mainGroupConfig != null;
+	}
+
+	protected FileConfiguration findConfiguration() {
+		// I know, this is looking silly
+		for (FileConfiguration fileConfig : this.permissionFiles.values()) {
+			return fileConfig;
+		}
+		return null;
+	}
+
+	protected void loadPermissions(File file) {
+		// add file type detection
+		FileConfiguration fileConfig = new YamlConfiguration();
+
+		try {
+			fileConfig.load(file);
+
+			this.permissionFiles.put(file, fileConfig);
+		} catch (Throwable e) {
+			Logger.getLogger("Minecraft").warning("[PermissionsEx] Error during loading " + file.getName() + ": " + e.getMessage());
+		}
+	}
+
+	protected void loadPermissions(File baseDirectory, List<String> files) {
+		for (String fileName : files) {
+			this.loadPermissions(new File(baseDirectory, fileName));
+		}
+	}
+
+	protected void loadUsers(FileConfiguration fileConfig) {
+		if (!fileConfig.isConfigurationSection("users")) { // this file don't have user information
+			return;
+		}
+
+		if (this.mainUserConfig == null) {
+			this.mainUserConfig = fileConfig;
+		}
+
+		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("users").getValues(false).entrySet()) {
+			if (entry.getValue() instanceof ConfigurationSection) {
+				this.users.put(entry.getKey().toLowerCase(), new FileUserDataProvider(this, (ConfigurationSection) entry.getValue()));
+			}
+		}
+	}
+
+	protected void loadGroups(FileConfiguration fileConfig) {
+		if (!fileConfig.isConfigurationSection("groups")) { // this file doesn't have group information
+			return;
+		}
+
+		if (this.mainGroupConfig == null) {
+			this.mainGroupConfig = fileConfig;
+		}
+
+		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("groups").getValues(false).entrySet()) {
+			if (entry.getValue() instanceof ConfigurationSection) {
+				ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
+				FileGroupDataProvider data = new FileGroupDataProvider(this, groupSection);
+
+				this.groups.put(entry.getKey().toLowerCase(), data);
+
+				// default group
+				if (groupSection.getBoolean("default", false)) { // default group
+					this.setupDefaultGroup(entry.getKey().toLowerCase(), null);
+				}
+
+				// world specific default group
+				if (groupSection.isConfigurationSection("worlds")) {
+					ConfigurationSection worlds = groupSection.getConfigurationSection("worlds");
+
+					for (String world : worlds.getKeys(false)) {
+						if (worlds.isConfigurationSection(world) && worlds.getConfigurationSection(world).getBoolean("default", false)) {
+							this.setupDefaultGroup(entry.getKey(), world);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	protected void setupDefaultGroup(String groupName, String worldName) {
+		if (groupName == null || groupName.isEmpty()) {
+			return;
+		}
+
+		if (this.defaultGroups.containsKey(worldName)) {
+			Logger.getLogger("Minecraft").warning("[PermissionsEx] Several default groups for one world is not allowed!");
+			return;
+		}
+
+		this.defaultGroups.put(worldName, groupName);
+	}
+
+	protected void loadWorlds(FileConfiguration fileConfig) {
+		if (!fileConfig.isConfigurationSection("worlds")) { // this file don't have world information
+			return;
+		}
+
+		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("worlds").getValues(false).entrySet()) {
+			if (entry.getValue() instanceof ConfigurationSection) {
+				ConfigurationSection worldNode = ((ConfigurationSection) entry.getValue());
+
+				if (worldNode.isList("inheritance")) {
+					this.worldInheritanceMap.put(entry.getKey(), worldNode.getStringList("inheritance"));
+				}
+
+				if (worldNode.isString("defaultGroup")) {
+					this.setupDefaultGroup(worldNode.getString("defaultGroup"), entry.getKey());
+				}
+			}
+		}
 	}
 
 	@Override
-	public List<String> getWorldInheritance(String world) {
-		if (world != null && !world.isEmpty()) {
-			return this.permissions.getStringList("worlds." + world + ".inheritance");
+	public List<String> getWorldInheritance(String worldName) {
+		if (this.worldInheritanceMap.containsKey(worldName)) {
+			return this.worldInheritanceMap.get(worldName);
 		}
 
 		return new ArrayList<String>();
 	}
-	
-	
 
 	@Override
 	public void setWorldInheritance(String world, List<String> parentWorlds) {
@@ -94,108 +224,95 @@ public class FileBackend extends PermissionBackend {
 			return;
 		}
 
-		this.permissions.set("worlds." + world + ".inheritance", parentWorlds);
+		this.worldInheritanceMap.put(world, parentWorlds);
+
+		this.saveWorldInheritance();
+		this.save();
 	}
 
-	@Override
-	public PermissionUser getUser(String userName) {
-		return new FileUser(userName, manager, this);
-	}
+	protected void saveWorldInheritance() {
+		FileConfiguration worldConfig = null;
+		for (FileConfiguration fileConfig : this.permissionFiles.values()) {
+			if (fileConfig.isConfigurationSection("worlds")) {
+				if (worldConfig != null) {
+					fileConfig.set("worlds", null);
+					continue;
 
-	@Override
-	public PermissionGroup getGroup(String groupName) {
-		return new FileGroup(groupName, manager, this);
-	}
+				}
 
-	@Override
-	public PermissionGroup getDefaultGroup(String worldName) {
-		Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
-
-		if (groupsMap == null || groupsMap.isEmpty()) {
-			throw new RuntimeException("No groups defined. Check your permissions file.");
-		}
-
-		String defaultGroupProperty = "default";
-		if (worldName != null) {
-			defaultGroupProperty = "worlds.`" + worldName + "`." + defaultGroupProperty;
-		}
-
-		for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-			Object property = entry.getValue().getProperty(defaultGroupProperty);
-			if (property instanceof Boolean && ((Boolean) property)) {
-				return this.manager.getGroup(entry.getKey());
+				worldConfig = fileConfig;
 			}
 		}
 
-		if (worldName == null) {
-			throw new RuntimeException("Default user group is not defined. Please select one using the \"default: true\" property");
-		}
-
-		return null;
+		worldConfig.set("worlds", this.worldInheritanceMap);
 	}
 
 	@Override
-	public void setDefaultGroup(PermissionGroup group, String worldName) {
-		Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
-
-		String defaultGroupProperty = "default";
-		if (worldName != null) {
-			defaultGroupProperty = "worlds.`" + worldName + "`." + defaultGroupProperty;
-		}
-
-		for (Map.Entry<String, ConfigurationNode> entry : groupsMap.entrySet()) {
-			if (!entry.getKey().equalsIgnoreCase(group.getName())
-					&& entry.getValue().getProperty(defaultGroupProperty) != null) {
-				entry.getValue().removeProperty(defaultGroupProperty);
-			}
-
-			if (entry.getKey().equalsIgnoreCase(group.getName())) {
-				entry.getValue().setProperty(defaultGroupProperty, true);
-			}
-		}
-
-		this.permissions.save();
+	public String getDefaultGroup(String worldName) {
+		return this.defaultGroups.get(worldName);
 	}
 
 	@Override
-	public Set<PermissionGroup> getGroups() {
-		Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
-		Map<String, ConfigurationNode> groupsMap = this.permissions.getNodesMap("groups");
+	public void setDefaultGroup(String groupName, String worldName) {
+		this.defaultGroups.put(worldName, groupName);
 
-		for (String groupName : groupsMap.keySet()) {
-			groups.add(this.manager.getGroup(groupName));
-		}
-
-		return groups;
+		this.save();
 	}
 
 	@Override
-	public Set<PermissionUser> getRegisteredUsers() {
-		Set<PermissionUser> users = new HashSet<PermissionUser> ();
-		Map<String, ConfigurationNode> userMap = this.permissions.getNodesMap("users");
+	public Set<String> getGroups() {
+		return this.groups.keySet();
+	}
 
-		if (userMap != null) {
-			for (Map.Entry<String, ConfigurationNode> entry : userMap.entrySet()) {
-				users.add(this.manager.getUser(entry.getKey()));
+	@Override
+	public Set<String> getRegisteredUsers() {
+		return this.users.keySet();
+	}
+
+	public void save() {
+		try {
+			for (Map.Entry<File, FileConfiguration> entry : this.permissionFiles.entrySet()) {
+				entry.getValue().save(entry.getKey());
 			}
+		} catch (IOException e) {
+			Logger.getLogger("Minecraft").severe("[PermissionsEx] Error during saving permissions: " + e.getMessage());
 		}
-
-		return users;
 	}
 
 	@Override
 	public void reload() {
-		this.permissions.load();
+		this.groups.clear();
+		this.users.clear();
+		this.defaultGroups.clear();
+		this.worldInheritanceMap.clear();
+
+		for (File permissionsFile : this.permissionFiles.keySet()) {
+			this.loadPermissions(permissionsFile);
+		}
 	}
 
 	@Override
 	public GroupDataProvider getGroupDataProvider(String groupName) {
-		return new FileGroupDataProvider();
+		FileGroupDataProvider groupData = this.groups.get(groupName.toLowerCase());
+
+		if (groupData == null) {
+			groupData = new FileGroupDataProvider(this, null);
+			this.groups.put(groupName.toLowerCase(), groupData);
+		}
+
+		return groupData;
 	}
 
 	@Override
 	public UserDataProvider getUserDataProvider(String userName) {
-		return new FileUserDataProvider();
+		FileUserDataProvider userData = this.users.get(userName.toLowerCase());
+
+		if (userData == null) { // new user
+			userData = new FileUserDataProvider(this, null);
+			this.users.put(userName.toLowerCase(), userData);
+		}
+
+		return userData;
 	}
 
 	public static Map<String, String> collectOptions(Map<String, Object> root) {

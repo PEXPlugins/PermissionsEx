@@ -1,4 +1,4 @@
-package ru.tehkode.permissions.backends.file;
+package ru.tehkode.permissions.backends.file.data;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7,13 +7,16 @@ import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionNode;
 import ru.tehkode.permissions.backends.DataProvider;
+import ru.tehkode.permissions.backends.file.FileBackend;
 
 public abstract class FileDataProvider implements DataProvider {
 
 	protected ConfigurationSection node;
+	protected FileBackend backend;
 	
-	public FileDataProvider(ConfigurationSection node) {
+	public FileDataProvider(FileBackend backend, ConfigurationSection node) {
 		this.node = node;
+		this.backend = backend;
 	}
 
 	@Override

@@ -53,33 +53,6 @@ public abstract class PermissionBackend {
     public abstract void initialize();
 
     /**
-     * Returns new PermissionUser object for specified player name
-     * 
-     * @param name Player name
-     * @return PermissionUser for specified player, or null on error.
-     */
-    public abstract PermissionUser getUser(String name);
-
-    /**
-     * Returns new PermissionGroup object for specified group name
-     * 
-     * @param name Group name
-     * @return PermissionGroup object, or null on error
-     */
-    public abstract PermissionGroup getGroup(String name);
-
-    /*
-     * Creates new group with specified name, or returns PermissionGroup object,
-     * if there is such group already exists.
-     * 
-     * @param name Group name
-     * @returns PermissionGroup instance for specified group 
-     */
-    public PermissionGroup createGroup(String name) {
-        return this.manager.getGroup(name);
-    }
-
-    /**
      * Removes the specified group
      * 
      * @param groupName Name of the group which should be removed
@@ -102,14 +75,14 @@ public abstract class PermissionBackend {
      * 
      * @return Default group instance
      */
-    public abstract PermissionGroup getDefaultGroup(String worldName);
+    public abstract String getDefaultGroup(String worldName);
 
     /**
      * Set group as default group
      * 
      * @param group 
      */
-    public abstract void setDefaultGroup(PermissionGroup group, String worldName);
+    public abstract void setDefaultGroup(String groupName, String worldName);
 
     /**
      * Returns an array of world names of specified world name
@@ -132,7 +105,7 @@ public abstract class PermissionBackend {
      * 
      * @return
      */
-    public abstract Set<PermissionGroup> getGroups();
+    public abstract Set<String> getGroups();
 
 
     /**
@@ -140,7 +113,7 @@ public abstract class PermissionBackend {
      *
      * @return
      */
-    public abstract Set<PermissionUser> getRegisteredUsers();
+    public abstract Set<String> getRegisteredUsers();
 
 	public abstract UserDataProvider getUserDataProvider(String userName);
 	

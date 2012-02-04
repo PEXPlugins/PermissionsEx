@@ -27,22 +27,18 @@ import java.util.*;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.configuration.Configuration;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.sql.SQLConnection;
-import ru.tehkode.permissions.backends.sql.SQLEntity;
-import ru.tehkode.permissions.backends.sql.SQLGroup;
-import ru.tehkode.permissions.backends.sql.SQLUser;
 import ru.tehkode.utils.StringUtils;
 
 /**
  *
  * @author code
  */
-public class SQLBackend extends PermissionBackend {
+public abstract class SQLBackend extends PermissionBackend {
 
     protected Map<String, List<String>> worldInheritanceCache = new HashMap<String, List<String>>();
     public SQLConnection sql;
@@ -59,11 +55,9 @@ public class SQLBackend extends PermissionBackend {
         String dbPassword = config.getString("permissions.backends.sql.password", "");
 
         if (dbUri == null || dbUri.isEmpty()) {
-            config.setProperty("permissions.backends.sql.uri", "mysql://localhost/exampledb");
-            config.setProperty("permissions.backends.sql.user", "databaseuser");
-            config.setProperty("permissions.backends.sql.password", "databasepassword");
-
-            config.save();
+            config.set("permissions.backends.sql.uri", "mysql://localhost/exampledb");
+            config.set("permissions.backends.sql.user", "databaseuser");
+            config.set("permissions.backends.sql.password", "databasepassword");
 
             Logger.getLogger("Minecraft").severe("SQL Connection is not configured, check config.yml");
 
@@ -74,22 +68,13 @@ public class SQLBackend extends PermissionBackend {
 
         Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Successfuly connected to database");
 
-        this.setupAliases(config);
+        //this.setupAliases(config);
         this.deployTables(dbDriver);
     }
 
     @Override
-    public PermissionUser getUser(String name) {
-        return new SQLUser(name, manager, this.sql);
-    }
-
-    @Override
-    public PermissionGroup getGroup(String name) {
-        return new SQLGroup(name, manager, this.sql);
-    }
-
-    @Override
-    public PermissionGroup getDefaultGroup(String worldName) {
+    public String getDefaultGroup(String worldName) {
+		/*
         try {
             ResultSet result;
 
@@ -111,49 +96,54 @@ public class SQLBackend extends PermissionBackend {
             return this.manager.getGroup(result.getString("name"));
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
+        } */
+		return null;	
     }
 
     @Override
-    public void setDefaultGroup(PermissionGroup group, String worldName) {
+    public void setDefaultGroup(String group, String worldName) {
+		/*
         if (worldName == null) {
             // Reset default flag
             this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
             // Set default flag
-            this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+            this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group);
         } else {
             this.sql.updateQuery("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
             this.sql.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
-                    group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName);
+                    group, SQLEntity.Type.GROUP.ordinal(), worldName);
         }
+		*/ 
     }
 
     @Override
-    public Set<PermissionGroup> getGroups() {
+    public Set<String> getGroups() {
+		/*
         String[] groupNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.GROUP, false);
         Set<PermissionGroup> groups = new HashSet<PermissionGroup> ();
 
         for (String groupName : groupNames) {
             groups.add(this.manager.getGroup(groupName));
         }
-
-        return groups;
+		*/
+        return null;
     }
 
     @Override
-    public Set<PermissionUser> getRegisteredUsers() {
+    public Set<String> getRegisteredUsers() {
+		/*
         String[] userNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.USER, false);
-        Set<PermissionUser> users = new HashSet<PermissionUser> ();
+        Set<String> users = new HashSet<String> ();
 
-        for (String groupName : userNames) {
-            users.add(this.manager.getUser(groupName));
+        for (String userName : userNames) {
+            users.add(userName);
         }
-
-        return users;
+		*/
+        return null;
     }
 
     protected final void setupAliases(Configuration config) {
-        List<String> aliases = config.getKeys("permissions.backends.sql.aliases");
+        List<String> aliases = config.getStringList("sql.aliases");
 
         if (aliases == null) {
             return;

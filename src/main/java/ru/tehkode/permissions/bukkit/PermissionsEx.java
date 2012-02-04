@@ -133,7 +133,7 @@ public class PermissionsEx extends JavaPlugin {
 	public static Plugin getPlugin() {
 		return Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
 	}
-
+	
 	public static boolean isAvailable() {
 		Plugin plugin = getPlugin();
 

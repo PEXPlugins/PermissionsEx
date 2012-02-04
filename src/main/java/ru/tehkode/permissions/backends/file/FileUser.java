@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.backends.file;
 
+import ru.tehkode.permissions.backends.file.data.FileUserDataProvider;
 import ru.tehkode.permissions.GenericPermissionUser;
 import ru.tehkode.permissions.PermissionManager;
 
@@ -28,8 +29,8 @@ import ru.tehkode.permissions.PermissionManager;
 public class FileUser extends GenericPermissionUser {
 	
 	
-    public FileUser(String playerName, PermissionManager manager, FileBackend backend) {
-        super(playerName, manager, backend.getUserDataProvider(playerName));		
+    public FileUser(String playerName, PermissionManager manager, FileUserDataProvider data) {
+        super(playerName, manager, data);		
     }
 	
 	/*

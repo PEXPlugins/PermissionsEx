@@ -17,24 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permissions.backends.sql;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import ru.tehkode.permissions.PermissionEntity;
-import ru.tehkode.permissions.PermissionManager;
 
 /**
  *
- * @author code
+ * @author t3hk0d3
  */
-public class SQLEntity extends PermissionEntity {
-
+public class SQLEntity {
+/*
 	public enum Type {
 
 		GROUP, USER
@@ -432,4 +422,5 @@ public class SQLEntity extends PermissionEntity {
 			throw new RuntimeException(e);
 		}
 	}
+	* */
 }

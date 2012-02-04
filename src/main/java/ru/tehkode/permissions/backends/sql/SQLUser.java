@@ -18,40 +18,18 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
-import java.util.List;
-import java.util.Map;
-import ru.tehkode.permissions.PermissionGroup;
+import ru.tehkode.permissions.GenericPermissionUser;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.ProxyPermissionUser;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  *
  * @author code
  */
-public class SQLUser extends PermissionUser {
-
-    protected SQLEntity backend;
+public class SQLUser extends GenericPermissionUser {
 
     public SQLUser(String name, PermissionManager manager, SQLConnection sql) {
-        super(new SQLEntity(name, manager, SQLEntity.Type.USER, sql));
+        super(name, manager, null);
     }
-
-	@Override
-	protected Map<String, List<PermissionGroup>> loadInheritance() {
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
-	@Override
-	protected Map<String, Map<String, String>> loadOptions() {
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
-	@Override
-	protected Map<String, List<String>> loadPermissions() {
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
 
 	@Override
 	public void remove() {

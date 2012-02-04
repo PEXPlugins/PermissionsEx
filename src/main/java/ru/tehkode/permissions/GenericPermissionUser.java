@@ -5,7 +5,7 @@ import java.util.Map;
 import ru.tehkode.permissions.backends.UserDataProvider;
 
 
-public abstract class GenericPermissionUser extends PermissionUser {
+public class GenericPermissionUser extends PermissionUser {
 
 	protected UserDataProvider provider;
 	
