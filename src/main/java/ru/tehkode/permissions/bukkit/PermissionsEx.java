@@ -25,9 +25,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -133,7 +133,7 @@ public class PermissionsEx extends JavaPlugin {
 	public static Plugin getPlugin() {
 		return Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
 	}
-	
+
 	public static boolean isAvailable() {
 		Plugin plugin = getPlugin();
 
@@ -170,7 +170,7 @@ public class PermissionsEx extends JavaPlugin {
 
 		protected boolean logLastPlayerLogin = false;
 
-		@EventHandler
+		@EventHandler(priority = EventPriority.NORMAL)
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			if (!logLastPlayerLogin) {
 				return;
@@ -178,10 +178,9 @@ public class PermissionsEx extends JavaPlugin {
 
 			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
 			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
-			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
 		}
 
-		@EventHandler
+		@EventHandler(priority = EventPriority.NORMAL)
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			if (logLastPlayerLogin) {
 				getPermissionManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));

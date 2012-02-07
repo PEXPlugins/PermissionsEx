@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.events;
 
+import org.bukkit.event.HandlerList;
 import ru.tehkode.permissions.PermissionEntity;
 
 /**
@@ -56,6 +57,17 @@ public class PermissionEntityEvent extends PermissionEvent {
         DEFAULTGROUP_CHANGED,
         WEIGHT_CHANGED,
         SAVED,
-        REMOVED,
-    }
+        REMOVED
+    };
+	
+	private static final HandlerList handlers = new HandlerList();
+
+	@Override
+	public HandlerList getHandlers() {
+		return handlers;
+	}
+
+	public static HandlerList getHandlerList() {
+		return handlers;
+	}
 }

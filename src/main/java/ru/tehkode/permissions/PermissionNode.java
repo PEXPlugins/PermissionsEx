@@ -38,6 +38,8 @@ public abstract class PermissionNode extends PermissionEntity {
 	 * @return
 	 */
 	public List<PermissionGroup> getOwnParents(String worldName) {
+		this.checkInheritance();
+		
 		return inheritance.containsKey(worldName) ? inheritance.get(worldName) : new LinkedList<PermissionGroup>();
 	}
 

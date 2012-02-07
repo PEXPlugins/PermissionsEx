@@ -8,6 +8,7 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionNode;
 import ru.tehkode.permissions.backends.DataProvider;
 import ru.tehkode.permissions.backends.file.FileBackend;
+import ru.tehkode.utils.Debug;
 
 public abstract class FileDataProvider implements DataProvider {
 
@@ -30,8 +31,10 @@ public abstract class FileDataProvider implements DataProvider {
 		
 		if (this.node.isConfigurationSection("worlds")) { // node have world-specific settings
 			Map<String, Object> data = this.node.getConfigurationSection("worlds").getValues(true);
-			System.out.println("Data: " + data);
+			Debug.print("Data %1", data);
 		}
+		
+		Debug.print("OPTION %1", result);
 
         return result;
 	}

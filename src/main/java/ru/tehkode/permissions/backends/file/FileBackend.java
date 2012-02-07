@@ -42,6 +42,7 @@ import ru.tehkode.permissions.backends.GroupDataProvider;
 import ru.tehkode.permissions.backends.UserDataProvider;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.ConfigurationNode;
+import ru.tehkode.utils.Debug;
 
 /**
  *
@@ -111,8 +112,14 @@ public class FileBackend extends PermissionBackend {
 		FileConfiguration fileConfig = new YamlConfiguration();
 
 		try {
+			Debug.print("LOADING %1", file);
+			
 			fileConfig.load(file);
-
+			
+			this.loadUsers(fileConfig);
+			this.loadGroups(fileConfig);
+			this.loadWorlds(fileConfig);
+			
 			this.permissionFiles.put(file, fileConfig);
 		} catch (Throwable e) {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Error during loading " + file.getName() + ": " + e.getMessage());
@@ -136,6 +143,7 @@ public class FileBackend extends PermissionBackend {
 
 		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("users").getValues(false).entrySet()) {
 			if (entry.getValue() instanceof ConfigurationSection) {
+				Debug.print("LOADING USER %1", entry.getKey());
 				this.users.put(entry.getKey().toLowerCase(), new FileUserDataProvider(this, (ConfigurationSection) entry.getValue()));
 			}
 		}
@@ -152,6 +160,7 @@ public class FileBackend extends PermissionBackend {
 
 		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("groups").getValues(false).entrySet()) {
 			if (entry.getValue() instanceof ConfigurationSection) {
+				Debug.print("LOADING GROUP %1", entry.getKey());
 				ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
 				FileGroupDataProvider data = new FileGroupDataProvider(this, groupSection);
 
@@ -196,6 +205,7 @@ public class FileBackend extends PermissionBackend {
 
 		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("worlds").getValues(false).entrySet()) {
 			if (entry.getValue() instanceof ConfigurationSection) {
+				Debug.print("LOADING WORLD %1", entry.getKey());
 				ConfigurationSection worldNode = ((ConfigurationSection) entry.getValue());
 
 				if (worldNode.isList("inheritance")) {
@@ -294,8 +304,11 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public GroupDataProvider getGroupDataProvider(String groupName) {
 		FileGroupDataProvider groupData = this.groups.get(groupName.toLowerCase());
+		Debug.print("Group request for %1", groupName);
+		
 
 		if (groupData == null) {
+			Debug.print("CREATING NEW FGDP");
 			groupData = new FileGroupDataProvider(this, null);
 			this.groups.put(groupName.toLowerCase(), groupData);
 		}
@@ -306,8 +319,10 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public UserDataProvider getUserDataProvider(String userName) {
 		FileUserDataProvider userData = this.users.get(userName.toLowerCase());
+		Debug.print("User request for %1", userName);
 
 		if (userData == null) { // new user
+			Debug.print("CREATING NEW FUDP");
 			userData = new FileUserDataProvider(this, null);
 			this.users.put(userName.toLowerCase(), userData);
 		}

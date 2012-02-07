@@ -3,6 +3,7 @@ package ru.tehkode.permissions;
 import java.util.List;
 import java.util.Map;
 import ru.tehkode.permissions.backends.UserDataProvider;
+import ru.tehkode.utils.Debug;
 
 
 public class GenericPermissionUser extends PermissionUser {
@@ -22,6 +23,7 @@ public class GenericPermissionUser extends PermissionUser {
 
 	@Override
 	protected Map<String, Map<String, String>> loadOptions() {
+		Debug.print("LOL OPTION: " + this.provider.getClass().getName());
 		return this.provider.loadOptions();
 	}
 

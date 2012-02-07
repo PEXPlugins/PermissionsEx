@@ -18,29 +18,42 @@
  */
 package ru.tehkode.permissions.events;
 
+import org.bukkit.event.HandlerList;
+
 /**
  *
  * @author t3hk0d3
  */
 public class PermissionSystemEvent extends PermissionEvent {
 
-    protected Action action;
-    
-    public PermissionSystemEvent(Action action) {
-        super(action.toString());
-        
-        this.action = action;
-    }
-    
-    public Action getAction(){
-        return this.action;
-    }
-    
-    public enum Action {
-        BACKEND_CHANGED,
-        RELOADED,
-        WORLDINHERITANCE_CHANGED,
-        DEFAULTGROUP_CHANGED,
-        DEBUGMODE_TOGGLE,
-    }
+	protected Action action;
+
+	public PermissionSystemEvent(Action action) {
+		super(action.toString());
+
+		this.action = action;
+	}
+
+	public Action getAction() {
+		return this.action;
+	}
+
+	public enum Action {
+		BACKEND_CHANGED,
+		RELOADED,
+		WORLDINHERITANCE_CHANGED,
+		DEFAULTGROUP_CHANGED,
+		DEBUGMODE_TOGGLE
+	};
+	
+	private static final HandlerList handlers = new HandlerList();
+
+	@Override
+	public HandlerList getHandlers() {
+		return handlers;
+	}
+
+	public static HandlerList getHandlerList() {
+		return handlers;
+	}
 }

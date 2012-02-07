@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
+import ru.tehkode.utils.Debug;
 
 /**
  *
@@ -171,6 +172,8 @@ public abstract class PermissionEntity {
 		if (this.options == null) {
 			this.options = this.loadOptions();
 		}
+		
+		Debug.print("[=========] Option loaded: %1", this.options);
 	}
 
 	/**
@@ -371,7 +374,9 @@ public abstract class PermissionEntity {
 	}
 
 	private Map<String, String> calculateOptions(String worldName, boolean worldInheritance) {
-		this.loadOptions();
+		Debug.print("TEST1 %1", this.options);
+		this.checkOptions();
+		Debug.print("TEST2 %1", this.options);
 
 		Map<String, String> map = new HashMap();
 
