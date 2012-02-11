@@ -32,9 +32,9 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  * @author t3hk0d3
  */
 public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
-	
-	protected final static String NON_INHERITABLE_PREFIX = "#";
-
+	#==BEGIN PULL REQUEST
+	protected final static String NON_INHERITABLE_PREFIX = "~";
+	#==END PULL REQUEST
 	protected int weight = 0;
 	protected boolean dirtyWeight = true;
 
