@@ -121,10 +121,7 @@ public class PermissiblePEX extends PermissibleBase {
 	public PermissionCheckResult performCheck(String permission, String worldName) {
 		try {
 			PermissionUser user = PermissionsEx.getUser(this.player);
-			if (user == null) {
-				return PermissionCheckResult.UNDEFINED;
-			}
-
+			
 			// Check using PEX
 			String expression = user.getMatchingExpression(permission.toLowerCase(), worldName);
 
@@ -176,7 +173,7 @@ public class PermissiblePEX extends PermissibleBase {
 			e.printStackTrace();
 		}
 
-		return PermissionCheckResult.FALSE;
+		return PermissionCheckResult.UNDEFINED;
 	}
 
 	@Override
