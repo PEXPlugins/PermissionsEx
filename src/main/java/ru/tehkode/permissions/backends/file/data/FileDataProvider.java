@@ -1,5 +1,6 @@
 package ru.tehkode.permissions.backends.file.data;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public abstract class FileDataProvider implements DataProvider {
 	public Map<String, Map<String, String>> loadOptions() {
 		Map<String, Map<String, String>> result = new HashMap<String, Map<String, String>>();
 		
-		if (this.node.isConfigurationSection("worlds")) { // node have world-specific settings
+		if (this.node != null && this.node.isConfigurationSection("worlds")) { // node have world-specific settings
 			Map<String, Object> data = this.node.getConfigurationSection("worlds").getValues(true);
 			Debug.print("Data %1", data);
 		}

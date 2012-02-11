@@ -44,37 +44,37 @@ public abstract class PermissionUser extends PermissionNode {
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		if (this.manager.getBackend().isCreateUserRecords() && this.isVirtual()) {
 			this.setGroups(this.getGroups(null), null);
 
 			this.save();
 		}
-		
+
 		if (this.isDebug()) {
 			Logger.getLogger("Minecraft").info("[PermissionsEx] User " + this.getName() + " initialized");
 		}
 	}
 
-	
 	@Deprecated
 	public String getOwnPrefix() {
 		return this.getOwnPrefix(null);
 	}
 
-	
 	@Deprecated
 	public final String getOwnSuffix() {
 		return this.getOwnSuffix(null);
 	}
-	
+
 	@Deprecated
 	public final String[] getOwnPermissions(String world) {
 		return this.getOwnPermissionsList(world).toArray(new String[0]);
 	}
+
 	/**
-	 * Return non-inherited value of specified option in common space (all worlds).
-	 * 
+	 * Return non-inherited value of specified option in common space (all
+	 * worlds).
+	 *
 	 * @param option
 	 * @return option value or empty string if option is not set
 	 */
@@ -85,19 +85,30 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Get group for this user, global inheritance only
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
-	
-
 	@Deprecated
 	public final PermissionGroup[] getGroups() {
 		return this.getGroups(null);
 	}
 
+	@Override
+	public List<PermissionGroup> getParents(String worldName) {
+		List<PermissionGroup> parents = super.getParents(worldName);
+		
+		if (parents.isEmpty()) {
+			parents.add(this.manager.getDefaultGroup(worldName));
+		}
+		
+		return parents;
+	}
+	
+	
+
 	/**
 	 * Get groups for this user for specified world
-	 * 
+	 *
 	 * @param worldName Name of world
 	 * @return PermissionGroup groups
 	 */
@@ -105,22 +116,22 @@ public abstract class PermissionUser extends PermissionNode {
 	public final PermissionGroup[] getGroups(String worldName) {
 		return this.getParents(worldName).toArray(new PermissionGroup[0]);
 	}
-	
+
 	@Deprecated
 	public final Map<String, PermissionGroup[]> getAllGroups() {
 		return this.convertMap(this.getParentMap(), new PermissionGroup[0]);
 	}
-	
+
 	/**
 	 * Get group names, common space only
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	@Deprecated
 	public List<String> getGroupsNamesList(String worldName) {
 		return this.getParentNames(worldName);
 	}
-	
+
 	@Deprecated
 	public final String[] getGroupsNames() {
 		return this.getGroupsNames(null);
@@ -128,7 +139,7 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Get group names in specified world
-	 * 
+	 *
 	 * @return String array of user's group names
 	 */
 	@Deprecated
@@ -138,9 +149,9 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Set parent groups for user
-	 * 
+	 *
 	 * @param groups array of parent group names
-	 */	
+	 */
 	@Deprecated
 	public void setGroups(String[] groupNames, String worldName) {
 		List<PermissionGroup> groups = new ArrayList<PermissionGroup>();
@@ -159,12 +170,11 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Set parent groups for user
-	 * 
+	 *
 	 * @param groups array of parent group objects
 	 */
 	@Deprecated
 	public void setGroups(PermissionGroup[] parentGroups, String worldName) {
-		
 	}
 
 	@Deprecated
@@ -174,9 +184,9 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Add user to group
-	 * 
+	 *
 	 * @param groupName group's name as String
-	 */	
+	 */
 	@Deprecated
 	public void addGroup(String groupName, String worldName) {
 		this.addGroup(this.manager.getGroup(groupName), worldName);
@@ -189,7 +199,7 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Add user to group
-	 * 
+	 *
 	 * @param group as PermissionGroup object
 	 */
 	@Deprecated
@@ -217,7 +227,7 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Remove user from group
-	 * 
+	 *
 	 * @param groupName group's name as String
 	 */
 	@Deprecated
@@ -236,7 +246,7 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Remove user from group
-	 * 
+	 *
 	 * @param group group as PermissionGroup object
 	 */
 	@Deprecated
@@ -258,11 +268,13 @@ public abstract class PermissionUser extends PermissionNode {
 	}
 
 	/**
-	 * Check if this user is member of group or one of its descendant groups (optionally)
-	 * 
+	 * Check if this user is member of group or one of its descendant groups
+	 * (optionally)
+	 *
 	 * @param group group as PermissionGroup object
-	 * @param worldName 
-	 * @param deep if true then descendant groups of the given group would be checked too 
+	 * @param worldName
+	 * @param deep if true then descendant groups of the given group would be
+	 * checked too
 	 * @return true on success, false otherwise
 	 */
 	@Deprecated
@@ -281,11 +293,13 @@ public abstract class PermissionUser extends PermissionNode {
 	}
 
 	/**
-	 * Check if this user is member of group or one of its descendant groups (optionally)
-	 * 
+	 * Check if this user is member of group or one of its descendant groups
+	 * (optionally)
+	 *
 	 * @param groupName group's name to check
-	 * @param worldName 
-	 * @param checkInheritance if true than descendant groups of specified group would be checked too 
+	 * @param worldName
+	 * @param checkInheritance if true than descendant groups of specified group
+	 * would be checked too
 	 * @return true on success, false otherwise
 	 */
 	@Deprecated
@@ -300,9 +314,9 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Check if this user is member of group or one of its descendant groups
-	 * 
+	 *
 	 * @param group
-	 * @param worldName 
+	 * @param worldName
 	 * @return true on success, false otherwise
 	 */
 	@Deprecated
@@ -316,8 +330,9 @@ public abstract class PermissionUser extends PermissionNode {
 	}
 
 	/**
-	 * Checks if this user is member of specified group or one of its descendant groups
-	 * 
+	 * Checks if this user is member of specified group or one of its descendant
+	 * groups
+	 *
 	 * @param group group's name
 	 * @return true on success, false otherwise
 	 */
@@ -332,16 +347,16 @@ public abstract class PermissionUser extends PermissionNode {
 	}
 
 	/**
-	 * Promotes user in specified ladder.
-	 * If user is not member of the ladder RankingException will be thrown
-	 * If promoter is not null and he is member of the ladder and 
-	 * his rank is lower then user's RankingException will be thrown too.
-	 * If there is no group to promote the user to RankingException would be thrown
-	 * 
-	 * 
+	 * Promotes user in specified ladder. If user is not member of the ladder
+	 * RankingException will be thrown If promoter is not null and he is member
+	 * of the ladder and his rank is lower then user's RankingException will be
+	 * thrown too. If there is no group to promote the user to RankingException
+	 * would be thrown
+	 *
+	 *
 	 * @param promoter null if action is performed from console or by a plugin
 	 * @param ladderName Ladder name
-	 * @throws RankingException 
+	 * @throws RankingException
 	 */
 	@Deprecated
 	public PermissionGroup promote(PermissionUser promoter, String ladderName) throws RankingException {
@@ -384,15 +399,16 @@ public abstract class PermissionUser extends PermissionNode {
 	}
 
 	/**
-	 * Demotes user in specified ladder.
-	 * If user is not member of the ladder RankingException will be thrown
-	 * If demoter is not null and he is member of the ladder and 
-	 * his rank is lower then user's RankingException will be thrown too.
-	 * If there is no group to demote the user to RankingException would be thrown
-	 * 
-	 * @param promoter Specify null if action performed from console or by plugin
+	 * Demotes user in specified ladder. If user is not member of the ladder
+	 * RankingException will be thrown If demoter is not null and he is member
+	 * of the ladder and his rank is lower then user's RankingException will be
+	 * thrown too. If there is no group to demote the user to RankingException
+	 * would be thrown
+	 *
+	 * @param promoter Specify null if action performed from console or by
+	 * plugin
 	 * @param ladderName
-	 * @throws RankingException 
+	 * @throws RankingException
 	 */
 	@Deprecated
 	public PermissionGroup demote(PermissionUser demoter, String ladderName) throws RankingException {
@@ -436,7 +452,7 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Check if the user is in the specified ladder
-	 * 
+	 *
 	 * @param ladder Ladder name
 	 * @return true on success, false otherwise
 	 */
@@ -447,7 +463,7 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Return user rank in specified ladder
-	 * 
+	 *
 	 * @param ladder Ladder name
 	 * @return rank as int
 	 */
@@ -463,8 +479,8 @@ public abstract class PermissionUser extends PermissionNode {
 	}
 
 	/**
-	 * Return user's group in specified ladder 
-	 * 
+	 * Return user's group in specified ladder
+	 *
 	 * @param ladder Ladder name
 	 * @return PermissionGroup object of ranked ladder group
 	 */
@@ -479,8 +495,9 @@ public abstract class PermissionUser extends PermissionNode {
 
 	/**
 	 * Return all ladders the user is participating in
-	 * 
-	 * @return Map, key - name of ladder, group - corresponding group of that ladder
+	 *
+	 * @return Map, key - name of ladder, group - corresponding group of that
+	 * ladder
 	 */
 	@Deprecated
 	public Map<String, PermissionGroup> getRankLadders() {
