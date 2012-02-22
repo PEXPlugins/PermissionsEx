@@ -93,19 +93,8 @@
 			<version>1.1-R3</version>
 			<type>jar</type>
 		</dependency>
-		<dependency>
-			<groupId>org.yaml</groupId>
-			<artifactId>snakeyaml</artifactId>
-			<version>1.9</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-			<version>1.1</version>
-			<type>jar</type>
-			<scope>compile</scope>
-		</dependency>
+		
+		<!-- configuration -->
 		<dependency>
 			<groupId>commons-configuration</groupId>
 			<artifactId>commons-configuration</artifactId>
@@ -113,6 +102,22 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>ru.tehkode</groupId>
+			<artifactId>simple-configs</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<type>jar</type>
+		</dependency>
+		
+		
+		<!-- unit testing -->
+		<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit-dep</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+		
 	</dependencies>
 	<repositories>
 		<repository>

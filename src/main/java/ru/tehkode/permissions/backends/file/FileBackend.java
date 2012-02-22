@@ -18,30 +18,24 @@
  */
 package ru.tehkode.permissions.backends.file;
 
-import ru.tehkode.permissions.backends.file.data.FileUserDataProvider;
-import ru.tehkode.permissions.backends.file.data.FileGroupDataProvider;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.logging.Logger;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
+
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.representer.Representer;
+import ru.tehkode.config.ConfigurationFactory;
 import ru.tehkode.permissions.PermissionBackend;
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.GroupDataProvider;
 import ru.tehkode.permissions.backends.UserDataProvider;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.config.ConfigurationNode;
+import ru.tehkode.permissions.backends.file.data.FileUserDataProvider;
+import ru.tehkode.permissions.backends.file.data.FileGroupDataProvider;
+import org.apache.commons.configuration.AbstractHierarchicalFileConfiguration;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import ru.tehkode.utils.Debug;
 
 /**
@@ -55,11 +49,11 @@ public class FileBackend extends PermissionBackend {
 	protected Map<String, List<String>> worldInheritanceMap = new HashMap<String, List<String>>();
 	protected Map<String, String> defaultGroups = new HashMap<String, String>();
 	// File containing permissions
-	protected Map<File, FileConfiguration> permissionFiles = new HashMap<File, FileConfiguration>();
+	protected Map<File, HierarchicalConfiguration> permissionFiles = new HashMap<File, HierarchicalConfiguration>();
 	// Configuration file where PEX would save new players
-	protected FileConfiguration mainUserConfig = null;
+	protected HierarchicalConfiguration mainUserConfig = null;
 	// Configuration file where PEX would save new groups
-	protected FileConfiguration mainGroupConfig = null;
+	protected HierarchicalConfiguration mainGroupConfig = null;
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) {
 		super(manager, config);
@@ -99,9 +93,9 @@ public class FileBackend extends PermissionBackend {
 		assert this.mainUserConfig != null && this.mainGroupConfig != null;
 	}
 
-	protected FileConfiguration findConfiguration() {
+	protected HierarchicalConfiguration findConfiguration() {
 		// I know, this is looking silly
-		for (FileConfiguration fileConfig : this.permissionFiles.values()) {
+		for (HierarchicalConfiguration fileConfig : this.permissionFiles.values()) {
 			return fileConfig;
 		}
 		return null;
@@ -109,12 +103,9 @@ public class FileBackend extends PermissionBackend {
 
 	protected void loadPermissions(File file) {
 		// add file type detection
-		FileConfiguration fileConfig = new YamlConfiguration();
-
 		try {
-			Debug.print("LOADING %1", file);
-			
-			fileConfig.load(file);
+            Debug.print("LOADING %1", file);
+            HierarchicalConfiguration fileConfig = ConfigurationFactory.loadFile(file);
 			
 			this.loadUsers(fileConfig);
 			this.loadGroups(fileConfig);
@@ -123,6 +114,7 @@ public class FileBackend extends PermissionBackend {
 			this.permissionFiles.put(file, fileConfig);
 		} catch (Throwable e) {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Error during loading " + file.getName() + ": " + e.getMessage());
+            e.printStackTrace();
 		}
 	}
 
@@ -132,7 +124,11 @@ public class FileBackend extends PermissionBackend {
 		}
 	}
 
-	protected void loadUsers(FileConfiguration fileConfig) {
+	protected void loadUsers(HierarchicalConfiguration fileConfig) {
+        for (Object obj : fileConfig.getList("users.user")) {
+            Debug.print("USER: %1", obj);
+        }
+        /*
 		if (!fileConfig.isConfigurationSection("users")) { // this file don't have user information
 			return;
 		}
@@ -147,9 +143,14 @@ public class FileBackend extends PermissionBackend {
 				this.users.put(entry.getKey().toLowerCase(), new FileUserDataProvider(this, (ConfigurationSection) entry.getValue()));
 			}
 		}
+		*/
 	}
 
-	protected void loadGroups(FileConfiguration fileConfig) {
+	protected void loadGroups(HierarchicalConfiguration fileConfig) {
+        for (Object obj : fileConfig.getList("groups.group")) {
+            Debug.print("GROUP: %1", obj);
+        }
+        /*
 		if (!fileConfig.isConfigurationSection("groups")) { // this file doesn't have group information
 			return;
 		}
@@ -183,6 +184,7 @@ public class FileBackend extends PermissionBackend {
 				}
 			}
 		}
+		*/
 	}
 
 	protected void setupDefaultGroup(String groupName, String worldName) {
@@ -198,11 +200,12 @@ public class FileBackend extends PermissionBackend {
 		this.defaultGroups.put(worldName, groupName);
 	}
 
-	protected void loadWorlds(FileConfiguration fileConfig) {
-		if (!fileConfig.isConfigurationSection("worlds")) { // this file don't have world information
-			return;
-		}
+	protected void loadWorlds(HierarchicalConfiguration fileConfig) {
+        for (Object obj : fileConfig.getList("worlds.world")) {
+            Debug.print("WORLD: %1", obj);
+        }
 
+        /*
 		for (Map.Entry<String, Object> entry : fileConfig.getConfigurationSection("worlds").getValues(false).entrySet()) {
 			if (entry.getValue() instanceof ConfigurationSection) {
 				Debug.print("LOADING WORLD %1", entry.getKey());
@@ -217,6 +220,7 @@ public class FileBackend extends PermissionBackend {
 				}
 			}
 		}
+		*/
 	}
 
 	@Override
@@ -241,20 +245,21 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	protected void saveWorldInheritance() {
-		FileConfiguration worldConfig = null;
-		for (FileConfiguration fileConfig : this.permissionFiles.values()) {
+        HierarchicalConfiguration worldConfig = null;
+        /*
+		for (HierarchicalConfiguration fileConfig : this.permissionFiles.values()) {
 			if (fileConfig.isConfigurationSection("worlds")) {
 				if (worldConfig != null) {
 					fileConfig.set("worlds", null);
 					continue;
-
 				}
 
 				worldConfig = fileConfig;
 			}
 		}
+		*/
 
-		worldConfig.set("worlds", this.worldInheritanceMap);
+		//worldConfig.set("worlds", this.worldInheritanceMap);
 	}
 
 	@Override
@@ -281,10 +286,14 @@ public class FileBackend extends PermissionBackend {
 
 	public void save() {
 		try {
-			for (Map.Entry<File, FileConfiguration> entry : this.permissionFiles.entrySet()) {
-				entry.getValue().save(entry.getKey());
+			for (Map.Entry<File, HierarchicalConfiguration> entry : this.permissionFiles.entrySet()) {
+                HierarchicalConfiguration config = entry.getValue();
+
+                if (config instanceof AbstractHierarchicalFileConfiguration) { // should be just FileConfiguration
+                    ((AbstractHierarchicalFileConfiguration)config).save(entry.getKey());
+                }
 			}
-		} catch (IOException e) {
+		} catch (Throwable e) {
 			Logger.getLogger("Minecraft").severe("[PermissionsEx] Error during saving permissions: " + e.getMessage());
 		}
 	}
@@ -355,6 +364,7 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public void dumpData(OutputStreamWriter writer) throws IOException {
+        /*
 		DumperOptions options = new DumperOptions();
 		options.setIndent(4);
 		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -565,5 +575,6 @@ public class FileBackend extends PermissionBackend {
 
 		// Write data to writer
 		yaml.dump(root.getRoot(), writer);
+		*/
 	}
 }
