@@ -78,7 +78,7 @@ public class PermissiblePEX extends PermissibleBase {
 			}
 
 			if (!success) {
-				Logger.getLogger("Mineraft").warning("[PermissionsEx] No Permissible injector found for your server implementation!");
+				Logger.getLogger("Minecraft").warning("[PermissionsEx] No Permissible injector found for your server implementation!");
 			}
 
 			permissible.recalculatePermissions();
