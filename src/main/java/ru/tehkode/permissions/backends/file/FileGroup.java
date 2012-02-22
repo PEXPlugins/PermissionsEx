@@ -19,11 +19,11 @@
 package ru.tehkode.permissions.backends.file;
 
 import java.util.*;
+import org.bukkit.configuration.ConfigurationSection;
 
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionGroup;
 import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.config.ConfigurationNode;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
@@ -32,42 +32,47 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  */
 public class FileGroup extends ProxyPermissionGroup {
 
-    protected ConfigurationNode node;
+	protected ConfigurationSection node;
 
-    public FileGroup(String name, PermissionManager manager, FileBackend backend) {
-        super(new FileEntity(name, manager, backend, "groups"));
-        
-        this.node = ((FileEntity)this.backendEntity).getConfigNode();
-    }
-    
-    @Override
-    public String[] getParentGroupsNamesImpl(String worldName) {
-        String inheritanceNode = "inheritance";
-        
-        if(worldName != null && !worldName.isEmpty()){
-            inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
-        }
-        
-        return this.node.getStringList(inheritanceNode, new LinkedList<String>()).toArray(new String[0]);
-    }
+	public FileGroup(String name, PermissionManager manager, FileBackend backend) {
+		super(new FileEntity(name, manager, backend, "groups"));
 
-    @Override
-    public void setParentGroups(String[] parentGroups, String worldName) {
-        if (parentGroups == null) {
-            return;
-        }
-        
-        String inheritanceNode = "inheritance";
-        
-        if(worldName != null && !worldName.isEmpty()){
-            inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
-        }
+		this.node = ((FileEntity) this.backendEntity).getConfigNode();
+	}
 
-        this.node.setProperty(inheritanceNode, Arrays.asList(parentGroups));
+	@Override
+	public String[] getParentGroupsNamesImpl(String worldName) {
+		String inheritanceNode = "inheritance";
 
-        this.save();
-        
-        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
-    }   
-    
+		if (worldName != null && !worldName.isEmpty()) {
+			inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
+		}
+
+		List<String> parents = this.node.getStringList(inheritanceNode);
+
+		if (parents.isEmpty()) {
+			return new String[0];
+		}
+
+		return parents.toArray(new String[parents.size()]);
+	}
+
+	@Override
+	public void setParentGroups(String[] parentGroups, String worldName) {
+		if (parentGroups == null) {
+			return;
+		}
+
+		String inheritanceNode = "inheritance";
+
+		if (worldName != null && !worldName.isEmpty()) {
+			inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
+		}
+
+		this.node.set(inheritanceNode, Arrays.asList(parentGroups));
+
+		this.save();
+
+		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+	}
 }

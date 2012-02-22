@@ -26,7 +26,6 @@ import org.bukkit.event.Event;
  */
 public abstract class PermissionEvent extends Event {
 
-    public PermissionEvent(String name) {
-        super("PermissionsEx." + name);
-    }
+	public PermissionEvent(String name) {
+	}
 }

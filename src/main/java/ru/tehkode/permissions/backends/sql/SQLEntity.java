@@ -249,16 +249,9 @@ public class SQLEntity extends PermissionEntity {
 
 	@Override
 	public Map<String, String> getOptions(String world) {
-		Map<String, String> options = new HashMap<String, String>();
+		Map<String, String> options = world == null ? this.commonOptions : this.worldsOptions.get(world);
 
-		// put common options
-		options.putAll(this.commonOptions);
-		// override them with world-specific
-		if (this.worldsOptions.containsKey(world)) {
-			options.putAll(this.worldsOptions.get(world));
-		}
-
-		return options;
+		return options != null ? options : new HashMap<String, String>();
 	}
 
 	@Override

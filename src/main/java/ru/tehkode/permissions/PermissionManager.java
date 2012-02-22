@@ -24,8 +24,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
-import org.bukkit.util.config.Configuration;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
@@ -479,8 +479,7 @@ public class PermissionManager {
 
 		if (backendName == null || backendName.isEmpty()) {
 			backendName = PermissionBackend.defaultBackend; //Default backend
-			this.config.setProperty("permissions.backend", backendName);
-			this.config.save();
+			this.config.set("permissions.backend", backendName);
 		}
 
 		this.setBackend(backendName);

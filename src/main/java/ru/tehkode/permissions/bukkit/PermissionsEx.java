@@ -19,24 +19,21 @@
 package ru.tehkode.permissions.bukkit;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.*;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.config.Configuration;
-import org.bukkit.util.config.ConfigurationNode;
 import ru.tehkode.permissions.*;
 import ru.tehkode.permissions.backends.*;
 import ru.tehkode.permissions.bukkit.commands.*;
@@ -52,7 +49,7 @@ public class PermissionsEx extends JavaPlugin {
 	protected static final Logger logger = Logger.getLogger("Minecraft");
 	protected PermissionManager permissionsManager;
 	protected CommandsManager commandsManager;
-	protected Configuration config;
+	protected FileConfiguration config;
 	protected BukkitPermissions superms;
 
 	public PermissionsEx() {
@@ -66,7 +63,7 @@ public class PermissionsEx extends JavaPlugin {
 
 	@Override
 	public void onLoad() {
-		this.config = this.loadConfig(configFile);
+		this.config = this.getConfig();
 		this.commandsManager = new CommandsManager(this);
 		this.permissionsManager = new PermissionManager(this.config);
 	}
@@ -83,25 +80,32 @@ public class PermissionsEx extends JavaPlugin {
 		// Register Player permissions cleaner
 		PlayerEventsListener cleaner = new PlayerEventsListener();
 		cleaner.logLastPlayerLogin = this.config.getBoolean("permissions.log-players", cleaner.logLastPlayerLogin);
-		this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_LOGIN, cleaner, Priority.Normal, this);
-		this.getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, cleaner, Priority.Normal, this);
+		this.getServer().getPluginManager().registerEvents(cleaner, this);
 
 		//register service
 		this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
 
 		// Bukkit permissions
-		ConfigurationNode dinnerpermsConfig = this.config.getNode("permissions.superperms");
+		ConfigurationSection dinnerpermsConfig = this.config.getConfigurationSection("permissions.superperms");
 
 		if (dinnerpermsConfig == null) {
-			this.config.setProperty("permissions.superperms", new HashMap<String, Object>());
-			dinnerpermsConfig = this.config.getNode("permissions.superperms");
+			dinnerpermsConfig = this.config.createSection("permissions.superperms");
 		}
 
 		this.superms = new BukkitPermissions(this, dinnerpermsConfig);
 
 		this.superms.updateAllPlayers();
 
-		this.config.save();
+		try {
+			File configFile = new File(this.getDataFolder(), PermissionsEx.configFile);
+			
+			if (!configFile.exists()) { // save only on deployment
+				configFile.mkdirs();
+				this.config.save(configFile);	 
+			}								
+		} catch (Throwable e) {
+			logger.severe("[PermissionsEx] Failed to save configuration file!");
+		}
 
 		// Start timed permissions cleaner timer
 		this.permissionsManager.initTimer();
@@ -174,45 +178,11 @@ public class PermissionsEx extends JavaPlugin {
 		return this.permissionsManager.has(player, permission, world);
 	}
 
-	@Override
-	public org.bukkit.util.config.Configuration getConfiguration() {
-		return this.config;
-	}
-
-	protected final Configuration loadConfig(String name) {
-		File dataFolder = getDataFolder();
-
-		if (dataFolder == null) {
-			dataFolder = new File("plugins/PermissionsEx/");
-		}
-
-		File configurationFile = new File(dataFolder, configFile);
-		Configuration configuration;
-		if (!configurationFile.exists()) {
-			try {
-				if (!dataFolder.exists()) {
-					dataFolder.mkdirs();
-				}
-				configurationFile.createNewFile(); // Try to create new one
-				configuration = new Configuration(configurationFile);
-				configuration.setProperty("permissions.basedir", dataFolder.getPath());
-				configuration.save();
-			} catch (IOException e) {
-				// And if failed (ex.: not enough rights) - catch exception
-				throw new RuntimeException(e); // Rethrow exception
-			}
-		} else {
-			configuration = new Configuration(configurationFile);
-			configuration.load();
-		}
-		return configuration;
-	}
-
-	public class PlayerEventsListener extends PlayerListener {
+	public class PlayerEventsListener implements Listener  {
 
 		protected boolean logLastPlayerLogin = false;
 
-		@Override
+		@EventHandler
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			if (!logLastPlayerLogin) {
 				return;
@@ -223,7 +193,7 @@ public class PermissionsEx extends JavaPlugin {
 			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
 		}
 
-		@Override
+		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			if (logLastPlayerLogin) {
 				getPermissionManager().getUser(event.getPlayer())

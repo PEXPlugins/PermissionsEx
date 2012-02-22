@@ -49,7 +49,7 @@ public abstract class PermissionsCommand implements CommandListener {
     }
 
     protected void informPlayer(Plugin plugin, String playerName, String message) {
-        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfiguration().getBoolean("permissions.informplayers.changes", false)) {
+        if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfig().getBoolean("permissions.informplayers.changes", false)) {
             return; // User informing is disabled
         }
 
