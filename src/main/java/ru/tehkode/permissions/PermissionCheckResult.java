@@ -18,7 +18,7 @@ public enum PermissionCheckResult {
 	
 	@Override
 	public String toString() {
-		return Boolean.toString(result);
+		return this == UNDEFINED ? "undefined" : Boolean.toString(result);
 	}
 
 	public static PermissionCheckResult fromBoolean(final boolean result) {

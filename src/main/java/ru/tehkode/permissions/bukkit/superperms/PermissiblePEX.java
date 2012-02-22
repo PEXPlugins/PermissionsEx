@@ -132,6 +132,15 @@ public class PermissiblePEX extends PermissibleBase {
 
 				return PermissionCheckResult.fromBoolean(user.explainExpression(expression));
 			}
+			
+			// Pass check to superperms
+			if (super.hasPermission(permission)) {
+				if (user.isDebug()) {
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", found in superperms");
+				}
+
+				return PermissionCheckResult.TRUE;
+			}
 
 			if (this.bridge.isEnableParentNodes()) {
 				// check using parent nodes
@@ -153,15 +162,6 @@ public class PermissiblePEX extends PermissibleBase {
 						return anwser;
 					}
 				}
-			}
-
-			// Pass check to superperms
-			if (super.hasPermission(permission)) {
-				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", found in superperms");
-				}
-
-				return PermissionCheckResult.TRUE;
 			}
 
 			// No permission found
