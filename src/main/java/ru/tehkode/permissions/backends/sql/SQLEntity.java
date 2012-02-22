@@ -419,7 +419,7 @@ public class SQLEntity extends PermissionEntity {
 
 	protected final void fetchInfo() {
 		try {
-			ResultSet result = this.db.selectQuery("SELECT `name`, `prefix`, `suffix` FROM `permissions_entity` WHERE `name` LIKE ? AND `type` = ? LIMIT 1", this.getName(), this.type.ordinal());
+			ResultSet result = this.db.selectQuery("SELECT `name`, `prefix`, `suffix` FROM `permissions_entity` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getName(), this.type.ordinal());
 			if (result.next()) {
 				this.prefix = result.getString("prefix");
 				this.suffix = result.getString("suffix");
