@@ -96,16 +96,7 @@ public class PermissionsEx extends JavaPlugin {
 
 		this.superms.updateAllPlayers();
 
-		try {
-			File configFile = new File(this.getDataFolder(), PermissionsEx.configFile);
-			
-			if (!configFile.exists()) { // save only on deployment
-				configFile.mkdirs();
-				this.config.save(configFile);	 
-			}								
-		} catch (Throwable e) {
-			logger.severe("[PermissionsEx] Failed to save configuration file!");
-		}
+		this.saveConfig();	
 
 		// Start timed permissions cleaner timer
 		this.permissionsManager.initTimer();
