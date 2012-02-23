@@ -8,10 +8,10 @@
         <netbeans.hint.license>gpl2</netbeans.hint.license> 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <url>https://github.com/t3hk0d3/PermissionsEx</url>
+    <url>https://github.com/PEXPlugins/PermissionsEx</url>
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/t3hk0d3/PermissionsEx/issues</url>
+        <url>https://github.com/PEXPlugins/PermissionsEx/issues</url>
     </issueManagement>
     <build>
         <finalName>${project.artifactId}</finalName>
