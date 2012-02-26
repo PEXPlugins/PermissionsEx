@@ -570,12 +570,14 @@ public abstract class PermissionEntity {
 		if (localExpression.startsWith("#")) {
 			localExpression = localExpression.substring(1);
 		}
-
-		if (!patternCache.containsKey(localExpression)) {
-			patternCache.put(localExpression, Pattern.compile(prepareRegexp(localExpression)));
+		
+		Pattern permissionMatcher = patternCache.get(localExpression);
+		
+		if (permissionMatcher == null) {
+			patternCache.put(localExpression, permissionMatcher = Pattern.compile(prepareRegexp(localExpression),  Pattern.CASE_INSENSITIVE));
 		}
 
-		if (patternCache.get(localExpression).matcher(permission).matches()) {
+		if (permissionMatcher.matcher(permission).matches()) {
 			return true;
 		}
 
