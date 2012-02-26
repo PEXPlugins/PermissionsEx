@@ -545,7 +545,8 @@ public abstract class PermissionEntity {
 		} catch (Throwable e) {
 		}
 
-		return regexp;
+		// Prepend regexp with (?i) to perform case-insensitive matching
+		return "(?i)" + regexp;
 	}
 	/**
 	 * Pattern cache
