@@ -158,11 +158,11 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * @return option value or empty string if option is not set
 	 */
 	public String getOwnOption(String option) {
-		return this.getOwnOption(option, "", "");
+		return this.getOwnOption(option, null, null);
 	}
 
 	public String getOwnOption(String option, String world) {
-		return this.getOwnOption(option, world, "");
+		return this.getOwnOption(option, world, null);
 	}
 
 	public int getOwnOptionInteger(String optionName, String world, int defaultValue) {

@@ -97,11 +97,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	public abstract String getOwnOption(String option, String world, String defaultValue);
 
 	public String getOwnOption(String option) {
-		return this.getOwnOption(option, "", "");
+		return this.getOwnOption(option, null, null);
 	}
 
 	public String getOwnOption(String option, String world) {
-		return this.getOwnOption(option, world, "");
+		return this.getOwnOption(option, world, null);
 	}
 
 	public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
@@ -171,7 +171,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 * @return 
 	 */
 	public int getRank() {
-		return this.getOwnOptionInteger("rank", "", 0);
+		return this.getOwnOptionInteger("rank", null, 0);
 	}
 
 	/**
