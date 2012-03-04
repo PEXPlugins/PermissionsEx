@@ -96,7 +96,7 @@ public class PermissionsEx extends JavaPlugin {
 
 		this.superms.updateAllPlayers();
 
-		this.saveConfig();	
+		this.saveConfig();
 
 		// Start timed permissions cleaner timer
 		this.permissionsManager.initTimer();
@@ -140,17 +140,15 @@ public class PermissionsEx extends JavaPlugin {
 	public static boolean isAvailable() {
 		Plugin plugin = getPlugin();
 
-		return !(plugin == null || !(plugin instanceof PermissionsEx) || ((PermissionsEx) plugin).permissionsManager == null);
+		return ((PermissionsEx) plugin).permissionsManager != null;
 	}
 
 	public static PermissionManager getPermissionManager() {
-		Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
-
 		if (!isAvailable()) {
 			throw new RuntimeException("Permissions manager is not accessable. Is the PermissionsEx plugin enabled?");
 		}
 
-		return ((PermissionsEx) plugin).permissionsManager;
+		return ((PermissionsEx) getPlugin()).permissionsManager;
 	}
 
 	public static PermissionUser getUser(Player player) {
@@ -169,7 +167,7 @@ public class PermissionsEx extends JavaPlugin {
 		return this.permissionsManager.has(player, permission, world);
 	}
 
-	public class PlayerEventsListener implements Listener  {
+	public class PlayerEventsListener implements Listener {
 
 		protected boolean logLastPlayerLogin = false;
 
@@ -187,8 +185,7 @@ public class PermissionsEx extends JavaPlugin {
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			if (logLastPlayerLogin) {
-				getPermissionManager().getUser(event.getPlayer())
-						.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
+				getPermissionManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 			}
 
 			getPermissionManager().resetUser(event.getPlayer().getName());
