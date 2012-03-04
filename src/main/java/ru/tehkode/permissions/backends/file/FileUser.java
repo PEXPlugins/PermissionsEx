@@ -45,13 +45,7 @@ public class FileUser extends ProxyPermissionUser {
 
 	@Override
 	protected String[] getGroupsNamesImpl(String worldName) {
-		String inheritanceNode = "group";
-
-		if (worldName != null && !worldName.isEmpty()) {
-			inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
-		}
-
-		Object groups = this.node.get(inheritanceNode);
+		Object groups = this.node.get(FileEntity.formatPath(worldName, "group"));
 
 		if (groups instanceof String) { // old style
 			String[] groupsArray;
@@ -80,13 +74,7 @@ public class FileUser extends ProxyPermissionUser {
 			return;
 		}
 
-		String inheritanceNode = "group";
-
-		if (worldName != null && !worldName.isEmpty()) {
-			inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
-		}
-
-		this.node.set(inheritanceNode, Arrays.asList(groups));
+		this.node.set(FileEntity.formatPath(worldName, "group"), Arrays.asList(groups));
 
 		this.save();
 		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);

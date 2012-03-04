@@ -19,26 +19,19 @@
 package ru.tehkode.permissions.backends;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.representer.Representer;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
@@ -52,6 +45,7 @@ import ru.tehkode.permissions.backends.file.FileUser;
  */
 public class FileBackend extends PermissionBackend {
 
+	public final static char PATH_SEPARATOR = '/';
 	public FileConfiguration permissions;
 	public File permissionsFile;
 
@@ -83,7 +77,7 @@ public class FileBackend extends PermissionBackend {
 		this.permissionsFile = new File(baseDir, permissionFilename);
 
 		this.reload();
-		
+
 		if (!permissionsFile.exists()) {
 			try {
 				permissionsFile.createNewFile();
@@ -108,7 +102,7 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public String[] getWorldInheritance(String world) {
 		if (world != null && !world.isEmpty()) {
-			List<String> parentWorlds = this.permissions.getStringList("worlds/" + world + "/inheritance");
+			List<String> parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "/inheritance"));
 			if (parentWorlds != null) {
 				return parentWorlds.toArray(new String[parentWorlds.size()]);
 			}
@@ -123,7 +117,7 @@ public class FileBackend extends PermissionBackend {
 			return;
 		}
 
-		this.permissions.set("worlds/" + world + "/inheritance", Arrays.asList(parentWorlds));
+		this.permissions.set(buildPath("worlds", world,  "inheritance"), Arrays.asList(parentWorlds));
 		this.save();
 	}
 
@@ -147,7 +141,7 @@ public class FileBackend extends PermissionBackend {
 
 		String defaultGroupProperty = "default";
 		if (worldName != null) {
-			defaultGroupProperty = "worlds/" + worldName + "/" + defaultGroupProperty;
+			defaultGroupProperty = buildPath("worlds", worldName, defaultGroupProperty);
 		}
 
 		for (Map.Entry<String, Object> entry : groups.getValues(false).entrySet()) {
@@ -173,17 +167,15 @@ public class FileBackend extends PermissionBackend {
 
 		String defaultGroupProperty = "default";
 		if (worldName != null) {
-			defaultGroupProperty = "worlds/" + worldName + "/" + defaultGroupProperty;
+			defaultGroupProperty = buildPath("worlds", worldName, defaultGroupProperty);
 		}
 
 		for (Map.Entry<String, Object> entry : groups.getValues(false).entrySet()) {
-
-
 			if (entry.getValue() instanceof ConfigurationSection) {
 				ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
 
 				groupSection.set(defaultGroupProperty, false);
-				
+
 				if (!entry.getValue().equals(group.getName())) {
 					groupSection.set(defaultGroupProperty, null);
 				} else {
@@ -199,7 +191,7 @@ public class FileBackend extends PermissionBackend {
 	public PermissionGroup[] getGroups() {
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 		ConfigurationSection groupsSection = this.permissions.getConfigurationSection("groups");
-		
+
 		if (groupsSection == null) {
 			return new PermissionGroup[0];
 		}
@@ -227,10 +219,35 @@ public class FileBackend extends PermissionBackend {
 		return users.toArray(new PermissionUser[users.size()]);
 	}
 
+	public static String buildPath(String... path) {
+		StringBuilder builder = new StringBuilder();
+
+		boolean first = true;
+		char separator = PATH_SEPARATOR; //permissions.options().pathSeparator();
+
+		for (String node : path) {
+			if (!first) {
+				builder.append(separator);
+			}
+
+			builder.append(node);
+
+			first = false;
+		}
+
+		return builder.toString();
+	}
+
 	@Override
 	public void reload() {
-		permissions = YamlConfiguration.loadConfiguration(permissionsFile);
-		permissions.options().pathSeparator('/');
+		permissions = new YamlConfiguration();
+		permissions.options().pathSeparator(PATH_SEPARATOR);
+		
+		try {
+			permissions.load(permissionsFile);
+		} catch (Throwable e) {
+			throw new IllegalStateException("Error loading permissions file", e);
+		}
 	}
 
 	public void save() {

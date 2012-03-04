@@ -42,13 +42,7 @@ public class FileGroup extends ProxyPermissionGroup {
 
 	@Override
 	public String[] getParentGroupsNamesImpl(String worldName) {
-		String inheritanceNode = "inheritance";
-
-		if (worldName != null && !worldName.isEmpty()) {
-			inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
-		}
-
-		List<String> parents = this.node.getStringList(inheritanceNode);
+		List<String> parents = this.node.getStringList(FileEntity.formatPath(worldName, "inheritance"));
 
 		if (parents.isEmpty()) {
 			return new String[0];
@@ -63,13 +57,7 @@ public class FileGroup extends ProxyPermissionGroup {
 			return;
 		}
 
-		String inheritanceNode = "inheritance";
-
-		if (worldName != null && !worldName.isEmpty()) {
-			inheritanceNode = "worlds.`" + worldName + "`." + inheritanceNode;
-		}
-
-		this.node.set(inheritanceNode, Arrays.asList(parentGroups));
+		this.node.set(FileEntity.formatPath(worldName, "inheritance"), Arrays.asList(parentGroups));
 
 		this.save();
 
