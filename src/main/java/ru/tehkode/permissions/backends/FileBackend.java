@@ -242,9 +242,11 @@ public class FileBackend extends PermissionBackend {
 	public void reload() {
 		permissions = new YamlConfiguration();
 		permissions.options().pathSeparator(PATH_SEPARATOR);
-		
+				
 		try {
 			permissions.load(permissionsFile);
+		} catch (FileNotFoundException e) {
+			// do nothing
 		} catch (Throwable e) {
 			throw new IllegalStateException("Error loading permissions file", e);
 		}
