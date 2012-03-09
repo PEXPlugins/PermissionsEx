@@ -68,7 +68,11 @@ public class FileEntity extends PermissionEntity {
 
 		this.virtual = true;
 
-		return backend.permissions.createSection(nodePath);
+		// Silly workaround for empty nodes
+		ConfigurationSection section = backend.permissions.createSection(nodePath);
+		backend.permissions.set(nodePath, null);
+		
+		return section;
 	}
 
 	public ConfigurationSection getConfigNode() {
