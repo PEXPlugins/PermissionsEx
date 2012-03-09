@@ -140,7 +140,7 @@ public class PermissionsEx extends JavaPlugin {
 	public static boolean isAvailable() {
 		Plugin plugin = getPlugin();
 
-		return ((PermissionsEx) plugin).permissionsManager != null;
+		return (plugin instanceof PermissionsEx) && ((PermissionsEx) plugin).permissionsManager != null;
 	}
 
 	public static PermissionManager getPermissionManager() {

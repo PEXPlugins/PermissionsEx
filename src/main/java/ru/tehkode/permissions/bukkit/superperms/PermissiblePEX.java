@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit.superperms;
 
+import org.bukkit.plugin.Plugin;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -95,7 +96,7 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public boolean hasPermission(String permission) {
 		if (permission.equals("permissionsex.handler.injected")) {
-			return PermissionsEx.isAvailable();
+			return isAvailable() && PermissionsEx.isAvailable();
 		}
 
 		return this.checkPermission(permission).toBoolean();
@@ -258,5 +259,11 @@ public class PermissiblePEX extends PermissibleBase {
 		}
 
 		return infoSet;
+	}
+	
+	private boolean isAvailable() {
+		Plugin plugin = Bukkit.getPluginManager().getPlugin("PermissionsEx");
+		
+		return plugin != null && plugin instanceof PermissionsEx;
 	}
 }
