@@ -108,7 +108,7 @@ public class PermissiblePEX extends PermissibleBase {
 		if (!this.cache.containsKey(cid)) {
 			PermissionCheckResult result = this.performCheck(permission, worldName);
 
-			if (result == PermissionCheckResult.UNDEFINED) {
+			if (result == PermissionCheckResult.UNDEFINED) { // return default permission
 				result = PermissionCheckResult.fromBoolean(super.hasPermission(permission));
 			}
 
@@ -134,12 +134,14 @@ public class PermissiblePEX extends PermissibleBase {
 			}
 			
 			// Pass check to superperms
-			if (super.hasPermission(permission)) {
+			if (super.isPermissionSet(permission)) { // permission set by side plugin
+				PermissionCheckResult result = PermissionCheckResult.fromBoolean(super.hasPermission(permission)); 
+				
 				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", found in superperms");
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = "+result+", found in superperms");
 				}
-
-				return PermissionCheckResult.TRUE;
+				
+				return result;
 			}
 
 			if (this.bridge.isEnableParentNodes()) {
@@ -212,7 +214,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 	@Override
 	public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-		if (!this.injectMetadata) {
+		if (!this.injectMetadata || !PermissionsEx.isAvailable()) {
 			return super.getEffectivePermissions();
 		}
 
