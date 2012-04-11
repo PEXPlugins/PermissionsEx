@@ -79,11 +79,15 @@ public class SQLConnection {
 
 		PreparedStatement stmt = this.db.prepareStatement(this.prepareQuery(sql));
 
-		if (params != null) {
-			this.bindParams(stmt, params);
-		}
+		try {
+			if (params != null) {
+				this.bindParams(stmt, params);
+			}
 
-		return stmt.executeQuery();
+			return stmt.executeQuery();
+		} finally {
+			stmt.close();
+		}
 	}
 
 	public Object selectQueryOne(String sql, Object fallback, Object... params) {
@@ -111,11 +115,15 @@ public class SQLConnection {
 
 			PreparedStatement stmt = this.db.prepareStatement(this.prepareQuery(sql));
 
-			if (params != null) {
-				this.bindParams(stmt, params);
-			}
+			try {
+				if (params != null) {
+					this.bindParams(stmt, params);
+				}
 
-			stmt.executeUpdate();
+				stmt.executeUpdate();
+			} finally {
+				stmt.close();
+			}
 
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -131,9 +139,14 @@ public class SQLConnection {
 
 		PreparedStatement stmt = this.db.prepareStatement(this.prepareQuery(sql));
 
-		for (Object[] params : rows) {
-			this.bindParams(stmt, params);
-			stmt.execute();
+		try {
+			for (Object[] params : rows) {
+				this.bindParams(stmt, params);
+				stmt.execute();
+			}
+
+		} finally {
+			stmt.close();
 		}
 	}
 

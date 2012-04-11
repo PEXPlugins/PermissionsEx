@@ -17,10 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permissions.backends.sql;
 
 import java.sql.ResultSet;
@@ -69,9 +65,12 @@ public class SQLEntity extends PermissionEntity {
 			List<String> entities = new LinkedList<String>();
 
 			ResultSet result = sql.selectQuery("SELECT name FROM `permissions_entity` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal());
+			
 			while (result.next()) {
 				entities.add(result.getString("name"));
 			}
+			
+			result.close();
 
 			return entities.toArray(new String[0]);
 		} catch (SQLException e) {
@@ -383,6 +382,8 @@ public class SQLEntity extends PermissionEntity {
 					}
 				}
 			}
+			
+			results.close();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -404,6 +405,8 @@ public class SQLEntity extends PermissionEntity {
 
 				this.parents.get(worldName).add(parentName);
 			}
+			
+			results.close();
 
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -426,6 +429,8 @@ public class SQLEntity extends PermissionEntity {
 				this.suffix = "";
 				this.virtual = true;
 			}
+			
+			result.close();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
