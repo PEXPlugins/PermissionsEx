@@ -59,21 +59,18 @@ public class StringUtils {
             return "";
         }
 
-        StringBuilder builder = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         int lastElement = list.size() - 1;
         for (int i = 0; i < list.size(); i++) {
-            builder.append(list.get(0).toString());
+            buffer.append(list.get(i).toString());
 
             if (i < lastElement) {
-                builder.append(separator);
+                buffer.append(separator);
             }
         }
-        for (Object obj : list) {
-            builder.append(obj.toString()).append(separator);
-        }
 
-        return builder.toString();
+        return buffer.toString();
     }
     
     /**
