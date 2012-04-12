@@ -36,6 +36,8 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.BukkitPermissions;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.*;
+import ru.tehkode.permissions.events.PermissionSystemEvent;
+import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 
 public class PermissiblePEX extends PermissibleBase {
 
@@ -62,8 +64,13 @@ public class PermissiblePEX extends PermissibleBase {
 
 	public static void inject(Player player, BukkitPermissions bridge) {
 		if (player.isPermissionSet("permissionsex.handler.injected")) { // already injected
+
+			System.out.println("=============== [" + player.getName() + "] Already injected!!!");
+
 			return;
 		}
+
+		System.out.println("=============== [" + player.getName() + "] Injecting new Permissible");
 
 		try {
 			Permissible permissible = new PermissiblePEX(player, bridge);
@@ -91,6 +98,12 @@ public class PermissiblePEX extends PermissibleBase {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
 			e.printStackTrace();
 		}
+	}
+
+	public static void reinjectAll() {
+		Logger.getLogger("Minecraft").warning("[PermissionsEx] Reinjecting all permissibles");
+		// Tell PEX to reinject all permissibles
+		Bukkit.getPluginManager().callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.REINJECT_PERMISSIBLES));
 	}
 
 	@Override
@@ -122,7 +135,7 @@ public class PermissiblePEX extends PermissibleBase {
 	public PermissionCheckResult performCheck(String permission, String worldName) {
 		try {
 			PermissionUser user = PermissionsEx.getUser(this.player);
-			
+
 			// Check using PEX
 			String expression = user.getMatchingExpression(permission.toLowerCase(), worldName);
 
@@ -133,15 +146,15 @@ public class PermissiblePEX extends PermissibleBase {
 
 				return PermissionCheckResult.fromBoolean(user.explainExpression(expression));
 			}
-			
+
 			// Pass check to superperms
 			if (super.isPermissionSet(permission)) { // permission set by side plugin
-				PermissionCheckResult result = PermissionCheckResult.fromBoolean(super.hasPermission(permission)); 
-				
+				PermissionCheckResult result = PermissionCheckResult.fromBoolean(super.hasPermission(permission));
+
 				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = "+result+", found in superperms");
+					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = " + result + ", found in superperms");
 				}
-				
+
 				return result;
 			}
 
@@ -171,6 +184,9 @@ public class PermissiblePEX extends PermissibleBase {
 			if (user.isDebug()) {
 				Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", no permission found");
 			}
+		} catch (PermissionsNotAvailable e) {
+			Logger.getLogger("Minecraft").warning("[PermissionsEx] Can't obtain PermissionsEx instance");
+			reinjectAll();
 		} catch (Throwable e) {
 			// This should stay so if something will gone wrong user have chance to understand whats wrong actually
 			e.printStackTrace();
@@ -199,10 +215,15 @@ public class PermissiblePEX extends PermissibleBase {
 			return PermissionsEx.isAvailable();
 		}
 
-		PermissionUser user = PermissionsEx.getUser(this.player);
+		try {
+			PermissionUser user = PermissionsEx.getUser(this.player);
 
-		if (user != null && user.getMatchingExpression(permission, this.player.getWorld().getName()) != null) {
-			return true;
+			if (user != null && user.getMatchingExpression(permission, this.player.getWorld().getName()) != null) {
+				return true;
+			}
+		} catch (PermissionsNotAvailable e) {
+			Logger.getLogger("Minecraft").warning("[PermissionsEx] Can't obtain PermissionsEx instance");
+			reinjectAll();
 		}
 
 		return super.isPermissionSet(permission);
@@ -260,10 +281,10 @@ public class PermissiblePEX extends PermissibleBase {
 
 		return infoSet;
 	}
-	
+
 	private boolean isAvailable() {
 		Plugin plugin = Bukkit.getPluginManager().getPlugin("PermissionsEx");
-		
+
 		return plugin != null && plugin instanceof PermissionsEx;
 	}
 }

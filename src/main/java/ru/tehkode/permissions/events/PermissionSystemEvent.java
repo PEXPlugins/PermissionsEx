@@ -55,5 +55,6 @@ public class PermissionSystemEvent extends PermissionEvent {
 		WORLDINHERITANCE_CHANGED,
 		DEFAULTGROUP_CHANGED,
 		DEBUGMODE_TOGGLE,
+		REINJECT_PERMISSIBLES,
 	}
 }

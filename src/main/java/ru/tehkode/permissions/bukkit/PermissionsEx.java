@@ -38,6 +38,7 @@ import ru.tehkode.permissions.*;
 import ru.tehkode.permissions.backends.*;
 import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.commands.CommandsManager;
+import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 
 /**
  *
@@ -145,7 +146,7 @@ public class PermissionsEx extends JavaPlugin {
 
 	public static PermissionManager getPermissionManager() {
 		if (!isAvailable()) {
-			throw new RuntimeException("Permissions manager is not accessable. Is the PermissionsEx plugin enabled?");
+			throw new PermissionsNotAvailable();
 		}
 
 		return ((PermissionsEx) getPlugin()).permissionsManager;
