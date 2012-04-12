@@ -33,10 +33,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import ru.tehkode.utils.StringUtils;
 
-/**
- *
- * @author code
- */
 public class SQLConnection {
 
 	protected static Pattern placeholderPattern = Pattern.compile("\\`([^\\`]+)\\`");
@@ -74,33 +70,27 @@ public class SQLConnection {
 		return tableName;
 	}
 
-	public ResultSet selectQuery(String sql, Object... params) throws SQLException {
+	public ResultSet select(String sql, Object... params) throws SQLException {
 		this.checkConnection();
 
-		PreparedStatement stmt = this.db.prepareStatement(this.prepareQuery(sql));
-
-		try {
-			if (params != null) {
-				this.bindParams(stmt, params);
-			}
-
-			return stmt.executeQuery();
-		} finally {
-			stmt.close();
-		}
+		SQLSelectQuery query = new SQLSelectQuery(sql, params);
+		
+		query.execute();
+		
+		return query.getResults();
 	}
 
-	public Object selectQueryOne(String sql, Object fallback, Object... params) {
+	public <T> T selectSingle(String sql, T fallback, Object... params) {
 		try {
 			this.checkConnection();
 
-			ResultSet result = this.selectQuery(sql, params);
+			ResultSet result = this.select(sql, params);
 
 			if (!result.next()) {
 				return fallback;
 			}
 
-			return result.getObject(1);
+			return (T)result.getObject(1);
 
 		} catch (SQLException e) {
 			Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
@@ -109,25 +99,12 @@ public class SQLConnection {
 		return fallback;
 	}
 
-	public void updateQuery(String sql, Object... params) {
-		try {
-			this.checkConnection();
+	public void executeUpdate(String sql, Object... params) throws SQLException {
+		this.checkConnection();
 
-			PreparedStatement stmt = this.db.prepareStatement(this.prepareQuery(sql));
+		SQLQuery query = new SQLQuery(sql, params);
 
-			try {
-				if (params != null) {
-					this.bindParams(stmt, params);
-				}
-
-				stmt.executeUpdate();
-			} finally {
-				stmt.close();
-			}
-
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
+		query.execute();
 	}
 
 	public void insert(String table, String[] fields, List<Object[]> rows) throws SQLException {
@@ -137,16 +114,11 @@ public class SQLConnection {
 		Arrays.fill(fieldPlaceholders, "?");
 		String sql = "INSERT INTO `" + table + "` (`" + StringUtils.implode(fields, "`, `") + "`) VALUES (" + StringUtils.implode(fieldPlaceholders, ", ") + ");";
 
-		PreparedStatement stmt = this.db.prepareStatement(this.prepareQuery(sql));
+		SQLQuery query = new SQLQuery(sql);
 
-		try {
-			for (Object[] params : rows) {
-				this.bindParams(stmt, params);
-				stmt.execute();
-			}
-
-		} finally {
-			stmt.close();
+		for (Object[] params : rows) {
+			query.bindParams(params);
+			query.execute();
 		}
 	}
 
@@ -200,18 +172,11 @@ public class SQLConnection {
 		return alias;
 	}
 
-	protected void bindParams(PreparedStatement stmt, Object[] params) throws SQLException {
-		for (int i = 1; i <= params.length; i++) {
-			Object param = params[i - 1];
-			stmt.setObject(i, param);
-		}
-	}
-
-	protected String prepareQuery(String sql) {
+	protected final String prepareQuery(String sql) {
 		Matcher match = placeholderPattern.matcher(sql);
 
 		while (match.find()) {
-			sql = sql.replace(match.group(0), "`" + this.getAlias(match.group(1)) + "`");
+			sql = sql.replace(match.group(0), "`" + getAlias(match.group(1)) + "`");
 		}
 
 		return sql;
@@ -219,13 +184,34 @@ public class SQLConnection {
 
 	@Override
 	protected void finalize() throws Throwable {
-		super.finalize();
 		try {
 			db.close();
 		} catch (SQLException e) {
 			Logger.getLogger("Minecraft").log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
 		} finally {
-			db = null;
+			super.finalize();
+		}
+	}
+
+	public class SQLQuery extends BasicSQLQuery {
+
+		public SQLQuery(String sql, Object... params) throws SQLException {
+			super(db.prepareStatement(prepareQuery(sql)));
+
+			if (params != null) {
+				bindParams(params);
+			}
+		}
+	}
+
+	public class SQLSelectQuery extends BasicSQLSelectQuery {
+
+		public SQLSelectQuery(String sql, Object[] params) throws SQLException {
+			super(db.prepareStatement(prepareQuery(sql)));
+
+			if (params != null) {
+				bindParams(params);
+			}
 		}
 	}
 }

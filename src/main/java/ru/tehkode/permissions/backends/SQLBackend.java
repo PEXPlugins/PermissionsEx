@@ -97,13 +97,13 @@ public class SQLBackend extends PermissionBackend {
 			ResultSet result;
 
 			if (worldName == null) {
-				result = this.sql.selectQuery("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+				result = this.sql.select("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
 
 				if (!result.next()) {
 					throw new RuntimeException("There is no default group set, this is a serious issue");
 				}
 			} else {
-				result = this.sql.selectQuery("SELECT `name` FROM `permissions` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
+				result = this.sql.select("SELECT `name` FROM `permissions` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
 						SQLEntity.Type.GROUP.ordinal(), worldName);
 
 				if (!result.next()) {
@@ -119,15 +119,19 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public void setDefaultGroup(PermissionGroup group, String worldName) {
+		try {
 		if (worldName == null) {
 			// Reset default flag
-			this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+			this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
 			// Set default flag
-			this.sql.updateQuery("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+			this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
 		} else {
-			this.sql.updateQuery("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
-			this.sql.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
+			this.sql.executeUpdate("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
+			this.sql.executeUpdate("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
 					group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName);
+		}
+		} catch (SQLException e) {
+			throw new RuntimeException("Failed to set default group", e);
 		}
 	}
 
@@ -172,14 +176,6 @@ public class SQLBackend extends PermissionBackend {
 
 	protected final void deployTables(String driver) {
 		if (this.sql.isTableExist("permissions")) {
-
-			if (!this.sql.isFieldExists("permissions_inheritance", "world")) {
-				Logger.getLogger("Minecraft").info("[PermissionsEx] Migration to newer database schema format");
-				this.sql.updateQuery("ALTER TABLE `permissions_inheritance` ADD `world` VARCHAR(50) NULL");
-				this.sql.updateQuery("ALTER TABLE `permissions_inheritance` DROP INDEX  `child` , ADD UNIQUE  `child` (`child`, `parent`, `type`, `world`)");
-
-			}
-
 			return;
 		}
 
@@ -202,7 +198,7 @@ public class SQLBackend extends PermissionBackend {
 
 				sqlQuery = sqlQuery + ";";
 
-				this.sql.updateQuery(sqlQuery);
+				this.sql.executeUpdate(sqlQuery);
 			}
 
 			Logger.getLogger("Minecraft").info("Database scheme deploying complete.");
@@ -320,7 +316,7 @@ public class SQLBackend extends PermissionBackend {
 
 		if (!worldInheritanceCache.containsKey(world)) {
 			try {
-				ResultSet result = this.sql.selectQuery("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2;", world);
+				ResultSet result = this.sql.select("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2;", world);
 				LinkedList<String> worldParents = new LinkedList<String>();
 
 				while (result.next()) {
@@ -343,7 +339,7 @@ public class SQLBackend extends PermissionBackend {
 		}
 
 		try {
-			this.sql.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2", worldName);
+			this.sql.executeUpdate("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2", worldName);
 
 			List<Object[]> records = new LinkedList<Object[]>();
 

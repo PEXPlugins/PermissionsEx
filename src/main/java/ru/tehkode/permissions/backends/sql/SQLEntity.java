@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package ru.tehkode.permissions.backends.sql;
 
 import java.sql.ResultSet;
@@ -64,12 +63,12 @@ public class SQLEntity extends PermissionEntity {
 		try {
 			List<String> entities = new LinkedList<String>();
 
-			ResultSet result = sql.selectQuery("SELECT name FROM `permissions_entity` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal());
-			
+			ResultSet result = sql.select("SELECT name FROM `permissions_entity` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal());
+
 			while (result.next()) {
 				entities.add(result.getString("name"));
 			}
-			
+
 			result.close();
 
 			return entities.toArray(new String[0]);
@@ -177,7 +176,11 @@ public class SQLEntity extends PermissionEntity {
 		}
 
 		if (value == null || value.isEmpty()) {
-			this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ?", this.getName(), option, this.type.ordinal(), world);
+			try {
+				this.db.executeUpdate("DELETE FROM `permissions` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ?", this.getName(), option, this.type.ordinal(), world);
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
 
 			if (!world.isEmpty() && this.worldsOptions.containsKey(world)) {
 				this.worldsOptions.get(world).remove(option);
@@ -199,10 +202,15 @@ public class SQLEntity extends PermissionEntity {
 			newOption = false;
 		}
 
-		if (newOption) {
-			this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, ?, ?, ?)", this.getName(), option, value, world, this.type.ordinal());
-		} else {
-			this.db.updateQuery("UPDATE `permissions` SET `value` = ? WHERE `name` = ? AND `type` = ? AND `permission` = ?", value, this.getName(), this.type.ordinal(), option);
+
+		try {
+			if (newOption) {
+				this.db.executeUpdate("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, ?, ?, ?)", this.getName(), option, value, world, this.type.ordinal());
+			} else {
+				this.db.executeUpdate("UPDATE `permissions` SET `value` = ? WHERE `name` = ? AND `type` = ? AND `permission` = ?", value, this.getName(), this.type.ordinal(), option);
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
 		}
 
 		if (this.isVirtual()) {
@@ -217,9 +225,9 @@ public class SQLEntity extends PermissionEntity {
 		try {
 			// Clean out existing records
 			if (worldName != null) { // damn NULL
-				this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getName(), this.type.ordinal(), worldName);
+				this.db.executeUpdate("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getName(), this.type.ordinal(), worldName);
 			} else {
-				this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND IFNULL(`world`, 1)", this.getName(), this.type.ordinal());
+				this.db.executeUpdate("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? AND IFNULL(`world`, 1)", this.getName(), this.type.ordinal());
 			}
 
 
@@ -285,10 +293,14 @@ public class SQLEntity extends PermissionEntity {
 			world = "";
 		}
 
-		this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), this.type.ordinal(), world);
+		try {
+			this.db.executeUpdate("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getName(), this.type.ordinal(), world);
 
-		for (int i = permissions.length - 1; i >= 0; i--) { // insert in reverse order
-			this.db.updateQuery("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permissions[i], world, this.type.ordinal());
+			for (int i = permissions.length - 1; i >= 0; i--) { // insert in reverse order
+				this.db.executeUpdate("INSERT INTO `permissions` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getName(), permissions[i], world, this.type.ordinal());
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
 		}
 
 		if (this.isVirtual()) {
@@ -305,12 +317,16 @@ public class SQLEntity extends PermissionEntity {
 
 	@Override
 	public void remove() {
-		// clear inheritance info
-		this.db.updateQuery("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ?", this.getName(), this.type.ordinal());
-		// clear permissions
-		this.db.updateQuery("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ?", this.getName(), this.type.ordinal());
-		// clear info
-		this.db.updateQuery("DELETE FROM `permissions_entity` WHERE `name` = ? AND `type` = ?", this.getName(), this.type.ordinal());
+		try {
+			// clear inheritance info
+			this.db.executeUpdate("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ?", this.getName(), this.type.ordinal());
+			// clear permissions
+			this.db.executeUpdate("DELETE FROM `permissions` WHERE `name` = ? AND `type` = ?", this.getName(), this.type.ordinal());
+			// clear info
+			this.db.executeUpdate("DELETE FROM `permissions_entity` WHERE `name` = ? AND `type` = ?", this.getName(), this.type.ordinal());
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 
 		this.virtual = true;
 		this.commonOptions.clear();
@@ -329,14 +345,14 @@ public class SQLEntity extends PermissionEntity {
 		}
 
 		try {
-			this.db.updateQuery(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
-		} catch (RuntimeException e) {
-			if (e.getCause() instanceof SQLException && this.isVirtual()) {
+			this.db.executeUpdate(sql, this.prefix, this.suffix, this.getName(), this.type.ordinal());
+		} catch (SQLException e) {
+			if (this.isVirtual()) {
 				this.virtual = false;
-				this.updateInfo(); // try update
+				this.updateInfo(); // try again
 			}
 
-			throw e;
+			throw new RuntimeException(e);
 		}
 
 		this.virtual = false;
@@ -349,7 +365,7 @@ public class SQLEntity extends PermissionEntity {
 		this.commonPermissions = new LinkedList<String>();
 
 		try {
-			ResultSet results = this.db.selectQuery("SELECT `permission`, `world`, `value` FROM `permissions` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
+			ResultSet results = this.db.select("SELECT `permission`, `world`, `value` FROM `permissions` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
 			while (results.next()) {
 				String permission = results.getString("permission").trim();
 				String world = results.getString("world").trim();
@@ -382,8 +398,6 @@ public class SQLEntity extends PermissionEntity {
 					}
 				}
 			}
-			
-			results.close();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -393,7 +407,7 @@ public class SQLEntity extends PermissionEntity {
 		try {
 			this.parents = new HashMap<String, Set<String>>();
 
-			ResultSet results = this.db.selectQuery("SELECT `parent`, `world` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
+			ResultSet results = this.db.select("SELECT `parent`, `world` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
 
 			while (results.next()) {
 				String parentName = results.getString(1);
@@ -405,9 +419,6 @@ public class SQLEntity extends PermissionEntity {
 
 				this.parents.get(worldName).add(parentName);
 			}
-			
-			results.close();
-
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -415,7 +426,8 @@ public class SQLEntity extends PermissionEntity {
 
 	protected final void fetchInfo() {
 		try {
-			ResultSet result = this.db.selectQuery("SELECT `name`, `prefix`, `suffix` FROM `permissions_entity` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getName(), this.type.ordinal());
+			ResultSet result = this.db.select("SELECT `name`, `prefix`, `suffix` FROM `permissions_entity` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getName(), this.type.ordinal());
+
 			if (result.next()) {
 				this.prefix = result.getString("prefix");
 				this.suffix = result.getString("suffix");
@@ -429,8 +441,6 @@ public class SQLEntity extends PermissionEntity {
 				this.suffix = "";
 				this.virtual = true;
 			}
-			
-			result.close();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
