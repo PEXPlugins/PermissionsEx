@@ -162,7 +162,7 @@ public class UtilityCommands extends PermissionsCommand {
 
 	@Command(name = "pex",
 	syntax = "toggle debug",
-	permission = "permissions.manage",
+	permission = "permissions.debug",
 	description = "Enable/disable debug mode")
 	public void toggleFeature(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		PermissionManager manager = PermissionsEx.getPermissionManager();
