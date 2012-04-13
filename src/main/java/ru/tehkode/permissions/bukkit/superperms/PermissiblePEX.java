@@ -64,14 +64,8 @@ public class PermissiblePEX extends PermissibleBase {
 
 	public static void inject(Player player, BukkitPermissions bridge) {
 		if (player.isPermissionSet("permissionsex.handler.injected")) { // already injected
-
-			System.out.println("=============== [" + player.getName() + "] Already injected!!!");
-
 			return;
 		}
-
-		System.out.println("=============== [" + player.getName() + "] Injecting new Permissible");
-
 		try {
 			Permissible permissible = new PermissiblePEX(player, bridge);
 
