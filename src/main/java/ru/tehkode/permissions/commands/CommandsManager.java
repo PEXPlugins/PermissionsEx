@@ -109,8 +109,9 @@ public class CommandsManager {
 		// Check permission
 		if (sender instanceof Player) { // this method are not public and required permission
 			if (!selectedBinding.checkPermissions((Player) sender)) {
-				logger.warning("User " + ((Player) sender).getName() + " was tried to access chat command \"" + command.getName() + " " + arguments + "\","
-						+ " but don't have permission to do this.");
+				logger.warning("User " + ((Player) sender).getName() + " tried to access chat command \"" 
+							+ command.getName() + " " + arguments
+							+ "\", but doesn't have permission to do this.");
 				sender.sendMessage(ChatColor.RED + "Sorry, you don't have enough permissions.");
 				return true;
 			}
