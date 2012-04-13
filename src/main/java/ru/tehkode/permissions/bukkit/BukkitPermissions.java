@@ -151,6 +151,7 @@ public class BukkitPermissions {
 			}
 		}
 
+		@EventHandler(priority = EventPriority.LOW)
 		public void onSystemEvent(PermissionSystemEvent event) {
 			if (event.getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
 				return;
