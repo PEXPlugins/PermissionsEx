@@ -176,7 +176,7 @@ public class FileBackend extends PermissionBackend {
 
 				groupSection.set(defaultGroupProperty, false);
 
-				if (!entry.getValue().equals(group.getName())) {
+				if (!groupSection.getName().equals(group.getName())) {
 					groupSection.set(defaultGroupProperty, null);
 				} else {
 					groupSection.set(defaultGroupProperty, true);
