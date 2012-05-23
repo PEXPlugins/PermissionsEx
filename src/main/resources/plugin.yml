@@ -27,7 +27,7 @@ commands:
            /<command> user <user> add <permission> [world] - Add <permission> to <user> in [world]
            /<command> user <user> remove <permission> [world] - Remove <permission> from <user> in [world]
            /<command> user <user> timed add <permission> [lifetime] [world] - Add timed <permission> to <user> with [lifetime] in [world]
-           /<command> user <user> timed add <permission> [lifetime] [world] - Remove timed <permission> from <user> in [world]
+           /<command> user <user> timed remove <permission> [lifetime] [world] - Remove timed <permission> from <user> in [world]
            /<command> user <user> set <option> <value> [world] - Set <option> to <value> in [world]
            /<command> user <user> group list [world] - List all user groups
            /<command> user <user> group add <group> [world] - Add <user> to <group>
