@@ -212,6 +212,7 @@ public class FileEntity extends PermissionEntity {
 		this.backend.permissions.set(nodePath, node);
 
 		this.backend.save();
+		this.virtual = false;
 	}
 
 	@Override
