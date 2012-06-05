@@ -365,7 +365,7 @@ public class SQLEntity extends PermissionEntity {
 		this.commonPermissions = new LinkedList<String>();
 
 		try {
-			ResultSet results = this.db.select("SELECT `permission`, `world`, `value` FROM `permissions` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getName(), this.type.ordinal());
+			ResultSet results = this.db.select("SELECT `permission`, `world`, `value` FROM `permissions` WHERE `name` = ? AND `type` = ? ORDER BY `permission`", this.getName(), this.type.ordinal());
 			while (results.next()) {
 				String permission = results.getString("permission").trim();
 				String world = results.getString("world").trim();
