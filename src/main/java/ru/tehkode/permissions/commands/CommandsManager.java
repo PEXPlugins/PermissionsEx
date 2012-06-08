@@ -20,10 +20,7 @@ package ru.tehkode.permissions.commands;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -44,19 +41,15 @@ import ru.tehkode.utils.StringUtils;
 public class CommandsManager {
 
 	protected static final Logger logger = Logger.getLogger("Minecraft");
-	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new HashMap<String, Map<CommandSyntax, CommandBinding>>();
+	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new LinkedHashMap<String, Map<CommandSyntax, CommandBinding>>();
 	protected Plugin plugin;
 	protected List<Plugin> helpPlugins = new LinkedList<Plugin>();
 
 	public CommandsManager(Plugin plugin) {
 		this.plugin = plugin;
-
-		this.findCommandHelpPlugins();
 	}
 
 	public void register(CommandListener listener) {
-
-
 		for (Method method : listener.getClass().getMethods()) {
 			if (!method.isAnnotationPresent(Command.class)) {
 				continue;
@@ -66,14 +59,14 @@ public class CommandsManager {
 
 			Map<CommandSyntax, CommandBinding> commandListeners = listeners.get(cmdAnnotation.name());
 			if (commandListeners == null) {
-				commandListeners = new HashMap<CommandSyntax, CommandBinding>();
+				commandListeners = new LinkedHashMap<CommandSyntax, CommandBinding>();
 				listeners.put(cmdAnnotation.name(), commandListeners);
 			}
 
-			this.registerCommandHelp(cmdAnnotation);
-
 			commandListeners.put(new CommandSyntax(cmdAnnotation.syntax()), new CommandBinding(listener, method));
 		}
+		
+		listener.onRegistered(this);
 	}
 
 	public boolean execute(CommandSender sender, org.bukkit.command.Command command, String[] args) {
@@ -138,17 +131,15 @@ public class CommandsManager {
 
 		return true;
 	}
-
-	protected void findCommandHelpPlugins() {
-		// Nothing here
-	}
-
-	protected void registerCommandHelp(Command command) {
-		if (command.description().isEmpty()) {
-			return;
+	
+	public List<CommandBinding> getCommands() {
+		List<CommandBinding> commands = new LinkedList<CommandBinding>();
+		
+		for (Map<CommandSyntax, CommandBinding> map : this.listeners.values()) {
+			commands.addAll(map.values());
 		}
-
-		// Nothing here
+ 		
+		return commands;
 	}
 
 	protected class CommandSyntax {
@@ -216,7 +207,7 @@ public class CommandsManager {
 		}
 	}
 
-	protected class CommandBinding {
+	public class CommandBinding {
 
 		protected Object object;
 		protected Method method;

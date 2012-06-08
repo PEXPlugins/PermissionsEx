@@ -35,12 +35,19 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.CommandListener;
+import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
 public abstract class PermissionsCommand implements CommandListener {
 
 	protected static final Logger logger = Logger.getLogger("Minecraft");
+	protected CommandsManager manager;
+
+	@Override
+	public void onRegistered(CommandsManager manager) {
+		this.manager = manager;
+	}
 
 	protected void informGroup(Plugin plugin, PermissionGroup group, String message) {
 		for (PermissionUser user : group.getUsers()) {
