@@ -93,16 +93,7 @@ public class PermissiblePEX extends PermissibleBase {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public PermissionAttachment addAttachment(Plugin plugin) {
-		System.out.println("Creating attachment for " + plugin.getDescription().getName());
-		
-		return new PEXAttachment(plugin, player);
-	}
-
-		
+	}	
 
 	public static void reinjectAll() {
 		Logger.getLogger("Minecraft").warning("[PermissionsEx] Reinjecting all permissibles");
@@ -296,21 +287,4 @@ public class PermissiblePEX extends PermissibleBase {
 		return plugin != null && plugin instanceof PermissionsEx;
 	}
 	
-	protected class PEXAttachment extends PermissionAttachment {
-		
-		protected Plugin plugin;
-
-		public PEXAttachment(Plugin plugin, Permissible Permissible) {
-			super(plugin, Permissible);
-			
-			this.plugin = plugin;
-		}
-
-		@Override
-		public void setPermission(String name, boolean value) {
-			System.out.println("["+plugin.getDescription().getName()+"] Setting permission '"+name+"' = " + value);
-			
-			super.setPermission(name, value);
-		}		
-	}
 }
