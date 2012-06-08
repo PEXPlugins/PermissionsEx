@@ -49,7 +49,7 @@ public class PermissiblePEX extends PermissibleBase {
 	};
 	protected Player player = null;
 	protected boolean strictMode = false;
-	protected boolean injectMetadata = true;
+	protected boolean injectMetadata = false;
 	protected BukkitPermissions bridge;
 	protected Map<String, PermissionCheckResult> cache = new HashMap<String, PermissionCheckResult>();
 
@@ -61,7 +61,7 @@ public class PermissiblePEX extends PermissibleBase {
 		this.strictMode = bridge.isStrictMode();
 		this.player = player;
 	}
-
+	
 	public static void inject(Player player, BukkitPermissions bridge) {
 		if (player.isPermissionSet("permissionsex.handler.injected")) { // already injected
 			return;
@@ -93,6 +93,15 @@ public class PermissiblePEX extends PermissibleBase {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public PermissionAttachment addAttachment(Plugin plugin) {
+		System.out.println("Creating attachment for " + plugin.getDescription().getName());
+		
+		return new PEXAttachment(plugin, player);
+	}
+
+		
 
 	public static void reinjectAll() {
 		Logger.getLogger("Minecraft").warning("[PermissionsEx] Reinjecting all permissibles");
@@ -192,9 +201,13 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public void recalculatePermissions() {
 		super.recalculatePermissions();
-
+		
 		if (this.cache != null) {
 			this.cache.clear();
+		}
+				
+		if (bridge != null) {
+			bridge.checkAllParentPermissions(false);
 		}
 	}
 
@@ -280,5 +293,23 @@ public class PermissiblePEX extends PermissibleBase {
 		Plugin plugin = Bukkit.getPluginManager().getPlugin("PermissionsEx");
 
 		return plugin != null && plugin instanceof PermissionsEx;
+	}
+	
+	protected class PEXAttachment extends PermissionAttachment {
+		
+		protected Plugin plugin;
+
+		public PEXAttachment(Plugin plugin, Permissible Permissible) {
+			super(plugin, Permissible);
+			
+			this.plugin = plugin;
+		}
+
+		@Override
+		public void setPermission(String name, boolean value) {
+			System.out.println("["+plugin.getDescription().getName()+"] Setting permission '"+name+"' = " + value);
+			
+			super.setPermission(name, value);
+		}		
 	}
 }
