@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -33,6 +34,7 @@ import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
+import ru.tehkode.permissions.commands.CommandsManager;
 
 public class UtilityCommands extends PermissionsCommand {
 
@@ -176,5 +178,15 @@ public class UtilityCommands extends PermissionsCommand {
 		}
 
 		logger.warning(debugStatusMessage);
+	}
+	
+	@Command(name = "pex",
+	syntax = "help [page] [count]",
+	permission = "permissions.manage",
+	description = "PermissionsEx commands help")
+	public void showHelp(Plugin plugin, CommandSender sender, Map<String, String> args) {
+		CommandsManager manager = ((PermissionsEx)PermissionsEx.getPlugin()).getCommandsManager();
+		
+		Set<CommandsManager> commands;
 	}
 }
