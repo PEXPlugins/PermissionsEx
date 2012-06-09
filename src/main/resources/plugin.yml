@@ -9,6 +9,7 @@ commands:
     description: Provides access to Permissions commands and information.
     usage: |
            Usage:
+           /<command> - Display help
            /<command> reload - Reload environment
            /<command> config <node> [value] - Print or set <node> [value]
            /<command> backend - Print currently used backend
