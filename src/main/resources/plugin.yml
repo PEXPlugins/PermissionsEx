@@ -28,7 +28,7 @@ commands:
            /<command> user <user> suffix [newsuffix] [world] - Get or set <user> suffix
            /<command> user <user> toggle debug - Toggle debug only for <user>
            /<command> user <user> check <permission> [world] - Checks player for <permission>
-           /<command> user <user> get <option> [world] - Toggle debug only for <user>
+           /<command> user <user> get <option> [world] - Get value of <option> for <user> in [world]
            /<command> user <user> delete - Remove <user>
            /<command> user <user> add <permission> [world] - Add <permission> to <user> in [world]
            /<command> user <user> remove <permission> [world] - Remove permission from <user> in [world]
