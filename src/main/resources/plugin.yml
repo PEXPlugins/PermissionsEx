@@ -9,13 +9,14 @@ commands:
     description: Provides access to Permissions commands and information.
     usage: |
            Usage:
-            /<command> reload - Reload environment
+           /<command> reload - Reload environment
            /<command> config <node> [value] - Print or set <node> [value]
            /<command> backend - Print currently used backend
            /<command> backend <backend> - Change permission backend on the fly (Use with caution!)
            /<command> hierarchy [world] - Print complete user/group hierarchy
            /<command> dump <backend> <filename> - Dump users/groups to selected <backend> format
            /<command> toggle debug - Enable/disable debug mode
+           /<command> help [page] [count] - PermissionsEx commands help
            /<command> users list - List all registered users
            /<command> users - List all registered users (alias)
            /<command> user - List all registered users (alias)
