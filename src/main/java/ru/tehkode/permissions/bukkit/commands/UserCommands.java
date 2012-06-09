@@ -245,7 +245,7 @@ public class UserCommands extends PermissionsCommand {
 	@Command(name = "pex",
 	syntax = "user <user> get <option> [world]",
 	permission = "permissions.manage.<user>",
-	description = "Toggle debug only for <user>")
+	description = "Get value of <option> for <user> in [world]")
 	public void userGetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));

@@ -157,8 +157,8 @@ public class PromotionCommands extends PermissionsCommand {
 		}
 	}
 
-	@Command(name = "promote",
-	syntax = "<user>",
+	@Command(name = "pex",
+	syntax = "promote <user>",
 	description = "Promotes <user> to next group",
 	isPrimary = true,
 	permission = "permissions.user.rank.promote")
@@ -166,8 +166,8 @@ public class PromotionCommands extends PermissionsCommand {
 		this.promoteUser(plugin, sender, args);
 	}
 
-	@Command(name = "demote",
-	syntax = "<user>",
+	@Command(name = "pex",
+	syntax = "demote <user>",
 	description = "Demotes <user> to previous group",
 	isPrimary = true,
 	permission = "permissions.user.rank.demote")
