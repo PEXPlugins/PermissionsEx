@@ -47,6 +47,8 @@ public class PermissionManager {
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 
+    protected PermissionMatcher matcher = new RegExpMatcher();
+
 	public PermissionManager(Configuration config) {
 		this.config = config;
 		this.initBackend();
@@ -492,4 +494,12 @@ public class PermissionManager {
 	protected void callEvent(PermissionSystemEvent.Action action) {
 		this.callEvent(new PermissionSystemEvent(action));
 	}
+
+    public PermissionMatcher getPermissionMatcher() {
+        return matcher;
+    }
+
+    public void setPermissionMatcher(PermissionMatcher matcher) {
+        this.matcher = matcher;
+    }
 }

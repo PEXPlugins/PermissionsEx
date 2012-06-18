@@ -18,15 +18,12 @@
  */
 package ru.tehkode.permissions;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
@@ -36,7 +33,6 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  */
 public abstract class PermissionEntity {
 
-	protected static Pattern rangeExpression = Pattern.compile("(\\d+)-(\\d+)");
 	protected PermissionManager manager;
 	private String name;
 	protected boolean virtual = true;
@@ -513,45 +509,6 @@ public abstract class PermissionEntity {
 		return null;
 	}
 
-	protected static String prepareRegexp(String expression) {
-		String regexp = expression.replace(".", "\\.").replace("*", "(.*)");
-
-		try {
-			Matcher rangeMatcher = rangeExpression.matcher(regexp);
-			while (rangeMatcher.find()) {
-				StringBuilder range = new StringBuilder();
-				int from = Integer.parseInt(rangeMatcher.group(1));
-				int to = Integer.parseInt(rangeMatcher.group(2));
-
-				if (from > to) {
-					int temp = from;
-					from = to;
-					to = temp;
-				} // swap them
-
-				range.append("(");
-
-				for (int i = from; i <= to; i++) {
-					range.append(i);
-					if (i < to) {
-						range.append("|");
-					}
-				}
-
-				range.append(")");
-
-				regexp = regexp.replace(rangeMatcher.group(0), range);
-			}
-		} catch (Throwable e) {
-		}
-
-		return regexp;
-	}
-	/**
-	 * Pattern cache
-	 */
-	protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
-
 	/**
 	 * Checks if specified permission matches specified permission expression
 	 * 
@@ -560,36 +517,8 @@ public abstract class PermissionEntity {
 	 * @param additionalChecks check for parent node matching
 	 * @return 
 	 */
-	public static boolean isMatches(String expression, String permission, boolean additionalChecks) {
-		String localExpression = expression;
-
-		if (localExpression.startsWith("-")) {
-			localExpression = localExpression.substring(1);
-		}
-		
-		if (localExpression.startsWith("#")) {
-			localExpression = localExpression.substring(1);
-		}
-		
-		Pattern permissionMatcher = patternCache.get(localExpression);
-		
-		if (permissionMatcher == null) {
-			patternCache.put(localExpression, permissionMatcher = Pattern.compile(prepareRegexp(localExpression),  Pattern.CASE_INSENSITIVE));
-		}
-
-		if (permissionMatcher.matcher(permission).matches()) {
-			return true;
-		}
-
-		//if (additionalChecks && localExpression.endsWith(".*") && isMatches(localExpression.substring(0, localExpression.length() - 2), permission, false)) {
-		//	return true;
-		//}
-		/*
-		if (additionalChecks && !expression.endsWith(".*") && isMatches(expression + ".*", permission, false)) {
-		return true;
-		}
-		 */
-		return false;
+	public boolean isMatches(String expression, String permission, boolean additionalChecks) {
+        return this.manager.getPermissionMatcher().isMatches(expression, permission);
 	}
 
 	public boolean explainExpression(String expression) {
