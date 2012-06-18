@@ -21,7 +21,6 @@ package ru.tehkode.permissions.bukkit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -49,8 +48,6 @@ public class BukkitPermissions {
 	protected boolean strictMode = false;
 	protected boolean enableParentNodes = true;
 	protected Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
-	
-	private int permissionsHashCode;
 
 	public BukkitPermissions(Plugin plugin, ConfigurationSection config) {
 		this.plugin = plugin;
@@ -65,7 +62,9 @@ public class BukkitPermissions {
 
 		this.registerEvents();
 
-		this.checkAllParentPermissions(true);
+		if (this.enableParentNodes) {
+			this.calculateAllParentPermissions();
+		}
 
 		logger.info("[PermissionsEx] Superperms support enabled.");
 	}
@@ -85,24 +84,9 @@ public class BukkitPermissions {
 	public Plugin getPlugin() {
 		return plugin;
 	}
-	
-	public final void checkAllParentPermissions(boolean forced) {
-		if (!this.enableParentNodes) {
-			return;
-		}
-		
-		Set<Permission> allPermissions = this.plugin.getServer().getPluginManager().getPermissions();
-		int hashCode = allPermissions.hashCode();
-		
-		if (forced || hashCode != permissionsHashCode) {
-			calculateParentPermissions(allPermissions);
-			
-			permissionsHashCode = hashCode;
-		}		
-	}
 
-	protected void calculateParentPermissions(Set<Permission> permissions) {
-		for (Permission permission : permissions) {
+	protected void calculateAllParentPermissions() {
+		for (Permission permission : this.plugin.getServer().getPluginManager().getPermissions()) {
 			this.calculatePermissionChildren(permission);
 		}
 	}
