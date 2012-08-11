@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.tehkode</groupId>
     <artifactId>PermissionsEx</artifactId>
-    <version>1.19.3</version>
+    <version>1.19.4</version>
     <name>PermissionsEx</name>
     <properties>
         <netbeans.hint.license>gpl2</netbeans.hint.license> 
@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.2.5-R5.0</version>
+            <version>1.3.1-R1.0</version>
             <type>jar</type>
         </dependency>
         <dependency>

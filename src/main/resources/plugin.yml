@@ -1,6 +1,6 @@
 name: PermissionsEx
 main: ru.tehkode.permissions.bukkit.PermissionsEx
-version: 1.19.3
+version: 1.19.4
 author: t3hk0d3
 website: www.bukkit.org
 description: PermissionsEx - New powerful users and groups permissions management plugin.
