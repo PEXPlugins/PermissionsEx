@@ -113,7 +113,7 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public void setWorldInheritance(String world, String[] parentWorlds) {
-		if (world == null && world.isEmpty()) {
+		if (world == null || world.isEmpty()) {
 			return;
 		}
 
