@@ -148,7 +148,7 @@ public class SQLConnection {
 			return;
 		}
 
-		if (!this.db.isValid(0)) {
+		if (!this.db.isValid(3)) {
 			Logger.getLogger("Minecraft").warning("Lost connection with sql server. Reconnecting.");
 			this.connect();
 		}
