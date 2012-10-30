@@ -8,4 +8,4 @@
 /dist
 /.idea/
 /PermissionsEx.iml
-/out
+.DS_Store
