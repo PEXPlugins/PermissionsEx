@@ -19,10 +19,13 @@
 package ru.tehkode.permissions.bukkit.superperms;
 
 import org.bukkit.plugin.Plugin;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
@@ -35,24 +38,26 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.BukkitPermissions;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+
 import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.*;
+
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 
 public class PermissiblePEX extends PermissibleBase {
 
 	protected static PermissibleInjector[] injectors = new PermissibleInjector[]{
-		new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
-		new ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
-		new ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "Spout"),
-		new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit"),
-		new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit++")
+			new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
+			new ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
+			new ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "Spout"),
+			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit"),
+			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit++")
 	};
 	protected Player player = null;
 	protected boolean strictMode = false;
 	protected boolean injectMetadata = false;
 	protected BukkitPermissions bridge;
-	protected Map<String, PermissionCheckResult> cache = new HashMap<String, PermissionCheckResult>();
+	protected Map<String, PermissionCheckResult> cache = new ConcurrentHashMap<String, PermissionCheckResult>();
 
 	protected PermissiblePEX(Player player, BukkitPermissions bridge) {
 		super(player);
@@ -62,7 +67,7 @@ public class PermissiblePEX extends PermissibleBase {
 		this.strictMode = bridge.isStrictMode();
 		this.player = player;
 	}
-	
+
 	public static void inject(Player player, BukkitPermissions bridge) {
 		if (player.isPermissionSet("permissionsex.handler.injected")) { // already injected
 			return;
@@ -93,7 +98,7 @@ public class PermissiblePEX extends PermissibleBase {
 			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
 			e.printStackTrace();
 		}
-	}	
+	}
 
 	public static void reinjectAll() {
 		Logger.getLogger("Minecraft").warning("[PermissionsEx] Reinjecting all permissibles");
@@ -143,7 +148,7 @@ public class PermissiblePEX extends PermissibleBase {
 			}
 
 			// Pass check to superperms
-			if (super.isPermissionSet(permission)) { // permission set by side plugin
+			if (super.isPermissionSet(permission)) { // permission already set by side plugin
 				PermissionCheckResult result = PermissionCheckResult.fromBoolean(super.hasPermission(permission));
 
 				if (user.isDebug()) {
@@ -153,27 +158,26 @@ public class PermissiblePEX extends PermissibleBase {
 				return result;
 			}
 
-			if (this.bridge.isEnableParentNodes()) {
-				// check using parent nodes
-				Map<String, Boolean> parentNodes = this.bridge.getChildPermissions().get(permission.toLowerCase());
+			// check using parent nodes
+			Map<String, Boolean> parentNodes = this.bridge.getChildPermissions().get(permission.toLowerCase());
 
-				if (parentNodes != null) {
-					for (String parentPermission : parentNodes.keySet()) {
-						PermissionCheckResult result = this.checkPermission(parentPermission);
-						if (result == PermissionCheckResult.UNDEFINED) {
-							continue;
-						}
-
-						PermissionCheckResult anwser = PermissionCheckResult.fromBoolean(parentNodes.get(parentPermission).booleanValue() ^ !result.toBoolean());
-
-						if (user.isDebug()) {
-							Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = " + anwser + ",  found from \"" + parentPermission + "\"");
-						}
-
-						return anwser;
+			if (parentNodes != null) {
+				for (String parentPermission : parentNodes.keySet()) {
+					PermissionCheckResult result = this.checkPermission(parentPermission);
+					if (result == PermissionCheckResult.UNDEFINED) {
+						continue;
 					}
+
+					PermissionCheckResult anwser = PermissionCheckResult.fromBoolean(parentNodes.get(parentPermission).booleanValue() ^ !result.toBoolean());
+
+					if (user.isDebug()) {
+						Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = " + anwser + ",  found from \"" + parentPermission + "\"");
+					}
+
+					return anwser;
 				}
 			}
+
 
 			// No permission found
 			if (user.isDebug()) {
@@ -193,11 +197,11 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public void recalculatePermissions() {
 		super.recalculatePermissions();
-		
+
 		if (this.cache != null) {
 			this.cache.clear();
 		}
-				
+
 		if (bridge != null) {
 			bridge.checkAllParentPermissions(false);
 		}
@@ -286,5 +290,5 @@ public class PermissiblePEX extends PermissibleBase {
 
 		return plugin != null && plugin instanceof PermissionsEx;
 	}
-	
+
 }
