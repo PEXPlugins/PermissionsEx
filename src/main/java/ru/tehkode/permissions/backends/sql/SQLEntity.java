@@ -369,7 +369,7 @@ public class SQLEntity extends PermissionEntity {
 			while (results.next()) {
 				String permission = results.getString("permission").trim();
 				String world = results.getString("world").trim();
-				String value = results.getString("value").trim();
+				String value = results.getString("value");
 
 				// @TODO: to this in more optimal way
 				if (value.isEmpty()) {
