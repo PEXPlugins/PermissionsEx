@@ -29,6 +29,7 @@ import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
+import ru.tehkode.utils.DateUtils;
 import ru.tehkode.utils.StringUtils;
 
 public class GroupCommands extends PermissionsCommand {
@@ -519,12 +520,7 @@ public class GroupCommands extends PermissionsCommand {
 		int lifetime = 0;
 
 		if (args.containsKey("lifetime")) {
-			try {
-				lifetime = Integer.parseInt(args.get("lifetime"));
-			} catch (NumberFormatException e) {
-				sender.sendMessage(ChatColor.RED + "lifetime should be integer number");
-				return;
-			}
+            lifetime = DateUtils.parseInterval(args.get("lifetime"));
 		}
 
 		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);

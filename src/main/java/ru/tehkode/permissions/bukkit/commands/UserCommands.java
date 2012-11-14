@@ -30,6 +30,7 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
+import ru.tehkode.utils.DateUtils;
 import ru.tehkode.utils.StringUtils;
 
 public class UserCommands extends PermissionsCommand {
@@ -379,12 +380,7 @@ public class UserCommands extends PermissionsCommand {
 		int lifetime = 0;
 
 		if (args.containsKey("lifetime")) {
-			try {
-				lifetime = Integer.parseInt(args.get("lifetime"));
-			} catch (NumberFormatException e) {
-				sender.sendMessage(ChatColor.RED + "lifetime should be integer number");
-				return;
-			}
+            lifetime = DateUtils.parseInterval(args.get("lifetime"));
 		}
 
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -496,7 +492,7 @@ public class UserCommands extends PermissionsCommand {
 
 		if (args.containsKey("lifetime")) {
 			try {
-				long lifetime = Long.parseLong(args.get("lifetime"));
+				int lifetime = DateUtils.parseInterval(args.get("lifetime"));
 
 				user.addGroup(groupName, worldName, lifetime);
 			} catch (NumberFormatException e) {
