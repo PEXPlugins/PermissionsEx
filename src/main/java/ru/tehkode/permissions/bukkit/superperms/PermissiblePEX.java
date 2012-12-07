@@ -18,31 +18,25 @@
  */
 package ru.tehkode.permissions.bukkit.superperms;
 
-import org.bukkit.plugin.Plugin;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
-
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.Permissible;
-import org.bukkit.permissions.PermissibleBase;
-import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.permissions.*;
+import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.BukkitPermissions;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
-
-import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.*;
-
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+
+import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameRegexPermissibleInjector;
+import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
 
 public class PermissiblePEX extends PermissibleBase {
 
@@ -50,8 +44,8 @@ public class PermissiblePEX extends PermissibleBase {
 			new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
 			new ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
 			new ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "Spout"),
-			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit"),
-			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.entity.CraftHumanEntity", "perm", true, "CraftBukkit++")
+			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.v1_4_5.entity.CraftHumanEntity", "perm", true, "CraftBukkit"),
+			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.v1_4_5.entity.CraftHumanEntity", "perm", true, "CraftBukkit++")
 	};
 	protected Player player = null;
 	protected boolean strictMode = false;
