@@ -18,7 +18,7 @@ public class CraftBukkitInterface {
         } else {
             String name = serverClass.getName();
             name = name.substring("org.bukkit.craftbukkit".length());
-            name = name.substring(0, name.length() - "CraftWorld".length());
+            name = name.substring(0, name.length() - "CraftServer".length());
             VERSION = name;
         }
     }
