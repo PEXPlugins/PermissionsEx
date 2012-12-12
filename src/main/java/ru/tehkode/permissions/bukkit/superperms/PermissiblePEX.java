@@ -35,17 +35,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameRegexPermissibleInjector;
-import static ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
-
+import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameRegexPermissibleInjector;
+import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
+import static ru.tehkode.permissions.bukkit.CraftBukkitInterface.getCBClassName;
 public class PermissiblePEX extends PermissibleBase {
-
 	protected static PermissibleInjector[] injectors = new PermissibleInjector[]{
 			new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
 			new ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
 			new ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "Spout"),
-			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.v1_4_5.entity.CraftHumanEntity", "perm", true, "CraftBukkit"),
-			new ServerNamePermissibleInjector("org.bukkit.craftbukkit.v1_4_5.entity.CraftHumanEntity", "perm", true, "CraftBukkit++")
+			new ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit"),
+			new ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++")
 	};
 	protected Player player = null;
 	protected boolean strictMode = false;
