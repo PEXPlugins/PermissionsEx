@@ -33,12 +33,14 @@ import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameRegexPermissibleInjector;
 import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
 import static ru.tehkode.permissions.bukkit.CraftBukkitInterface.getCBClassName;
 public class PermissiblePEX extends PermissibleBase {
+    private static final Logger LOGGER = Logger.getLogger(PermissiblePEX.class.getCanonicalName());
 	protected static PermissibleInjector[] injectors = new PermissibleInjector[]{
 			new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
 			new ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
@@ -79,22 +81,21 @@ public class PermissiblePEX extends PermissibleBase {
 			}
 
 			if (!success) {
-				Logger.getLogger("Minecraft").warning("[PermissionsEx] No Permissible injector found for your server implementation!");
+				LOGGER.warning("[PermissionsEx] No Permissible injector found for your server implementation!");
 			}
 
 			permissible.recalculatePermissions();
 
 			if (PermissionsEx.getPermissionManager().isDebug()) {
-				Logger.getLogger("Minecraft").info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
+				LOGGER.info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
 			}
 		} catch (Throwable e) {
-			Logger.getLogger("Minecraft").warning("[PermissionsEx] Failed to inject own Permissible");
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, "[PermissionsEx] Failed to inject own Permissible", e);
 		}
 	}
 
 	public static void reinjectAll() {
-		Logger.getLogger("Minecraft").warning("[PermissionsEx] Reinjecting all permissibles");
+		LOGGER.warning("[PermissionsEx] Reinjecting all permissibles");
 		// Tell PEX to reinject all permissibles
 		Bukkit.getPluginManager().callEvent(new PermissionSystemEvent(PermissionSystemEvent.Action.REINJECT_PERMISSIBLES));
 	}
@@ -134,7 +135,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 			if (expression != null || this.strictMode) {
 				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
+					LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
 				}
 
 				return PermissionCheckResult.fromBoolean(user.explainExpression(expression));
@@ -145,7 +146,7 @@ public class PermissiblePEX extends PermissibleBase {
 				PermissionCheckResult result = PermissionCheckResult.fromBoolean(super.hasPermission(permission));
 
 				if (user.isDebug()) {
-					Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = " + result + ", found in superperms");
+					LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\" = " + result + ", found in superperms");
 				}
 
 				return result;
@@ -164,7 +165,7 @@ public class PermissiblePEX extends PermissibleBase {
 					PermissionCheckResult anwser = PermissionCheckResult.fromBoolean(parentNodes.get(parentPermission).booleanValue() ^ !result.toBoolean());
 
 					if (user.isDebug()) {
-						Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\" = " + anwser + ",  found from \"" + parentPermission + "\"");
+						LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\" = " + anwser + ",  found from \"" + parentPermission + "\"");
 					}
 
 					return anwser;
@@ -174,10 +175,10 @@ public class PermissiblePEX extends PermissibleBase {
 
 			// No permission found
 			if (user.isDebug()) {
-				Logger.getLogger("Minecraft").info("User " + user.getName() + " checked for \"" + permission + "\", no permission found");
+				LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\", no permission found");
 			}
 		} catch (PermissionsNotAvailable e) {
-			Logger.getLogger("Minecraft").warning("[PermissionsEx] Can't obtain PermissionsEx instance");
+			LOGGER.warning("[PermissionsEx] Can't obtain PermissionsEx instance");
 			reinjectAll();
 		} catch (Throwable e) {
 			// This should stay so if something will gone wrong user have chance to understand whats wrong actually
@@ -218,7 +219,7 @@ public class PermissiblePEX extends PermissibleBase {
 				return true;
 			}
 		} catch (PermissionsNotAvailable e) {
-			Logger.getLogger("Minecraft").warning("[PermissionsEx] Can't obtain PermissionsEx instance");
+			LOGGER.warning("[PermissionsEx] Can't obtain PermissionsEx instance");
 			reinjectAll();
 		}
 
