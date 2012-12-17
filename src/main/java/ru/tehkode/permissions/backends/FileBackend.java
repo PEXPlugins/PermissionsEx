@@ -39,7 +39,6 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.file.FileGroup;
 import ru.tehkode.permissions.backends.file.FileUser;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 /**
  * @author code
@@ -78,26 +77,6 @@ public class FileBackend extends PermissionBackend {
         this.permissionsFile = new File(baseDir, permissionFilename);
 
         this.reload();
-
-        if (!permissionsFile.exists()) {
-            try {
-                permissionsFile.createNewFile();
-
-                // Load default permissions
-                permissions.set("groups/default/default", true);
-
-
-                List<String> defaultPermissions = new LinkedList<String>();
-                // Specify here default permissions
-                defaultPermissions.add("modifyworld.*");
-
-                permissions.set("groups/default/permissions", defaultPermissions);
-
-                this.save();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     @Override
@@ -241,17 +220,21 @@ public class FileBackend extends PermissionBackend {
 
     @Override
     public void reload() {
-
+        FileConfiguration newPermissions = new YamlConfiguration();
+        newPermissions.options().pathSeparator(PATH_SEPARATOR);
         try {
-            FileConfiguration newPermissions = new YamlConfiguration();
-            newPermissions.options().pathSeparator(PATH_SEPARATOR);
+
             newPermissions.load(permissionsFile);
 
             Logger.getLogger("Minecraft").info("Permissions file successfully reloaded");
 
             this.permissions = newPermissions;
         } catch (FileNotFoundException e) {
-            // do nothing
+            if (this.permissions == null) {
+                // First load, load even if the file doesn't exist
+                this.permissions = newPermissions;
+                initNewConfiguration();
+            }
         } catch (Throwable e) {
             Logger.getLogger("Minecraft").warning("Error loading permissions file:\n " + e.getMessage());
 
@@ -259,6 +242,32 @@ public class FileBackend extends PermissionBackend {
                 // this is required to drop PEX plugin on first faulty initialization
                 // so PEX won't load with incorrect config
                 throw new IllegalStateException("Error loading permissions file", e);
+            }
+        }
+    }
+
+    /**
+     * This method is called when the file the permissions config is supposed to save to
+     * does not exist yet,This adds default permissions & stuff
+     */
+    private void initNewConfiguration() {
+        if (!permissionsFile.exists()) {
+            try {
+                permissionsFile.createNewFile();
+
+                // Load default permissions
+                permissions.set("groups/default/default", true);
+
+
+                List<String> defaultPermissions = new LinkedList<String>();
+                // Specify here default permissions
+                defaultPermissions.add("modifyworld.*");
+
+                permissions.set("groups/default/permissions", defaultPermissions);
+
+                this.save();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
