@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -29,14 +30,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import ru.tehkode.permissions.PermissionBackend;
+import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.backends.file.FileEntity;
 import ru.tehkode.permissions.backends.file.FileGroup;
 import ru.tehkode.permissions.backends.file.FileUser;
 
@@ -282,6 +287,159 @@ public class FileBackend extends PermissionBackend {
 
     @Override
     public void dumpData(OutputStreamWriter writer) throws IOException {
-        throw new UnsupportedOperationException("Sorry, data dumping is broken!");
+        YamlConfiguration config = new YamlConfiguration();
+        config.options().pathSeparator(PATH_SEPARATOR).indent(4);
+
+        // Groups
+        for (PermissionGroup group : this.manager.getGroups()) {
+            ConfigurationSection groupSection = config.createSection(buildPath("groups", group.getName()));
+
+            // Inheritance
+            if (group.getParentGroupsNames().length > 0) {
+                groupSection.set("inheritance", Arrays.asList(group.getParentGroupsNames()));
+            }
+
+            dumpEntityData(group, groupSection);
+
+            // world-specific inheritance
+            for (Map.Entry<String, PermissionGroup[]> entry : group.getAllParentGroups().entrySet()) {
+                if (entry.getKey() == null) continue;
+
+                List<String> groups = new ArrayList<String>();
+                for (PermissionGroup parentGroup : entry.getValue()) {
+                    if (parentGroup == null) {
+                        continue;
+                    }
+
+                    groups.add(parentGroup.getName());
+                }
+
+                if (groups.isEmpty()) continue;
+
+                groupSection.set(buildPath("worlds", entry.getKey(), "inheritance"), groups);
+            }
+
+            // world specific stuff
+            for (String worldName : group.getWorlds()) {
+                if (worldName == null) continue;
+
+                String worldPath = buildPath("worlds", worldName);
+                // world-specific prefix
+                String prefix = group.getOwnPrefix(worldName);
+                if (prefix != null && !prefix.isEmpty()) {
+                    groupSection.set(buildPath(worldPath, "prefix"), prefix);
+                }
+
+                String suffix = group.getOwnSuffix(worldName);
+                if (suffix != null && !suffix.isEmpty()) {
+                    groupSection.set(buildPath(worldPath, "suffix"), suffix);
+                }
+
+                if (group.isDefault(worldName)) {
+                    groupSection.set(buildPath(worldPath, "suffix"), true);
+                }
+            }
+
+            if (group.isDefault(null)) {
+                groupSection.set("default", true);
+            }
+        }
+
+        // World inheritance
+        for (World world : Bukkit.getServer().getWorlds()) {
+            String[] parentWorlds = manager.getWorldInheritance(world.getName());
+            if (parentWorlds.length == 0) {
+                continue;
+            }
+
+            config.set(buildPath("worlds", world.getName(), "inheritance"), Arrays.asList(parentWorlds));
+        }
+
+        // Users setup
+        for (PermissionUser user : this.manager.getUsers()) {
+            ConfigurationSection userSection = config.createSection(buildPath("users", user.getName()));
+
+            // Inheritance
+            if (user.getGroupsNames().length > 0) {
+                userSection.set("group", Arrays.asList(user.getGroupsNames()));
+            }
+
+            // Prefix
+            if (user.getOwnPrefix() != null && !user.getOwnPrefix().isEmpty()) {
+                userSection.set("prefix", user.getOwnPrefix());
+            }
+
+            //Suffix
+            if (user.getOwnSuffix() != null && !user.getOwnSuffix().isEmpty()) {
+                userSection.set("suffix", user.getOwnSuffix());
+            }
+
+            dumpEntityData(user, userSection);
+
+            // world-specific inheritance
+            for (Map.Entry<String, PermissionGroup[]> entry : user.getAllGroups().entrySet()) {
+                if (entry.getKey() == null) continue;
+
+                List<String> groups = new ArrayList<String>();
+                for (PermissionGroup group : entry.getValue()) {
+                    if (group == null) {continue;}
+
+                    groups.add(group.getName());
+                }
+
+                if (groups.isEmpty()) continue;
+
+                userSection.set(buildPath("worlds", entry.getKey(), "group"), groups);
+            }
+
+            // world specific prefix & suffix
+            for (String worldName : user.getWorlds()) {
+                if (worldName == null) continue;
+
+                String worldPath = buildPath("worlds", worldName);
+                // world-specific prefix
+                String prefix = user.getOwnPrefix(worldName);
+                if (prefix != null && !prefix.isEmpty()) {
+                    userSection.set(buildPath(worldPath, "prefix"), prefix);
+                }
+
+                String suffix = user.getOwnSuffix(worldName);
+                if (suffix != null && !suffix.isEmpty()) {
+                    userSection.set(buildPath(worldPath, "suffix"), suffix);
+                }
+            }
+        }
+
+        // Write data
+        writer.write(config.saveToString());
+        writer.flush();
+    }
+
+    // Some of the methods are common in PermissionEntity. Sadly not very many of them.
+    private void dumpEntityData(PermissionEntity entity, ConfigurationSection section) {
+
+        // Permissions
+        for (Map.Entry<String, String[]> entry : entity.getAllPermissions().entrySet()) {
+            if (entry.getValue().length == 0) continue;
+
+            String nodePath = "permissions";
+            if (entry.getKey() != null && !entry.getKey().isEmpty()) {
+                nodePath = buildPath("worlds", entry.getKey(), nodePath);
+            }
+
+            section.set(nodePath, Arrays.asList(entry.getValue()));
+        }
+
+        // Options
+        for (Map.Entry<String, Map<String, String>> entry : entity.getAllOptions().entrySet()) {
+            if(entry.getValue().isEmpty()) continue;
+
+            String nodePath = "options";
+            if (entry.getKey() != null && !entry.getKey().isEmpty()) {
+                nodePath = buildPath("worlds", entry.getKey(), nodePath);
+            }
+
+            section.set(nodePath, entry.getValue());
+        }
     }
 }
