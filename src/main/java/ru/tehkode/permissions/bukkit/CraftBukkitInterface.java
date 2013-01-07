@@ -6,20 +6,29 @@ import org.bukkit.Bukkit;
  * Interface to get versioned obfuscation of CraftBukkit classes
  */
 public class CraftBukkitInterface {
-    private static final String CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
+    private static final String CRAFTBUKKIT_PREFIX; 
     private static final String VERSION;
-
+    private static final boolean IS_BUKKIT_FORGE;
     static {
-        Class serverClass = Bukkit.getServer().getClass();
-        if (!serverClass.getSimpleName().equals("CraftServer")) {
+        Class serverClass = Bukkit.getServer().getClass();			
+        if (!serverClass.getSimpleName().equals("CraftServer") && !serverClass.getSimpleName().equals("BukkitServer")) {
             VERSION = null;
-        } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer")) {
+        } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer") || serverClass.getName().equals("keepcalm.mods.bukkit.bukkitAPI.BukkitServer")) {
             VERSION = "";
         } else {
             String name = serverClass.getName();
             name = name.substring("org.bukkit.craftbukkit".length());
             name = name.substring(0, name.length() - "CraftServer".length());
             VERSION = name;
+        }
+        
+        if (serverClass.getPackage().getName().startsWith("keepcalm.mods.bukkit")) {
+        	IS_BUKKIT_FORGE = true;
+        	CRAFTBUKKIT_PREFIX = "keepcalm.mods.bukkit.bukkitAPI";
+        }
+        else {
+        	CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
+        	IS_BUKKIT_FORGE = false;
         }
     }
 
