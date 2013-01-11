@@ -74,6 +74,7 @@ public class PermissiblePEX extends PermissibleBase {
 			boolean success = false;
 			for (PermissibleInjector injector : injectors) {
 				if (injector.isApplicable(player)) {
+					System.out.println("Found an applicable injector: " + injector.clazzName);
 					if (injector.inject(player, permissible)) {
 						success = true;
 						break;
