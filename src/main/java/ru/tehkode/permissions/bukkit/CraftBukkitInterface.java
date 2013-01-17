@@ -8,20 +8,41 @@ import org.bukkit.Bukkit;
 public class CraftBukkitInterface {
     private static final String CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
     private static final String VERSION;
-
+    
     static {
-        Class serverClass = Bukkit.getServer().getClass();
-        if (!serverClass.getSimpleName().equals("CraftServer")) {
-            VERSION = null;
-        } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer")) {
-            VERSION = "";
-        } else {
-            String name = serverClass.getName();
-            name = name.substring("org.bukkit.craftbukkit".length());
-            name = name.substring(0, name.length() - "CraftServer".length());
-            VERSION = name;
-        }
+    	String version = "";
+		if (!checkVersion(version)) {
+			StringBuilder builder = new StringBuilder();
+			for (int a = 0; a < 10; a++) {
+				for (int b = 0; b < 10; b++) {
+					for (int c = 0; c < 10; c++) {
+						// Format:
+						// [package].v1_4_R1.[trail]
+						builder.setLength(0);
+						builder.append('v').append(a).append('_').append(b).append('_').append('R').append(c);
+						version = builder.toString();
+						if (checkVersion(version)) {
+							a = b = c = 10;
+						}
+					}
+				}
+			}
+		}
+		VERSION = version.isEmpty() ? "" : ("."+version);
     }
+    
+	private static boolean checkVersion(String version) {
+		try {
+			if (version.isEmpty()) {
+				Class.forName("net.minecraft.server.World");
+			} else {
+				Class.forName("net.minecraft.server." + version + ".World");
+			}
+			return true;
+		} catch (ClassNotFoundException ex) {
+			return false;
+		}
+	}
 
     private CraftBukkitInterface() {}
 
