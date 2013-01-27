@@ -47,7 +47,7 @@ public class PermissiblePEX extends PermissibleBase {
 			new ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "Spout"),
 			new ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit"),
 			new ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++"),
-			new ServerNamePermissibleInjector("keepcalm.mods.bukkit.bukkitAPI.entity.BukkitEntityHuman", "perm", true, "BukkitForge")
+			new ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "BukkitForge")
 	};
 	protected Player player = null;
 	protected boolean strictMode = false;

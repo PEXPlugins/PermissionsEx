@@ -8,12 +8,11 @@ import org.bukkit.Bukkit;
 public class CraftBukkitInterface {
     private static final String CRAFTBUKKIT_PREFIX; 
     private static final String VERSION;
-    private static final boolean IS_BUKKIT_FORGE;
     static {
         Class serverClass = Bukkit.getServer().getClass();			
-        if (!serverClass.getSimpleName().equals("CraftServer") && !serverClass.getSimpleName().equals("BukkitServer")) {
+        if (!serverClass.getSimpleName().equals("CraftServer")) {
             VERSION = null;
-        } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer") || serverClass.getName().equals("keepcalm.mods.bukkit.bukkitAPI.BukkitServer")) {
+        } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer")) {
             VERSION = "";
         } else {
             String name = serverClass.getName();
@@ -22,14 +21,7 @@ public class CraftBukkitInterface {
             VERSION = name;
         }
         
-        if (serverClass.getPackage().getName().startsWith("keepcalm.mods.bukkit")) {
-        	IS_BUKKIT_FORGE = true;
-        	CRAFTBUKKIT_PREFIX = "keepcalm.mods.bukkit.bukkitAPI";
-        }
-        else {
-        	CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
-        	IS_BUKKIT_FORGE = false;
-        }
+       	CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
     }
 
     private CraftBukkitInterface() {}
