@@ -346,7 +346,7 @@ public class GroupCommands extends PermissionsCommand {
 				groups.remove(parentGroup);
 			}
 
-			group.setParentGroups(groups.toArray(new PermissionGroup[0]), worldName);
+			group.setParentGroups(groups.toArray(new PermissionGroup[groups.size()]), worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 

@@ -37,6 +37,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.bukkit.superperms.PEXPermissionSubscriptionMap;
 import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
@@ -48,8 +49,9 @@ public class BukkitPermissions {
 	protected Plugin plugin;
 	protected boolean strictMode = false;
 	protected boolean enableParentNodes = true;
+    private final PEXPermissionSubscriptionMap subscriptionsHandler;
 	protected Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
-	
+
 	private int permissionsHashCode;
 
 	public BukkitPermissions(Plugin plugin, ConfigurationSection config) {
@@ -57,8 +59,11 @@ public class BukkitPermissions {
 
 		if (!config.getBoolean("enable", true)) {
 			logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
-			return;
+			subscriptionsHandler = null;
+            return;
 		}
+
+        subscriptionsHandler = PEXPermissionSubscriptionMap.inject(this, plugin.getServer().getPluginManager());
 
 		this.strictMode = config.getBoolean("strict-mode", strictMode);
 		this.enableParentNodes = config.getBoolean("parent-nodes", this.enableParentNodes);
@@ -85,20 +90,24 @@ public class BukkitPermissions {
 	public Plugin getPlugin() {
 		return plugin;
 	}
-	
+
+    public void onDisable() {
+        PEXPermissionSubscriptionMap.uninject(plugin.getServer().getPluginManager());
+    }
+
 	public final void checkAllParentPermissions(boolean forced) {
 		if (!this.enableParentNodes) {
 			return;
 		}
-		
+
 		Set<Permission> allPermissions = this.plugin.getServer().getPluginManager().getPermissions();
 		int hashCode = allPermissions.hashCode();
-		
+
 		if (forced || hashCode != permissionsHashCode) {
 			calculateParentPermissions(allPermissions);
-			
+
 			permissionsHashCode = hashCode;
-		}		
+		}
 	}
 
 	protected void calculateParentPermissions(Set<Permission> permissions) {
@@ -124,7 +133,7 @@ public class BukkitPermissions {
 		manager.registerEvents(new EventListener(), plugin);
 	}
 
-	public void updatePermissions(Player player) {
+    public void updatePermissions(Player player) {
 		if (player == null || !this.plugin.isEnabled()) {
 			return;
 		}

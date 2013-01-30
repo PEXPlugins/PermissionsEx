@@ -33,6 +33,7 @@ import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,6 +41,7 @@ import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameReg
 import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
 import static ru.tehkode.permissions.bukkit.CraftBukkitInterface.getCBClassName;
 public class PermissiblePEX extends PermissibleBase {
+    private static final AtomicBoolean LAST_CALL_ERRORED = new AtomicBoolean(false);
     private static final Logger LOGGER = Logger.getLogger(PermissiblePEX.class.getCanonicalName());
 	protected static PermissibleInjector[] injectors = new PermissibleInjector[]{
 			new ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
@@ -113,18 +115,30 @@ public class PermissiblePEX extends PermissibleBase {
 		String worldName = player.getWorld().getName();
 		String cid = worldName + ":" + permission;
 
-		if (!this.cache.containsKey(cid)) {
-			PermissionCheckResult result = this.performCheck(permission, worldName);
+        try {
+            if (!this.cache.containsKey(cid)) {
+                PermissionCheckResult result = this.performCheck(permission, worldName);
 
-			if (result == PermissionCheckResult.UNDEFINED) { // return default permission
-				result = PermissionCheckResult.fromBoolean(super.hasPermission(permission));
-			}
+                if (result == PermissionCheckResult.UNDEFINED) { // return default permission
+                    result = PermissionCheckResult.fromBoolean(super.hasPermission(permission));
+                }
 
-			this.cache.put(cid, result);
-		}
+                this.cache.put(cid, result);
+            }
 
-		return this.cache.get(cid);
-	}
+            PermissionCheckResult result = this.cache.get(cid);
+            if (PermissionsEx.getUser(player).isDebug()) {
+                LOGGER.info("User " + player.getName() + " checked for \"" + permission + "\", cache value " + result + " found.");
+            }
+            LAST_CALL_ERRORED.set(false);
+            return result;
+        } catch (Throwable t) {
+            if (LAST_CALL_ERRORED.compareAndSet(false, true)) {
+                LOGGER.log(Level.SEVERE, "Error accessing PEX instance", t);
+            }
+            return PermissionCheckResult.UNDEFINED;
+        }
+    }
 
 	public PermissionCheckResult performCheck(String permission, String worldName) {
 		try {
@@ -138,7 +152,8 @@ public class PermissiblePEX extends PermissibleBase {
 					LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
 				}
 
-				return PermissionCheckResult.fromBoolean(user.explainExpression(expression));
+                LAST_CALL_ERRORED.set(false);
+                return PermissionCheckResult.fromBoolean(user.explainExpression(expression));
 			}
 
 			// Pass check to superperms
@@ -149,7 +164,8 @@ public class PermissiblePEX extends PermissibleBase {
 					LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\" = " + result + ", found in superperms");
 				}
 
-				return result;
+                LAST_CALL_ERRORED.set(false);
+                return result;
 			}
 
 			// check using parent nodes
@@ -162,13 +178,14 @@ public class PermissiblePEX extends PermissibleBase {
 						continue;
 					}
 
-					PermissionCheckResult anwser = PermissionCheckResult.fromBoolean(parentNodes.get(parentPermission).booleanValue() ^ !result.toBoolean());
+					PermissionCheckResult anwser = PermissionCheckResult.fromBoolean(parentNodes.get(parentPermission) ^ !result.toBoolean());
 
 					if (user.isDebug()) {
 						LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\" = " + anwser + ",  found from \"" + parentPermission + "\"");
 					}
 
-					return anwser;
+                    LAST_CALL_ERRORED.set(false);
+                    return anwser;
 				}
 			}
 
@@ -181,10 +198,14 @@ public class PermissiblePEX extends PermissibleBase {
 			LOGGER.warning("[PermissionsEx] Can't obtain PermissionsEx instance");
 			reinjectAll();
 		} catch (Throwable e) {
-			// This should stay so if something will gone wrong user have chance to understand whats wrong actually
-			e.printStackTrace();
-		}
+            if (!LAST_CALL_ERRORED.compareAndSet(false, true)) {
+                // This should stay so if something will gone wrong user have chance to understand whats wrong actually
+                e.printStackTrace();
+            }
+            return PermissionCheckResult.UNDEFINED;
+        }
 
+        LAST_CALL_ERRORED.set(false);
 		return PermissionCheckResult.UNDEFINED;
 	}
 
@@ -218,10 +239,15 @@ public class PermissiblePEX extends PermissibleBase {
 			if (user != null && user.getMatchingExpression(permission, this.player.getWorld().getName()) != null) {
 				return true;
 			}
+            LAST_CALL_ERRORED.set(false);
 		} catch (PermissionsNotAvailable e) {
 			LOGGER.warning("[PermissionsEx] Can't obtain PermissionsEx instance");
 			reinjectAll();
-		}
+		} catch (Throwable t) {
+            if (LAST_CALL_ERRORED.compareAndSet(false, true)) {
+                LOGGER.log(Level.SEVERE, "[PermissionsEx] Error checking isPermissionSet for " + player.getName(), t);
+            }
+        }
 
 		return super.isPermissionSet(permission);
 	}
@@ -249,6 +275,7 @@ public class PermissiblePEX extends PermissibleBase {
 			// Groups
 			for (PermissionGroup group : user.getGroups(world)) {
 				infoSet.add(new PermissionAttachmentInfo(this.player, "groups." + group.getName(), attachment, true));
+                infoSet.add(new PermissionAttachmentInfo(this.player, "group." + group.getName(), attachment, true));
 			}
 
 			// Options

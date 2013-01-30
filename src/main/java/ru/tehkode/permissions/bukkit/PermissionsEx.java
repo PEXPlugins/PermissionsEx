@@ -20,7 +20,6 @@ package ru.tehkode.permissions.bukkit;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -51,6 +50,10 @@ public class PermissionsEx extends JavaPlugin {
 	protected CommandsManager commandsManager;
 	protected FileConfiguration config;
 	protected BukkitPermissions superms;
+    private static PermissionsEx instance;
+    {
+        instance = this;
+    }
 
 	public PermissionsEx() {
 		super();
@@ -73,7 +76,7 @@ public class PermissionsEx extends JavaPlugin {
 		if (this.permissionsManager == null) {
 			this.permissionsManager = new PermissionManager(this.config);
 		}
-		
+
 		// Register commands
 		this.commandsManager.register(new UserCommands());
 		this.commandsManager.register(new GroupCommands());
@@ -115,6 +118,7 @@ public class PermissionsEx extends JavaPlugin {
 		}
 
 		this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
+        this.superms.onDisable();
 
 		logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
 	}
@@ -138,13 +142,13 @@ public class PermissionsEx extends JavaPlugin {
 	}
 
 	public static Plugin getPlugin() {
-		return Bukkit.getServer().getPluginManager().getPlugin("PermissionsEx");
+		return instance;
 	}
 
 	public static boolean isAvailable() {
 		Plugin plugin = getPlugin();
 
-		return (plugin instanceof PermissionsEx) && ((PermissionsEx) plugin).permissionsManager != null;
+		return plugin.isEnabled() && ((PermissionsEx) plugin).permissionsManager != null;
 	}
 
 	public static PermissionManager getPermissionManager() {
@@ -170,7 +174,7 @@ public class PermissionsEx extends JavaPlugin {
 	public boolean has(Player player, String permission, String world) {
 		return this.permissionsManager.has(player, permission, world);
 	}
-	
+
 	public class PlayerEventsListener implements Listener {
 
 		protected boolean logLastPlayerLogin = false;

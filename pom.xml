@@ -3,9 +3,9 @@
     <groupId>ru.tehkode</groupId>
     <artifactId>PermissionsEx</artifactId>
     <version>1.19.5</version>
-    <name>PermissionsEx</name> 
+    <name>PermissionsEx</name>
     <properties>
-        <netbeans.hint.license>gpl2</netbeans.hint.license> 
+        <netbeans.hint.license>gpl2</netbeans.hint.license>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <url>https://github.com/PEXPlugins/PermissionsEx</url>
