@@ -18,18 +18,14 @@
  */
 package ru.tehkode.permissions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  *
@@ -41,8 +37,8 @@ public abstract class PermissionUser extends PermissionEntity {
 	protected Map<String, String[]> cachedPermissions = new HashMap<String, String[]>();
 	protected Map<String, String> cachedPrefix = new HashMap<String, String>();
 	protected Map<String, String> cachedSuffix = new HashMap<String, String>();
-	protected HashMap<String, String> cachedAnwsers = new HashMap<String, String>();
-	protected HashMap<String, String> cachedOptions = new HashMap<String, String>();
+	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<String, String>();
+	protected Map<String, String> cachedOptions = new HashMap<String, String>();
 
 	public PermissionUser(String playerName, PermissionManager manager) {
 		super(playerName, manager);
