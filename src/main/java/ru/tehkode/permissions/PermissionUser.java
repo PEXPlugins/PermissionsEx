@@ -28,12 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- *
  * @author code
  */
 public abstract class PermissionUser extends PermissionEntity {
 
-    private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
+	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
 
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
 	protected Map<String, String[]> cachedPermissions = new HashMap<String, String[]>();
@@ -49,13 +48,13 @@ public abstract class PermissionUser extends PermissionEntity {
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		if (this.manager.getBackend().isCreateUserRecords() && this.isVirtual()) {
 			this.setGroups(this.getGroups(null), null);
 
 			this.save();
 		}
-		
+
 		if (this.isDebug()) {
 			Logger.getLogger("Minecraft").info("[PermissionsEx] User " + this.getName() + " initialized");
 		}
@@ -65,7 +64,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * Return non-inherited user prefix.
 	 * This means if a user don't have has own prefix
 	 * then empty string or null would be returned
-	 * 
+	 *
 	 * @return prefix as string
 	 */
 	public String getOwnPrefix() {
@@ -78,7 +77,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * Return non-inherited suffix prefix.
 	 * This means if a user don't has own suffix
 	 * then empty string or null would be returned
-	 * 
+	 *
 	 * @return suffix as string
 	 */
 	public final String getOwnSuffix() {
@@ -89,7 +88,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Return non-inherited permissions of a user in world
-	 * 
+	 *
 	 * @param world world's name
 	 * @return String array of owned Permissions
 	 */
@@ -141,9 +140,9 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Return non-inherited value of specified option for user in world
-	 * 
-	 * @param option option string
-	 * @param world world's name
+	 *
+	 * @param option       option string
+	 * @param world        world's name
 	 * @param defaultValue default value
 	 * @return option value or defaultValue if option is not set
 	 */
@@ -151,7 +150,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Return non-inherited value of specified option in common space (all worlds).
-	 * 
+	 *
 	 * @param option
 	 * @return option value or empty string if option is not set
 	 */
@@ -201,8 +200,8 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Get group for this user, global inheritance only
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public PermissionGroup[] getGroups() {
 		return this.getGroups(null);
@@ -210,7 +209,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Get groups for this user for specified world
-	 * 
+	 *
 	 * @param worldName Name of world
 	 * @return PermissionGroup groups
 	 */
@@ -296,8 +295,8 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Get group names, common space only
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public String[] getGroupsNames() {
 		return this.getGroupsNames(null);
@@ -305,7 +304,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Get group names in specified world
-	 * 
+	 *
 	 * @return String array of user's group names
 	 */
 	public String[] getGroupsNames(String worldName) {
@@ -321,7 +320,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Set parent groups for user
-	 * 
+	 *
 	 * @param groups array of parent group names
 	 */
 	public abstract void setGroups(String[] groups, String worldName);
@@ -332,7 +331,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Set parent groups for user
-	 * 
+	 *
 	 * @param groups array of parent group objects
 	 */
 	public void setGroups(PermissionGroup[] parentGroups, String worldName) {
@@ -351,7 +350,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Add user to group
-	 * 
+	 *
 	 * @param groupName group's name as String
 	 */
 	public void addGroup(String groupName, String worldName) {
@@ -376,7 +375,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Add user to group
-	 * 
+	 *
 	 * @param group as PermissionGroup object
 	 */
 	public void addGroup(PermissionGroup group, String worldName) {
@@ -401,7 +400,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Remove user from group
-	 * 
+	 *
 	 * @param groupName group's name as String
 	 */
 	public void removeGroup(String groupName, String worldName) {
@@ -426,7 +425,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Remove user from group
-	 * 
+	 *
 	 * @param group group as PermissionGroup object
 	 */
 	public void removeGroup(PermissionGroup group, String worldName) {
@@ -447,10 +446,10 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Check if this user is member of group or one of its descendant groups (optionally)
-	 * 
-	 * @param group group as PermissionGroup object
-	 * @param worldName 
-	 * @param checkInheritance if true then descendant groups of the given group would be checked too 
+	 *
+	 * @param group            group as PermissionGroup object
+	 * @param worldName
+	 * @param checkInheritance if true then descendant groups of the given group would be checked too
 	 * @return true on success, false otherwise
 	 */
 	public boolean inGroup(PermissionGroup group, String worldName, boolean checkInheritance) {
@@ -479,10 +478,10 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Check if this user is member of group or one of its descendant groups (optionally)
-	 * 
-	 * @param groupName group's name to check
-	 * @param worldName 
-	 * @param checkInheritance if true than descendant groups of specified group would be checked too 
+	 *
+	 * @param groupName        group's name to check
+	 * @param worldName
+	 * @param checkInheritance if true than descendant groups of specified group would be checked too
 	 * @return true on success, false otherwise
 	 */
 	public boolean inGroup(String groupName, String worldName, boolean checkInheritance) {
@@ -495,9 +494,9 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Check if this user is member of group or one of its descendant groups
-	 * 
+	 *
 	 * @param group
-	 * @param worldName 
+	 * @param worldName
 	 * @return true on success, false otherwise
 	 */
 	public boolean inGroup(PermissionGroup group, String worldName) {
@@ -510,7 +509,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Checks if this user is member of specified group or one of its descendant groups
-	 * 
+	 *
 	 * @param group group's name
 	 * @return true on success, false otherwise
 	 */
@@ -525,14 +524,13 @@ public abstract class PermissionUser extends PermissionEntity {
 	/**
 	 * Promotes user in specified ladder.
 	 * If user is not member of the ladder RankingException will be thrown
-	 * If promoter is not null and he is member of the ladder and 
+	 * If promoter is not null and he is member of the ladder and
 	 * his rank is lower then user's RankingException will be thrown too.
 	 * If there is no group to promote the user to RankingException would be thrown
-	 * 
-	 * 
-	 * @param promoter null if action is performed from console or by a plugin
+	 *
+	 * @param promoter   null if action is performed from console or by a plugin
 	 * @param ladderName Ladder name
-	 * @throws RankingException 
+	 * @throws RankingException
 	 */
 	public PermissionGroup promote(PermissionUser promoter, String ladderName) throws RankingException {
 		if (ladderName == null || ladderName.isEmpty()) {
@@ -576,13 +574,13 @@ public abstract class PermissionUser extends PermissionEntity {
 	/**
 	 * Demotes user in specified ladder.
 	 * If user is not member of the ladder RankingException will be thrown
-	 * If demoter is not null and he is member of the ladder and 
+	 * If demoter is not null and he is member of the ladder and
 	 * his rank is lower then user's RankingException will be thrown too.
 	 * If there is no group to demote the user to RankingException would be thrown
-	 * 
-	 * @param promoter Specify null if action performed from console or by plugin
+	 *
+	 * @param promoter   Specify null if action performed from console or by plugin
 	 * @param ladderName
-	 * @throws RankingException 
+	 * @throws RankingException
 	 */
 	public PermissionGroup demote(PermissionUser demoter, String ladderName) throws RankingException {
 		if (ladderName == null || ladderName.isEmpty()) {
@@ -625,7 +623,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Check if the user is in the specified ladder
-	 * 
+	 *
 	 * @param ladder Ladder name
 	 * @return true on success, false otherwise
 	 */
@@ -635,7 +633,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Return user rank in specified ladder
-	 * 
+	 *
 	 * @param ladder Ladder name
 	 * @return rank as int
 	 */
@@ -650,8 +648,8 @@ public abstract class PermissionUser extends PermissionEntity {
 	}
 
 	/**
-	 * Return user's group in specified ladder 
-	 * 
+	 * Return user's group in specified ladder
+	 *
 	 * @param ladder Ladder name
 	 * @return PermissionGroup object of ranked ladder group
 	 */
@@ -665,7 +663,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	/**
 	 * Return all ladders the user is participating in
-	 * 
+	 *
 	 * @return Map, key - name of ladder, group - corresponding group of that ladder
 	 */
 	public Map<String, PermissionGroup> getRankLadders() {
@@ -879,22 +877,22 @@ public abstract class PermissionUser extends PermissionEntity {
 	public String getMatchingExpression(String permission, String world) {
 		String cacheId = world + ":" + permission;
 		if (!this.cachedAnwsers.containsKey(cacheId)) {
-            String result = super.getMatchingExpression(permission, world);
+			String result = super.getMatchingExpression(permission, world);
 
-            if(result == null) {    // this is actually kinda dirty clutch
-                result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
-            }
+			if (result == null) {    // this is actually kinda dirty clutch
+				result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
+			}
 
 			this.cachedAnwsers.put(cacheId, result);
 		}
 
 		String result = this.cachedAnwsers.get(cacheId);
 
-        if (PERMISSION_NOT_FOUND.equals(result)) {
-            result = null;
-        }
+		if (PERMISSION_NOT_FOUND.equals(result)) {
+			result = null;
+		}
 
-        return result;
+		return result;
 	}
 
 	protected void clearCache() {
