@@ -33,6 +33,8 @@ import java.util.logging.Logger;
  */
 public abstract class PermissionUser extends PermissionEntity {
 
+    private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
+
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
 	protected Map<String, String[]> cachedPermissions = new HashMap<String, String[]>();
 	protected Map<String, String> cachedPrefix = new HashMap<String, String>();
@@ -877,10 +879,22 @@ public abstract class PermissionUser extends PermissionEntity {
 	public String getMatchingExpression(String permission, String world) {
 		String cacheId = world + ":" + permission;
 		if (!this.cachedAnwsers.containsKey(cacheId)) {
-			this.cachedAnwsers.put(cacheId, super.getMatchingExpression(permission, world));
+            String result = super.getMatchingExpression(permission, world);
+
+            if(result == null) {    // this is actually kinda dirty clutch
+                result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
+            }
+
+			this.cachedAnwsers.put(cacheId, result);
 		}
 
-		return this.cachedAnwsers.get(cacheId);
+		String result = this.cachedAnwsers.get(cacheId);
+
+        if (PERMISSION_NOT_FOUND.equals(result)) {
+            result = null;
+        }
+
+        return result;
 	}
 
 	protected void clearCache() {
