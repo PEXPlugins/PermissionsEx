@@ -20,6 +20,7 @@ package ru.tehkode.permissions;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
@@ -737,7 +738,40 @@ public abstract class PermissionUser extends PermissionEntity {
 				parentGroup.getInheritedPermissions(worldName, permissions, true, false, true);
 			}
 		}
+        
+        // Add all child nodes
+        for (String node : permissions.toArray(new String[0])){
+            this.getInheritedChildPermissions(node, permissions);
+        }
 	}
+    
+    protected void getInheritedChildPermissions(String perm, List<String> list)
+    {
+        getInheritedChildPermissions(perm, list, false);
+    }
+    
+    protected void getInheritedChildPermissions(String perm, List<String> list, boolean invert) {
+        
+        if (perm.startsWith("-")) {
+            invert = !invert;
+            perm = perm.substring(1);
+        }
+        getInheritedChildPermissions(Bukkit.getPluginManager().getPermission(perm), list, invert);
+    }
+    
+    protected void getInheritedChildPermissions(Permission perm, List<String> list, boolean invert) {
+        if (perm == null) {
+            return;
+        }
+        for (Map.Entry<String, Boolean> entry : perm.getChildren().entrySet()){
+            boolean has = entry.getValue().booleanValue() ^ invert;
+            String node = (has ? "" : "-") + entry.getKey();
+            if (!list.contains(node)){
+                list.add(node);
+                getInheritedChildPermissions(node, list, !has);
+            }
+        }
+    }
 
 	@Override
 	public void addTimedPermission(String permission, String world, int lifeTime) {
