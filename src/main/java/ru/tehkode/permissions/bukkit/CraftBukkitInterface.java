@@ -6,11 +6,10 @@ import org.bukkit.Bukkit;
  * Interface to get versioned obfuscation of CraftBukkit classes
  */
 public class CraftBukkitInterface {
-    private static final String CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
+    private static final String CRAFTBUKKIT_PREFIX; 
     private static final String VERSION;
-
     static {
-        Class serverClass = Bukkit.getServer().getClass();
+        Class serverClass = Bukkit.getServer().getClass();			
         if (!serverClass.getSimpleName().equals("CraftServer")) {
             VERSION = null;
         } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer")) {
@@ -21,6 +20,8 @@ public class CraftBukkitInterface {
             name = name.substring(0, name.length() - "CraftServer".length());
             VERSION = name;
         }
+        
+       	CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
     }
 
     private CraftBukkitInterface() {}
