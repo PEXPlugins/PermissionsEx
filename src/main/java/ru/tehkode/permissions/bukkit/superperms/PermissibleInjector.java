@@ -22,10 +22,11 @@ public abstract class PermissibleInjector {
 
 	/**
 	 * Attempts to inject {@code permissible} into {@code player},
-	 * @param player The player to have {@code permissible} injected into
+	 *
+	 * @param player      The player to have {@code permissible} injected into
 	 * @param permissible The permissible to inject into {@code player}
 	 * @return whether the injection was successful
-	 * @throws NoSuchFieldException when the permissions field could not be found in the Permissible
+	 * @throws NoSuchFieldException   when the permissions field could not be found in the Permissible
 	 * @throws IllegalAccessException when things go very wrong
 	 */
 	public boolean inject(Player player, Permissible permissible) throws NoSuchFieldException, IllegalAccessException {

@@ -25,14 +25,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
- *
  * @author t3hk0d3
  */
 public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
-	
+
 	protected final static String NON_INHERITABLE_PREFIX = "#";
 
 	protected int weight = 0;
@@ -45,17 +45,17 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		if (this.isDebug()) {
 			Logger.getLogger("Minecraft").info("[PermissionsEx] Group " + this.getName() + " initialized");
 		}
-	}	
+	}
 
 	/**
 	 * Return non-inherited group prefix.
 	 * This means if a group don't have has own prefix
 	 * then empty string or null would be returned
-	 * 
+	 *
 	 * @return prefix as string
 	 */
 	public String getOwnPrefix() {
@@ -68,7 +68,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 * Return non-inherited suffix prefix.
 	 * This means if a group don't has own suffix
 	 * then empty string or null would be returned
-	 * 
+	 *
 	 * @return suffix as string
 	 */
 	public final String getOwnSuffix() {
@@ -79,7 +79,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Returns own (without inheritance) permissions of group for world
-	 * 
+	 *
 	 * @param world world's world name
 	 * @return Array of permissions for world
 	 */
@@ -88,7 +88,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	/**
 	 * Returns option value in specified world without inheritance
 	 * This mean option value wouldn't be inherited from parent groups
-	 * 
+	 *
 	 * @param option
 	 * @param world
 	 * @param defaultValue
@@ -158,8 +158,8 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Checks if group is participating in ranking system
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public boolean isRanked() {
 		return (this.getRank() > 0);
@@ -167,8 +167,8 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Returns rank in ranking system. 0 if group is not ranked
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public int getRank() {
 		return this.getOwnOptionInteger("rank", null, 0);
@@ -176,7 +176,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Set rank for this group
-	 * 
+	 *
 	 * @param rank Rank for group. Specify 0 to remove group from ranking
 	 */
 	public void setRank(int rank) {
@@ -191,7 +191,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Returns ranking ladder where this group is participating in
-	 * 
+	 *
 	 * @return Name of rank ladder as String
 	 */
 	public String getRankLadder() {
@@ -200,7 +200,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Set rank ladder for this group
-	 * 
+	 *
 	 * @param rankLadder Name of rank ladder
 	 */
 	public void setRankLadder(String rankLadder) {
@@ -217,7 +217,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Returns array of parent groups objects
-	 * 
+	 *
 	 * @return array of groups objects
 	 */
 	public PermissionGroup[] getParentGroups(String worldName) {
@@ -293,7 +293,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Returns direct parents names of this group
-	 * 
+	 *
 	 * @return array of parents group names
 	 */
 	public String[] getParentGroupsNames(String worldName) {
@@ -311,7 +311,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Set parent groups
-	 * 
+	 *
 	 * @param parentGroups Array of parent groups names to set
 	 */
 	public abstract void setParentGroups(String[] parentGroups, String worldName);
@@ -322,7 +322,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Set parent groups
-	 * 
+	 *
 	 * @param parentGroups Array of parent groups objects to set
 	 */
 	public void setParentGroups(PermissionGroup[] parentGroups, String worldName) {
@@ -344,9 +344,9 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	protected abstract void removeGroup();
 
 	/**
-	 * Check if this group is descendant of specified group 
-	 * 
-	 * @param group group object of parent
+	 * Check if this group is descendant of specified group
+	 *
+	 * @param group            group object of parent
 	 * @param checkInheritance set to false to check only the direct inheritance
 	 * @return true if this group is descendant or direct parent of specified group
 	 */
@@ -387,11 +387,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	}
 
 	/**
-	 * Check if this group is descendant of specified group 
-	 * 
-	 * @param groupName name of group to check against
+	 * Check if this group is descendant of specified group
+	 *
+	 * @param groupName        name of group to check against
 	 * @param checkInheritance set to false to check only the direct inheritance
-	 * @return 
+	 * @return
 	 */
 	public boolean isChildOf(String groupName, String worldName, boolean checkInheritance) {
 		return isChildOf(this.manager.getGroup(groupName), worldName, checkInheritance);
@@ -403,9 +403,9 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Check if specified group is direct parent of this group
-	 * 
+	 *
 	 * @param groupName to check against
-	 * @return 
+	 * @return
 	 */
 	public boolean isChildOf(String groupName, String worldName) {
 		return this.isChildOf(groupName, worldName, false);
@@ -417,8 +417,8 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Return array of direct child group objects
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public PermissionGroup[] getChildGroups(String worldName) {
 		return this.manager.getGroups(this.getName(), worldName, false);
@@ -430,8 +430,8 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Return array of descendant group objects
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public PermissionGroup[] getDescendantGroups(String worldName) {
 		return this.manager.getGroups(this.getName(), worldName, true);
@@ -443,8 +443,8 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	/**
 	 * Return array of direct members (users) of this group
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public PermissionUser[] getUsers(String worldName) {
 		return this.manager.getUsers(this.getName(), worldName, false);
@@ -551,7 +551,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		if (permissions.contains(permission)) {
 			permissions.remove(permission);
 		}
-		
+
 		permissions.add(0, permission);
 
 		this.setPermissions(permissions.toArray(new String[0]), worldName);
@@ -569,12 +569,12 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance, boolean firstStep) {
 		if (firstStep) {
 			permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
-			permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));		
+			permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
 		} else { // filter permissions for ancestors groups			
-			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getTimedPermissions(worldName));			
-			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getOwnPermissions(worldName));		
+			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getTimedPermissions(worldName));
+			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getOwnPermissions(worldName));
 		}
-		
+
 		if (worldName != null) {
 			// World inheritance
 			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {

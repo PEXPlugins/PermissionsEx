@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -35,7 +36,6 @@ import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
 /**
- *
  * @author code
  */
 public class CommandsManager {
@@ -65,7 +65,7 @@ public class CommandsManager {
 
 			commandListeners.put(new CommandSyntax(cmdAnnotation.syntax()), new CommandBinding(listener, method));
 		}
-		
+
 		listener.onRegistered(this);
 	}
 
@@ -102,9 +102,9 @@ public class CommandsManager {
 		// Check permission
 		if (sender instanceof Player) { // this method are not public and required permission
 			if (!selectedBinding.checkPermissions((Player) sender)) {
-				logger.warning("User " + ((Player) sender).getName() + " tried to access chat command \"" 
-							+ command.getName() + " " + arguments
-							+ "\", but doesn't have permission to do this.");
+				logger.warning("User " + ((Player) sender).getName() + " tried to access chat command \""
+						+ command.getName() + " " + arguments
+						+ "\", but doesn't have permission to do this.");
 				sender.sendMessage(ChatColor.RED + "Sorry, you don't have enough permissions.");
 				return true;
 			}
@@ -131,14 +131,14 @@ public class CommandsManager {
 
 		return true;
 	}
-	
+
 	public List<CommandBinding> getCommands() {
 		List<CommandBinding> commands = new LinkedList<CommandBinding>();
-		
+
 		for (Map<CommandSyntax, CommandBinding> map : this.listeners.values()) {
 			commands.addAll(map.values());
 		}
- 		
+
 		return commands;
 	}
 

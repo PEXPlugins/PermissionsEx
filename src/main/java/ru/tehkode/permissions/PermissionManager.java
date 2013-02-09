@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
@@ -31,7 +32,6 @@ import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 /**
- *
  * @author t3hk0d3
  */
 public class PermissionManager {
@@ -47,7 +47,7 @@ public class PermissionManager {
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 
-    protected PermissionMatcher matcher = new RegExpMatcher();
+	protected PermissionMatcher matcher = new RegExpMatcher();
 
 	public PermissionManager(Configuration config) {
 		this.config = config;
@@ -59,8 +59,8 @@ public class PermissionManager {
 
 	/**
 	 * Check if specified player has specified permission
-	 * 
-	 * @param player player object
+	 *
+	 * @param player     player object
 	 * @param permission permission string to check against
 	 * @return true on success false otherwise
 	 */
@@ -70,10 +70,10 @@ public class PermissionManager {
 
 	/**
 	 * Check if player has specified permission in world
-	 * 
-	 * @param player player object
+	 *
+	 * @param player     player object
 	 * @param permission permission as string to check against
-	 * @param world world's name as string
+	 * @param world      world's name as string
 	 * @return true on success false otherwise
 	 */
 	public boolean has(Player player, String permission, String world) {
@@ -82,10 +82,10 @@ public class PermissionManager {
 
 	/**
 	 * Check if player with name has permission in world
-	 * 
+	 *
 	 * @param playerName player name
 	 * @param permission permission as string to check against
-	 * @param world world's name as string
+	 * @param world      world's name as string
 	 * @return true on success false otherwise
 	 */
 	public boolean has(String playerName, String permission, String world) {
@@ -100,7 +100,7 @@ public class PermissionManager {
 
 	/**
 	 * Return user's object
-	 * 
+	 *
 	 * @param username get PermissionUser with given name
 	 * @return PermissionUser instance
 	 */
@@ -126,7 +126,7 @@ public class PermissionManager {
 
 	/**
 	 * Return object of specified player
-	 * 
+	 *
 	 * @param player player object
 	 * @return PermissionUser instance
 	 */
@@ -136,7 +136,7 @@ public class PermissionManager {
 
 	/**
 	 * Return all registered user objects
-	 * 
+	 *
 	 * @return PermissionUser array
 	 */
 	public PermissionUser[] getUsers() {
@@ -145,7 +145,7 @@ public class PermissionManager {
 
 	/**
 	 * Return all users in group
-	 * 
+	 *
 	 * @param groupName group's name
 	 * @return PermissionUser array
 	 */
@@ -158,9 +158,9 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Return all users in group and descendant groups 
-	 * 
-	 * @param groupName group's name
+	 * Return all users in group and descendant groups
+	 *
+	 * @param groupName   group's name
 	 * @param inheritance true return members of descendant groups of specified group
 	 * @return PermissionUser array for groupnName
 	 */
@@ -174,7 +174,7 @@ public class PermissionManager {
 
 	/**
 	 * Reset in-memory object of specified user
-	 * 
+	 *
 	 * @param userName user's name
 	 */
 	public void resetUser(String userName) {
@@ -183,7 +183,7 @@ public class PermissionManager {
 
 	/**
 	 * Clear cache for specified user
-	 * 
+	 *
 	 * @param userName
 	 */
 	public void clearUserCache(String userName) {
@@ -196,7 +196,7 @@ public class PermissionManager {
 
 	/**
 	 * Clear cache for specified player
-	 * 
+	 *
 	 * @param player
 	 */
 	public void clearUserCache(Player player) {
@@ -205,7 +205,7 @@ public class PermissionManager {
 
 	/**
 	 * Return object for specified group
-	 * 
+	 *
 	 * @param groupname group's name
 	 * @return PermissionGroup object
 	 */
@@ -231,7 +231,7 @@ public class PermissionManager {
 
 	/**
 	 * Return all groups
-	 * 
+	 *
 	 * @return PermissionGroup array
 	 */
 	public PermissionGroup[] getGroups() {
@@ -240,7 +240,7 @@ public class PermissionManager {
 
 	/**
 	 * Return all child groups of specified group
-	 * 
+	 *
 	 * @param groupName group's name
 	 * @return PermissionGroup array
 	 */
@@ -254,8 +254,8 @@ public class PermissionManager {
 
 	/**
 	 * Return all descendants or child groups for groupName
-	 * 
-	 * @param groupName group's name
+	 *
+	 * @param groupName   group's name
 	 * @param inheritance true: only direct child groups would be returned
 	 * @return PermissionGroup array for specified groupName
 	 */
@@ -269,7 +269,7 @@ public class PermissionManager {
 
 	/**
 	 * Return default group object
-	 * 
+	 *
 	 * @return default group object. null if not specified
 	 */
 	public PermissionGroup getDefaultGroup(String worldName) {
@@ -312,7 +312,7 @@ public class PermissionManager {
 
 	/**
 	 * Set default group to specified group
-	 * 
+	 *
 	 * @param group PermissionGroup group object
 	 */
 	public void setDefaultGroup(PermissionGroup group, String worldName) {
@@ -334,7 +334,7 @@ public class PermissionManager {
 
 	/**
 	 * Reset in-memory object for groupName
-	 * 
+	 *
 	 * @param groupName group's name
 	 */
 	public void resetGroup(String groupName) {
@@ -343,7 +343,7 @@ public class PermissionManager {
 
 	/**
 	 * Set debug mode
-	 * 
+	 *
 	 * @param debug true enables debug mode, false disables
 	 */
 	public void setDebug(boolean debug) {
@@ -353,7 +353,7 @@ public class PermissionManager {
 
 	/**
 	 * Return current state of debug mode
-	 * 
+	 *
 	 * @return true debug is enabled, false if disabled
 	 */
 	public boolean isDebug() {
@@ -362,7 +362,7 @@ public class PermissionManager {
 
 	/**
 	 * Return groups of specified rank ladder
-	 * 
+	 *
 	 * @param ladderName
 	 * @return Map of ladder, key - rank of group, value - group object. Empty map if ladder does not exist
 	 */
@@ -384,7 +384,7 @@ public class PermissionManager {
 
 	/**
 	 * Return array of world names who has world inheritance
-	 * 
+	 *
 	 * @param worldName World name
 	 * @return Array of parent world, if world does not exist return empty array
 	 */
@@ -393,9 +393,9 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Set world inheritance parents for world 
-	 * 
-	 * @param world world name which inheritance should be set
+	 * Set world inheritance parents for world
+	 *
+	 * @param world        world name which inheritance should be set
 	 * @param parentWorlds array of parent world names
 	 */
 	public void setWorldInheritance(String world, String[] parentWorlds) {
@@ -405,7 +405,7 @@ public class PermissionManager {
 
 	/**
 	 * Return current backend
-	 * 
+	 *
 	 * @return current backend object
 	 */
 	public PermissionBackend getBackend() {
@@ -415,7 +415,7 @@ public class PermissionManager {
 	/**
 	 * Set backend to specified backend.
 	 * This would also cause backend resetting.
-	 * 
+	 *
 	 * @param backendName name of backend to set to
 	 */
 	public void setBackend(String backendName) {
@@ -430,8 +430,8 @@ public class PermissionManager {
 
 	/**
 	 * Register new timer task
-	 * 
-	 * @param task TimerTask object
+	 *
+	 * @param task  TimerTask object
 	 * @param delay delay in seconds
 	 */
 	protected void registerTask(TimerTask task, int delay) {
@@ -458,12 +458,12 @@ public class PermissionManager {
 		reset();
 		timer.cancel();
 	}
-	
+
 	public void initTimer() {
 		if (timer != null) {
 			timer.cancel();
 		}
-		
+
 		timer = new Timer("PermissionsEx-Cleaner");
 	}
 
@@ -495,11 +495,11 @@ public class PermissionManager {
 		this.callEvent(new PermissionSystemEvent(action));
 	}
 
-    public PermissionMatcher getPermissionMatcher() {
-        return matcher;
-    }
+	public PermissionMatcher getPermissionMatcher() {
+		return matcher;
+	}
 
-    public void setPermissionMatcher(PermissionMatcher matcher) {
-        this.matcher = matcher;
-    }
+	public void setPermissionMatcher(PermissionMatcher matcher) {
+		this.matcher = matcher;
+	}
 }

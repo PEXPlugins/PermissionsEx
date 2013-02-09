@@ -23,7 +23,6 @@ import ru.tehkode.permissions.ProxyPermissionUser;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
- *
  * @author code
  */
 public class SQLUser extends ProxyPermissionUser {

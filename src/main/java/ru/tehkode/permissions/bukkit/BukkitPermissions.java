@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -49,7 +50,7 @@ public class BukkitPermissions {
 	protected Plugin plugin;
 	protected boolean strictMode = false;
 	protected boolean enableParentNodes = true;
-    private final PEXPermissionSubscriptionMap subscriptionsHandler;
+	private final PEXPermissionSubscriptionMap subscriptionsHandler;
 	protected Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
 
 	private int permissionsHashCode;
@@ -60,10 +61,10 @@ public class BukkitPermissions {
 		if (!config.getBoolean("enable", true)) {
 			logger.info("[PermissionsEx] Superperms disabled. Check \"config.yml\" to enable.");
 			subscriptionsHandler = null;
-            return;
+			return;
 		}
 
-        subscriptionsHandler = PEXPermissionSubscriptionMap.inject(this, plugin.getServer().getPluginManager());
+		subscriptionsHandler = PEXPermissionSubscriptionMap.inject(this, plugin.getServer().getPluginManager());
 
 		this.strictMode = config.getBoolean("strict-mode", strictMode);
 		this.enableParentNodes = config.getBoolean("parent-nodes", this.enableParentNodes);
@@ -91,9 +92,9 @@ public class BukkitPermissions {
 		return plugin;
 	}
 
-    public void onDisable() {
-        PEXPermissionSubscriptionMap.uninject(plugin.getServer().getPluginManager());
-    }
+	public void onDisable() {
+		PEXPermissionSubscriptionMap.uninject(plugin.getServer().getPluginManager());
+	}
 
 	public final void checkAllParentPermissions(boolean forced) {
 		if (!this.enableParentNodes) {
@@ -133,7 +134,7 @@ public class BukkitPermissions {
 		manager.registerEvents(new EventListener(), plugin);
 	}
 
-    public void updatePermissions(Player player) {
+	public void updatePermissions(Player player) {
 		if (player == null || !this.plugin.isEnabled()) {
 			return;
 		}

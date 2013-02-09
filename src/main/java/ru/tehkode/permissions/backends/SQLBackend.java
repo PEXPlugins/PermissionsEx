@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
@@ -44,7 +45,6 @@ import ru.tehkode.permissions.backends.sql.SQLUser;
 import ru.tehkode.utils.StringUtils;
 
 /**
- *
  * @author code
  */
 public class SQLBackend extends PermissionBackend {
@@ -120,16 +120,16 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public void setDefaultGroup(PermissionGroup group, String worldName) {
 		try {
-		if (worldName == null) {
-			// Reset default flag
-			this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
-			// Set default flag
-			this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
-		} else {
-			this.sql.executeUpdate("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
-			this.sql.executeUpdate("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
-					group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName);
-		}
+			if (worldName == null) {
+				// Reset default flag
+				this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+				// Set default flag
+				this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+			} else {
+				this.sql.executeUpdate("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
+				this.sql.executeUpdate("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
+						group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName);
+			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to set default group", e);
 		}

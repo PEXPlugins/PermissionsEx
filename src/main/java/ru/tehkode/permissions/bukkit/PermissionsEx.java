@@ -20,6 +20,7 @@ package ru.tehkode.permissions.bukkit;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -39,7 +40,6 @@ import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 
 /**
- *
  * @author code
  */
 public class PermissionsEx extends JavaPlugin {
@@ -50,10 +50,11 @@ public class PermissionsEx extends JavaPlugin {
 	protected CommandsManager commandsManager;
 	protected FileConfiguration config;
 	protected BukkitPermissions superms;
-    private static PermissionsEx instance;
-    {
-        instance = this;
-    }
+	private static PermissionsEx instance;
+
+	{
+		instance = this;
+	}
 
 	public PermissionsEx() {
 		super();
@@ -118,7 +119,7 @@ public class PermissionsEx extends JavaPlugin {
 		}
 
 		this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
-        this.superms.onDisable();
+		this.superms.onDisable();
 
 		logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
 	}

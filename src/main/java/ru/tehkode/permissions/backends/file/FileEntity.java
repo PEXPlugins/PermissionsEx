@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionManager;
@@ -71,7 +72,7 @@ public class FileEntity extends PermissionEntity {
 		// Silly workaround for empty nodes
 		ConfigurationSection section = backend.permissions.createSection(nodePath);
 		backend.permissions.set(nodePath, null);
-		
+
 		return section;
 	}
 
@@ -91,7 +92,7 @@ public class FileEntity extends PermissionEntity {
 	}
 
 	@Override
-	public void setPermissions(String[] permissions, String world) {		
+	public void setPermissions(String[] permissions, String world) {
 		this.node.set(formatPath(world, "permissions"), permissions.length > 0 ? Arrays.asList(permissions) : null);
 
 		this.save();

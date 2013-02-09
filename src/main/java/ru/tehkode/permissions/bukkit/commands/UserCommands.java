@@ -19,6 +19,7 @@
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Map;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -36,9 +37,9 @@ import ru.tehkode.utils.StringUtils;
 public class UserCommands extends PermissionsCommand {
 
 	@Command(name = "pex",
-	syntax = "users list",
-	permission = "permissions.manage.users",
-	description = "List all registered users")
+			syntax = "users list",
+			permission = "permissions.manage.users",
+			description = "List all registered users")
 	public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
 
@@ -49,18 +50,18 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "users",
-	permission = "permissions.manage.users",
-	description = "List all registered users (alias)",
-	isPrimary = true)
+			syntax = "users",
+			permission = "permissions.manage.users",
+			description = "List all registered users (alias)",
+			isPrimary = true)
 	public void userListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		this.usersList(plugin, sender, args);
 	}
 
 	@Command(name = "pex",
-	syntax = "user",
-	permission = "permissions.manage.users",
-	description = "List all registered users (alias)")
+			syntax = "user",
+			permission = "permissions.manage.users",
+			description = "List all registered users (alias)")
 	public void userListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		this.usersList(plugin, sender, args);
 	}
@@ -69,9 +70,9 @@ public class UserCommands extends PermissionsCommand {
 	 * User permission management
 	 */
 	@Command(name = "pex",
-	syntax = "user <user>",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "List user permissions (list alias)")
+			syntax = "user <user>",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "List user permissions (list alias)")
 	public void userListAliasPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -106,9 +107,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> list [world]",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "List user permissions")
+			syntax = "user <user> list [world]",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "List user permissions")
 	public void userListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -129,9 +130,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> superperms",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "List user actual superperms")
+			syntax = "user <user> superperms",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "List user actual superperms")
 	public void userListSuperPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 
@@ -155,9 +156,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> prefix [newprefix] [world]",
-	permission = "permissions.manage.users.prefix.<user>",
-	description = "Get or set <user> prefix")
+			syntax = "user <user> prefix [newprefix] [world]",
+			permission = "permissions.manage.users.prefix.<user>",
+			description = "Get or set <user> prefix")
 	public void userPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -177,9 +178,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> suffix [newsuffix] [world]",
-	permission = "permissions.manage.users.suffix.<user>",
-	description = "Get or set <user> suffix")
+			syntax = "user <user> suffix [newsuffix] [world]",
+			permission = "permissions.manage.users.suffix.<user>",
+			description = "Get or set <user> suffix")
 	public void userSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -199,9 +200,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> toggle debug",
-	permission = "permissions.manage.<user>",
-	description = "Toggle debug only for <user>")
+			syntax = "user <user> toggle debug",
+			permission = "permissions.manage.<user>",
+			description = "Toggle debug only for <user>")
 	public void userToggleDebug(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 
@@ -218,9 +219,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> check <permission> [world]",
-	permission = "permissions.manage.<user>",
-	description = "Checks player for <permission>")
+			syntax = "user <user> check <permission> [world]",
+			permission = "permissions.manage.<user>",
+			description = "Checks player for <permission>")
 	public void userCheckPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -244,9 +245,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> get <option> [world]",
-	permission = "permissions.manage.<user>",
-	description = "Toggle debug only for <user>")
+			syntax = "user <user> get <option> [world]",
+			permission = "permissions.manage.<user>",
+			description = "Toggle debug only for <user>")
 	public void userGetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -266,9 +267,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> delete",
-	permission = "permissions.manage.users.<user>",
-	description = "Remove <user>")
+			syntax = "user <user> delete",
+			permission = "permissions.manage.users.<user>",
+			description = "Remove <user>")
 	public void userDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -290,9 +291,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> add <permission> [world]",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "Add <permission> to <user> in [world]")
+			syntax = "user <user> add <permission> [world]",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "Add <permission> to <user> in [world]")
 	public void userAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -312,9 +313,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> remove <permission> [world]",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "Remove permission from <user> in [world]")
+			syntax = "user <user> remove <permission> [world]",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "Remove permission from <user> in [world]")
 	public void userRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -336,9 +337,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> swap <permission> <targetPermission> [world]",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself")
+			syntax = "user <user> swap <permission> <targetPermission> [world]",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself")
 	public void userSwapPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -370,9 +371,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> timed add <permission> [lifetime] [world]",
-	permission = "permissions.manage.users.permissions.timed.<user>",
-	description = "Add timed <permissions> to <user> for [lifetime] seconds in [world]")
+			syntax = "user <user> timed add <permission> [lifetime] [world]",
+			permission = "permissions.manage.users.permissions.timed.<user>",
+			description = "Add timed <permissions> to <user> for [lifetime] seconds in [world]")
 	public void userAddTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -380,7 +381,7 @@ public class UserCommands extends PermissionsCommand {
 		int lifetime = 0;
 
 		if (args.containsKey("lifetime")) {
-            lifetime = DateUtils.parseInterval(args.get("lifetime"));
+			lifetime = DateUtils.parseInterval(args.get("lifetime"));
 		}
 
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -402,9 +403,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> timed remove <permission> [world]",
-	permission = "permissions.manage.users.permissions.timed.<user>",
-	description = "Remove timed <permission> from <user> in [world]")
+			syntax = "user <user> timed remove <permission> [world]",
+			permission = "permissions.manage.users.permissions.timed.<user>",
+			description = "Remove timed <permission> from <user> in [world]")
 	public void userRemoveTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -424,9 +425,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> set <option> <value> [world]",
-	permission = "permissions.manage.users.permissions.<user>",
-	description = "Set <option> to <value> in [world]")
+			syntax = "user <user> set <option> <value> [world]",
+			permission = "permissions.manage.users.permissions.<user>",
+			description = "Set <option> to <value> in [world]")
 	public void userSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -454,9 +455,9 @@ public class UserCommands extends PermissionsCommand {
 	 * User's groups management
 	 */
 	@Command(name = "pex",
-	syntax = "user <user> group list [world]",
-	permission = "permissions.manage.membership.<user>",
-	description = "List all <user> groups")
+			syntax = "user <user> group list [world]",
+			permission = "permissions.manage.membership.<user>",
+			description = "List all <user> groups")
 	public void userListGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
@@ -475,9 +476,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> group add <group> [world] [lifetime]",
-	permission = "permissions.manage.membership.<group>",
-	description = "Add <user> to <group>")
+			syntax = "user <user> group add <group> [world] [lifetime]",
+			permission = "permissions.manage.membership.<group>",
+			description = "Add <user> to <group>")
 	public void userAddGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String groupName = this.autoCompleteGroupName(args.get("group"));
@@ -505,15 +506,14 @@ public class UserCommands extends PermissionsCommand {
 		}
 
 
-
 		sender.sendMessage(ChatColor.WHITE + "User added to group \"" + groupName + "\"!");
 		this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> group set <group> [world]",
-	permission = "",
-	description = "Set <group> for <user>")
+			syntax = "user <user> group set <group> [world]",
+			permission = "",
+			description = "Set <group> for <user>")
 	public void userSetGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		PermissionManager manager = PermissionsEx.getPermissionManager();
 
@@ -570,9 +570,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "user <user> group remove <group> [world]",
-	permission = "permissions.manage.membership.<group>",
-	description = "Remove <user> from <group>")
+			syntax = "user <user> group remove <group> [world]",
+			permission = "permissions.manage.membership.<group>",
+			description = "Remove <user> from <group>")
 	public void userRemoveGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String groupName = this.autoCompleteGroupName(args.get("group"));
@@ -593,9 +593,9 @@ public class UserCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "users cleanup <group> [threshold]",
-	permission = "permissions.manage.users.cleanup",
-	description = "Clean users of specified group, which last login was before threshold (in days). By default threshold is 30 days.")
+			syntax = "users cleanup <group> [threshold]",
+			permission = "permissions.manage.users.cleanup",
+			description = "Clean users of specified group, which last login was before threshold (in days). By default threshold is 30 days.")
 	public void usersCleanup(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		long threshold = 2304000;
 

@@ -21,7 +21,6 @@ package ru.tehkode.permissions.events;
 import org.bukkit.event.HandlerList;
 
 /**
- *
  * @author t3hk0d3
  */
 public class PermissionSystemEvent extends PermissionEvent {

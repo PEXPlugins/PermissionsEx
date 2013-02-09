@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import ru.tehkode.utils.StringUtils;
 
 public class SQLConnection {
@@ -74,9 +75,9 @@ public class SQLConnection {
 		this.checkConnection();
 
 		SQLSelectQuery query = new SQLSelectQuery(sql, params);
-		
+
 		query.execute();
-		
+
 		return query.getResults();
 	}
 
@@ -90,7 +91,7 @@ public class SQLConnection {
 				return fallback;
 			}
 
-			return (T)result.getObject(1);
+			return (T) result.getObject(1);
 
 		} catch (SQLException e) {
 			Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());

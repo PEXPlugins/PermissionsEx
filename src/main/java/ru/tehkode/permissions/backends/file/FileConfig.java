@@ -10,38 +10,38 @@ import java.util.logging.Logger;
 
 public class FileConfig extends YamlConfiguration {
 
-    protected File file;
+	protected File file;
 
-    public FileConfig(File file) {
-        super();
+	public FileConfig(File file) {
+		super();
 
-        this.options().pathSeparator(FileBackend.PATH_SEPARATOR);
+		this.options().pathSeparator(FileBackend.PATH_SEPARATOR);
 
-        this.file = file;
+		this.file = file;
 
-        this.reload();
-    }
+		this.reload();
+	}
 
-    public File getFile() {
-        return file;
-    }
+	public File getFile() {
+		return file;
+	}
 
-    public void reload() {
+	public void reload() {
 
-        try {
-            this.load(file);
-        } catch (FileNotFoundException e) {
-            // do nothing
-        } catch (Throwable e) {
-            throw new IllegalStateException("Error loading permissions file", e);
-        }
-    }
+		try {
+			this.load(file);
+		} catch (FileNotFoundException e) {
+			// do nothing
+		} catch (Throwable e) {
+			throw new IllegalStateException("Error loading permissions file", e);
+		}
+	}
 
-    public void save() {
-        try {
-            this.save(file);
-        } catch (IOException e) {
-            Logger.getLogger("Minecraft").severe("[PermissionsEx] Error during saving permissions file: " + e.getMessage());
-        }
-    }
+	public void save() {
+		try {
+			this.save(file);
+		} catch (IOException e) {
+			Logger.getLogger("Minecraft").severe("[PermissionsEx] Error during saving permissions file: " + e.getMessage());
+		}
+	}
 }

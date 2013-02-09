@@ -30,7 +30,7 @@ public class BasicSQLSelectQuery extends BasicSQLQuery implements SQLSelectQuery
 	@Override
 	public SQLSelectQuery execute() throws SQLException {
 		this.results = stmt.executeQuery();
-		
+
 		return this;
 	}
 }

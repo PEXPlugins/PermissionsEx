@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -39,9 +40,9 @@ import ru.tehkode.permissions.commands.CommandsManager.CommandBinding;
 public class UtilityCommands extends PermissionsCommand {
 
 	@Command(name = "pex",
-	syntax = "reload",
-	permission = "permissions.manage.reload",
-	description = "Reload environment")
+			syntax = "reload",
+			permission = "permissions.manage.reload",
+			description = "Reload environment")
 	public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		PermissionsEx.getPermissionManager().reset();
 
@@ -49,9 +50,9 @@ public class UtilityCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "config <node> [value]",
-	permission = "permissions.manage.config",
-	description = "Print or set <node> [value]")
+			syntax = "config <node> [value]",
+			permission = "permissions.manage.config",
+			description = "Print or set <node> [value]")
 	public void config(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		if (!(plugin instanceof PermissionsEx)) {
 			return;
@@ -90,17 +91,17 @@ public class UtilityCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "backend",
-	permission = "permissions.manage.backend",
-	description = "Print currently used backend")
+			syntax = "backend",
+			permission = "permissions.manage.backend",
+			description = "Print currently used backend")
 	public void getBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		sender.sendMessage("Current backend: " + PermissionsEx.getPermissionManager().getBackend());
 	}
 
 	@Command(name = "pex",
-	syntax = "backend <backend>",
-	permission = "permissions.manage.backend",
-	description = "Change permission backend on the fly (Use with caution!)")
+			syntax = "backend <backend>",
+			permission = "permissions.manage.backend",
+			description = "Change permission backend on the fly (Use with caution!)")
 	public void setBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		if (args.get("backend") == null) {
 			return;
@@ -120,18 +121,18 @@ public class UtilityCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "hierarchy [world]",
-	permission = "permissions.manage.users",
-	description = "Print complete user/group hierarchy")
+			syntax = "hierarchy [world]",
+			permission = "permissions.manage.users",
+			description = "Print complete user/group hierarchy")
 	public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		sender.sendMessage("User/Group inheritance hierarchy:");
 		this.sendMessage(sender, this.printHierarchy(null, this.autoCompleteWorldName(args.get("world")), 0));
 	}
 
 	@Command(name = "pex",
-	syntax = "dump <backend> <filename>",
-	permission = "permissions.dump",
-	description = "Dump users/groups to selected <backend> format")
+			syntax = "dump <backend> <filename>",
+			permission = "permissions.dump",
+			description = "Dump users/groups to selected <backend> format")
 	public void dumpData(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		if (!(plugin instanceof PermissionsEx)) {
 			return; // User informing is disabled
@@ -163,9 +164,9 @@ public class UtilityCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "toggle debug",
-	permission = "permissions.debug",
-	description = "Enable/disable debug mode")
+			syntax = "toggle debug",
+			permission = "permissions.debug",
+			description = "Enable/disable debug mode")
 	public void toggleFeature(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		PermissionManager manager = PermissionsEx.getPermissionManager();
 
@@ -181,9 +182,9 @@ public class UtilityCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "help [page] [count]",
-	permission = "permissions.manage",
-	description = "PermissionsEx commands help")
+			syntax = "help [page] [count]",
+			permission = "permissions.manage",
+			description = "PermissionsEx commands help")
 	public void showHelp(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		List<CommandBinding> commands = this.manager.getCommands();
 

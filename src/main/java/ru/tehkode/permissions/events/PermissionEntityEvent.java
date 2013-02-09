@@ -22,7 +22,6 @@ import org.bukkit.event.HandlerList;
 import ru.tehkode.permissions.PermissionEntity;
 
 /**
- *
  * @author t3hk0d3
  */
 public class PermissionEntityEvent extends PermissionEvent {

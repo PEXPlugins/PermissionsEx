@@ -20,6 +20,7 @@ package ru.tehkode.permissions.backends.file;
 
 import java.util.Arrays;
 import java.util.List;
+
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionUser;
@@ -27,7 +28,6 @@ import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
- *
  * @author code
  */
 public class FileUser extends ProxyPermissionUser {

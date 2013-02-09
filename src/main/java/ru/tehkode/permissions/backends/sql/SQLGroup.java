@@ -24,27 +24,27 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 public class SQLGroup extends ProxyPermissionGroup {
 
-    protected SQLEntity backend;
+	protected SQLEntity backend;
 
-    public SQLGroup(String name, PermissionManager manager, SQLConnection sql) {
-        super(new SQLEntity(name, manager, SQLEntity.Type.GROUP, sql));
+	public SQLGroup(String name, PermissionManager manager, SQLConnection sql) {
+		super(new SQLEntity(name, manager, SQLEntity.Type.GROUP, sql));
 
-        this.backend = (SQLEntity) this.backendEntity;
-    }
+		this.backend = (SQLEntity) this.backendEntity;
+	}
 
-    @Override
-    protected String[] getParentGroupsNamesImpl(String worldName) {
-        return this.backend.getParentNames(worldName);
-    }
+	@Override
+	protected String[] getParentGroupsNamesImpl(String worldName) {
+		return this.backend.getParentNames(worldName);
+	}
 
-    @Override
-    public void setParentGroups(String[] parentGroups, String worldName) {
-        if (parentGroups == null) {
-            return;
-        }
+	@Override
+	public void setParentGroups(String[] parentGroups, String worldName) {
+		if (parentGroups == null) {
+			return;
+		}
 
-        this.backend.setParents(parentGroups, worldName);
-        
-        this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
-    }
+		this.backend.setParents(parentGroups, worldName);
+
+		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+	}
 }

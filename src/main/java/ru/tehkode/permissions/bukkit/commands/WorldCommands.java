@@ -21,6 +21,7 @@ package ru.tehkode.permissions.bukkit.commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -34,10 +35,10 @@ import ru.tehkode.utils.StringUtils;
 public class WorldCommands extends PermissionsCommand {
 
 	@Command(name = "pex",
-	syntax = "worlds",
-	description = "Print loaded worlds",
-	isPrimary = true,
-	permission = "permissions.manage.worlds")
+			syntax = "worlds",
+			description = "Print loaded worlds",
+			isPrimary = true,
+			permission = "permissions.manage.worlds")
 	public void worldsTree(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		List<World> worlds = Bukkit.getServer().getWorlds();
 
@@ -56,9 +57,9 @@ public class WorldCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "world <world>",
-	description = "Print <world> inheritance info",
-	permission = "permissions.manage.worlds")
+			syntax = "world <world>",
+			description = "Print <world> inheritance info",
+			permission = "permissions.manage.worlds")
 	public void worldPrintInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 		PermissionManager manager = PermissionsEx.getPermissionManager();
@@ -87,9 +88,9 @@ public class WorldCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "world <world> inherit <parentWorlds>",
-	description = "Set <parentWorlds> for <world>",
-	permission = "permissions.manage.worlds.inheritance")
+			syntax = "world <world> inherit <parentWorlds>",
+			description = "Set <parentWorlds> for <world>",
+			permission = "permissions.manage.worlds.inheritance")
 	public void worldSetInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 		PermissionManager manager = PermissionsEx.getPermissionManager();

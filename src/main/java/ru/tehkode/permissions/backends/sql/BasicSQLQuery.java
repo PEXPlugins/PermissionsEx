@@ -19,7 +19,7 @@ public class BasicSQLQuery implements SQLQuery {
 	@Override
 	public SQLQuery execute() throws SQLException {
 		stmt.execute();
-		
+
 		return this;
 	}
 

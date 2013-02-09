@@ -20,6 +20,7 @@ package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Map;
 import java.util.logging.Logger;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -33,10 +34,10 @@ import ru.tehkode.permissions.exceptions.RankingException;
 public class PromotionCommands extends PermissionsCommand {
 
 	@Command(name = "pex",
-	syntax = "group <group> rank [rank] [ladder]",
-	description = "Get or set <group> [rank] [ladder]",
-	isPrimary = true,
-	permission = "permissions.groups.rank.<group>")
+			syntax = "group <group> rank [rank] [ladder]",
+			description = "Get or set <group> [rank] [ladder]",
+			isPrimary = true,
+			permission = "permissions.groups.rank.<group>")
 	public void rankGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
@@ -71,9 +72,9 @@ public class PromotionCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "promote <user> [ladder]",
-	description = "Promotes <user> to next group on [ladder]",
-	isPrimary = true)
+			syntax = "promote <user> [ladder]",
+			description = "Promotes <user> to next group on [ladder]",
+			isPrimary = true)
 	public void promoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -114,9 +115,9 @@ public class PromotionCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-	syntax = "demote <user> [ladder]",
-	description = "Demotes <user> to previous group or [ladder]",
-	isPrimary = true)
+			syntax = "demote <user> [ladder]",
+			description = "Demotes <user> to previous group or [ladder]",
+			isPrimary = true)
 	public void demoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
@@ -158,19 +159,19 @@ public class PromotionCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "promote",
-	syntax = "<user>",
-	description = "Promotes <user> to next group",
-	isPrimary = true,
-	permission = "permissions.user.rank.promote")
+			syntax = "<user>",
+			description = "Promotes <user> to next group",
+			isPrimary = true,
+			permission = "permissions.user.rank.promote")
 	public void promoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		this.promoteUser(plugin, sender, args);
 	}
 
 	@Command(name = "demote",
-	syntax = "<user>",
-	description = "Demotes <user> to previous group",
-	isPrimary = true,
-	permission = "permissions.user.rank.demote")
+			syntax = "<user>",
+			description = "Demotes <user> to previous group",
+			isPrimary = true,
+			permission = "permissions.user.rank.demote")
 	public void demoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		this.demoteUser(plugin, sender, args);
 	}

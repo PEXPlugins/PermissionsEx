@@ -11,7 +11,6 @@ public class PermissionsNotAvailable extends RuntimeException {
 	public String getMessage() {
 		return super.getMessage();
 	}
-	
-	
+
 
 }

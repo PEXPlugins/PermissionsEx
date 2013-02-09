@@ -26,11 +26,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionManager;
 
 /**
- *
  * @author code
  */
 public class SQLEntity extends PermissionEntity {
@@ -39,6 +39,7 @@ public class SQLEntity extends PermissionEntity {
 
 		GROUP, USER
 	}
+
 	protected SQLConnection db;
 	protected Map<String, List<String>> worldsPermissions = null;
 	protected Map<String, Map<String, String>> worldsOptions = null;

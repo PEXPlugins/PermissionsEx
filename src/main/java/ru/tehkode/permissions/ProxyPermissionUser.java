@@ -19,115 +19,116 @@
 package ru.tehkode.permissions;
 
 import java.util.Map;
+
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 public abstract class ProxyPermissionUser extends PermissionUser {
 
-    protected PermissionEntity backendEntity;
+	protected PermissionEntity backendEntity;
 
-    public ProxyPermissionUser(PermissionEntity backendEntity) {
-        super(backendEntity.getName(), backendEntity.manager);
+	public ProxyPermissionUser(PermissionEntity backendEntity) {
+		super(backendEntity.getName(), backendEntity.manager);
 
-        this.backendEntity = backendEntity;
+		this.backendEntity = backendEntity;
 
-        this.setName(backendEntity.getName());
+		this.setName(backendEntity.getName());
 
-        this.virtual = backendEntity.isVirtual();
+		this.virtual = backendEntity.isVirtual();
 
-    }
-	
+	}
+
 	@Override
 	public void initialize() {
 		super.initialize();
 		this.backendEntity.initialize();
-	}	
+	}
 
-    @Override
-    public String[] getWorlds() {
-        return backendEntity.getWorlds();
-    }
+	@Override
+	public String[] getWorlds() {
+		return backendEntity.getWorlds();
+	}
 
-    @Override
-    public String getOwnPrefix(String worldName) {
-        return backendEntity.getPrefix(worldName);
-    }
+	@Override
+	public String getOwnPrefix(String worldName) {
+		return backendEntity.getPrefix(worldName);
+	}
 
-    @Override
-    public String getOwnSuffix(String worldName) {
-        return backendEntity.getSuffix(worldName);
-    }
+	@Override
+	public String getOwnSuffix(String worldName) {
+		return backendEntity.getSuffix(worldName);
+	}
 
-    @Override
-    public void setPrefix(String prefix, String worldName) {
-        this.backendEntity.setPrefix(prefix, worldName);
+	@Override
+	public void setPrefix(String prefix, String worldName) {
+		this.backendEntity.setPrefix(prefix, worldName);
 
-        this.clearCache();
-    }
+		this.clearCache();
+	}
 
-    @Override
-    public void setSuffix(String suffix, String worldName) {
-        this.backendEntity.setSuffix(suffix, worldName);
+	@Override
+	public void setSuffix(String suffix, String worldName) {
+		this.backendEntity.setSuffix(suffix, worldName);
 
-        this.clearCache();
-    }
+		this.clearCache();
+	}
 
-    @Override
-    public boolean isVirtual() {
-        return backendEntity.isVirtual();
-    }
+	@Override
+	public boolean isVirtual() {
+		return backendEntity.isVirtual();
+	}
 
-    @Override
-    public String[] getOwnPermissions(String world) {
-        return this.backendEntity.getPermissions(world);
-    }
+	@Override
+	public String[] getOwnPermissions(String world) {
+		return this.backendEntity.getPermissions(world);
+	}
 
-    @Override
-    public Map<String, String[]> getAllPermissions() {
-        return this.backendEntity.getAllPermissions();
-    }
+	@Override
+	public Map<String, String[]> getAllPermissions() {
+		return this.backendEntity.getAllPermissions();
+	}
 
-    @Override
-    public void setPermissions(String[] permissions, String world) {
-        this.backendEntity.setPermissions(permissions, world);
+	@Override
+	public void setPermissions(String[] permissions, String world) {
+		this.backendEntity.setPermissions(permissions, world);
 
-        this.clearCache();
+		this.clearCache();
 
-        this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
-    }
+		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
+	}
 
-    @Override
-    public Map<String, Map<String, String>> getAllOptions() {
-        return this.backendEntity.getAllOptions();
-    }
+	@Override
+	public Map<String, Map<String, String>> getAllOptions() {
+		return this.backendEntity.getAllOptions();
+	}
 
-    @Override
-    public String getOwnOption(String option, String world, String defaultValue) {
-        return this.backendEntity.getOption(option, world, defaultValue);
-    }
+	@Override
+	public String getOwnOption(String option, String world, String defaultValue) {
+		return this.backendEntity.getOption(option, world, defaultValue);
+	}
 
-    @Override
-    public Map<String, String> getOptions(String world) {
-        return this.backendEntity.getOptions(world);
-    }
+	@Override
+	public Map<String, String> getOptions(String world) {
+		return this.backendEntity.getOptions(world);
+	}
 
-    @Override
-    public void setOption(String permission, String value, String world) {
-        this.backendEntity.setOption(permission, value, world);
+	@Override
+	public void setOption(String permission, String value, String world) {
+		this.backendEntity.setOption(permission, value, world);
 
-        this.clearCache();
+		this.clearCache();
 
-        this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
-    }
+		this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
+	}
 
-    @Override
-    public void save() {
-        this.backendEntity.save();
-        super.save();
-    }
+	@Override
+	public void save() {
+		this.backendEntity.save();
+		super.save();
+	}
 
-    @Override
-    public void remove() {
-        this.backendEntity.remove();
-        super.remove();
-    }
+	@Override
+	public void remove() {
+		this.backendEntity.remove();
+		super.remove();
+	}
 }

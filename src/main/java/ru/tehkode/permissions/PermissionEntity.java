@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+
 import org.bukkit.Bukkit;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
- *
  * @author code
  */
 public abstract class PermissionEntity {
@@ -56,7 +56,7 @@ public abstract class PermissionEntity {
 	/**
 	 * Return name of permission entity (User or Group)
 	 * User should be equal to Player's name on the server
-	 * 
+	 *
 	 * @return name
 	 */
 	public String getName() {
@@ -69,7 +69,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Returns entity prefix
-	 * 
+	 *
 	 * @param worldName
 	 * @return prefix
 	 */
@@ -81,18 +81,18 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Returns entity prefix
-	 * 
+	 *
 	 */
 	/**
 	 * Set prefix to value
-	 * 
+	 *
 	 * @param prefix new prefix
 	 */
 	public abstract void setPrefix(String prefix, String worldName);
 
 	/**
 	 * Return entity suffix
-	 * 
+	 *
 	 * @return suffix
 	 */
 	public abstract String getSuffix(String worldName);
@@ -103,14 +103,14 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Set suffix to value
-	 * 
+	 *
 	 * @param suffix new suffix
 	 */
 	public abstract void setSuffix(String suffix, String worldName);
 
 	/**
 	 * Checks if entity has specified permission in default world
-	 * 
+	 *
 	 * @param permission Permission to check
 	 * @return true if entity has this permission otherwise false
 	 */
@@ -120,9 +120,9 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Check if entity has specified permission in world
-	 * 
+	 *
 	 * @param permission Permission to check
-	 * @param world World to check permission in
+	 * @param world      World to check permission in
 	 * @return true if entity has this permission otherwise false
 	 */
 	public boolean has(String permission, String world) {
@@ -141,7 +141,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Return all entity permissions in specified world
-	 * 
+	 *
 	 * @param world World name
 	 * @return Array of permission expressions
 	 */
@@ -150,16 +150,16 @@ public abstract class PermissionEntity {
 	/**
 	 * Return permissions for all worlds
 	 * Common permissions stored as "" (empty string) as world.
-	 * 
+	 *
 	 * @return Map with world name as key and permissions array as value
 	 */
 	public abstract Map<String, String[]> getAllPermissions();
 
 	/**
 	 * Add permissions for specified world
-	 * 
+	 *
 	 * @param permission Permission to add
-	 * @param world World name to add permission to
+	 * @param world      World name to add permission to
 	 */
 	public void addPermission(String permission, String world) {
 		throw new UnsupportedOperationException("You shouldn't call this method");
@@ -167,7 +167,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Add permission in common space (all worlds)
-	 * 
+	 *
 	 * @param permission Permission to add
 	 */
 	public void addPermission(String permission) {
@@ -176,9 +176,9 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Remove permission in world
-	 * 
+	 *
 	 * @param permission Permission to remove
-	 * @param world World name to remove permission for
+	 * @param world      World name to remove permission for
 	 */
 	public void removePermission(String permission, String worldName) {
 		throw new UnsupportedOperationException("You shouldn't call this method");
@@ -186,7 +186,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Remove specified permission from all worlds
-	 * 
+	 *
 	 * @param permission Permission to remove
 	 */
 	public void removePermission(String permission) {
@@ -197,15 +197,15 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Set permissions in world
-	 * 
+	 *
 	 * @param permissions Array of permissions to set
-	 * @param world World to set permissions for
+	 * @param world       World to set permissions for
 	 */
 	public abstract void setPermissions(String[] permissions, String world);
 
 	/**
 	 * Set specified permissions in common space (all world)
-	 * 
+	 *
 	 * @param permission Permission to set
 	 */
 	public void setPermissions(String[] permission) {
@@ -214,9 +214,9 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Get option in world
-	 * 
-	 * @param option Name of option
-	 * @param world World to look for
+	 *
+	 * @param option       Name of option
+	 * @param world        World to look for
 	 * @param defaultValue Default value to fallback if no such option was found
 	 * @return Value of option as String
 	 */
@@ -225,7 +225,7 @@ public abstract class PermissionEntity {
 	/**
 	 * Return option
 	 * Option would be looked up in common options
-	 * 
+	 *
 	 * @param option Option name
 	 * @return option value or empty string if option was not found
 	 */
@@ -236,9 +236,9 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Return option for world
-	 * 
+	 *
 	 * @param option Option name
-	 * @param world World to look in
+	 * @param world  World to look in
 	 * @return option value or empty string if option was not found
 	 */
 	public String getOption(String option, String world) {
@@ -248,7 +248,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Return integer value for option
-	 * 
+	 *
 	 * @param optionName
 	 * @param world
 	 * @param defaultValue
@@ -265,7 +265,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Returns double value for option
-	 * 
+	 *
 	 * @param optionName
 	 * @param world
 	 * @param defaultValue
@@ -284,7 +284,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Returns boolean value for option
-	 * 
+	 *
 	 * @param optionName
 	 * @param world
 	 * @param defaultValue
@@ -304,18 +304,18 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Set specified option in world
-	 * 
+	 *
 	 * @param option Option name
-	 * @param value Value to set, null to remove
-	 * @param world World name
+	 * @param value  Value to set, null to remove
+	 * @param world  World name
 	 */
 	public abstract void setOption(String option, String value, String world);
 
 	/**
 	 * Set option for all worlds. Can be overwritten by world specific option
-	 * 
+	 *
 	 * @param option Option name
-	 * @param value Value to set, null to remove
+	 * @param value  Value to set, null to remove
 	 */
 	public void setOption(String permission, String value) {
 		this.setOption(permission, value, "");
@@ -323,7 +323,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Get options in world
-	 * 
+	 *
 	 * @param world
 	 * @return Option value as string Map
 	 */
@@ -332,7 +332,7 @@ public abstract class PermissionEntity {
 	/**
 	 * Return options for all worlds
 	 * Common options stored as "" (empty string) as world.
-	 * 
+	 *
 	 * @return Map with world name as key and map of options as value
 	 */
 	public abstract Map<String, Map<String, String>> getAllOptions();
@@ -349,7 +349,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Return state of entity
-	 * 
+	 *
 	 * @return true if entity is only in-memory
 	 */
 	public boolean isVirtual() {
@@ -358,14 +358,14 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Return world names where entity have permissions/options/etc
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	public abstract String[] getWorlds();
 
 	/**
 	 * Return entity timed (temporary) permission for world
-	 * 
+	 *
 	 * @param world
 	 * @return Array of timed permissions in that world
 	 */
@@ -383,7 +383,7 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Returns remaining lifetime of specified permission in world
-	 * 
+	 *
 	 * @param permission Name of permission
 	 * @param world
 	 * @return remaining lifetime in seconds of timed permission. 0 if permission is transient
@@ -402,10 +402,10 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Adds timed permission to specified world in seconds
-	 * 
+	 *
 	 * @param permission
 	 * @param world
-	 * @param lifeTime Lifetime of permission in seconds. 0 for transient permission (world disappear only after server reload)
+	 * @param lifeTime   Lifetime of permission in seconds. 0 for transient permission (world disappear only after server reload)
 	 */
 	public void addTimedPermission(final String permission, String world, int lifeTime) {
 		if (world == null) {
@@ -439,9 +439,9 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Removes specified timed permission for world
-	 * 
+	 *
 	 * @param permission
-	 * @param world 
+	 * @param world
 	 */
 	public void removeTimedPermission(String permission, String world) {
 		if (world == null) {
@@ -511,14 +511,14 @@ public abstract class PermissionEntity {
 
 	/**
 	 * Checks if specified permission matches specified permission expression
-	 * 
-	 * @param expression permission expression - what user have in his permissions list (permission.nodes.*)
-	 * @param permission permission which are checking for (permission.node.some.subnode)
+	 *
+	 * @param expression       permission expression - what user have in his permissions list (permission.nodes.*)
+	 * @param permission       permission which are checking for (permission.node.some.subnode)
 	 * @param additionalChecks check for parent node matching
-	 * @return 
+	 * @return
 	 */
 	public boolean isMatches(String expression, String permission, boolean additionalChecks) {
-        return this.manager.getPermissionMatcher().isMatches(expression, permission);
+		return this.manager.getPermissionMatcher().isMatches(expression, permission);
 	}
 
 	public boolean explainExpression(String expression) {
