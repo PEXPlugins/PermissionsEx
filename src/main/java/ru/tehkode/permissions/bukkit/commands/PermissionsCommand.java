@@ -163,7 +163,7 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	protected String autoCompleteWorldName(String worldName, String argName) {
-		if (worldName == null || worldName.isEmpty()) {
+		if (worldName == null || worldName.isEmpty() || "*".equals(worldName)) {
 			return null;
 		}
 
