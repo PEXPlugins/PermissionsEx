@@ -84,7 +84,7 @@ public class UserCommands extends PermissionsCommand {
 			return;
 		}
 
-		sender.sendMessage(userName + " are member of:");
+		sender.sendMessage("'" + userName + "' is a member of:");
 		printEntityInheritance(sender, user.getGroups());
 
 		for (String world : user.getAllGroups().keySet()) {
