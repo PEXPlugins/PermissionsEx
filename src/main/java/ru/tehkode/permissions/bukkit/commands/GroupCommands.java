@@ -381,7 +381,7 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		sender.sendMessage(groupName + " are member of:");
+		sender.sendMessage("'" + groupName + "' inherits the following groups:");
 		printEntityInheritance(sender, group.getParentGroups());
 
 		for (String world : group.getAllParentGroups().keySet()) {
