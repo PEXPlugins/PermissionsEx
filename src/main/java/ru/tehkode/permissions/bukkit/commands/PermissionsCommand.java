@@ -317,10 +317,6 @@ public abstract class PermissionsCommand implements CommandListener {
 		}
 
 		level++; // Just increment level once
-		for (PermissionGroup group : parents) {
-			builder.append(mapPermissions(worldName, group, level));
-		}
-
 		return builder.toString();
 	}
 
