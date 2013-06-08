@@ -18,12 +18,10 @@
  */
 package ru.tehkode.permissions.bukkit;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -31,13 +29,25 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.*;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.tehkode.permissions.*;
-import ru.tehkode.permissions.backends.*;
-import ru.tehkode.permissions.bukkit.commands.*;
+import ru.tehkode.permissions.PermissionBackend;
+import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.backends.FileBackend;
+import ru.tehkode.permissions.backends.SQLBackend;
+import ru.tehkode.permissions.bukkit.commands.GroupCommands;
+import ru.tehkode.permissions.bukkit.commands.PromotionCommands;
+import ru.tehkode.permissions.bukkit.commands.UserCommands;
+import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
+import ru.tehkode.permissions.bukkit.commands.WorldCommands;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author code
@@ -67,78 +77,105 @@ public class PermissionsEx extends JavaPlugin {
 
 	@Override
 	public void onLoad() {
-		this.config = this.getConfig();
-		this.commandsManager = new CommandsManager(this);
-		this.permissionsManager = new PermissionManager(this.config);
+		try {
+			this.config = this.getConfig();
+			this.commandsManager = new CommandsManager(this);
+			this.permissionsManager = new PermissionManager(this.config);
+		} catch (Throwable t) {
+			ErrorReport.handleError("In onLoad", t);
+			this.setEnabled(false);
+		}
 	}
 
 	@Override
 	public void onEnable() {
-		if (this.permissionsManager == null) {
-			this.permissionsManager = new PermissionManager(this.config);
+		try {
+			if (this.permissionsManager == null) {
+				this.permissionsManager = new PermissionManager(this.config);
+			}
+
+			// Register commands
+			this.commandsManager.register(new UserCommands());
+			this.commandsManager.register(new GroupCommands());
+			this.commandsManager.register(new PromotionCommands());
+			this.commandsManager.register(new WorldCommands());
+			this.commandsManager.register(new UtilityCommands());
+
+			// Register Player permissions cleaner
+			PlayerEventsListener cleaner = new PlayerEventsListener();
+			cleaner.logLastPlayerLogin = this.config.getBoolean("permissions.log-players", cleaner.logLastPlayerLogin);
+			this.getServer().getPluginManager().registerEvents(cleaner, this);
+
+			//register service
+			this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
+
+			// Bukkit permissions
+			ConfigurationSection dinnerpermsConfig = this.config.getConfigurationSection("permissions.superperms");
+
+			if (dinnerpermsConfig == null) {
+				dinnerpermsConfig = this.config.createSection("permissions.superperms");
+			}
+
+			this.superms = new BukkitPermissions(this, dinnerpermsConfig);
+
+			this.superms.updateAllPlayers();
+
+			this.saveConfig();
+
+			// Start timed permissions cleaner timer
+			this.permissionsManager.initTimer();
+
+			logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
+		} catch (Throwable t) {
+			ErrorReport.handleError("Error while enabling: ", t);
+			this.getPluginLoader().disablePlugin(this);
 		}
-
-		// Register commands
-		this.commandsManager.register(new UserCommands());
-		this.commandsManager.register(new GroupCommands());
-		this.commandsManager.register(new PromotionCommands());
-		this.commandsManager.register(new WorldCommands());
-		this.commandsManager.register(new UtilityCommands());
-
-		// Register Player permissions cleaner
-		PlayerEventsListener cleaner = new PlayerEventsListener();
-		cleaner.logLastPlayerLogin = this.config.getBoolean("permissions.log-players", cleaner.logLastPlayerLogin);
-		this.getServer().getPluginManager().registerEvents(cleaner, this);
-
-		//register service
-		this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
-
-		// Bukkit permissions
-		ConfigurationSection dinnerpermsConfig = this.config.getConfigurationSection("permissions.superperms");
-
-		if (dinnerpermsConfig == null) {
-			dinnerpermsConfig = this.config.createSection("permissions.superperms");
-		}
-
-		this.superms = new BukkitPermissions(this, dinnerpermsConfig);
-
-		this.superms.updateAllPlayers();
-
-		this.saveConfig();
-
-		// Start timed permissions cleaner timer
-		this.permissionsManager.initTimer();
-
-		logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
 	}
 
 	@Override
 	public void onDisable() {
-		if (this.permissionsManager != null) {
-			this.permissionsManager.end();
+		try {
+			if (this.permissionsManager != null) {
+				this.permissionsManager.end();
+			}
+
+			this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
+			if (this.superms != null) {
+				this.superms.onDisable();
+			}
+
+			logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
+		} catch (Throwable t) {
+			ErrorReport.handleError("While disabling", t);
 		}
-
-		this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
-		this.superms.onDisable();
-
-		logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
+		ErrorReport.shutdown();
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-		PluginDescriptionFile pdf = this.getDescription();
-		if (args.length > 0) {
-			return this.commandsManager.execute(sender, command, args);
-		} else {
-			if (sender instanceof Player) {
-				sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]");
-
-				return !this.permissionsManager.has((Player) sender, "permissions.manage");
+		try {
+			PluginDescriptionFile pdf = this.getDescription();
+			if (args.length > 0) {
+				return this.commandsManager.execute(sender, command, args);
 			} else {
-				sender.sendMessage("[PermissionsEx] version [" + pdf.getVersion() + "]");
+				if (sender instanceof Player) {
+					sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]");
 
-				return false;
+					return !this.permissionsManager.has((Player) sender, "permissions.manage");
+				} else {
+					sender.sendMessage("[PermissionsEx] version [" + pdf.getVersion() + "]");
+
+					return false;
+				}
 			}
+		} catch (Throwable t) {
+			ErrorReport report = ErrorReport.withException("While " + sender.getName() + " was executing /" + command.getName(), t);
+			String msg = report.buildUserErrorMessage();
+			if (!(sender instanceof ConsoleCommandSender)) {
+				getLogger().severe(msg);
+			}
+			sender.sendMessage(ChatColor.RED + msg);
+			return true;
 		}
 	}
 
@@ -182,6 +219,7 @@ public class PermissionsEx extends JavaPlugin {
 
 		@EventHandler
 		public void onPlayerLogin(PlayerLoginEvent event) {
+			try {
 			if (!logLastPlayerLogin) {
 				return;
 			}
@@ -189,15 +227,22 @@ public class PermissionsEx extends JavaPlugin {
 			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
 			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
 			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
+			} catch (Throwable t) {
+				ErrorReport.handleError("While login cleanup event", t);
+			}
 		}
 
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
+			try {
 			if (logLastPlayerLogin) {
 				getPermissionManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 			}
 
 			getPermissionManager().resetUser(event.getPlayer().getName());
+			} catch (Throwable t) {
+				ErrorReport.handleError("While logout cleanup event", t);
+			}
 		}
 	}
 }

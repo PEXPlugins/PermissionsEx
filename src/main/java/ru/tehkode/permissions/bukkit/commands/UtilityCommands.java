@@ -18,14 +18,6 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -33,9 +25,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandsManager.CommandBinding;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.List;
+import java.util.Map;
 
 public class UtilityCommands extends PermissionsCommand {
 
@@ -47,6 +47,16 @@ public class UtilityCommands extends PermissionsCommand {
 		PermissionsEx.getPermissionManager().reset();
 
 		sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
+	}
+
+	@Command(name = "pex",
+			syntax = "report",
+			permission = "permissions.manage.reportbug",
+			description = "Create an issue template to report an issue")
+	public void report(Plugin plugin, CommandSender sender, Map<String, String> args) {
+		ErrorReport report = ErrorReport.withException("User-requested report", new Exception().fillInStackTrace());
+		sender.sendMessage("Fill in the information at " + report.getShortURL() + " to report an issue");
+		sender.sendMessage(ChatColor.RED + "NOTE: A GitHub account is necessary to report issues. Create one at https://github.com/");
 	}
 
 	@Command(name = "pex",
@@ -124,7 +134,7 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "hierarchy [world]",
 			permission = "permissions.manage.users",
 			description = "Print complete user/group hierarchy")
-	public void printHierarhy(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void printHierarchy(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		sender.sendMessage("User/Group inheritance hierarchy:");
 		this.sendMessage(sender, this.printHierarchy(null, this.autoCompleteWorldName(args.get("world")), 0));
 	}

@@ -18,18 +18,19 @@
  */
 package ru.tehkode.permissions;
 
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.entity.Player;
+import ru.tehkode.permissions.bukkit.ErrorReport;
+import ru.tehkode.permissions.events.PermissionEntityEvent;
+import ru.tehkode.permissions.events.PermissionEvent;
+import ru.tehkode.permissions.events.PermissionSystemEvent;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.Configuration;
-import org.bukkit.entity.Player;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
-import ru.tehkode.permissions.events.PermissionEvent;
-import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 /**
  * @author t3hk0d3
@@ -419,13 +420,17 @@ public class PermissionManager {
 	 * @param backendName name of backend to set to
 	 */
 	public void setBackend(String backendName) {
-		synchronized (this) {
-			this.clearCache();
-			this.backend = PermissionBackend.getBackend(backendName, this, config);
-			this.backend.initialize();
-		}
+		try {
+			synchronized (this) {
+				this.clearCache();
+				this.backend = PermissionBackend.getBackend(backendName, this, config);
+				this.backend.initialize();
+			}
 
-		this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
+			this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
+		} catch (Throwable t) {
+			ErrorReport.handleError("While setting backend", t);
+		}
 	}
 
 	/**

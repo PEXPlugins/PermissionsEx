@@ -20,13 +20,20 @@ package ru.tehkode.permissions.bukkit.superperms;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.*;
+import org.bukkit.permissions.Permissible;
+import org.bukkit.permissions.PermissibleBase;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.BukkitPermissions;
+import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameRegexPermissibleInjector;
+import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 
@@ -34,11 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ClassNameRegexPermissibleInjector;
-import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector.ServerNamePermissibleInjector;
 
 import static ru.tehkode.permissions.bukkit.CraftBukkitInterface.getCBClassName;
 
@@ -94,7 +97,7 @@ public class PermissiblePEX extends PermissibleBase {
 				LOGGER.info("[PermissionsEx] Permissions handler for " + player.getName() + " successfuly injected");
 			}
 		} catch (Throwable e) {
-			LOGGER.log(Level.WARNING, "[PermissionsEx] Failed to inject own Permissible", e);
+			ErrorReport.handleError("Unable to inject permissions handler for " + player.getName(), e);
 		}
 	}
 
@@ -136,7 +139,7 @@ public class PermissiblePEX extends PermissibleBase {
 			return result;
 		} catch (Throwable t) {
 			if (LAST_CALL_ERRORED.compareAndSet(false, true)) {
-				LOGGER.log(Level.SEVERE, "Error accessing PEX instance", t);
+				ErrorReport.handleError("While checking permissions -- Issue getting PEX instance?", t);
 			}
 			return PermissionCheckResult.UNDEFINED;
 		}
@@ -196,18 +199,16 @@ public class PermissiblePEX extends PermissibleBase {
 			if (user.isDebug()) {
 				LOGGER.info("User " + user.getName() + " checked for \"" + permission + "\", no permission found");
 			}
+			LAST_CALL_ERRORED.set(false);
 		} catch (PermissionsNotAvailable e) {
 			LOGGER.warning("[PermissionsEx] Can't obtain PermissionsEx instance");
 			reinjectAll();
 		} catch (Throwable e) {
 			if (!LAST_CALL_ERRORED.compareAndSet(false, true)) {
-				// This should stay so if something will gone wrong user have chance to understand whats wrong actually
-				e.printStackTrace();
+				ErrorReport.handleError("While performing PEX check", e);
 			}
 			return PermissionCheckResult.UNDEFINED;
 		}
-
-		LAST_CALL_ERRORED.set(false);
 		return PermissionCheckResult.UNDEFINED;
 	}
 
@@ -247,10 +248,9 @@ public class PermissiblePEX extends PermissibleBase {
 			reinjectAll();
 		} catch (Throwable t) {
 			if (LAST_CALL_ERRORED.compareAndSet(false, true)) {
-				LOGGER.log(Level.SEVERE, "[PermissionsEx] Error checking isPermissionSet for " + player.getName(), t);
+				ErrorReport.handleError("Error checking isPermissionSet for " + player.getName(), t);
 			}
 		}
-
 		return super.isPermissionSet(permission);
 	}
 
@@ -302,7 +302,7 @@ public class PermissiblePEX extends PermissibleBase {
 			}
 
 		} catch (Throwable e) {
-			// do nothing
+			ErrorReport.handleError("Error building metadata for " + player.getName(), e);
 		}
 
 		return infoSet;

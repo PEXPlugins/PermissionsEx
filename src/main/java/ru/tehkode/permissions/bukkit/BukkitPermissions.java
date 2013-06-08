@@ -18,12 +18,6 @@
  */
 package ru.tehkode.permissions.bukkit;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Logger;
-
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -42,6 +36,12 @@ import ru.tehkode.permissions.bukkit.superperms.PEXPermissionSubscriptionMap;
 import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
 public class BukkitPermissions {
 
@@ -154,36 +154,52 @@ public class BukkitPermissions {
 
 		@EventHandler(priority = EventPriority.LOWEST)
 		public void onPlayerLogin(PlayerLoginEvent event) {
-			updatePermissions(event.getPlayer());
+			try {
+				updatePermissions(event.getPlayer());
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event login", t);
+			}
 		}
 
 		@EventHandler(priority = EventPriority.LOW)
 		public void onPluginEnable(PluginEnableEvent event) {
-			List<Permission> pluginPermissions = event.getPlugin().getDescription().getPermissions();
+			try {
+				List<Permission> pluginPermissions = event.getPlugin().getDescription().getPermissions();
 
-			for (Permission permission : pluginPermissions) {
-				calculatePermissionChildren(permission);
+				for (Permission permission : pluginPermissions) {
+					calculatePermissionChildren(permission);
+				}
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event plugin enable", t);
 			}
 		}
 
 		@EventHandler(priority = EventPriority.LOW)
 		public void onEntityEvent(PermissionEntityEvent event) {
-			if (event.getEntity() instanceof PermissionUser) { // update user only
-				updatePermissions(Bukkit.getServer().getPlayer(event.getEntity().getName()));
-			} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-				for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(event.getEntity().getName(), true)) {
-					updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
+			try {
+				if (event.getEntity() instanceof PermissionUser) { // update user only
+					updatePermissions(Bukkit.getServer().getPlayer(event.getEntity().getName()));
+				} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
+					for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(event.getEntity().getName(), true)) {
+						updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
+					}
 				}
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event permission entity", t);
 			}
 		}
 
 		@EventHandler(priority = EventPriority.LOW)
 		public void onSystemEvent(PermissionSystemEvent event) {
-			if (event.getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
-				return;
-			}
+			try {
+				if (event.getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
+					return;
+				}
 
-			updateAllPlayers();
+				updateAllPlayers();
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event permission system event", t);
+			}
 		}
 	}
 }

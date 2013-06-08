@@ -18,6 +18,7 @@
  */
 package ru.tehkode.utils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -79,7 +80,7 @@ public class StringUtils {
 	 * @param is an InputStream to read from
 	 * @return a String representing the input read from the InputStream
 	 */
-	public static String readStream(InputStream is) throws Exception {
+	public static String readStream(InputStream is) throws IOException {
 		if (is != null) {
 			StringBuilder builder = new StringBuilder();
 
@@ -87,7 +88,7 @@ public class StringUtils {
 				Reader reader = new InputStreamReader(is, "UTF-8");
 
 				char[] buffer = new char[128];
-				int read = 0;
+				int read;
 				while ((read = reader.read(buffer)) > 0) {
 					builder.append(buffer, 0, read);
 				}
