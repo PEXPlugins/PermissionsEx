@@ -1,8 +1,8 @@
 name: PermissionsEx
 main: ru.tehkode.permissions.bukkit.PermissionsEx
-version: 1.19.5
+version: "${project.version}"
 author: t3hk0d3
-website: www.bukkit.org
+website: http://dev.bukkit.org/server-mods/permissionsex
 description: PermissionsEx - New powerful users and groups permissions management plugin.
 commands:
   pex:
@@ -11,6 +11,7 @@ commands:
            Usage:
            /<command> - Display help
            /<command> reload - Reload environment
+           /<command> report - Report an issue with PEX
            /<command> config <node> [value] - Print or set <node> [value]
            /<command> backend - Print currently used backend
            /<command> backend <backend> - Change permission backend on the fly (Use with caution!)
