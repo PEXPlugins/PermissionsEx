@@ -18,12 +18,10 @@
  */
 package ru.tehkode.permissions.bukkit.superperms;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
