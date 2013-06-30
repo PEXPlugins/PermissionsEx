@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -26,26 +27,24 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.tehkode.permissions.PermissionBackend;
-import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.backends.SQLBackend;
-import ru.tehkode.permissions.bukkit.commands.GroupCommands;
-import ru.tehkode.permissions.bukkit.commands.PromotionCommands;
-import ru.tehkode.permissions.bukkit.commands.UserCommands;
-import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
-import ru.tehkode.permissions.bukkit.commands.WorldCommands;
-import ru.tehkode.permissions.commands.CommandsManager;
-import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
+import ru.tehkode.permissions.bukkit.superperms.PEXPermissionSubscriptionMap;
+import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,102 +52,130 @@ import java.util.logging.Logger;
  * @author code
  */
 public class PermissionsEx extends JavaPlugin {
+	// Parent-child permissions stuff
+	private final Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
+	private int permissionsHashCode;
 
-	protected static final String configFile = "config.yml";
-	protected static final Logger logger = Logger.getLogger("Minecraft");
-	protected PermissionManager permissionsManager;
-	protected CommandsManager commandsManager;
-	protected FileConfiguration config;
-	protected BukkitPermissions superms;
-	private static PermissionsEx instance;
-
-	{
-		instance = this;
-	}
-
-	public PermissionsEx() {
-		super();
-
-		PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
-		PermissionBackend.registerBackendAlias("file", FileBackend.class);
-
-		logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin initialized.");
-	}
-
-	@Override
-	public void onLoad() {
-		try {
-			this.config = this.getConfig();
-			this.commandsManager = new CommandsManager(this);
-			this.permissionsManager = new PermissionManager(this.config);
-		} catch (Throwable t) {
-			ErrorReport.handleError("In onLoad", t);
-			this.setEnabled(false);
-		}
-	}
+	// Permissions subscriptions handling
+	private PEXPermissionSubscriptionMap subscriptionHandler;
 
 	@Override
 	public void onEnable() {
-		try {
-			if (this.permissionsManager == null) {
-				this.permissionsManager = new PermissionManager(this.config);
-			}
-
-			// Register commands
-			this.commandsManager.register(new UserCommands());
-			this.commandsManager.register(new GroupCommands());
-			this.commandsManager.register(new PromotionCommands());
-			this.commandsManager.register(new WorldCommands());
-			this.commandsManager.register(new UtilityCommands());
-
-			// Register Player permissions cleaner
-			PlayerEventsListener cleaner = new PlayerEventsListener();
-			cleaner.logLastPlayerLogin = this.config.getBoolean("permissions.log-players", cleaner.logLastPlayerLogin);
-			this.getServer().getPluginManager().registerEvents(cleaner, this);
-
-			//register service
-			this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
-
-			// Bukkit permissions
-			ConfigurationSection dinnerpermsConfig = this.config.getConfigurationSection("permissions.superperms");
-
-			if (dinnerpermsConfig == null) {
-				dinnerpermsConfig = this.config.createSection("permissions.superperms");
-			}
-
-			this.superms = new BukkitPermissions(this, dinnerpermsConfig);
-
-			this.superms.updateAllPlayers();
-
-			this.saveConfig();
-
-			// Start timed permissions cleaner timer
-			this.permissionsManager.initTimer();
-
-			logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
-		} catch (Throwable t) {
-			ErrorReport.handleError("Error while enabling: ", t);
-			this.getPluginLoader().disablePlugin(this);
-		}
+		subscriptionHandler = PEXPermissionSubscriptionMap.inject(this, getServer().getPluginManager());
+		getServer().getPluginManager().registerEvents(new EventListener(), this);
+		checkAllParentPermissions(true);
 	}
 
 	@Override
 	public void onDisable() {
-		try {
-			if (this.permissionsManager != null) {
-				this.permissionsManager.end();
-			}
+		subscriptionHandler.uninject();
+	}
 
-			this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
-			if (this.superms != null) {
-				this.superms.onDisable();
-			}
+	public Map<String, Map<String, Boolean>> getChildPermissions() {
+		return childPermissions;
+	}
 
-			logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
-		} catch (Throwable t) {
-			ErrorReport.handleError("While disabling", t);
+	public final void checkAllParentPermissions(boolean forced) {
+		Set<Permission> allPermissions = getServer().getPluginManager().getPermissions();
+		int hashCode = allPermissions.hashCode();
+
+		if (forced || hashCode != permissionsHashCode) {
+			calculateParentPermissions(allPermissions);
+
+			permissionsHashCode = hashCode;
 		}
-		ErrorReport.shutdown();
+	}
+
+	protected void calculateParentPermissions(Set<Permission> permissions) {
+		for (Permission permission : permissions) {
+			this.calculatePermissionChildren(permission);
+		}
+	}
+
+	protected void calculatePermissionChildren(Permission permission) {
+		for (Map.Entry<String, Boolean> child : permission.getChildren().entrySet()) {
+			Map<String, Boolean> map = this.childPermissions.get(child.getKey().toLowerCase());
+			if (map == null) {
+				this.childPermissions.put(child.getKey().toLowerCase(), map = new HashMap<String, Boolean>());
+			}
+
+			map.put(permission.getName(), child.getValue());
+		}
+	}
+
+	private void registerEvents() {
+		PluginManager manager = plugin.getServer().getPluginManager();
+
+		manager.registerEvents(new EventListener(), this);
+	}
+
+	public void updatePermissions(Player player) {
+		if (player == null || !this.plugin.isEnabled()) {
+			return;
+		}
+
+		PermissiblePEX.inject(player, this);
+
+		player.recalculatePermissions();
+	}
+
+	public void updateAllPlayers() {
+		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+			updatePermissions(player);
+		}
+	}
+
+	protected class EventListener implements Listener {
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		public void onPlayerLogin(PlayerLoginEvent event) {
+			try {
+				updatePermissions(event.getPlayer());
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event login", t);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOW)
+		public void onPluginEnable(PluginEnableEvent event) {
+			try {
+				List<Permission> pluginPermissions = event.getPlugin().getDescription().getPermissions();
+
+				for (Permission permission : pluginPermissions) {
+					calculatePermissionChildren(permission);
+				}
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event plugin enable", t);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOW)
+		public void onEntityEvent(PermissionEntityEvent event) {
+			try {
+				if (event.getEntity() instanceof PermissionUser) { // update user only
+					updatePermissions(Bukkit.getServer().getPlayer(event.getEntity().getName()));
+				} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
+					for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(event.getEntity().getName(), true)) {
+						updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
+					}
+				}
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event permission entity", t);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOW)
+		public void onSystemEvent(PermissionSystemEvent event) {
+			try {
+				if (event.getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
+					return;
+				}
+
+				updateAllPlayers();
+			} catch (Throwable t) {
+				ErrorReport.handleError("Superperms event permission system event", t);
+			}
+		}
 	}
 
 	@Override
@@ -176,73 +203,6 @@ public class PermissionsEx extends JavaPlugin {
 			}
 			sender.sendMessage(ChatColor.RED + msg);
 			return true;
-		}
-	}
-
-	public static Plugin getPlugin() {
-		return instance;
-	}
-
-	public static boolean isAvailable() {
-		Plugin plugin = getPlugin();
-
-		return plugin.isEnabled() && ((PermissionsEx) plugin).permissionsManager != null;
-	}
-
-	public static PermissionManager getPermissionManager() {
-		if (!isAvailable()) {
-			throw new PermissionsNotAvailable();
-		}
-
-		return ((PermissionsEx) getPlugin()).permissionsManager;
-	}
-
-	public static PermissionUser getUser(Player player) {
-		return getPermissionManager().getUser(player);
-	}
-
-	public static PermissionUser getUser(String name) {
-		return getPermissionManager().getUser(name);
-	}
-
-	public boolean has(Player player, String permission) {
-		return this.permissionsManager.has(player, permission);
-	}
-
-	public boolean has(Player player, String permission, String world) {
-		return this.permissionsManager.has(player, permission, world);
-	}
-
-	public class PlayerEventsListener implements Listener {
-
-		protected boolean logLastPlayerLogin = false;
-
-		@EventHandler
-		public void onPlayerLogin(PlayerLoginEvent event) {
-			try {
-			if (!logLastPlayerLogin) {
-				return;
-			}
-
-			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
-			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
-			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
-			} catch (Throwable t) {
-				ErrorReport.handleError("While login cleanup event", t);
-			}
-		}
-
-		@EventHandler
-		public void onPlayerQuit(PlayerQuitEvent event) {
-			try {
-			if (logLastPlayerLogin) {
-				getPermissionManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
-			}
-
-			getPermissionManager().resetUser(event.getPlayer().getName());
-			} catch (Throwable t) {
-				ErrorReport.handleError("While logout cleanup event", t);
-			}
 		}
 	}
 }

@@ -1,13 +1,9 @@
 package ru.tehkode.permissions.bukkit.superperms;
 
 import com.google.common.collect.Sets;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.PluginManager;
-import ru.tehkode.permissions.PermissionCheckResult;
-import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.bukkit.BukkitPermissions;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 import java.lang.reflect.Field;
@@ -17,19 +13,22 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * PermissibleMap for the permissions subscriptions data in Bukkit's {@link PluginManager} so we can put in our own data too.
  */
 public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>> {
-	private static final Logger LOGGER = Logger.getLogger(PEXPermissionSubscriptionMap.class.getCanonicalName());
-	private final BukkitPermissions superms;
+	private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<PEXPermissionSubscriptionMap>();
+	private final PermissionsEx plugin;
+	private final PluginManager manager;
 
-	public PEXPermissionSubscriptionMap(BukkitPermissions superms, Map<String, Map<Permissible, Boolean>> backing) {
+
+	private PEXPermissionSubscriptionMap(PermissionsEx plugin, PluginManager manager, Map<String, Map<Permissible, Boolean>> backing) {
 		super(backing);
-		this.superms = superms;
+		this.plugin = plugin;
+		this.manager = manager;
 	}
 
 	/**
@@ -39,7 +38,12 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 	 * @param manager The manager to inject into
 	 */
 	@SuppressWarnings("unchecked")
-	public static PEXPermissionSubscriptionMap inject(BukkitPermissions superms, PluginManager manager) {
+	public static PEXPermissionSubscriptionMap inject(PermissionsEx plugin, PluginManager manager) {
+		PEXPermissionSubscriptionMap map = INSTANCE.get();
+		if (map != null) {
+			return map;
+		}
+
 		try {
 			Field field = manager.getClass().getDeclaredField("permSubs");
 			field.setAccessible(true);
@@ -47,43 +51,43 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 			if (backing instanceof PEXPermissionSubscriptionMap) {
 				return (PEXPermissionSubscriptionMap) backing;
 			}
-			PEXPermissionSubscriptionMap wrappedMap = new PEXPermissionSubscriptionMap(superms, backing);
-			field.set(manager, wrappedMap);
-			return wrappedMap;
+			PEXPermissionSubscriptionMap wrappedMap = new PEXPermissionSubscriptionMap(plugin, manager, backing);
+			if (INSTANCE.compareAndSet(null, wrappedMap)) {
+				field.set(manager, wrappedMap);
+				return wrappedMap;
+			} else {
+				return INSTANCE.get();
+			}
 		} catch (IllegalAccessException e) {
-			LOGGER.log(Level.SEVERE, "[PermissionsEx] Error injecting permissible map!", e);
+			plugin.getLogger().log(Level.SEVERE, "Error injecting permissible map!", e);
 			return null;
 		} catch (NoSuchFieldException e) {
-			LOGGER.severe("[PermissionsEx] No permission subscriptions field in plugin manager! " +
+			plugin.getLogger().severe("No permission subscriptions field in plugin manager! " +
 					"Permission-based broadcasts will not work.");
 			return null;
 		}
 	}
 
 	/**
-	 * Uninject a PEX map from the provided plugin manager.
-	 *
-	 * @param manager The manager to uninject
+	 * Uninject this PEX map from its plugin manager
 	 */
-	public static void uninject(PluginManager manager) {
-		try {
-			Field field = manager.getClass().getDeclaredField("permSubs");
-			field.setAccessible(true);
-			Map backing = (Map) field.get(manager);
-			if (backing instanceof PEXPermissionSubscriptionMap) {
-				PEXPermissionSubscriptionMap wrappedMap = (PEXPermissionSubscriptionMap) backing;
-				Map<String, Map<Permissible, Boolean>> unwrappedMap = new HashMap<String, Map<Permissible, Boolean>>(backing.size());
-				for (Map.Entry<String, Map<Permissible, Boolean>> entry : wrappedMap.entrySet()) {
+	public void uninject() {
+		if (INSTANCE.compareAndSet(this, null)) {
+			try {
+				Field field = manager.getClass().getDeclaredField("permSubs");
+				field.setAccessible(true);
+				Map<String, Map<Permissible, Boolean>> unwrappedMap = new HashMap<String, Map<Permissible, Boolean>>(this.size());
+				for (Map.Entry<String, Map<Permissible, Boolean>> entry : this.entrySet()) {
 					if (entry.getValue() instanceof PEXSubscriptionValueMap) {
 						unwrappedMap.put(entry.getKey(), ((PEXSubscriptionValueMap) entry.getValue()).backing);
 					}
 				}
 				field.set(manager, unwrappedMap);
+			} catch (IllegalAccessException e) {
+				this.plugin.getLogger().log(Level.SEVERE, "Error uninjecting permissible map!", e);
+			} catch (NoSuchFieldException e) {
+				// Wasn't injected anyway, no need to notify
 			}
-		} catch (IllegalAccessException e) {
-			LOGGER.log(Level.SEVERE, "[PermissionsEx] Error uninjecting permissible map!", e);
-		} catch (NoSuchFieldException e) {
-			// Wasn't injected anyway, no need to notify
 		}
 	}
 
@@ -94,21 +98,19 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 		}
 
 		Map<Permissible, Boolean> result = super.get(key);
-		if (PermissionsEx.isAvailable()) {
-			if (result == null) {
-				result = new PEXSubscriptionValueMap((String) key, new WeakHashMap<Permissible, Boolean>());
-				super.put((String) key, result);
-			} else if (!(result instanceof PEXSubscriptionValueMap)) {
-				result = new PEXSubscriptionValueMap((String) key, result);
-				super.put((String) key, result);
-			}
+		if (result == null) {
+			result = new PEXSubscriptionValueMap((String) key, new WeakHashMap<Permissible, Boolean>());
+			super.put((String) key, result);
+		} else if (!(result instanceof PEXSubscriptionValueMap)) {
+			result = new PEXSubscriptionValueMap((String) key, result);
+			super.put((String) key, result);
 		}
 		return result;
 	}
 
 	@Override
 	public Map<Permissible, Boolean> put(String key, Map<Permissible, Boolean> value) {
-		if (!(value instanceof PEXSubscriptionValueMap) && PermissionsEx.isAvailable()) {
+		if (!(value instanceof PEXSubscriptionValueMap)) {
 			value = new PEXSubscriptionValueMap(key, value);
 		}
 		return super.put(key, value);
@@ -165,13 +167,10 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 
 		@Override
 		public Boolean get(Object key) {
-			if (key instanceof Player) {
-				PermissionUser user = PermissionsEx.getUser((Player) key);
-				if (user != null) {
-					String match = user.getMatchingExpression(permission, ((Player) key).getWorld().getName());
-					if (match != null) {
-						return user.explainExpression(match);
-					}
+			if (key instanceof Permissible) {
+				Permissible p = (Permissible) key;
+				if (p.isPermissionSet(permission)) {
+					return p.hasPermission(permission);
 				}
 			}
 			return backing.get(key);
@@ -179,15 +178,11 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 
 		@Override
 		public Set<Permissible> keySet() {
-			Player[] players = superms.getPlugin().getServer().getOnlinePlayers();
+			Player[] players = plugin.getServer().getOnlinePlayers();
 			Set<Permissible> pexMatches = new HashSet<Permissible>(players.length);
 			for (Player player : players) {
-				PermissionUser user = PermissionsEx.getUser(player);
-				if (user != null) {
-					String match = user.getMatchingExpression(permission, player.getWorld().getName());
-					if (match != null) {
-						pexMatches.add(player);
-					}
+				if (player.hasPermission(permission)) {
+					pexMatches.add(player);
 				}
 			}
 			return Sets.union(pexMatches, backing.keySet());
