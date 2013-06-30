@@ -18,191 +18,181 @@
  */
 package ru.tehkode.permissions.bukkit;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.server.PluginEnableEvent;
-import org.bukkit.permissions.Permission;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.tehkode.permissions.PermissionMatcher;
+import ru.tehkode.permissions.RegExpMatcher;
 import ru.tehkode.permissions.bukkit.superperms.PEXPermissionSubscriptionMap;
+import ru.tehkode.permissions.bukkit.superperms.PermissibleInjector;
 import ru.tehkode.permissions.bukkit.superperms.PermissiblePEX;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import static ru.tehkode.permissions.bukkit.CraftBukkitInterface.getCBClassName;
 
 /**
  * @author code
  */
-public class PermissionsEx extends JavaPlugin {
-	// Parent-child permissions stuff
-	private final Map<String, Map<String, Boolean>> childPermissions = new HashMap<String, Map<String, Boolean>>();
-	private int permissionsHashCode;
-
+public final class PermissionsEx extends JavaPlugin {
+	protected static final PermissibleInjector[] injectors = new PermissibleInjector[]{
+			new PermissibleInjector.ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
+			new PermissibleInjector.ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
+			new PermissibleInjector.ClassNameRegexPermissibleInjector("org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer", "perm", false, "Spout"),
+			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit"),
+			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++")
+	};
 	// Permissions subscriptions handling
 	private PEXPermissionSubscriptionMap subscriptionHandler;
+	private final PermissionMatcher matcher = new RegExpMatcher();
+	private boolean debugMode = false;
 
 	@Override
 	public void onEnable() {
 		subscriptionHandler = PEXPermissionSubscriptionMap.inject(this, getServer().getPluginManager());
 		getServer().getPluginManager().registerEvents(new EventListener(), this);
-		checkAllParentPermissions(true);
+		injectAllPermissibles();
 	}
 
 	@Override
 	public void onDisable() {
 		subscriptionHandler.uninject();
+		uninjectAllPermissibles();
 	}
 
-	public Map<String, Map<String, Boolean>> getChildPermissions() {
-		return childPermissions;
+	public boolean debugMode() {
+		return this.debugMode;
 	}
 
-	public final void checkAllParentPermissions(boolean forced) {
-		Set<Permission> allPermissions = getServer().getPluginManager().getPermissions();
-		int hashCode = allPermissions.hashCode();
-
-		if (forced || hashCode != permissionsHashCode) {
-			calculateParentPermissions(allPermissions);
-
-			permissionsHashCode = hashCode;
-		}
+	public void setDebugMode(boolean debug) {
+		this.debugMode = debug;
 	}
 
-	protected void calculateParentPermissions(Set<Permission> permissions) {
-		for (Permission permission : permissions) {
-			this.calculatePermissionChildren(permission);
-		}
+	public PermissionMatcher getMatcher() {
+		return this.matcher;
 	}
 
-	protected void calculatePermissionChildren(Permission permission) {
-		for (Map.Entry<String, Boolean> child : permission.getChildren().entrySet()) {
-			Map<String, Boolean> map = this.childPermissions.get(child.getKey().toLowerCase());
-			if (map == null) {
-				this.childPermissions.put(child.getKey().toLowerCase(), map = new HashMap<String, Boolean>());
-			}
-
-			map.put(permission.getName(), child.getValue());
-		}
-	}
-
-	private void registerEvents() {
-		PluginManager manager = plugin.getServer().getPluginManager();
-
-		manager.registerEvents(new EventListener(), this);
-	}
-
-	public void updatePermissions(Player player) {
-		if (player == null || !this.plugin.isEnabled()) {
+	public void injectPermissible(Player player) {
+		if (player.hasPermission("permissionsex.disable")) { // this user shouldn't get permissionsex matching
 			return;
 		}
 
-		PermissiblePEX.inject(player, this);
+		try {
+			PermissiblePEX permissible = new PermissiblePEX(player, this);
 
-		player.recalculatePermissions();
-	}
-
-	public void updateAllPlayers() {
-		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-			updatePermissions(player);
-		}
-	}
-
-	protected class EventListener implements Listener {
-
-		@EventHandler(priority = EventPriority.LOWEST)
-		public void onPlayerLogin(PlayerLoginEvent event) {
-			try {
-				updatePermissions(event.getPlayer());
-			} catch (Throwable t) {
-				ErrorReport.handleError("Superperms event login", t);
-			}
-		}
-
-		@EventHandler(priority = EventPriority.LOW)
-		public void onPluginEnable(PluginEnableEvent event) {
-			try {
-				List<Permission> pluginPermissions = event.getPlugin().getDescription().getPermissions();
-
-				for (Permission permission : pluginPermissions) {
-					calculatePermissionChildren(permission);
-				}
-			} catch (Throwable t) {
-				ErrorReport.handleError("Superperms event plugin enable", t);
-			}
-		}
-
-		@EventHandler(priority = EventPriority.LOW)
-		public void onEntityEvent(PermissionEntityEvent event) {
-			try {
-				if (event.getEntity() instanceof PermissionUser) { // update user only
-					updatePermissions(Bukkit.getServer().getPlayer(event.getEntity().getName()));
-				} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-					for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers(event.getEntity().getName(), true)) {
-						updatePermissions(Bukkit.getServer().getPlayer(user.getName()));
+			boolean success = false, found = false;
+			for (PermissibleInjector injector : injectors) {
+				if (injector.isApplicable(player)) {
+					found = true;
+					Permissible oldPerm = injector.inject(player, permissible);
+					if (oldPerm != null) {
+						permissible.setPreviousPermissible(oldPerm);
+						success = true;
+						break;
 					}
 				}
-			} catch (Throwable t) {
-				ErrorReport.handleError("Superperms event permission entity", t);
 			}
+
+			if (!found) {
+				getLogger().warning("No Permissible injector found for your server implementation!");
+			} else if (!success) {
+				getLogger().warning("Unable to inject PEX's permissible for " + player.getName());
+			}
+
+			permissible.recalculatePermissions();
+
+			if (success && debugMode()) {
+				getLogger().info("Permissions handler for " + player.getName() + " successfully injected");
+			}
+		} catch (Throwable e) {
+			getLogger().log(Level.SEVERE, "Unable to inject permissible for " + player.getName(), e);
+		}
+	}
+
+	private void injectAllPermissibles() {
+		for (Player player : getServer().getOnlinePlayers()) {
+			injectPermissible(player);
+		}
+	}
+
+	private void uninjectPermissible(Player player) {
+		if (player.hasPermission("permissionsex.disable")) { // this user shouldn't get permissionsex matching
+			return;
 		}
 
-		@EventHandler(priority = EventPriority.LOW)
-		public void onSystemEvent(PermissionSystemEvent event) {
-			try {
-				if (event.getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
-					return;
+		try {
+			boolean success = false;
+			for (PermissibleInjector injector : injectors) {
+				if (injector.isApplicable(player)) {
+					Permissible pexPerm = injector.getPermissible(player);
+					if (pexPerm instanceof PermissiblePEX) {
+					if (injector.inject(player, ((PermissiblePEX) pexPerm).getPreviousPermissible()) != null) {
+						success = true;
+						break;
+					}
+					}
 				}
-
-				updateAllPlayers();
-			} catch (Throwable t) {
-				ErrorReport.handleError("Superperms event permission system event", t);
 			}
+
+			if (!success) {
+				getLogger().warning("No Permissible injector found for your server implementation (while uninjecting for " + player.getName() + "!");
+			} else if (debugMode()) {
+				getLogger().info("Permissions handler for " + player.getName() + " successfully uninjected");
+			}
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void uninjectAllPermissibles() {
+		for (Player player : getServer().getOnlinePlayers()) {
+			injectPermissible(player);
+		}
+	}
+
+	private class EventListener implements Listener {
+		@EventHandler(priority = EventPriority.LOWEST)
+		public void onPlayerLogin(PlayerLoginEvent event) {
+			injectPermissible(event.getPlayer());
+		}
+
+		@EventHandler(priority = EventPriority.MONITOR)
+		// Technically not supposed to use MONITOR for this, but we don't want to remove before other plugins are done checking permissions
+		public void onPlayerQuit(PlayerQuitEvent event) {
+			uninjectPermissible(event.getPlayer());
 		}
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-		try {
-			PluginDescriptionFile pdf = this.getDescription();
-			if (args.length > 0) {
-				return this.commandsManager.execute(sender, command, args);
+		PluginDescriptionFile pdf = this.getDescription();
+		if (args.length == 1) {
+			if (args[0].equalsIgnoreCase("debug")) {
+				setDebugMode(!debugMode());
+				sender.sendMessage(ChatColor.AQUA + " Debug mode " + (debugMode() ? "enabled" : "disabled"));
+				return true;
+			} else if (args[0].equalsIgnoreCase("reload")) {
+				uninjectAllPermissibles();
+				injectAllPermissibles();
+				sender.sendMessage(ChatColor.AQUA + "PEX reloaded");
+				return true;
 			} else {
-				if (sender instanceof Player) {
-					sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]");
-
-					return !this.permissionsManager.has((Player) sender, "permissions.manage");
-				} else {
-					sender.sendMessage("[PermissionsEx] version [" + pdf.getVersion() + "]");
-
-					return false;
-				}
+				sender.sendMessage(ChatColor.RED + "Unknown command: " + args[0]);
 			}
-		} catch (Throwable t) {
-			ErrorReport report = ErrorReport.withException("While " + sender.getName() + " was executing /" + command.getName(), t);
-			String msg = report.buildUserErrorMessage();
-			if (!(sender instanceof ConsoleCommandSender)) {
-				getLogger().severe(msg);
-			}
-			sender.sendMessage(ChatColor.RED + msg);
-			return true;
+		} else if (args.length > 1) {
+			sender.sendMessage(ChatColor.RED + "Too many arguments!");
 		}
+		// Usage
+		sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.RESET + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.RESET + "]");
+		return false;
 	}
 }

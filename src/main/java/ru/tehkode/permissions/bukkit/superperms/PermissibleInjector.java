@@ -25,47 +25,61 @@ public abstract class PermissibleInjector {
 	 *
 	 * @param player      The player to have {@code permissible} injected into
 	 * @param permissible The permissible to inject into {@code player}
-	 * @return whether the injection was successful
+	 * @return the old permissible if the injection was successful, otherwise null
 	 * @throws NoSuchFieldException   when the permissions field could not be found in the Permissible
 	 * @throws IllegalAccessException when things go very wrong
 	 */
-	public boolean inject(Player player, Permissible permissible) throws NoSuchFieldException, IllegalAccessException {
-		Class humanEntity;
+	public Permissible inject(Player player, Permissible permissible) throws NoSuchFieldException, IllegalAccessException {
+		Field permField = getPermissibleField(player);
+		if (permField == null) {
+			return null;
+		}
+		Permissible oldPerm = (Permissible) permField.get(player);
+		if (copyValues && permissible instanceof PermissibleBase) {
+			PermissibleBase newBase = (PermissibleBase) permissible;
+			PermissibleBase oldBase = (PermissibleBase) oldPerm;
+			copyValues(oldBase, newBase);
+		}
+
+		// Inject permissible
+		permField.set(player, permissible);
+		return oldPerm;
+	}
+
+	public Permissible getPermissible(Player player) throws NoSuchFieldException, IllegalAccessException {
+		return (Permissible) getPermissibleField(player).get(player);
+	}
+
+	private Field getPermissibleField(Player player) throws NoSuchFieldException {
+		Class<?> humanEntity;
 		try {
 			humanEntity = Class.forName(clazzName);
 		} catch (ClassNotFoundException e) {
-			Logger.getLogger("Minecraft").warning("[PermissionsEx] Unknown server implementation being used!");
-			return false;
+			Logger.getLogger("PermissionsEx").warning("[PermissionsEx] Unknown server implementation being used!");
+			return null;
 		}
 
 		if (!humanEntity.isAssignableFrom(player.getClass())) {
-			Logger.getLogger("Minecraft").warning("[PermissionsEx] Strange error while injecting permissible!");
-			return false;
+			Logger.getLogger("PermissionsEx").warning("[PermissionsEx] Strange error while injecting permissible!");
+			return null;
 		}
 
 		Field permField = humanEntity.getDeclaredField(fieldName);
 		// Make it public for reflection
 		permField.setAccessible(true);
+		return permField;
+	}
 
-		if (copyValues) {
-			PermissibleBase oldBase = (PermissibleBase) permField.get(player);
+	private void copyValues(PermissibleBase old, PermissibleBase newPerm) throws NoSuchFieldException, IllegalAccessException {
+		// Attachments
+		Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
+		attachmentField.setAccessible(true);
+		attachmentField.set(newPerm, attachmentField.get(old));
 
-			// Copy permissions and attachments from old Permissible
-
-			// Attachments
-			Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
-			attachmentField.setAccessible(true);
-			attachmentField.set(permissible, attachmentField.get(oldBase));
-
-			// Permissions
-			Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
-			permissionsField.setAccessible(true);
-			permissionsField.set(permissible, permissionsField.get(oldBase));
-		}
-
-		// Inject permissible
-		permField.set(player, permissible);
-		return true;
+		// Permissions
+		Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
+		permissionsField.setAccessible(true);
+		permissionsField.set(newPerm, permissionsField.get(old));
 	}
 
 	public abstract boolean isApplicable(Player player);

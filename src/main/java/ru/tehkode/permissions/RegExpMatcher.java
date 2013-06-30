@@ -5,12 +5,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RegExpMatcher implements PermissionMatcher {
-	protected static Pattern rangeExpression = Pattern.compile("(\\d+)-(\\d+)");
-
+	protected static final Pattern RANGE_EXPRESSION = Pattern.compile("(\\d+)-(\\d+)");
 	protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
 
 	@Override
-	public boolean isMatches(String expression, String permission) {
+	public boolean matches(String expression, String permission) {
 		Pattern permissionMatcher = patternCache.get(expression);
 
 		if (permissionMatcher == null) {
@@ -36,7 +35,7 @@ public class RegExpMatcher implements PermissionMatcher {
 		String regexp = expression.replace(".", "\\.").replace("*", "(.*)");
 
 		try {
-			Matcher rangeMatcher = rangeExpression.matcher(regexp);
+			Matcher rangeMatcher = RANGE_EXPRESSION.matcher(regexp);
 			while (rangeMatcher.find()) {
 				StringBuilder range = new StringBuilder();
 				int from = Integer.parseInt(rangeMatcher.group(1));
