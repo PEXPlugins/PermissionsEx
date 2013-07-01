@@ -61,10 +61,17 @@ public class PermissiblePEX extends PermissibleBase {
 	@Override
 	public boolean hasPermission(String permission) {
 		if (super.isPermissionSet(permission)) {
-			return super.hasPermission(permission);
+			final boolean ret = super.hasPermission(permission);
+			if (plugin.debugMode()) {
+				plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', superperms-matched a value of " + ret);
+			}
+			return ret;
 		}
 
 		PermissionCheckResult res = permissionValue(permission);
+		if (plugin.debugMode()) {
+			plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', regex-matched a value of " + res + " from cache.");
+		}
 		switch (res) {
 			case TRUE:
 			case FALSE:
@@ -98,6 +105,11 @@ public class PermissiblePEX extends PermissibleBase {
 			for (PermissionAttachmentInfo pai : getEffectivePermissions()) {
 				if (plugin.getMatcher().matches(pai.getPermission(), permission)) {
 					res = PermissionCheckResult.fromBoolean(pai.getValue());
+					if (plugin.debugMode()) {
+						plugin.getLogger().info("User " + player.getName() +
+								" checked for permission '" + permission + "', regex-matched a value of "
+								+ res + " from " + pai.getPermission() + " (CACHE MISS)");
+					}
 					break;
 				}
 			}
