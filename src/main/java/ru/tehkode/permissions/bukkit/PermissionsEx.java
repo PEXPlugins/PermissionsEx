@@ -177,10 +177,18 @@ public final class PermissionsEx extends JavaPlugin {
 		PluginDescriptionFile pdf = this.getDescription();
 		if (args.length == 1) {
 			if (args[0].equalsIgnoreCase("debug")) {
+				if (!sender.hasPermission("permissionsex.debug")) {
+					sender.sendMessage(ChatColor.RED + "You do not have permission to toggle debug mode!");
+					return true;
+				}
 				setDebugMode(!debugMode());
 				sender.sendMessage(ChatColor.AQUA + " Debug mode " + (debugMode() ? "enabled" : "disabled"));
 				return true;
 			} else if (args[0].equalsIgnoreCase("reload")) {
+				if (!sender.hasPermission("permissionsex.reload")) {
+					sender.sendMessage(ChatColor.RED + "You do not have permission to reinject permissibles!");
+					return true;
+				}
 				uninjectAllPermissibles();
 				injectAllPermissibles();
 				sender.sendMessage(ChatColor.AQUA + "PEX reloaded");

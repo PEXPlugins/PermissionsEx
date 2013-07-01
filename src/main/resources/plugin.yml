@@ -16,3 +16,9 @@ permissions:
     permissionsex.disable:
         description: Prevents PEX-style matching from taking effect on players
         default: false
+    permissionsex.debug:
+        description: Allow toggling debug mode on the server
+        default: op
+    permissionsex.reload:
+        description: Allow reinjecting the PEX permissibles
+        default: op
