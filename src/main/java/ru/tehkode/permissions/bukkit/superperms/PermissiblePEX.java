@@ -21,6 +21,7 @@ package ru.tehkode.permissions.bukkit.superperms;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
+import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
@@ -69,9 +70,7 @@ public class PermissiblePEX extends PermissibleBase {
 		}
 
 		PermissionCheckResult res = permissionValue(permission);
-		if (plugin.debugMode()) {
-			plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', regex-matched a value of " + res + " from cache.");
-		}
+
 		switch (res) {
 			case TRUE:
 			case FALSE:
@@ -79,6 +78,28 @@ public class PermissiblePEX extends PermissibleBase {
 			case UNDEFINED:
 			default:
 				return super.hasPermission(permission);
+		}
+	}
+
+	@Override
+	public boolean hasPermission(Permission permission) {
+		if (super.isPermissionSet(permission.getName())) {
+			final boolean ret = super.hasPermission(permission);
+			if (plugin.debugMode()) {
+				plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission.getName() + "', superperms-matched a value of " + ret);
+			}
+			return ret;
+		}
+
+		PermissionCheckResult res = permissionValue(permission.getName());
+
+		switch (res) {
+			case TRUE:
+			case FALSE:
+				return res.toBoolean();
+			case UNDEFINED:
+			default:
+				return permission.getDefault().getValue(player.isOp());
 		}
 	}
 
@@ -99,7 +120,11 @@ public class PermissiblePEX extends PermissibleBase {
 		try {
 			permission = permission.toLowerCase();
 			if (cache.containsKey(permission)) {
-				return cache.get(permission);
+				PermissionCheckResult res = cache.get(permission);
+				if (plugin.debugMode()) {
+					plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', regex-matched a value of " + res + " from cache.");
+				}
+				return res;
 			}
 			PermissionCheckResult res = PermissionCheckResult.UNDEFINED;
 			for (PermissionAttachmentInfo pai : getEffectivePermissions()) {
