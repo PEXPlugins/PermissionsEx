@@ -139,6 +139,7 @@ public class PermissiblePEX extends PermissibleBase {
 				}
 			}
 			cache.put(permission, res);
+			LAST_CALL_ERRORED.set(false);
 			return res;
 		} catch (Throwable t) {
 			if (LAST_CALL_ERRORED.compareAndSet(false, true)) {
