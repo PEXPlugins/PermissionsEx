@@ -1,14 +1,18 @@
 package ru.tehkode.permissions.bukkit;
 
-import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 import ru.tehkode.utils.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -16,6 +20,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,6 +31,27 @@ import java.util.concurrent.Executors;
 public class ErrorReport {
 	private static final ExecutorService ASYNC_EXEC = Executors.newSingleThreadExecutor();
 	private static final String UTF8_ENCODING = "utf-8";
+	private static final ThreadLocal<Yaml> YAML_INSTANCE = new ThreadLocal<Yaml>() {
+		@Override
+		protected Yaml initialValue() {
+			DumperOptions opts = new DumperOptions();
+			opts.setDefaultFlowStyle(DumperOptions.FlowStyle.FLOW);
+			opts.setDefaultScalarStyle(DumperOptions.ScalarStyle.DOUBLE_QUOTED);
+			opts.setPrettyFlow(true);
+			opts.setWidth(Integer.MAX_VALUE); // Don't wrap scalars -- json no like
+			return new Yaml(opts);
+		}
+	};
+	private static final URL GIST_POST_URL;
+
+	static {
+		try {
+			GIST_POST_URL = new URL("https://api.github.com/gists");
+		} catch (MalformedURLException e) {
+			throw new ExceptionInInitializerError(e);
+		}
+	}
+
 	public static final String LONG_URL_FORMAT = "https://github.com/PEXPlugins/PermissionsEx/issues/new?title=%s&body=%s";
 
 	private String shortURL;
@@ -57,7 +84,7 @@ public class ErrorReport {
 			return url;
 		}
 
-		URLConnection conn = null;
+		URLConnection conn;
 		try {
 			conn = shortUrlApi.openConnection();
 			return StringUtils.readStream(conn.getInputStream());
@@ -71,6 +98,51 @@ public class ErrorReport {
 			}*/
 			return url;
 		}
+	}
+
+	public static String gistText(String text) {
+		Yaml yaml = YAML_INSTANCE.get();
+		OutputStreamWriter requestWriter = null;
+		InputStream responseReader = null;
+		try {
+			URLConnection conn = GIST_POST_URL.openConnection();
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+
+			Map<String, Object> request = new HashMap<String, Object>();       // {
+			request.put("description", "PEX Error Report");                       //     "description": "PEX Error Report",
+			request.put("public", "false");                                       //     "public": false,
+			Map<String, Object> filesMap = new HashMap<String, Object>();      //     "files": {
+			Map<String, Object> singleFileMap = new HashMap<String, Object>(); //         "report.md": {
+			singleFileMap.put("content", text);                                //             "content": <text>
+			filesMap.put("report.md", singleFileMap);                           //         }
+			request.put("files", filesMap);                                       //     }
+			// }
+			yaml.dump(request, (requestWriter = new OutputStreamWriter(conn.getOutputStream())));
+
+			Map<?, ?> data = (Map<?, ?>) yaml.load((responseReader = conn.getInputStream()));
+			if (data.containsKey("html_url")) {
+				return data.get("html_url").toString();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (requestWriter != null) {
+				try {
+					requestWriter.close();
+				} catch (IOException ignore) {
+				}
+			}
+
+			if (responseReader != null) {
+				try {
+					responseReader.close();
+				} catch (IOException ignore) {
+				}
+			}
+		}
+		return null;
 	}
 
 	public String getShortURL() {
@@ -95,7 +167,6 @@ public class ErrorReport {
 	public String buildUserErrorMessage() {
 		StringBuilder build = new StringBuilder("Error occurred with PermissionsEx! Please post it to ")
 				.append(getShortURL())
-				.append(ChatColor.RESET)
 				.append(". Full error:\n");
 		StringWriter writer = new StringWriter();
 		PrintWriter pWriter = new PrintWriter(writer);
@@ -114,15 +185,31 @@ public class ErrorReport {
 	}
 
 	public static void handleError(final String cause, final Throwable error) {
+		handleError(cause, error, null);
+	}
+
+	public static void handleError(final String cause, final Throwable error, final CommandSender target) {
 		if (!ASYNC_EXEC.isShutdown()) {
+			System.out.println("Submitting to async executor for handling");
 			ASYNC_EXEC.submit(new Runnable() {
 				@Override
 				public void run() {
-					PermissionsEx.logger.severe(withException(cause, error).buildUserErrorMessage());
+					String msg = withException(cause, error).buildUserErrorMessage();
+					if (target != null) {
+						target.sendMessage(msg);
+					} else {
+						PermissionsEx.getPlugin().getLogger().severe(msg);
+					}
 				}
 			});
 		} else {
-			PermissionsEx.logger.severe(withException(cause, error).buildUserErrorMessage());
+			System.out.println("Not using async");
+			String msg = withException(cause, error).buildUserErrorMessage();
+			if (target != null) {
+				target.sendMessage(msg);
+			} else {
+				PermissionsEx.getPlugin().getLogger().severe(msg);
+			}
 		}
 	}
 
@@ -133,8 +220,6 @@ public class ErrorReport {
 	// Factory methods
 	public static ErrorReport withException(String cause, Throwable error) {
 		Builder builder = builder(error);
-		builder.addHeading("Description")
-				.addText("[Insert description of issue here]");
 
 		builder.addHeading("What PEX Saw");
 
@@ -238,16 +323,19 @@ public class ErrorReport {
 		}
 
 		public ErrorReport build() {
-			return new ErrorReport(this.name, this.message.toString(), error);
+			Builder builder = new Builder(name, error);
+			builder.addHeading("Description")
+					.addText("[Insert description of issue here]");
+			builder.addHeading("Detailed Information")
+					.addText("[Is available here](" + gistText(this.message.toString()) + ")");
+			return new ErrorReport(this.name, builder.message.toString(), error);
 		}
 	}
 
 	public class ExceptionHandler implements Thread.UncaughtExceptionHandler {
 		@Override
 		public void uncaughtException(Thread t, Throwable e) {
-			PermissionsEx.logger.severe(
-					withException("Unknown error in thread " + t.getName() + "-" + t.getId(), e)
-							.buildUserErrorMessage());
+			handleError("Unknown error in thread " + t.getName() + "-" + t.getId(), e);
 		}
 	}
 }

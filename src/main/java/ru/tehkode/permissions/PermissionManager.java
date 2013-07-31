@@ -420,17 +420,13 @@ public class PermissionManager {
 	 * @param backendName name of backend to set to
 	 */
 	public void setBackend(String backendName) {
-		try {
-			synchronized (this) {
-				this.clearCache();
-				this.backend = PermissionBackend.getBackend(backendName, this, config);
-				this.backend.initialize();
-			}
-
-			this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
-		} catch (Throwable t) {
-			ErrorReport.handleError("While setting backend", t);
+		synchronized (this) {
+			this.clearCache();
+			this.backend = PermissionBackend.getBackend(backendName, this, config);
+			this.backend.initialize();
 		}
+
+		this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
 	}
 
 	/**
