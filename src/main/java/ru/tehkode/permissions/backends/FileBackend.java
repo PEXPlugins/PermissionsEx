@@ -41,7 +41,6 @@ import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.file.FileEntity;
 import ru.tehkode.permissions.backends.file.FileGroup;
 import ru.tehkode.permissions.backends.file.FileUser;
 
@@ -241,7 +240,9 @@ public class FileBackend extends PermissionBackend {
 				initNewConfiguration();
 			}
 		} catch (Throwable e) {
-			Logger.getLogger("Minecraft").warning("Error loading permissions file:\n " + e.getMessage());
+			Logger.getLogger("PermissionsEx").warning("===================================\n" +
+					"Error loading permissions file:\n " + e.getMessage() +
+					"===================================\n");
 
 			if (this.permissions == null) {
 				// this is required to drop PEX plugin on first faulty initialization
