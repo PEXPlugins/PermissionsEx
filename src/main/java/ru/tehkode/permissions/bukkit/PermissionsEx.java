@@ -21,8 +21,6 @@ package ru.tehkode.permissions.bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -43,25 +41,21 @@ import ru.tehkode.permissions.bukkit.commands.PromotionCommands;
 import ru.tehkode.permissions.bukkit.commands.UserCommands;
 import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
 import ru.tehkode.permissions.bukkit.commands.WorldCommands;
+import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author code
  */
 public class PermissionsEx extends JavaPlugin {
-
-	protected static final String configFile = "config.yml";
-	protected static final Logger logger = Logger.getLogger("Minecraft");
+	protected static final String CONFIG_FILE = "config.yml";
 	protected PermissionManager permissionsManager;
 	protected CommandsManager commandsManager;
 	protected FileConfiguration config;
-	protected BukkitPermissions superms;
+	protected SuperpermsListener superms;
+	private final RegexPermissions regexPerms = new RegexPermissions(this);
 	private static PermissionsEx instance;
-
 	{
 		instance = this;
 	}
@@ -71,8 +65,6 @@ public class PermissionsEx extends JavaPlugin {
 
 		PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
 		PermissionBackend.registerBackendAlias("file", FileBackend.class);
-
-		logger.log(Level.INFO, "[PermissionsEx] PermissionEx plugin initialized.");
 	}
 
 	@Override
@@ -108,24 +100,14 @@ public class PermissionsEx extends JavaPlugin {
 
 			//register service
 			this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
-
-			// Bukkit permissions
-			ConfigurationSection dinnerpermsConfig = this.config.getConfigurationSection("permissions.superperms");
-
-			if (dinnerpermsConfig == null) {
-				dinnerpermsConfig = this.config.createSection("permissions.superperms");
-			}
-
-			this.superms = new BukkitPermissions(this, dinnerpermsConfig);
-
-			this.superms.updateAllPlayers();
-
+			regexPerms.onEnable();
+			superms = new SuperpermsListener(this);
+			this.getServer().getPluginManager().registerEvents(superms, this);
 			this.saveConfig();
 
 			// Start timed permissions cleaner timer
 			this.permissionsManager.initTimer();
 
-			logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " enabled");
 		} catch (Throwable t) {
 			ErrorReport.handleError("Error while enabling: ", t);
 			this.getPluginLoader().disablePlugin(this);
@@ -140,11 +122,11 @@ public class PermissionsEx extends JavaPlugin {
 			}
 
 			this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
+			this.regexPerms.onDisable();
 			if (this.superms != null) {
 				this.superms.onDisable();
 			}
 
-			logger.log(Level.INFO, "[PermissionsEx] v" + this.getDescription().getVersion() + " disabled successfully.");
 		} catch (Throwable t) {
 			ErrorReport.handleError("While disabling", t);
 		}
@@ -169,18 +151,21 @@ public class PermissionsEx extends JavaPlugin {
 				}
 			}
 		} catch (Throwable t) {
-			ErrorReport report = ErrorReport.withException("While " + sender.getName() + " was executing /" + command.getName(), t);
-			String msg = report.buildUserErrorMessage();
-			if (!(sender instanceof ConsoleCommandSender)) {
-				getLogger().severe(msg);
-			}
-			sender.sendMessage(ChatColor.RED + msg);
+			ErrorReport.handleError("While " + sender.getName() + " was executing /" + command.getName(), t, sender);
 			return true;
 		}
 	}
 
+	public boolean isDebug() {
+		return permissionsManager.isDebug();
+	}
+
 	public static Plugin getPlugin() {
 		return instance;
+	}
+
+	public RegexPermissions getRegexPerms() {
+		return regexPerms;
 	}
 
 	public static boolean isAvailable() {
@@ -195,6 +180,10 @@ public class PermissionsEx extends JavaPlugin {
 		}
 
 		return ((PermissionsEx) getPlugin()).permissionsManager;
+	}
+
+	public PermissionManager getPermissionsManager() {
+		return permissionsManager;
 	}
 
 	public static PermissionUser getUser(Player player) {

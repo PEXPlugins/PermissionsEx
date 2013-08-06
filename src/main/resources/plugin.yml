@@ -86,6 +86,6 @@ commands:
            Usage:
            /<command> <user> - Demotes <user> to previous group
 permissions:
-    permissionsex.handler.injected:
-        description: Service permissions used by PEX for superperms bridge injection. DO NOT USE IT!
+    permissionsex.disabled:
+        description: Apply this permission to players who should not have pex regex-based permission matching apply
         default: false
