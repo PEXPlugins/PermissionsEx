@@ -32,7 +32,8 @@ public class RegexPermissions {
 			new PermissibleInjector.ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
 			new PermissibleInjector.ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer"),
 			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit"),
-			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++")
+			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++"),
+			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "SportBukkit")
 	};
 
 	public void onEnable() {
