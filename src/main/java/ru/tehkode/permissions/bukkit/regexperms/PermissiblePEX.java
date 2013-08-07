@@ -183,7 +183,7 @@ public class PermissiblePEX extends PermissibleBase {
 					}
 			}
 			cache.put(permission, res);
-			if (res == PermissionCheckResult.UNDEFINED) {
+			if (res == PermissionCheckResult.UNDEFINED && plugin.isDebug()) {
 				plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', no match found (CACHE MISS)");
 			}
 			LAST_CALL_ERRORED.set(false);
