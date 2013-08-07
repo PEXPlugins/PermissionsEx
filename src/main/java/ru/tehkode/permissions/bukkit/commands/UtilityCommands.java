@@ -197,9 +197,15 @@ public class UtilityCommands extends PermissionsCommand {
 			description = "PermissionsEx commands help")
 	public void showHelp(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		List<CommandBinding> commands = this.manager.getCommands();
-
-		int count = args.containsKey("count") ? Integer.parseInt(args.get("count")) : 4;
-		int page = args.containsKey("page") ? Integer.parseInt(args.get("page")) : 1;
+		
+		try {
+			int count = args.containsKey("count") ? Integer.parseInt(args.trget("count")) : 4;
+			int page = args.containsKey("page") ? Integer.parseInt(args.get("page")) : 1;
+		} catch (NumberFormatException e) {
+			sender.sendMessage("Unkown Format! \"" + e.getMessage() + "\"");
+			return;
+		}
+		
 
 		if (page < 1) {
 			sender.sendMessage("Page couldn't be lower than 1");
