@@ -199,10 +199,22 @@ public class UtilityCommands extends PermissionsCommand {
 		List<CommandBinding> commands = this.manager.getCommands();
 		
 		try {
-			int count = args.containsKey("count") ? Integer.parseInt(args.trget("count")) : 4;
-			int page = args.containsKey("page") ? Integer.parseInt(args.get("page")) : 1;
+			int page = args.containsKey("page") ? Integer.parseInt(args
+					.get("page")) : 1;
 		} catch (NumberFormatException e) {
-			sender.sendMessage("Unkown Format! \"" + e.getMessage() + "\"");
+			sender.sendMessage(ChatColor.RED + "Page only accepts numbers!");
+			sender.sendMessage(ChatColor.RED + "\"" + args.get("paga")
+					+ "\" contains a non number!");
+			return;
+		}
+
+		try {
+			int count = args.containsKey("count") ? Integer.parseInt(args
+					.get("count")) : 4;
+		} catch (NumberFormatException e) {
+			sender.sendMessage(ChatColor.RED + "Count only accepts numbers!");
+			sender.sendMessage(ChatColor.RED + "\"" + args.get("count")
+					+ "\" contains a non number!");
 			return;
 		}
 		
