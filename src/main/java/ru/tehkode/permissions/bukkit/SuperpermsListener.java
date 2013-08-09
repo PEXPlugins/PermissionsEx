@@ -7,80 +7,109 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionDefault;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.bukkit.ErrorReport;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author zml2008
+ * PEX permissions database integration with superperms
  */
 public class SuperpermsListener implements Listener {
 	private final PermissionsEx plugin;
-	private final Map<String, PermissionAttachment> attachments = new ConcurrentHashMap<String, PermissionAttachment>();
+	private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
+	private final Map<String, Permission> mainPermissions = new HashMap<String, Permission>(), // player->permission object
+			optionPermissions = new HashMap<String, Permission>();
 
 	public SuperpermsListener(PermissionsEx plugin) {
 		this.plugin = plugin;
 	}
 
 	protected void updateAttachment(Player player) {
-		PermissionAttachment prevAttach = attachments.get(player.getName());
-		if (prevAttach != null) {
-			prevAttach.remove();
+		PermissionAttachment attach = attachments.get(player.getName());
+		Permission playerPerm = getCreateWrapper(player, "", mainPermissions);
+		Permission playerOptionPerm = getCreateWrapper(player, ".options", optionPermissions);
+		if (attach == null) {
+			attach = player.addAttachment(plugin);
+			attachments.put(player.getName(), attach);
+			attach.setPermission(playerPerm, true);
 		}
 
-		final PermissionAttachment attach = player.addAttachment(plugin);
-		attachments.put(player.getName(), attach);
 		PermissionUser user = plugin.getPermissionsManager().getUser(player);
 		if (user != null) {
-			final String[] perms = user.getPermissions(player.getWorld().getName());
-			final String worldName = player.getWorld().getName();
-			final String[] groups = user.getGroupsNames(worldName);
-			final Map<String, String> options = user.getOptions(worldName);
-			final String prefix = user.getPrefix(worldName), suffix = user.getSuffix(worldName);
-
-			plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-				@Override
-				public void run() {
-					for (String perm : perms) {
-						boolean value = true;
-						if (perm.startsWith("-")) {
-							value = false;
-							perm = perm.substring(1);
-						}
-						attach.setPermission(perm, value);
-					}
-
-					// Metadata
-					// Groups
-					for (String group : groups) {
-						attach.setPermission("groups." + group, true);
-						attach.setPermission("group." + group, true);
-					}
-
-					// Options
-					for (Map.Entry<String, String> option : options.entrySet()) {
-						attach.setPermission("options." + option.getKey() + "." + option.getValue(), true);
-					}
-
-					// Prefix and Suffix
-					attach.setPermission("prefix." + prefix, true);
-					attach.setPermission("suffix." + suffix, true);
-				}
-			});
+			updatePlayerPermission(playerPerm, player, user);
+			updatePlayerMetadata(playerOptionPerm, player, user);
+			player.recalculatePermissions();
 		}
+	}
+
+	private Permission getCreateWrapper(Player player, String suffix, Map<String, Permission> permissions) {
+		Permission perm = permissions.get(player.getName());
+		if (perm == null) {
+			perm = new Permission("permissionsex.player." + player.getName() + suffix, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE);
+			permissions.put(player.getName(), perm);
+			plugin.getServer().getPluginManager().addPermission(perm);
+		}
+
+		return perm;
+
+	}
+
+	private void updatePlayerPermission(Permission permission, Player player, PermissionUser user) {
+		permission.getChildren().clear();
+		permission.getChildren().put("permissionsex.player." + player.getName() + ".options", true);
+		for (String perm : user.getPermissions(player.getWorld().getName())) {
+			boolean value = true;
+			if (perm.startsWith("-")) {
+				value = false;
+				perm = perm.substring(1);
+			}
+			permission.getChildren().put(perm, value);
+		}
+	}
+
+	private void updatePlayerMetadata(Permission rootPermission, Player player, PermissionUser user) {
+		rootPermission.getChildren().clear();
+		final String[] groups = user.getGroupsNames(player.getWorld().getName());
+		final Map<String, String> options = user.getOptions(player.getWorld().getName());
+		// Metadata
+		// Groups
+		for (String group : groups) {
+			rootPermission.getChildren().put("groups." + group, true);
+			rootPermission.getChildren().put("group." + group, true);
+		}
+
+		// Options
+		for (Map.Entry<String, String> option : options.entrySet()) {
+			rootPermission.getChildren().put("options." + option.getKey() + "." + option.getValue(), true);
+		}
+
+		// Prefix and Suffix
+		rootPermission.getChildren().put("prefix." + user.getPrefix(player.getWorld().getName()), true);
+		rootPermission.getChildren().put("suffix." + user.getSuffix(player.getWorld().getName()), true);
+
 	}
 
 	protected void removeAttachment(Player player) {
 		PermissionAttachment attach = attachments.remove(player.getName());
 		if (attach != null) {
 			attach.remove();
+		}
+
+		Permission mainPerm = mainPermissions.remove(player.getName());
+		if (mainPerm != null) {
+			plugin.getServer().getPluginManager().removePermission(mainPerm);
+		}
+
+		Permission optionPerm = optionPermissions.remove(player.getName());
+		if (optionPerm != null) {
+			plugin.getServer().getPluginManager().removePermission(optionPerm);
 		}
 	}
 
@@ -109,20 +138,39 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
+	private void updateSelective(PermissionEntityEvent event, PermissionUser user) {
+		final Player p = plugin.getServer().getPlayerExact(user.getName());
+		if (p != null) {
+			switch (event.getAction()) {
+				case SAVED:
+					break;
+
+				case PERMISSIONS_CHANGED:
+				case TIMEDPERMISSION_EXPIRED:
+					updatePlayerPermission(getCreateWrapper(p, "", mainPermissions), p, user);
+					p.recalculatePermissions();
+					break;
+
+				case OPTIONS_CHANGED:
+				case INFO_CHANGED:
+					updatePlayerMetadata(getCreateWrapper(p, ".options", optionPermissions), p, user);
+					p.recalculatePermissions();
+					break;
+
+				default:
+					updateAttachment(p);
+			}
+		}
+	}
+
 	@EventHandler(priority = EventPriority.LOW)
 	public void onEntityEvent(PermissionEntityEvent event) {
 		try {
 			if (event.getEntity() instanceof PermissionUser) { // update user only
-				final Player p = plugin.getServer().getPlayerExact(event.getEntity().getName());
-				if (p != null) {
-					updateAttachment(p);
-				}
+				updateSelective(event, (PermissionUser) event.getEntity());
 			} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
 				for (PermissionUser user : plugin.getPermissionsManager().getUsers(event.getEntity().getName(), true)) {
-					final Player p = plugin.getServer().getPlayerExact(user.getName());
-					if (p != null) {
-						updateAttachment(p);
-					}
+					updateSelective(event, user);
 				}
 			}
 		} catch (Throwable t) {
@@ -145,9 +193,14 @@ public class SuperpermsListener implements Listener {
 			if (event.getAction() == PermissionSystemEvent.Action.DEBUGMODE_TOGGLE) {
 				return;
 			}
-
-			for (Player p : plugin.getServer().getOnlinePlayers()) {
-				updateAttachment(p);
+			switch (event.getAction()) {
+				case DEBUGMODE_TOGGLE:
+				case REINJECT_PERMISSIBLES:
+					return;
+				default:
+					for (Player p : plugin.getServer().getOnlinePlayers()) {
+						updateAttachment(p);
+					}
 			}
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event permission system event", t);
