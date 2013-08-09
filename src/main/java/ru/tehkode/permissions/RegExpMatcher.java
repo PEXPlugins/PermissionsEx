@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RegExpMatcher implements PermissionMatcher {
+	public static final String RAW_REGEX_CHAR = "$";
 	protected static Pattern rangeExpression = Pattern.compile("(\\d+)-(\\d+)");
 
 	protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
@@ -33,7 +34,12 @@ public class RegExpMatcher implements PermissionMatcher {
 			expression = expression.substring(1);
 		}
 
-		String regexp = expression.replace(".", "\\.").replace("*", "(.*)");
+		boolean rawRegexp = expression.startsWith(RAW_REGEX_CHAR);
+		if (rawRegexp) {
+			expression = expression.substring(1);
+		}
+
+		String regexp = rawRegexp ? expression : expression.replace(".", "\\.").replace("*", "(.*)");
 
 		try {
 			Matcher rangeMatcher = rangeExpression.matcher(regexp);
