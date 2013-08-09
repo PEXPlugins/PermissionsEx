@@ -21,9 +21,11 @@ package ru.tehkode.permissions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import ru.tehkode.permissions.events.PermissionEntityEvent;
@@ -47,7 +49,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		super.initialize();
 
 		if (this.isDebug()) {
-			Logger.getLogger("Minecraft").info("[PermissionsEx] Group " + this.getName() + " initialized");
+			Logger.getLogger("PermissionsEx").info("[PermissionsEx] Group " + this.getName() + " initialized");
 		}
 	}
 
@@ -540,7 +542,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	@Override
 	public String[] getPermissions(String world) {
 		List<String> permissions = new LinkedList<String>();
-		this.getInheritedPermissions(world, permissions, true, false, true);
+		this.getInheritedPermissions(world, permissions, true, false, new HashSet<PermissionGroup>());
 		return permissions.toArray(new String[0]);
 	}
 
@@ -566,11 +568,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		this.setPermissions(permissions.toArray(new String[0]), worldName);
 	}
 
-	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance, boolean firstStep) {
-		if (firstStep) {
+	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance, Set<PermissionGroup> visitedGroups) {
+		if (visitedGroups.size() == 0) {
 			permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
 			permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
-		} else { // filter permissions for ancestors groups			
+		} else { // filter permissions for ancestors groups
 			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getTimedPermissions(worldName));
 			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getOwnPermissions(worldName));
 		}
@@ -578,18 +580,22 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		if (worldName != null) {
 			// World inheritance
 			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				getInheritedPermissions(parentWorld, permissions, false, true, firstStep);
+				getInheritedPermissions(parentWorld, permissions, false, true, visitedGroups);
 			}
 			// Common permission
 			if (!worldInheritance) {
-				this.getInheritedPermissions(null, permissions, false, true, firstStep);
+				this.getInheritedPermissions(null, permissions, false, true, visitedGroups);
 			}
 		}
 
-		// Group inhertance
-		if (groupInheritance) {
-			for (PermissionGroup group : this.getParentGroups(worldName)) {
-				group.getInheritedPermissions(worldName, permissions, true, false, false);
+		if (!visitedGroups.contains(this)) {
+			visitedGroups.add(this);
+
+			// Group inhertance
+			if (groupInheritance) {
+				for (PermissionGroup group : this.getParentGroups(worldName)) {
+					group.getInheritedPermissions(worldName, permissions, true, false, visitedGroups);
+				}
 			}
 		}
 	}
