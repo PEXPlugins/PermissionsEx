@@ -191,6 +191,19 @@ public class UtilityCommands extends PermissionsCommand {
 		logger.warning(debugStatusMessage);
 	}
 
+	private static int tryGetInt(CommandSender sender, Map<String, String> args, String key, int def) {
+		if (!args.containsKey(key)) {
+			return def;
+		}
+
+		try {
+			return Integer.parseInt(args.get(key));
+		} catch (NumberFormatException e) {
+			sender.sendMessage(ChatColor.RED + "Invalid " + key + " entered; must be an integer but was '" + args.get(key) + "'");
+			return Integer.MIN_VALUE;
+		}
+	}
+
 	@Command(name = "pex",
 			syntax = "help [page] [count]",
 			permission = "permissions.manage",
@@ -198,11 +211,15 @@ public class UtilityCommands extends PermissionsCommand {
 	public void showHelp(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		List<CommandBinding> commands = this.manager.getCommands();
 
-		int count = args.containsKey("count") ? Integer.parseInt(args.get("count")) : 4;
-		int page = args.containsKey("page") ? Integer.parseInt(args.get("page")) : 1;
+		int count = tryGetInt(sender, args, "count", 4);
+		int page = tryGetInt(sender, args, "page", 1);
+
+		if (page == Integer.MIN_VALUE || count == Integer.MIN_VALUE) {
+			return; // method already prints error message
+		}
 
 		if (page < 1) {
-			sender.sendMessage("Page couldn't be lower than 1");
+			sender.sendMessage(ChatColor.RED + "Page couldn't be lower than 1");
 			return;
 		}
 
