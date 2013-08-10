@@ -18,6 +18,8 @@
  */
 package ru.tehkode.permissions;
 
+import ru.tehkode.permissions.events.PermissionEntityEvent;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-
-import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  * @author t3hk0d3
@@ -588,14 +588,12 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 			}
 		}
 
-		if (!visitedGroups.contains(this)) {
+		// Group inhertance
+		if (groupInheritance && !visitedGroups.contains(this)) {
 			visitedGroups.add(this);
 
-			// Group inhertance
-			if (groupInheritance) {
-				for (PermissionGroup group : this.getParentGroups(worldName)) {
-					group.getInheritedPermissions(worldName, permissions, true, false, visitedGroups);
-				}
+			for (PermissionGroup group : this.getParentGroups(worldName)) {
+				group.getInheritedPermissions(worldName, permissions, true, false, visitedGroups);
 			}
 		}
 	}
