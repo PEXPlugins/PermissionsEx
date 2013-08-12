@@ -75,11 +75,7 @@ public abstract class PermissibleInjector {
 		Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
 		attachmentField.setAccessible(true);
 		attachmentField.set(newPerm, attachmentField.get(old));
-
-		// Permissions
-		Field permissionsField = PermissibleBase.class.getDeclaredField("permissions");
-		permissionsField.setAccessible(true);
-		permissionsField.set(newPerm, permissionsField.get(old));
+		newPerm.recalculatePermissions();
 	}
 
 	public abstract boolean isApplicable(Player player);

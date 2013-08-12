@@ -26,8 +26,12 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.utils.FieldReplacer;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -40,6 +44,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Class should be thread-safe
  */
 public class PermissiblePEX extends PermissibleBase {
+	private static final FieldReplacer<PermissibleBase, Map> PERMISSIONS_FIELD = new FieldReplacer<PermissibleBase, Map>(PermissibleBase.class, "permissions", Map.class);
+	private final Map<String, PermissionAttachmentInfo> permissions;
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 	private static final AtomicBoolean LAST_CALL_ERRORED = new AtomicBoolean(false);
 
@@ -48,10 +54,19 @@ public class PermissiblePEX extends PermissibleBase {
 	private Permissible previousPermissible = null;
 	protected final Map<String, PermissionCheckResult> cache = new ConcurrentHashMap<String, PermissionCheckResult>();
 
+	@SuppressWarnings("unchecked")
 	public PermissiblePEX(Player player, PermissionsEx plugin) {
 		super(player);
 		this.player = player;
 		this.plugin = plugin;
+		permissions = new LinkedHashMap<String, PermissionAttachmentInfo>() {
+			@Override
+			public PermissionAttachmentInfo put(String s, PermissionAttachmentInfo i) {
+				System.out.println("Putting node " + s);
+				return super.put(s, i);
+			}
+		};
+		PERMISSIONS_FIELD.set(this, permissions);
 	}
 
 	public Permissible getPreviousPermissible() {
@@ -141,6 +156,12 @@ public class PermissiblePEX extends PermissibleBase {
 		}
 	}
 
+
+	@Override
+	public Set<PermissionAttachmentInfo> getEffectivePermissions() {
+		return new LinkedHashSet<PermissionAttachmentInfo>(permissions.values());
+	}
+
 	private PermissionCheckResult checkSingle(String expression, String permission, boolean value) {
 		if (plugin.getPermissionsManager().getPermissionMatcher().isMatches(expression, permission)) {
 			PermissionCheckResult res = PermissionCheckResult.fromBoolean(value);
@@ -168,7 +189,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 			res = PermissionCheckResult.UNDEFINED;
 
-			for (PermissionAttachmentInfo pai : getEffectivePermissions()) {
+			for (PermissionAttachmentInfo pai : permissions.values()) {
 				if ((res = checkSingle(pai.getPermission(), permission, pai.getValue())) != PermissionCheckResult.UNDEFINED) {
 					break;
 				}
