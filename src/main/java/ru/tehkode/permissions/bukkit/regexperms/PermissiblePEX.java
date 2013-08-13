@@ -59,13 +59,7 @@ public class PermissiblePEX extends PermissibleBase {
 		super(player);
 		this.player = player;
 		this.plugin = plugin;
-		permissions = new LinkedHashMap<String, PermissionAttachmentInfo>() {
-			@Override
-			public PermissionAttachmentInfo put(String s, PermissionAttachmentInfo i) {
-				System.out.println("Putting node " + s);
-				return super.put(s, i);
-			}
-		};
+		permissions = new LinkedHashMap<String, PermissionAttachmentInfo>();
 		PERMISSIONS_FIELD.set(this, permissions);
 	}
 
