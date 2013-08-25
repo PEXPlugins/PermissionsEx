@@ -54,7 +54,7 @@ public class PermissionsEx extends JavaPlugin {
 	protected CommandsManager commandsManager;
 	protected FileConfiguration config;
 	protected SuperpermsListener superms;
-	private final RegexPermissions regexPerms = new RegexPermissions(this);
+	private RegexPermissions regexPerms;
 	private static PermissionsEx instance;
 	{
 		instance = this;
@@ -100,7 +100,7 @@ public class PermissionsEx extends JavaPlugin {
 
 			//register service
 			this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
-			regexPerms.onEnable();
+			regexPerms = new RegexPermissions(this);
 			superms = new SuperpermsListener(this);
 			this.getServer().getPluginManager().registerEvents(superms, this);
 			this.saveConfig();
@@ -122,7 +122,9 @@ public class PermissionsEx extends JavaPlugin {
 			}
 
 			this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
-			this.regexPerms.onDisable();
+			if (this.regexPerms != null) {
+				this.regexPerms.onDisable();
+			}
 			if (this.superms != null) {
 				this.superms.onDisable();
 			}

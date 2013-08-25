@@ -25,6 +25,10 @@ public class RegexPermissions {
 
 	public RegexPermissions(PermissionsEx plugin) {
 		this.plugin = plugin;
+		subscriptionHandler = PEXPermissionSubscriptionMap.inject(plugin, plugin.getServer().getPluginManager());
+		permsList = PermissionList.inject(plugin.getServer().getPluginManager());
+		plugin.getServer().getPluginManager().registerEvents(new EventListener(), plugin);
+		injectAllPermissibles();
 	}
 
 	protected static final PermissibleInjector[] injectors = new PermissibleInjector[]{
@@ -35,13 +39,6 @@ public class RegexPermissions {
 			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++"),
 			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "SportBukkit")
 	};
-
-	public void onEnable() {
-		subscriptionHandler = PEXPermissionSubscriptionMap.inject(plugin, plugin.getServer().getPluginManager());
-		permsList = PermissionList.inject(plugin.getServer().getPluginManager());
-		plugin.getServer().getPluginManager().registerEvents(new EventListener(), plugin);
-		injectAllPermissibles();
-	}
 
 	public void onDisable() {
 		subscriptionHandler.uninject();
