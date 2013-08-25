@@ -20,6 +20,7 @@ package ru.tehkode.permissions.backends.sql;
 
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionUser;
+import ru.tehkode.permissions.backends.SQLBackend;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
@@ -29,7 +30,7 @@ public class SQLUser extends ProxyPermissionUser {
 
 	protected SQLEntity backend;
 
-	public SQLUser(String name, PermissionManager manager, SQLConnection sql) {
+	public SQLUser(String name, PermissionManager manager, SQLBackend sql) {
 		super(new SQLEntity(name, manager, SQLEntity.Type.USER, sql));
 
 		this.backend = (SQLEntity) this.backendEntity;

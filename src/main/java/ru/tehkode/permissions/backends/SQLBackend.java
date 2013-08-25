@@ -18,18 +18,6 @@
  */
 package ru.tehkode.permissions.backends;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
@@ -42,7 +30,24 @@ import ru.tehkode.permissions.backends.sql.SQLConnection;
 import ru.tehkode.permissions.backends.sql.SQLEntity;
 import ru.tehkode.permissions.backends.sql.SQLGroup;
 import ru.tehkode.permissions.backends.sql.SQLUser;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.StringUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * @author code
@@ -50,7 +55,8 @@ import ru.tehkode.utils.StringUtils;
 public class SQLBackend extends PermissionBackend {
 
 	protected Map<String, String[]> worldInheritanceCache = new HashMap<String, String[]>();
-	public SQLConnection sql;
+	private Map<String, Object> tableNames;
+	private ThreadLocal<SQLConnection> conn;
 
 	public SQLBackend(PermissionManager manager, Configuration config) {
 		super(manager, config);
@@ -58,10 +64,9 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public void initialize() {
-		String dbDriver = config.getString("permissions.backends.sql.driver", "mysql");
-		String dbUri = config.getString("permissions.backends.sql.uri", "");
-		String dbUser = config.getString("permissions.backends.sql.user", "");
-		String dbPassword = config.getString("permissions.backends.sql.password", "");
+		final String dbUri = config.getString("permissions.backends.sql.uri", "");
+		final String dbUser = config.getString("permissions.backends.sql.user", "");
+		final String dbPassword = config.getString("permissions.backends.sql.password", "");
 
 		if (dbUri == null || dbUri.isEmpty()) {
 			config.set("permissions.backends.sql.uri", "mysql://localhost/exampledb");
@@ -73,22 +78,45 @@ public class SQLBackend extends PermissionBackend {
 			throw new RuntimeException("SQL Connection is not configured, check config.yml");
 		}
 
-		sql = new SQLConnection(dbUri, dbUser, dbPassword, dbDriver);
+		conn = new ThreadLocal<SQLConnection>() {
+			@Override
+			public SQLConnection initialValue() {
+				return new SQLConnection(dbUri, dbUser, dbPassword, SQLBackend.this);
+			}
+		};
 
-		Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Successfuly connected to database");
+
+		Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Successfully connected to database");
 
 		this.setupAliases(config);
-		this.deployTables(dbDriver);
+		this.deployTables();
+	}
+
+	public SQLConnection getSQL() {
+		return conn.get();
+	}
+
+	public String getTableName(String identifier) {
+		Map<String, Object> tableNames = this.tableNames;
+		if (tableNames == null) {
+			return identifier;
+		}
+
+		Object ret = tableNames.get(identifier);
+		if (ret == null) {
+			return identifier;
+		}
+		return ret.toString();
 	}
 
 	@Override
 	public PermissionUser getUser(String name) {
-		return new SQLUser(name, manager, this.sql);
+		return new SQLUser(name, manager, this);
 	}
 
 	@Override
 	public PermissionGroup getGroup(String name) {
-		return new SQLGroup(name, manager, this.sql);
+		return new SQLGroup(name, manager, this);
 	}
 
 	@Override
@@ -97,14 +125,14 @@ public class SQLBackend extends PermissionBackend {
 			ResultSet result;
 
 			if (worldName == null) {
-				result = this.sql.select("SELECT `name` FROM `permissions_entity` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+				result = getSQL().prepAndBind("SELECT `name` FROM `{permissions_entity}` WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal()).executeQuery();
 
 				if (!result.next()) {
 					throw new RuntimeException("There is no default group set, this is a serious issue");
 				}
 			} else {
-				result = this.sql.select("SELECT `name` FROM `permissions` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
-						SQLEntity.Type.GROUP.ordinal(), worldName);
+				result = this.getSQL().prepAndBind("SELECT `name` FROM `{permissions}` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
+						SQLEntity.Type.GROUP.ordinal(), worldName).executeQuery();
 
 				if (!result.next()) {
 					return null;
@@ -122,13 +150,13 @@ public class SQLBackend extends PermissionBackend {
 		try {
 			if (worldName == null) {
 				// Reset default flag
-				this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal());
+				this.getSQL().prepAndBind("UPDATE `{permissions_entity}` SET `default` = 0 WHERE `type` = ? AND `default` = 1 LIMIT 1", SQLEntity.Type.GROUP.ordinal()).execute();
 				// Set default flag
-				this.sql.executeUpdate("UPDATE `permissions_entity` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName());
+				this.getSQL().prepAndBind("UPDATE `{permissions_entity}` SET `default` = 1 WHERE `type` = ? AND `name` = ? LIMIT 1", SQLEntity.Type.GROUP.ordinal(), group.getName()).execute();
 			} else {
-				this.sql.executeUpdate("DELETE FROM `permissions` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal());
-				this.sql.executeUpdate("INSERT INTO `permissions` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
-						group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName);
+				this.getSQL().prepAndBind("DELETE FROM `{permissions}` WHERE `permission` = 'default' AND `world` = ? AND `type` = ?", worldName, SQLEntity.Type.GROUP.ordinal()).execute();
+				this.getSQL().prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `type`, `world`, `value`) VALUES (?, 'default', ?, ?, 'true')",
+						group.getName(), SQLEntity.Type.GROUP.ordinal(), worldName).execute();
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to set default group", e);
@@ -137,7 +165,7 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionGroup[] getGroups() {
-		String[] groupNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.GROUP, false);
+		String[] groupNames = SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.GROUP, false);
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
 		for (String groupName : groupNames) {
@@ -151,7 +179,7 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionUser[] getRegisteredUsers() {
-		String[] userNames = SQLEntity.getEntitiesNames(sql, SQLEntity.Type.USER, false);
+		String[] userNames = SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.USER, false);
 		PermissionUser[] users = new PermissionUser[userNames.length];
 
 		int index = 0;
@@ -169,43 +197,63 @@ public class SQLBackend extends PermissionBackend {
 			return;
 		}
 
-		for (Map.Entry<String, Object> entry : aliases.getValues(false).entrySet()) {
-			sql.setAlias(entry.getKey(), entry.getValue().toString());
-		}
+		tableNames = aliases.getValues(false);
 	}
 
-	protected final void deployTables(String driver) {
-		if (this.sql.isTableExist("permissions")) {
-			return;
-		}
+	private void executeStream(SQLConnection conn, InputStream str) throws SQLException, IOException {
+		String deploySQL = StringUtils.readStream(str);
 
-		try {
-			InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + driver + ".sql");
 
-			if (databaseDumpStream == null) {
-				throw new Exception("Can't find appropriate database dump for used database (" + driver + "). Is it bundled?");
+		Statement s = conn.getStatement();
+
+		for (String sqlQuery : deploySQL.trim().split(";")) {
+			sqlQuery = sqlQuery.trim();
+			if (sqlQuery.isEmpty()) {
+				continue;
 			}
 
-			String deploySQL = StringUtils.readStream(databaseDumpStream);
+			sqlQuery = conn.expandQuery(sqlQuery + ";");
+
+			s.addBatch(sqlQuery);
+		}
+		s.executeBatch();
+	}
+
+	protected final void deployTables() {
+		try {
+			if (this.getSQL().hasTable("permissions")) {
+				return;
+			}
+			InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + getSQL().getDriver() + ".sql");
+
+			if (databaseDumpStream == null) {
+				throw new Exception("Can't find appropriate database dump for used database (" + getSQL().getDriver() + "). Is it bundled?");
+			}
 
 			Logger.getLogger("Minecraft").info("Deploying default database scheme");
 
-			for (String sqlQuery : deploySQL.trim().split(";")) {
-				sqlQuery = sqlQuery.trim();
-				if (sqlQuery.isEmpty()) {
-					continue;
+			executeStream(getSQL(), databaseDumpStream);
+
+			PermissionGroup defGroup = getGroup("default");
+			String deployFile = config.getString("permissions.backends.sql.deploy", "");
+			if (deployFile.length() > 0) {
+				final File deploy = new File(PermissionsEx.getPlugin().getDataFolder(), deployFile);
+				if (!deploy.exists()) {
+					throw new Exception("Permissions deploy file for SQL does not exist!");
 				}
+				executeStream(getSQL(), new FileInputStream(deploy));
+				config.set("permissions.backends.sql.deploy", null);
 
-				sqlQuery = sqlQuery + ";";
-
-				this.sql.executeUpdate(sqlQuery);
+			} else {
+				defGroup.addPermission("modifyworld.*");
+				setDefaultGroup(defGroup, null);
 			}
 
 			Logger.getLogger("Minecraft").info("Database scheme deploying complete.");
 
 		} catch (Exception e) {
 			Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
-			Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please initialize database manually using " + driver + ".sql");
+			Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please initialize database manually using " + getSQL().getDriver() + ".sql");
 		}
 	}
 
@@ -217,11 +265,11 @@ public class SQLBackend extends PermissionBackend {
 			// Basic info (Prefix/Suffix)
 			String prefix = user.getOwnPrefix();
 			String suffix = user.getOwnSuffix();
-			writer.append("INSERT INTO `permissions_entity` ( `name`, `type`, `prefix`, `suffix` ) VALUES ( '" + user.getName() + "', 1, '" + (prefix == null ? "" : prefix) + "','" + (suffix == null ? "" : suffix) + "' );\n");
+			writer.append("INSERT INTO `{permissions_entity}` ( `name`, `type`, `prefix`, `suffix` ) VALUES ( '" + user.getName() + "', 1, '" + (prefix == null ? "" : prefix) + "','" + (suffix == null ? "" : suffix) + "' );\n");
 
 			// Inheritance
 			for (String group : user.getGroupsNames()) {
-				writer.append("INSERT INTO `permissions_inheritance` ( `child`, `parent`, `type` ) VALUES ( '" + user.getName() + "', '" + group + "',  1);\n");
+				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '" + user.getName() + "', '" + group + "',  1);\n");
 			}
 
 			// Permissions
@@ -233,7 +281,7 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + permission + "', '" + world + "', ''); \n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + permission + "', '" + world + "', ''); \n");
 				}
 			}
 
@@ -247,7 +295,7 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
 				}
 			}
 		}
@@ -257,11 +305,11 @@ public class SQLBackend extends PermissionBackend {
 		// Groups
 		for (PermissionGroup group : this.manager.getGroups()) {
 			// Basic info (Prefix/Suffix)
-			writer.append("INSERT INTO `permissions_entity` ( `name`, `type`, `prefix`, `suffix`, `default` ) VALUES ( '" + group.getName() + "', 0, '" + group.getOwnPrefix() + "','" + group.getOwnSuffix() + "', " + (group.equals(defaultGroup) ? "1" : "0") + " );\n");
+			writer.append("INSERT INTO `{permissions_entity}` ( `name`, `type`, `prefix`, `suffix`, `default` ) VALUES ( '" + group.getName() + "', 0, '" + group.getOwnPrefix() + "','" + group.getOwnSuffix() + "', " + (group.equals(defaultGroup) ? "1" : "0") + " );\n");
 
 			// Inheritance
 			for (String parent : group.getParentGroupsNames()) {
-				writer.append("INSERT INTO `permissions_inheritance` ( `child`, `parent`, `type` ) VALUES ( '" + group.getName() + "', '" + parent + "',  0);\n");
+				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '" + group.getName() + "', '" + parent + "',  0);\n");
 			}
 
 			// Permissions
@@ -273,7 +321,7 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value`) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + world + "', '');\n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value`) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + world + "', '');\n");
 				}
 			}
 
@@ -287,7 +335,7 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `permissions` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
 				}
 			}
 		}
@@ -300,7 +348,7 @@ public class SQLBackend extends PermissionBackend {
 			}
 
 			for (String parentWorld : parentWorlds) {
-				writer.append("INSERT INTO `permissions_inheritance` ( `child`, `parent`, `type` ) VALUES ( '" + world.getName() + "', '" + parentWorld + "',  2);\n");
+				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '" + world.getName() + "', '" + parentWorld + "',  2);\n");
 			}
 		}
 
@@ -316,7 +364,7 @@ public class SQLBackend extends PermissionBackend {
 
 		if (!worldInheritanceCache.containsKey(world)) {
 			try {
-				ResultSet result = this.sql.select("SELECT `parent` FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2;", world);
+				ResultSet result = this.getSQL().prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2;", world).executeQuery();
 				LinkedList<String> worldParents = new LinkedList<String>();
 
 				while (result.next()) {
@@ -339,15 +387,14 @@ public class SQLBackend extends PermissionBackend {
 		}
 
 		try {
-			this.sql.executeUpdate("DELETE FROM `permissions_inheritance` WHERE `child` = ? AND `type` = 2", worldName);
+			this.getSQL().prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2", worldName).execute();
 
-			List<Object[]> records = new LinkedList<Object[]>();
-
+			PreparedStatement statement = this.getSQL().prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`) VALUES (?, ?, 2)", worldName, "toset");
 			for (String parentWorld : parentWorlds) {
-				records.add(new Object[]{worldName, parentWorld, 2});
+				statement.setString(2, parentWorld);
+				statement.addBatch();
 			}
-
-			this.sql.insert("permissions_inheritance", new String[]{"child", "parent", "type"}, records);
+			statement.executeBatch();
 
 			this.worldInheritanceCache.put(worldName, parentWorlds);
 

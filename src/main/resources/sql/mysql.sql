@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `permissions` (
+CREATE TABLE IF NOT EXISTS `{permissions}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `permissions` (
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 
-CREATE TABLE IF NOT EXISTS `permissions_entity` (
+CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `permissions_entity` (
   KEY `default` (`default`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
-CREATE TABLE IF NOT EXISTS `permissions_inheritance` (
+CREATE TABLE IF NOT EXISTS `{permissions_inheritance}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `child` varchar(50) NOT NULL,
   `parent` varchar(50) NOT NULL,
@@ -35,6 +35,3 @@ CREATE TABLE IF NOT EXISTS `permissions_inheritance` (
   KEY `child_2` (`child`,`type`),
   KEY `parent` (`parent`,`type`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-INSERT INTO `permissions` (`id`, `name`, `type`, `permission`, `world`, `value`) VALUES (1, 'default', 0, 'modifyworld.*', '', '');
-INSERT INTO `permissions_entity` (`id`, `name`, `type`, `prefix`, `suffix`, `default`) VALUES (1, 'default', 0, '', '', 1);

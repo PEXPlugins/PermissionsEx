@@ -20,13 +20,14 @@ package ru.tehkode.permissions.backends.sql;
 
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.ProxyPermissionGroup;
+import ru.tehkode.permissions.backends.SQLBackend;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 public class SQLGroup extends ProxyPermissionGroup {
 
 	protected SQLEntity backend;
 
-	public SQLGroup(String name, PermissionManager manager, SQLConnection sql) {
+	public SQLGroup(String name, PermissionManager manager, SQLBackend sql) {
 		super(new SQLEntity(name, manager, SQLEntity.Type.GROUP, sql));
 
 		this.backend = (SQLEntity) this.backendEntity;

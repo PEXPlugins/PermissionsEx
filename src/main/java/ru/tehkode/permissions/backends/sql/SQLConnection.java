@@ -18,130 +18,110 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import ru.tehkode.permissions.backends.SQLBackend;
+
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.sql.Statement;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ru.tehkode.utils.StringUtils;
-
+/**
+ * One connection per thread, don't share your connections
+ */
 public class SQLConnection {
-
-	protected static Pattern placeholderPattern = Pattern.compile("\\`([^\\`]+)\\`");
+	private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
+	private final Map<String, PreparedStatement> cachedStatements = new HashMap<String, PreparedStatement>();
+	private Statement statement;
 	protected Connection db;
-	protected String uri;
-	protected String user;
-	protected String password;
-	protected String dbDriver;
-	protected Map<String, String> aliases = new HashMap<String, String>();
+	private final String driver;
+	protected final String uri;
+	protected final String user;
+	protected final String password;
+	private final SQLBackend backend;
 
-	public SQLConnection(String uri, String user, String password, String dbDriver) {
+	public SQLConnection(String uri, String user, String password, SQLBackend backend) {
+		this.uri = uri;
+		this.user = user;
+		this.password = password;
+		this.backend = backend;
+		this.driver = uri.split(":", 2)[0];
 		try {
-
-			Class.forName(getDriverClass(dbDriver)).newInstance();
-
-			this.uri = uri;
-			this.user = user;
-			this.password = password;
-
+			Class.forName(getDriverClass(this.driver)).newInstance();
 			this.connect();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new ExceptionInInitializerError(e);
 		}
 	}
 
-	public void setAlias(String tableName, String alias) {
-		this.aliases.put(tableName, alias);
+	public String getDriver() {
+		return driver;
 	}
 
-	public String getAlias(String tableName) {
-		if (this.aliases.containsKey(tableName)) {
-			return this.aliases.get(tableName);
-		}
-
-		return tableName;
-	}
-
-	public ResultSet select(String sql, Object... params) throws SQLException {
+	public PreparedStatement prep(String query) throws SQLException {
 		this.checkConnection();
 
-		SQLSelectQuery query = new SQLSelectQuery(sql, params);
-
-		query.execute();
-
-		return query.getResults();
-	}
-
-	public <T> T selectSingle(String sql, T fallback, Object... params) {
-		try {
-			this.checkConnection();
-
-			ResultSet result = this.select(sql, params);
-
-			if (!result.next()) {
-				return fallback;
-			}
-
-			return (T) result.getObject(1);
-
-		} catch (SQLException e) {
-			Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
+		PreparedStatement statement = cachedStatements.get(query);
+		if (statement == null) {
+			statement = this.db.prepareStatement(expandQuery(query));
+			cachedStatements.put(query, statement);
 		}
 
-		return fallback;
+		return statement;
 	}
 
-	public void executeUpdate(String sql, Object... params) throws SQLException {
+	/**
+	 * Perform table name expansion on a query
+	 * Example: <pre>SELECT * FROM `{permissions}`;</pre>
+	 * @param query the query to get
+	 * @return The expanded query
+	 */
+	public String expandQuery(String query) {
+		StringBuffer ret = new StringBuffer();
+		Matcher m = TABLE_PATTERN.matcher(query);
+		while (m.find()) {
+			m.appendReplacement(ret, this.backend.getTableName(m.group(1)));
+		}
+		m.appendTail(ret);
+		return ret.toString();
+	}
+
+	public Statement getStatement() throws SQLException {
 		this.checkConnection();
-
-		SQLQuery query = new SQLQuery(sql, params);
-
-		query.execute();
+		if (this.statement == null) {
+			this.statement = this.db.createStatement();
+		}
+		return this.statement;
 	}
 
-	public void insert(String table, String[] fields, List<Object[]> rows) throws SQLException {
+	public boolean hasTable(String table) throws SQLException {
 		this.checkConnection();
-
-		String[] fieldPlaceholders = new String[fields.length];
-		Arrays.fill(fieldPlaceholders, "?");
-		String sql = "INSERT INTO `" + table + "` (`" + StringUtils.implode(fields, "`, `") + "`) VALUES (" + StringUtils.implode(fieldPlaceholders, ", ") + ");";
-
-		SQLQuery query = new SQLQuery(sql);
-
-		for (Object[] params : rows) {
-			query.bindParams(params);
-			query.execute();
-		}
+		return db.getMetaData().getTables(null, null, table, null).next();
 	}
 
-	public boolean isTableExist(String tableName) {
-		try {
-			this.checkConnection();
-
-			return this.db.getMetaData().getTables(null, null, this.getAlias(tableName), null).next();
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
+	public PreparedStatement prepAndBind(String query, Object... args) throws SQLException {
+		PreparedStatement statement = prep(query);
+		bind(statement, (Object[]) args);
+		return statement;
 	}
 
-	public boolean isFieldExists(String tableName, String fieldName) {
-		try {
-			this.checkConnection();
-
-
-			return this.db.getMetaData().getColumns(null, null, this.getAlias(tableName), fieldName).next();
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
+	public PreparedStatement bind(PreparedStatement statement, Object... args) throws SQLException {
+		statement.clearParameters();
+		final int argsExpected = statement.getParameterMetaData().getParameterCount();
+		if (args.length != argsExpected) {
+			throw new SQLException("Invalid argument number provided; expected " + argsExpected + " but got " + args.length);
 		}
+		for (int i = 0; i < args.length; ++i) {
+			statement.setObject(i + 1, args[i]);
+		}
+		return statement;
 	}
 
 	protected void checkConnection() throws SQLException {
@@ -150,37 +130,28 @@ public class SQLConnection {
 		}
 
 		if (!this.db.isValid(3)) {
-			Logger.getLogger("Minecraft").warning("Lost connection with sql server. Reconnecting.");
+			Logger.getLogger("PermissionsEx").warning("Lost connection with sql server. Reconnecting.");
 			this.connect();
 		}
 	}
 
 	protected final void connect() throws SQLException {
-		Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Connecting to database \"" + this.uri + "\"");
+		Logger.getLogger("PermissionsEx").info("[PermissionsEx-SQL] Connecting to database \"" + this.uri + "\"");
+		this.cachedStatements.clear();
+		this.statement = null;
 		db = DriverManager.getConnection("jdbc:" + uri, user, password);
 	}
 
 	protected static String getDriverClass(String alias) {
-
 		if (alias.equals("mysql")) {
 			alias = "com.mysql.jdbc.Driver";
 		} else if (alias.equals("sqlite")) {
 			alias = "org.sqlite.JDBC";
-		} else if (alias.equals("postgre")) {
+		} else if (alias.matches("postgres?")) {
 			alias = "org.postgresql.Driver";
 		}
 
 		return alias;
-	}
-
-	protected final String prepareQuery(String sql) {
-		Matcher match = placeholderPattern.matcher(sql);
-
-		while (match.find()) {
-			sql = sql.replace(match.group(0), "`" + getAlias(match.group(1)) + "`");
-		}
-
-		return sql;
 	}
 
 	@Override
@@ -188,31 +159,9 @@ public class SQLConnection {
 		try {
 			db.close();
 		} catch (SQLException e) {
-			Logger.getLogger("Minecraft").log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
+			Logger.getLogger("PermissionsEx").log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
 		} finally {
 			super.finalize();
-		}
-	}
-
-	public class SQLQuery extends BasicSQLQuery {
-
-		public SQLQuery(String sql, Object... params) throws SQLException {
-			super(db.prepareStatement(prepareQuery(sql)));
-
-			if (params != null) {
-				bindParams(params);
-			}
-		}
-	}
-
-	public class SQLSelectQuery extends BasicSQLSelectQuery {
-
-		public SQLSelectQuery(String sql, Object[] params) throws SQLException {
-			super(db.prepareStatement(prepareQuery(sql)));
-
-			if (params != null) {
-				bindParams(params);
-			}
 		}
 	}
 }
