@@ -108,7 +108,7 @@ public class PermissionManager {
 	 */
 	public PermissionUser getUser(String username) {
 		if (username == null || username.isEmpty()) {
-			return null;
+			throw new IllegalArgumentException("Null or empty name passed! Name must not be empty");
 		}
 
 		PermissionUser user = users.get(username.toLowerCase());
