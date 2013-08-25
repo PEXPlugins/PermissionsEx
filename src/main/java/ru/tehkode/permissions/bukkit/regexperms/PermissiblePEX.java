@@ -80,7 +80,6 @@ public class PermissiblePEX extends PermissibleBase {
 						return existing;
 					}
 				}
-				System.out.println("Putting " + k + "=" + v.getValue());
 				super.put(k, v);
 				return existing;
 			}
