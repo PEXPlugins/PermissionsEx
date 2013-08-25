@@ -161,7 +161,7 @@ public class CommandsManager {
 		private String prepareSyntaxRegexp(String syntax) {
 			String expression = syntax;
 
-			Matcher argMatcher = Pattern.compile("(?:[\\s]+)((\\<|\\[)([^\\>\\]]+)(?:\\>|\\]))").matcher(expression);
+			Matcher argMatcher = Pattern.compile("(?:[\\s]+)?((\\<|\\[)([^\\>\\]]+)(?:\\>|\\]))").matcher(expression);
 			//Matcher argMatcher = Pattern.compile("(\\<|\\[)([^\\>\\]]+)(?:\\>|\\])").matcher(expression);
 
 			int index = 0;
