@@ -43,6 +43,7 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.file.FileGroup;
 import ru.tehkode.permissions.backends.file.FileUser;
+import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 /**
  * @author code
@@ -58,7 +59,7 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize() throws PermissionBackendException {
 		String permissionFilename = config.getString("permissions.backends.file.file");
 
 		// Default settings
@@ -223,14 +224,14 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public void reload() {
+	public void reload() throws PermissionBackendException {
 		FileConfiguration newPermissions = new YamlConfiguration();
 		newPermissions.options().pathSeparator(PATH_SEPARATOR);
 		try {
 
 			newPermissions.load(permissionsFile);
 
-			Logger.getLogger("Minecraft").info("Permissions file successfully reloaded");
+			Logger.getLogger("PermissionsEx").info("Permissions file successfully reloaded");
 
 			this.permissions = newPermissions;
 		} catch (FileNotFoundException e) {
@@ -240,15 +241,7 @@ public class FileBackend extends PermissionBackend {
 				initNewConfiguration();
 			}
 		} catch (Throwable e) {
-			Logger.getLogger("PermissionsEx").warning("===================================\n" +
-					"Error loading permissions file:\n " + e.getMessage() +
-					"===================================\n");
-
-			if (this.permissions == null) {
-				// this is required to drop PEX plugin on first faulty initialization
-				// so PEX won't load with incorrect config
-				throw new IllegalStateException("Error loading permissions file", e);
-			}
+			throw new PermissionBackendException("Error loading permissions file!", e);
 		}
 	}
 
@@ -256,7 +249,7 @@ public class FileBackend extends PermissionBackend {
 	 * This method is called when the file the permissions config is supposed to save to
 	 * does not exist yet,This adds default permissions & stuff
 	 */
-	private void initNewConfiguration() {
+	private void initNewConfiguration() throws PermissionBackendException {
 		if (!permissionsFile.exists()) {
 			try {
 				permissionsFile.createNewFile();
@@ -273,7 +266,7 @@ public class FileBackend extends PermissionBackend {
 
 				this.save();
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				throw new PermissionBackendException(e);
 			}
 		}
 	}

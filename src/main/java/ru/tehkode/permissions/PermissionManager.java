@@ -25,6 +25,7 @@ import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
+import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class PermissionManager {
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
 
-	public PermissionManager(Configuration config) {
+	public PermissionManager(Configuration config) throws PermissionBackendException {
 		this.config = config;
 		this.initBackend();
 
@@ -419,7 +420,7 @@ public class PermissionManager {
 	 *
 	 * @param backendName name of backend to set to
 	 */
-	public void setBackend(String backendName) {
+	public void setBackend(String backendName) throws PermissionBackendException {
 		synchronized (this) {
 			this.clearCache();
 			this.backend = PermissionBackend.getBackend(backendName, this, config);
@@ -446,7 +447,7 @@ public class PermissionManager {
 	/**
 	 * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
 	 */
-	public void reset() {
+	public void reset() throws PermissionBackendException {
 		this.clearCache();
 
 		if (this.backend != null) {
@@ -456,7 +457,11 @@ public class PermissionManager {
 	}
 
 	public void end() {
+		try {
 		reset();
+		} catch (PermissionBackendException ignore) {
+			// Ignore because we're shutting down so who cares
+		}
 		timer.cancel();
 	}
 
@@ -477,7 +482,7 @@ public class PermissionManager {
 		this.initTimer();
 	}
 
-	private void initBackend() {
+	private void initBackend() throws PermissionBackendException {
 		String backendName = this.config.getString("permissions.backend");
 
 		if (backendName == null || backendName.isEmpty()) {

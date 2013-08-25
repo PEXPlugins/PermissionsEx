@@ -57,7 +57,7 @@ public class SQLConnection {
 			Class.forName(getDriverClass(this.driver)).newInstance();
 			this.connect();
 		} catch (Exception e) {
-			throw new ExceptionInInitializerError(e);
+			throw new RuntimeException(e);
 		}
 	}
 

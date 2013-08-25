@@ -43,7 +43,10 @@ import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
 import ru.tehkode.permissions.bukkit.commands.WorldCommands;
 import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
 import ru.tehkode.permissions.commands.CommandsManager;
+import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
+
+import java.util.logging.Level;
 
 /**
  * @author code
@@ -55,6 +58,7 @@ public class PermissionsEx extends JavaPlugin {
 	protected FileConfiguration config;
 	protected SuperpermsListener superms;
 	private RegexPermissions regexPerms;
+	private boolean errored = false;
 	private static PermissionsEx instance;
 	{
 		instance = this;
@@ -67,20 +71,34 @@ public class PermissionsEx extends JavaPlugin {
 		PermissionBackend.registerBackendAlias("file", FileBackend.class);
 	}
 
+	private void logBackendExc(PermissionBackendException e) {
+		getLogger().log(Level.SEVERE, "\n========== UNABLE TO LOAD PERMISSIONS BACKEND =========\n" +
+									  "Your configuration must be fixed before PEX will enable\n" +
+									  "Details: " + e.getMessage() + "\n" +
+									  "=======================================================", e);
+	}
+
 	@Override
 	public void onLoad() {
 		try {
 			this.config = this.getConfig();
 			this.commandsManager = new CommandsManager(this);
 			this.permissionsManager = new PermissionManager(this.config);
+		} catch (PermissionBackendException e) {
+			logBackendExc(e);
+			errored = true;
 		} catch (Throwable t) {
 			ErrorReport.handleError("In onLoad", t);
-			this.setEnabled(false);
+			errored = true;
 		}
 	}
 
 	@Override
 	public void onEnable() {
+		if (errored) {
+			this.getPluginLoader().disablePlugin(this);
+			return;
+		}
 		try {
 			if (this.permissionsManager == null) {
 				this.permissionsManager = new PermissionManager(this.config);
@@ -107,7 +125,9 @@ public class PermissionsEx extends JavaPlugin {
 
 			// Start timed permissions cleaner timer
 			this.permissionsManager.initTimer();
-
+		} catch (PermissionBackendException e) {
+			logBackendExc(e);
+			this.getPluginLoader().disablePlugin(this);
 		} catch (Throwable t) {
 			ErrorReport.handleError("Error while enabling: ", t);
 			this.getPluginLoader().disablePlugin(this);

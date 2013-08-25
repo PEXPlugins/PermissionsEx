@@ -31,6 +31,7 @@ import ru.tehkode.permissions.backends.sql.SQLEntity;
 import ru.tehkode.permissions.backends.sql.SQLGroup;
 import ru.tehkode.permissions.backends.sql.SQLUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.utils.StringUtils;
 
 import java.io.File;
@@ -63,7 +64,7 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize() throws PermissionBackendException {
 		final String dbUri = config.getString("permissions.backends.sql.uri", "");
 		final String dbUser = config.getString("permissions.backends.sql.user", "");
 		final String dbPassword = config.getString("permissions.backends.sql.password", "");
@@ -73,9 +74,7 @@ public class SQLBackend extends PermissionBackend {
 			config.set("permissions.backends.sql.user", "databaseuser");
 			config.set("permissions.backends.sql.password", "databasepassword");
 
-			Logger.getLogger("Minecraft").severe("SQL Connection is not configured, check config.yml");
-
-			throw new RuntimeException("SQL Connection is not configured, check config.yml");
+			throw new PermissionBackendException("SQL connection is not configured, see config.yml");
 		}
 
 		conn = new ThreadLocal<SQLConnection>() {
@@ -85,8 +84,17 @@ public class SQLBackend extends PermissionBackend {
 			}
 		};
 
+		try {
+			getSQL(); // Test connection
+		} catch (Exception e) {
+			if (e.getCause() != null && e.getCause() instanceof Exception) {
+				e = (Exception) e.getCause();
+			}
+			throw new PermissionBackendException(e);
+		}
 
-		Logger.getLogger("Minecraft").info("[PermissionsEx-SQL] Successfully connected to database");
+
+		Logger.getLogger("PermissionsEx").info("[PermissionsEx-SQL] Successfully connected to database");
 
 		this.setupAliases(config);
 		this.deployTables();
@@ -219,7 +227,7 @@ public class SQLBackend extends PermissionBackend {
 		s.executeBatch();
 	}
 
-	protected final void deployTables() {
+	protected final void deployTables() throws PermissionBackendException {
 		try {
 			if (this.getSQL().hasTable("permissions")) {
 				return;
@@ -230,7 +238,7 @@ public class SQLBackend extends PermissionBackend {
 				throw new Exception("Can't find appropriate database dump for used database (" + getSQL().getDriver() + "). Is it bundled?");
 			}
 
-			Logger.getLogger("Minecraft").info("Deploying default database scheme");
+			Logger.getLogger("PermissionsEx").info("Deploying default database scheme");
 
 			executeStream(getSQL(), databaseDumpStream);
 
@@ -249,11 +257,10 @@ public class SQLBackend extends PermissionBackend {
 				setDefaultGroup(defGroup, null);
 			}
 
-			Logger.getLogger("Minecraft").info("Database scheme deploying complete.");
+			Logger.getLogger("PermissionsEx").info("Database scheme deploying complete.");
 
 		} catch (Exception e) {
-			Logger.getLogger("Minecraft").severe("SQL Error: " + e.getMessage());
-			Logger.getLogger("Minecraft").severe("Deploying of default scheme failed. Please initialize database manually using " + getSQL().getDriver() + ".sql");
+			throw new PermissionBackendException("Deploying of default data failed. Please initialize database manually using " + getSQL().getDriver() + ".sql", e);
 		}
 	}
 

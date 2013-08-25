@@ -29,6 +29,7 @@ import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.commands.CommandsManager.CommandBinding;
+import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class UtilityCommands extends PermissionsCommand {
 
@@ -44,9 +46,14 @@ public class UtilityCommands extends PermissionsCommand {
 			permission = "permissions.manage.reload",
 			description = "Reload environment")
 	public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		PermissionsEx.getPermissionManager().reset();
-
-		sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
+		try {
+			PermissionsEx.getPermissionManager().reset();
+			sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
+		} catch (PermissionBackendException e) {
+			sender.sendMessage(ChatColor.RED + "Failed to reload permissions! Check configuration!\n" +
+							   ChatColor.RED + "Error (see console for full): " + e.getMessage());
+			plugin.getLogger().log(Level.WARNING, "Failed to reload permissions when " + sender.getName() + " ran `pex reload`", e);
+		}
 	}
 
 	@Command(name = "pex",
@@ -127,6 +134,10 @@ public class UtilityCommands extends PermissionsCommand {
 				sender.sendMessage(ChatColor.RED + "Error during backend initialization.");
 				e.printStackTrace();
 			}
+		} catch (PermissionBackendException e) {
+			sender.sendMessage(ChatColor.RED + "Backend initialization failed! Fix your configuration!\n" +
+							   ChatColor.RED + "Error (see console for more): " + e.getMessage());
+			plugin.getLogger().log(Level.WARNING, "Backend initialization failed when " + sender.getName() + " was initializing " + args.get("backend"), e);
 		}
 	}
 

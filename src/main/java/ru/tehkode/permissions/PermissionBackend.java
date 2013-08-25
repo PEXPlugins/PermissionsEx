@@ -35,6 +35,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 /**
  * @author t3hk0d3
@@ -56,7 +57,7 @@ public abstract class PermissionBackend {
 	/**
 	 * Backend initialization should be done here
 	 */
-	public abstract void initialize();
+	public abstract void initialize() throws PermissionBackendException;
 
 	/**
 	 * Returns new PermissionUser object for specified player name
@@ -77,9 +78,9 @@ public abstract class PermissionBackend {
 	/*
 	 * Creates new group with specified name, or returns PermissionGroup object,
 	 * if there is such group already exists.
-	 * 
+	 *
 	 * @param name Group name
-	 * @returns PermissionGroup instance for specified group 
+	 * @returns PermissionGroup instance for specified group
 	 */
 	public PermissionGroup createGroup(String name) {
 		return this.manager.getGroup(name);
@@ -260,7 +261,7 @@ public abstract class PermissionBackend {
 	/**
 	 * Reload backend (reread permissions file, reconnect to database, etc)
 	 */
-	public abstract void reload();
+	public abstract void reload() throws PermissionBackendException;
 
 	/**
 	 * Dump data to native backend format
