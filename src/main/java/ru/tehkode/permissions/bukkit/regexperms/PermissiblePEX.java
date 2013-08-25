@@ -59,7 +59,32 @@ public class PermissiblePEX extends PermissibleBase {
 		super(player);
 		this.player = player;
 		this.plugin = plugin;
-		permissions = new LinkedHashMap<String, PermissionAttachmentInfo>();
+		permissions = new LinkedHashMap<String, PermissionAttachmentInfo>() {
+			/**
+			 * Customized put() useable ONLY for this permissible. It's pretty weird otherwise.
+			 * (It's more of a putIfAbsent, but it needs to override PermissibleBase behavior, so it's put())
+			 * Basically:
+			 * If the permission is already present in the map, only allow it to be reset if the original has no attachment.
+			 *
+			 * @param k The key
+			 * @param v The value
+			 * @return The previous/existing permission at this location
+			 */
+			@Override
+			public PermissionAttachmentInfo put(String k, PermissionAttachmentInfo v) {
+				PermissionAttachmentInfo existing = this.get(k);
+				if (existing != null) {
+					if (existing.getAttachment() == null) {
+						this.remove(k);
+					} else {
+						return existing;
+					}
+				}
+				System.out.println("Putting " + k + "=" + v.getValue());
+				super.put(k, v);
+				return existing;
+			}
+		};
 		PERMISSIONS_FIELD.set(this, permissions);
 	}
 

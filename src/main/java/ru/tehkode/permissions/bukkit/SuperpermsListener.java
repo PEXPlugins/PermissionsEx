@@ -70,7 +70,9 @@ public class SuperpermsListener implements Listener {
 				value = false;
 				perm = perm.substring(1);
 			}
-			permission.getChildren().put(perm, value);
+			if (!permission.getChildren().containsKey(perm)) {
+				permission.getChildren().put(perm, value);
+			}
 		}
 	}
 
