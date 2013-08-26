@@ -1,5 +1,6 @@
 package ru.tehkode.permissions.bukkit;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -110,14 +111,14 @@ public class ErrorReport {
 			conn.setDoInput(true);
 
 			Map<String, Object> request = new HashMap<String, Object>();       // {
-			request.put("description", "PEX Error Report");                       //     "description": "PEX Error Report",
-			request.put("public", "false");                                       //     "public": false,
+			request.put("description", "PEX Error Report");       //     "description": "PEX Error Report",
+			request.put("public", "false");                       //     "public": false,
 			Map<String, Object> filesMap = new HashMap<String, Object>();      //     "files": {
 			Map<String, Object> singleFileMap = new HashMap<String, Object>(); //         "report.md": {
-			singleFileMap.put("content", text);                                //             "content": <text>
-			filesMap.put("report.md", singleFileMap);                           //         }
-			request.put("files", filesMap);                                       //     }
-			// }
+			singleFileMap.put("content", text);                   //             "content": <text>
+			filesMap.put("report.md", singleFileMap);             //         }
+			request.put("files", filesMap);                       //     }
+			                                                      // }
 			yaml.dump(request, (requestWriter = new OutputStreamWriter(conn.getOutputStream())));
 
 			Map<?, ?> data = (Map<?, ?>) yaml.load((responseReader = conn.getInputStream()));
@@ -221,6 +222,11 @@ public class ErrorReport {
 	public static ErrorReport withException(String cause, Throwable error) {
 		Builder builder = builder(error);
 
+		Plugin pexPlugin = PermissionsEx.getPlugin();
+		builder.addHeading("Basic info").
+				addText("**Bukkit version:** " + Bukkit.getBukkitVersion() + " running on " + Bukkit.getVersion()).
+				addText("**PermissionsEx version:** " + (pexPlugin == null || pexPlugin.getDescription() == null ? "unknown" : pexPlugin.getDescription().getVersion()));
+
 		builder.addHeading("What PEX Saw");
 
 		if (cause != null) {
@@ -240,7 +246,6 @@ public class ErrorReport {
 
 
 		// PEX Configuration
-		Plugin pexPlugin = PermissionsEx.getPlugin();
 		YamlConfiguration pexConfig = new YamlConfiguration();
 		boolean successfulLoad = false;
 		final File mainConfigFile = new File(pexPlugin.getDataFolder(), "config.yml");
@@ -318,7 +323,7 @@ public class ErrorReport {
 			if (format != null) {
 				message.append(format);
 			}
-			message.append('\n').append(text).append("```\n");
+			message.append('\n').append(text).append("\n```\n");
 			return this;
 		}
 
