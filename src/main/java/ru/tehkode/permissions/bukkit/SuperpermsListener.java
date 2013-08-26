@@ -29,6 +29,9 @@ public class SuperpermsListener implements Listener {
 
 	public SuperpermsListener(PermissionsEx plugin) {
 		this.plugin = plugin;
+		for (Player player : plugin.getServer().getOnlinePlayers()) {
+			updateAttachment(player);
+		}
 	}
 
 	protected void updateAttachment(Player player) {
