@@ -264,19 +264,31 @@ public class SQLBackend extends PermissionBackend {
 		}
 	}
 
+	private static String blankIfNull(String in) {
+		return in == null ? "" : in;
+	}
+
 	@Override
 	public void dumpData(OutputStreamWriter writer) throws IOException {
-
 		// Users
 		for (PermissionUser user : this.manager.getUsers()) {
+			writer.append("/* User ").append(user.getName()).append(" */\n");
 			// Basic info (Prefix/Suffix)
-			String prefix = user.getOwnPrefix();
-			String suffix = user.getOwnSuffix();
-			writer.append("INSERT INTO `{permissions_entity}` ( `name`, `type`, `prefix`, `suffix` ) VALUES ( '" + user.getName() + "', 1, '" + (prefix == null ? "" : prefix) + "','" + (suffix == null ? "" : suffix) + "' );\n");
+			writer.append("INSERT INTO `{permissions_entity}` ( `name`, `type`, `prefix`, `suffix` ) VALUES ( '")
+					.append(user.getName())
+					.append("', 1, '")
+					.append(blankIfNull(user.getOwnPrefix()))
+					.append("','")
+					.append(blankIfNull(user.getOwnSuffix()))
+					.append("' );\n");
 
 			// Inheritance
 			for (String group : user.getGroupsNames()) {
-				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '" + user.getName() + "', '" + group + "',  1);\n");
+				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '")
+						.append(user.getName())
+						.append("', '")
+						.append(group)
+						.append("',  1);\n");
 			}
 
 			// Permissions
@@ -288,7 +300,38 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + permission + "', '" + world + "', ''); \n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('")
+							.append(user.getName())
+							.append("', 1, '")
+							.append(permission)
+							.append("', '")
+							.append(world)
+							.append("', ''); \n");
+				}
+			}
+
+			for (String world : user.getWorlds()) {
+				if (world == null) continue;
+
+				final String worldPrefix = user.getOwnPrefix(world);
+				final String worldSuffix = user.getOwnSuffix(world);
+
+				if (worldPrefix != null && !worldPrefix.isEmpty()) {
+					writer.append("INSERT INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES ('")
+							.append(user.getName())
+							.append("', 1, 'prefix', '")
+							.append(world).append("', '")
+							.append(worldPrefix)
+							.append("');\n");
+				}
+				if (worldSuffix != null && !worldSuffix.isEmpty()) {
+					writer.append("INSERT INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES ('")
+							.append(user.getName())
+							.append("', 1, 'suffix', '")
+							.append(world)
+							.append("', '")
+							.append(worldSuffix)
+							.append("');\n");
 				}
 			}
 
@@ -302,7 +345,15 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + user.getName() + "', 1, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('")
+							.append(user.getName())
+							.append("', 1, '")
+							.append(option.getKey())
+							.append("', '")
+							.append(world)
+							.append("', '")
+							.append(value)
+							.append("' );\n");
 				}
 			}
 		}
@@ -311,12 +362,50 @@ public class SQLBackend extends PermissionBackend {
 
 		// Groups
 		for (PermissionGroup group : this.manager.getGroups()) {
+			writer.append("/* Group ").append(group.getName()).append(" */\n");
 			// Basic info (Prefix/Suffix)
-			writer.append("INSERT INTO `{permissions_entity}` ( `name`, `type`, `prefix`, `suffix`, `default` ) VALUES ( '" + group.getName() + "', 0, '" + group.getOwnPrefix() + "','" + group.getOwnSuffix() + "', " + (group.equals(defaultGroup) ? "1" : "0") + " );\n");
+			writer.append("INSERT INTO `{permissions_entity}` ( `name`, `type`, `prefix`, `suffix`, `default` ) VALUES ( '")
+					.append(group.getName())
+					.append("', 0, '")
+					.append(blankIfNull(group.getOwnPrefix()))
+					.append("','")
+					.append(blankIfNull(group.getOwnSuffix()))
+					.append("', ")
+					.append(group.equals(defaultGroup) ? "1" : "0")
+					.append(" );\n");
+
+			for (String world : group.getWorlds()) {
+				if (world == null) continue;
+
+				final String worldPrefix = group.getOwnPrefix(world);
+				final String worldSuffix = group.getOwnSuffix(world);
+
+				if (worldPrefix != null && !worldPrefix.isEmpty()) {
+					writer.append("INSERT INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES ('")
+							.append(group.getName())
+							.append("', 0, 'prefix', '")
+							.append(world).append("', '")
+							.append(worldPrefix)
+							.append("');\n");
+				}
+				if (worldSuffix != null && !worldSuffix.isEmpty()) {
+					writer.append("INSERT INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES ('")
+							.append(group.getName())
+							.append("', 0, 'suffix', '")
+							.append(world)
+							.append("', '")
+							.append(worldSuffix)
+							.append("');\n");
+				}
+			}
 
 			// Inheritance
 			for (String parent : group.getParentGroupsNames()) {
-				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '" + group.getName() + "', '" + parent + "',  0);\n");
+				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '")
+						.append(group.getName())
+						.append("', '")
+						.append(parent)
+						.append("',  0);\n");
 			}
 
 			// Permissions
@@ -328,7 +417,13 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value`) VALUES ('" + group.getName() + "', 0, '" + permission + "', '" + world + "', '');\n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value`) VALUES ('")
+							.append(group.getName())
+							.append("', 0, '")
+							.append(permission)
+							.append("', '")
+							.append(world)
+							.append("', '');\n");
 				}
 			}
 
@@ -342,12 +437,21 @@ public class SQLBackend extends PermissionBackend {
 						world = "";
 					}
 
-					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('" + group.getName() + "', 0, '" + option.getKey() + "', '" + world + "', '" + value + "' );\n");
+					writer.append("INSERT INTO `{permissions}` ( `name`, `type`, `permission`, `world`, `value` ) VALUES ('")
+							.append(group.getName())
+							.append("', 0, '")
+							.append(option.getKey())
+							.append("', '")
+							.append(world)
+							.append("', '")
+							.append(value)
+							.append("' );\n");
 				}
 			}
 		}
 
 		// World-inheritance
+		writer.append("/* World Inheritance */\n");
 		for (World world : Bukkit.getServer().getWorlds()) {
 			String[] parentWorlds = manager.getWorldInheritance(world.getName());
 			if (parentWorlds.length == 0) {
@@ -355,7 +459,11 @@ public class SQLBackend extends PermissionBackend {
 			}
 
 			for (String parentWorld : parentWorlds) {
-				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '" + world.getName() + "', '" + parentWorld + "',  2);\n");
+				writer.append("INSERT INTO `{permissions_inheritance}` ( `child`, `parent`, `type` ) VALUES ( '")
+						.append(world.getName())
+						.append("', '")
+						.append(parentWorld)
+						.append("',  2);\n");
 			}
 		}
 

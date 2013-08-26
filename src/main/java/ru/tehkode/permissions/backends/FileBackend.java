@@ -18,18 +18,6 @@
  */
 package ru.tehkode.permissions.backends;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
@@ -44,6 +32,18 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.file.FileGroup;
 import ru.tehkode.permissions.backends.file.FileUser;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * @author code
@@ -211,6 +211,10 @@ public class FileBackend extends PermissionBackend {
 		char separator = PATH_SEPARATOR; //permissions.options().pathSeparator();
 
 		for (String node : path) {
+			if (node.isEmpty()) {
+				continue;
+			}
+
 			if (!first) {
 				builder.append(separator);
 			}
@@ -279,6 +283,44 @@ public class FileBackend extends PermissionBackend {
 		}
 	}
 
+	private void dumpGroupInfo(PermissionGroup group, String worldName, ConfigurationSection groupSection) {
+		String worldPath = worldName == null ? "" : buildPath("worlds", worldName);
+		// world-specific prefix
+		String prefix = group.getOwnPrefix(worldName);
+		if (prefix != null && !prefix.isEmpty()) {
+			groupSection.set(buildPath(worldPath, "prefix"), prefix);
+		}
+
+		String suffix = group.getOwnSuffix(worldName);
+		if (suffix != null && !suffix.isEmpty()) {
+			groupSection.set(buildPath(worldPath, "suffix"), suffix);
+		}
+
+		if (group.isDefault(worldName)) {
+			groupSection.set(buildPath(worldPath, "default"), true);
+		}
+	}
+
+	private void dumpUserInfo(PermissionUser user, String worldName, ConfigurationSection userSection) {
+		final String[] groups = user.getGroupsNames(worldName);
+		final String prefix = user.getOwnPrefix(worldName), suffix = user.getOwnSuffix(worldName);
+		final String pathPrefix = worldName == null ? "" : buildPath("worlds", worldName);
+		// Inheritance
+		if (groups.length > 0) {
+			userSection.set(buildPath(pathPrefix, "group"), Arrays.asList(groups));
+		}
+
+		// Prefix
+		if (prefix != null && !prefix.isEmpty()) {
+			userSection.set(buildPath(pathPrefix, "prefix"), user.getOwnPrefix(worldName));
+		}
+
+		//Suffix
+		if (suffix != null && !suffix.isEmpty()) {
+			userSection.set(buildPath(pathPrefix, "suffix"), suffix);
+		}
+	}
+
 	@Override
 	public void dumpData(OutputStreamWriter writer) throws IOException {
 		YamlConfiguration config = new YamlConfiguration();
@@ -316,27 +358,9 @@ public class FileBackend extends PermissionBackend {
 			// world specific stuff
 			for (String worldName : group.getWorlds()) {
 				if (worldName == null) continue;
-
-				String worldPath = buildPath("worlds", worldName);
-				// world-specific prefix
-				String prefix = group.getOwnPrefix(worldName);
-				if (prefix != null && !prefix.isEmpty()) {
-					groupSection.set(buildPath(worldPath, "prefix"), prefix);
-				}
-
-				String suffix = group.getOwnSuffix(worldName);
-				if (suffix != null && !suffix.isEmpty()) {
-					groupSection.set(buildPath(worldPath, "suffix"), suffix);
-				}
-
-				if (group.isDefault(worldName)) {
-					groupSection.set(buildPath(worldPath, "suffix"), true);
-				}
+				dumpGroupInfo(group, worldName, groupSection);
 			}
-
-			if (group.isDefault(null)) {
-				groupSection.set("default", true);
-			}
+			dumpGroupInfo(group, null, groupSection);
 		}
 
 		// World inheritance
@@ -352,57 +376,11 @@ public class FileBackend extends PermissionBackend {
 		// Users setup
 		for (PermissionUser user : this.manager.getUsers()) {
 			ConfigurationSection userSection = config.createSection(buildPath("users", user.getName()));
-
-			// Inheritance
-			if (user.getGroupsNames().length > 0) {
-				userSection.set("group", Arrays.asList(user.getGroupsNames()));
-			}
-
-			// Prefix
-			if (user.getOwnPrefix() != null && !user.getOwnPrefix().isEmpty()) {
-				userSection.set("prefix", user.getOwnPrefix());
-			}
-
-			//Suffix
-			if (user.getOwnSuffix() != null && !user.getOwnSuffix().isEmpty()) {
-				userSection.set("suffix", user.getOwnSuffix());
-			}
-
+			dumpUserInfo(user, null, userSection);
 			dumpEntityData(user, userSection);
-
-			// world-specific inheritance
-			for (Map.Entry<String, PermissionGroup[]> entry : user.getAllGroups().entrySet()) {
-				if (entry.getKey() == null) continue;
-
-				List<String> groups = new ArrayList<String>();
-				for (PermissionGroup group : entry.getValue()) {
-					if (group == null) {
-						continue;
-					}
-
-					groups.add(group.getName());
-				}
-
-				if (groups.isEmpty()) continue;
-
-				userSection.set(buildPath("worlds", entry.getKey(), "group"), groups);
-			}
-
-			// world specific prefix & suffix
-			for (String worldName : user.getWorlds()) {
-				if (worldName == null) continue;
-
-				String worldPath = buildPath("worlds", worldName);
-				// world-specific prefix
-				String prefix = user.getOwnPrefix(worldName);
-				if (prefix != null && !prefix.isEmpty()) {
-					userSection.set(buildPath(worldPath, "prefix"), prefix);
-				}
-
-				String suffix = user.getOwnSuffix(worldName);
-				if (suffix != null && !suffix.isEmpty()) {
-					userSection.set(buildPath(worldPath, "suffix"), suffix);
-				}
+			for (String world : user.getWorlds()) {
+				if (world == null) continue;
+				dumpUserInfo(user, null, userSection);
 			}
 		}
 
@@ -410,6 +388,7 @@ public class FileBackend extends PermissionBackend {
 		writer.write(config.saveToString());
 		writer.flush();
 	}
+
 
 	// Some of the methods are common in PermissionEntity. Sadly not very many of them.
 	private void dumpEntityData(PermissionEntity entity, ConfigurationSection section) {
