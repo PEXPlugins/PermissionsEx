@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit.regexperms;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
@@ -64,7 +65,7 @@ public class PermissiblePEX extends PermissibleBase {
 			 * Customized put() useable ONLY for this permissible. It's pretty weird otherwise.
 			 * (It's more of a putIfAbsent, but it needs to override PermissibleBase behavior, so it's put())
 			 * Basically:
-			 * If the permission is already present in the map, only allow it to be reset if the original has no attachment.
+			 * If the permission is already present in the map, only allow it to be reset if the original is from a different attachment
 			 *
 			 * @param k The key
 			 * @param v The value
@@ -74,7 +75,7 @@ public class PermissiblePEX extends PermissibleBase {
 			public PermissionAttachmentInfo put(String k, PermissionAttachmentInfo v) {
 				PermissionAttachmentInfo existing = this.get(k);
 				if (existing != null) {
-					if (existing.getAttachment() == null) {
+					if (!ObjectUtils.equals(existing.getAttachment(), v.getAttachment())) {
 						this.remove(k);
 					} else {
 						return existing;
