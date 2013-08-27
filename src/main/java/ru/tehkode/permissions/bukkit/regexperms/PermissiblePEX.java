@@ -26,6 +26,7 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
+import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.FieldReplacer;
 
@@ -96,6 +97,18 @@ public class PermissiblePEX extends PermissibleBase {
 		this.previousPermissible = previousPermissible;
 	}
 
+	public boolean isDebug() {
+		boolean debug = plugin.isDebug();
+		try {
+		PermissionUser user = plugin.getPermissionsManager().getUser(this.player);
+			if (user != null) {
+				debug |= user.isDebug();
+			}
+		} catch (Throwable ignore) {
+		}
+		return debug;
+	}
+
 	@Override
 	public boolean hasPermission(String permission) {
 		lock.readLock().lock();
@@ -110,7 +123,7 @@ public class PermissiblePEX extends PermissibleBase {
 				default:
 					if (super.isPermissionSet(permission)) {
 						final boolean ret = super.hasPermission(permission);
-						if (plugin.isDebug()) {
+						if (isDebug()) {
 							plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', superperms-matched a value of " + ret);
 						}
 						return ret;
@@ -137,7 +150,7 @@ public class PermissiblePEX extends PermissibleBase {
 				default:
 					if (super.isPermissionSet(permission.getName())) {
 						final boolean ret = super.hasPermission(permission);
-						if (plugin.isDebug()) {
+						if (isDebug()) {
 							plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission.getName() + "', superperms-matched a value of " + ret);
 						}
 						return ret;
@@ -184,7 +197,7 @@ public class PermissiblePEX extends PermissibleBase {
 	private PermissionCheckResult checkSingle(String expression, String permission, boolean value) {
 		if (plugin.getPermissionsManager().getPermissionMatcher().isMatches(expression, permission)) {
 			PermissionCheckResult res = PermissionCheckResult.fromBoolean(value);
-			if (plugin.isDebug()) {
+			if (isDebug()) {
 				plugin.getLogger().info("User " + player.getName() +
 						" checked for permission '" + permission + "', regex-matched a value of "
 						+ res + " from " + expression + " (CACHE MISS)");
@@ -200,7 +213,7 @@ public class PermissiblePEX extends PermissibleBase {
 			permission = permission.toLowerCase();
 			PermissionCheckResult res = cache.get(permission);
 			if (res != null) {
-				if (plugin.isDebug()) {
+				if (isDebug()) {
 					plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', regex-matched a value of " + res + " from cache.");
 				}
 				return res;
@@ -223,13 +236,13 @@ public class PermissiblePEX extends PermissibleBase {
 					}
 			}
 			cache.put(permission, res);
-			if (res == PermissionCheckResult.UNDEFINED && plugin.isDebug()) {
+			if (res == PermissionCheckResult.UNDEFINED && isDebug()) {
 				plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', no match found (CACHE MISS)");
 			}
 			LAST_CALL_ERRORED.set(false);
 			return res;
 		} catch (Throwable t) {
-			if (!plugin.isDebug() && LAST_CALL_ERRORED.compareAndSet(false, true)) {
+			if (!isDebug() && LAST_CALL_ERRORED.compareAndSet(false, true)) {
 				t.printStackTrace();
 			}
 			return PermissionCheckResult.UNDEFINED;
