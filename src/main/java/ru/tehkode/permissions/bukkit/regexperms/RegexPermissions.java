@@ -31,13 +31,11 @@ public class RegexPermissions {
 		injectAllPermissibles();
 	}
 
-	protected static final PermissibleInjector[] injectors = new PermissibleInjector[]{
-			new PermissibleInjector.ServerNamePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true, "Glowstone"),
-			new PermissibleInjector.ServerNamePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true, "Spout"),
+	protected static final PermissibleInjector[] injectors = new PermissibleInjector[] {
+			new PermissibleInjector.ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
+			new PermissibleInjector.ClassPresencePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true),
 			new PermissibleInjector.ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer"),
-			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit"),
-			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "CraftBukkit++"),
-			new PermissibleInjector.ServerNamePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true, "SportBukkit")
+			new PermissibleInjector.ClassPresencePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true),
 	};
 
 	public void onDisable() {

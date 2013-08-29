@@ -94,6 +94,22 @@ public abstract class PermissibleInjector {
 		}
 	}
 
+	public static class ClassPresencePermissibleInjector extends PermissibleInjector {
+
+		public ClassPresencePermissibleInjector(String clazzName, String fieldName, boolean copyValues) {
+			super(clazzName, fieldName, copyValues);
+		}
+
+		@Override
+		public boolean isApplicable(Player player) {
+			try {
+				return Class.forName(clazzName).isInstance(player);
+			} catch (ClassNotFoundException e) {
+				return false;
+			}
+		}
+	}
+
 	public static class ClassNameRegexPermissibleInjector extends PermissibleInjector {
 		private final String regex;
 
