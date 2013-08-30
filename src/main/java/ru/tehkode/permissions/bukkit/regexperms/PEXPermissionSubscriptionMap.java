@@ -180,7 +180,7 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 
 		@Override
 		public Set<Entry<Permissible, Boolean>> entrySet() {
-			return entrySet();
+			return backing.entrySet();
 		}
 	}
 }
