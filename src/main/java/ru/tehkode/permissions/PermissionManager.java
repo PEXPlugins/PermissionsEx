@@ -48,6 +48,7 @@ public class PermissionManager {
 	protected Timer timer;
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
+	protected boolean userAddGroupsLast = false;
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
 
@@ -57,6 +58,7 @@ public class PermissionManager {
 
 		this.debugMode = config.getBoolean("permissions.debug", debugMode);
 		this.allowOps = config.getBoolean("permissions.allowOps", allowOps);
+		this.userAddGroupsLast = config.getBoolean("permissions.user-add-groups-last", userAddGroupsLast);
 	}
 
 	/**

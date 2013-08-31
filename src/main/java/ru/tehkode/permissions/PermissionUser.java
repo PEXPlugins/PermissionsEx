@@ -365,7 +365,11 @@ public abstract class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		groups.add(0, groupName); //add group to start of list
+		if (this.manager.userAddGroupsLast) {
+			groups.add(groupName);
+		} else {
+			groups.add(0, groupName); //add group to start of list
+		}
 
 		this.setGroups(groups.toArray(new String[0]), worldName);
 	}
