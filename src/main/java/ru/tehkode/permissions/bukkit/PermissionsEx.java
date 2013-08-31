@@ -96,6 +96,7 @@ public class PermissionsEx extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		if (errored) {
+			getLogger().severe("==== PermissionsEx could not be enabled due to an earlier error. Look at the previous server log for more info ====");
 			this.getPluginLoader().disablePlugin(this);
 			return;
 		}
