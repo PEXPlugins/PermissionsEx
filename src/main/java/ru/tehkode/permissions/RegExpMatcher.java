@@ -3,6 +3,7 @@ package ru.tehkode.permissions;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class RegExpMatcher implements PermissionMatcher {
 	public static final String RAW_REGEX_CHAR = "$";
@@ -22,7 +23,11 @@ public class RegExpMatcher implements PermissionMatcher {
 	}
 
 	protected Pattern createPattern(String expression) {
-		return Pattern.compile(prepareRegexp(expression), Pattern.CASE_INSENSITIVE);
+        try {
+		    return Pattern.compile(prepareRegexp(expression), Pattern.CASE_INSENSITIVE);
+        } catch (PatternSyntaxException e) {
+            return Pattern.compile(Pattern.quote(expression), Pattern.CASE_INSENSITIVE);
+        }
 	}
 
 	public static String prepareRegexp(String expression) {
