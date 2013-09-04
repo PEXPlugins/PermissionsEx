@@ -24,8 +24,6 @@ import java.util.Map;
 public class SuperpermsListener implements Listener {
 	private final PermissionsEx plugin;
 	private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
-	private final Map<String, Permission> mainPermissions = new HashMap<String, Permission>(), // player->permission object
-			optionPermissions = new HashMap<String, Permission>();
 
 	public SuperpermsListener(PermissionsEx plugin) {
 		this.plugin = plugin;
@@ -36,8 +34,8 @@ public class SuperpermsListener implements Listener {
 
 	protected void updateAttachment(Player player) {
 		PermissionAttachment attach = attachments.get(player.getName());
-		Permission playerPerm = getCreateWrapper(player, "", mainPermissions);
-		Permission playerOptionPerm = getCreateWrapper(player, ".options", optionPermissions);
+		Permission playerPerm = getCreateWrapper(player, "");
+		Permission playerOptionPerm = getCreateWrapper(player, ".options");
 		if (attach == null) {
 			attach = player.addAttachment(plugin);
 			attachments.put(player.getName(), attach);
@@ -52,11 +50,19 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	private Permission getCreateWrapper(Player player, String suffix, Map<String, Permission> permissions) {
-		Permission perm = permissions.get(player.getName());
+	private String permissionName(Player player, String suffix) {
+		return "permissionsex.player." + player.getName() + suffix;
+	}
+
+	private void removePEXPerm(Player player, String suffix) {
+		plugin.getServer().getPluginManager().removePermission(permissionName(player, suffix));
+	}
+
+	private Permission getCreateWrapper(Player player, String suffix) {
+		final String name = permissionName(player, suffix);
+		Permission perm = plugin.getServer().getPluginManager().getPermission(name);
 		if (perm == null) {
-			perm = new Permission("permissionsex.player." + player.getName() + suffix, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE);
-			permissions.put(player.getName(), perm);
+			perm = new Permission(name, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE);
 			plugin.getServer().getPluginManager().addPermission(perm);
 		}
 
@@ -107,15 +113,8 @@ public class SuperpermsListener implements Listener {
 			attach.remove();
 		}
 
-		Permission mainPerm = mainPermissions.remove(player.getName());
-		if (mainPerm != null) {
-			plugin.getServer().getPluginManager().removePermission(mainPerm);
-		}
-
-		Permission optionPerm = optionPermissions.remove(player.getName());
-		if (optionPerm != null) {
-			plugin.getServer().getPluginManager().removePermission(optionPerm);
-		}
+		removePEXPerm(player, "");
+		removePEXPerm(player, ".options");
 	}
 
 	public void onDisable() {
@@ -152,13 +151,13 @@ public class SuperpermsListener implements Listener {
 
 				case PERMISSIONS_CHANGED:
 				case TIMEDPERMISSION_EXPIRED:
-					updatePlayerPermission(getCreateWrapper(p, "", mainPermissions), p, user);
+					updatePlayerPermission(getCreateWrapper(p, ""), p, user);
 					p.recalculatePermissions();
 					break;
 
 				case OPTIONS_CHANGED:
 				case INFO_CHANGED:
-					updatePlayerMetadata(getCreateWrapper(p, ".options", optionPermissions), p, user);
+					updatePlayerMetadata(getCreateWrapper(p, ".options"), p, user);
 					p.recalculatePermissions();
 					break;
 
