@@ -45,6 +45,7 @@ import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
+import ru.tehkode.utils.StringUtils;
 
 import java.util.logging.Level;
 
@@ -174,7 +175,7 @@ public class PermissionsEx extends JavaPlugin {
 				}
 			}
 		} catch (Throwable t) {
-			ErrorReport.handleError("While " + sender.getName() + " was executing /" + command.getName(), t, sender);
+			ErrorReport.handleError("While " + sender.getName() + " was executing /" + command.getName() + " " + StringUtils.implode(args, " "), t, sender);
 			return true;
 		}
 	}
