@@ -28,6 +28,7 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.FieldReplacer;
 
@@ -269,8 +270,8 @@ public class PermissiblePEX extends PermissibleBase {
 			LAST_CALL_ERRORED.set(false);
 			return res;
 		} catch (Throwable t) {
-			if (!isDebug() && LAST_CALL_ERRORED.compareAndSet(false, true)) {
-				t.printStackTrace();
+			if (LAST_CALL_ERRORED.compareAndSet(false, true)) {
+				ErrorReport.handleError("Permissible permissionValue for " + player.getName(), t);
 			}
 			return PermissionCheckResult.UNDEFINED;
 		} finally {
