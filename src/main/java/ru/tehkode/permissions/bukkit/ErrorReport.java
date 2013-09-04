@@ -332,11 +332,11 @@ public class ErrorReport {
 			builder.addHeading("Description")
 					.addText("[Insert description of issue here]");
 			builder.addHeading("Detailed Information");
-            if (new File("plugins" + File.separator + "PermissionsEx", "report-disable").exists()) {
-                builder.addText("I am stupid and chose to disable error reporting, therefore removing any chance of getting help with my error");
-            } else {
-                builder.addText("[Is available here](" + gistText(this.message.toString()) + ")");
-            }
+			if (new File("plugins" + File.separator + "PermissionsEx", "report-disable").exists()) {
+				builder.addText("I am stupid and chose to disable error reporting, therefore removing any chance of getting help with my error");
+			} else {
+				builder.addText("[Is available here](" + gistText(this.message.toString()) + ")");
+			}
 			return new ErrorReport(this.name, builder.message.toString(), error);
 		}
 	}
