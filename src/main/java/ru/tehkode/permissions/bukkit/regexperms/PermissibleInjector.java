@@ -5,6 +5,7 @@ import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -74,7 +75,7 @@ public abstract class PermissibleInjector {
 		// Attachments
 		Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
 		attachmentField.setAccessible(true);
-		attachmentField.set(newPerm, attachmentField.get(old));
+        ((List) attachmentField.get(newPerm)).addAll((List)attachmentField.get(old));
 		newPerm.recalculatePermissions();
 	}
 
