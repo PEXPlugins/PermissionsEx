@@ -191,7 +191,6 @@ public class ErrorReport {
 
 	public static void handleError(final String cause, final Throwable error, final CommandSender target) {
 		if (!ASYNC_EXEC.isShutdown()) {
-			System.out.println("Submitting to async executor for handling");
 			ASYNC_EXEC.submit(new Runnable() {
 				@Override
 				public void run() {
@@ -204,7 +203,6 @@ public class ErrorReport {
 				}
 			});
 		} else {
-			System.out.println("Not using async");
 			String msg = withException(cause, error).buildUserErrorMessage();
 			if (target != null) {
 				target.sendMessage(msg);
