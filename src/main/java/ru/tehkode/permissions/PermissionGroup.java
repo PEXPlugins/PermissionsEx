@@ -20,14 +20,7 @@ package ru.tehkode.permissions;
 
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -655,6 +648,10 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 	@Override
 	public String getOption(String optionName, String worldName, String defaultValue) {
+		return getOption(optionName, worldName, defaultValue, new HashSet<PermissionGroup>());
+	}
+
+	protected String getOption(String optionName, String worldName, String defaultValue, Set<PermissionGroup> alreadyVisited) {
 		String value = this.getOwnOption(optionName, worldName, null);
 		if (value != null) {
 			return value;
@@ -676,16 +673,20 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		}
 
 		// Inheritance
-		for (PermissionGroup group : this.getParentGroups(worldName)) {
-			value = group.getOption(optionName, worldName, null);
-			if (value != null) {
-				return value;
+		if (!alreadyVisited.contains(this)) {
+			alreadyVisited.add(this);
+			for (PermissionGroup group : this.getParentGroups(worldName)) {
+				value = group.getOption(optionName, worldName, null, alreadyVisited);
+				if (value != null) {
+					return value;
+				}
 			}
 		}
 
 		// Nothing found
 		return defaultValue;
 	}
+
 
 	@Override
 	public int compareTo(PermissionGroup o) {
