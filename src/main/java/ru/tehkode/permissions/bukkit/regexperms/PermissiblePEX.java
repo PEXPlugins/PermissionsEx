@@ -23,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
@@ -30,8 +31,12 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.FieldReplacer;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +52,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class PermissiblePEX extends PermissibleBase {
 	private static final FieldReplacer<PermissibleBase, Map> PERMISSIONS_FIELD = new FieldReplacer<PermissibleBase, Map>(PermissibleBase.class, "permissions", Map.class);
+	private static final FieldReplacer<PermissibleBase, List> ATTACHMENTS_FIELD = new FieldReplacer<PermissibleBase, List>(PermissibleBase.class, "attachments", List.class);
+    private static final Method CALC_CHILD_PERMS_METH;
+    static {
+        try {
+            CALC_CHILD_PERMS_METH = PermissibleBase.class.getDeclaredMethod("calculateChildPermissions", Map.class, boolean.class, PermissionAttachment.class);
+        } catch (NoSuchMethodException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+        CALC_CHILD_PERMS_METH.setAccessible(true);
+    }
 	private final Map<String, PermissionAttachmentInfo> permissions;
+	private final List<PermissionAttachment> attachments;
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 	private static final AtomicBoolean LAST_CALL_ERRORED = new AtomicBoolean(false);
 
@@ -75,18 +91,15 @@ public class PermissiblePEX extends PermissibleBase {
 			@Override
 			public PermissionAttachmentInfo put(String k, PermissionAttachmentInfo v) {
 				PermissionAttachmentInfo existing = this.get(k);
-				if (existing != null) {
-					if (!ObjectUtils.equals(existing.getAttachment(), v.getAttachment())) {
-						this.remove(k);
-					} else {
-						return existing;
-					}
-				}
-				super.put(k, v);
-				return existing;
+                if (existing != null) {
+                    return existing;
+                }
+                return super.put(k, v);
 			}
 		};
 		PERMISSIONS_FIELD.set(this, permissions);
+		this.attachments = ATTACHMENTS_FIELD.get(this);
+        recalculatePermissions();
 	}
 
 	public Permissible getPreviousPermissible() {
@@ -165,18 +178,34 @@ public class PermissiblePEX extends PermissibleBase {
 
 	@Override
 	public void recalculatePermissions() {
-		if (lock != null) { // recalculatePermissions() is called from superclass constructor
+		if (lock != null) { // recalculatePermissions() is called from superclass constructor, ignore it because we call it from our constructor
 			lock.writeLock().lock();
 			try {
-				super.recalculatePermissions();
+                clearPermissions();
 				cache.clear();
+				for (ListIterator<PermissionAttachment> it = this.attachments.listIterator(this.attachments.size()); it.hasPrevious();) {
+					PermissionAttachment attach = it.previous();
+                    calculateChildPerms(attach.getPermissions(), false, attach);
+				}
+
+				for (Permission p : player.getServer().getPluginManager().getDefaultPermissions(isOp())) {
+					this.permissions.put(p.getName(), new PermissionAttachmentInfo(player, p.getName(), null, true));
+                    calculateChildPerms(p.getChildren(), false, null);
+				}
 			} finally {
 				lock.writeLock().unlock();
 			}
-		} else {
-			super.recalculatePermissions();
 		}
 	}
+
+    protected void calculateChildPerms(Map<String, Boolean> children, boolean invert, PermissionAttachment attachment) {
+        try {
+            CALC_CHILD_PERMS_METH.invoke(this, children, invert, attachment);
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	@Override
 	public boolean isPermissionSet(String permission) {
