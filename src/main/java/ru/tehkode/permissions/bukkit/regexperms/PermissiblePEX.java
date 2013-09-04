@@ -80,9 +80,7 @@ public class PermissiblePEX extends PermissibleBase {
 		permissions = new LinkedHashMap<String, PermissionAttachmentInfo>() {
 			/**
 			 * Customized put() useable ONLY for this permissible. It's pretty weird otherwise.
-			 * (It's more of a putIfAbsent, but it needs to override PermissibleBase behavior, so it's put())
-			 * Basically:
-			 * If the permission is already present in the map, only allow it to be reset if the original is from a different attachment
+			 * It'd be better as a putIfAbsent, but it needs to be called from the superclass so it's not.
 			 *
 			 * @param k The key
 			 * @param v The value
