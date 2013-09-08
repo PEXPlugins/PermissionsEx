@@ -258,7 +258,9 @@ public class PermissiblePEX extends PermissibleBase {
 				for (Map.Entry<String, Boolean> ent : plugin.getRegexPerms().getPermissionList().getParents(permission)) {
 						if ((res = permissionValue(ent.getKey())) != PermissionCheckResult.UNDEFINED) {
 							res = PermissionCheckResult.fromBoolean(!(res.toBoolean() ^ ent.getValue()));
-							plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', match from parent '" + ent.getKey() + "' (CACHE MISS)");
+							if (isDebug()) {
+								plugin.getLogger().info("User " + player.getName() + " checked for permission '" + permission + "', match from parent '" + ent.getKey() + "' (CACHE MISS)");
+							}
 							break;
 						}
 					}
