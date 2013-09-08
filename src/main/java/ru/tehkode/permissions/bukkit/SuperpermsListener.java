@@ -133,7 +133,8 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(priority = EventPriority.MONITOR)
+	// Technically not supposed to use MONITOR for this, but we don't want to remove before other plugins are done checking permissions
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		try {
 			removeAttachment(event.getPlayer());
