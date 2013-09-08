@@ -72,7 +72,7 @@ public class SuperpermsListener implements Listener {
 
 	private void updatePlayerPermission(Permission permission, Player player, PermissionUser user) {
 		permission.getChildren().clear();
-		permission.getChildren().put("permissionsex.player." + player.getName() + ".options", true);
+		permission.getChildren().put(permissionName(player, ".options"), true);
 		for (String perm : user.getPermissions(player.getWorld().getName())) {
 			boolean value = true;
 			if (perm.startsWith("-")) {
