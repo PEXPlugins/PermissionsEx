@@ -43,9 +43,13 @@ public class PermissionList extends HashMap<String, Permission> {
         return ret;
     }
 
-    private void injectPermission(Permission p) {
-
-    }
+	private void removeAllChildren(String perm) {
+		for (Iterator<Map.Entry<String, Map.Entry<String, Boolean>>> it = childParentMapping.entries().iterator(); it.hasNext();) {
+			if (it.next().getValue().getKey().equals(perm)) {
+				it.remove();
+			}
+		}
+	}
 
     private class NotifyingChildrenMap extends LinkedHashMap<String, Boolean> {
         private final Permission perm;
@@ -73,6 +77,12 @@ public class PermissionList extends HashMap<String, Permission> {
             childParentMapping.put(perm, new SimpleEntry<String, Boolean>(this.perm.getName(), val));
             return super.put(perm, val);
         }
+
+		@Override
+		public void clear() {
+			removeAllChildren(perm.getName());
+			super.clear();
+		}
     }
 
 
@@ -94,17 +104,12 @@ public class PermissionList extends HashMap<String, Permission> {
 		}
         FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
         repl.set(v, new NotifyingChildrenMap(v));
-        injectPermission(v);
 		return super.put(k, v);
 	}
 
 	@Override
 	public Permission remove(Object k) {
-		for (Iterator<Map.Entry<String, Map.Entry<String, Boolean>>> it = childParentMapping.entries().iterator(); it.hasNext();) {
-			if (it.next().getValue().getKey().equals(k)) {
-				it.remove();
-			}
-		}
+		removeAllChildren(k.toString());
 		Permission ret = super.remove(k);
         if (ret != null) {
             getFieldReplacer(ret).set(ret, new LinkedHashMap<String, Boolean>(ret.getChildren()));
