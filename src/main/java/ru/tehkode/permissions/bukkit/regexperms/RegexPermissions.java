@@ -9,6 +9,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permissible;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 import java.util.logging.Level;
 
@@ -140,6 +141,19 @@ public class RegexPermissions {
 		// Technically not supposed to use MONITOR for this, but we don't want to remove before other plugins are done checking permissions
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			uninjectPermissible(event.getPlayer());
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		public void onPermissionSystemEvent(PermissionSystemEvent event) {
+			switch (event.getAction()) {
+				case REINJECT_PERMISSIBLES:
+				case RELOADED:
+					uninjectAllPermissibles();
+					injectAllPermissibles();
+					break;
+				default:
+					return;
+			}
 		}
 	}
 
