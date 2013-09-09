@@ -9,14 +9,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import ru.tehkode.utils.StringUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -118,7 +111,7 @@ public class ErrorReport {
 			singleFileMap.put("content", text);                   //             "content": <text>
 			filesMap.put("report.md", singleFileMap);             //         }
 			request.put("files", filesMap);                       //     }
-			                                                      // }
+			// }
 			yaml.dump(request, (requestWriter = new OutputStreamWriter(conn.getOutputStream())));
 
 			Map<?, ?> data = (Map<?, ?>) yaml.load((responseReader = conn.getInputStream()));
@@ -222,8 +215,28 @@ public class ErrorReport {
 
 		Plugin pexPlugin = PermissionsEx.getPlugin();
 		builder.addHeading("Basic info").
-				addText("**Bukkit version:** " + Bukkit.getBukkitVersion() + " running on " + Bukkit.getVersion()).
-				addText("**PermissionsEx version:** " + (pexPlugin == null || pexPlugin.getDescription() == null ? "unknown" : pexPlugin.getDescription().getVersion()));
+				addText("**Bukkit version:** " + Bukkit.getBukkitVersion() + " running on " + Bukkit.getVersion());
+
+		if (pexPlugin != null) {
+			StringBuilder pluginList = new StringBuilder("**Plugins:** (*italics* are disabled)\n");
+			Plugin[] plugins = pexPlugin.getServer().getPluginManager().getPlugins();
+			for (int i = 0; i < plugins.length; i++) {
+				Plugin plugin = plugins[i];
+				pluginList.append("- ");
+				if (plugin.getDescription() != null) {
+					if (plugin.isEnabled()) {
+						pluginList.append(plugin.getDescription().getFullName());
+					} else {
+						pluginList.append("*").append(plugin.getDescription().getFullName()).append("*");
+					}
+				} else {
+					pluginList.append("Unknown");
+				}
+
+				pluginList.append(" (```").append(plugin.getClass().getName()).append("```)").append('\n');
+			}
+			builder.addText(pluginList.toString());
+		}
 
 		builder.addHeading("What PEX Saw");
 
