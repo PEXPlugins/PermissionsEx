@@ -98,8 +98,7 @@ public class MemoryEntity extends PermissionEntity {
         } else {
             worldsPermissions.put(world, permissions);
         }
-
-        commonPermissions = permissions;
+        
         this.save();
     }
 
