@@ -31,9 +31,11 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.backends.MemoryBackend;
 import ru.tehkode.permissions.backends.FileBackend;
 import ru.tehkode.permissions.backends.SQLBackend;
 import ru.tehkode.permissions.bukkit.commands.GroupCommands;
@@ -70,6 +72,8 @@ public class PermissionsEx extends JavaPlugin {
 
 		PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
 		PermissionBackend.registerBackendAlias("file", FileBackend.class);
+		PermissionBackend.registerBackendAlias("memory", MemoryBackend.class);
+
 	}
 
 	private void logBackendExc(PermissionBackendException e) {
