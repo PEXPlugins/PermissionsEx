@@ -24,6 +24,7 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.PermissionBackend;
 import ru.tehkode.permissions.PermissionEntity;
@@ -61,7 +62,7 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public void initialize() throws PermissionBackendException {
-		PermissionsEx plugin = PermissionsEx.getPlugin();
+		Plugin plugin = PermissionsEx.getPlugin();
 		String permissionFilename = config.getString("permissions.backends.file.file");
 
 		// Default settings
@@ -70,7 +71,7 @@ public class FileBackend extends PermissionBackend {
 			config.set("permissions.backends.file.file", "permissions.yml");
 		}
 
-		String baseDir = config.getString("permissions.basedir", plugin.getDataFolder());
+		String baseDir = config.getString("permissions.basedir", plugin.getDataFolder().getPath());
 
 		if (baseDir.contains("\\") && !"\\".equals(File.separator)) {
 			baseDir = baseDir.replace("\\", File.separator);
