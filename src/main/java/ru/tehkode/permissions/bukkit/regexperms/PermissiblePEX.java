@@ -180,6 +180,10 @@ public class PermissiblePEX extends PermissibleBase {
 		if (lock != null) { // recalculatePermissions() is called from superclass constructor, ignore it because we call it from our constructor
 			lock.writeLock().lock();
 			try {
+				if (isDebug()) {
+					plugin.getLogger().info("Recalculating permissions for player " + player.getName() + " (perbmissible)");
+                    Thread.dumpStack();
+				}
                 clearPermissions();
 				cache.clear();
 				for (ListIterator<PermissionAttachment> it = this.attachments.listIterator(this.attachments.size()); it.hasPrevious();) {
