@@ -27,10 +27,7 @@ import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -145,6 +142,10 @@ public class PermissionManager {
 	 */
 	public PermissionUser[] getUsers() {
 		return backend.getUsers();
+	}
+
+	public Collection<String> getUserNames() {
+		return backend.getRegisteredUserNames();
 	}
 
 	/**
@@ -509,5 +510,9 @@ public class PermissionManager {
 
 	public void setPermissionMatcher(PermissionMatcher matcher) {
 		this.matcher = matcher;
+	}
+
+	public Collection<String> getGroupNames() {
+		return backend.getRegisteredGroupNames();
 	}
 }

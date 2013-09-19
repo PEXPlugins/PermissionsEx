@@ -37,12 +37,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -202,6 +197,18 @@ public class FileBackend extends PermissionBackend {
 		}
 
 		return users.toArray(new PermissionUser[users.size()]);
+	}
+
+	@Override
+	public Collection<String> getRegisteredUserNames() {
+		ConfigurationSection users = this.permissions.getConfigurationSection("users");
+		return users != null ? users.getKeys(false) : Collections.<String>emptySet();
+	}
+
+	@Override
+	public Collection<String> getRegisteredGroupNames() {
+		ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
+		return groups != null ? groups.getKeys(false) : Collections.<String>emptySet();
 	}
 
 	public static String buildPath(String... path) {

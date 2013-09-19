@@ -43,11 +43,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -173,7 +169,7 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionGroup[] getGroups() {
-		String[] groupNames = SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.GROUP, false);
+		Set<String> groupNames = SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.GROUP, false);
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
 		for (String groupName : groupNames) {
@@ -187,8 +183,8 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionUser[] getRegisteredUsers() {
-		String[] userNames = SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.USER, false);
-		PermissionUser[] users = new PermissionUser[userNames.length];
+		Set<String> userNames = SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.USER, false);
+		PermissionUser[] users = new PermissionUser[userNames.size()];
 
 		int index = 0;
 		for (String groupName : userNames) {
@@ -196,6 +192,17 @@ public class SQLBackend extends PermissionBackend {
 		}
 
 		return users;
+	}
+
+
+	@Override
+	public Collection<String> getRegisteredGroupNames() {
+		return SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.GROUP, false);
+	}
+
+	@Override
+	public Collection<String> getRegisteredUserNames() {
+		return SQLEntity.getEntitiesNames(getSQL(), SQLEntity.Type.USER, false);
 	}
 
 	protected final void setupAliases(Configuration config) {
