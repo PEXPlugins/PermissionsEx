@@ -89,6 +89,10 @@ public abstract class PermissionsCommand implements CommandListener {
 			return null;
 		}
 
+		if (playerName.startsWith("#")) {
+			return playerName.substring(1);
+		}
+
 		List<String> players = new LinkedList<String>();
 
 		// Collect online Player names
@@ -103,13 +107,13 @@ public abstract class PermissionsCommand implements CommandListener {
 		}
 
 		// Collect registered PEX user names
-		for (PermissionUser user : PermissionsEx.getPermissionManager().getUsers()) {
-			if (user.getName().equalsIgnoreCase(playerName)) {
-				return user.getName();
+		for (String user : PermissionsEx.getPermissionManager().getUserNames()) {
+			if (user.equalsIgnoreCase(playerName)) {
+				return user;
 			}
 
-			if (user.getName().toLowerCase().startsWith(playerName.toLowerCase()) && !players.contains(user.getName())) {
-				players.add(user.getName());
+			if (user.toLowerCase().startsWith(playerName.toLowerCase()) && !players.contains(user)) {
+				players.add(user);
 			}
 		}
 
@@ -136,15 +140,20 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	protected String autoCompleteGroupName(String groupName, String argName) {
+
+		if (groupName.startsWith("#")) {
+			return groupName.substring(1);
+		}
+
 		List<String> groups = new LinkedList<String>();
 
-		for (PermissionGroup group : PermissionsEx.getPermissionManager().getGroups()) {
-			if (group.getName().equalsIgnoreCase(groupName)) {
-				return group.getName();
+		for (String group : PermissionsEx.getPermissionManager().getGroupNames()) {
+			if (group.equalsIgnoreCase(groupName)) {
+				return group;
 			}
 
-			if (group.getName().toLowerCase().startsWith(groupName.toLowerCase()) && !groups.contains(group.getName())) {
-				groups.add(group.getName());
+			if (group.toLowerCase().startsWith(groupName.toLowerCase()) && !groups.contains(group)) {
+				groups.add(group);
 			}
 		}
 

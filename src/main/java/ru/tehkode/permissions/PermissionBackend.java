@@ -21,13 +21,7 @@ package ru.tehkode.permissions;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -212,6 +206,24 @@ public abstract class PermissionBackend {
 	 * @return
 	 */
 	public abstract PermissionUser[] getRegisteredUsers();
+
+	public Collection<String> getRegisteredUserNames() {
+		PermissionUser[] users = getRegisteredUsers();
+		List<String> ret = new ArrayList<String>(users.length);
+		for (PermissionUser user : users) {
+			ret.add(user.getName());
+		}
+		return Collections.unmodifiableCollection(ret);
+	}
+
+	public Collection<String> getRegisteredGroupNames() {
+		PermissionGroup[] groups = getGroups();
+		List<String> ret = new ArrayList<String>(groups.length);
+		for (PermissionGroup group : groups) {
+			ret.add(group.getName());
+		}
+		return Collections.unmodifiableCollection(ret);
+	}
 
 	/**
 	 * Return users of specified group.

@@ -21,12 +21,7 @@ package ru.tehkode.permissions.backends.sql;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionManager;
@@ -62,9 +57,9 @@ public class SQLEntity extends PermissionEntity {
 		this.fetchInheritance();
 	}
 
-	public static String[] getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) {
+	public static Set<String> getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) {
 		try {
-			List<String> entities = new LinkedList<String>();
+			Set<String> entities = new HashSet<String>();
 
 			ResultSet result = sql.prepAndBind("SELECT name FROM `{permissions_entity}` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal()).executeQuery();
 
@@ -74,7 +69,7 @@ public class SQLEntity extends PermissionEntity {
 
 			result.close();
 
-			return entities.toArray(new String[0]);
+			return Collections.unmodifiableSet(entities);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
