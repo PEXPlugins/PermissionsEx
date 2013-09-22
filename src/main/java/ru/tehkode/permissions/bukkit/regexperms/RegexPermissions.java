@@ -54,7 +54,8 @@ public class RegexPermissions {
 	}
 
 	public void injectPermissible(Player player) {
-		if (player.hasPermission("permissionsex.disable")) { // this user shouldn't get permissionsex matching
+		if (player.hasPermission("permissionsex.disabled")) { // this user shouldn't get permissionsex matching
+			System.out.println("User has permissionsex.disable set, do not register!");
 			return;
 		}
 
@@ -97,7 +98,7 @@ public class RegexPermissions {
 	}
 
 	private void uninjectPermissible(Player player) {
-		if (player.hasPermission("permissionsex.disable")) { // this user shouldn't get permissionsex matching
+		if (player.hasPermission("permissionsex.disabled")) { // this user shouldn't get permissionsex matching
 			return;
 		}
 
@@ -134,6 +135,7 @@ public class RegexPermissions {
 	private class EventListener implements Listener {
 		@EventHandler(priority = EventPriority.LOWEST)
 		public void onPlayerLogin(PlayerLoginEvent event) {
+			System.out.println("Injecting permissible for " + event.getPlayer().getName());
 			injectPermissible(event.getPlayer());
 		}
 
