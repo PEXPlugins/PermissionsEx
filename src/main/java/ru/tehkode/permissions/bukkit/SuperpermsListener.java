@@ -33,6 +33,10 @@ public class SuperpermsListener implements Listener {
 	}
 
 	protected void updateAttachment(Player player) {
+		updateAttachment(player, player.getWorld().getName());
+	}
+
+	protected void updateAttachment(Player player, String worldName) {
 		PermissionAttachment attach = attachments.get(player.getName());
 		Permission playerPerm = getCreateWrapper(player, "");
 		Permission playerOptionPerm = getCreateWrapper(player, ".options");
@@ -44,8 +48,8 @@ public class SuperpermsListener implements Listener {
 
 		PermissionUser user = plugin.getPermissionsManager().getUser(player);
 		if (user != null) {
-			updatePlayerPermission(playerPerm, player, user);
-			updatePlayerMetadata(playerOptionPerm, player, user);
+			updatePlayerPermission(playerPerm, player, user, worldName);
+			updatePlayerMetadata(playerOptionPerm, user, worldName);
 			player.recalculatePermissions();
 		}
 	}
@@ -70,10 +74,10 @@ public class SuperpermsListener implements Listener {
 
 	}
 
-	private void updatePlayerPermission(Permission permission, Player player, PermissionUser user) {
+	private void updatePlayerPermission(Permission permission, Player player, PermissionUser user, String worldName) {
 		permission.getChildren().clear();
 		permission.getChildren().put(permissionName(player, ".options"), true);
-		for (String perm : user.getPermissions(player.getWorld().getName())) {
+		for (String perm : user.getPermissions(worldName)) {
 			boolean value = true;
 			if (perm.startsWith("-")) {
 				value = false;
@@ -85,10 +89,10 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	private void updatePlayerMetadata(Permission rootPermission, Player player, PermissionUser user) {
+	private void updatePlayerMetadata(Permission rootPermission, PermissionUser user, String worldName) {
 		rootPermission.getChildren().clear();
-		final String[] groups = user.getGroupsNames(player.getWorld().getName());
-		final Map<String, String> options = user.getOptions(player.getWorld().getName());
+		final String[] groups = user.getGroupsNames(worldName);
+		final Map<String, String> options = user.getOptions(worldName);
 		// Metadata
 		// Groups
 		for (String group : groups) {
@@ -102,8 +106,8 @@ public class SuperpermsListener implements Listener {
 		}
 
 		// Prefix and Suffix
-		rootPermission.getChildren().put("prefix." + user.getPrefix(player.getWorld().getName()), true);
-		rootPermission.getChildren().put("suffix." + user.getSuffix(player.getWorld().getName()), true);
+		rootPermission.getChildren().put("prefix." + user.getPrefix(worldName), true);
+		rootPermission.getChildren().put("suffix." + user.getSuffix(worldName), true);
 
 	}
 
@@ -127,7 +131,15 @@ public class SuperpermsListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerLogin(PlayerLoginEvent event) {
 		try {
-			updateAttachment(event.getPlayer());
+			final Player player = event.getPlayer();
+			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world after a tick
+			updateAttachment(player, null);
+			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+				@Override
+				public void run() {
+					updateAttachment(player);
+				}
+			});
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event login", t);
 		}
@@ -152,13 +164,13 @@ public class SuperpermsListener implements Listener {
 
 				case PERMISSIONS_CHANGED:
 				case TIMEDPERMISSION_EXPIRED:
-					updatePlayerPermission(getCreateWrapper(p, ""), p, user);
+					updatePlayerPermission(getCreateWrapper(p, ""), p, user, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
 				case OPTIONS_CHANGED:
 				case INFO_CHANGED:
-					updatePlayerMetadata(getCreateWrapper(p, ".options"), p, user);
+					updatePlayerMetadata(getCreateWrapper(p, ".options"), user, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
