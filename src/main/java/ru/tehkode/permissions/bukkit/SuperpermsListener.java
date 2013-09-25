@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permission;
@@ -129,17 +130,20 @@ public class SuperpermsListener implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		try {
+			updateAttachment(event.getPlayer());
+		} catch (Throwable t) {
+			ErrorReport.handleError("Superperms event join", t);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerLogin(PlayerLoginEvent event) {
 		try {
 			final Player player = event.getPlayer();
-			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world after a tick
+			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world in join event
 			updateAttachment(player, null);
-			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-				@Override
-				public void run() {
-					updateAttachment(player);
-				}
-			});
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event login", t);
 		}
