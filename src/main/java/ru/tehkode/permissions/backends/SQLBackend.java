@@ -236,7 +236,7 @@ public class SQLBackend extends PermissionBackend {
 
 	protected final void deployTables() throws PermissionBackendException {
 		try {
-			if (this.getSQL().hasTable("permissions")) {
+			if (this.getSQL().hasTable("{permissions}")) {
 				return;
 			}
 			InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + getSQL().getDriver() + ".sql");

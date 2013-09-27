@@ -103,6 +103,7 @@ public class SQLConnection {
 
 	public boolean hasTable(String table) throws SQLException {
 		this.checkConnection();
+		table = expandQuery(table);
 		return db.getMetaData().getTables(null, null, table, null).next();
 	}
 
