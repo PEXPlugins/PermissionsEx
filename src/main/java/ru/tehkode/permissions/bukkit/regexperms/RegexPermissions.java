@@ -127,7 +127,7 @@ public class RegexPermissions {
 
 	private void uninjectAllPermissibles() {
 		for (Player player : plugin.getServer().getOnlinePlayers()) {
-			injectPermissible(player);
+			uninjectPermissible(player);
 		}
 	}
 
