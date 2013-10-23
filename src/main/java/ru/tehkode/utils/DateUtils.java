@@ -26,22 +26,6 @@ public class DateUtils {
 	public static int getSecondsIn(String type) {
 		type = type.toLowerCase();
 
-		if ("second".equals(type) || "s".equals(type)) {
-			return 1;
-		} else if ("minute".equals(type) || "m".equals(type)) {
-			return 60;
-		} else if ("hour".equals(type) || "h".equals(type)) {
-			return 3600;
-		} else if ("day".equals(type) || "d".equals(type)) {
-			return 86400;
-		} else if ("week".equals(type) || "w".equals(type)) {
-			return 604800;
-		} else if ("month".equals(type)) {
-			return 2592000;
-		} else if ("year".equals(type)) {
-			return 31104000;
-		}
-
-		return 0;
-	}
+		return Interval.byLabel(type).value();
+    }
 }
