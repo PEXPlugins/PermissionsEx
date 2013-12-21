@@ -240,7 +240,8 @@ public class PermissionsEx extends JavaPlugin {
 			if (!logLastPlayerLogin) {
 				return;
 			}
-
+                        getPermissionManager().resetBackend();
+                        getPermissionManager().clearUserCache(event.getPlayer());
 			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
 			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
 			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work

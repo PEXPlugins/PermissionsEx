@@ -458,6 +458,15 @@ public class PermissionManager {
 		}
 		this.callEvent(PermissionSystemEvent.Action.RELOADED);
 	}
+        
+	/**
+	 * Reset all resets only the backend cache
+	 */
+        public void resetBackend() throws PermissionBackendException {
+                if(this.backend != null) {
+                        this.backend.reload();
+                }
+        }
 
 	public void end() {
 		try {
