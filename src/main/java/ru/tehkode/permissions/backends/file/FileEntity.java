@@ -134,6 +134,11 @@ public class FileEntity extends PermissionEntity {
 	}
 
 	@Override
+	public Type getType() {
+		throw new UnsupportedOperationException("Not used");
+	}
+
+	@Override
 	public String getPrefix(String worldName) {
 		return this.node.getString(formatPath(worldName, "prefix"));
 	}

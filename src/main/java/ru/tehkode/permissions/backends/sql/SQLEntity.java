@@ -87,6 +87,11 @@ public class SQLEntity extends PermissionEntity {
 	}
 
 	@Override
+	public PermissionEntity.Type getType() {
+		throw new UnsupportedOperationException("Not used.");
+	}
+
+	@Override
 	public String getPrefix(String worldName) {
 		return (worldName == null || worldName.isEmpty()) ? this.prefix : this.getOption("prefix", worldName);
 	}

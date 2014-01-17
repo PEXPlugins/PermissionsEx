@@ -54,7 +54,12 @@ public class MemoryEntity extends PermissionEntity {
         commonPermissions = new String[0];
     }
 
-    @Override
+	@Override
+	public Type getType() {
+		throw new UnsupportedOperationException("Not used.");
+	}
+
+	@Override
     public String getPrefix(String worldName) {
         return worldPrefix.containsKey(worldName) ? worldPrefix.get(worldName) : "";
     }

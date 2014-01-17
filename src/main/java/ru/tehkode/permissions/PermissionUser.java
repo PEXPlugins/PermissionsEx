@@ -61,6 +61,11 @@ public abstract class PermissionUser extends PermissionEntity {
 		}
 	}
 
+	@Override
+	public Type getType() {
+		return Type.USER;
+	}
+
 	/**
 	 * Return non-inherited user prefix.
 	 * This means if a user don't have has own prefix

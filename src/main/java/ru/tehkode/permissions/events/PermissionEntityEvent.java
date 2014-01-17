@@ -20,6 +20,9 @@ package ru.tehkode.permissions.events;
 
 import org.bukkit.event.HandlerList;
 import ru.tehkode.permissions.PermissionEntity;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
+
+import java.util.UUID;
 
 /**
  * @author t3hk0d3
@@ -27,13 +30,16 @@ import ru.tehkode.permissions.PermissionEntity;
 public class PermissionEntityEvent extends PermissionEvent {
 
 	private static final HandlerList handlers = new HandlerList();
-	protected PermissionEntity entity;
+	protected transient PermissionEntity entity;
 	protected Action action;
+	protected PermissionEntity.Type type;
+	protected String entityName;
 
-	public PermissionEntityEvent(PermissionEntity entity, Action action) {
-		super(action.toString());
-
+	public PermissionEntityEvent(UUID sourceUUID, PermissionEntity entity, Action action) {
+		super(sourceUUID);
 		this.entity = entity;
+		this.entityName = entity.getName();
+		this.type = entity.getType();
 		this.action = action;
 	}
 
@@ -42,7 +48,25 @@ public class PermissionEntityEvent extends PermissionEvent {
 	}
 
 	public PermissionEntity getEntity() {
+		if (entity == null) {
+			switch (type) {
+				case GROUP:
+					entity = PermissionsEx.getPermissionManager().getGroup(entityName);
+					break;
+				case USER:
+					entity = PermissionsEx.getPermissionManager().getUser(entityName);
+					break;
+			}
+		}
 		return entity;
+	}
+
+	public String getEntityName() {
+		return entityName;
+	}
+
+	public PermissionEntity.Type getType() {
+		return type;
 	}
 
 	public enum Action {

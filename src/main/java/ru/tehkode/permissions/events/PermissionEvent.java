@@ -20,11 +20,20 @@ package ru.tehkode.permissions.events;
 
 import org.bukkit.event.Event;
 
+import java.io.Serializable;
+import java.util.UUID;
+
 /**
  * @author t3hk0d3
  */
-public abstract class PermissionEvent extends Event {
+public abstract class PermissionEvent extends Event implements Serializable {
+	private final UUID serverId;
 
-	public PermissionEvent(String name) {
+	public PermissionEvent(UUID id) {
+		serverId = id;
+	}
+
+	public UUID getSourceUUID() {
+		return serverId;
 	}
 }

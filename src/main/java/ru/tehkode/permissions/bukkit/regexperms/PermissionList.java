@@ -2,6 +2,7 @@ package ru.tehkode.permissions.bukkit.regexperms;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.utils.FieldReplacer;
@@ -24,7 +25,7 @@ public class PermissionList extends HashMap<String, Permission> {
 	 * v.k = parent permission
 	 * v.v = value parent gives child
 	 */
-	private final Multimap<String, Map.Entry<String, Boolean>> childParentMapping = HashMultimap.create();
+	private final Multimap<String, Map.Entry<String, Boolean>> childParentMapping = Multimaps.synchronizedMultimap(HashMultimap.<String, Map.Entry<String, Boolean>>create());
 
 	public PermissionList() {
 		super();
@@ -65,7 +66,7 @@ public class PermissionList extends HashMap<String, Permission> {
 
         private void removeFromMapping(String child) {
             for (Iterator<Map.Entry<String, Boolean>> it = childParentMapping.get(child).iterator(); it.hasNext();) {
-                if (it.next().getKey().equals(child)) {
+                if (it.next().getKey().equals(perm.getName())) {
                     it.remove();
                 }
             }
@@ -73,7 +74,7 @@ public class PermissionList extends HashMap<String, Permission> {
 
         @Override
         public Boolean put(String perm, Boolean val) {
-            removeFromMapping(perm);
+            //removeFromMapping(perm);
             childParentMapping.put(perm, new SimpleEntry<String, Boolean>(this.perm.getName(), val));
             return super.put(perm, val);
         }

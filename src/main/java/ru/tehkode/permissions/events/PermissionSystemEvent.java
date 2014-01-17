@@ -20,17 +20,17 @@ package ru.tehkode.permissions.events;
 
 import org.bukkit.event.HandlerList;
 
+import java.util.UUID;
+
 /**
  * @author t3hk0d3
  */
 public class PermissionSystemEvent extends PermissionEvent {
-
 	protected Action action;
 	private static final HandlerList handlers = new HandlerList();
 
-	public PermissionSystemEvent(Action action) {
-		super(action.toString());
-
+	public PermissionSystemEvent(UUID sourceUUID, Action action) {
+		super(sourceUUID);
 		this.action = action;
 	}
 

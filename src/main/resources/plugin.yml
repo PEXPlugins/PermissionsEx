@@ -1,5 +1,6 @@
 name: PermissionsEx
 main: ru.tehkode.permissions.bukkit.PermissionsEx
+softdepend: ["NetEvents"]
 version: "${project.version}"
 author: [t3hk0d3, zml]
 website: http://dev.bukkit.org/server-mods/permissionsex

@@ -88,10 +88,10 @@ public class PermissionsEx extends JavaPlugin {
 		try {
 			this.config = this.getConfig();
 			this.commandsManager = new CommandsManager(this);
-			this.permissionsManager = new PermissionManager(this.config);
-		} catch (PermissionBackendException e) {
+			//this.permissionsManager = new PermissionManager(this.config);
+		/*} catch (PermissionBackendException e) {
 			logBackendExc(e);
-			errored = true;
+			errored = true;*/
 		} catch (Throwable t) {
 			ErrorReport.handleError("In onLoad", t);
 			errored = true;
@@ -107,7 +107,7 @@ public class PermissionsEx extends JavaPlugin {
 		}
 		try {
 			if (this.permissionsManager == null) {
-				this.permissionsManager = new PermissionManager(this.config);
+				this.permissionsManager = new PermissionManager(this.config, this);
 			}
 
 			// Register commands

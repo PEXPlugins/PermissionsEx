@@ -18,10 +18,14 @@
  */
 package ru.tehkode.permissions;
 
+import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
-import ru.tehkode.permissions.bukkit.ErrorReport;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
@@ -46,17 +50,112 @@ public class PermissionManager {
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 	protected boolean userAddGroupsLast = false;
+	private NetEventsPlugin netEvents;
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
 
-	public PermissionManager(Configuration config) throws PermissionBackendException {
+	public PermissionManager(Configuration config, PermissionsEx plugin) throws PermissionBackendException {
 		this.config = config;
+		if (config.getBoolean("multiserver.use-netevents", true)) {
+			this.netEvents = (NetEventsPlugin) plugin.getServer().getPluginManager().getPlugin("NetEvents");
+			plugin.getServer().getPluginManager().registerEvents(new RemoteEventListener(), plugin);
+		}
 		this.initBackend();
 
 		this.debugMode = config.getBoolean("permissions.debug", debugMode);
 		this.allowOps = config.getBoolean("permissions.allowOps", allowOps);
 		this.userAddGroupsLast = config.getBoolean("permissions.user-add-groups-last", userAddGroupsLast);
+
 	}
+
+	UUID getServerUUID() {
+		return netEvents != null ? netEvents.getServerUUID() : null;
+	}
+
+	public boolean isLocal(PermissionEvent event) {
+		if (netEvents == null) {
+			return true;
+		}
+
+		return event.getSourceUUID().equals(netEvents.getServerUUID());
+	}
+
+	private class RemoteEventListener implements Listener {
+        @EventHandler(priority = EventPriority.LOWEST)
+        public void onEntityEvent(PermissionEntityEvent event) {
+            if (isLocal(event)) {
+				return;
+			}
+			final boolean reloadEntity, reloadAll;
+
+			switch (event.getAction()) {
+				case DEFAULTGROUP_CHANGED:
+				case RANK_CHANGED:
+				case INHERITANCE_CHANGED:
+					reloadAll = true;
+					reloadEntity = false;
+					break;
+				case SAVED:
+				case TIMEDPERMISSION_EXPIRED:
+					return;
+			   default:
+				   reloadEntity = true;
+				   reloadAll = false;
+				   break;
+			}
+
+			try {
+				if (backend != null) {
+					backend.reload();
+				}
+			} catch (PermissionBackendException e) {
+				e.printStackTrace();
+			}
+			if (reloadEntity) {
+				switch (event.getType()) {
+					case USER:
+						users.remove(event.getEntityName());
+						break;
+					case GROUP:
+						PermissionGroup group = groups.remove(event.getEntityName());
+						if (group != null) {
+							for (Iterator<PermissionUser> it = users.values().iterator(); it.hasNext();) {
+								if (it.next().inGroup(group, true)) {
+									it.remove();
+								}
+							}
+						}
+
+						break;
+				}
+			} else if (reloadAll) {
+				clearCache();
+			}
+		}
+
+        @EventHandler(priority = EventPriority.LOWEST)
+        public void onSystemEvent(PermissionSystemEvent event) {
+			if (isLocal(event)) {
+				return;
+			}
+
+			switch (event.getAction()) {
+				case BACKEND_CHANGED:
+				case DEBUGMODE_TOGGLE:
+				case REINJECT_PERMISSIBLES:
+					return;
+			}
+
+			try {
+				if (backend != null) {
+					backend.reload();
+				}
+				clearCache();
+			} catch (PermissionBackendException e) {
+				e.printStackTrace();
+			}
+		}
+    }
 
 	/**
 	 * Check if specified player has specified permission
@@ -330,7 +429,7 @@ public class PermissionManager {
 		this.defaultGroups.clear();
 
 		this.callEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED);
-		this.callEvent(new PermissionEntityEvent(group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
+		this.callEvent(new PermissionEntityEvent(getServerUUID(), group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
 	}
 
 	public void setDefaultGroup(PermissionGroup group) {
@@ -497,11 +596,15 @@ public class PermissionManager {
 	}
 
 	protected void callEvent(PermissionEvent event) {
-		Bukkit.getServer().getPluginManager().callEvent(event);
+        if (netEvents != null) {
+            netEvents.callEvent(event);
+        } else {
+		    Bukkit.getServer().getPluginManager().callEvent(event);
+        }
 	}
 
 	protected void callEvent(PermissionSystemEvent.Action action) {
-		this.callEvent(new PermissionSystemEvent(action));
+		this.callEvent(new PermissionSystemEvent(getServerUUID(), action));
 	}
 
 	public PermissionMatcher getPermissionMatcher() {

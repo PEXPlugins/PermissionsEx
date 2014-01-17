@@ -46,6 +46,10 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		}
 	}
 
+	public Type getType() {
+		return Type.GROUP;
+	}
+
 	/**
 	 * Return non-inherited group prefix.
 	 * This means if a group don't have has own prefix

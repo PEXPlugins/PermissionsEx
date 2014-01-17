@@ -32,6 +32,9 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  * @author code
  */
 public abstract class PermissionEntity {
+	public static enum Type {
+		USER, GROUP;
+	}
 
 	protected PermissionManager manager;
 	private String name;
@@ -66,6 +69,8 @@ public abstract class PermissionEntity {
 	protected void setName(String name) {
 		this.name = name;
 	}
+
+	public abstract Type getType();
 
 	/**
 	 * Returns entity prefix
@@ -463,7 +468,7 @@ public abstract class PermissionEntity {
 	}
 
 	protected void callEvent(PermissionEntityEvent.Action action) {
-		this.callEvent(new PermissionEntityEvent(this, action));
+		this.callEvent(new PermissionEntityEvent(manager.getServerUUID(), this, action));
 	}
 
 	@Override
