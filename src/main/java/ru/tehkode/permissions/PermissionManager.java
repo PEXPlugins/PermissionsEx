@@ -81,9 +81,9 @@ public class PermissionManager {
 	}
 
 	private class RemoteEventListener implements Listener {
-        @EventHandler(priority = EventPriority.LOWEST)
-        public void onEntityEvent(PermissionEntityEvent event) {
-            if (isLocal(event)) {
+		@EventHandler(priority = EventPriority.LOWEST)
+		public void onEntityEvent(PermissionEntityEvent event) {
+			if (isLocal(event)) {
 				return;
 			}
 			final boolean reloadEntity, reloadAll;
@@ -98,10 +98,10 @@ public class PermissionManager {
 				case SAVED:
 				case TIMEDPERMISSION_EXPIRED:
 					return;
-			   default:
-				   reloadEntity = true;
-				   reloadAll = false;
-				   break;
+				default:
+					reloadEntity = true;
+					reloadAll = false;
+					break;
 			}
 
 			try {
@@ -119,7 +119,7 @@ public class PermissionManager {
 					case GROUP:
 						PermissionGroup group = groups.remove(event.getEntityName());
 						if (group != null) {
-							for (Iterator<PermissionUser> it = users.values().iterator(); it.hasNext();) {
+							for (Iterator<PermissionUser> it = users.values().iterator(); it.hasNext(); ) {
 								if (it.next().inGroup(group, true)) {
 									it.remove();
 								}
@@ -133,8 +133,8 @@ public class PermissionManager {
 			}
 		}
 
-        @EventHandler(priority = EventPriority.LOWEST)
-        public void onSystemEvent(PermissionSystemEvent event) {
+		@EventHandler(priority = EventPriority.LOWEST)
+		public void onSystemEvent(PermissionSystemEvent event) {
 			if (isLocal(event)) {
 				return;
 			}
@@ -155,7 +155,7 @@ public class PermissionManager {
 				e.printStackTrace();
 			}
 		}
-    }
+	}
 
 	/**
 	 * Check if specified player has specified permission
@@ -560,7 +560,7 @@ public class PermissionManager {
 
 	public void end() {
 		try {
-		reset();
+			reset();
 		} catch (PermissionBackendException ignore) {
 			// Ignore because we're shutting down so who cares
 		}
@@ -596,11 +596,11 @@ public class PermissionManager {
 	}
 
 	protected void callEvent(PermissionEvent event) {
-        if (netEvents != null) {
-            netEvents.callEvent(event);
-        } else {
-		    Bukkit.getServer().getPluginManager().callEvent(event);
-        }
+		if (netEvents != null) {
+			netEvents.callEvent(event);
+		} else {
+			Bukkit.getServer().getPluginManager().callEvent(event);
+		}
 	}
 
 	protected void callEvent(PermissionSystemEvent.Action action) {

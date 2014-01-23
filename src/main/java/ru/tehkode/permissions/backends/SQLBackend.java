@@ -300,7 +300,8 @@ public class SQLBackend extends PermissionBackend {
 
 			// Permissions
 			for (Map.Entry<String, String[]> entry : user.getAllPermissions().entrySet()) {
-				for (String permission : entry.getValue()) {
+				for (int i = entry.getValue().length - 1; i >= 0; --i) {
+					String permission = entry.getValue()[i];
 					String world = entry.getKey();
 
 					if (world == null) {
@@ -417,7 +418,8 @@ public class SQLBackend extends PermissionBackend {
 
 			// Permissions
 			for (Map.Entry<String, String[]> entry : group.getAllPermissions().entrySet()) {
-				for (String permission : entry.getValue()) {
+				for (int i = entry.getValue().length - 1; i >= 0; --i) {
+					String permission = entry.getValue()[i];
 					String world = entry.getKey();
 
 					if (world == null) {
