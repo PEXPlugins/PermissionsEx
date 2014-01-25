@@ -25,6 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
@@ -57,8 +58,11 @@ public class PermissionManager {
 	public PermissionManager(Configuration config, PermissionsEx plugin) throws PermissionBackendException {
 		this.config = config;
 		if (config.getBoolean("multiserver.use-netevents", true)) {
-			this.netEvents = (NetEventsPlugin) plugin.getServer().getPluginManager().getPlugin("NetEvents");
-			plugin.getServer().getPluginManager().registerEvents(new RemoteEventListener(), plugin);
+			Plugin netEventsPlugin = plugin.getServer().getPluginManager().getPlugin("NetEvents");
+			if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
+				this.netEvents = (NetEventsPlugin) netEventsPlugin;
+				plugin.getServer().getPluginManager().registerEvents(new RemoteEventListener(), plugin);
+			}
 		}
 		this.initBackend();
 
