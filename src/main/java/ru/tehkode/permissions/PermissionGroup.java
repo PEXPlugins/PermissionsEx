@@ -350,16 +350,28 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 * @return true if this group is descendant or direct parent of specified group
 	 */
 	public boolean isChildOf(PermissionGroup group, String worldName, boolean checkInheritance) {
+		return isChildOf(group, worldName, checkInheritance ? new HashSet<String>() : null);
+	}
+
+	private boolean isChildOf(PermissionGroup group, String worldName, Set<String> visitedParents) {
 		if (group == null) {
 			return false;
 		}
 
-		for (PermissionGroup parentGroup : this.getParentGroups(worldName)) {
-			if (group.equals(parentGroup)) {
+		if (visitedParents != null) {
+			visitedParents.add(this.getName());
+		}
+
+		for (String parentGroup : this.getParentGroupsNamesImpl(worldName)) {
+			if (visitedParents != null && visitedParents.contains(parentGroup)) {
+				continue;
+			}
+
+			if (group.getName().equals(parentGroup)) {
 				return true;
 			}
 
-			if (checkInheritance && parentGroup.isChildOf(group, worldName, checkInheritance)) {
+			if (visitedParents != null && manager.getGroup(parentGroup).isChildOf(group, worldName, visitedParents)) {
 				return true;
 			}
 		}

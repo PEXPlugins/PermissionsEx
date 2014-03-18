@@ -327,8 +327,12 @@ public class PermissionManager {
 		if (group == null) {
 			group = this.backend.getGroup(groupname);
 			if (group != null) {
-				group.initialize();
-				this.groups.put(groupname.toLowerCase(), group);
+			   this.groups.put(groupname.toLowerCase(), group);
+				try {
+					group.initialize();
+				} catch (Exception e) {
+					this.groups.remove(groupname.toLowerCase());
+				}
 			} else {
 				throw new IllegalStateException("Group " + groupname + " is null");
 			}
