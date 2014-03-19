@@ -264,7 +264,14 @@ public abstract class PermissionUser extends PermissionEntity {
 			Collections.sort(groups);
 		}
 
-		return groups;
+		List<PermissionGroup> groupsInOrder = new LinkedList<PermissionGroup>();
+		PermissionGroup[] allGroups = this.manager.getGroups();
+		for (PermissionGroup group : allGroups) {
+			if (groups.contains(group)) {
+				groupsInOrder.add(group);
+			}
+		}
+		return groupsInOrder;
 	}
 
 	public Map<String, PermissionGroup[]> getAllGroups() {

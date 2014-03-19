@@ -626,4 +626,18 @@ public class PermissionManager {
 	public Collection<String> getGroupNames() {
 		return backend.getRegisteredGroupNames();
 	}
+	
+	public String[] getGroupUsers(String groupName) {
+		PermissionGroup group = this.getGroup(groupName);
+		List<String> res = new LinkedList<String>();
+		PermissionUser[] users = group.getUsers(groupName);
+		for (PermissionUser user : users) {
+			res.add(user.getName());
+		}
+		String[] array = new String[res.size()];
+		for (int i = 0; i < res.size(); i++) {
+		    array[i] = res.get(i); // Watch out for NullPointerExceptions!
+		}
+		return array;
+	}
 }
