@@ -17,6 +17,7 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -92,7 +93,7 @@ public class SuperpermsListener implements Listener {
 
 	private void updatePlayerMetadata(Permission rootPermission, PermissionUser user, String worldName) {
 		rootPermission.getChildren().clear();
-		final String[] groups = user.getGroupsNames(worldName);
+		final List<String> groups = user.getGroupNames(worldName);
 		final Map<String, String> options = user.getOptions(worldName);
 		// Metadata
 		// Groups

@@ -26,38 +26,44 @@ import ru.tehkode.permissions.exceptions.RankingException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 /**
  * @author code
  */
-public abstract class PermissionUser extends PermissionEntity {
+public class PermissionUser extends PermissionEntity {
 
 	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
 
+	private final PermissionsUserData data;
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
-	protected Map<String, String[]> cachedPermissions = new HashMap<String, String[]>();
+	protected Map<String, List<String>> cachedPermissions = new HashMap<String, List<String>>();
 	protected Map<String, String> cachedPrefix = new HashMap<String, String>();
 	protected Map<String, String> cachedSuffix = new HashMap<String, String>();
 	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<String, String>();
 	protected Map<String, String> cachedOptions = new HashMap<String, String>();
 
-	public PermissionUser(String playerName, PermissionManager manager) {
+	public PermissionUser(String playerName, PermissionsUserData data, PermissionManager manager) {
 		super(playerName, manager);
+		this.data = data;
+	}
+
+	@Override
+	protected PermissionsUserData getData() {
+		return data;
 	}
 
 	@Override
 	public void initialize() {
 		super.initialize();
 
-		if (this.manager.getBackend().isCreateUserRecords() && this.isVirtual()) {
-			this.setGroups(this.getGroups(null), null);
+		if (this.manager.shouldCreateUserRecords() && this.isVirtual()) {
+			this.setGroups(this.getGroupNames(null), null);
 
 			this.save();
 		}
 
 		if (this.isDebug()) {
-			Logger.getLogger("Minecraft").info("[PermissionsEx] User " + this.getName() + " initialized");
+			manager.getLogger().info("User " + this.getName() + " initialized");
 		}
 	}
 
@@ -77,7 +83,9 @@ public abstract class PermissionUser extends PermissionEntity {
 		return this.getOwnPrefix(null);
 	}
 
-	public abstract String getOwnPrefix(String worldName);
+	public String getOwnPrefix(String worldName) {
+		return getData().getPrefix(worldName);
+	}
 
 	/**
 	 * Return non-inherited suffix prefix.
@@ -90,7 +98,9 @@ public abstract class PermissionUser extends PermissionEntity {
 		return this.getOwnSuffix(null);
 	}
 
-	public abstract String getOwnSuffix(String worldName);
+	public String getOwnSuffix(String worldName) {
+		return getData().getSuffix(worldName);
+	}
 
 	/**
 	 * Return non-inherited permissions of a user in world
@@ -98,7 +108,9 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * @param world world's name
 	 * @return String array of owned Permissions
 	 */
-	public abstract String[] getOwnPermissions(String world);
+	public List<String> getOwnPermissions(String world) {
+		return getData().getPermissions(world);
+	}
 
 	@Override
 	public String getOption(String optionName, String worldName, String defaultValue) {
@@ -152,7 +164,13 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * @param defaultValue default value
 	 * @return option value or defaultValue if option is not set
 	 */
-	public abstract String getOwnOption(String option, String world, String defaultValue);
+	public String getOwnOption(String option, String world, String defaultValue) {
+		String ret = getData().getOption(option, world);
+		if (ret == null) {
+			return defaultValue;
+		}
+		return ret;
+	}
 
 	/**
 	 * Return non-inherited value of specified option in common space (all worlds).
@@ -202,14 +220,12 @@ public abstract class PermissionUser extends PermissionEntity {
 		return defaultValue;
 	}
 
-	protected abstract String[] getGroupsNamesImpl(String worldName);
-
 	/**
 	 * Get group for this user, global inheritance only
 	 *
 	 * @return
 	 */
-	public PermissionGroup[] getGroups() {
+	public List<PermissionGroup> getGroups() {
 		return this.getGroups(null);
 	}
 
@@ -219,18 +235,18 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * @param worldName Name of world
 	 * @return PermissionGroup groups
 	 */
-	public PermissionGroup[] getGroups(String worldName) {
+	public List<PermissionGroup> getGroups(String worldName) {
 		if (!this.cachedGroups.containsKey(worldName)) {
-			this.cachedGroups.put(worldName, this.getGroups(worldName, this.manager.getDefaultGroup(worldName)));
+			this.cachedGroups.put(worldName, this.getGroupsUncached(worldName));
 		}
 
-		return this.cachedGroups.get(worldName).toArray(new PermissionGroup[0]);
+		return Collections.unmodifiableList(this.cachedGroups.get(worldName));
 	}
 
-	private List<PermissionGroup> getGroups(String worldName, PermissionGroup fallback) {
+	private List<PermissionGroup> getGroupsUncached(String worldName) {
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-		for (String groupName : this.getGroupsNamesImpl(worldName)) {
+		for (String groupName : getData().getGroups(worldName)) {
 			if (groupName == null || groupName.isEmpty()) {
 				continue;
 			}
@@ -249,15 +265,15 @@ public abstract class PermissionUser extends PermissionEntity {
 		if (worldName != null) { // also check world-inheritance
 			// world inheritance
 			for (String world : this.manager.getWorldInheritance(worldName)) {
-				groups.addAll(this.getGroups(world, null));
+				groups.addAll(this.getGroups(world));
 			}
 
 			// common groups
-			groups.addAll(this.getGroups(null, null));
+			groups.addAll(this.getGroups(null));
 		}
 
-		if (groups.isEmpty() && fallback != null) {
-			groups.add(fallback);
+		if (groups.isEmpty()) { // Default group permissions are only included if empty
+			groups.addAll(manager.getDefaultGroups(worldName));
 		}
 
 		if (groups.size() > 1) {
@@ -267,8 +283,8 @@ public abstract class PermissionUser extends PermissionEntity {
 		return groups;
 	}
 
-	public Map<String, PermissionGroup[]> getAllGroups() {
-		Map<String, PermissionGroup[]> allGroups = new HashMap<String, PermissionGroup[]>();
+	public Map<String, List<PermissionGroup>> getAllGroups() {
+		Map<String, List<PermissionGroup>> allGroups = new HashMap<String, List<PermissionGroup>>();
 
 		for (String worldName : this.getWorlds()) {
 			allGroups.put(worldName, this.getWorldGroups(worldName));
@@ -279,10 +295,10 @@ public abstract class PermissionUser extends PermissionEntity {
 		return allGroups;
 	}
 
-	protected PermissionGroup[] getWorldGroups(String worldName) {
+	protected List<PermissionGroup> getWorldGroups(String worldName) {
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-		for (String groupName : this.getGroupsNamesImpl(worldName)) {
+		for (String groupName : this.getData().getGroups(worldName)) {
 			if (groupName == null || groupName.isEmpty()) {
 				continue;
 			}
@@ -296,7 +312,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 		Collections.sort(groups);
 
-		return groups.toArray(new PermissionGroup[0]);
+		return Collections.unmodifiableList(groups);
 	}
 
 	/**
@@ -304,8 +320,8 @@ public abstract class PermissionUser extends PermissionEntity {
 	 *
 	 * @return
 	 */
-	public String[] getGroupsNames() {
-		return this.getGroupsNames(null);
+	public List<String> getGroupNames() {
+		return this.getGroupNames(null);
 	}
 
 	/**
@@ -313,7 +329,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	 *
 	 * @return String array of user's group names
 	 */
-	public String[] getGroupsNames(String worldName) {
+	public List<String> getGroupNames(String worldName) {
 		List<String> groups = new LinkedList<String>();
 		for (PermissionGroup group : this.getGroups(worldName)) {
 			if (group != null) {
@@ -321,7 +337,7 @@ public abstract class PermissionUser extends PermissionEntity {
 			}
 		}
 
-		return groups.toArray(new String[0]);
+		return Collections.unmodifiableList(groups);
 	}
 
 	/**
@@ -329,29 +345,32 @@ public abstract class PermissionUser extends PermissionEntity {
 	 *
 	 * @param groups array of parent group names
 	 */
-	public abstract void setGroups(String[] groups, String worldName);
+	public void setGroups(List<String> groups, String worldName) {
+		getData().setGroups(groups, worldName);
+		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+	}
 
-	public void setGroups(String[] groups) {
+	public void setGroups(List<String> groups) {
 		this.setGroups(groups, null);
 	}
 
 	/**
 	 * Set parent groups for user
 	 *
-	 * @param groups array of parent group objects
+	 * @param parentGroups array of parent group objects
 	 */
-	public void setGroups(PermissionGroup[] parentGroups, String worldName) {
+	public void setGroupObjects(List<PermissionGroup> parentGroups, String worldName) {
 		List<String> groups = new LinkedList<String>();
 
 		for (PermissionGroup group : parentGroups) {
 			groups.add(group.getName());
 		}
 
-		this.setGroups(groups.toArray(new String[0]), worldName);
+		this.setGroups(groups, worldName);
 	}
 
-	public void setGroups(PermissionGroup[] parentGroups) {
-		this.setGroups(parentGroups, null);
+	public void setGroupObjects(List<PermissionGroup> parentGroups) {
+		this.setGroupObjects(parentGroups, null);
 	}
 
 	/**
@@ -364,7 +383,7 @@ public abstract class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(Arrays.asList(this.getGroupsNamesImpl(worldName)));
+		List<String> groups = new ArrayList<String>(getData().getGroups(worldName));
 
 		if (groups.contains(groupName)) {
 			return;
@@ -376,7 +395,7 @@ public abstract class PermissionUser extends PermissionEntity {
 			groups.add(0, groupName); //add group to start of list
 		}
 
-		this.setGroups(groups.toArray(new String[0]), worldName);
+		this.setGroups(groups, worldName);
 	}
 
 	public void addGroup(String groupName) {
@@ -418,7 +437,7 @@ public abstract class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(Arrays.asList(this.getGroupsNamesImpl(worldName)));
+		List<String> groups = new ArrayList<String>(getData().getGroups(worldName));
 
 		if (!groups.contains(groupName)) {
 			return;
@@ -426,7 +445,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 		groups.remove(groupName);
 
-		this.setGroups(groups.toArray(new String[0]), worldName);
+		this.setGroups(groups, worldName);
 	}
 
 	public void removeGroup(String groupName) {
@@ -520,7 +539,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	/**
 	 * Checks if this user is member of specified group or one of its descendant groups
 	 *
-	 * @param group group's name
+	 * @param groupName group's name
 	 * @return true on success, false otherwise
 	 */
 	public boolean inGroup(String groupName, String worldName) {
@@ -588,7 +607,7 @@ public abstract class PermissionUser extends PermissionEntity {
 	 * his rank is lower then user's RankingException will be thrown too.
 	 * If there is no group to demote the user to RankingException would be thrown
 	 *
-	 * @param promoter   Specify null if action performed from console or by plugin
+	 * @param demoter   Specify null if action performed from console or by plugin
 	 * @param ladderName
 	 * @throws RankingException
 	 */
@@ -691,12 +710,12 @@ public abstract class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public String[] getPermissions(String worldName) {
+	public List<String> getPermissions(String worldName) {
 		if (!this.cachedPermissions.containsKey(worldName)) {
 			List<String> permissions = new LinkedList<String>();
 			this.getInheritedPermissions(worldName, permissions, true, false);
 
-			this.cachedPermissions.put(worldName, permissions.toArray(new String[0]));
+			this.cachedPermissions.put(worldName, permissions);
 		}
 
 		return this.cachedPermissions.get(worldName);
@@ -704,7 +723,7 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void addPermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
+		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
 
 		if (permissions.contains(permission)) { // remove old permission
 			permissions.remove(permission);
@@ -713,21 +732,21 @@ public abstract class PermissionUser extends PermissionEntity {
 		// add permission on the top of list
 		permissions.add(0, permission);
 
-		this.setPermissions(permissions.toArray(new String[0]), worldName);
+		this.setPermissions(permissions, worldName);
 	}
 
 	@Override
 	public void removePermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
+		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
 
 		permissions.remove(permission);
 
-		this.setPermissions(permissions.toArray(new String[0]), worldName);
+		this.setPermissions(permissions, worldName);
 	}
 
 	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance) {
-		permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
-		permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
+		permissions.addAll(this.getTimedPermissions(worldName));
+		permissions.addAll(this.getOwnPermissions(worldName));
 
 		if (worldName != null) {
 			// World inheritance
@@ -749,7 +768,7 @@ public abstract class PermissionUser extends PermissionEntity {
 		}
 
 		// Add all child nodes
-		for (String node : permissions.toArray(new String[0])) {
+		for (String node : new ArrayList<String>(permissions)) {
 			this.getInheritedChildPermissions(node, permissions);
 		}
 	}
@@ -815,12 +834,12 @@ public abstract class PermissionUser extends PermissionEntity {
 	}
 
 	protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
-		List<PermissionGroup> groups = new ArrayList<PermissionGroup>(Arrays.asList(this.getGroups()));
+		List<PermissionGroup> groups = new ArrayList<PermissionGroup>(this.getGroups());
 
 		groups.remove(src);
 		groups.add(dst);
 
-		this.setGroups(groups.toArray(new PermissionGroup[0]));
+		this.setGroupObjects(groups);
 	}
 
 	@Override
@@ -949,26 +968,26 @@ public abstract class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void setPrefix(String prefix, String worldName) {
+		super.setPrefix(prefix, worldName);
 		this.clearCache();
 	}
 
 	@Override
 	public void setSuffix(String postfix, String worldName) {
+		super.setSuffix(postfix, worldName);
 		this.clearCache();
 	}
 
 	@Override
 	public void remove() {
+		super.remove();
 		this.clearCache();
-
-		this.callEvent(PermissionEntityEvent.Action.REMOVED);
 	}
 
 	@Override
 	public void save() {
+		super.save();
 		this.clearCache();
-
-		this.callEvent(PermissionEntityEvent.Action.SAVED);
 	}
 
 	@Override
@@ -994,5 +1013,16 @@ public abstract class PermissionUser extends PermissionEntity {
 		}
 
 		return true;
+	}
+
+	// Compatibility methods
+	@Deprecated
+	public String[] getGroupsNames() {
+		return getGroupsNames(null);
+	}
+
+	@Deprecated
+	public String[] getGroupsNames(String world) {
+		return getGroupNames(world).toArray(new String[0]);
 	}
 }

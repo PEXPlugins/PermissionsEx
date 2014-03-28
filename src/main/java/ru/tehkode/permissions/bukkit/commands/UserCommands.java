@@ -18,7 +18,11 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -41,11 +45,11 @@ public class UserCommands extends PermissionsCommand {
 			permission = "permissions.manage.users",
 			description = "List all registered users")
 	public void usersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
+		Set<PermissionUser> users = PermissionsEx.getPermissionManager().getUsers();
 
 		sender.sendMessage(ChatColor.WHITE + "Currently registered users: ");
 		for (PermissionUser user : users) {
-			sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getGroupsNames(), ", ") + "]");
+			sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getGroupNames(), ", ") + "]");
 		}
 	}
 
@@ -351,16 +355,16 @@ public class UserCommands extends PermissionsCommand {
 			return;
 		}
 
-		String[] permissions = user.getOwnPermissions(worldName);
+		List<String> permissions = user.getOwnPermissions(worldName);
 
 		try {
 			int sourceIndex = this.getPosition(this.autoCompletePermission(user, args.get("permission"), worldName, "permission"), permissions);
 			int targetIndex = this.getPosition(this.autoCompletePermission(user, args.get("targetPermission"), worldName, "targetPermission"), permissions);
 
-			String targetPermission = permissions[targetIndex];
+			String targetPermission = permissions.get(targetIndex);
 
-			permissions[targetIndex] = permissions[sourceIndex];
-			permissions[sourceIndex] = targetPermission;
+			permissions.set(targetIndex, permissions.get(sourceIndex));
+			permissions.set(sourceIndex, targetPermission);
 
 			user.setPermissions(permissions, worldName);
 
@@ -527,26 +531,26 @@ public class UserCommands extends PermissionsCommand {
 
 		String groupName = args.get("group");
 
-		PermissionGroup[] groups;
+		List<PermissionGroup> groups;
 
 		if (groupName.contains(",")) {
 			String[] groupsNames = groupName.split(",");
-			groups = new PermissionGroup[groupsNames.length];
+			groups = new ArrayList<PermissionGroup>(groupsNames.length);
 
-			for (int i = 0; i < groupsNames.length; i++) {
-				if (sender instanceof Player && !manager.has((Player) sender, "permissions.manage.membership." + groupsNames[i].toLowerCase())) {
-					sender.sendMessage(ChatColor.RED + "Don't have enough permission for group " + groupsNames[i]);
+			for (String addName : groupsNames) {
+				if (sender instanceof Player && !manager.has((Player) sender, "permissions.manage.membership." + addName.toLowerCase())) {
+					sender.sendMessage(ChatColor.RED + "Don't have enough permission for group " + addName);
 					return;
 				}
 
-				groups[i] = manager.getGroup(this.autoCompleteGroupName(groupsNames[i]));
+				groups.add(manager.getGroup(this.autoCompleteGroupName(addName)));
 			}
 
 		} else {
 			groupName = this.autoCompleteGroupName(groupName);
 
 			if (groupName != null) {
-				groups = new PermissionGroup[]{manager.getGroup(groupName)};
+				groups = Collections.singletonList(manager.getGroup(groupName));
 
 				if (sender instanceof Player && !manager.has((Player) sender, "permissions.manage.membership." + groupName.toLowerCase())) {
 					sender.sendMessage(ChatColor.RED + "Don't have enough permission for group " + groupName);
@@ -559,8 +563,8 @@ public class UserCommands extends PermissionsCommand {
 			}
 		}
 
-		if (groups.length > 0) {
-			user.setGroups(groups, worldName);
+		if (!groups.isEmpty()) {
+			user.setGroupObjects(groups, worldName);
 			sender.sendMessage(ChatColor.WHITE + "User groups set!");
 		} else {
 			sender.sendMessage(ChatColor.RED + "No groups set!");

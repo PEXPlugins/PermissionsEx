@@ -21,20 +21,26 @@ package ru.tehkode.permissions;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * @author t3hk0d3
  */
-public abstract class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
+public class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
 
 	protected final static String NON_INHERITABLE_PREFIX = "#";
 
 	protected int weight = 0;
 	protected boolean dirtyWeight = true;
+	private final PermissionsGroupData data;
 
-	public PermissionGroup(String groupName, PermissionManager manager) {
+	public PermissionGroup(String groupName, PermissionsGroupData data, PermissionManager manager) {
 		super(groupName, manager);
+		this.data = data;
+	}
+
+	@Override
+	protected PermissionsGroupData getData() {
+		return data;
 	}
 
 	@Override
@@ -42,7 +48,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		super.initialize();
 
 		if (this.isDebug()) {
-			Logger.getLogger("PermissionsEx").info("[PermissionsEx] Group " + this.getName() + " initialized");
+			manager.getLogger().info("Group " + this.getName() + " initialized");
 		}
 	}
 
@@ -61,7 +67,9 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		return this.getOwnPrefix(null);
 	}
 
-	public abstract String getOwnPrefix(String worldName);
+	public String getOwnPrefix(String worldName) {
+		return getData().getPrefix(worldName);
+	}
 
 	/**
 	 * Return non-inherited suffix prefix.
@@ -74,7 +82,9 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		return this.getOwnSuffix(null);
 	}
 
-	public abstract String getOwnSuffix(String worldName);
+	public String getOwnSuffix(String worldName) {
+		return getData().getSuffix(worldName);
+	}
 
 	/**
 	 * Returns own (without inheritance) permissions of group for world
@@ -82,7 +92,9 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 * @param world world's world name
 	 * @return Array of permissions for world
 	 */
-	public abstract String[] getOwnPermissions(String world);
+	public List<String> getOwnPermissions(String world) {
+		return getData().getPermissions(world);
+	}
 
 	/**
 	 * Returns option value in specified world without inheritance
@@ -93,7 +105,13 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 * @param defaultValue
 	 * @return option value or defaultValue if option was not found in own options
 	 */
-	public abstract String getOwnOption(String option, String world, String defaultValue);
+	public String getOwnOption(String option, String world, String defaultValue) {
+		String ret = getData().getOption(option, world);
+		if (ret == null) {
+			ret = defaultValue;
+		}
+		return ret;
+	}
 
 	public String getOwnOption(String option) {
 		return this.getOwnOption(option, null, null);
@@ -212,17 +230,15 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
 	}
 
-	protected abstract String[] getParentGroupsNamesImpl(String worldName);
-
 	/**
 	 * Returns array of parent groups objects
 	 *
-	 * @return array of groups objects
+	 * @return unmodifiable list of parent group objects
 	 */
-	public PermissionGroup[] getParentGroups(String worldName) {
+	public List<PermissionGroup> getParentGroups(String worldName) {
 		List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>();
 
-		for (String parentGroup : this.getParentGroupsNamesImpl(worldName)) {
+		for (String parentGroup : getData().getParents(worldName)) {
 
 			// Yeah horrible thing, i know, that just safety from invoking empty named groups
 			parentGroup = parentGroup.trim();
@@ -235,7 +251,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 			}
 
 			PermissionGroup group = this.manager.getGroup(parentGroup);
-			if (!parentGroups.contains(group) && !group.isChildOf(this, worldName, true)) { // To prevent cyclic inheritance
+			if (!parentGroups.contains(group)) { // To prevent cyclic inheritance
 				parentGroups.add(group);
 			}
 		}
@@ -243,23 +259,23 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		if (worldName != null) {
 			// World Inheritance
 			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				parentGroups.addAll(Arrays.asList(getParentGroups(parentWorld)));
+				parentGroups.addAll(getParentGroups(parentWorld));
 			}
 
-			parentGroups.addAll(Arrays.asList(getParentGroups(null)));
+			parentGroups.addAll(getParentGroups(null));
 		}
 
 		Collections.sort(parentGroups);
 
-		return parentGroups.toArray(new PermissionGroup[0]);
+		return Collections.unmodifiableList(parentGroups);
 	}
 
-	public PermissionGroup[] getParentGroups() {
+	public List<PermissionGroup> getParentGroups() {
 		return this.getParentGroups(null);
 	}
 
-	public Map<String, PermissionGroup[]> getAllParentGroups() {
-		Map<String, PermissionGroup[]> allGroups = new HashMap<String, PermissionGroup[]>();
+	public Map<String, List<PermissionGroup>> getAllParentGroups() {
+		Map<String, List<PermissionGroup>> allGroups = new HashMap<String, List<PermissionGroup>>();
 
 		for (String worldName : this.getWorlds()) {
 			allGroups.put(worldName, this.getWorldGroups(worldName));
@@ -270,10 +286,10 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		return allGroups;
 	}
 
-	protected PermissionGroup[] getWorldGroups(String worldName) {
+	protected List<PermissionGroup> getWorldGroups(String worldName) {
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-		for (String groupName : this.getParentGroupsNamesImpl(worldName)) {
+		for (String groupName : getData().getParents(worldName)) {
 			if (groupName == null || groupName.isEmpty() || groupName.equalsIgnoreCase(this.getName())) {
 				continue;
 			}
@@ -287,7 +303,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 		Collections.sort(groups);
 
-		return groups.toArray(new PermissionGroup[0]);
+		return Collections.unmodifiableList(groups);
 	}
 
 	/**
@@ -313,9 +329,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 *
 	 * @param parentGroups Array of parent groups names to set
 	 */
-	public abstract void setParentGroups(String[] parentGroups, String worldName);
+	public void setParentGroups(List<String> parentGroups, String worldName) {
+		getData().setParents(parentGroups, worldName);
+	}
 
-	public void setParentGroups(String[] parentGroups) {
+	public void setParentGroups(List<String> parentGroups) {
 		this.setParentGroups(parentGroups, null);
 	}
 
@@ -324,23 +342,21 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 *
 	 * @param parentGroups Array of parent groups objects to set
 	 */
-	public void setParentGroups(PermissionGroup[] parentGroups, String worldName) {
+	public void setParentGroupObjects(List<PermissionGroup> parentGroups, String worldName) {
 		List<String> groups = new LinkedList<String>();
 
 		for (PermissionGroup group : parentGroups) {
 			groups.add(group.getName());
 		}
 
-		this.setParentGroups(groups.toArray(new String[0]), worldName);
+		this.setParentGroups(groups, worldName);
 
 		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
 	}
 
-	public void setParentGroups(PermissionGroup[] parentGroups) {
-		this.setParentGroups(parentGroups, null);
+	public void setParentGroupObjects(List<PermissionGroup> parentGroups) {
+		this.setParentGroupObjects(parentGroups, null);
 	}
-
-	protected abstract void removeGroup();
 
 	/**
 	 * Check if this group is descendant of specified group
@@ -362,7 +378,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 			visitedParents.add(this.getName());
 		}
 
-		for (String parentGroup : this.getParentGroupsNamesImpl(worldName)) {
+		for (String parentGroup : getData().getParents(worldName)) {
 			if (visitedParents != null && visitedParents.contains(parentGroup)) {
 				continue;
 			}
@@ -431,11 +447,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 *
 	 * @return
 	 */
-	public PermissionGroup[] getChildGroups(String worldName) {
+	public List<PermissionGroup> getChildGroups(String worldName) {
 		return this.manager.getGroups(this.getName(), worldName, false);
 	}
 
-	public PermissionGroup[] getChildGroups() {
+	public List<PermissionGroup> getChildGroups() {
 		return this.manager.getGroups(this.getName(), false);
 	}
 
@@ -444,11 +460,11 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 *
 	 * @return
 	 */
-	public PermissionGroup[] getDescendantGroups(String worldName) {
+	public List<PermissionGroup> getDescendantGroups(String worldName) {
 		return this.manager.getGroups(this.getName(), worldName, true);
 	}
 
-	public PermissionGroup[] getDescendantGroups() {
+	public List<PermissionGroup> getDescendantGroups() {
 		return this.manager.getGroups(this.getName(), true);
 	}
 
@@ -457,16 +473,21 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	 *
 	 * @return
 	 */
-	public PermissionUser[] getUsers(String worldName) {
+	public Set<PermissionUser> getUsers(String worldName) {
 		return this.manager.getUsers(this.getName(), worldName, false);
 	}
 
-	public PermissionUser[] getUsers() {
+	public Set<PermissionUser> getUsers() {
 		return this.manager.getUsers(this.getName());
 	}
 
 	public boolean isDefault(String worldName) {
-		return this.equals(this.manager.getDefaultGroup(worldName));
+		return getData().isDefault(worldName);
+	}
+
+	public void setDefault(boolean def, String worldName) {
+		getData().setDefault(def, worldName);
+		callEvent(PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED);
 	}
 
 	/**
@@ -549,15 +570,15 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	}
 
 	@Override
-	public String[] getPermissions(String world) {
+	public List<String> getPermissions(String world) {
 		List<String> permissions = new LinkedList<String>();
 		this.getInheritedPermissions(world, permissions, true, false, new HashSet<PermissionGroup>());
-		return permissions.toArray(new String[0]);
+		return Collections.unmodifiableList(permissions);
 	}
 
 	@Override
 	public void addPermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
+		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
 
 		if (permissions.contains(permission)) {
 			permissions.remove(permission);
@@ -565,22 +586,20 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 
 		permissions.add(0, permission);
 
-		this.setPermissions(permissions.toArray(new String[0]), worldName);
+		this.setPermissions(permissions, worldName);
 	}
 
 	@Override
 	public void removePermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(Arrays.asList(this.getOwnPermissions(worldName)));
-
+		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
 		permissions.remove(permission);
-
-		this.setPermissions(permissions.toArray(new String[0]), worldName);
+		this.setPermissions(permissions, worldName);
 	}
 
 	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance, Set<PermissionGroup> visitedGroups) {
 		if (visitedGroups.size() == 0) {
-			permissions.addAll(Arrays.asList(this.getTimedPermissions(worldName)));
-			permissions.addAll(Arrays.asList(this.getOwnPermissions(worldName)));
+			permissions.addAll(this.getTimedPermissions(worldName));
+			permissions.addAll(this.getOwnPermissions(worldName));
 		} else { // filter permissions for ancestors groups
 			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getTimedPermissions(worldName));
 			this.copyFilterPermissions(NON_INHERITABLE_PREFIX, permissions, this.getOwnPermissions(worldName));
@@ -607,7 +626,7 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		}
 	}
 
-	protected void copyFilterPermissions(String filterPrefix, List<String> to, String[] from) {
+	protected void copyFilterPermissions(String filterPrefix, List<String> to, List<String> from) {
 		for (String permission : from) {
 			if (permission.startsWith(filterPrefix)) {
 				continue;
@@ -643,18 +662,15 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 		}
 
 		this.clearChildren(null);
-
-		this.removeGroup();
-
-		this.callEvent(PermissionEntityEvent.Action.REMOVED);
+		super.remove();
 	}
 
 	private void clearChildren(String worldName) {
 		for (PermissionGroup group : this.getChildGroups(worldName)) {
-			List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+			List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>(group.getParentGroups(worldName));
 			parentGroups.remove(this);
 
-			group.setParentGroups(parentGroups.toArray(new PermissionGroup[0]), worldName);
+			group.setParentGroupObjects(parentGroups, worldName);
 		}
 
 		for (PermissionUser user : this.getUsers(worldName)) {
@@ -708,4 +724,5 @@ public abstract class PermissionGroup extends PermissionEntity implements Compar
 	public int compareTo(PermissionGroup o) {
 		return this.getWeight() - o.getWeight();
 	}
+
 }

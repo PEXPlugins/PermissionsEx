@@ -46,9 +46,9 @@ public class WorldCommands extends PermissionsCommand {
 
 		sender.sendMessage("Worlds on server: ");
 		for (World world : worlds) {
-			String[] parentWorlds = manager.getWorldInheritance(world.getName());
+			List<String> parentWorlds = manager.getWorldInheritance(world.getName());
 			String output = "  " + world.getName();
-			if (parentWorlds.length > 0) {
+			if (!parentWorlds.isEmpty()) {
 				output += ChatColor.GREEN + " [" + ChatColor.WHITE + StringUtils.implode(parentWorlds, ", ") + ChatColor.GREEN + "]";
 			}
 
@@ -68,19 +68,19 @@ public class WorldCommands extends PermissionsCommand {
 			return;
 		}
 
-		String[] parentWorlds = manager.getWorldInheritance(worldName);
+		List<String> parentWorlds = manager.getWorldInheritance(worldName);
 
-		sender.sendMessage("World " + worldName + " inherit:");
-		if (parentWorlds.length == 0) {
+		sender.sendMessage("World " + worldName + " inherits:");
+		if (parentWorlds.isEmpty()) {
 			sender.sendMessage("nothing :3");
 			return;
 		}
 
 		for (String parentWorld : parentWorlds) {
-			String[] parents = manager.getWorldInheritance(parentWorld);
+			List<String> parents = manager.getWorldInheritance(parentWorld);
 			String output = "  " + parentWorld;
-			if (parentWorlds.length > 0) {
-				output += ChatColor.GREEN + " [" + ChatColor.WHITE + StringUtils.implode(parentWorlds, ", ") + ChatColor.GREEN + "]";
+			if (!parents.isEmpty()) {
+				output += ChatColor.GREEN + " [" + ChatColor.WHITE + StringUtils.implode(parents, ", ") + ChatColor.GREEN + "]";
 			}
 
 			sender.sendMessage(output);
@@ -112,7 +112,7 @@ public class WorldCommands extends PermissionsCommand {
 			parents.add(parentWorlds.trim());
 		}
 
-		manager.setWorldInheritance(worldName, parents.toArray(new String[0]));
+		manager.setWorldInheritance(worldName, parents);
 
 		sender.sendMessage("World " + worldName + " inherits " + StringUtils.implode(parents, ", "));
 	}

@@ -32,12 +32,12 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import ru.tehkode.permissions.PermissionBackend;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.MemoryBackend;
-import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.backends.SQLBackend;
+import ru.tehkode.permissions.backends.memory.MemoryBackend;
+import ru.tehkode.permissions.backends.file.FileBackend;
+import ru.tehkode.permissions.backends.sql.SQLBackend;
 import ru.tehkode.permissions.bukkit.commands.GroupCommands;
 import ru.tehkode.permissions.bukkit.commands.PromotionCommands;
 import ru.tehkode.permissions.bukkit.commands.UserCommands;
@@ -55,10 +55,9 @@ import java.util.logging.Level;
  * @author code
  */
 public class PermissionsEx extends JavaPlugin {
-	protected static final String CONFIG_FILE = "config.yml";
 	protected PermissionManager permissionsManager;
 	protected CommandsManager commandsManager;
-	protected FileConfiguration config;
+	private PermissionsExConfig config;
 	protected SuperpermsListener superms;
 	private RegexPermissions regexPerms;
 	private boolean errored = false;
@@ -86,7 +85,7 @@ public class PermissionsEx extends JavaPlugin {
 	@Override
 	public void onLoad() {
 		try {
-			this.config = this.getConfig();
+			this.config = new PermissionsExConfig(this.getConfig());
 			this.commandsManager = new CommandsManager(this);
 			//this.permissionsManager = new PermissionManager(this.config);
 		/*} catch (PermissionBackendException e) {
@@ -119,7 +118,6 @@ public class PermissionsEx extends JavaPlugin {
 
 			// Register Player permissions cleaner
 			PlayerEventsListener cleaner = new PlayerEventsListener();
-			cleaner.logLastPlayerLogin = this.config.getBoolean("permissions.log-players", cleaner.logLastPlayerLogin);
 			this.getServer().getPluginManager().registerEvents(cleaner, this);
 
 			//register service
@@ -232,16 +230,15 @@ public class PermissionsEx extends JavaPlugin {
 
 	public class PlayerEventsListener implements Listener {
 
-		protected boolean logLastPlayerLogin = false;
 
 		@EventHandler
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			try {
-			if (!logLastPlayerLogin) {
+			if (!config.shouldLogPlayers()) {
 				return;
 			}
 
-			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
+			PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
 			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
 			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
 			} catch (Throwable t) {
@@ -252,11 +249,11 @@ public class PermissionsEx extends JavaPlugin {
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			try {
-			if (logLastPlayerLogin) {
-				getPermissionManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
+			if (config.shouldLogPlayers()) {
+				getPermissionsManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 			}
 
-			getPermissionManager().resetUser(event.getPlayer().getName());
+			getPermissionsManager().resetUser(event.getPlayer().getName());
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);
 			}

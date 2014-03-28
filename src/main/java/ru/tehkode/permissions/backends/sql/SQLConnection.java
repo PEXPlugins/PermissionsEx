@@ -18,9 +18,6 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
-import ru.tehkode.permissions.backends.SQLBackend;
-
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -29,7 +26,6 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,13 +127,13 @@ public class SQLConnection {
 		}
 
 		if (!this.db.isValid(3)) {
-			Logger.getLogger("PermissionsEx").warning("Lost connection with sql server. Reconnecting.");
+			backend.getLogger().warning("Lost connection with sql server. Reconnecting.");
 			this.connect();
 		}
 	}
 
 	protected final void connect() throws SQLException {
-		Logger.getLogger("PermissionsEx").info("[PermissionsEx-SQL] Connecting to database \"" + this.uri + "\"");
+		backend.getLogger().info("Connecting to database \"" + this.uri + "\"");
 		this.cachedStatements.clear();
 		this.statement = null;
 		db = DriverManager.getConnection("jdbc:" + uri, user, password);
@@ -160,7 +156,7 @@ public class SQLConnection {
 		try {
 			db.close();
 		} catch (SQLException e) {
-			Logger.getLogger("PermissionsEx").log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
+			backend.getLogger().log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
 		} finally {
 			super.finalize();
 		}

@@ -42,7 +42,6 @@ public interface PermissionsData {
 	 * @param worldName
 	 * @return
 	 */
-	@Deprecated
 	public String getPrefix(String worldName);
 
 	/**
@@ -51,7 +50,6 @@ public interface PermissionsData {
 	 * @param prefix
 	 * @param worldName
 	 */
-	@Deprecated
 	public void setPrefix(String prefix, String worldName);
 
 	/**
@@ -60,7 +58,6 @@ public interface PermissionsData {
 	 * @param worldName
 	 * @return
 	 */
-	@Deprecated
 	public String getSuffix(String worldName);
 
 	/**
@@ -69,7 +66,6 @@ public interface PermissionsData {
 	 * @param prefix
 	 * @param worldName
 	 */
-	@Deprecated
 	public void setSuffix(String suffix, String worldName);
 
 	/**
@@ -123,4 +119,6 @@ public interface PermissionsData {
 	 * Completely remove data from backend
 	 */
 	public void remove();
+
+
 }

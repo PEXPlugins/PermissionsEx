@@ -18,9 +18,11 @@
  */
 package ru.tehkode.permissions;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -47,6 +49,8 @@ public abstract class PermissionEntity {
 		this.manager = manager;
 		this.name = name;
 	}
+
+	protected abstract PermissionsData getData();
 
 	/**
 	 * This method 100% run after all constructors have been run and entity
@@ -78,7 +82,9 @@ public abstract class PermissionEntity {
 	 * @param worldName
 	 * @return prefix
 	 */
-	public abstract String getPrefix(String worldName);
+	public String getPrefix(String worldName) {
+		return getData().getPrefix(worldName);
+	}
 
 	public String getPrefix() {
 		return this.getPrefix(null);
@@ -93,14 +99,19 @@ public abstract class PermissionEntity {
 	 *
 	 * @param prefix new prefix
 	 */
-	public abstract void setPrefix(String prefix, String worldName);
+	public void setPrefix(String prefix, String worldName) {
+		getData().setPrefix(prefix, worldName);
+		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
+	}
 
 	/**
 	 * Return entity suffix
 	 *
 	 * @return suffix
 	 */
-	public abstract String getSuffix(String worldName);
+	public String getSuffix(String worldName) {
+		return getData().getSuffix(worldName);
+	}
 
 	public String getSuffix() {
 		return getSuffix(null);
@@ -111,7 +122,10 @@ public abstract class PermissionEntity {
 	 *
 	 * @param suffix new suffix
 	 */
-	public abstract void setSuffix(String suffix, String worldName);
+	public void setSuffix(String suffix, String worldName) {
+		getData().setSuffix(suffix, worldName);
+		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
+	}
 
 	/**
 	 * Checks if entity has specified permission in default world
@@ -150,7 +164,9 @@ public abstract class PermissionEntity {
 	 * @param world World name
 	 * @return Array of permission expressions
 	 */
-	public abstract String[] getPermissions(String world);
+	public List<String> getPermissions(String world) {
+		return getData().getPermissions(world);
+	}
 
 	/**
 	 * Return permissions for all worlds
@@ -158,7 +174,9 @@ public abstract class PermissionEntity {
 	 *
 	 * @return Map with world name as key and permissions array as value
 	 */
-	public abstract Map<String, String[]> getAllPermissions();
+	public Map<String, List<String>> getAllPermissions() {
+		return getData().getPermissionsMap();
+	}
 
 	/**
 	 * Add permissions for specified world
@@ -183,7 +201,7 @@ public abstract class PermissionEntity {
 	 * Remove permission in world
 	 *
 	 * @param permission Permission to remove
-	 * @param world      World name to remove permission for
+	 * @param worldName      World name to remove permission for
 	 */
 	public void removePermission(String permission, String worldName) {
 		throw new UnsupportedOperationException("You shouldn't call this method");
@@ -206,15 +224,18 @@ public abstract class PermissionEntity {
 	 * @param permissions Array of permissions to set
 	 * @param world       World to set permissions for
 	 */
-	public abstract void setPermissions(String[] permissions, String world);
+	public void setPermissions(List<String> permissions, String world) {
+		getData().setPermissions(permissions, world);
+		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
+	}
 
 	/**
 	 * Set specified permissions in common space (all world)
 	 *
 	 * @param permission Permission to set
 	 */
-	public void setPermissions(String[] permission) {
-		this.setPermissions(permission, "");
+	public void setPermissions(List<String> permission) {
+		this.setPermissions(permission, null);
 	}
 
 	/**
@@ -225,7 +246,13 @@ public abstract class PermissionEntity {
 	 * @param defaultValue Default value to fallback if no such option was found
 	 * @return Value of option as String
 	 */
-	public abstract String getOption(String option, String world, String defaultValue);
+	public String getOption(String option, String world, String defaultValue) {
+		String ret = getData().getOption(option, world);
+		if (ret == null) {
+			ret = defaultValue;
+		}
+		return ret;
+	}
 
 	/**
 	 * Return option
@@ -236,7 +263,7 @@ public abstract class PermissionEntity {
 	 */
 	public String getOption(String option) {
 		// @todo Replace empty string with null
-		return this.getOption(option, "", "");
+		return this.getOption(option, null, "");
 	}
 
 	/**
@@ -314,7 +341,10 @@ public abstract class PermissionEntity {
 	 * @param value  Value to set, null to remove
 	 * @param world  World name
 	 */
-	public abstract void setOption(String option, String value, String world);
+	public void setOption(String option, String value, String world) {
+		getData().setOption(option, value, world);
+		this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
+	}
 
 	/**
 	 * Set option for all worlds. Can be overwritten by world specific option
@@ -322,8 +352,8 @@ public abstract class PermissionEntity {
 	 * @param option Option name
 	 * @param value  Value to set, null to remove
 	 */
-	public void setOption(String permission, String value) {
-		this.setOption(permission, value, "");
+	public void setOption(String option, String value) {
+		this.setOption(option, value, "");
 	}
 
 	/**
@@ -332,25 +362,35 @@ public abstract class PermissionEntity {
 	 * @param world
 	 * @return Option value as string Map
 	 */
-	public abstract Map<String, String> getOptions(String world);
+	public Map<String, String> getOptions(String world) {
+		return getData().getOptions(world);
+	}
 
 	/**
 	 * Return options for all worlds
-	 * Common options stored as "" (empty string) as world.
+	 * Common options stored as null (empty string) as world.
 	 *
 	 * @return Map with world name as key and map of options as value
 	 */
-	public abstract Map<String, Map<String, String>> getAllOptions();
+	public Map<String, Map<String, String>> getAllOptions() {
+		return getData().getOptionsMap();
+	}
 
 	/**
 	 * Save in-memory data to storage backend
 	 */
-	public abstract void save();
+	public void save() {
+		getData().save();
+		this.callEvent(PermissionEntityEvent.Action.SAVED);
+	}
 
 	/**
 	 * Remove entity data from backend
 	 */
-	public abstract void remove();
+	public void remove() {
+		getData().remove();
+		this.callEvent(PermissionEntityEvent.Action.REMOVED);
+	}
 
 	/**
 	 * Return state of entity
@@ -366,7 +406,9 @@ public abstract class PermissionEntity {
 	 *
 	 * @return
 	 */
-	public abstract String[] getWorlds();
+	public Set<String> getWorlds() {
+		return getData().getWorlds();
+	}
 
 	/**
 	 * Return entity timed (temporary) permission for world
@@ -374,16 +416,16 @@ public abstract class PermissionEntity {
 	 * @param world
 	 * @return Array of timed permissions in that world
 	 */
-	public String[] getTimedPermissions(String world) {
+	public List<String> getTimedPermissions(String world) {
 		if (world == null) {
 			world = "";
 		}
 
 		if (!this.timedPermissions.containsKey(world)) {
-			return new String[0];
+			return Collections.emptyList();
 		}
 
-		return this.timedPermissions.get(world).toArray(new String[0]);
+		return Collections.unmodifiableList(this.timedPermissions.get(world));
 	}
 
 	/**
@@ -504,7 +546,7 @@ public abstract class PermissionEntity {
 		return this.getMatchingExpression(this.getPermissions(world), permission);
 	}
 
-	public String getMatchingExpression(String[] permissions, String permission) {
+	public String getMatchingExpression(List<String> permissions, String permission) {
 		for (String expression : permissions) {
 			if (isMatches(expression, permission, true)) {
 				return expression;

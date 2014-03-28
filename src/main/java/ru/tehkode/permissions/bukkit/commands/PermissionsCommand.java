@@ -73,7 +73,7 @@ public abstract class PermissionsCommand implements CommandListener {
 		return autoCompletePlayerName(playerName, "user");
 	}
 
-	protected void printEntityInheritance(CommandSender sender, PermissionGroup[] groups) {
+	protected void printEntityInheritance(CommandSender sender, List<PermissionGroup> groups) {
 		for (PermissionGroup group : groups) {
 			String rank = "not ranked";
 			if (group.isRanked()) {
@@ -244,20 +244,20 @@ public abstract class PermissionsCommand implements CommandListener {
 		return permission;
 	}
 
-	protected int getPosition(String permission, String[] permissions) {
+	protected int getPosition(String permission, List<String> permissions) {
 		try {
 			// permission is permission index
 			int position = Integer.parseInt(permission) - 1;
 
-			if (position < 0 || position >= permissions.length) {
+			if (position < 0 || position >= permissions.size()) {
 				throw new RuntimeException("Wrong permission index specified!");
 			}
 
 			return position;
 		} catch (NumberFormatException e) {
 			// permission is permission text
-			for (int i = 0; i < permissions.length; i++) {
-				if (permission.equalsIgnoreCase(permissions[i])) {
+			for (int i = 0; i < permissions.size(); i++) {
+				if (permission.equalsIgnoreCase(permissions.get(i))) {
 					return i;
 				}
 			}
@@ -269,15 +269,15 @@ public abstract class PermissionsCommand implements CommandListener {
 	protected String printHierarchy(PermissionGroup parent, String worldName, int level) {
 		StringBuilder buffer = new StringBuilder();
 
-		PermissionGroup[] groups;
+		List<PermissionGroup> groups;
 		if (parent == null) {
-			groups = PermissionsEx.getPermissionManager().getGroups();
+			groups = PermissionsEx.getPermissionManager().getGroupList();
 		} else {
 			groups = parent.getChildGroups(worldName);
 		}
 
 		for (PermissionGroup group : groups) {
-			if (parent == null && group.getParentGroups(worldName).length > 0) {
+			if (parent == null && !group.getParentGroups(worldName).isEmpty()) {
 				continue;
 			}
 
@@ -315,7 +315,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			builder.append("\n");
 		}
 
-		PermissionGroup[] parents;
+		List<PermissionGroup> parents;
 
 		if (entity instanceof PermissionUser) {
 			parents = ((PermissionUser) entity).getGroups(worldName);
@@ -331,9 +331,9 @@ public abstract class PermissionsCommand implements CommandListener {
 
 	protected List<String> getPermissionsTree(PermissionEntity entity, String world, int level) {
 		List<String> permissions = new LinkedList<String>();
-		Map<String, String[]> allPermissions = entity.getAllPermissions();
+		Map<String, List<String>> allPermissions = entity.getAllPermissions();
 
-		String[] worldsPermissions = allPermissions.get(world);
+		List<String> worldsPermissions = allPermissions.get(world);
 		if (worldsPermissions != null) {
 			permissions.addAll(sprintPermissions(world, worldsPermissions));
 		}
@@ -351,7 +351,7 @@ public abstract class PermissionsCommand implements CommandListener {
 		return permissions;
 	}
 
-	protected List<String> sprintPermissions(String world, String[] permissions) {
+	protected List<String> sprintPermissions(String world, List<String> permissions) {
 		List<String> permissionList = new LinkedList<String>();
 
 		if (permissions == null) {

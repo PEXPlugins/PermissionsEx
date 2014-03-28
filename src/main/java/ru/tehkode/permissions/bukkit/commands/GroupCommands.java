@@ -18,10 +18,10 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -40,7 +40,7 @@ public class GroupCommands extends PermissionsCommand {
 			permission = "permissions.manage.groups.list",
 			description = "List all registered groups")
 	public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
+		List<PermissionGroup> groups = PermissionsEx.getPermissionManager().getGroupList();
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
 		sender.sendMessage(ChatColor.WHITE + "Registered groups: ");
@@ -184,7 +184,7 @@ public class GroupCommands extends PermissionsCommand {
 				groups.add(PermissionsEx.getPermissionManager().getGroup(parent));
 			}
 
-			group.setParentGroups(groups.toArray(new PermissionGroup[0]), null);
+			group.setParentGroupObjects(groups, null);
 		}
 
 		sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " created!");
@@ -239,7 +239,7 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		if (group.getParentGroups(worldName).length == 0) {
+		if (group.getParentGroups(worldName).isEmpty()) {
 			sender.sendMessage(ChatColor.RED + "Group " + group.getName() + " doesn't have parents");
 			return;
 		}
@@ -279,7 +279,7 @@ public class GroupCommands extends PermissionsCommand {
 				}
 			}
 
-			group.setParentGroups(groups.toArray(new PermissionGroup[0]), worldName);
+			group.setParentGroupObjects(groups, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
@@ -304,7 +304,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getParentGroups(worldName));
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
@@ -314,7 +314,7 @@ public class GroupCommands extends PermissionsCommand {
 				}
 			}
 
-			group.setParentGroups(groups.toArray(new PermissionGroup[0]), worldName);
+			group.setParentGroupObjects(groups, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
@@ -339,7 +339,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(Arrays.asList(group.getParentGroups(worldName)));
+			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getParentGroups(worldName));
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
@@ -347,7 +347,7 @@ public class GroupCommands extends PermissionsCommand {
 				groups.remove(parentGroup);
 			}
 
-			group.setParentGroups(groups.toArray(new PermissionGroup[groups.size()]), worldName);
+			group.setParentGroupObjects(groups, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
@@ -491,16 +491,16 @@ public class GroupCommands extends PermissionsCommand {
 		}
 
 
-		String[] permissions = group.getOwnPermissions(worldName);
+		List<String> permissions = group.getOwnPermissions(worldName);
 
 		try {
 			int sourceIndex = this.getPosition(this.autoCompletePermission(group, args.get("permission"), worldName, "permission"), permissions);
 			int targetIndex = this.getPosition(this.autoCompletePermission(group, args.get("targetPermission"), worldName, "targetPermission"), permissions);
 
-			String targetPermission = permissions[targetIndex];
+			String targetPermission = permissions.get(targetIndex);
 
-			permissions[targetIndex] = permissions[sourceIndex];
-			permissions[sourceIndex] = targetPermission;
+			permissions.set(targetIndex, permissions.get(sourceIndex));
+			permissions.set(sourceIndex, targetPermission);
 
 			group.setPermissions(permissions, worldName);
 
@@ -571,10 +571,11 @@ public class GroupCommands extends PermissionsCommand {
 	public void groupUsersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
-		PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers(groupName);
+		Set<PermissionUser> users = PermissionsEx.getPermissionManager().getUsers(groupName);
 
-		if (users == null || users.length == 0) {
+		if (users == null || users.isEmpty()) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist or empty");
+			return;
 		}
 
 		sender.sendMessage("Group " + groupName + " users:");
@@ -662,11 +663,12 @@ public class GroupCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-			syntax = "set default group <group> [world]",
+			syntax = "set default group <group> <value> [world]",
 			permission = "permissions.manage.groups.inheritance",
 			description = "Set default group for specified world")
 	public void groupDefaultSet(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
+		boolean def = Boolean.parseBoolean(args.get("value"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
 		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
@@ -676,7 +678,7 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		PermissionsEx.getPermissionManager().setDefaultGroup(group, worldName);
-		sender.sendMessage("New default group in " + worldName + " world is " + group.getName() + " group");
+		group.setDefault(def, worldName);
+		sender.sendMessage("Group " + groupName + " is " + (def ? "now" : "no longer") + " default in world " + worldName);
 	}
 }

@@ -1,21 +1,18 @@
 package ru.tehkode.permissions.backends.file;
 
 import org.bukkit.configuration.ConfigurationSection;
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
-import ru.tehkode.permissions.backends.FileBackend;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 
 public class FileData implements PermissionsUserData, PermissionsGroupData {
-
 	protected transient FileConfig config;
-
 	protected String nodePath;
-
 	protected ConfigurationSection node;
-
 	protected boolean virtual = true;
 
 	public FileData(String basePath, String name, FileConfig config) {
@@ -67,6 +64,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setPermissions(List<String> permissions, String worldName) {
 		this.node.set(formatPath(worldName, "permissions"), permissions.isEmpty() ? null : permissions);
+		save();
 	}
 
 	@Override
@@ -112,6 +110,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setPrefix(String prefix, String worldName) {
 		this.node.set(formatPath(worldName, "prefix"), prefix);
+		save();
 	}
 
 	@Override
@@ -122,6 +121,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setSuffix(String suffix, String worldName) {
 		this.node.set(formatPath(worldName, "suffix"), suffix);
+		save();
 	}
 
 	@Override
@@ -132,6 +132,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setOption(String option, String worldName, String value) {
 		this.node.set(formatPath(worldName, "options", option), value);
+		save();
 	}
 
 	@Override
@@ -165,7 +166,11 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void save() {
-		this.config.save();
+		try {
+			this.config.save();
+		} catch (IOException e) {
+			PermissionsEx.getPermissionManager().getLogger().log(Level.SEVERE, "Error saving data for  " + nodePath, e);
+		}
 	}
 
 	@Override
@@ -176,7 +181,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public List<String> getGroups(String worldName) {
-		Object groups = this.node.get(FileEntity.formatPath(worldName, "group"));
+		Object groups = this.node.get(formatPath(worldName, "group"));
 
 		if (groups instanceof String) { // old style
 			String[] groupsArray;
@@ -189,20 +194,21 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 			return Arrays.asList(groupsArray);
 		} else if (groups instanceof List) {
-			return (List<String>) groups;
+			return Collections.unmodifiableList((List) groups);
 		} else {
-			return new ArrayList<String>(0);
+			return Collections.emptyList();
 		}
 	}
 
 	@Override
-	public void setGroups(List<PermissionGroup> groups, String worldName) {
-		this.node.set(FileEntity.formatPath(worldName, "group"), groups);
+	public void setGroups(List<String> groups, String worldName) {
+		this.node.set(formatPath(worldName, "group"), groups);
+		save();
 	}
 
 	@Override
 	public List<String> getParents(String worldName) {
-		List<String> parents = this.node.getStringList(FileEntity.formatPath(worldName, "inheritance"));
+		List<String> parents = this.node.getStringList(formatPath(worldName, "inheritance"));
 
 		if (parents.isEmpty()) {
 			return new ArrayList<String>(0);
@@ -212,8 +218,24 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public void setParents(String worldName, List<String> parents) {
-		this.node.set(FileEntity.formatPath(worldName, "inheritance"), parents);
+	public void setParents(List<String> parents, String worldName) {
+		this.node.set(formatPath(worldName, "inheritance"), parents);
+		save();
+	}
+
+	@Override
+	public boolean isDefault(String world) {
+		return world == null ? this.node.getBoolean("default") : this.node.getBoolean(formatPath(world, "default"));
+	}
+
+	@Override
+	public void setDefault(boolean def, String world) {
+		if (world == null) {
+			this.node.set("default", def);
+		} else {
+			this.node.set(formatPath(world, "default"), def);
+		}
+		save();
 	}
 
 	private Map<String, String> collectOptions(ConfigurationSection section) {

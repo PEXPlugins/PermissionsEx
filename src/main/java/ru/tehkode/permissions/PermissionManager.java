@@ -20,13 +20,15 @@ package ru.tehkode.permissions;
 
 import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.Configuration;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.bukkit.PermissionsExConfig;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
@@ -41,12 +43,12 @@ import java.util.logging.Logger;
 public class PermissionManager {
 
 	public final static int TRANSIENT_PERMISSION = 0;
-	protected static final Logger logger = Logger.getLogger("Minecraft");
 	protected Map<String, PermissionUser> users = new HashMap<String, PermissionUser>();
 	protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
 	protected Map<String, PermissionGroup> defaultGroups = new HashMap<String, PermissionGroup>();
 	protected PermissionBackend backend = null;
-	protected Configuration config;
+	private final PermissionsExConfig config;
+	private final Logger logger;
 	protected Timer timer;
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
@@ -55,9 +57,10 @@ public class PermissionManager {
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
 
-	public PermissionManager(Configuration config, PermissionsEx plugin) throws PermissionBackendException {
+	public PermissionManager(PermissionsExConfig config, PermissionsEx plugin) throws PermissionBackendException {
 		this.config = config;
-		if (config.getBoolean("multiserver.use-netevents", true)) {
+		this.logger = plugin.getLogger();
+		if (config.useNetEvents()) {
 			Plugin netEventsPlugin = plugin.getServer().getPluginManager().getPlugin("NetEvents");
 			if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
 				this.netEvents = (NetEventsPlugin) netEventsPlugin;
@@ -65,11 +68,9 @@ public class PermissionManager {
 			}
 		}
 		this.initBackend();
-
-		this.debugMode = config.getBoolean("permissions.debug", debugMode);
-		this.allowOps = config.getBoolean("permissions.allowOps", allowOps);
-		this.userAddGroupsLast = config.getBoolean("permissions.user-add-groups-last", userAddGroupsLast);
-
+		this.debugMode = config.isDebug();
+		this.allowOps = config.allowOps();
+		this.userAddGroupsLast = config.userAddGroupsLast();
 	}
 
 	UUID getServerUUID() {
@@ -82,6 +83,10 @@ public class PermissionManager {
 		}
 
 		return event.getSourceUUID().equals(netEvents.getServerUUID());
+	}
+
+	public boolean shouldCreateUserRecords() {
+		return config.createUserRecords();
 	}
 
 	private class RemoteEventListener implements Listener {
@@ -216,8 +221,9 @@ public class PermissionManager {
 		PermissionUser user = users.get(username.toLowerCase());
 
 		if (user == null) {
-			user = this.backend.getUser(username);
-			if (user != null) {
+			PermissionsUserData data = backend.getUserData(username);
+			if (data != null) {
+				user = new PermissionUser(username, data, this);
 				user.initialize();
 				this.users.put(username.toLowerCase(), user);
 			} else {
@@ -241,14 +247,21 @@ public class PermissionManager {
 	/**
 	 * Return all registered user objects
 	 *
-	 * @return PermissionUser array
+	 * @return unmodifiable list of users
 	 */
-	public PermissionUser[] getUsers() {
-		return backend.getUsers();
+	public Set<PermissionUser> getUsers() {
+		Set<PermissionUser> users = new HashSet<PermissionUser>();
+		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
+			users.add(getUser(p));
+		}
+		for (String name : backend.getUserNames()) {
+			users.add(getUser(name));
+		}
+		return Collections.unmodifiableSet(users);
 	}
 
 	public Collection<String> getUserNames() {
-		return backend.getRegisteredUserNames();
+		return backend.getUserNames();
 	}
 
 	/**
@@ -257,12 +270,12 @@ public class PermissionManager {
 	 * @param groupName group's name
 	 * @return PermissionUser array
 	 */
-	public PermissionUser[] getUsers(String groupName, String worldName) {
-		return backend.getUsers(groupName, worldName);
+	public Set<PermissionUser> getUsers(String groupName, String worldName) {
+		return getUsers(groupName, worldName, false);
 	}
 
-	public PermissionUser[] getUsers(String groupName) {
-		return backend.getUsers(groupName);
+	public Set<PermissionUser> getUsers(String groupName) {
+		return getUsers(groupName, false);
 	}
 
 	/**
@@ -272,12 +285,28 @@ public class PermissionManager {
 	 * @param inheritance true return members of descendant groups of specified group
 	 * @return PermissionUser array for groupnName
 	 */
-	public PermissionUser[] getUsers(String groupName, String worldName, boolean inheritance) {
-		return backend.getUsers(groupName, worldName, inheritance);
+	public Set<PermissionUser> getUsers(String groupName, String worldName, boolean inheritance) {
+		Set<PermissionUser> users = new HashSet<PermissionUser>();
+
+		for (PermissionUser user : this.getUsers()) {
+			if (user.inGroup(groupName, worldName, inheritance)) {
+				users.add(user);
+			}
+		}
+
+		return Collections.unmodifiableSet(users);
 	}
 
-	public PermissionUser[] getUsers(String groupName, boolean inheritance) {
-		return backend.getUsers(groupName, inheritance);
+	public Set<PermissionUser> getUsers(String groupName, boolean inheritance) {
+		Set<PermissionUser> users = new HashSet<PermissionUser>();
+
+		for (PermissionUser user : this.getUsers()) {
+			if (user.inGroup(groupName, inheritance)) {
+				users.add(user);
+			}
+		}
+
+		return Collections.unmodifiableSet(users);
 	}
 
 	/**
@@ -325,9 +354,10 @@ public class PermissionManager {
 		PermissionGroup group = groups.get(groupname.toLowerCase());
 
 		if (group == null) {
-			group = this.backend.getGroup(groupname);
-			if (group != null) {
-			   this.groups.put(groupname.toLowerCase(), group);
+			PermissionsGroupData data = this.backend.getGroupData(groupname);
+			if (data != null) {
+				group = new PermissionGroup(groupname, data, this);
+				this.groups.put(groupname.toLowerCase(), group);
 				try {
 					group.initialize();
 				} catch (Exception e) {
@@ -346,8 +376,17 @@ public class PermissionManager {
 	 *
 	 * @return PermissionGroup array
 	 */
+	public List<PermissionGroup> getGroupList() {
+		List<PermissionGroup> ret = new LinkedList<PermissionGroup>();
+		for (String name : backend.getGroupNames()) {
+			ret.add(getGroup(name));
+		}
+		return Collections.unmodifiableList(ret);
+	}
+
+	@Deprecated
 	public PermissionGroup[] getGroups() {
-		return backend.getGroups();
+		return getGroupList().toArray(new PermissionGroup[0]);
 	}
 
 	/**
@@ -356,12 +395,12 @@ public class PermissionManager {
 	 * @param groupName group's name
 	 * @return PermissionGroup array
 	 */
-	public PermissionGroup[] getGroups(String groupName, String worldName) {
-		return backend.getGroups(groupName, worldName);
+	public List<PermissionGroup> getGroups(String groupName, String worldName) {
+		return getGroups(groupName, worldName, false);
 	}
 
-	public PermissionGroup[] getGroups(String groupName) {
-		return backend.getGroups(groupName);
+	public List<PermissionGroup> getGroups(String groupName) {
+		return getGroups(groupName, null);
 	}
 
 	/**
@@ -369,14 +408,33 @@ public class PermissionManager {
 	 *
 	 * @param groupName   group's name
 	 * @param inheritance true: only direct child groups would be returned
-	 * @return PermissionGroup array for specified groupName
+	 * @return unmodifiable PermissionGroup list for specified groupName
 	 */
-	public PermissionGroup[] getGroups(String groupName, String worldName, boolean inheritance) {
-		return backend.getGroups(groupName, worldName, inheritance);
+	public List<PermissionGroup> getGroups(String groupName, String worldName, boolean inheritance) {
+		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+
+		for (PermissionGroup group : this.getGroupList()) {
+			if (!groups.contains(group) && group.isChildOf(groupName, worldName, inheritance)) {
+				groups.add(group);
+			}
+		}
+
+		return Collections.unmodifiableList(groups);
 	}
 
-	public PermissionGroup[] getGroups(String groupName, boolean inheritance) {
-		return backend.getGroups(groupName, inheritance);
+	public List<PermissionGroup> getGroups(String groupName, boolean inheritance) {
+		List<PermissionGroup> groups = new ArrayList<PermissionGroup>();
+
+		for (World world : Bukkit.getServer().getWorlds()) {
+			groups.addAll(getGroups(groupName, world.getName(), inheritance));
+		}
+
+		// Common space users
+		groups.addAll(getGroups(groupName, null, inheritance));
+
+		Collections.sort(groups);
+
+		return Collections.unmodifiableList(groups);
 	}
 
 	/**
@@ -388,60 +446,31 @@ public class PermissionManager {
 		String worldIndex = worldName != null ? worldName : "";
 
 		if (!this.defaultGroups.containsKey(worldIndex)) {
-			this.defaultGroups.put(worldIndex, this.getDefaultGroup(worldName, this.getDefaultGroup(null, null)));
+			this.defaultGroups.put(worldIndex, this.getDefaultGroup(worldName));
 		}
 
 		return this.defaultGroups.get(worldIndex);
 	}
 
-	public PermissionGroup getDefaultGroup() {
-		return this.getDefaultGroup(null);
-	}
-
-	private PermissionGroup getDefaultGroup(String worldName, PermissionGroup fallback) {
-		PermissionGroup defaultGroup = this.backend.getDefaultGroup(worldName);
-
-		if (defaultGroup == null && worldName == null) {
-			throw new IllegalStateException("No default group defined. Use \"pex set default group <group> [world]\" to define default group.");
-		}
-
-		if (defaultGroup != null) {
-			return defaultGroup;
+	/**
+	 * Return all known default groups
+	 *
+	 * @param worldName World to check (will include global scope)
+	 * @return All default groups
+	 */
+	public List<PermissionGroup> getDefaultGroups(String worldName) {
+		List<PermissionGroup> defaults = new LinkedList<PermissionGroup>();
+		for (String name : this.getBackend().getDefaultGroupNames(worldName)) {
+			defaults.add(getGroup(name));
 		}
 
 		if (worldName != null) {
-			// check world-inheritance
-			for (String parentWorld : this.getWorldInheritance(worldName)) {
-				defaultGroup = this.getDefaultGroup(parentWorld, null);
-				if (defaultGroup != null) {
-					return defaultGroup;
-				}
+			for (String name : this.getBackend().getDefaultGroupNames(null)) {
+				defaults.add(getGroup(name));
 			}
 		}
 
-		return fallback;
-	}
-
-	/**
-	 * Set default group to specified group
-	 *
-	 * @param group PermissionGroup group object
-	 */
-	public void setDefaultGroup(PermissionGroup group, String worldName) {
-		if (group == null || group.equals(this.defaultGroups)) {
-			return;
-		}
-
-		backend.setDefaultGroup(group, worldName);
-
-		this.defaultGroups.clear();
-
-		this.callEvent(PermissionSystemEvent.Action.DEFAULTGROUP_CHANGED);
-		this.callEvent(new PermissionEntityEvent(getServerUUID(), group, PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED));
-	}
-
-	public void setDefaultGroup(PermissionGroup group) {
-		this.setDefaultGroup(group, null);
+		return Collections.unmodifiableList(defaults);
 	}
 
 	/**
@@ -469,7 +498,7 @@ public class PermissionManager {
 	 * @return true debug is enabled, false if disabled
 	 */
 	public boolean isDebug() {
-		return this.debugMode;
+		return config.isDebug();
 	}
 
 	/**
@@ -481,7 +510,7 @@ public class PermissionManager {
 	public Map<Integer, PermissionGroup> getRankLadder(String ladderName) {
 		Map<Integer, PermissionGroup> ladder = new HashMap<Integer, PermissionGroup>();
 
-		for (PermissionGroup group : this.getGroups()) {
+		for (PermissionGroup group : this.getGroupList()) {
 			if (!group.isRanked()) {
 				continue;
 			}
@@ -500,7 +529,7 @@ public class PermissionManager {
 	 * @param worldName World name
 	 * @return Array of parent world, if world does not exist return empty array
 	 */
-	public String[] getWorldInheritance(String worldName) {
+	public List<String> getWorldInheritance(String worldName) {
 		return backend.getWorldInheritance(worldName);
 	}
 
@@ -510,7 +539,7 @@ public class PermissionManager {
 	 * @param world        world name which inheritance should be set
 	 * @param parentWorlds array of parent world names
 	 */
-	public void setWorldInheritance(String world, String[] parentWorlds) {
+	public void setWorldInheritance(String world, List<String> parentWorlds) {
 		backend.setWorldInheritance(world, parentWorlds);
 		this.callEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED);
 	}
@@ -533,8 +562,9 @@ public class PermissionManager {
 	public void setBackend(String backendName) throws PermissionBackendException {
 		synchronized (this) {
 			this.clearCache();
-			this.backend = PermissionBackend.getBackend(backendName, this, config);
-			this.backend.initialize();
+			this.backend = PermissionBackend.getBackend(backendName, this, config.getBackendConfig(backendName));
+			this.backend.reload();
+			this.backend.validate();
 		}
 
 		this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
@@ -593,14 +623,7 @@ public class PermissionManager {
 	}
 
 	private void initBackend() throws PermissionBackendException {
-		String backendName = this.config.getString("permissions.backend");
-
-		if (backendName == null || backendName.isEmpty()) {
-			backendName = PermissionBackend.defaultBackend; //Default backend
-			this.config.set("permissions.backend", backendName);
-		}
-
-		this.setBackend(backendName);
+		this.setBackend(config.getDefaultBackend());
 	}
 
 	protected void callEvent(PermissionEvent event) {
@@ -624,6 +647,10 @@ public class PermissionManager {
 	}
 
 	public Collection<String> getGroupNames() {
-		return backend.getRegisteredGroupNames();
+		return backend.getGroupNames();
+	}
+
+	public Logger getLogger() {
+		return logger;
 	}
 }

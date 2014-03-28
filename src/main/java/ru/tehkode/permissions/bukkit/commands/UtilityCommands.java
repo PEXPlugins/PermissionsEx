@@ -23,7 +23,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import ru.tehkode.permissions.PermissionBackend;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
@@ -151,9 +151,9 @@ public class UtilityCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "pex",
-			syntax = "dump <backend> <filename>",
+			syntax = "import <backend>",
 			permission = "permissions.dump",
-			description = "Dump users/groups to selected <backend> format")
+			description = "Import data from <backend> as specified in the configuration")
 	public void dumpData(Plugin plugin, CommandSender sender, Map<String, String> args) {
 		if (!(plugin instanceof PermissionsEx)) {
 			return; // User informing is disabled
@@ -161,16 +161,12 @@ public class UtilityCommands extends PermissionsCommand {
 
 		try {
 			PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), plugin.getConfig(), null);
+			backend.reload();
+			backend.validate();
+			PermissionsEx.getPermissionManager().getBackend().loadFrom(backend);
 
-			File dstFile = new File(plugin.getDataFolder(), args.get("filename"));
 
-			FileOutputStream outStream = new FileOutputStream(dstFile);
-
-			backend.dumpData(new OutputStreamWriter(outStream, "UTF-8"));
-
-			outStream.close();
-
-			sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data dumped in \"" + dstFile.getName() + "\" ");
+			sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data from \"" + args.get("backend") + "\" loaded into currently active backend");
 		} catch (RuntimeException e) {
 			if (e.getCause() instanceof ClassNotFoundException) {
 				sender.sendMessage(ChatColor.RED + "Specified backend not found!");
@@ -179,8 +175,9 @@ public class UtilityCommands extends PermissionsCommand {
 				logger.severe("Error: " + e.getMessage());
 				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			sender.sendMessage(ChatColor.RED + "IO Error: " + e.getMessage());
+		} catch (PermissionBackendException e) {
+			sender.sendMessage(ChatColor.RED + "Backend " + args.get("backend") + " was unable to load due to user configuration error. See console for details.");
+			plugin.getLogger().log(Level.WARNING, "Import backend unable to load", e);
 		}
 	}
 

@@ -2,7 +2,7 @@ package ru.tehkode.permissions;
 
 import java.util.List;
 
-public interface PermissionsUserData {
+public interface PermissionsUserData extends PermissionsData {
 
 	/**
 	 * Returns user groups in specified world
@@ -17,5 +17,6 @@ public interface PermissionsUserData {
 	 * @param groups
 	 * @param worldName
 	 */
-	public void setGroups(List<PermissionGroup> groups, String worldName);
+	public void setGroups(List<String> groups, String worldName);
+
 }
