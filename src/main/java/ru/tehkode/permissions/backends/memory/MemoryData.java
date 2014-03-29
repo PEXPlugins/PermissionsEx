@@ -48,16 +48,6 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
-	public List<String> getGroups(String worldName) {
-		return getParents(worldName);
-	}
-
-	@Override
-	public void setGroups(List<String> groups, String worldName) {
-		setParents(groups, worldName);
-	}
-
-	@Override
 	public List<String> getPermissions(String worldName) {
 		return worldsPermissions.containsKey(worldName) ? worldsPermissions.get(worldName)
 				: Collections.<String>emptyList();

@@ -50,7 +50,7 @@ public class GroupCommands extends PermissionsCommand {
 				rank = " (rank: " + group.getRank() + "@" + group.getRankLadder() + ") ";
 			}
 
-			sender.sendMessage(String.format("  %s %s %s %s[%s]", group.getName(), " #" + group.getWeight(), rank, ChatColor.DARK_GREEN, StringUtils.implode(group.getParentGroupsNames(worldName), ", ")));
+			sender.sendMessage(String.format("  %s %s %s %s[%s]", group.getName(), " #" + group.getWeight(), rank, ChatColor.DARK_GREEN, StringUtils.implode(group.getParentNames(worldName), ", ")));
 		}
 	}
 
@@ -184,7 +184,7 @@ public class GroupCommands extends PermissionsCommand {
 				groups.add(PermissionsEx.getPermissionManager().getGroup(parent));
 			}
 
-			group.setParentGroupObjects(groups, null);
+			group.setParents(groups, null);
 		}
 
 		sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " created!");
@@ -239,15 +239,16 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		if (group.getParentGroups(worldName).isEmpty()) {
+		List<String> parentNames = group.getParentNames(worldName);
+		if (parentNames.isEmpty()) {
 			sender.sendMessage(ChatColor.RED + "Group " + group.getName() + " doesn't have parents");
 			return;
 		}
 
 		sender.sendMessage("Group " + group.getName() + " parents:");
 
-		for (PermissionGroup parent : group.getParentGroups(worldName)) {
-			sender.sendMessage("  " + parent.getName());
+		for (String parent : parentNames) {
+			sender.sendMessage("  " + parent);
 		}
 
 	}
@@ -279,7 +280,7 @@ public class GroupCommands extends PermissionsCommand {
 				}
 			}
 
-			group.setParentGroupObjects(groups, worldName);
+			group.setParents(groups, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
@@ -304,7 +305,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getParentGroups(worldName));
+			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getOwnParents(worldName));
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
@@ -314,7 +315,7 @@ public class GroupCommands extends PermissionsCommand {
 				}
 			}
 
-			group.setParentGroupObjects(groups, worldName);
+			group.setParents(groups, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
@@ -339,7 +340,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.get("parents") != null) {
 			String[] parents = args.get("parents").split(",");
-			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getParentGroups(worldName));
+			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getOwnParents(worldName));
 
 			for (String parent : parents) {
 				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
@@ -347,7 +348,7 @@ public class GroupCommands extends PermissionsCommand {
 				groups.remove(parentGroup);
 			}
 
-			group.setParentGroupObjects(groups, worldName);
+			group.setParents(groups, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
 
@@ -382,15 +383,16 @@ public class GroupCommands extends PermissionsCommand {
 		}
 
 		sender.sendMessage("'" + groupName + "' inherits the following groups:");
-		printEntityInheritance(sender, group.getParentGroups());
+		printEntityInheritance(sender, group.getParents());
 
-		for (String world : group.getAllParentGroups().keySet()) {
+		Map<String, List<PermissionGroup>> parents = group.getAllParents();
+		for (String world : parents.keySet()) {
 			if (world == null) {
 				continue;
 			}
 
 			sender.sendMessage("  @" + world + ":");
-			printEntityInheritance(sender, group.getAllParentGroups().get(world));
+			printEntityInheritance(sender, parents.get(world));
 		}
 
 		sender.sendMessage("Group " + group.getName() + "'s permissions:");

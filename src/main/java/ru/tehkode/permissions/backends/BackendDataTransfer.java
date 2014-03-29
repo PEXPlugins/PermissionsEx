@@ -27,9 +27,15 @@ public class BackendDataTransfer {
 			}
 		}
 
+		to.setParents(from.getParents(null), null);
 		to.setPrefix(from.getPrefix(null), null);
 		to.setSuffix(from.getSuffix(null), null);
 		for (String world : from.getWorlds()) {
+			List<String> groups =  from.getParents(world);
+			if (groups == null || groups.isEmpty()) {
+				continue;
+			}
+			to.setParents(groups, world);
 			to.setPrefix(from.getPrefix(world), world);
 			to.setSuffix(from.getSuffix(world), world);
 		}
@@ -37,27 +43,13 @@ public class BackendDataTransfer {
 
 	public static void transferGroup(PermissionsGroupData from, PermissionsGroupData to) {
 		transferBase(from, to);
-		to.setParents(from.getParents(null), null);
 		to.setDefault(from.isDefault(null), null);
 		for (String world : from.getWorlds()) {
-			List<String> groups =  from.getParents(world);
-			if (groups == null || groups.isEmpty()) {
-				continue;
-			}
-			to.setParents(groups, world);
 			to.setDefault(from.isDefault(world), world);
 		}
 	}
 
 	public static void transferUser(PermissionsUserData from, PermissionsUserData to) {
 		transferBase(from, to);
-		to.setGroups(from.getGroups(null), null);
-		for (String world : from.getWorlds()) {
-			List<String> groups =  from.getGroups(world);
-			if (groups == null || groups.isEmpty()) {
-				continue;
-			}
-			to.setGroups(groups, world);
-		}
 	}
 }

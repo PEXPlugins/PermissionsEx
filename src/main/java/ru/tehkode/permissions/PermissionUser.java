@@ -57,7 +57,7 @@ public class PermissionUser extends PermissionEntity {
 		super.initialize();
 
 		if (this.manager.shouldCreateUserRecords() && this.isVirtual()) {
-			this.setGroups(this.getGroupNames(null), null);
+			this.setParentsName(this.getOwnParentNames(null), null);
 
 			this.save();
 		}
@@ -72,35 +72,6 @@ public class PermissionUser extends PermissionEntity {
 		return Type.USER;
 	}
 
-	/**
-	 * Return non-inherited user prefix.
-	 * This means if a user don't have has own prefix
-	 * then empty string or null would be returned
-	 *
-	 * @return prefix as string
-	 */
-	public String getOwnPrefix() {
-		return this.getOwnPrefix(null);
-	}
-
-	public String getOwnPrefix(String worldName) {
-		return getData().getPrefix(worldName);
-	}
-
-	/**
-	 * Return non-inherited suffix prefix.
-	 * This means if a user don't has own suffix
-	 * then empty string or null would be returned
-	 *
-	 * @return suffix as string
-	 */
-	public final String getOwnSuffix() {
-		return this.getOwnSuffix(null);
-	}
-
-	public String getOwnSuffix(String worldName) {
-		return getData().getSuffix(worldName);
-	}
 
 	/**
 	 * Return non-inherited permissions of a user in world
@@ -120,167 +91,29 @@ public class PermissionUser extends PermissionEntity {
 			return this.cachedOptions.get(cacheIndex);
 		}
 
-		String value = this.getOwnOption(optionName, worldName, null);
+		String value = super.getOption(optionName, worldName, null);
 		if (value != null) {
 			this.cachedOptions.put(cacheIndex, value);
 			return value;
-		}
-
-		if (worldName != null) { // world inheritance
-			for (String world : manager.getWorldInheritance(worldName)) {
-				value = this.getOption(optionName, world, null);
-				if (value != null) {
-					this.cachedOptions.put(cacheIndex, value);
-					return value;
-				}
-			}
-
-			// Check common space
-			value = this.getOption(optionName, null, null);
-			if (value != null) {
-				this.cachedOptions.put(cacheIndex, value);
-				return value;
-			}
-		}
-
-		// Inheritance
-		for (PermissionGroup group : this.getGroups(worldName)) {
-			value = group.getOption(optionName, worldName, null);
-			if (value != null) {
-				this.cachedOptions.put(cacheIndex, value); // put into cache inherited value
-				return value;
-			}
 		}
 
 		// Nothing found
 		return defaultValue;
 	}
 
-	/**
-	 * Return non-inherited value of specified option for user in world
-	 *
-	 * @param option       option string
-	 * @param world        world's name
-	 * @param defaultValue default value
-	 * @return option value or defaultValue if option is not set
-	 */
-	public String getOwnOption(String option, String world, String defaultValue) {
-		String ret = getData().getOption(option, world);
-		if (ret == null) {
-			return defaultValue;
-		}
-		return ret;
-	}
 
-	/**
-	 * Return non-inherited value of specified option in common space (all worlds).
-	 *
-	 * @param option
-	 * @return option value or empty string if option is not set
-	 */
-	public String getOwnOption(String option) {
-		return this.getOwnOption(option, null, null);
-	}
-
-	public String getOwnOption(String option, String world) {
-		return this.getOwnOption(option, world, null);
-	}
-
-	public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
-		String option = this.getOwnOption(optionName, world, Integer.toString(defaultValue));
-
-		try {
-			return Integer.parseInt(option);
-		} catch (NumberFormatException e) {
-		}
-
-		return defaultValue;
-	}
-
-	public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
-		String option = this.getOwnOption(optionName, world, Boolean.toString(defaultValue));
-
-		if ("false".equalsIgnoreCase(option)) {
-			return false;
-		} else if ("true".equalsIgnoreCase(option)) {
-			return true;
-		}
-
-		return defaultValue;
-	}
-
-	public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
-		String option = this.getOwnOption(optionName, world, Double.toString(defaultValue));
-
-		try {
-			return Double.parseDouble(option);
-		} catch (NumberFormatException e) {
-		}
-
-		return defaultValue;
-	}
-
-	/**
-	 * Get group for this user, global inheritance only
-	 *
-	 * @return
-	 */
-	public List<PermissionGroup> getGroups() {
-		return this.getGroups(null);
-	}
-
-	/**
-	 * Get groups for this user for specified world
-	 *
-	 * @param worldName Name of world
-	 * @return PermissionGroup groups
-	 */
-	public List<PermissionGroup> getGroups(String worldName) {
+	@Override
+	protected List<PermissionGroup> getParentsInternal(String worldName) {
 		if (!this.cachedGroups.containsKey(worldName)) {
-			this.cachedGroups.put(worldName, this.getGroupsUncached(worldName));
-		}
-
-		return Collections.unmodifiableList(this.cachedGroups.get(worldName));
-	}
-
-	private List<PermissionGroup> getGroupsUncached(String worldName) {
-		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-
-		for (String groupName : getData().getGroups(worldName)) {
-			if (groupName == null || groupName.isEmpty()) {
-				continue;
+			List<PermissionGroup> groups = super.getParentsInternal(worldName);
+			if (groups.isEmpty()) {
+				groups.addAll(manager.getDefaultGroups(worldName));
+				Collections.sort(groups);
 			}
-
-			PermissionGroup group = this.manager.getGroup(groupName);
-
-			if (!this.checkMembership(group, worldName)) {
-				continue;
-			}
-
-			if (!groups.contains(group)) {
-				groups.add(group);
-			}
+			this.cachedGroups.put(worldName, groups);
 		}
 
-		if (worldName != null) { // also check world-inheritance
-			// world inheritance
-			for (String world : this.manager.getWorldInheritance(worldName)) {
-				groups.addAll(this.getGroups(world));
-			}
-
-			// common groups
-			groups.addAll(this.getGroups(null));
-		}
-
-		if (groups.isEmpty()) { // Default group permissions are only included if empty
-			groups.addAll(manager.getDefaultGroups(worldName));
-		}
-
-		if (groups.size() > 1) {
-			Collections.sort(groups);
-		}
-
-		return groups;
+		return this.cachedGroups.get(worldName);
 	}
 
 	public Map<String, List<PermissionGroup>> getAllGroups() {
@@ -298,7 +131,7 @@ public class PermissionUser extends PermissionEntity {
 	protected List<PermissionGroup> getWorldGroups(String worldName) {
 		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
-		for (String groupName : this.getData().getGroups(worldName)) {
+		for (String groupName : this.getData().getParents(worldName)) {
 			if (groupName == null || groupName.isEmpty()) {
 				continue;
 			}
@@ -315,63 +148,7 @@ public class PermissionUser extends PermissionEntity {
 		return Collections.unmodifiableList(groups);
 	}
 
-	/**
-	 * Get group names, common space only
-	 *
-	 * @return
-	 */
-	public List<String> getGroupNames() {
-		return this.getGroupNames(null);
-	}
 
-	/**
-	 * Get group names in specified world
-	 *
-	 * @return String array of user's group names
-	 */
-	public List<String> getGroupNames(String worldName) {
-		List<String> groups = new LinkedList<String>();
-		for (PermissionGroup group : this.getGroups(worldName)) {
-			if (group != null) {
-				groups.add(group.getName());
-			}
-		}
-
-		return Collections.unmodifiableList(groups);
-	}
-
-	/**
-	 * Set parent groups for user
-	 *
-	 * @param groups array of parent group names
-	 */
-	public void setGroups(List<String> groups, String worldName) {
-		getData().setGroups(groups, worldName);
-		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
-	}
-
-	public void setGroups(List<String> groups) {
-		this.setGroups(groups, null);
-	}
-
-	/**
-	 * Set parent groups for user
-	 *
-	 * @param parentGroups array of parent group objects
-	 */
-	public void setGroupObjects(List<PermissionGroup> parentGroups, String worldName) {
-		List<String> groups = new LinkedList<String>();
-
-		for (PermissionGroup group : parentGroups) {
-			groups.add(group.getName());
-		}
-
-		this.setGroups(groups, worldName);
-	}
-
-	public void setGroupObjects(List<PermissionGroup> parentGroups) {
-		this.setGroupObjects(parentGroups, null);
-	}
 
 	/**
 	 * Add user to group
@@ -383,7 +160,7 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(getData().getGroups(worldName));
+		List<String> groups = new ArrayList<String>(getOwnParentNames(worldName));
 
 		if (groups.contains(groupName)) {
 			return;
@@ -395,7 +172,7 @@ public class PermissionUser extends PermissionEntity {
 			groups.add(0, groupName); //add group to start of list
 		}
 
-		this.setGroups(groups, worldName);
+		this.setParentsName(groups, worldName);
 	}
 
 	public void addGroup(String groupName) {
@@ -437,15 +214,13 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(getData().getGroups(worldName));
-
+		List<String> groups = new ArrayList<String>(getOwnParentNames(worldName));
 		if (!groups.contains(groupName)) {
 			return;
 		}
 
 		groups.remove(groupName);
-
-		this.setGroups(groups, worldName);
+		this.setParentsName(groups, worldName);
 	}
 
 	public void removeGroup(String groupName) {
@@ -482,7 +257,7 @@ public class PermissionUser extends PermissionEntity {
 	 * @return true on success, false otherwise
 	 */
 	public boolean inGroup(PermissionGroup group, String worldName, boolean checkInheritance) {
-		for (PermissionGroup parentGroup : this.getGroups(worldName)) {
+		for (PermissionGroup parentGroup : this.getParents(worldName)) {
 			if (parentGroup.equals(group)) {
 				return true;
 			}
@@ -698,7 +473,7 @@ public class PermissionUser extends PermissionEntity {
 	public Map<String, PermissionGroup> getRankLadders() {
 		Map<String, PermissionGroup> ladders = new HashMap<String, PermissionGroup>();
 
-		for (PermissionGroup group : this.getGroups()) {
+		for (PermissionGroup group : this.getParents()) {
 			if (!group.isRanked()) {
 				continue;
 			}
@@ -712,105 +487,21 @@ public class PermissionUser extends PermissionEntity {
 	@Override
 	public List<String> getPermissions(String worldName) {
 		if (!this.cachedPermissions.containsKey(worldName)) {
-			List<String> permissions = new LinkedList<String>();
-			this.getInheritedPermissions(worldName, permissions, true, false);
-
-			this.cachedPermissions.put(worldName, permissions);
+			this.cachedPermissions.put(worldName, super.getPermissions(worldName));
 		}
 
 		return this.cachedPermissions.get(worldName);
 	}
 
 	@Override
-	public void addPermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
-
-		if (permissions.contains(permission)) { // remove old permission
-			permissions.remove(permission);
-		}
-
-		// add permission on the top of list
-		permissions.add(0, permission);
-
-		this.setPermissions(permissions, worldName);
-	}
-
-	@Override
-	public void removePermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
-
-		permissions.remove(permission);
-
-		this.setPermissions(permissions, worldName);
-	}
-
-	protected void getInheritedPermissions(String worldName, List<String> permissions, boolean groupInheritance, boolean worldInheritance) {
-		permissions.addAll(this.getTimedPermissions(worldName));
-		permissions.addAll(this.getOwnPermissions(worldName));
-
-		if (worldName != null) {
-			// World inheritance
-			for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-				getInheritedPermissions(parentWorld, permissions, false, true);
-			}
-
-			// Common permissions
-			if (!worldInheritance) { // skip common world permissions if we are inside world-inheritance tree
-				getInheritedPermissions(null, permissions, false, true);
-			}
-		}
-
-		// Group inhertance
-		if (groupInheritance) {
-			for (PermissionGroup parentGroup : this.getGroups(worldName)) {
-				parentGroup.getInheritedPermissions(worldName, permissions, true, false, new HashSet<PermissionGroup>());
-			}
-		}
-
-		// Add all child nodes
-		for (String node : new ArrayList<String>(permissions)) {
-			this.getInheritedChildPermissions(node, permissions);
-		}
-	}
-
-	protected void getInheritedChildPermissions(String perm, List<String> list) {
-		getInheritedChildPermissions(perm, list, false);
-	}
-
-	protected void getInheritedChildPermissions(String perm, List<String> list, boolean invert) {
-
-		if (perm.startsWith("-")) {
-			invert = !invert;
-			perm = perm.substring(1);
-		}
-		getInheritedChildPermissions(Bukkit.getPluginManager().getPermission(perm), list, invert);
-	}
-
-	protected void getInheritedChildPermissions(Permission perm, List<String> list, boolean invert) {
-		if (perm == null) {
-			return;
-		}
-		for (Map.Entry<String, Boolean> entry : perm.getChildren().entrySet()) {
-			boolean has = entry.getValue().booleanValue() ^ invert;
-			String node = (has ? "" : "-") + entry.getKey();
-			if (!list.contains(node)) {
-				list.add(node);
-				getInheritedChildPermissions(node, list, !has);
-			}
-		}
-	}
-
-	@Override
 	public void addTimedPermission(String permission, String world, int lifeTime) {
 		super.addTimedPermission(permission, world, lifeTime);
-
 		this.clearCache();
 	}
 
 	@Override
 	public void removeTimedPermission(String permission, String world) {
 		super.removeTimedPermission(permission, world);
-
 		this.clearCache();
 	}
 
@@ -834,51 +525,18 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
-		List<PermissionGroup> groups = new ArrayList<PermissionGroup>(this.getGroups());
+		List<PermissionGroup> groups = new ArrayList<PermissionGroup>(this.getParents());
 
 		groups.remove(src);
 		groups.add(dst);
 
-		this.setGroupObjects(groups);
+		this.setParents(groups);
 	}
 
 	@Override
 	public String getPrefix(String worldName) {
-		// @TODO This method should be refactored
-
 		if (!this.cachedPrefix.containsKey(worldName)) {
-			String localPrefix = this.getOwnPrefix(worldName);
-
-			if (worldName != null && (localPrefix == null || localPrefix.isEmpty())) {
-				// World-inheritance
-				for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-					String prefix = this.getOwnPrefix(parentWorld);
-					if (prefix != null && !prefix.isEmpty()) {
-						localPrefix = prefix;
-						break;
-					}
-				}
-
-				// Common space
-				if (localPrefix == null || localPrefix.isEmpty()) {
-					localPrefix = this.getOwnPrefix(null);
-				}
-			}
-
-			if (localPrefix == null || localPrefix.isEmpty()) {
-				for (PermissionGroup group : this.getGroups(worldName)) {
-					localPrefix = group.getPrefix(worldName);
-					if (localPrefix != null && !localPrefix.isEmpty()) {
-						break;
-					}
-				}
-			}
-
-			if (localPrefix == null) { // just for NPE safety
-				localPrefix = "";
-			}
-
-			this.cachedPrefix.put(worldName, localPrefix);
+			this.cachedPrefix.put(worldName, super.getPrefix(worldName));
 		}
 
 		return this.cachedPrefix.get(worldName);
@@ -896,39 +554,8 @@ public class PermissionUser extends PermissionEntity {
 
 	@Override
 	public String getSuffix(String worldName) {
-		// @TODO This method should be refactored
 		if (!this.cachedSuffix.containsKey(worldName)) {
-			String localSuffix = this.getOwnSuffix(worldName);
-
-			if (worldName != null && (localSuffix == null || localSuffix.isEmpty())) {
-				// World-inheritance
-				for (String parentWorld : this.manager.getWorldInheritance(worldName)) {
-					String suffix = this.getOwnSuffix(parentWorld);
-					if (suffix != null && !suffix.isEmpty()) {
-						localSuffix = suffix;
-						break;
-					}
-				}
-
-				// Common space
-				if (localSuffix == null || localSuffix.isEmpty()) {
-					localSuffix = this.getOwnSuffix(null);
-				}
-			}
-
-			if (localSuffix == null || localSuffix.isEmpty()) {
-				for (PermissionGroup group : this.getGroups(worldName)) {
-					localSuffix = group.getSuffix(worldName);
-					if (localSuffix != null && !localSuffix.isEmpty()) {
-						break;
-					}
-				}
-			}
-
-			if (localSuffix == null) { // just for NPE safety
-				localSuffix = "";
-			}
-			this.cachedSuffix.put(worldName, localSuffix);
+			this.cachedSuffix.put(worldName, super.getSuffix(worldName));
 		}
 
 		return this.cachedSuffix.get(worldName);
@@ -1023,6 +650,78 @@ public class PermissionUser extends PermissionEntity {
 
 	@Deprecated
 	public String[] getGroupsNames(String world) {
-		return getGroupNames(world).toArray(new String[0]);
+		return getParentNames(world).toArray(new String[0]);
+	}
+
+
+	/**
+	 * Get group for this user, global inheritance only
+	 *
+	 * @return
+	 */
+	@Deprecated
+	public List<PermissionGroup> getGroups() {
+		return getParents();
+	}
+
+	/**
+	 * Get groups for this user for specified world
+	 *
+	 * @param worldName Name of world
+	 * @return PermissionGroup groups
+	 */
+	@Deprecated
+	public List<PermissionGroup> getGroups(String worldName) {
+		return getParents(worldName);
+	}
+
+	/**
+	 * Get group names, common space only
+	 *
+	 * @return
+	 */
+	@Deprecated
+	public List<String> getGroupNames() {
+		return getParentNames();
+	}
+
+	/**
+	 * Get group names in specified world
+	 *
+	 * @return String array of user's group names
+	 */
+	@Deprecated
+	public List<String> getGroupNames(String worldName) {
+		return getParentNames(worldName);
+	}
+
+	/**
+	 * Set parent groups for user
+	 *
+	 * @param groups array of parent group names
+	 */
+	@Deprecated
+	public void setGroups(List<String> groups, String worldName) {
+		setParentsName(groups, worldName);
+	}
+
+	@Deprecated
+	public void setGroups(List<String> groups) {
+		setParentsName(groups);
+	}
+
+	/**
+	 * Set parent groups for user
+	 *
+	 * @param parentGroups array of parent group objects
+	 */
+	@Deprecated
+	public void setGroupObjects(List<PermissionGroup> parentGroups, String worldName) {
+		setParents(parentGroups, worldName);
+	}
+
+	@Deprecated
+	public void setGroupObjects(List<PermissionGroup> parentGroups) {
+		setParents(parentGroups);
 	}
 }

@@ -443,16 +443,6 @@ protected void updateInfo() {
 		}
 	}
 
-	@Override
-	public List<String> getGroups(String worldName) {
-		return getParents(worldName);
-	}
-
-	@Override
-	public void setGroups(List<String> groups, String worldName) {
-		setParents(groups, worldName);
-	}
-
 	public enum Type {
 		GROUP, USER
 	}

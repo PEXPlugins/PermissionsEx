@@ -1,22 +1,10 @@
 package ru.tehkode.permissions;
 
-import java.util.List;
 
+/**
+ * This interface is currently empty, but remains to support user-specific data requirements.
+ * Ideally there should be a minimal amount of data types only supported for users
+ */
 public interface PermissionsUserData extends PermissionsData {
-
-	/**
-	 * Returns user groups in specified world
-	 *
-	 * @param worldName
-	 */
-	public List<String> getGroups(String worldName);
-
-	/**
-	 * Set groups in specified world
-	 *
-	 * @param groups
-	 * @param worldName
-	 */
-	public void setGroups(List<String> groups, String worldName);
 
 }

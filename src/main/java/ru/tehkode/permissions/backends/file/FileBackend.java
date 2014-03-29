@@ -103,12 +103,12 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String userName) {
-		return new FileData("users", userName, this.permissions);
+		return new FileData("users", userName, this.permissions, "group");
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
-		return new FileData("groups", groupName, this.permissions);
+		return new FileData("groups", groupName, this.permissions, "inheritance");
 	}
 
 	@Override

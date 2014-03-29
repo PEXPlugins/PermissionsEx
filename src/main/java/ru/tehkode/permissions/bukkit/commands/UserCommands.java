@@ -49,7 +49,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "Currently registered users: ");
 		for (PermissionUser user : users) {
-			sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getGroupNames(), ", ") + "]");
+			sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentNames(), ", ") + "]");
 		}
 	}
 
@@ -89,7 +89,7 @@ public class UserCommands extends PermissionsCommand {
 		}
 
 		sender.sendMessage("'" + userName + "' is a member of:");
-		printEntityInheritance(sender, user.getGroups());
+		printEntityInheritance(sender, user.getParents());
 
 		for (String world : user.getAllGroups().keySet()) {
 			if (world == null) {
@@ -474,7 +474,7 @@ public class UserCommands extends PermissionsCommand {
 		}
 
 		sender.sendMessage("User " + args.get("user") + " @" + worldName + " currently in:");
-		for (PermissionGroup group : user.getGroups(worldName)) {
+		for (PermissionGroup group : user.getParents(worldName)) {
 			sender.sendMessage("  " + group.getName());
 		}
 	}

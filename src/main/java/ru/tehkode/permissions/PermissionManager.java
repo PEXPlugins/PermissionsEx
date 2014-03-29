@@ -498,7 +498,7 @@ public class PermissionManager {
 	 * @return true debug is enabled, false if disabled
 	 */
 	public boolean isDebug() {
-		return config.isDebug();
+		return debugMode;
 	}
 
 	/**

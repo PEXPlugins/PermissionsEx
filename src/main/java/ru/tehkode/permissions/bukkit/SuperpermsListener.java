@@ -93,7 +93,7 @@ public class SuperpermsListener implements Listener {
 
 	private void updatePlayerMetadata(Permission rootPermission, PermissionUser user, String worldName) {
 		rootPermission.getChildren().clear();
-		final List<String> groups = user.getGroupNames(worldName);
+		final List<String> groups = user.getParentNames(worldName);
 		final Map<String, String> options = user.getOptions(worldName);
 		// Metadata
 		// Groups

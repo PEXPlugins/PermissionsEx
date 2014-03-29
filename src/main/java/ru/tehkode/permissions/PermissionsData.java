@@ -63,7 +63,7 @@ public interface PermissionsData {
 	/**
 	 * Set suffix in specified world
 	 *
-	 * @param prefix
+	 * @param suffix
 	 * @param worldName
 	 */
 	public void setSuffix(String suffix, String worldName);
@@ -102,6 +102,21 @@ public interface PermissionsData {
 	 */
 	public Map<String, Map<String, String>> getOptionsMap();
 
+	/**
+	 * Return the parent groups of a user or group
+	 *
+	 * @param worldName World or null for common
+	 * @return Unmodifiable list of parents
+	 */
+	public List<String> getParents(String worldName);
+
+	/**
+	 * Set parent groups of a user or group
+	 *
+	 * @param parents New list of parents
+	 * @param worldName World name or null for common
+	 */
+	public void setParents(List<String> parents, String worldName);
 
 	/**
 	 * Returns true if this User/Group exists only in server memory

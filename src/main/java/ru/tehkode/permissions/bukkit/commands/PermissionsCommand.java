@@ -277,7 +277,7 @@ public abstract class PermissionsCommand implements CommandListener {
 		}
 
 		for (PermissionGroup group : groups) {
-			if (parent == null && !group.getParentGroups(worldName).isEmpty()) {
+			if (parent == null && !group.getParents(worldName).isEmpty()) {
 				continue;
 			}
 
@@ -315,16 +315,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			builder.append("\n");
 		}
 
-		List<PermissionGroup> parents;
-
-		if (entity instanceof PermissionUser) {
-			parents = ((PermissionUser) entity).getGroups(worldName);
-		} else if (entity instanceof PermissionGroup) {
-			parents = ((PermissionGroup) entity).getParentGroups(worldName);
-		} else {
-			throw new RuntimeException("Unknown class in hierarchy. Nag t3hk0d3 please.");
-		}
-
+		List<PermissionGroup> parents = entity.getParents(worldName);
 		level++; // Just increment level once
 		return builder.toString();
 	}

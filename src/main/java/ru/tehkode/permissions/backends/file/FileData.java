@@ -10,15 +10,16 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class FileData implements PermissionsUserData, PermissionsGroupData {
-	protected transient FileConfig config;
-	protected String nodePath;
-	protected ConfigurationSection node;
+	protected transient final FileConfig config;
+	private  String nodePath;
+	private ConfigurationSection node;
 	protected boolean virtual = true;
+	private final String parentPath;
 
-	public FileData(String basePath, String name, FileConfig config) {
+	public FileData(String basePath, String name, FileConfig config, String parentPath) {
 		this.config = config;
-
 		this.node = findNode(name, basePath);
+		this.parentPath = parentPath;
 	}
 
 	private ConfigurationSection findNode(String entityName, String basePath) {
@@ -37,7 +38,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
 				if (entry.getKey().equalsIgnoreCase(entityName)
 						&& entry.getValue() instanceof ConfigurationSection) {
-					this.nodePath = FileBackend.buildPath(basePath, entityName);
+					this.nodePath = FileBackend.buildPath(basePath, entry.getKey());
 					return (ConfigurationSection) entry.getValue();
 				}
 			}
@@ -179,47 +180,21 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		this.save();
 	}
 
-	@Override
-	public List<String> getGroups(String worldName) {
-		Object groups = this.node.get(formatPath(worldName, "group"));
-
-		if (groups instanceof String) { // old style
-			String[] groupsArray;
-			String groupsString = ((String) groups);
-			if (groupsString.contains(",")) {
-				groupsArray = ((String) groups).split(",");
-			} else {
-				groupsArray = new String[]{groupsString};
-			}
-
-			return Arrays.asList(groupsArray);
-		} else if (groups instanceof List) {
-			return Collections.unmodifiableList((List) groups);
-		} else {
-			return Collections.emptyList();
-		}
-	}
-
-	@Override
-	public void setGroups(List<String> groups, String worldName) {
-		this.node.set(formatPath(worldName, "group"), groups);
-		save();
-	}
 
 	@Override
 	public List<String> getParents(String worldName) {
-		List<String> parents = this.node.getStringList(formatPath(worldName, "inheritance"));
+		List<String> parents = this.node.getStringList(formatPath(worldName, parentPath));
 
-		if (parents.isEmpty()) {
-			return new ArrayList<String>(0);
+		if (parents == null || parents.isEmpty()) {
+			return Collections.emptyList();
 		}
 
-		return parents;
+		return Collections.unmodifiableList(parents);
 	}
 
 	@Override
 	public void setParents(List<String> parents, String worldName) {
-		this.node.set(formatPath(worldName, "inheritance"), parents);
+		this.node.set(formatPath(worldName, parentPath), parents);
 		save();
 	}
 

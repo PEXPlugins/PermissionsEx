@@ -18,7 +18,9 @@
  */
 package ru.tehkode.permissions;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +30,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.permissions.Permission;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
  * @author code
  */
 public abstract class PermissionEntity {
+	protected final static String NON_INHERITABLE_PREFIX = "#";
 	public static enum Type {
 		USER, GROUP;
 	}
@@ -77,23 +81,60 @@ public abstract class PermissionEntity {
 	public abstract Type getType();
 
 	/**
+	 * Return non-inherited user prefix.
+	 * This means if at entity  don't have has own prefix
+	 * then empty string or null would be returned
+	 *
+	 * @return prefix as string
+	 */
+	public String getOwnPrefix() {
+		return this.getOwnPrefix(null);
+	}
+
+	public String getOwnPrefix(String worldName) {
+		return getData().getPrefix(worldName);
+	}
+
+	/**
+	 * Return non-inherited user suffix.
+	 * This means if an entity don't has own suffix
+	 * then empty string or null would be returned
+	 *
+	 * @return suffix as string
+	 */
+	public final String getOwnSuffix() {
+		return this.getOwnSuffix(null);
+	}
+
+	public String getOwnSuffix(String worldName) {
+		return getData().getSuffix(worldName);
+	}
+
+	/**
 	 * Returns entity prefix
 	 *
 	 * @param worldName
 	 * @return prefix
 	 */
 	public String getPrefix(String worldName) {
-		return getData().getPrefix(worldName);
-	}
-
-	public String getPrefix() {
-		return this.getPrefix(null);
+		String ret = new HierarchyTraverser<String>(this, worldName) {
+			@Override
+			protected String fetchLocal(PermissionEntity entity, String world) {
+				final String ret = entity.getOwnPrefix(world);
+				return ret == null || ret.isEmpty() ? null : ret;
+			}
+		}.traverse();
+		return ret == null ? "" : ret;
 	}
 
 	/**
 	 * Returns entity prefix
 	 *
-	 */
+	 */	public String getPrefix() {
+		return this.getPrefix(null);
+	}
+
+
 	/**
 	 * Set prefix to value
 	 *
@@ -110,7 +151,14 @@ public abstract class PermissionEntity {
 	 * @return suffix
 	 */
 	public String getSuffix(String worldName) {
-		return getData().getSuffix(worldName);
+		String ret = new HierarchyTraverser<String>(this, worldName) {
+			@Override
+			protected String fetchLocal(PermissionEntity entity, String world) {
+				final String ret = entity.getOwnSuffix(world);
+				return ret == null || ret.isEmpty() ? null : ret;
+			}
+		}.traverse();
+		return ret == null ? "" : ret;
 	}
 
 	public String getSuffix() {
@@ -165,7 +213,16 @@ public abstract class PermissionEntity {
 	 * @return Array of permission expressions
 	 */
 	public List<String> getPermissions(String world) {
-		return getData().getPermissions(world);
+		return Collections.unmodifiableList(getPermissionsInternal(world, false));
+	}
+
+	/**
+	 * Returns own (without inheritance) permissions of group for world
+	 *
+	 * @param world world's world name
+	 * @return Array of permissions for world
+	 */	public List<String> getOwnPermissions(String world) {
+		return Collections.unmodifiableList(getData().getPermissions(world));
 	}
 
 	/**
@@ -178,14 +235,81 @@ public abstract class PermissionEntity {
 		return getData().getPermissionsMap();
 	}
 
+	protected List<String> getPermissionsInternal(String worldName, final boolean filterNonInheritable) {
+		final List<String> ret = new ArrayList<String>();
+		// TODO: Handle non-inheritable permissions correctly
+
+		new HierarchyTraverser<Void>(this, worldName) {
+			@Override
+			protected Void fetchLocal(PermissionEntity entity, String world) {
+				for (String perm : entity.getOwnPermissions(world)) {
+					if (filterNonInheritable && entity != PermissionEntity.this && perm.startsWith(NON_INHERITABLE_PREFIX)) {
+						continue;
+					}
+
+					ret.add(perm);
+					getInheritedChildPermissions(perm, ret);
+				}
+
+				for (String perm : entity.getTimedPermissions(world)) {
+					if (filterNonInheritable && entity != PermissionEntity.this && perm.startsWith(NON_INHERITABLE_PREFIX)) {
+						continue;
+					}
+
+					ret.add(perm);
+					getInheritedChildPermissions(perm, ret);
+				}
+				return null;
+			}
+		}.traverse();
+
+		return ret;
+	}
+
+	protected void getInheritedChildPermissions(String perm, List<String> list) {
+		getInheritedChildPermissions(perm, list, false);
+	}
+
+	protected void getInheritedChildPermissions(String perm, List<String> list, boolean invert) {
+
+		if (perm.startsWith("-")) {
+			invert = !invert;
+			perm = perm.substring(1);
+		}
+		getInheritedChildPermissions(Bukkit.getPluginManager().getPermission(perm), list, invert);
+	}
+
+	protected void getInheritedChildPermissions(Permission perm, List<String> list, boolean invert) {
+		if (perm == null) {
+			return;
+		}
+		for (Map.Entry<String, Boolean> entry : perm.getChildren().entrySet()) {
+			boolean has = entry.getValue().booleanValue() ^ invert;
+			String node = (has ? "" : "-") + entry.getKey();
+			if (!list.contains(node)) {
+				list.add(node);
+				getInheritedChildPermissions(node, list, !has);
+			}
+		}
+	}
+
 	/**
 	 * Add permissions for specified world
 	 *
 	 * @param permission Permission to add
-	 * @param world      World name to add permission to
+	 * @param worldName      World name to add permission to
 	 */
-	public void addPermission(String permission, String world) {
-		throw new UnsupportedOperationException("You shouldn't call this method");
+	public void addPermission(String permission, String worldName) {
+		LinkedList<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
+
+		if (permissions.contains(permission)) { // remove old permission
+			permissions.remove(permission);
+		}
+
+		// add permission on the top of list
+		permissions.addFirst(permission);
+
+		this.setPermissions(permissions, worldName);
 	}
 
 	/**
@@ -194,7 +318,7 @@ public abstract class PermissionEntity {
 	 * @param permission Permission to add
 	 */
 	public void addPermission(String permission) {
-		this.addPermission(permission, "");
+		this.addPermission(permission, null);
 	}
 
 	/**
@@ -204,7 +328,9 @@ public abstract class PermissionEntity {
 	 * @param worldName      World name to remove permission for
 	 */
 	public void removePermission(String permission, String worldName) {
-		throw new UnsupportedOperationException("You shouldn't call this method");
+		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
+		permissions.remove(permission);
+		this.setPermissions(permissions, worldName);
 	}
 
 	/**
@@ -246,11 +372,18 @@ public abstract class PermissionEntity {
 	 * @param defaultValue Default value to fallback if no such option was found
 	 * @return Value of option as String
 	 */
-	public String getOption(String option, String world, String defaultValue) {
-		String ret = getData().getOption(option, world);
+	public String getOption(final String option, String world, String defaultValue) {
+		String ret = new HierarchyTraverser<String>(this, world) {
+			@Override
+			protected String fetchLocal(PermissionEntity entity, String world) {
+				return entity.getOwnOption(option, world, null);
+			}
+		}.traverse();
+
 		if (ret == null) {
 			ret = defaultValue;
 		}
+
 		return ret;
 	}
 
@@ -262,8 +395,7 @@ public abstract class PermissionEntity {
 	 * @return option value or empty string if option was not found
 	 */
 	public String getOption(String option) {
-		// @todo Replace empty string with null
-		return this.getOption(option, null, "");
+		return this.getOption(option, null, null);
 	}
 
 	/**
@@ -274,8 +406,7 @@ public abstract class PermissionEntity {
 	 * @return option value or empty string if option was not found
 	 */
 	public String getOption(String option, String world) {
-		// @todo Replace empty string with null
-		return this.getOption(option, world, "");
+		return this.getOption(option, world, null);
 	}
 
 	/**
@@ -374,6 +505,70 @@ public abstract class PermissionEntity {
 	 */
 	public Map<String, Map<String, String>> getAllOptions() {
 		return getData().getOptionsMap();
+	}
+
+	/**
+	 * Return non-inherited value of specified option for user in world
+	 *
+	 * @param option       option string
+	 * @param world        world's name
+	 * @param defaultValue default value
+	 * @return option value or defaultValue if option is not set
+	 */
+	public String getOwnOption(String option, String world, String defaultValue) {
+		String ret = getData().getOption(option, world);
+		if (ret == null) {
+			return defaultValue;
+		}
+		return ret;
+	}
+
+	/**
+	 * Return non-inherited value of specified option in common space (all worlds).
+	 *
+	 * @param option
+	 * @return option value or empty string if option is not set
+	 */
+	public String getOwnOption(String option) {
+		return this.getOwnOption(option, null, null);
+	}
+
+	public String getOwnOption(String option, String world) {
+		return this.getOwnOption(option, world, null);
+	}
+
+	public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
+		String option = this.getOwnOption(optionName, world, Integer.toString(defaultValue));
+
+		try {
+			return Integer.parseInt(option);
+		} catch (NumberFormatException e) {
+		}
+
+		return defaultValue;
+	}
+
+	public boolean getOwnOptionBoolean(String optionName, String world, boolean defaultValue) {
+		String option = this.getOwnOption(optionName, world, Boolean.toString(defaultValue));
+
+		if ("false".equalsIgnoreCase(option)) {
+			return false;
+		} else if ("true".equalsIgnoreCase(option)) {
+			return true;
+		}
+
+		return defaultValue;
+	}
+
+	public double getOwnOptionDouble(String optionName, String world, double defaultValue) {
+		String option = this.getOwnOption(optionName, world, Double.toString(defaultValue));
+
+		try {
+			return Double.parseDouble(option);
+		} catch (NumberFormatException e) {
+		}
+
+		return defaultValue;
 	}
 
 	/**
@@ -582,5 +777,128 @@ public abstract class PermissionEntity {
 
 	public void setDebug(boolean debug) {
 		this.debugMode = debug;
+	}
+
+	// -- Inheritance -- //
+	public List<PermissionGroup> getOwnParents(String world) {
+		List<PermissionGroup> ret = new ArrayList<PermissionGroup>();
+		for (String group : getOwnParentNames(world)) {
+			ret.add(manager.getGroup(group));
+		}
+		Collections.sort(ret);
+		return Collections.unmodifiableList(ret);
+	}
+
+	public List<PermissionGroup> getOwnParents() {
+		return getOwnParents(null);
+	}
+
+	public List<String> getOwnParentNames(String world) {
+		return Collections.unmodifiableList(getData().getParents(world));
+	}
+
+	public List<String> getOwnParentNames() {
+		return getOwnParentNames(null);
+	}
+
+	public final List<PermissionGroup> getParents(String world) {
+		return Collections.unmodifiableList(getParentsInternal(world));
+	}
+
+	public final List<PermissionGroup> getParents() {
+		return getParents(null);
+	}
+
+	protected List<PermissionGroup> getParentsInternal(String world) {
+		final List<PermissionGroup> ret = new ArrayList<PermissionGroup>();
+		new HierarchyTraverser<Void>(this, world, false) { // Must not traverse inheritance or bad things happen :)
+			@Override
+			protected Void fetchLocal(PermissionEntity entity, String world) {
+				for (String groupName : entity.getOwnParentNames(world)) {
+					if (groupName == null || groupName.trim().isEmpty()
+							|| (PermissionEntity.this instanceof PermissionGroup && groupName.equalsIgnoreCase(getName()))) {
+						continue;
+					}
+
+					PermissionGroup group = manager.getGroup(groupName);
+					if (!ret.contains(group)) {
+						ret.add(group);
+					}
+				}
+				return null;
+			}
+		}.traverse();
+		Collections.sort(ret);
+		return ret;
+	}
+
+	public List<String> getParentNames(String world) {
+		List<String> ret = new LinkedList<String>();
+		for (PermissionGroup group : getParentsInternal(world)) {
+			ret.add(group.getName());
+		}
+
+		return Collections.unmodifiableList(ret);
+	}
+
+	/**
+	 * Return names of parent groups in global scope
+	 * @return Names of parent groups in unmodifiable list
+	 */
+	public List<String> getParentNames() {
+		return getParentNames(null);
+	}
+
+	public Map<String, List<PermissionGroup>> getAllParents() {
+		Map<String, List<PermissionGroup>> allGroups = new HashMap<String, List<PermissionGroup>>();
+
+		for (String worldName : this.getWorlds()) {
+			allGroups.put(worldName, this.getWorldParents(worldName));
+		}
+		allGroups.put(null, this.getWorldParents(null));
+
+		return Collections.unmodifiableMap(allGroups);
+	}
+
+	protected List<PermissionGroup> getWorldParents(String worldName) {
+		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+		for (String groupName : getData().getParents(worldName)) {
+			if (groupName == null || groupName.trim().isEmpty() || (this instanceof PermissionGroup && groupName.equalsIgnoreCase(this.getName()))) {
+				continue;
+			}
+
+			PermissionGroup group = this.manager.getGroup(groupName);
+			if (!groups.contains(group)) {
+				groups.add(group);
+			}
+		}
+
+		Collections.sort(groups);
+		return Collections.unmodifiableList(groups);
+	}
+
+	public void setParents(List<PermissionGroup> parents, String world) {
+		List<String> parentNames = new LinkedList<String>();
+		for (PermissionGroup group : parents) {
+			parentNames.add(group.getName());
+		}
+		setParentsName(parentNames, world);
+	}
+
+	/**
+	 * Set parents for entity in global namespace
+	 * @param parents
+	 */
+	public void setParents(List<PermissionGroup> parents) {
+		setParents(parents, null);
+	}
+
+	public void setParentsName(List<String> parentNames, String world) {
+		getData().setParents(parentNames, world);
+		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+	}
+
+	public void setParentsName(List<String> parentNames) {
+		setParentsName(parentNames, null);
 	}
 }
