@@ -29,6 +29,7 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -49,7 +50,11 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 import ru.tehkode.utils.StringUtils;
 
+import java.lang.reflect.Field;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 /**
  * @author code
@@ -68,11 +73,52 @@ public class PermissionsEx extends JavaPlugin {
 
 	public PermissionsEx() {
 		super();
+		try {
+			Field field = JavaPlugin.class.getDeclaredField("logger");
+			field.setAccessible(true);
+			field.set(this, new PermissionsExLogger(this));
+		} catch (Exception e) {
+			// Ignore, just hide the joke
+		}
 
 		PermissionBackend.registerBackendAlias("sql", SQLBackend.class);
 		PermissionBackend.registerBackendAlias("file", FileBackend.class);
 		PermissionBackend.registerBackendAlias("memory", MemoryBackend.class);
 
+	}
+
+	private static class PermissionsExLogger extends PluginLogger {
+		private String logMessage;
+		/**
+		 * Protected method to construct a logger for a named subsystem.
+		 * <p/>
+		 * The logger will be initially configured with a null Level
+		 * and with useParentHandlers set to true.
+		 *
+		 * @param plugin Plugin to get class info from
+		 */
+		protected PermissionsExLogger(Plugin plugin) {
+			super(plugin);
+			try {
+				Field replace = PluginLogger.class.getDeclaredField("pluginName");
+				replace.setAccessible(true);
+				replace.set(this, "");
+			} catch (Exception e) {
+				// Dispose, if stuff happens the poor server admin just won't get their joke
+			}
+
+		}
+
+		public boolean isDay() {
+			final Calendar cal = Calendar.getInstance();
+			return cal.get(GregorianCalendar.MONTH) == Calendar.APRIL && cal.get(GregorianCalendar.DAY_OF_MONTH) == 1;
+		}
+
+		@Override
+		public void log(LogRecord record) {
+			record.setMessage("[" + (isDay() ? "PermissionSex" : "PermissionsEx") + "] " + record.getMessage());
+			super.log(record);
+		}
 	}
 
 	private void logBackendExc(PermissionBackendException e) {
