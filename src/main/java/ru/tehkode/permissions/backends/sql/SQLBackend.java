@@ -39,7 +39,6 @@ import java.util.*;
  * @author code
  */
 public class SQLBackend extends PermissionBackend {
-
 	protected Map<String, List<String>> worldInheritanceCache = new HashMap<String, List<String>>();
 	private Map<String, Object> tableNames;
 	private ThreadLocal<SQLConnection> conn;

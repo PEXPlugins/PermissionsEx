@@ -11,7 +11,7 @@ import java.util.logging.Level;
 
 public class FileData implements PermissionsUserData, PermissionsGroupData {
 	protected transient final FileConfig config;
-	private  String nodePath;
+	private String nodePath;
 	private ConfigurationSection node;
 	protected boolean virtual = true;
 	private final String parentPath;
@@ -167,7 +167,11 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void save() {
-		this.config.set(nodePath, node);
+		if (isVirtual()) {
+			this.config.set(nodePath, node);
+			virtual = false;
+		}
+
 		try {
 			this.config.save();
 		} catch (IOException e) {

@@ -151,7 +151,7 @@ public class PermissionsEx extends JavaPlugin {
 		}
 		try {
 			if (this.permissionsManager == null) {
-				this.permissionsManager = new PermissionManager(this.config, this);
+				this.permissionsManager = new PermissionManager(this);
 			}
 
 			// Register commands
@@ -225,6 +225,10 @@ public class PermissionsEx extends JavaPlugin {
 			ErrorReport.handleError("While " + sender.getName() + " was executing /" + command.getName() + " " + StringUtils.implode(args, " "), t, sender);
 			return true;
 		}
+	}
+
+	public PermissionsExConfig getConfiguration() {
+		return config;
 	}
 
 	public boolean isDebug() {

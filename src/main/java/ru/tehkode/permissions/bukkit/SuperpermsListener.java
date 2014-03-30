@@ -19,13 +19,14 @@ import ru.tehkode.permissions.events.PermissionSystemEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * PEX permissions database integration with superperms
  */
 public class SuperpermsListener implements Listener {
 	private final PermissionsEx plugin;
-	private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
+	private final Map<UUID, PermissionAttachment> attachments = new HashMap<UUID, PermissionAttachment>();
 
 	public SuperpermsListener(PermissionsEx plugin) {
 		this.plugin = plugin;
@@ -39,12 +40,12 @@ public class SuperpermsListener implements Listener {
 	}
 
 	protected void updateAttachment(Player player, String worldName) {
-		PermissionAttachment attach = attachments.get(player.getName());
+		PermissionAttachment attach = attachments.get(player.getUniqueId());
 		Permission playerPerm = getCreateWrapper(player, "");
 		Permission playerOptionPerm = getCreateWrapper(player, ".options");
 		if (attach == null) {
 			attach = player.addAttachment(plugin);
-			attachments.put(player.getName(), attach);
+			attachments.put(player.getUniqueId(), attach);
 			attach.setPermission(playerPerm, true);
 		}
 
@@ -93,7 +94,7 @@ public class SuperpermsListener implements Listener {
 
 	private void updatePlayerMetadata(Permission rootPermission, PermissionUser user, String worldName) {
 		rootPermission.getChildren().clear();
-		final List<String> groups = user.getParentNames(worldName);
+		final List<String> groups = user.getParentIdentifiers(worldName);
 		final Map<String, String> options = user.getOptions(worldName);
 		// Metadata
 		// Groups
@@ -114,7 +115,7 @@ public class SuperpermsListener implements Listener {
 	}
 
 	protected void removeAttachment(Player player) {
-		PermissionAttachment attach = attachments.remove(player.getName());
+		PermissionAttachment attach = attachments.remove(player.getUniqueId());
 		if (attach != null) {
 			attach.remove();
 		}
@@ -172,7 +173,7 @@ public class SuperpermsListener implements Listener {
 	}
 
 	private void updateSelective(PermissionEntityEvent event, PermissionUser user) {
-		final Player p = plugin.getServer().getPlayerExact(user.getName());
+		final Player p = plugin.getServer().getPlayer(UUID.fromString(user.getIdentifier()));
 		if (p != null) {
 			switch (event.getAction()) {
 				case SAVED:
@@ -202,7 +203,7 @@ public class SuperpermsListener implements Listener {
 			if (event.getEntity() instanceof PermissionUser) { // update user only
 				updateSelective(event, (PermissionUser) event.getEntity());
 			} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-				for (PermissionUser user : plugin.getPermissionsManager().getUsers(event.getEntity().getName(), true)) {
+				for (PermissionUser user : plugin.getPermissionsManager().getUsers(event.getEntity().getIdentifier(), true)) {
 					updateSelective(event, user);
 				}
 			}

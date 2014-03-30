@@ -45,7 +45,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		super.initialize();
 
 		if (this.isDebug()) {
-			manager.getLogger().info("Group " + this.getName() + " initialized");
+			manager.getLogger().info("Group " + this.getIdentifier() + " initialized");
 		}
 	}
 
@@ -145,7 +145,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		}
 
 		if (visitedParents != null) {
-			visitedParents.add(this.getName());
+			visitedParents.add(this.getIdentifier());
 		}
 
 		for (String parentGroup : getData().getParents(worldName)) {
@@ -153,7 +153,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 				continue;
 			}
 
-			if (group.getName().equals(parentGroup)) {
+			if (group.getIdentifier().equals(parentGroup)) {
 				return true;
 			}
 
@@ -218,11 +218,11 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @return
 	 */
 	public List<PermissionGroup> getChildGroups(String worldName) {
-		return this.manager.getGroups(this.getName(), worldName, false);
+		return this.manager.getGroups(this.getIdentifier(), worldName, false);
 	}
 
 	public List<PermissionGroup> getChildGroups() {
-		return this.manager.getGroups(this.getName(), false);
+		return this.manager.getGroups(this.getIdentifier(), false);
 	}
 
 	/**
@@ -231,11 +231,11 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @return
 	 */
 	public List<PermissionGroup> getDescendantGroups(String worldName) {
-		return this.manager.getGroups(this.getName(), worldName, true);
+		return this.manager.getGroups(this.getIdentifier(), worldName, true);
 	}
 
 	public List<PermissionGroup> getDescendantGroups() {
-		return this.manager.getGroups(this.getName(), true);
+		return this.manager.getGroups(this.getIdentifier(), true);
 	}
 
 	/**
@@ -244,15 +244,15 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @return
 	 */
 	public Set<PermissionUser> getUsers(String worldName) {
-		return this.manager.getUsers(this.getName(), worldName, false);
+		return this.manager.getUsers(this.getIdentifier(), worldName, false);
 	}
 
 	public Set<PermissionUser> getUsers() {
-		return this.manager.getUsers(this.getName());
+		return this.manager.getUsers(this.getIdentifier());
 	}
 
 	protected Set<PermissionUser> getActiveUsers() {
-		return this.manager.getActiveUsers(this.getName());
+		return this.manager.getActiveUsers(this.getIdentifier());
 	}
 
 	public boolean isDefault(String worldName) {
@@ -349,32 +349,32 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * Returns direct parents names of this group
 	 *
 	 * @return array of parents group names
-	 * @deprecated See {@link #getParentNames(String)}
+	 * @deprecated See {@link #getParentIdentifiers(String)}
 	 */
 	@Deprecated
 	public String[] getParentGroupsNames(String worldName) {
-		return getParentNames(worldName).toArray(new String[0]);
+		return getParentIdentifiers(worldName).toArray(new String[0]);
 	}
 
 	@Deprecated
 	public String[] getParentGroupsNames() {
-		return getParentNames().toArray(new String[0]);
+		return getParentIdentifiers().toArray(new String[0]);
 	}
 
 	/**
 	 * Set parent groups
 	 *
 	 * @param parentGroups Array of parent groups names to set
-	 * @deprecated See {@link #setParentsName(List, String)}
+	 * @deprecated See {@link #setParentsIdentifier(List, String)}
 	 */
 	@Deprecated
 	public void setParentGroups(List<String> parentGroups, String worldName) {
-		setParentsName(parentGroups, worldName);
+		setParentsIdentifier(parentGroups, worldName);
 	}
 
 	@Deprecated
 	public void setParentGroups(List<String> parentGroups) {
-		this.setParentsName(parentGroups);
+		this.setParentsIdentifier(parentGroups);
 	}
 
 	/**

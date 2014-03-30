@@ -47,7 +47,7 @@ public abstract class HierarchyTraverser<Return> {
 			// Circular inheritance detection
 			if (visited.contains(current)) {
 				if (current.isDebug()) {
-					current.manager.getLogger().warning("Potential circular inheritance detected involving group " + current.getName() + " (when performing traversal for entity " + start + ")");
+					current.manager.getLogger().warning("Potential circular inheritance detected involving group " + current.getIdentifier() + " (when performing traversal for entity " + start + ")");
 				}
 				continue;
 			}

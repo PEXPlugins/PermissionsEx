@@ -65,9 +65,9 @@ public class PromotionCommands extends PermissionsCommand {
 		int rank = group.getRank();
 
 		if (rank > 0) {
-			sender.sendMessage("Group " + group.getName() + " rank is " + rank + " (ladder = " + group.getRankLadder() + ")");
+			sender.sendMessage("Group " + group.getIdentifier() + " rank is " + rank + " (ladder = " + group.getRankLadder() + ")");
 		} else {
-			sender.sendMessage("Group " + group.getName() + " is unranked");
+			sender.sendMessage("Group " + group.getIdentifier() + " is unranked");
 		}
 	}
 
@@ -99,18 +99,18 @@ public class PromotionCommands extends PermissionsCommand {
 				return;
 			}
 
-			promoterName = promoter.getName();
+			promoterName = promoter.getIdentifier();
 		}
 
 		try {
 			PermissionGroup targetGroup = user.promote(promoter, ladder);
 
-			this.informPlayer(plugin, user.getName(), "You have been promoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getName() + " group");
-			sender.sendMessage("User " + user.getName() + " promoted to " + targetGroup.getName() + " group");
-			Logger.getLogger("Minecraft").info("User " + user.getName() + " has been promoted to " + targetGroup.getName() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
+			this.informPlayer(plugin, user.getIdentifier(), "You have been promoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getIdentifier() + " group");
+			sender.sendMessage("User " + user.getIdentifier() + " promoted to " + targetGroup.getIdentifier() + " group");
+			Logger.getLogger("Minecraft").info("User " + user.getIdentifier() + " has been promoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
 		} catch (RankingException e) {
 			sender.sendMessage(ChatColor.RED + "Promotion error: " + e.getMessage());
-			Logger.getLogger("Minecraft").severe("Ranking Error (" + promoterName + " > " + e.getTarget().getName() + "): " + e.getMessage());
+			Logger.getLogger("Minecraft").severe("Ranking Error (" + promoterName + " > " + e.getTarget().getIdentifier() + "): " + e.getMessage());
 		}
 	}
 
@@ -143,18 +143,18 @@ public class PromotionCommands extends PermissionsCommand {
 				return;
 			}
 
-			demoterName = demoter.getName();
+			demoterName = demoter.getIdentifier();
 		}
 
 		try {
 			PermissionGroup targetGroup = user.demote(demoter, args.get("ladder"));
 
-			this.informPlayer(plugin, user.getName(), "You have been demoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getName() + " group");
-			sender.sendMessage("User " + user.getName() + " demoted to " + targetGroup.getName() + " group");
-			Logger.getLogger("Minecraft").info("User " + user.getName() + " has been demoted to " + targetGroup.getName() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
+			this.informPlayer(plugin, user.getIdentifier(), "You have been demoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getIdentifier() + " group");
+			sender.sendMessage("User " + user.getIdentifier() + " demoted to " + targetGroup.getIdentifier() + " group");
+			Logger.getLogger("Minecraft").info("User " + user.getIdentifier() + " has been demoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
 		} catch (RankingException e) {
 			sender.sendMessage(ChatColor.RED + "Demotion error: " + e.getMessage());
-			Logger.getLogger("Minecraft").severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getName() + "): " + e.getMessage());
+			Logger.getLogger("Minecraft").severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getIdentifier() + "): " + e.getMessage());
 		}
 	}
 

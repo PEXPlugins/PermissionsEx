@@ -50,7 +50,7 @@ public class GroupCommands extends PermissionsCommand {
 				rank = " (rank: " + group.getRank() + "@" + group.getRankLadder() + ") ";
 			}
 
-			sender.sendMessage(String.format("  %s %s %s %s[%s]", group.getName(), " #" + group.getWeight(), rank, ChatColor.DARK_GREEN, StringUtils.implode(group.getParentNames(worldName), ", ")));
+			sender.sendMessage(String.format("  %s %s %s %s[%s]", group.getIdentifier(), " #" + group.getWeight(), rank, ChatColor.DARK_GREEN, StringUtils.implode(group.getParentIdentifiers(worldName), ", ")));
 		}
 	}
 
@@ -93,7 +93,7 @@ public class GroupCommands extends PermissionsCommand {
 			}
 		}
 
-		sender.sendMessage("Group " + group.getName() + " have " + group.getWeight() + " calories.");
+		sender.sendMessage("Group " + group.getIdentifier() + " have " + group.getWeight() + " calories.");
 	}
 
 	@Command(name = "pex",
@@ -112,7 +112,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		group.setDebug(!group.isDebug());
 
-		sender.sendMessage("Debug mode for group " + group.getName() + " have been " + (group.isDebug() ? "enabled" : "disabled") + "!");
+		sender.sendMessage("Debug mode for group " + group.getIdentifier() + " have been " + (group.isDebug() ? "enabled" : "disabled") + "!");
 	}
 
 	@Command(name = "pex",
@@ -134,7 +134,7 @@ public class GroupCommands extends PermissionsCommand {
 			group.setPrefix(args.get("newprefix"), worldName);
 		}
 
-		sender.sendMessage(group.getName() + "'s prefix = \"" + group.getPrefix(worldName) + "\"");
+		sender.sendMessage(group.getIdentifier() + "'s prefix = \"" + group.getPrefix(worldName) + "\"");
 	}
 
 	@Command(name = "pex",
@@ -156,7 +156,7 @@ public class GroupCommands extends PermissionsCommand {
 			group.setSuffix(args.get("newsuffix"), worldName);
 		}
 
-		sender.sendMessage(group.getName() + "'s suffix is = \"" + group.getSuffix(worldName) + "\"");
+		sender.sendMessage(group.getIdentifier() + "'s suffix is = \"" + group.getSuffix(worldName) + "\"");
 	}
 
 	@Command(name = "pex",
@@ -187,7 +187,7 @@ public class GroupCommands extends PermissionsCommand {
 			group.setParents(groups, null);
 		}
 
-		sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " created!");
+		sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " created!");
 
 		group.save();
 	}
@@ -206,10 +206,10 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " removed!");
+		sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " removed!");
 
 		group.remove();
-		PermissionsEx.getPermissionManager().resetGroup(group.getName());
+		PermissionsEx.getPermissionManager().resetGroup(group.getIdentifier());
 		group = null;
 	}
 
@@ -239,13 +239,13 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		List<String> parentNames = group.getParentNames(worldName);
+		List<String> parentNames = group.getParentIdentifiers(worldName);
 		if (parentNames.isEmpty()) {
-			sender.sendMessage(ChatColor.RED + "Group " + group.getName() + " doesn't have parents");
+			sender.sendMessage(ChatColor.RED + "Group " + group.getIdentifier() + " doesn't have parents");
 			return;
 		}
 
-		sender.sendMessage("Group " + group.getName() + " parents:");
+		sender.sendMessage("Group " + group.getIdentifier() + " parents:");
 
 		for (String parent : parentNames) {
 			sender.sendMessage("  " + parent);
@@ -282,7 +282,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			group.setParents(groups, worldName);
 
-			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
+			sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " inheritance updated!");
 
 			group.save();
 		}
@@ -317,7 +317,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			group.setParents(groups, worldName);
 
-			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
+			sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " inheritance updated!");
 
 			group.save();
 		}
@@ -350,7 +350,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			group.setParents(groups, worldName);
 
-			sender.sendMessage(ChatColor.WHITE + "Group " + group.getName() + " inheritance updated!");
+			sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " inheritance updated!");
 
 			group.save();
 		}
@@ -395,10 +395,10 @@ public class GroupCommands extends PermissionsCommand {
 			printEntityInheritance(sender, parents.get(world));
 		}
 
-		sender.sendMessage("Group " + group.getName() + "'s permissions:");
+		sender.sendMessage("Group " + group.getIdentifier() + "'s permissions:");
 		this.sendMessage(sender, this.mapPermissions(worldName, group, 0));
 
-		sender.sendMessage("Group " + group.getName() + "'s Options: ");
+		sender.sendMessage("Group " + group.getIdentifier() + "'s Options: ");
 		for (Map.Entry<String, String> option : group.getOptions(worldName).entrySet()) {
 			sender.sendMessage("  " + option.getKey() + " = \"" + option.getValue() + "\"");
 		}
@@ -421,7 +421,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		group.addPermission(args.get("permission"), worldName);
 
-		sender.sendMessage(ChatColor.WHITE + "Permission \"" + args.get("permission") + "\" added to " + group.getName() + " !");
+		sender.sendMessage(ChatColor.WHITE + "Permission \"" + args.get("permission") + "\" added to " + group.getIdentifier() + " !");
 
 		this.informGroup(plugin, group, "Your permissions have been changed");
 	}
@@ -472,7 +472,7 @@ public class GroupCommands extends PermissionsCommand {
 		group.removePermission(permission, worldName);
 		group.removeTimedPermission(permission, worldName);
 
-		sender.sendMessage(ChatColor.WHITE + "Permission \"" + permission + "\" removed from " + group.getName() + " !");
+		sender.sendMessage(ChatColor.WHITE + "Permission \"" + permission + "\" removed from " + group.getIdentifier() + " !");
 
 		this.informGroup(plugin, group, "Your permissions have been changed");
 	}
@@ -583,7 +583,7 @@ public class GroupCommands extends PermissionsCommand {
 		sender.sendMessage("Group " + groupName + " users:");
 
 		for (PermissionUser user : users) {
-			sender.sendMessage("   " + user.getName());
+			sender.sendMessage("   " + user.getIdentifier());
 		}
 	}
 
@@ -660,8 +660,11 @@ public class GroupCommands extends PermissionsCommand {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
 
-		PermissionGroup defaultGroup = PermissionsEx.getPermissionManager().getDefaultGroup(worldName);
-		sender.sendMessage("Default group in " + worldName + " world is " + defaultGroup.getName() + " group");
+		List<PermissionGroup> defaultGroups = PermissionsEx.getPermissionManager().getDefaultGroups(worldName);
+		sender.sendMessage("Default groups in world " + worldName + " are:");
+		for (PermissionGroup grp : defaultGroups) {
+			sender.sendMessage("  - " + grp.getIdentifier());
+		}
 	}
 
 	@Command(name = "pex",

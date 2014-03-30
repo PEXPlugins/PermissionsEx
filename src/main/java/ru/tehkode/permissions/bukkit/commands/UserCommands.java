@@ -49,7 +49,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "Currently registered users: ");
 		for (PermissionUser user : users) {
-			sender.sendMessage(" " + user.getName() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentNames(), ", ") + "]");
+			sender.sendMessage(" " + user.getIdentifier() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentIdentifiers(), ", ") + "]");
 		}
 	}
 
@@ -179,7 +179,7 @@ public class UserCommands extends PermissionsCommand {
 			user.setPrefix(args.get("newprefix"), worldName);
 		}
 
-		sender.sendMessage(user.getName() + "'s prefix = \"" + user.getPrefix() + "\"");
+		sender.sendMessage(user.getIdentifier() + "'s prefix = \"" + user.getPrefix() + "\"");
 	}
 
 	@Command(name = "pex",
@@ -201,7 +201,7 @@ public class UserCommands extends PermissionsCommand {
 			user.setSuffix(args.get("newsuffix"), worldName);
 		}
 
-		sender.sendMessage(user.getName() + "'s suffix = \"" + user.getSuffix() + "\"");
+		sender.sendMessage(user.getIdentifier() + "'s suffix = \"" + user.getSuffix() + "\"");
 	}
 
 	@Command(name = "pex",
@@ -292,7 +292,7 @@ public class UserCommands extends PermissionsCommand {
 
 		PermissionsEx.getPermissionManager().resetUser(userName);
 
-		sender.sendMessage(ChatColor.WHITE + "User \"" + user.getName() + "\" removed!");
+		sender.sendMessage(ChatColor.WHITE + "User \"" + user.getIdentifier() + "\" removed!");
 	}
 
 	@Command(name = "pex",
@@ -476,7 +476,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage("User " + args.get("user") + " @" + worldName + " currently in:");
 		for (PermissionGroup group : user.getParents(worldName)) {
-			sender.sendMessage("  " + group.getName());
+			sender.sendMessage("  " + group.getIdentifier());
 		}
 	}
 
@@ -571,7 +571,7 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "No groups set!");
 		}
 
-		this.informPlayer(plugin, user.getName(), "You are now only in \"" + groupName + "\" group");
+		this.informPlayer(plugin, user.getIdentifier(), "You are now only in \"" + groupName + "\" group");
 	}
 
 	@Command(name = "pex",

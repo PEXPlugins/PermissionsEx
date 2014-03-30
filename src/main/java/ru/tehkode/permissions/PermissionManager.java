@@ -20,6 +20,7 @@ package ru.tehkode.permissions;
 
 import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -27,6 +28,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import ru.tehkode.permissions.backends.BackendDataTransfer;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.bukkit.PermissionsExConfig;
@@ -48,8 +50,7 @@ public class PermissionManager {
 	protected Map<String, PermissionGroup> groups = new HashMap<String, PermissionGroup>();
 	protected Map<String, PermissionGroup> defaultGroups = new HashMap<String, PermissionGroup>();
 	protected PermissionBackend backend = null;
-	private final PermissionsExConfig config;
-	private final Logger logger;
+	private final PermissionsEx plugin;
 	protected Timer timer;
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
@@ -58,10 +59,9 @@ public class PermissionManager {
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
 
-	public PermissionManager(PermissionsExConfig config, PermissionsEx plugin) throws PermissionBackendException {
-		this.config = config;
-		this.logger = plugin.getLogger();
-		if (config.useNetEvents()) {
+	public PermissionManager(PermissionsEx plugin) throws PermissionBackendException {
+		this.plugin = plugin;
+		if (plugin.getConfiguration().useNetEvents()) {
 			Plugin netEventsPlugin = plugin.getServer().getPluginManager().getPlugin("NetEvents");
 			if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
 				this.netEvents = (NetEventsPlugin) netEventsPlugin;
@@ -69,9 +69,9 @@ public class PermissionManager {
 			}
 		}
 		this.initBackend();
-		this.debugMode = config.isDebug();
-		this.allowOps = config.allowOps();
-		this.userAddGroupsLast = config.userAddGroupsLast();
+		this.debugMode = plugin.getConfiguration().isDebug();
+		this.allowOps = plugin.getConfiguration().allowOps();
+		this.userAddGroupsLast = plugin.getConfiguration().userAddGroupsLast();
 	}
 
 	UUID getServerUUID() {
@@ -87,7 +87,7 @@ public class PermissionManager {
 	}
 
 	public boolean shouldCreateUserRecords() {
-		return config.createUserRecords();
+		return plugin.getConfiguration().createUserRecords();
 	}
 
 	private class RemoteEventListener implements Listener {
@@ -219,20 +219,31 @@ public class PermissionManager {
 			throw new IllegalArgumentException("Null or empty name passed! Name must not be empty");
 		}
 
-		PermissionUser user = users.get(username.toLowerCase());
-
-		if (user == null) {
-			PermissionsUserData data = backend.getUserData(username);
-			if (data != null) {
-				user = new PermissionUser(username, data, this);
-				user.initialize();
-				this.users.put(username.toLowerCase(), user);
-			} else {
-				throw new IllegalStateException("User " + username + " is null");
-			}
+		PermissionUser user = users.get(username);
+		if (user != null) {
+			return user;
 		}
 
-		return user;
+		try {
+			return getUser(UUID.fromString(username)); // Username is uuid as string, just use it
+		} catch (IllegalArgumentException ex) {
+			UUID userUUID = null;
+			try {
+				userUUID = plugin.getServer().getOfflinePlayer(username).getUniqueId();
+			} catch (Throwable t) {
+				// Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
+			}
+
+			if (userUUID == null) {
+				plugin.getLogger().warning("Unable to convert user " + username + " to UUID-based storage");
+				// We don't know the UUID, so we'll just have to return an unconverted user
+				user = createAndLoadUser(username);
+				this.users.put(username.toLowerCase(), user);
+				return user;
+			} else {
+				return getUser(userUUID.toString(), username);
+			}
+		}
 	}
 
 	/**
@@ -242,7 +253,62 @@ public class PermissionManager {
 	 * @return PermissionUser instance
 	 */
 	public PermissionUser getUser(Player player) {
-		return this.getUser(player.getName());
+		return this.getUser(player.getUniqueId().toString(), player.getName());
+	}
+
+	public PermissionUser getUser(UUID uid) {
+		final String identifier = uid.toString();
+		if (users.containsKey(identifier)) {
+			return getUser(identifier, null);
+		}
+		OfflinePlayer ply = plugin.getServer().getPlayer(uid); // to make things cheaper, we're just checking online players (can be improved later on)
+															   // Also, only online players are really necessary to convert to proper names
+		String fallbackName = null;
+		if (ply != null) {
+			fallbackName = ply.getName();
+		}
+		return getUser(identifier, fallbackName);
+	}
+
+	private PermissionUser getUser(String identifier, String fallbackName) {
+		PermissionUser user = users.get(identifier);
+
+		if (user == null) {
+			PermissionsUserData data = backend.getUserData(identifier);
+
+			if (data != null) {
+				if (fallbackName != null && !backend.hasUser(identifier) && backend.hasUser(fallbackName)) {
+					if (isDebug()) {
+						getLogger().info("Converting user " + fallbackName + " (UUID " + identifier + ") to UUID-based storage");
+					}
+
+					PermissionsUserData oldData = backend.getUserData(fallbackName);
+					BackendDataTransfer.transferUser(oldData, data);
+					oldData.remove();
+					// Convert
+				}
+				data.setOption("name", null, fallbackName);
+				user = new PermissionUser(identifier, data, this);
+				user.initialize();
+				this.users.put(identifier.toLowerCase(), user);
+			} else {
+				throw new IllegalStateException("User " + identifier + " is null");
+			}
+		}
+
+		return user;
+	}
+
+	private PermissionUser createAndLoadUser(String identifier) {
+		PermissionUser user;
+		PermissionsUserData data = backend.getUserData(identifier);
+			if (data != null) {
+				user = new PermissionUser(identifier, data, this);
+				user.initialize();
+				return user;
+			} else {
+				throw new IllegalStateException("User " + identifier + " is null");
+			}
 	}
 
 	/**
@@ -459,21 +525,6 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Return default group object
-	 *
-	 * @return default group object. null if not specified
-	 */
-	public PermissionGroup getDefaultGroup(String worldName) {
-		String worldIndex = worldName != null ? worldName : "";
-
-		if (!this.defaultGroups.containsKey(worldIndex)) {
-			this.defaultGroups.put(worldIndex, this.getDefaultGroup(worldName));
-		}
-
-		return this.defaultGroups.get(worldIndex);
-	}
-
-	/**
 	 * Return all known default groups
 	 *
 	 * @param worldName World to check (will include global scope)
@@ -594,7 +645,7 @@ public class PermissionManager {
 	 * @param backendName Name of the configuration section which describes this backend
 	 */
 	public PermissionBackend createBackend(String backendName) throws PermissionBackendException {
-		ConfigurationSection config = this.config.getBackendConfig(backendName);
+		ConfigurationSection config = plugin.getConfiguration().getBackendConfig(backendName);
 		String backendType = config.getString("type");
 		if (backendType == null) {
 			config.set("type", backendType = backendName);
@@ -659,7 +710,7 @@ public class PermissionManager {
 	}
 
 	private void initBackend() throws PermissionBackendException {
-		this.setBackend(config.getDefaultBackend());
+		this.setBackend(plugin.getConfiguration().getDefaultBackend());
 	}
 
 	protected void callEvent(PermissionEvent event) {
@@ -687,6 +738,6 @@ public class PermissionManager {
 	}
 
 	public Logger getLogger() {
-		return logger;
+		return plugin.getLogger();
 	}
 }

@@ -52,7 +52,7 @@ public abstract class PermissionsCommand implements CommandListener {
 
 	protected void informGroup(Plugin plugin, PermissionGroup group, String message) {
 		for (PermissionUser user : group.getUsers()) {
-			this.informPlayer(plugin, user.getName(), message);
+			this.informPlayer(plugin, user.getIdentifier(), message);
 		}
 	}
 
@@ -80,7 +80,7 @@ public abstract class PermissionsCommand implements CommandListener {
 				rank = "rank " + group.getRank() + " @ " + group.getRankLadder();
 			}
 
-			sender.sendMessage("   " + group.getName() + " (" + rank + ")");
+			sender.sendMessage("   " + group.getIdentifier() + " (" + rank + ")");
 		}
 	}
 
@@ -281,13 +281,13 @@ public abstract class PermissionsCommand implements CommandListener {
 				continue;
 			}
 
-			buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getName()).append("\n");
+			buffer.append(StringUtils.repeat("  ", level)).append(" - ").append(group.getIdentifier()).append("\n");
 
 			// Groups
 			buffer.append(printHierarchy(group, worldName, level + 1));
 
 			for (PermissionUser user : group.getUsers(worldName)) {
-				buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getName()).append("\n");
+				buffer.append(StringUtils.repeat("  ", level + 1)).append(" + ").append(user.getIdentifier()).append("\n");
 			}
 		}
 
@@ -308,7 +308,7 @@ public abstract class PermissionsCommand implements CommandListener {
 
 			builder.append(permission);
 			if (level > 0) {
-				builder.append(" (from ").append(entity.getName()).append(")");
+				builder.append(" (from ").append(entity.getIdentifier()).append(")");
 			} else {
 				builder.append(" (own)");
 			}

@@ -20,7 +20,6 @@ package ru.tehkode.permissions;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.Permission;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
@@ -57,13 +56,13 @@ public class PermissionUser extends PermissionEntity {
 		super.initialize();
 
 		if (this.manager.shouldCreateUserRecords() && this.isVirtual()) {
-			this.setParentsName(this.getOwnParentNames(null), null);
+			this.setParentsIdentifier(this.getOwnParentIdentifiers(null), null);
 
 			this.save();
 		}
 
 		if (this.isDebug()) {
-			manager.getLogger().info("User " + this.getName() + " initialized");
+			manager.getLogger().info("User " + this.getIdentifier() + " initialized");
 		}
 	}
 
@@ -111,8 +110,8 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public void setParentsName(List<String> parentsName, String world) {
-		super.setParentsName(parentsName, world);
+	public void setParentsIdentifier(List<String> parentsName, String world) {
+		super.setParentsIdentifier(parentsName, world);
 		clearCache();
 	}
 
@@ -132,7 +131,7 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(getOwnParentNames(worldName));
+		List<String> groups = new ArrayList<String>(getOwnParentIdentifiers(worldName));
 
 		if (groups.contains(groupName)) {
 			return;
@@ -144,7 +143,7 @@ public class PermissionUser extends PermissionEntity {
 			groups.add(0, groupName); //add group to start of list
 		}
 
-		this.setParentsName(groups, worldName);
+		this.setParentsIdentifier(groups, worldName);
 	}
 
 	public void addGroup(String groupName) {
@@ -161,7 +160,7 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		this.addGroup(group.getName(), worldName);
+		this.addGroup(group.getIdentifier(), worldName);
 	}
 
 	public void addGroup(PermissionGroup group) {
@@ -186,13 +185,13 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(getOwnParentNames(worldName));
+		List<String> groups = new ArrayList<String>(getOwnParentIdentifiers(worldName));
 		if (!groups.contains(groupName)) {
 			return;
 		}
 
 		groups.remove(groupName);
-		this.setParentsName(groups, worldName);
+		this.setParentsIdentifier(groups, worldName);
 	}
 
 	public void removeGroup(String groupName) {
@@ -209,7 +208,7 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		this.removeGroup(group.getName(), worldName);
+		this.removeGroup(group.getIdentifier(), worldName);
 	}
 
 	public void removeGroup(PermissionGroup group) {
@@ -489,7 +488,7 @@ public class PermissionUser extends PermissionEntity {
 			promoterRank = promoter.getRank(ladderName);
 
 			if (promoterRank >= rank) {
-				throw new RankingException("Promoter don't have high enough rank to change " + this.getName() + "'s rank", this, promoter);
+				throw new RankingException("Promoter don't have high enough rank to change " + this.getIdentifier() + "'s rank", this, promoter);
 			}
 		}
 
@@ -516,7 +515,7 @@ public class PermissionUser extends PermissionEntity {
 
 	@Override
 	public boolean has(String permission) {
-		Player player = Bukkit.getServer().getPlayer(this.getName());
+		Player player = Bukkit.getServer().getPlayer(this.getIdentifier());
 		if (player != null) {
 			return this.has(permission, player.getWorld().getName());
 		}
@@ -592,7 +591,7 @@ public class PermissionUser extends PermissionEntity {
 	@Override
 	public boolean explainExpression(String expression) {
 		if (expression == null && this.manager.allowOps) {
-			Player player = Bukkit.getServer().getPlayer(this.getName());
+			Player player = Bukkit.getServer().getPlayer(this.getIdentifier());
 			if (player != null && player.isOp()) {
 				return true;
 			}
@@ -602,10 +601,10 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	protected boolean checkMembership(PermissionGroup group, String worldName) {
-		int groupLifetime = this.getOwnOptionInteger("group-" + group.getName() + "-until", worldName, 0);
+		int groupLifetime = this.getOwnOptionInteger("group-" + group.getIdentifier() + "-until", worldName, 0);
 
 		if (groupLifetime > 0 && groupLifetime < System.currentTimeMillis() / 1000) { // check for expiration
-			this.setOption("group-" + group.getName() + "-until", null, worldName); // remove option
+			this.setOption("group-" + group.getIdentifier() + "-until", null, worldName); // remove option
 			this.removeGroup(group, worldName); // remove membership
 			// @TODO Make notification of player about expired memebership
 			return false;
@@ -622,7 +621,7 @@ public class PermissionUser extends PermissionEntity {
 
 	@Deprecated
 	public String[] getGroupsNames(String world) {
-		return getParentNames(world).toArray(new String[0]);
+		return getParentIdentifiers(world).toArray(new String[0]);
 	}
 
 
@@ -654,7 +653,7 @@ public class PermissionUser extends PermissionEntity {
 	 */
 	@Deprecated
 	public List<String> getGroupNames() {
-		return getParentNames();
+		return getParentIdentifiers();
 	}
 
 	/**
@@ -664,7 +663,7 @@ public class PermissionUser extends PermissionEntity {
 	 */
 	@Deprecated
 	public List<String> getGroupNames(String worldName) {
-		return getParentNames(worldName);
+		return getParentIdentifiers(worldName);
 	}
 
 	/**
@@ -674,12 +673,12 @@ public class PermissionUser extends PermissionEntity {
 	 */
 	@Deprecated
 	public void setGroups(List<String> groups, String worldName) {
-		setParentsName(groups, worldName);
+		setParentsIdentifier(groups, worldName);
 	}
 
 	@Deprecated
 	public void setGroups(List<String> groups) {
-		setParentsName(groups);
+		setParentsIdentifier(groups);
 	}
 
 	/**
