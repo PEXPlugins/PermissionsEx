@@ -91,13 +91,14 @@ public class UserCommands extends PermissionsCommand {
 		sender.sendMessage("'" + userName + "' is a member of:");
 		printEntityInheritance(sender, user.getParents());
 
-		for (String world : user.getAllGroups().keySet()) {
+		Map<String, List<PermissionGroup>> allParents = user.getAllParents();
+		for (String world : allParents.keySet()) {
 			if (world == null) {
 				continue;
 			}
 
 			sender.sendMessage("  @" + world + ":");
-			printEntityInheritance(sender, user.getAllGroups().get(world));
+			printEntityInheritance(sender, allParents.get(world));
 		}
 
 		sender.sendMessage(userName + "'s permissions:");
@@ -564,7 +565,7 @@ public class UserCommands extends PermissionsCommand {
 		}
 
 		if (!groups.isEmpty()) {
-			user.setGroupObjects(groups, worldName);
+			user.setParents(groups, worldName);
 			sender.sendMessage(ChatColor.WHITE + "User groups set!");
 		} else {
 			sender.sendMessage(ChatColor.RED + "No groups set!");

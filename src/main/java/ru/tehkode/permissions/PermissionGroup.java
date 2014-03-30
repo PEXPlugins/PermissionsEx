@@ -251,6 +251,10 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		return this.manager.getUsers(this.getName());
 	}
 
+	protected Set<PermissionUser> getActiveUsers() {
+		return this.manager.getActiveUsers(this.getName());
+	}
+
 	public boolean isDefault(String worldName) {
 		return getData().isDefault(worldName);
 	}
@@ -275,8 +279,38 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		this.clearMembersCache();
 	}
 
+	@Override
+	public void setPrefix(String prefix, String worldName) {
+		super.setPrefix(prefix, worldName);
+		clearMembersCache();
+	}
+
+	@Override
+	public void setSuffix(String suffix, String worldName) {
+		super.setSuffix(suffix, worldName);
+		clearMembersCache();
+	}
+
+	@Override
+	public void setPermissions(List<String> permissions, String world) {
+		super.setPermissions(permissions, world);
+		clearMembersCache();
+	}
+
+	@Override
+	public void setOption(String option, String value, String world) {
+		super.setOption(option, value, world);
+		clearMembersCache();
+	}
+
+	@Override
+	public void setParents(List<PermissionGroup> parents, String world) {
+		super.setParents(parents, world);
+		clearMembersCache();
+	}
+
 	protected void clearMembersCache() {
-		for (PermissionUser user : this.getUsers()) {
+		for (PermissionUser user : this.getActiveUsers()) {
 			user.clearCache();
 		}
 	}

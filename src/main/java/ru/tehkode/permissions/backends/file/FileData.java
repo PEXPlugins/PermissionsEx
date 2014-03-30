@@ -162,11 +162,12 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public boolean isVirtual() {
-		return this.config.isConfigurationSection(this.nodePath);
+		return virtual;
 	}
 
 	@Override
 	public void save() {
+		this.config.set(nodePath, node);
 		try {
 			this.config.save();
 		} catch (IOException e) {

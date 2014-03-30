@@ -260,10 +260,30 @@ public class PermissionManager {
 		return Collections.unmodifiableSet(users);
 	}
 
+	/**
+	 * Return users currently cached in memory
+	 *
+	 * @return A copy of the list of users cached in memory
+	 */
+	public Set<PermissionUser> getActiveUsers() {
+		return new HashSet<PermissionUser>(users.values());
+	}
+
 	public Collection<String> getUserNames() {
 		return backend.getUserNames();
 	}
 
+	Set<PermissionUser> getActiveUsers(String groupName) {
+		Set<PermissionUser> users = new HashSet<PermissionUser>();
+
+		for (PermissionUser user : this.getActiveUsers()) {
+			if (user.inGroup(groupName, false)) {
+				users.add(user);
+			}
+		}
+
+		return Collections.unmodifiableSet(users);
+	}
 	/**
 	 * Return all users in group
 	 *
