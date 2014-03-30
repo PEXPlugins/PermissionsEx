@@ -44,7 +44,7 @@ public class SQLBackend extends PermissionBackend {
 	private Map<String, Object> tableNames;
 	private ThreadLocal<SQLConnection> conn;
 
-	public SQLBackend(PermissionManager manager, Configuration config) {
+	public SQLBackend(PermissionManager manager, ConfigurationSection config) {
 		super(manager, config);
 		final String dbUri = getConfig().getString("uri", "");
 		final String dbUser = getConfig().getString("user", "");

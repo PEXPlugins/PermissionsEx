@@ -58,6 +58,10 @@ public class PermissionsExConfig {
 	}
 
 	public ConfigurationSection getBackendConfig(String backend) {
-		return config.getConfigurationSection("permissions.backends." + backend);
+		ConfigurationSection section = config.getConfigurationSection("permissions.backends." + backend);
+		if (section == null) {
+			section = config.createSection("permissions.backends." + backend);
+		}
+		return section;
 	}
 }

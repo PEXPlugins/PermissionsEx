@@ -21,6 +21,7 @@ package ru.tehkode.permissions;
 import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -582,12 +583,27 @@ public class PermissionManager {
 	public void setBackend(String backendName) throws PermissionBackendException {
 		synchronized (this) {
 			this.clearCache();
-			this.backend = PermissionBackend.getBackend(backendName, this, config.getBackendConfig(backendName));
-			this.backend.reload();
-			this.backend.validate();
+			this.backend = createBackend(backendName);
 		}
 
 		this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);
+	}
+
+	/**
+	 * Creates a backend but does not set it as the active backend. Useful for data transfer & such
+	 * @param backendName Name of the configuration section which describes this backend
+	 */
+	public PermissionBackend createBackend(String backendName) throws PermissionBackendException {
+		ConfigurationSection config = this.config.getBackendConfig(backendName);
+		String backendType = config.getString("type");
+		if (backendType == null) {
+			config.set("type", backendType = backendName);
+		}
+
+		PermissionBackend backend = PermissionBackend.getBackend(backendType, this, config);
+		backend.reload();
+		backend.validate();
+		return backend;
 	}
 
 	/**

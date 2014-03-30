@@ -37,11 +37,12 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		this.name = name;
 		this.type = type;
 		this.backend = backend;
+		fetchInfo();
 	}
 
 	// Cache updating
 
-protected void updateInfo() {
+	protected void updateInfo() {
 		String sql;
 		if (this.isVirtual()) { // This section are suspicious, here was problem which are resolved mysticaly. Keep eye on it.
 			sql = "INSERT INTO `{permissions_entity}` (`prefix`, `suffix`, `default`, `name`, `type`) VALUES (?, ?, ?, ?, ?)";
@@ -50,7 +51,7 @@ protected void updateInfo() {
 		}
 
 		try {
-			this.backend.getSQL().prepAndBind(sql, this.prefix, this.suffix, this.def, this.getName(), this.type.ordinal()).execute();
+			this.backend.getSQL().prepAndBind(sql, this.prefix, this.suffix, this.def ? 1 : 0, this.getName(), this.type.ordinal()).execute();
 		} catch (SQLException e) {
 			if (this.isVirtual()) {
 				this.virtual = false;
@@ -129,13 +130,20 @@ protected void updateInfo() {
 		}
 	}
 
+	private String nullToEmpty(String enter) {
+		if (enter == null || enter.equals("null")) {
+			return null;
+		}
+		return enter;
+	}
+
 	protected final void fetchInfo() {
 		try {
 			ResultSet result = this.backend.getSQL().prepAndBind("SELECT `name`, `prefix`, `suffix`, `default` FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getName(), this.type.ordinal()).executeQuery();
 
 			if (result.next()) {
-				this.prefix = result.getString("prefix");
-				this.suffix = result.getString("suffix");
+				this.prefix = nullToEmpty(result.getString("prefix"));
+				this.suffix = nullToEmpty(result.getString("suffix"));
 				this.def = result.getBoolean("default");
 
 				// For teh case-insensetivity
@@ -206,6 +214,10 @@ protected void updateInfo() {
 	@Override
 	public Map<String, List<String>> getPermissionsMap() {
 		Map<String, List<String>> allPermissions = new HashMap<String, List<String>>();
+
+		if (this.commonPermissions == null) {
+			this.fetchPermissions();
+		}
 
 		allPermissions.put(null, Collections.unmodifiableList(this.commonPermissions));
 
@@ -338,6 +350,10 @@ protected void updateInfo() {
 	@Override
 	public Map<String, Map<String, String>> getOptionsMap() {
 		Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
+
+		if (this.commonOptions == null) {
+			this.fetchPermissions();
+		}
 
 		allOptions.put(null, Collections.unmodifiableMap(this.commonOptions));
 

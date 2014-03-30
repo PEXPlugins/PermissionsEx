@@ -88,7 +88,6 @@ public class PermissionsEx extends JavaPlugin {
 	}
 
 	private static class PermissionsExLogger extends PluginLogger {
-		private String logMessage;
 		/**
 		 * Protected method to construct a logger for a named subsystem.
 		 * <p/>

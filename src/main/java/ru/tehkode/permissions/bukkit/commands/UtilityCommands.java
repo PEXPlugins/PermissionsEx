@@ -157,10 +157,9 @@ public class UtilityCommands extends PermissionsCommand {
 		}
 
 		try {
-			PermissionBackend backend = PermissionBackend.getBackend(args.get("backend"), PermissionsEx.getPermissionManager(), plugin.getConfig(), null);
-			backend.reload();
-			backend.validate();
-			PermissionsEx.getPermissionManager().getBackend().loadFrom(backend);
+			PermissionManager mgr = PermissionsEx.getPermissionManager();
+			PermissionBackend backend = mgr.createBackend(args.get("backend"));
+			mgr.getBackend().loadFrom(backend);
 
 
 			sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data from \"" + args.get("backend") + "\" loaded into currently active backend");
