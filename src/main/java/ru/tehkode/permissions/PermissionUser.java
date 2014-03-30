@@ -72,17 +72,6 @@ public class PermissionUser extends PermissionEntity {
 		return Type.USER;
 	}
 
-
-	/**
-	 * Return non-inherited permissions of a user in world
-	 *
-	 * @param world world's name
-	 * @return String array of owned Permissions
-	 */
-	public List<String> getOwnPermissions(String world) {
-		return getData().getPermissions(world);
-	}
-
 	@Override
 	public String getOption(String optionName, String worldName, String defaultValue) {
 		String cacheIndex = worldName + "|" + optionName;
@@ -101,6 +90,11 @@ public class PermissionUser extends PermissionEntity {
 		return defaultValue;
 	}
 
+	@Override
+	public void setOption(String option, String value, String worldName) {
+		super.setOption(option, value, worldName);
+		clearCache();
+	}
 
 	@Override
 	protected List<PermissionGroup> getParentsInternal(String worldName) {
@@ -116,39 +110,17 @@ public class PermissionUser extends PermissionEntity {
 		return this.cachedGroups.get(worldName);
 	}
 
+	@Override
+	public void setParentsName(List<String> parentsName, String world) {
+		super.setParentsName(parentsName, world);
+		clearCache();
+	}
+
+
+	@Deprecated
 	public Map<String, List<PermissionGroup>> getAllGroups() {
-		Map<String, List<PermissionGroup>> allGroups = new HashMap<String, List<PermissionGroup>>();
-
-		for (String worldName : this.getWorlds()) {
-			allGroups.put(worldName, this.getWorldGroups(worldName));
-		}
-
-		allGroups.put(null, this.getWorldGroups(null));
-
-		return allGroups;
+		return getAllParents();
 	}
-
-	protected List<PermissionGroup> getWorldGroups(String worldName) {
-		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
-
-		for (String groupName : this.getData().getParents(worldName)) {
-			if (groupName == null || groupName.isEmpty()) {
-				continue;
-			}
-
-			PermissionGroup group = this.manager.getGroup(groupName);
-
-			if (!groups.contains(group)) {
-				groups.add(group);
-			}
-		}
-
-		Collections.sort(groups);
-
-		return Collections.unmodifiableList(groups);
-	}
-
-
 
 	/**
 	 * Add user to group
