@@ -18,13 +18,7 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
-import org.apache.commons.dbcp2.ConnectionFactory;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
-import org.apache.commons.dbcp2.PoolingDataSource;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
@@ -33,14 +27,20 @@ import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.utils.StringUtils;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author code
@@ -48,11 +48,10 @@ import java.util.*;
 public class SQLBackend extends PermissionBackend {
 	protected Map<String, List<String>> worldInheritanceCache = new HashMap<>();
 	private Map<String, Object> tableNames;
-	private DataSource ds;
-	private final ObjectPool<?> connectionPool;
+	private BasicDataSource ds;
 	private String dbDriver;
 
-	public SQLBackend(PermissionManager manager, ConfigurationSection config) {
+	public SQLBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
 		final String dbUri = getConfig().getString("uri", "");
 		final String dbUser = getConfig().getString("user", "");
@@ -62,40 +61,16 @@ public class SQLBackend extends PermissionBackend {
 			getConfig().set("uri", "mysql://localhost/exampledb");
 			getConfig().set("user", "databaseuser");
 			getConfig().set("password", "databasepassword");
-			ds = null;
-			connectionPool = null;
-		} else {
-		    dbDriver = dbUri.split(":", 2)[0];
-
-			ConnectionFactory connectionFactory = new DriverManagerConnectionFactory("jdbc:" + dbUri, dbUser, dbPassword);
-			PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-			GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
-			poolableConnectionFactory.setPool(connectionPool);
-			connectionPool.setMaxTotal(20);
-			connectionPool.setMaxWaitMillis(200);
-			this.ds = new PoolingDataSource<>(connectionPool);
-			this.connectionPool = connectionPool;
-		}
-		this.setupAliases();
-	}
-
-	protected static String getDriverClass(String alias) {
-		if (alias.equals("mysql")) {
-			alias = "com.mysql.jdbc.Driver";
-		} else if (alias.equals("sqlite")) {
-			alias = "org.sqlite.JDBC";
-		} else if (alias.matches("postgres?")) {
-			alias = "org.postgresql.Driver";
-		}
-
-		return alias;
-	}
-
-	@Override
-	public void validate() throws PermissionBackendException {
-		if (ds == null) {
 			throw new PermissionBackendException("SQL connection is not configured, see config.yml");
 		}
+		dbDriver = dbUri.split(":", 2)[0];
+
+		this.ds = new BasicDataSource();
+		this.ds.setUrl("jdbc:" + dbUri);
+		this.ds.setUsername(dbUser);
+		this.ds.setPassword(dbPassword);
+		this.ds.setMaxTotal(20);
+		this.ds.setMaxWaitMillis(200); // 4 ticks
 
 		try (SQLConnection conn = getSQL()) {
 			conn.checkConnection();
@@ -103,11 +78,12 @@ public class SQLBackend extends PermissionBackend {
 			if (e.getCause() != null && e.getCause() instanceof Exception) {
 				e = (Exception) e.getCause();
 			}
-			throw new PermissionBackendException(e);
+			throw new PermissionBackendException("Unable to connect to SQL database", e);
 		}
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
+		this.setupAliases();
 		this.deployTables();
 	}
 
@@ -144,7 +120,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public boolean hasUser(String userName) {
 		try {
-			ResultSet res = getSQL().prepAndBind("SELECT `id` FROM `{permissions_entity}` where `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
+			ResultSet res = getSQL().prepAndBind("SELECT `id` FROM `{permissions_entity}` WHERE `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
 			return res.next();
 		} catch (SQLException e) {
 			return false;
@@ -154,12 +130,12 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public boolean hasGroup(String group) {
 		try (SQLConnection conn = getSQL()) {
-			ResultSet res = conn.prepAndBind("SELECT `id` FROM `{permissions_entity}` where `type` = ? AND `name` = ?", SQLData.Type.GROUP.ordinal(), group).executeQuery();
+			ResultSet res = conn.prepAndBind("SELECT `id` FROM `{permissions_entity}` WHERE `type` = ? AND `name` = ?", SQLData.Type.GROUP.ordinal(), group).executeQuery();
 			return res.next();
 		} catch (SQLException e) {
 			return false;
 		}
-}
+	}
 
 	@Override
 	public Set<String> getDefaultGroupNames(String worldName) {
@@ -206,7 +182,7 @@ public class SQLBackend extends PermissionBackend {
 	public Collection<String> getUserNames() {
 		Set<String> ret = new HashSet<>();
 		try (SQLConnection conn = getSQL()) {
-			ResultSet set = conn.prepAndBind("SELECT `value` from `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
+			ResultSet set = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
 			while (set.next()) {
 				ret.add(set.getString("value"));
 			}
@@ -335,16 +311,18 @@ public class SQLBackend extends PermissionBackend {
 		}
 	}
 
-	@Override
 	public void reload() {
 		worldInheritanceCache.clear();
 	}
 
 	@Override
-	public void close() {
+	public void close() throws PermissionBackendException {
 		if (ds != null) {
-			connectionPool.close();
-			ds = null;
+			try {
+				ds.close();
+			} catch (SQLException e) {
+				throw new PermissionBackendException("Error while closing", e);
+			}
 		}
 	}
 }

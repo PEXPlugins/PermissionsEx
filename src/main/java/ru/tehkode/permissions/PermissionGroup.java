@@ -66,7 +66,6 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		this.setOption("weight", Integer.toString(weight));
 
 		this.dirtyWeight = true;
-
 		this.clearMembersCache();
 		this.callEvent(PermissionEntityEvent.Action.WEIGHT_CHANGED);
 	}
@@ -269,44 +268,44 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 */
 	@Override
 	public void addTimedPermission(String permission, String world, int lifeTime) {
-		super.addTimedPermission(permission, world, lifeTime);
 		this.clearMembersCache();
+		super.addTimedPermission(permission, world, lifeTime);
 	}
 
 	@Override
 	public void removeTimedPermission(String permission, String world) {
-		super.removeTimedPermission(permission, world);
 		this.clearMembersCache();
+		super.removeTimedPermission(permission, world);
 	}
 
 	@Override
 	public void setPrefix(String prefix, String worldName) {
-		super.setPrefix(prefix, worldName);
 		clearMembersCache();
+		super.setPrefix(prefix, worldName);
 	}
 
 	@Override
 	public void setSuffix(String suffix, String worldName) {
-		super.setSuffix(suffix, worldName);
 		clearMembersCache();
+		super.setSuffix(suffix, worldName);
 	}
 
 	@Override
 	public void setPermissions(List<String> permissions, String world) {
-		super.setPermissions(permissions, world);
 		clearMembersCache();
+		super.setPermissions(permissions, world);
 	}
 
 	@Override
 	public void setOption(String option, String value, String world) {
-		super.setOption(option, value, world);
 		clearMembersCache();
+		super.setOption(option, value, world);
 	}
 
 	@Override
 	public void setParents(List<PermissionGroup> parents, String world) {
-		super.setParents(parents, world);
 		clearMembersCache();
+		super.setParents(parents, world);
 	}
 
 	protected void clearMembersCache() {

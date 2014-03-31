@@ -39,7 +39,7 @@ public class FileBackend extends PermissionBackend {
 	public FileConfig permissions;
 	public File permissionsFile;
 
-	public FileBackend(PermissionManager manager, ConfigurationSection config) {
+	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
 		String permissionFilename = getConfig().getString("file");
 
@@ -61,6 +61,7 @@ public class FileBackend extends PermissionBackend {
 		}
 
 		this.permissionsFile = new File(baseDir, permissionFilename);
+		reload();
 	}
 
 	@Override
@@ -222,11 +223,6 @@ public class FileBackend extends PermissionBackend {
 		} catch (Throwable e) {
 			throw new PermissionBackendException("Error loading permissions file!", e);
 		}
-	}
-
-	@Override
-	public void validate() throws PermissionBackendException {
-
 	}
 
 	/**

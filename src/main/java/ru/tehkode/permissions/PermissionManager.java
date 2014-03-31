@@ -158,6 +158,7 @@ public class PermissionManager {
 
 			try {
 				if (backend != null) {
+					backend.close();
 					backend.reload();
 				}
 				clearCache();
@@ -686,8 +687,6 @@ public class PermissionManager {
 		}
 
 		PermissionBackend backend = PermissionBackend.getBackend(backendType, this, config);
-		backend.reload();
-		backend.validate();
 		return backend;
 	}
 

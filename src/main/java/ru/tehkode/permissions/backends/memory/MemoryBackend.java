@@ -38,19 +38,13 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
  */
 public class MemoryBackend extends PermissionBackend {
 
-    public MemoryBackend(PermissionManager manager, ConfigurationSection config) {
+    public MemoryBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
         super(manager, config);
     }
 
 
 	@Override
 	public void reload() throws PermissionBackendException {
-
-	}
-
-	@Override
-	public void validate() throws PermissionBackendException {
-
 	}
 
 	@Override

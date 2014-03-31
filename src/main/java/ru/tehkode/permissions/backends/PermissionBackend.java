@@ -27,7 +27,7 @@ public abstract class PermissionBackend {
 	private final PermissionManager manager;
 	private final ConfigurationSection backendConfig;
 
-	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) {
+	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		this.manager = manager;
 		this.backendConfig = backendConfig;
 	}
@@ -41,12 +41,6 @@ public abstract class PermissionBackend {
 	}
 
 	public abstract void reload() throws PermissionBackendException;
-
-	/**
-	 * Validate that information contained in this backend is usable.
-	 * @throws PermissionBackendException if backend is not valid
-	 */
-	public abstract void validate() throws PermissionBackendException;
 
 	public abstract PermissionsUserData getUserData(String userName);
 
