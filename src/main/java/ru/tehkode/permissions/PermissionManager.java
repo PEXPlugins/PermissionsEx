@@ -286,7 +286,9 @@ public class PermissionManager {
 					oldData.remove();
 					// Convert
 				}
-				data.setOption("name", null, fallbackName);
+				if (fallbackName != null) {
+					data.setOption("name", fallbackName, null);
+				}
 				user = new PermissionUser(identifier, data, this);
 				user.initialize();
 				this.users.put(identifier.toLowerCase(), user);

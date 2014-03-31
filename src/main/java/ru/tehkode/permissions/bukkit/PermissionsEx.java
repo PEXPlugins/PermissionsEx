@@ -278,18 +278,17 @@ public class PermissionsEx extends JavaPlugin {
 	}
 
 	public class PlayerEventsListener implements Listener {
-
-
 		@EventHandler
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			try {
-			if (!config.shouldLogPlayers()) {
-				return;
-			}
+				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
+				user.setOption("name", event.getPlayer().getName()); // Update name
+				if (!config.shouldLogPlayers()) {
+					return;
+				}
 
-			PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
-			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
+				user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
+				// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
 			} catch (Throwable t) {
 				ErrorReport.handleError("While login cleanup event", t);
 			}

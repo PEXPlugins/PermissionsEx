@@ -285,7 +285,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public void setOption(String option, String worldName, String value) {
+	public void setOption(String option, String value, String worldName) {
 		if (option == null || option.isEmpty()) {
 			return;
 		}

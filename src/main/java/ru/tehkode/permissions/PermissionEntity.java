@@ -75,7 +75,7 @@ public abstract class PermissionEntity {
 	}
 
 	public String getName() {
-		return getOption("name", getIdentifier());
+		return getOption("name", null, getIdentifier());
 	}
 
 	/*protected void setName(String name) {
@@ -488,7 +488,7 @@ public abstract class PermissionEntity {
 	 * @param value  Value to set, null to remove
 	 */
 	public void setOption(String option, String value) {
-		this.setOption(option, value, "");
+		this.setOption(option, value, null);
 	}
 
 	/**
