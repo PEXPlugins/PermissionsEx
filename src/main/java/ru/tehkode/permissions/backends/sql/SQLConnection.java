@@ -19,12 +19,9 @@
 package ru.tehkode.permissions.backends.sql;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,45 +29,19 @@ import java.util.regex.Pattern;
 /**
  * One connection per thread, don't share your connections
  */
-public class SQLConnection {
+public class SQLConnection implements AutoCloseable {
 	private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
-	private final Map<String, PreparedStatement> cachedStatements = new HashMap<String, PreparedStatement>();
 	private Statement statement;
-	protected Connection db;
-	private final String driver;
-	protected final String uri;
-	protected final String user;
-	protected final String password;
+	private final Connection db;
 	private final SQLBackend backend;
 
-	public SQLConnection(String uri, String user, String password, SQLBackend backend) {
-		this.uri = uri;
-		this.user = user;
-		this.password = password;
+	public SQLConnection(Connection conn, SQLBackend backend) {
 		this.backend = backend;
-		this.driver = uri.split(":", 2)[0];
-		try {
-			Class.forName(getDriverClass(this.driver)).newInstance();
-			this.connect();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public String getDriver() {
-		return driver;
+		this.db = conn;
 	}
 
 	public PreparedStatement prep(String query) throws SQLException {
-		this.checkConnection();
-
-		PreparedStatement statement = cachedStatements.get(query);
-		if (statement == null) {
-			statement = this.db.prepareStatement(expandQuery(query));
-			cachedStatements.put(query, statement);
-		}
-
-		return statement;
+		return this.db.prepareStatement(expandQuery(query));
 	}
 
 	/**
@@ -127,34 +98,19 @@ public class SQLConnection {
 		}
 
 		if (!this.db.isValid(3)) {
-			backend.getLogger().warning("Lost connection with sql server. Reconnecting.");
-			this.connect();
+			throw new SQLException("Lost connection with database!");
 		}
 	}
 
-	protected final void connect() throws SQLException {
-		backend.getLogger().info("Connecting to database \"" + this.uri + "\"");
-		this.cachedStatements.clear();
-		this.statement = null;
-		db = DriverManager.getConnection("jdbc:" + uri, user, password);
-	}
-
-	protected static String getDriverClass(String alias) {
-		if (alias.equals("mysql")) {
-			alias = "com.mysql.jdbc.Driver";
-		} else if (alias.equals("sqlite")) {
-			alias = "org.sqlite.JDBC";
-		} else if (alias.matches("postgres?")) {
-			alias = "org.postgresql.Driver";
-		}
-
-		return alias;
+	@Override
+	public void close() throws SQLException {
+		db.close();
 	}
 
 	@Override
 	protected void finalize() throws Throwable {
 		try {
-			db.close();
+			close();
 		} catch (SQLException e) {
 			backend.getLogger().log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
 		} finally {

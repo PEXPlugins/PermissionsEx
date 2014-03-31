@@ -7,6 +7,7 @@ import ru.tehkode.permissions.PermissionsUserData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,7 +30,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	private List<String> commonPermissions = null;
 	private Map<String, String> commonOptions = null;
 	private Map<String, Set<String>> parents = null;
-	private boolean virtual;
+	private boolean virtual = true;
 	private boolean def;
 	private String prefix, suffix;
 
@@ -50,8 +51,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			sql = "UPDATE `{permissions_entity}` SET `prefix` = ?, `suffix` = ?, `default` = ? WHERE `name` = ? AND `type` = ?";
 		}
 
-		try {
-			this.backend.getSQL().prepAndBind(sql, this.prefix, this.suffix, this.def ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
+		try (SQLConnection conn = backend.getSQL()) {
+			conn.prepAndBind(sql, this.prefix, this.suffix, this.def ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
 		} catch (SQLException e) {
 			if (this.isVirtual()) {
 				this.virtual = false;
@@ -65,13 +66,13 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	protected final void fetchPermissions() {
-		this.worldsOptions = new HashMap<String, Map<String, String>>();
-		this.worldsPermissions = new HashMap<String, List<String>>();
-		this.commonOptions = new HashMap<String, String>();
-		this.commonPermissions = new LinkedList<String>();
+		this.worldsOptions = new HashMap<>();
+		this.worldsPermissions = new HashMap<>();
+		this.commonOptions = new HashMap<>();
+		this.commonPermissions = new LinkedList<>();
 
-		try {
-			ResultSet results = this.backend.getSQL().prepAndBind("SELECT `permission`, `world`, `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getIdentifier(), this.type.ordinal()).executeQuery();
+		try (SQLConnection conn = backend.getSQL()) {
+			ResultSet results = conn.prepAndBind("SELECT `permission`, `world`, `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? ORDER BY `id` DESC", this.getIdentifier(), this.type.ordinal()).executeQuery();
 			while (results.next()) {
 				String permission = results.getString("permission").trim();
 				String world = results.getString("world").trim();
@@ -110,10 +111,10 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	protected final void fetchInheritance() {
-		try {
-			this.parents = new HashMap<String, Set<String>>();
+		try (SQLConnection conn = backend.getSQL()) {
+			this.parents = new HashMap<>();
 
-			ResultSet results = this.backend.getSQL().prepAndBind("SELECT `parent`, `world` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getIdentifier(), this.type.ordinal()).executeQuery();
+			ResultSet results = conn.prepAndBind("SELECT `parent`, `world` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", this.getIdentifier(), this.type.ordinal()).executeQuery();
 
 			while (results.next()) {
 				String parentName = results.getString(1);
@@ -138,8 +139,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	protected final void fetchInfo() {
-		try {
-			ResultSet result = this.backend.getSQL().prepAndBind("SELECT `name`, `prefix`, `suffix`, `default` FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getIdentifier(), this.type.ordinal()).executeQuery();
+		try (SQLConnection conn = backend.getSQL()) {
+			ResultSet result = conn.prepAndBind("SELECT `name`, `prefix`, `suffix`, `default` FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getIdentifier(), this.type.ordinal()).executeQuery();
 
 			if (result.next()) {
 				this.prefix = nullToEmpty(result.getString("prefix"));
@@ -191,10 +192,10 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			worldName = "";
 		}
 
-		try {
-			this.backend.getSQL().prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getIdentifier(), this.type.ordinal(), worldName).execute();
+		try (SQLConnection conn = backend.getSQL()) {
+			conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getIdentifier(), this.type.ordinal(), worldName).execute();
 
-			PreparedStatement statement = this.backend.getSQL().prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getIdentifier(), "toset", worldName, this.type.ordinal());
+			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getIdentifier(), "toset", worldName, this.type.ordinal());
 			for (int i = permissions.size() - 1; i >= 0; i--) { // insert in reverse order
 				statement.setString(2, permissions.get(i));
 				statement.addBatch();
@@ -208,7 +209,15 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			this.save();
 		}
 
-		this.fetchPermissions();
+		if (this.commonPermissions == null) {
+			this.fetchPermissions();
+		} else {
+			if (worldName.isEmpty()) {
+				this.commonPermissions = new ArrayList<>(permissions);
+			} else {
+				this.worldsPermissions.put(worldName, new ArrayList<>(permissions));
+			}
+		}
 	}
 
 	@Override
@@ -271,6 +280,9 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public String getOption(String option, String worldName) {
+		if (this.commonOptions == null) {
+			fetchPermissions();
+		}
 		if (worldName != null && !worldName.isEmpty() && this.worldsOptions.containsKey(worldName)) {
 			if (this.worldsOptions.get(worldName).containsKey(option)) {
 				return this.worldsOptions.get(worldName).get(option);
@@ -295,16 +307,20 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		}
 
 		if (value == null || value.isEmpty()) {
-			try {
-				this.backend.getSQL().prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ?", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
+			try (SQLConnection conn = backend.getSQL()) {
+				conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ?", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
 
-			if (!worldName.isEmpty() && this.worldsOptions.containsKey(worldName)) {
-				this.worldsOptions.get(worldName).remove(option);
+			if (commonOptions == null) {
+				fetchPermissions();
 			} else {
-				this.commonOptions.remove(option);
+				if (!worldName.isEmpty() && this.worldsOptions.containsKey(worldName)) {
+					this.worldsOptions.get(worldName).remove(option);
+				} else {
+					this.commonOptions.remove(option);
+				}
 			}
 
 			return;
@@ -322,11 +338,11 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		}
 
 
-		try {
+		try (SQLConnection conn = backend.getSQL()) {
 			if (newOption) {
-				this.backend.getSQL().prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, ?, ?, ?)", this.getIdentifier(), option, value, worldName, this.type.ordinal()).execute();
+				conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, ?, ?, ?)", this.getIdentifier(), option, value, worldName, this.type.ordinal()).execute();
 			} else {
-				this.backend.getSQL().prepAndBind("UPDATE `{permissions}` SET `value` = ? WHERE `name` = ? AND `type` = ? AND `permission` = ?", value, this.getIdentifier(), this.type.ordinal(), option).execute();
+				conn.prepAndBind("UPDATE `{permissions}` SET `value` = ? WHERE `name` = ? AND `type` = ? AND `permission` = ?", value, this.getIdentifier(), this.type.ordinal(), option).execute();
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -376,13 +392,13 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void remove() {
-		try {
+		try (SQLConnection conn = backend.getSQL()) {
 			// clear inheritance info
-			this.backend.getSQL().prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
+			conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
 			// clear permissions
-			this.backend.getSQL().prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
+			conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
 			// clear info
-			this.backend.getSQL().prepAndBind("DELETE FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
+			conn.prepAndBind("DELETE FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -413,16 +429,16 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		if (this.isVirtual()) {
 			this.save();
 		}
-		try {
+		try (SQLConnection conn = backend.getSQL()) {
 			// Clean out existing records
 			if (worldName != null) { // damn NULL
-				this.backend.getSQL().prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getIdentifier(), this.type.ordinal(), worldName).execute();
+				conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getIdentifier(), this.type.ordinal(), worldName).execute();
 			} else {
-				this.backend.getSQL().prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND IFNULL(`world`, 1)", this.getIdentifier(), this.type.ordinal()).execute();
+				conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND IFNULL(`world`, 1)", this.getIdentifier(), this.type.ordinal()).execute();
 			}
 
 
-			PreparedStatement statement = this.backend.getSQL().prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`, `world`) VALUES (?, ?, ?, ?)", this.getIdentifier(), "toset", this.type.ordinal(), worldName);
+			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`, `world`) VALUES (?, ?, ?, ?)", this.getIdentifier(), "toset", this.type.ordinal(), worldName);
 			for (String group : parents) {
 				if (group == null || group.isEmpty()) {
 					continue;
@@ -463,21 +479,17 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		GROUP, USER
 	}
 
-	public static Set<String> getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) {
-		try {
-			Set<String> entities = new HashSet<String>();
+	public static Set<String> getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) throws SQLException {
+		Set<String> entities = new HashSet<String>();
 
-			ResultSet result = sql.prepAndBind("SELECT name FROM `{permissions_entity}` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal()).executeQuery();
+		ResultSet result = sql.prepAndBind("SELECT name FROM `{permissions_entity}` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal()).executeQuery();
 
-			while (result.next()) {
-				entities.add(result.getString("name"));
-			}
-
-			result.close();
-
-			return Collections.unmodifiableSet(entities);
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
+		while (result.next()) {
+			entities.add(result.getString("name"));
 		}
+
+		result.close();
+
+		return Collections.unmodifiableSet(entities);
 	}
 }

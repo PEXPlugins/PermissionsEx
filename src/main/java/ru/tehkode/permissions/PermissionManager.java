@@ -277,9 +277,12 @@ public class PermissionManager {
 		PermissionUser user = users.get(identifier);
 
 		if (user == null) {
+			System.out.println("Has " + identifier + " (before get): " + backend.hasUser(identifier));
 			PermissionsUserData data = backend.getUserData(identifier);
 
 			if (data != null) {
+				System.out.println("Has " + identifier + " (after get): " + backend.hasUser(identifier));
+				System.out.print("Has " + fallbackName + "(fallback): " + backend.hasUser(fallbackName));
 				if (fallbackName != null && !backend.hasUser(identifier) && backend.hasUser(fallbackName)) {
 					if (isDebug()) {
 						getLogger().info("Converting user " + fallbackName + " (UUID " + identifier + ") to UUID-based storage");

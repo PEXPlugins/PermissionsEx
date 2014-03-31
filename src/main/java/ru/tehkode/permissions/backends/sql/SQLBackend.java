@@ -18,6 +18,12 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
@@ -26,8 +32,10 @@ import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.utils.StringUtils;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,7 +48,8 @@ import java.util.*;
 public class SQLBackend extends PermissionBackend {
 	protected Map<String, List<String>> worldInheritanceCache = new HashMap<String, List<String>>();
 	private Map<String, Object> tableNames;
-	private ThreadLocal<SQLConnection> conn;
+	private final DataSource ds;
+	private String dbDriver;
 
 	public SQLBackend(PermissionManager manager, ConfigurationSection config) {
 		super(manager, config);
@@ -52,26 +61,40 @@ public class SQLBackend extends PermissionBackend {
 			getConfig().set("uri", "mysql://localhost/exampledb");
 			getConfig().set("user", "databaseuser");
 			getConfig().set("password", "databasepassword");
-
+			ds = null;
 		} else {
-			conn = new ThreadLocal<SQLConnection>() {
-				@Override
-				public SQLConnection initialValue() {
-					return new SQLConnection(dbUri, dbUser, dbPassword, SQLBackend.this);
-				}
-			};
+		    dbDriver = dbUri.split(":", 2)[0];
+
+			ConnectionFactory connectionFactory = new DriverManagerConnectionFactory("jdbc:" + dbUri, dbUser, dbPassword);
+			PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+			GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+			poolableConnectionFactory.setPool(connectionPool);
+			connectionPool.setMaxTotal(20);
+			connectionPool.setMaxWaitMillis(200);
+			this.ds = new PoolingDataSource<>(connectionPool);
 		}
 		this.setupAliases();
 	}
 
+	protected static String getDriverClass(String alias) {
+		if (alias.equals("mysql")) {
+			alias = "com.mysql.jdbc.Driver";
+		} else if (alias.equals("sqlite")) {
+			alias = "org.sqlite.JDBC";
+		} else if (alias.matches("postgres?")) {
+			alias = "org.postgresql.Driver";
+		}
+
+		return alias;
+	}
+
 	@Override
 	public void validate() throws PermissionBackendException {
-		if (conn == null) {
+		if (ds == null) {
 			throw new PermissionBackendException("SQL connection is not configured, see config.yml");
 		}
 
-		try {
-			SQLConnection conn = getSQL(); // Test connection
+		try (SQLConnection conn = getSQL()) {
 			conn.checkConnection();
 		} catch (Exception e) {
 			if (e.getCause() != null && e.getCause() instanceof Exception) {
@@ -80,14 +103,16 @@ public class SQLBackend extends PermissionBackend {
 			throw new PermissionBackendException(e);
 		}
 
-
 		getManager().getLogger().info("Successfully connected to SQL database");
 
 		this.deployTables();
 	}
 
-	public SQLConnection getSQL() {
-		return conn.get();
+	public SQLConnection getSQL() throws SQLException {
+		if (ds == null) {
+			throw new SQLException("SQL connection information was not correct, could not retrieve connection");
+		}
+		return new SQLConnection(ds.getConnection(), this);
 	}
 
 	public String getTableName(String identifier) {
@@ -116,7 +141,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public boolean hasUser(String userName) {
 		try {
-			ResultSet res = getSQL().prepAndBind("SELECT `id` FROM `{permissions_backend}` where `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
+			ResultSet res = getSQL().prepAndBind("SELECT `id` FROM `{permissions_entity}` where `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
 			return res.next();
 		} catch (SQLException e) {
 			return false;
@@ -125,8 +150,8 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public boolean hasGroup(String group) {
-		try {
-			ResultSet res = getSQL().prepAndBind("SELECT `id` FROM `{permissions_backend}` where `type` = ? AND `name` = ?", SQLData.Type.GROUP.ordinal(), group).executeQuery();
+		try (SQLConnection conn = getSQL()) {
+			ResultSet res = conn.prepAndBind("SELECT `id` FROM `{permissions_entity}` where `type` = ? AND `name` = ?", SQLData.Type.GROUP.ordinal(), group).executeQuery();
 			return res.next();
 		} catch (SQLException e) {
 			return false;
@@ -135,13 +160,13 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public Set<String> getDefaultGroupNames(String worldName) {
-		try {
+		try (SQLConnection conn = getSQL()) {
 			ResultSet result;
 
 			if (worldName == null) {
-				result = getSQL().prepAndBind("SELECT `name` FROM `{permissions_entity}` WHERE `type` = ? AND `default` = 1", SQLData.Type.GROUP.ordinal()).executeQuery();
+				result = conn.prepAndBind("SELECT `name` FROM `{permissions_entity}` WHERE `type` = ? AND `default` = 1", SQLData.Type.GROUP.ordinal()).executeQuery();
 			} else {
-				result = this.getSQL().prepAndBind("SELECT `name` FROM `{permissions}` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
+				result = conn.prepAndBind("SELECT `name` FROM `{permissions}` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
 						SQLData.Type.GROUP.ordinal(), worldName).executeQuery();
 			}
 			Set<String> ret = new HashSet<String>();
@@ -158,19 +183,26 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public Collection<String> getGroupNames() {
-		return SQLData.getEntitiesNames(getSQL(), SQLData.Type.GROUP, false);
+		try (SQLConnection conn = getSQL()) {
+			return SQLData.getEntitiesNames(conn, SQLData.Type.GROUP, false);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public Collection<String> getUserIdentifiers() {
-		return SQLData.getEntitiesNames(getSQL(), SQLData.Type.USER, false);
+		try (SQLConnection conn = getSQL()) {
+			return SQLData.getEntitiesNames(conn, SQLData.Type.USER, false);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public Collection<String> getUserNames() {
-		SQLConnection conn = getSQL();
 		Set<String> ret = new HashSet<String>();
-		try {
+		try (SQLConnection conn = getSQL()) {
 			ResultSet set = conn.prepAndBind("SELECT `value` from `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
 			while (set.next()) {
 				ret.add(set.getString("value"));
@@ -211,30 +243,28 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	protected final void deployTables() throws PermissionBackendException {
-		try {
-			if (this.getSQL().hasTable("{permissions}")) {
+		try (SQLConnection conn = getSQL()) {
+			if (conn.hasTable("{permissions}")) {
 				return;
 			}
-			InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + getSQL().getDriver() + ".sql");
+			InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + dbDriver + ".sql");
 
 			if (databaseDumpStream == null) {
-				throw new Exception("Can't find appropriate database dump for used database (" + getSQL().getDriver() + "). Is it bundled?");
+				throw new Exception("Can't find appropriate database dump for used database (" + dbDriver + "). Is it bundled?");
 			}
 
 			getLogger().info("Deploying default database scheme");
-
-			executeStream(getSQL(), databaseDumpStream);
-
-			PermissionsGroupData defGroup = getGroupData("default");
-			defGroup.setPermissions(Collections.singletonList("modifyworld.*"), null);
-			defGroup.setDefault(true, null);
-			defGroup.save();
-
-			getLogger().info("Database scheme deploying complete.");
-
+			executeStream(conn, databaseDumpStream);
 		} catch (Exception e) {
-			throw new PermissionBackendException("Deploying of default data failed. Please initialize database manually using " + getSQL().getDriver() + ".sql", e);
+			throw new PermissionBackendException("Deploying of default data failed. Please initialize database manually using " + dbDriver + ".sql", e);
 		}
+
+		PermissionsGroupData defGroup = getGroupData("default");
+		defGroup.setPermissions(Collections.singletonList("modifyworld.*"), null);
+		defGroup.setDefault(true, null);
+		defGroup.save();
+
+		getLogger().info("Database scheme deploying complete.");
 	}
 
 	@Override
@@ -244,8 +274,8 @@ public class SQLBackend extends PermissionBackend {
 		}
 
 		if (!worldInheritanceCache.containsKey(world)) {
-			try {
-				ResultSet result = this.getSQL().prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2;", world).executeQuery();
+			try (SQLConnection conn = getSQL()) {
+				ResultSet result = conn.prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2;", world).executeQuery();
 				LinkedList<String> worldParents = new LinkedList<String>();
 
 				while (result.next()) {
@@ -263,8 +293,8 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public Map<String, List<String>> getAllWorldInheritance() {
-		try {
-			ResultSet result = getSQL().prepAndBind("SELECT `child` FROM `{permissions_inheritance}` WHERE `type` = 2 ").executeQuery();
+		try (SQLConnection conn = getSQL()) {
+			ResultSet result = conn.prepAndBind("SELECT `child` FROM `{permissions_inheritance}` WHERE `type` = 2 ").executeQuery();
 
 			Map<String, List<String>> ret = new HashMap<String, List<String>>();
 			while (result.next()) {
@@ -285,10 +315,10 @@ public class SQLBackend extends PermissionBackend {
 			return;
 		}
 
-		try {
-			this.getSQL().prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2", worldName).execute();
+		try (SQLConnection conn = getSQL()) {
+			conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2", worldName).execute();
 
-			PreparedStatement statement = this.getSQL().prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`) VALUES (?, ?, 2)", worldName, "toset");
+			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`) VALUES (?, ?, 2)", worldName, "toset");
 			for (String parentWorld : parentWorlds) {
 				statement.setString(2, parentWorld);
 				statement.addBatch();

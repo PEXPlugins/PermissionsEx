@@ -91,8 +91,8 @@ public class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void setOption(String option, String value, String worldName) {
-		super.setOption(option, value, worldName);
 		clearCache();
+		super.setOption(option, value, worldName);
 	}
 
 	@Override
@@ -111,8 +111,8 @@ public class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void setParentsIdentifier(List<String> parentsName, String world) {
-		super.setParentsIdentifier(parentsName, world);
 		clearCache();
+		super.setParentsIdentifier(parentsName, world);
 	}
 
 
@@ -465,15 +465,21 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public void addTimedPermission(String permission, String world, int lifeTime) {
-		super.addTimedPermission(permission, world, lifeTime);
+	public void setPermissions(List<String> permissions, String worldName) {
 		this.clearCache();
+		super.setPermissions(permissions, worldName);
+	}
+
+	@Override
+	public void addTimedPermission(String permission, String world, int lifeTime) {
+		this.clearCache();
+		super.addTimedPermission(permission, world, lifeTime);
 	}
 
 	@Override
 	public void removeTimedPermission(String permission, String world) {
-		super.removeTimedPermission(permission, world);
 		this.clearCache();
+		super.removeTimedPermission(permission, world);
 	}
 
 	protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
@@ -566,26 +572,26 @@ public class PermissionUser extends PermissionEntity {
 
 	@Override
 	public void setPrefix(String prefix, String worldName) {
-		super.setPrefix(prefix, worldName);
 		this.clearCache();
+		super.setPrefix(prefix, worldName);
 	}
 
 	@Override
 	public void setSuffix(String postfix, String worldName) {
-		super.setSuffix(postfix, worldName);
 		this.clearCache();
+		super.setSuffix(postfix, worldName);
 	}
 
 	@Override
 	public void remove() {
-		super.remove();
 		this.clearCache();
+		super.remove();
 	}
 
 	@Override
 	public void save() {
-		super.save();
 		this.clearCache();
+		super.save();
 	}
 
 	@Override
