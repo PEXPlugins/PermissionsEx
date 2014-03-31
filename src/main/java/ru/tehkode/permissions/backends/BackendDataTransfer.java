@@ -23,7 +23,7 @@ public class BackendDataTransfer {
 
 		for (Map.Entry<String, Map<String, String>> entry : from.getOptionsMap().entrySet()) {
 			for (Map.Entry<String, String> option : entry.getValue().entrySet()) {
-				to.setOption(option.getKey(), entry.getKey(), option.getValue());
+				to.setOption(option.getKey(), option.getValue(), entry.getKey());
 			}
 		}
 
