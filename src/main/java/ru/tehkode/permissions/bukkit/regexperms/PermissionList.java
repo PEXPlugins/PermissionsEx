@@ -19,7 +19,7 @@ import java.util.Map;
 public class PermissionList extends HashMap<String, Permission> {
 	private static FieldReplacer<PluginManager, Map> INJECTOR;
 
-    private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<Class<?>, FieldReplacer<Permission, Map>>();
+    private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<>();
 	/**
 	 * k = child permission
 	 * v.k = parent permission
@@ -38,7 +38,7 @@ public class PermissionList extends HashMap<String, Permission> {
     private FieldReplacer<Permission, Map> getFieldReplacer(Permission perm) {
         FieldReplacer<Permission, Map> ret = CHILDREN_MAPS.get(perm.getClass());
         if (ret == null) {
-            ret = new FieldReplacer<Permission, Map>(perm.getClass(), "children", Map.class);
+            ret = new FieldReplacer<>(perm.getClass(), "children", Map.class);
             CHILDREN_MAPS.put(perm.getClass(), ret);
         }
         return ret;
@@ -75,7 +75,7 @@ public class PermissionList extends HashMap<String, Permission> {
         @Override
         public Boolean put(String perm, Boolean val) {
             //removeFromMapping(perm);
-            childParentMapping.put(perm, new SimpleEntry<String, Boolean>(this.perm.getName(), val));
+            childParentMapping.put(perm, new SimpleEntry<>(this.perm.getName(), val));
             return super.put(perm, val);
         }
 
@@ -89,7 +89,7 @@ public class PermissionList extends HashMap<String, Permission> {
 
 	public static PermissionList inject(PluginManager manager) {
 		if (INJECTOR == null) {
-			INJECTOR = new FieldReplacer<PluginManager, Map>(manager.getClass(), "permissions", Map.class);
+			INJECTOR = new FieldReplacer<>(manager.getClass(), "permissions", Map.class);
 		}
 		Map existing = INJECTOR.get(manager);
 		@SuppressWarnings("unchecked")
@@ -101,7 +101,7 @@ public class PermissionList extends HashMap<String, Permission> {
 	@Override
 	public Permission put(String k, Permission v) {
 		for (Map.Entry<String, Boolean> ent : v.getChildren().entrySet()) {
-			childParentMapping.put(ent.getKey(), new SimpleEntry<String, Boolean>(v.getName(), ent.getValue()));
+			childParentMapping.put(ent.getKey(), new SimpleEntry<>(v.getName(), ent.getValue()));
 		}
         FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
         repl.set(v, new NotifyingChildrenMap(v));
@@ -113,7 +113,7 @@ public class PermissionList extends HashMap<String, Permission> {
 		removeAllChildren(k.toString());
 		Permission ret = super.remove(k);
         if (ret != null) {
-            getFieldReplacer(ret).set(ret, new LinkedHashMap<String, Boolean>(ret.getChildren()));
+            getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
         }
         return ret;
 	}

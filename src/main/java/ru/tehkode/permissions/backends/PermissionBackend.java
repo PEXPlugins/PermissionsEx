@@ -103,6 +103,32 @@ public abstract class PermissionBackend {
 
 	public abstract void setWorldInheritance(String world, List<String> inheritance);
 
+	public void close() throws PermissionBackendException {}
+
+	public final Logger getLogger() {
+		return manager.getLogger();
+	}
+
+	/**
+	 * Load data from alternate backend.
+	 * Assume that this overwrites all data in the receiving backend (except for users not included in transferring backend)
+	 *
+	 * @param backend The backend to load data from
+	 */
+	public void loadFrom(PermissionBackend backend) {
+		for (String user : backend.getUserIdentifiers()) {
+			BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
+		}
+
+		for (String group : backend.getGroupNames()) {
+			BackendDataTransfer.transferGroup(backend.getGroupData(group), getGroupData(group));
+		}
+
+		for (Map.Entry<String, List<String>> ent : backend.getAllWorldInheritance().entrySet()) {
+			setWorldInheritance(ent.getKey(), ent.getValue()); // Could merge data but too complicated & too lazy
+		}
+	}
+
 	// -- Backend lookup/creation
 
 	public final static String DEFAULT_BACKEND = "file";
@@ -110,7 +136,7 @@ public abstract class PermissionBackend {
 	/**
 	 * Array of backend aliases
 	 */
-	private static final Map<String, Class<? extends PermissionBackend>> REGISTERED_ALIASES = new HashMap<String, Class<? extends PermissionBackend>>();
+	private static final Map<String, Class<? extends PermissionBackend>> REGISTERED_ALIASES = new HashMap<>();
 
 	/**
 	 * Return class name for alias
@@ -244,30 +270,6 @@ public abstract class PermissionBackend {
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	public final Logger getLogger() {
-		return manager.getLogger();
-	}
-
-	/**
-	 * Load data from alternate backend.
-	 * Assume that this overwrites all data in the receiving backend (except for users not included in transferring backend)
-	 *
-	 * @param backend The backend to load data from
-	 */
-	public void loadFrom(PermissionBackend backend) {
-		for (String user : backend.getUserIdentifiers()) {
-			BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
-		}
-
-		for (String group : backend.getGroupNames()) {
-			BackendDataTransfer.transferGroup(backend.getGroupData(group), getGroupData(group));
-		}
-
-		for (Map.Entry<String, List<String>> ent : backend.getAllWorldInheritance().entrySet()) {
-			setWorldInheritance(ent.getKey(), ent.getValue()); // Could merge data but too complicated
 		}
 	}
 }

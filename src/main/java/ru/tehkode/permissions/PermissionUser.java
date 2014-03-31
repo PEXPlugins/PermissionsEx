@@ -34,12 +34,12 @@ public class PermissionUser extends PermissionEntity {
 	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
 
 	private final PermissionsUserData data;
-	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<String, List<PermissionGroup>>();
-	protected Map<String, List<String>> cachedPermissions = new HashMap<String, List<String>>();
-	protected Map<String, String> cachedPrefix = new HashMap<String, String>();
-	protected Map<String, String> cachedSuffix = new HashMap<String, String>();
-	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<String, String>();
-	protected Map<String, String> cachedOptions = new HashMap<String, String>();
+	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
+	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
+	protected Map<String, String> cachedPrefix = new HashMap<>();
+	protected Map<String, String> cachedSuffix = new HashMap<>();
+	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
+	protected Map<String, String> cachedOptions = new HashMap<>();
 
 	public PermissionUser(String playerName, PermissionsUserData data, PermissionManager manager) {
 		super(playerName, manager);
@@ -131,7 +131,7 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(getOwnParentIdentifiers(worldName));
+		List<String> groups = new ArrayList<>(getOwnParentIdentifiers(worldName));
 
 		if (groups.contains(groupName)) {
 			return;
@@ -185,7 +185,7 @@ public class PermissionUser extends PermissionEntity {
 			return;
 		}
 
-		List<String> groups = new ArrayList<String>(getOwnParentIdentifiers(worldName));
+		List<String> groups = new ArrayList<>(getOwnParentIdentifiers(worldName));
 		if (!groups.contains(groupName)) {
 			return;
 		}
@@ -442,7 +442,7 @@ public class PermissionUser extends PermissionEntity {
 	 * @return Map, key - name of ladder, group - corresponding group of that ladder
 	 */
 	public Map<String, PermissionGroup> getRankLadders() {
-		Map<String, PermissionGroup> ladders = new HashMap<String, PermissionGroup>();
+		Map<String, PermissionGroup> ladders = new HashMap<>();
 
 		for (PermissionGroup group : this.getParents()) {
 			if (!group.isRanked()) {
@@ -502,7 +502,7 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
-		List<PermissionGroup> groups = new ArrayList<PermissionGroup>(this.getParents());
+		List<PermissionGroup> groups = new ArrayList<>(this.getParents());
 
 		groups.remove(src);
 		groups.add(dst);
@@ -521,12 +521,20 @@ public class PermissionUser extends PermissionEntity {
 
 	@Override
 	public boolean has(String permission) {
-		Player player = Bukkit.getServer().getPlayer(this.getIdentifier());
+		Player player = getPlayer();
 		if (player != null) {
 			return this.has(permission, player.getWorld().getName());
 		}
 
 		return super.has(permission);
+	}
+
+	public Player getPlayer() {
+		try {
+			return manager.getPlugin().getServer().getPlayer(UUID.fromString(getIdentifier()));
+		} catch (IllegalArgumentException ex) {
+			return manager.getPlugin().getServer().getPlayerExact(getIdentifier());
+		}
 	}
 
 	@Override
@@ -597,7 +605,7 @@ public class PermissionUser extends PermissionEntity {
 	@Override
 	public boolean explainExpression(String expression) {
 		if (expression == null && this.manager.allowOps) {
-			Player player = Bukkit.getServer().getPlayer(this.getIdentifier());
+			Player player = getPlayer();
 			if (player != null && player.isOp()) {
 				return true;
 			}

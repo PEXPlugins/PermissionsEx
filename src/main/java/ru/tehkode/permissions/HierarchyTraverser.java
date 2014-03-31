@@ -38,8 +38,8 @@ public abstract class HierarchyTraverser<Return> {
 	 * @return a value if any found
 	 */
 	public Return traverse() {
-		LinkedList<PermissionEntity> entities = new LinkedList<PermissionEntity>();
-		Set<PermissionEntity> visited = new HashSet<PermissionEntity>();
+		LinkedList<PermissionEntity> entities = new LinkedList<>();
+		Set<PermissionEntity> visited = new HashSet<>();
 		entities.add(start);
 		Return ret = null;
 		while (!entities.isEmpty()) {
@@ -92,8 +92,8 @@ public abstract class HierarchyTraverser<Return> {
 	private Return traverseWorldInheritance(PermissionEntity entity) {
 		List<String> worldInheritance = entity.manager.getWorldInheritance(world);
 		if (worldInheritance.size() > 0) {
-			Deque<String> worlds = new LinkedList<String>(worldInheritance);
-			Set<String> visitedWorlds = new HashSet<String>();
+			Deque<String> worlds = new LinkedList<>(worldInheritance);
+			Set<String> visitedWorlds = new HashSet<>();
 			Return ret = null;
 			while (!worlds.isEmpty()) {
 				String current = worlds.removeFirst();

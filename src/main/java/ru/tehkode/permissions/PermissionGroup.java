@@ -327,7 +327,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 
 	private void clearChildren(String worldName) {
 		for (PermissionGroup group : this.getChildGroups(worldName)) {
-			List<PermissionGroup> parentGroups = new LinkedList<PermissionGroup>(group.getOwnParents(worldName));
+			List<PermissionGroup> parentGroups = new LinkedList<>(group.getOwnParents(worldName));
 			parentGroups.remove(this);
 
 			group.setParents(parentGroups, worldName);

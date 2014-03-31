@@ -23,6 +23,7 @@ import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
@@ -35,7 +36,6 @@ import ru.tehkode.utils.StringUtils;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,9 +46,10 @@ import java.util.*;
  * @author code
  */
 public class SQLBackend extends PermissionBackend {
-	protected Map<String, List<String>> worldInheritanceCache = new HashMap<String, List<String>>();
+	protected Map<String, List<String>> worldInheritanceCache = new HashMap<>();
 	private Map<String, Object> tableNames;
-	private final DataSource ds;
+	private DataSource ds;
+	private final ObjectPool<?> connectionPool;
 	private String dbDriver;
 
 	public SQLBackend(PermissionManager manager, ConfigurationSection config) {
@@ -62,6 +63,7 @@ public class SQLBackend extends PermissionBackend {
 			getConfig().set("user", "databaseuser");
 			getConfig().set("password", "databasepassword");
 			ds = null;
+			connectionPool = null;
 		} else {
 		    dbDriver = dbUri.split(":", 2)[0];
 
@@ -72,6 +74,7 @@ public class SQLBackend extends PermissionBackend {
 			connectionPool.setMaxTotal(20);
 			connectionPool.setMaxWaitMillis(200);
 			this.ds = new PoolingDataSource<>(connectionPool);
+			this.connectionPool = connectionPool;
 		}
 		this.setupAliases();
 	}
@@ -169,7 +172,7 @@ public class SQLBackend extends PermissionBackend {
 				result = conn.prepAndBind("SELECT `name` FROM `{permissions}` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
 						SQLData.Type.GROUP.ordinal(), worldName).executeQuery();
 			}
-			Set<String> ret = new HashSet<String>();
+			Set<String> ret = new HashSet<>();
 			while (result.next()) {
 				ret.add(result.getString("name"));
 			}
@@ -201,7 +204,7 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public Collection<String> getUserNames() {
-		Set<String> ret = new HashSet<String>();
+		Set<String> ret = new HashSet<>();
 		try (SQLConnection conn = getSQL()) {
 			ResultSet set = conn.prepAndBind("SELECT `value` from `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
 			while (set.next()) {
@@ -276,7 +279,7 @@ public class SQLBackend extends PermissionBackend {
 		if (!worldInheritanceCache.containsKey(world)) {
 			try (SQLConnection conn = getSQL()) {
 				ResultSet result = conn.prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = 2;", world).executeQuery();
-				LinkedList<String> worldParents = new LinkedList<String>();
+				LinkedList<String> worldParents = new LinkedList<>();
 
 				while (result.next()) {
 					worldParents.add(result.getString("parent"));
@@ -296,7 +299,7 @@ public class SQLBackend extends PermissionBackend {
 		try (SQLConnection conn = getSQL()) {
 			ResultSet result = conn.prepAndBind("SELECT `child` FROM `{permissions_inheritance}` WHERE `type` = 2 ").executeQuery();
 
-			Map<String, List<String>> ret = new HashMap<String, List<String>>();
+			Map<String, List<String>> ret = new HashMap<>();
 			while (result.next()) {
 				final String world = result.getString("child");
 				if (!ret.containsKey(world)) {
@@ -335,5 +338,13 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public void reload() {
 		worldInheritanceCache.clear();
+	}
+
+	@Override
+	public void close() {
+		if (ds != null) {
+			connectionPool.close();
+			ds = null;
+		}
 	}
 }

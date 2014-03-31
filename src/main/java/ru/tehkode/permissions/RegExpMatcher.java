@@ -9,7 +9,7 @@ public class RegExpMatcher implements PermissionMatcher {
 	public static final String RAW_REGEX_CHAR = "$";
 	protected static Pattern rangeExpression = Pattern.compile("(\\d+)-(\\d+)");
 
-	protected static HashMap<String, Pattern> patternCache = new HashMap<String, Pattern>();
+	protected static HashMap<String, Pattern> patternCache = new HashMap<>();
 
 	@Override
 	public boolean isMatches(String expression, String permission) {
@@ -72,7 +72,7 @@ public class RegExpMatcher implements PermissionMatcher {
 
 				regexp = regexp.replace(rangeMatcher.group(0), range.toString());
 			}
-		} catch (Throwable e) {
+		} catch (Throwable ignore) {
 		}
 
 		return regexp;

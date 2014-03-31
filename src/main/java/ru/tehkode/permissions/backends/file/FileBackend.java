@@ -82,7 +82,7 @@ public class FileBackend extends PermissionBackend {
 			return Collections.emptyMap();
 		}
 
-		Map<String, List<String>> ret = new HashMap<String, List<String>>();
+		Map<String, List<String>> ret = new HashMap<>();
 		for (String world : worldsSection.getKeys(false)) {
 			ret.put(world, getWorldInheritance(world));
 		}
@@ -127,7 +127,7 @@ public class FileBackend extends PermissionBackend {
 			return Collections.emptySet();
 		}
 
-		Set<String> names = new HashSet<String>();
+		Set<String> names = new HashSet<>();
 
 		String defaultGroupProperty = "default";
 		if (worldName != null) {
@@ -161,7 +161,7 @@ public class FileBackend extends PermissionBackend {
 			return Collections.emptySet();
 		}
 
-		Set<String> userNames = new HashSet<String>();
+		Set<String> userNames = new HashSet<>();
 
 		for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
 			if (entry.getValue() instanceof ConfigurationSection) {
@@ -242,7 +242,7 @@ public class FileBackend extends PermissionBackend {
 				permissions.set("groups/default/default", true);
 
 
-				List<String> defaultPermissions = new LinkedList<String>();
+				List<String> defaultPermissions = new LinkedList<>();
 				// Specify here default permissions
 				defaultPermissions.add("modifyworld.*");
 

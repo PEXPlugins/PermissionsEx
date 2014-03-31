@@ -57,7 +57,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			return; // User informing is disabled
 		}
 
-		Player player = plugin.getServer().getPlayer(user.getName());
+		Player player = user.getPlayer();
 		if (player == null) {
 			return;
 		}
@@ -89,7 +89,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			return playerName.substring(1);
 		}
 
-		List<String> players = new LinkedList<String>();
+		List<String> players = new LinkedList<>();
 
 		// Collect online Player names
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
@@ -137,7 +137,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			return groupName.substring(1);
 		}
 
-		List<String> groups = new LinkedList<String>();
+		List<String> groups = new LinkedList<>();
 
 		for (String group : PermissionsEx.getPermissionManager().getGroupNames()) {
 			if (group.equalsIgnoreCase(groupName)) {
@@ -168,7 +168,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			return null;
 		}
 
-		List<String> worlds = new LinkedList<String>();
+		List<String> worlds = new LinkedList<>();
 
 		for (World world : Bukkit.getServer().getWorlds()) {
 			if (world.getName().equalsIgnoreCase(worldName)) {
@@ -189,9 +189,9 @@ public abstract class PermissionsCommand implements CommandListener {
 		return worldName;
 	}
 
-	protected String getSafeWorldName(String worldName, String userName) {
+	protected String getSafeWorldName(String worldName, PermissionUser user) {
 		if (worldName == null) {
-			Player player = Bukkit.getServer().getPlayer(userName);
+			Player player = user.getPlayer();
 
 			if (player != null) {
 				worldName = player.getWorld().getName();
@@ -209,10 +209,10 @@ public abstract class PermissionsCommand implements CommandListener {
 
 	protected String autoCompletePermission(PermissionEntity entity, String permission, String worldName, String argName) {
 		if (permission == null) {
-			return permission;
+			return null;
 		}
 
-		Set<String> permissions = new HashSet<String>();
+		Set<String> permissions = new HashSet<>();
 		for (String currentPermission : entity.getPermissions(worldName)) {
 			if (currentPermission.equalsIgnoreCase(permission)) {
 				return currentPermission;
@@ -313,7 +313,7 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	protected List<String> getPermissionsTree(PermissionEntity entity, String world, int level) {
-		List<String> permissions = new LinkedList<String>();
+		List<String> permissions = new LinkedList<>();
 		Map<String, List<String>> allPermissions = entity.getAllPermissions();
 
 		List<String> worldsPermissions = allPermissions.get(world);
@@ -335,7 +335,7 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	protected List<String> sprintPermissions(String world, List<String> permissions) {
-		List<String> permissionList = new LinkedList<String>();
+		List<String> permissionList = new LinkedList<>();
 
 		if (permissions == null) {
 			return permissionList;
@@ -359,12 +359,12 @@ public abstract class PermissionsCommand implements CommandListener {
 
 		try {
 			return Integer.parseInt(value);
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ignore) {
 		}
 
 		try {
 			return Double.parseDouble(value);
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ignore) {
 		}
 
 		return value;

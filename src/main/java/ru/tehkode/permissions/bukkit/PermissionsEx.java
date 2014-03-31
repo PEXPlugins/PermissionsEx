@@ -21,7 +21,6 @@ package ru.tehkode.permissions.bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -132,6 +131,10 @@ public class PermissionsEx extends JavaPlugin {
 		try {
 			this.config = new PermissionsExConfig(this.getConfig());
 			this.commandsManager = new CommandsManager(this);
+
+			if (!getServer().getOnlineMode()) {
+				getLogger().log(Level.WARNING, "This server is in offline mode. Unless this server is configured to integrate with a supported proxy (see http://dft.ba/-8ous), UUIDs *may not be stable*!");
+			}
 			//this.permissionsManager = new PermissionManager(this.config);
 		/*} catch (PermissionBackendException e) {
 			logBackendExc(e);
@@ -301,7 +304,7 @@ public class PermissionsEx extends JavaPlugin {
 				getPermissionsManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 			}
 
-			getPermissionsManager().resetUser(event.getPlayer().getName());
+			getPermissionsManager().resetUser(event.getPlayer().getUniqueId());
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);
 			}

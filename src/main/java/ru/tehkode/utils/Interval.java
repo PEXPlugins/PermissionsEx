@@ -39,7 +39,7 @@ public enum Interval {
         }
     }
 
-    private final static Map<String, Interval> intervalMap = new HashMap<String, Interval>();
+    private final static Map<String, Interval> intervalMap = new HashMap<>();
 
     static {
         for(Interval type : Interval.values()) {

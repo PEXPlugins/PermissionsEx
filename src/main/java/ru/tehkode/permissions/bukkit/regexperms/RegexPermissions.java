@@ -97,10 +97,6 @@ public class RegexPermissions {
 	}
 
 	private void uninjectPermissible(Player player) {
-		if (player.hasPermission("permissionsex.disabled")) { // this user shouldn't get permissionsex matching
-			return;
-		}
-
 		try {
 			boolean success = false;
 			for (PermissibleInjector injector : injectors) {

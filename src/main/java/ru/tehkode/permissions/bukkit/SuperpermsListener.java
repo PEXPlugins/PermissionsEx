@@ -26,7 +26,7 @@ import java.util.UUID;
  */
 public class SuperpermsListener implements Listener {
 	private final PermissionsEx plugin;
-	private final Map<UUID, PermissionAttachment> attachments = new HashMap<UUID, PermissionAttachment>();
+	private final Map<UUID, PermissionAttachment> attachments = new HashMap<>();
 
 	public SuperpermsListener(PermissionsEx plugin) {
 		this.plugin = plugin;
@@ -58,7 +58,7 @@ public class SuperpermsListener implements Listener {
 	}
 
 	private String permissionName(Player player, String suffix) {
-		return "permissionsex.player." + player.getName() + suffix;
+		return "permissionsex.player." + player.getUniqueId().toString() + suffix;
 	}
 
 	private void removePEXPerm(Player player, String suffix) {

@@ -83,7 +83,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 					if (!world.isEmpty()) {
 						List<String> worldPermissions = this.worldsPermissions.get(world);
 						if (worldPermissions == null) {
-							worldPermissions = new LinkedList<String>();
+							worldPermissions = new LinkedList<>();
 							this.worldsPermissions.put(world, worldPermissions);
 						}
 
@@ -95,7 +95,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 					if (!world.isEmpty()) {
 						Map<String, String> worldOptions = this.worldsOptions.get(world);
 						if (worldOptions == null) {
-							worldOptions = new HashMap<String, String>();
+							worldOptions = new HashMap<>();
 							worldsOptions.put(world, worldOptions);
 						}
 
@@ -168,7 +168,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public List<String> getPermissions(String worldName) {
-		List<String> permissions = new LinkedList<String>();
+		List<String> permissions = new LinkedList<>();
 
 		if (commonPermissions == null) {
 			this.fetchPermissions();
@@ -222,7 +222,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public Map<String, List<String>> getPermissionsMap() {
-		Map<String, List<String>> allPermissions = new HashMap<String, List<String>>();
+		Map<String, List<String>> allPermissions = new HashMap<>();
 
 		if (this.commonPermissions == null) {
 			this.fetchPermissions();
@@ -239,7 +239,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public Set<String> getWorlds() {
-		Set<String> worlds = new HashSet<String>();
+		Set<String> worlds = new HashSet<>();
 
 		worlds.addAll(worldsOptions.keySet());
 		worlds.addAll(worldsPermissions.keySet());
@@ -352,8 +352,17 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			this.save();
 		}
 
-		// Refetch options
-		this.fetchPermissions();
+		if (worldName.isEmpty()) {
+			commonOptions.put(option, value);
+		} else {
+			Map<String, Map<String, String>> worldsOptions = this.worldsOptions;
+			Map<String, String> options = worldsOptions.get(worldName);
+			if (options == null) {
+				options = new HashMap<>();
+				worldsOptions.put(worldName, options);
+			}
+			options.put(option, value);
+		}
 	}
 
 	@Override
@@ -365,7 +374,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public Map<String, Map<String, String>> getOptionsMap() {
-		Map<String, Map<String, String>> allOptions = new HashMap<String, Map<String, String>>();
+		Map<String, Map<String, String>> allOptions = new HashMap<>();
 
 		if (this.commonOptions == null) {
 			this.fetchPermissions();
@@ -480,7 +489,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	public static Set<String> getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) throws SQLException {
-		Set<String> entities = new HashSet<String>();
+		Set<String> entities = new HashSet<>();
 
 		ResultSet result = sql.prepAndBind("SELECT name FROM `{permissions_entity}` WHERE `type` = ? " + (defaultOnly ? " AND `default` = 1" : ""), type.ordinal()).executeQuery();
 

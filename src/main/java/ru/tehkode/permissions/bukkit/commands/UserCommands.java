@@ -146,7 +146,7 @@ public class UserCommands extends PermissionsCommand {
 			UUID uid = UUID.fromString(userName);
 			player = plugin.getServer().getPlayer(uid);
 		} catch (IllegalArgumentException ex) {
-			player = plugin.getServer().getPlayer(userName);
+			player = plugin.getServer().getPlayerExact(userName);
 		}
 
 		if (player == null) {
@@ -244,16 +244,15 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "User does not exist");
 			return;
 		}
-		userName = user.getName();
 
-		worldName = this.getSafeWorldName(worldName, userName);
+		worldName = this.getSafeWorldName(worldName, user);
 
 		String permission = user.getMatchingExpression(args.get("permission"), worldName);
 
 		if (permission == null) {
-			sender.sendMessage("Player \"" + userName + "\" don't such have no permission");
+			sender.sendMessage("Player \"" + describeUser(user) + "\" don't such have no permission");
 		} else {
-			sender.sendMessage("Player \"" + userName + "\" have \"" + permission + "\" = " + user.explainExpression(permission));
+			sender.sendMessage("Player \"" + describeUser(user) + "\" have \"" + permission + "\" = " + user.explainExpression(permission));
 		}
 	}
 
@@ -271,13 +270,12 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "User does not exist");
 			return;
 		}
-		userName = user.getName();
 
-		worldName = this.getSafeWorldName(worldName, userName);
+		worldName = this.getSafeWorldName(worldName, user);
 
 		String value = user.getOption(args.get("option"), worldName, null);
 
-		sender.sendMessage("Player " + userName + " @ " + worldName + " option \"" + args.get("option") + "\" = \"" + value + "\"");
+		sender.sendMessage("Player " + describeUser(user) + " @ " + worldName + " option \"" + args.get("option") + "\" = \"" + value + "\"");
 	}
 
 	@Command(name = "pex",
@@ -545,7 +543,7 @@ public class UserCommands extends PermissionsCommand {
 
 		if (groupName.contains(",")) {
 			String[] groupsNames = groupName.split(",");
-			groups = new ArrayList<PermissionGroup>(groupsNames.length);
+			groups = new ArrayList<>(groupsNames.length);
 
 			for (String addName : groupsNames) {
 				if (sender instanceof Player && !manager.has((Player) sender, "permissions.manage.membership." + addName.toLowerCase())) {

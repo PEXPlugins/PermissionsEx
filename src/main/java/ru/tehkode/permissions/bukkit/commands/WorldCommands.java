@@ -97,7 +97,7 @@ public class WorldCommands extends PermissionsCommand {
 			return;
 		}
 
-		List<String> parents = new ArrayList<String>();
+		List<String> parents = new ArrayList<>();
 		String parentWorlds = args.get("parentWorlds");
 		if (parentWorlds.contains(",")) {
 			for (String world : parentWorlds.split(",")) {

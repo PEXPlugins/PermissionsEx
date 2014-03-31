@@ -15,12 +15,12 @@ import java.util.Set;
  */
 public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	private final String name;
-	private final HashMap<String, String> worldPrefix = new HashMap<String, String>();
-	private final HashMap<String, String> worldSuffix = new HashMap<String, String>();
-	private final HashMap<String, List<String>> worldsPermissions = new HashMap<String, List<String>>();
-	private final Map<String, Map<String, String>> worldsOptions = new HashMap<String, Map<String, String>>();
-	private final Map<String, List<String>> parents = new HashMap<String, List<String>>();
-	private final Map<String, Boolean> defaultVals = new HashMap<String, Boolean>();
+	private final HashMap<String, String> worldPrefix = new HashMap<>();
+	private final HashMap<String, String> worldSuffix = new HashMap<>();
+	private final HashMap<String, List<String>> worldsPermissions = new HashMap<>();
+	private final Map<String, Map<String, String>> worldsOptions = new HashMap<>();
+	private final Map<String, List<String>> parents = new HashMap<>();
+	private final Map<String, Boolean> defaultVals = new HashMap<>();
 
 	public MemoryData(String name) {
 		this.name = name;

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>> {
 	private static FieldReplacer<PluginManager, Map> INJECTOR;
-	private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<PEXPermissionSubscriptionMap>();
+	private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<>();
 	private final PermissionsEx plugin;
 	private final PluginManager manager;
 
@@ -45,7 +45,7 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 		}
 
 		if (INJECTOR == null) {
-			INJECTOR = new FieldReplacer<PluginManager, Map>(manager.getClass(), "permSubs", Map.class);
+			INJECTOR = new FieldReplacer<>(manager.getClass(), "permSubs", Map.class);
 		}
 
 		Map backing = INJECTOR.get(manager);
@@ -66,7 +66,7 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 	 */
 	public void uninject() {
 		if (INSTANCE.compareAndSet(this, null)) {
-			Map<String, Map<Permissible, Boolean>> unwrappedMap = new HashMap<String, Map<Permissible, Boolean>>(this.size());
+			Map<String, Map<Permissible, Boolean>> unwrappedMap = new HashMap<>(this.size());
 			for (Map.Entry<String, Map<Permissible, Boolean>> entry : this.entrySet()) {
 				if (entry.getValue() instanceof PEXSubscriptionValueMap) {
 					unwrappedMap.put(entry.getKey(), ((PEXSubscriptionValueMap) entry.getValue()).backing);

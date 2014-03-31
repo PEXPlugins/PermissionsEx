@@ -67,9 +67,6 @@ public class UtilityCommands extends PermissionsCommand {
 			permission = "permissions.manage.config",
 			description = "Print or set <node> [value]")
 	public void config(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
-		if (!(plugin instanceof PermissionsEx)) {
-			return;
-		}
 
 		String nodeName = args.get("node");
 		if (nodeName == null || nodeName.isEmpty()) {
@@ -90,12 +87,12 @@ public class UtilityCommands extends PermissionsCommand {
 		Object node = config.get(nodeName);
 		if (node instanceof Map) {
 			sender.sendMessage("Node \"" + nodeName + "\": ");
-			for (Map.Entry<String, Object> entry : ((Map<String, Object>) node).entrySet()) {
+			for (Map.Entry<?, ?> entry : ((Map<?, ?>) node).entrySet()) {
 				sender.sendMessage("  " + entry.getKey() + " = " + entry.getValue());
 			}
 		} else if (node instanceof List) {
 			sender.sendMessage("Node \"" + nodeName + "\": ");
-			for (String item : ((List<String>) node)) {
+			for (Object item : ((List<?>) node)) {
 				sender.sendMessage(" - " + item);
 			}
 		} else {
@@ -151,15 +148,10 @@ public class UtilityCommands extends PermissionsCommand {
 			permission = "permissions.dump",
 			description = "Import data from <backend> as specified in the configuration")
 	public void dumpData(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
-		if (!(plugin instanceof PermissionsEx)) {
-			return; // User informing is disabled
-		}
-
 		try {
 			PermissionManager mgr = plugin.getPermissionsManager();
 			PermissionBackend backend = mgr.createBackend(args.get("backend"));
 			mgr.getBackend().loadFrom(backend);
-
 
 			sender.sendMessage(ChatColor.WHITE + "[PermissionsEx] Data from \"" + args.get("backend") + "\" loaded into currently active backend");
 		} catch (RuntimeException e) {
@@ -184,13 +176,10 @@ public class UtilityCommands extends PermissionsCommand {
 		PermissionManager manager = plugin.getPermissionsManager();
 
 		manager.setDebug(!manager.isDebug());
-
 		String debugStatusMessage = "Debug mode " + (manager.isDebug() ? "enabled" : "disabled");
-
 		if (sender instanceof Player) {
 			sender.sendMessage(debugStatusMessage);
 		}
-
 		plugin.getLogger().warning(debugStatusMessage);
 	}
 

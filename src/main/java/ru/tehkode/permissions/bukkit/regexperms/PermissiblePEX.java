@@ -50,8 +50,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Class should be thread-safe
  */
 public class PermissiblePEX extends PermissibleBase {
-	private static final FieldReplacer<PermissibleBase, Map> PERMISSIONS_FIELD = new FieldReplacer<PermissibleBase, Map>(PermissibleBase.class, "permissions", Map.class);
-	private static final FieldReplacer<PermissibleBase, List> ATTACHMENTS_FIELD = new FieldReplacer<PermissibleBase, List>(PermissibleBase.class, "attachments", List.class);
+	private static final FieldReplacer<PermissibleBase, Map> PERMISSIONS_FIELD = new FieldReplacer<>(PermissibleBase.class, "permissions", Map.class);
+	private static final FieldReplacer<PermissibleBase, List> ATTACHMENTS_FIELD = new FieldReplacer<>(PermissibleBase.class, "attachments", List.class);
 	private static final Method CALC_CHILD_PERMS_METH;
 
 	static {
@@ -70,7 +70,7 @@ public class PermissiblePEX extends PermissibleBase {
 	protected final Player player;
 	protected final PermissionsEx plugin;
 	private Permissible previousPermissible = null;
-	protected final Map<String, PermissionCheckResult> cache = new ConcurrentHashMap<String, PermissionCheckResult>();
+	protected final Map<String, PermissionCheckResult> cache = new ConcurrentHashMap<>();
 
 	@SuppressWarnings("unchecked")
 	public PermissiblePEX(Player player, PermissionsEx plugin) {
@@ -185,6 +185,7 @@ public class PermissiblePEX extends PermissibleBase {
 		try {
 			CALC_CHILD_PERMS_METH.invoke(this, children, invert, attachment);
 		} catch (IllegalAccessException e) {
+			// Shouldn't happen, we setAccessible earlier
 		} catch (InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
@@ -198,7 +199,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 	@Override
 	public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-		return new LinkedHashSet<PermissionAttachmentInfo>(permissions.values());
+		return new LinkedHashSet<>(permissions.values());
 	}
 
 	private PermissionCheckResult checkSingle(String expression, String permission, boolean value) {
@@ -241,7 +242,6 @@ public class PermissiblePEX extends PermissibleBase {
 						}
 						break;
 					}
-					break;
 				}
 			}
 			cache.put(permission, res);

@@ -22,14 +22,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
@@ -40,9 +38,8 @@ import ru.tehkode.utils.StringUtils;
  */
 public class CommandsManager {
 
-	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new LinkedHashMap<String, Map<CommandSyntax, CommandBinding>>();
+	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new LinkedHashMap<>();
 	protected PermissionsEx plugin;
-	protected List<Plugin> helpPlugins = new LinkedList<Plugin>();
 
 	public CommandsManager(PermissionsEx plugin) {
 		this.plugin = plugin;
@@ -58,7 +55,7 @@ public class CommandsManager {
 
 			Map<CommandSyntax, CommandBinding> commandListeners = listeners.get(cmdAnnotation.name());
 			if (commandListeners == null) {
-				commandListeners = new LinkedHashMap<CommandSyntax, CommandBinding>();
+				commandListeners = new LinkedHashMap<>();
 				listeners.put(cmdAnnotation.name(), commandListeners);
 			}
 
@@ -132,7 +129,7 @@ public class CommandsManager {
 	}
 
 	public List<CommandBinding> getCommands() {
-		List<CommandBinding> commands = new LinkedList<CommandBinding>();
+		List<CommandBinding> commands = new LinkedList<>();
 
 		for (Map<CommandSyntax, CommandBinding> map : this.listeners.values()) {
 			commands.addAll(map.values());
@@ -145,7 +142,7 @@ public class CommandsManager {
 
 		protected String originalSyntax;
 		protected String regexp;
-		protected List<String> arguments = new LinkedList<String>();
+		protected List<String> arguments = new LinkedList<>();
 
 		public CommandSyntax(String syntax) {
 			this.originalSyntax = syntax;
@@ -182,7 +179,7 @@ public class CommandsManager {
 		}
 
 		public Map<String, String> getMatchedArguments(String str) {
-			Map<String, String> matchedArguments = new HashMap<String, String>(this.arguments.size());
+			Map<String, String> matchedArguments = new HashMap<>(this.arguments.size());
 
 			if (this.arguments.size() > 0) {
 				Matcher argMatcher = Pattern.compile(this.regexp).matcher(str);
@@ -210,7 +207,7 @@ public class CommandsManager {
 
 		protected Object object;
 		protected Method method;
-		protected Map<String, String> params = new HashMap<String, String>();
+		protected Map<String, String> params = new HashMap<>();
 
 		public CommandBinding(Object object, Method method) {
 			this.object = object;

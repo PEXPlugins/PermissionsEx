@@ -19,7 +19,7 @@ public class BackendDataTransfer {
 
 	private static void transferBase(PermissionsData from, PermissionsData to) {
 		for (Map.Entry<String, List<String>> entry : from.getPermissionsMap().entrySet()) {
-			to.setPermissions(new ArrayList<String>(entry.getValue()), entry.getKey());
+			to.setPermissions(new ArrayList<>(entry.getValue()), entry.getKey());
 		}
 
 		for (Map.Entry<String, Map<String, String>> entry : from.getOptionsMap().entrySet()) {
@@ -29,7 +29,7 @@ public class BackendDataTransfer {
 		}
 
 		List<String> globalParents = from.getParents(null);
-		to.setParents(globalParents == null ? null : new ArrayList<String>(globalParents), null);
+		to.setParents(globalParents == null ? null : new ArrayList<>(globalParents), null);
 		to.setPrefix(from.getPrefix(null), null);
 		to.setSuffix(from.getSuffix(null), null);
 		for (String world : from.getWorlds()) {
@@ -39,7 +39,7 @@ public class BackendDataTransfer {
 			if (groups == null || groups.isEmpty()) {
 				continue;
 			}
-			to.setParents(new ArrayList<String>(groups), world);
+			to.setParents(new ArrayList<>(groups), world);
 		}
 	}
 

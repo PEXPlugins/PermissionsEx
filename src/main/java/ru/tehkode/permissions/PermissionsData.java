@@ -82,8 +82,8 @@ public interface PermissionsData {
 	 * Sets option value in specified world
 	 *
 	 * @param option
-	 * @param worldName
 	 * @param value
+	 * @param world
 	 */
 	public void setOption(String option, String value, String world);
 

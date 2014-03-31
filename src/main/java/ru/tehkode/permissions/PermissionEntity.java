@@ -45,8 +45,8 @@ public abstract class PermissionEntity {
 	protected PermissionManager manager;
 	private String name;
 	protected boolean virtual = true;
-	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
-	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
+	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<>();
+	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<>();
 	protected boolean debugMode = false;
 
 	public PermissionEntity(String name, PermissionManager manager) {
@@ -240,7 +240,7 @@ public abstract class PermissionEntity {
 	}
 
 	protected List<String> getPermissionsInternal(String worldName, final boolean filterNonInheritable) {
-		final List<String> ret = new ArrayList<String>();
+		final List<String> ret = new ArrayList<>();
 		// TODO: Handle non-inheritable permissions correctly
 
 		new HierarchyTraverser<Void>(this, worldName) {
@@ -288,7 +288,7 @@ public abstract class PermissionEntity {
 			return;
 		}
 		for (Map.Entry<String, Boolean> entry : perm.getChildren().entrySet()) {
-			boolean has = entry.getValue().booleanValue() ^ invert;
+			boolean has = entry.getValue() ^ invert;
 			String node = (has ? "" : "-") + entry.getKey();
 			if (!list.contains(node)) {
 				list.add(node);
@@ -304,7 +304,7 @@ public abstract class PermissionEntity {
 	 * @param worldName      World name to add permission to
 	 */
 	public void addPermission(String permission, String worldName) {
-		LinkedList<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
+		LinkedList<String> permissions = new LinkedList<>(this.getOwnPermissions(worldName));
 
 		if (permissions.contains(permission)) { // remove old permission
 			permissions.remove(permission);
@@ -332,7 +332,7 @@ public abstract class PermissionEntity {
 	 * @param worldName      World name to remove permission for
 	 */
 	public void removePermission(String permission, String worldName) {
-		List<String> permissions = new LinkedList<String>(this.getOwnPermissions(worldName));
+		List<String> permissions = new LinkedList<>(this.getOwnPermissions(worldName));
 		permissions.remove(permission);
 		this.setPermissions(permissions, worldName);
 	}
@@ -424,7 +424,7 @@ public abstract class PermissionEntity {
 	public int getOptionInteger(String optionName, String world, int defaultValue) {
 		try {
 			return Integer.parseInt(this.getOption(optionName, world, Integer.toString(defaultValue)));
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ignore) {
 		}
 
 		return defaultValue;
@@ -443,7 +443,7 @@ public abstract class PermissionEntity {
 
 		try {
 			return Double.parseDouble(option);
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ignore) {
 		}
 
 		return defaultValue;
@@ -546,7 +546,7 @@ public abstract class PermissionEntity {
 
 		try {
 			return Integer.parseInt(option);
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ignore) {
 		}
 
 		return defaultValue;
@@ -569,7 +569,7 @@ public abstract class PermissionEntity {
 
 		try {
 			return Double.parseDouble(option);
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ignore) {
 		}
 
 		return defaultValue;
@@ -643,7 +643,7 @@ public abstract class PermissionEntity {
 			return 0;
 		}
 
-		return (int) (this.timedPermissionsTime.get(world + ":" + permission).longValue() - (System.currentTimeMillis() / 1000L));
+		return (int) (this.timedPermissionsTime.get(world + ":" + permission) - (System.currentTimeMillis() / 1000L));
 	}
 
 	/**
@@ -785,7 +785,7 @@ public abstract class PermissionEntity {
 
 	// -- Inheritance -- //
 	public List<PermissionGroup> getOwnParents(String world) {
-		List<PermissionGroup> ret = new ArrayList<PermissionGroup>();
+		List<PermissionGroup> ret = new ArrayList<>();
 		for (String group : getOwnParentIdentifiers(world)) {
 			ret.add(manager.getGroup(group));
 		}
@@ -814,7 +814,7 @@ public abstract class PermissionEntity {
 	}
 
 	protected List<PermissionGroup> getParentsInternal(String world) {
-		final List<PermissionGroup> ret = new ArrayList<PermissionGroup>();
+		final List<PermissionGroup> ret = new ArrayList<>();
 		new HierarchyTraverser<Void>(this, world, false) { // Must not traverse inheritance or bad things happen :)
 			@Override
 			protected Void fetchLocal(PermissionEntity entity, String world) {
@@ -837,7 +837,7 @@ public abstract class PermissionEntity {
 	}
 
 	public List<String> getParentIdentifiers(String world) {
-		List<String> ret = new LinkedList<String>();
+		List<String> ret = new LinkedList<>();
 		for (PermissionGroup group : getParentsInternal(world)) {
 			ret.add(group.getIdentifier());
 		}
@@ -854,7 +854,7 @@ public abstract class PermissionEntity {
 	}
 
 	public Map<String, List<PermissionGroup>> getAllParents() {
-		Map<String, List<PermissionGroup>> allGroups = new HashMap<String, List<PermissionGroup>>();
+		Map<String, List<PermissionGroup>> allGroups = new HashMap<>();
 
 		for (String worldName : this.getWorlds()) {
 			allGroups.put(worldName, this.getWorldParents(worldName));
@@ -865,7 +865,7 @@ public abstract class PermissionEntity {
 	}
 
 	protected List<PermissionGroup> getWorldParents(String worldName) {
-		List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
+		List<PermissionGroup> groups = new LinkedList<>();
 		for (String groupName : getData().getParents(worldName)) {
 			if (groupName == null || groupName.trim().isEmpty() || (this instanceof PermissionGroup && groupName.equalsIgnoreCase(this.getIdentifier()))) {
 				continue;
@@ -882,7 +882,7 @@ public abstract class PermissionEntity {
 	}
 
 	public void setParents(List<PermissionGroup> parents, String world) {
-		List<String> parentNames = new LinkedList<String>();
+		List<String> parentNames = new LinkedList<>();
 		for (PermissionGroup group : parents) {
 			parentNames.add(group.getIdentifier());
 		}
