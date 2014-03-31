@@ -64,7 +64,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void setPermissions(List<String> permissions, String worldName) {
-		this.node.set(formatPath(worldName, "permissions"), permissions.isEmpty() ? null : permissions);
+		this.node.set(formatPath(worldName, "permissions"), permissions == null || permissions.isEmpty() ? null : permissions);
 		save();
 	}
 

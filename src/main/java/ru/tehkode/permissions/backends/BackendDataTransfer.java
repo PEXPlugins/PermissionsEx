@@ -4,6 +4,7 @@ import ru.tehkode.permissions.PermissionsData;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public class BackendDataTransfer {
 
 	private static void transferBase(PermissionsData from, PermissionsData to) {
 		for (Map.Entry<String, List<String>> entry : from.getPermissionsMap().entrySet()) {
-			to.setPermissions(entry.getValue(), entry.getKey());
+			to.setPermissions(new ArrayList<String>(entry.getValue()), entry.getKey());
 		}
 
 		for (Map.Entry<String, Map<String, String>> entry : from.getOptionsMap().entrySet()) {
@@ -27,17 +28,18 @@ public class BackendDataTransfer {
 			}
 		}
 
-		to.setParents(from.getParents(null), null);
+		List<String> globalParents = from.getParents(null);
+		to.setParents(globalParents == null ? null : new ArrayList<String>(globalParents), null);
 		to.setPrefix(from.getPrefix(null), null);
 		to.setSuffix(from.getSuffix(null), null);
 		for (String world : from.getWorlds()) {
+			to.setPrefix(from.getPrefix(world), world);
+			to.setSuffix(from.getSuffix(world), world);
 			List<String> groups =  from.getParents(world);
 			if (groups == null || groups.isEmpty()) {
 				continue;
 			}
-			to.setParents(groups, world);
-			to.setPrefix(from.getPrefix(world), world);
-			to.setSuffix(from.getSuffix(world), world);
+			to.setParents(new ArrayList<String>(groups), world);
 		}
 	}
 
