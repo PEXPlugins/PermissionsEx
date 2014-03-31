@@ -168,7 +168,7 @@ public class UtilityCommands extends PermissionsCommand {
 				sender.sendMessage(ChatColor.RED + "Specified backend not found!");
 			} else {
 				sender.sendMessage(ChatColor.RED + "Error: " + e.getMessage());
-				logger.severe("Error: " + e.getMessage());
+				plugin.getLogger().severe("Error: " + e.getMessage());
 				e.printStackTrace();
 			}
 		} catch (PermissionBackendException e) {
@@ -186,13 +186,13 @@ public class UtilityCommands extends PermissionsCommand {
 
 		manager.setDebug(!manager.isDebug());
 
-		String debugStatusMessage = "[PermissionsEx] Debug mode " + (manager.isDebug() ? "enabled" : "disabled");
+		String debugStatusMessage = "Debug mode " + (manager.isDebug() ? "enabled" : "disabled");
 
 		if (sender instanceof Player) {
 			sender.sendMessage(debugStatusMessage);
 		}
 
-		logger.warning(debugStatusMessage);
+		plugin.getLogger().warning(debugStatusMessage);
 	}
 
 	private static int tryGetInt(CommandSender sender, Map<String, String> args, String key, int def) {

@@ -538,8 +538,8 @@ public class GroupCommands extends PermissionsCommand {
 		sender.sendMessage(ChatColor.WHITE + "Timed permission added!");
 		this.informGroup(plugin, group, "Your permissions have been changed!");
 
-		logger.info("Group " + groupName + " get timed permission \"" + args.get("permission") + "\" "
-				+ (lifetime > 0 ? "for " + lifetime + " seconds " : " ") + "from " + getSenderName(sender));
+		plugin.getLogger().info("Group " + groupName + " get timed permission \"" + args.get("permission") + "\" "
+				+ (lifetime > 0 ? "for " + lifetime + " seconds " : " ") + "from " + sender.getName());
 	}
 
 	@Command(name = "pex",
@@ -583,7 +583,7 @@ public class GroupCommands extends PermissionsCommand {
 		sender.sendMessage("Group " + groupName + " users:");
 
 		for (PermissionUser user : users) {
-			sender.sendMessage("   " + user.getIdentifier());
+			sender.sendMessage("   " + describeUser(user));
 		}
 	}
 
@@ -615,7 +615,7 @@ public class GroupCommands extends PermissionsCommand {
 			user.addGroup(groupName, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " added to " + groupName + " !");
-			this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
+			this.informPlayer(plugin, user, "You are assigned to \"" + groupName + "\" group");
 		}
 	}
 
@@ -647,7 +647,7 @@ public class GroupCommands extends PermissionsCommand {
 			user.removeGroup(groupName, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");
-			this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
+			this.informPlayer(plugin, user, "You were removed from \"" + groupName + "\" group");
 
 		}
 	}

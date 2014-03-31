@@ -163,8 +163,23 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Collection<String> getUserNames() {
+	public Collection<String> getUserIdentifiers() {
 		return SQLData.getEntitiesNames(getSQL(), SQLData.Type.USER, false);
+	}
+
+	@Override
+	public Collection<String> getUserNames() {
+		SQLConnection conn = getSQL();
+		Set<String> ret = new HashSet<String>();
+		try {
+			ResultSet set = conn.prepAndBind("SELECT `value` from `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
+			while (set.next()) {
+				ret.add(set.getString("value"));
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return Collections.unmodifiableSet(ret);
 	}
 
 	protected final void setupAliases() {

@@ -150,9 +150,32 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Collection<String> getUserNames() {
+	public Collection<String> getUserIdentifiers() {
 		ConfigurationSection users = this.permissions.getConfigurationSection("users");
 		return users != null ? users.getKeys(false) : Collections.<String>emptyList();
+	}
+
+	@Override
+	public Collection<String> getUserNames() {
+		ConfigurationSection users = this.permissions.getConfigurationSection("users");
+
+		if (users == null) {
+			return Collections.emptySet();
+		}
+
+		Set<String> userNames = new HashSet<String>();
+
+		for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
+			if (entry.getValue() instanceof ConfigurationSection) {
+				ConfigurationSection userSection = (ConfigurationSection) entry.getValue();
+
+				String name = userSection.getString(buildPath("options", "name"));
+				if (name != null) {
+					userNames.add(name);
+				}
+			}
+		}
+		return Collections.unmodifiableSet(userNames);
 	}
 
 	@Override

@@ -93,24 +93,24 @@ public class PromotionCommands extends PermissionsCommand {
 
 		PermissionUser promoter = null;
 		if (sender instanceof Player) {
-			promoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+			promoter = PermissionsEx.getPermissionManager().getUser((Player) sender);
 			if (promoter == null || !promoter.has("permissions.user.promote." + ladder, ((Player) sender).getWorld().getName())) {
 				sender.sendMessage(ChatColor.RED + "You don't have enough permissions to promote on this ladder");
 				return;
 			}
 
-			promoterName = promoter.getIdentifier();
+			promoterName = promoter.getName();
 		}
 
 		try {
 			PermissionGroup targetGroup = user.promote(promoter, ladder);
 
-			this.informPlayer(plugin, user.getIdentifier(), "You have been promoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getIdentifier() + " group");
-			sender.sendMessage("User " + user.getIdentifier() + " promoted to " + targetGroup.getIdentifier() + " group");
-			Logger.getLogger("Minecraft").info("User " + user.getIdentifier() + " has been promoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
+			this.informPlayer(plugin, user, "You have been promoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getIdentifier() + " group");
+			sender.sendMessage("User " + describeUser(user) + " promoted to " + targetGroup.getIdentifier() + " group");
+			plugin.getLogger().info("User " + describeUser(user) + " has been promoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
 		} catch (RankingException e) {
 			sender.sendMessage(ChatColor.RED + "Promotion error: " + e.getMessage());
-			Logger.getLogger("Minecraft").severe("Ranking Error (" + promoterName + " > " + e.getTarget().getIdentifier() + "): " + e.getMessage());
+			plugin.getLogger().severe("Ranking Error (" + promoterName + " > " + e.getTarget().getIdentifier() + "): " + e.getMessage());
 		}
 	}
 
@@ -136,25 +136,25 @@ public class PromotionCommands extends PermissionsCommand {
 
 		PermissionUser demoter = null;
 		if (sender instanceof Player) {
-			demoter = PermissionsEx.getPermissionManager().getUser(((Player) sender).getName());
+			demoter = PermissionsEx.getPermissionManager().getUser((Player) sender);
 
 			if (demoter == null || !demoter.has("permissions.user.demote." + ladder, ((Player) sender).getWorld().getName())) {
 				sender.sendMessage(ChatColor.RED + "You don't have enough permissions to demote on this ladder");
 				return;
 			}
 
-			demoterName = demoter.getIdentifier();
+			demoterName = demoter.getName();
 		}
 
 		try {
 			PermissionGroup targetGroup = user.demote(demoter, args.get("ladder"));
 
-			this.informPlayer(plugin, user.getIdentifier(), "You have been demoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getIdentifier() + " group");
-			sender.sendMessage("User " + user.getIdentifier() + " demoted to " + targetGroup.getIdentifier() + " group");
-			Logger.getLogger("Minecraft").info("User " + user.getIdentifier() + " has been demoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
+			this.informPlayer(plugin, user, "You have been demoted on " + targetGroup.getRankLadder() + " ladder to " + targetGroup.getIdentifier() + " group");
+			sender.sendMessage("User " + describeUser(user) + " demoted to " + targetGroup.getIdentifier() + " group");
+			plugin.getLogger().info("User " + describeUser(user) + " has been demoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
 		} catch (RankingException e) {
 			sender.sendMessage(ChatColor.RED + "Demotion error: " + e.getMessage());
-			Logger.getLogger("Minecraft").severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getIdentifier() + "): " + e.getMessage());
+			plugin.getLogger().severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getIdentifier() + "): " + e.getMessage());
 		}
 	}
 

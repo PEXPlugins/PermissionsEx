@@ -41,8 +41,6 @@ import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
 public abstract class PermissionsCommand implements CommandListener {
-
-	protected static final Logger logger = Logger.getLogger("Minecraft");
 	protected CommandsManager manager;
 
 	@Override
@@ -52,21 +50,21 @@ public abstract class PermissionsCommand implements CommandListener {
 
 	protected void informGroup(Plugin plugin, PermissionGroup group, String message) {
 		for (PermissionUser user : group.getUsers()) {
-			this.informPlayer(plugin, user.getIdentifier(), message);
+			this.informPlayer(plugin, user, message);
 		}
 	}
 
-	protected void informPlayer(Plugin plugin, String playerName, String message) {
-		if (!(plugin instanceof PermissionsEx) || !((PermissionsEx) plugin).getConfig().getBoolean("permissions.informplayers.changes", false)) {
+	protected void informPlayer(Plugin plugin, PermissionUser user, String message) {
+		if (!(plugin instanceof PermissionsEx) || !plugin.getConfig().getBoolean("permissions.informplayers.changes", false)) {
 			return; // User informing is disabled
 		}
 
-		Player player = Bukkit.getServer().getPlayer(playerName);
+		Player player = Bukkit.getServer().getPlayer(user.getName());
 		if (player == null) {
 			return;
 		}
 
-		player.sendMessage(ChatColor.BLUE + "[PermissionsEx] " + ChatColor.WHITE + message);
+		player.sendMessage(ChatColor.BLUE + "[PermissionsEx] " + ChatColor.RESET + message);
 	}
 
 	protected String autoCompletePlayerName(String playerName) {
@@ -98,11 +96,11 @@ public abstract class PermissionsCommand implements CommandListener {
 		// Collect online Player names
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 			if (player.getName().equalsIgnoreCase(playerName)) {
-				return player.getName();
+				return player.getUniqueId().toString();
 			}
 
-			if (player.getName().toLowerCase().startsWith(playerName.toLowerCase()) && !players.contains(player.getName())) {
-				players.add(player.getName());
+			if (player.getName().toLowerCase().startsWith(playerName.toLowerCase()) && !players.contains(player.getUniqueId().toString())) {
+				players.add(player.getUniqueId().toString());
 			}
 		}
 
@@ -127,12 +125,8 @@ public abstract class PermissionsCommand implements CommandListener {
 		return playerName;
 	}
 
-	protected String getSenderName(CommandSender sender) {
-		if (sender instanceof Player) {
-			return ((Player) sender).getName();
-		}
-
-		return "console";
+	protected String describeUser(PermissionUser user) {
+		return user.getIdentifier() + "/" + user.getName();
 	}
 
 	protected String autoCompleteGroupName(String groupName) {

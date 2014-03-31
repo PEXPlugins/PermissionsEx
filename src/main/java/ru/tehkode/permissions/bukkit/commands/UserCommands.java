@@ -49,7 +49,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "Currently registered users: ");
 		for (PermissionUser user : users) {
-			sender.sendMessage(" " + user.getIdentifier() + " " + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentIdentifiers(), ", ") + "]");
+			sender.sendMessage(" " + user.getIdentifier() + " (last known name:  " + user.getName() + ") "  + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentIdentifiers(), ", ") + "]");
 		}
 	}
 
@@ -87,8 +87,9 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "User does not exist");
 			return;
 		}
+		userName = user.getName();
 
-		sender.sendMessage("'" + userName + "' is a member of:");
+		sender.sendMessage("'" + user.getIdentifier() + '/' + userName + "' is a member of:");
 		printEntityInheritance(sender, user.getParents());
 
 		Map<String, List<PermissionGroup>> allParents = user.getAllParents();
@@ -126,7 +127,7 @@ public class UserCommands extends PermissionsCommand {
 			return;
 		}
 
-		sender.sendMessage(userName + "'s permissions:");
+		sender.sendMessage(user.getName() + "'s permissions:");
 
 		for (String permission : user.getPermissions(worldName)) {
 			sender.sendMessage("  " + permission);
@@ -201,7 +202,7 @@ public class UserCommands extends PermissionsCommand {
 			user.setSuffix(args.get("newsuffix"), worldName);
 		}
 
-		sender.sendMessage(user.getIdentifier() + "'s suffix = \"" + user.getSuffix() + "\"");
+		sender.sendMessage(user.getName() + "'s suffix = \"" + user.getSuffix() + "\"");
 	}
 
 	@Command(name = "pex",
@@ -220,7 +221,7 @@ public class UserCommands extends PermissionsCommand {
 
 		user.setDebug(!user.isDebug());
 
-		sender.sendMessage("Debug mode for user " + userName + " " + (user.isDebug() ? "enabled" : "disabled") + "!");
+		sender.sendMessage("Debug mode for user " + user.getName() + " " + (user.isDebug() ? "enabled" : "disabled") + "!");
 	}
 
 	@Command(name = "pex",
@@ -237,6 +238,7 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "User does not exist");
 			return;
 		}
+		userName = user.getName();
 
 		worldName = this.getSafeWorldName(worldName, userName);
 
@@ -263,6 +265,7 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "User does not exist");
 			return;
 		}
+		userName = user.getName();
 
 		worldName = this.getSafeWorldName(worldName, userName);
 
@@ -292,7 +295,7 @@ public class UserCommands extends PermissionsCommand {
 
 		PermissionsEx.getPermissionManager().resetUser(userName);
 
-		sender.sendMessage(ChatColor.WHITE + "User \"" + user.getIdentifier() + "\" removed!");
+		sender.sendMessage(ChatColor.WHITE + "User \"" + describeUser(user) + "\" removed!");
 	}
 
 	@Command(name = "pex",
@@ -314,7 +317,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "Permission \"" + args.get("permission") + "\" added!");
 
-		this.informPlayer(plugin, userName, "Your permissions have been changed!");
+		this.informPlayer(plugin, user, "Your permissions have been changed!");
 	}
 
 	@Command(name = "pex",
@@ -338,7 +341,7 @@ public class UserCommands extends PermissionsCommand {
 		user.removeTimedPermission(permission, worldName);
 
 		sender.sendMessage(ChatColor.WHITE + "Permission \"" + permission + "\" removed!");
-		this.informPlayer(plugin, userName, "Your permissions have been changed!");
+		this.informPlayer(plugin, user, "Your permissions have been changed!");
 	}
 
 	@Command(name = "pex",
@@ -401,10 +404,10 @@ public class UserCommands extends PermissionsCommand {
 		user.addTimedPermission(permission, worldName, lifetime);
 
 		sender.sendMessage(ChatColor.WHITE + "Timed permission \"" + permission + "\" added!");
-		this.informPlayer(plugin, userName, "Your permissions have been changed!");
+		this.informPlayer(plugin, user, "Your permissions have been changed!");
 
-		logger.info("User " + userName + " get timed permission \"" + args.get("permission") + "\" "
-				+ (lifetime > 0 ? "for " + lifetime + " seconds " : " ") + "from " + getSenderName(sender));
+		plugin.getLogger().info("User " + userName + " get timed permission \"" + args.get("permission") + "\" "
+				+ (lifetime > 0 ? "for " + lifetime + " seconds " : " ") + "from " + sender.getName());
 	}
 
 	@Command(name = "pex",
@@ -426,7 +429,7 @@ public class UserCommands extends PermissionsCommand {
 		user.removeTimedPermission(args.get("permission"), worldName);
 
 		sender.sendMessage(ChatColor.WHITE + "Timed permission \"" + permission + "\" removed!");
-		this.informPlayer(plugin, userName, "Your permissions have been changed!");
+		this.informPlayer(plugin, user, "Your permissions have been changed!");
 	}
 
 	@Command(name = "pex",
@@ -453,7 +456,7 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.WHITE + "Option \"" + args.get("option") + "\" set!");
 		}
 
-		this.informPlayer(plugin, userName, "Your permissions have been changed!");
+		this.informPlayer(plugin, user, "Your permissions have been changed!");
 	}
 
 	/**
@@ -474,7 +477,7 @@ public class UserCommands extends PermissionsCommand {
 			return;
 		}
 
-		sender.sendMessage("User " + args.get("user") + " @" + worldName + " currently in:");
+		sender.sendMessage("User " + describeUser(user) + " @" + worldName + " currently in:");
 		for (PermissionGroup group : user.getParents(worldName)) {
 			sender.sendMessage("  " + group.getIdentifier());
 		}
@@ -512,7 +515,7 @@ public class UserCommands extends PermissionsCommand {
 
 
 		sender.sendMessage(ChatColor.WHITE + "User added to group \"" + groupName + "\"!");
-		this.informPlayer(plugin, userName, "You are assigned to \"" + groupName + "\" group");
+		this.informPlayer(plugin, user, "You are assigned to \"" + groupName + "\" group");
 	}
 
 	@Command(name = "pex",
@@ -571,7 +574,7 @@ public class UserCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.RED + "No groups set!");
 		}
 
-		this.informPlayer(plugin, user.getIdentifier(), "You are now only in \"" + groupName + "\" group");
+		this.informPlayer(plugin, user, "You are now only in \"" + groupName + "\" group");
 	}
 
 	@Command(name = "pex",
@@ -594,7 +597,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "User removed from group " + groupName + "!");
 
-		this.informPlayer(plugin, userName, "You were removed from \"" + groupName + "\" group");
+		this.informPlayer(plugin, user, "You were removed from \"" + groupName + "\" group");
 	}
 
 	@Command(name = "pex",

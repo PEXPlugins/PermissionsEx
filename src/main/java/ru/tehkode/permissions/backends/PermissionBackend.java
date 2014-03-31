@@ -56,6 +56,16 @@ public abstract class PermissionBackend {
 
 	public abstract boolean hasGroup(String group);
 
+	/**
+	 * Return list of identifiers associated with users. These may not be user-readable
+	 * @return Identifiers associated with users
+	 */
+	public abstract Collection<String> getUserIdentifiers();
+
+	/**
+	 * Return friendly names of known users. These cannot be passed to {@link #getUserData(String)} to return a valid user object
+	 * @return Names associated with users
+	 */
 	public abstract Collection<String> getUserNames();
 
 	/*public List<PermissionsUserData> getUsers() {
@@ -248,7 +258,7 @@ public abstract class PermissionBackend {
 	 * @param backend The backend to load data from
 	 */
 	public void loadFrom(PermissionBackend backend) {
-		for (String user : backend.getUserNames()) {
+		for (String user : backend.getUserIdentifiers()) {
 			BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
 		}
 

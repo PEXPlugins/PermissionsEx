@@ -31,7 +31,6 @@ import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.backends.BackendDataTransfer;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.bukkit.PermissionsExConfig;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
@@ -321,7 +320,7 @@ public class PermissionManager {
 		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
 			users.add(getUser(p));
 		}
-		for (String name : backend.getUserNames()) {
+		for (String name : backend.getUserIdentifiers()) {
 			users.add(getUser(name));
 		}
 		return Collections.unmodifiableSet(users);
@@ -334,6 +333,10 @@ public class PermissionManager {
 	 */
 	public Set<PermissionUser> getActiveUsers() {
 		return new HashSet<PermissionUser>(users.values());
+	}
+
+	public Collection<String> getUserIdentifiers() {
+		return backend.getUserIdentifiers();
 	}
 
 	public Collection<String> getUserNames() {

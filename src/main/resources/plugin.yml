@@ -68,8 +68,8 @@ commands:
            /<command> group <group> users - List all users in <group>
            /<command> group <group> user add <user> [world] - Add <user> (single or comma-separated list) to <group>
            /<command> group <group> user remove <user> [world] - Add <user> (single or comma-separated list) to <group>
-           /<command> default group [world] - Print default group for specified world
-           /<command> set default group <group> [world] - Set default group for specified world
+           /<command> default group [world] - Print default groups for specified world
+           /<command> set default group <group> <value> [world] - Set whether a group is default for specified worlds
            /<command> group <group> rank [rank] [ladder] - Get or set <group> [rank] [ladder]
            /<command> promote <user> [ladder] - Promotes <user> to next group on [ladder]
            /<command> demote <user> [ladder] - Demotes <user> to previous group or [ladder]
