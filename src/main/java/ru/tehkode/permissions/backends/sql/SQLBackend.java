@@ -18,7 +18,6 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
-import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;

@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
@@ -39,8 +38,8 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "groups list [world]",
 			permission = "permissions.manage.groups.list",
 			description = "List all registered groups")
-	public void groupsList(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		List<PermissionGroup> groups = PermissionsEx.getPermissionManager().getGroupList();
+	public void groupsList(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		List<PermissionGroup> groups = plugin.getPermissionsManager().getGroupList();
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
 		sender.sendMessage(ChatColor.WHITE + "Registered groups: ");
@@ -58,7 +57,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "groups",
 			permission = "permissions.manage.groups.list",
 			description = "List all registered groups (alias)")
-	public void groupsListAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupsListAlias(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		this.groupsList(plugin, sender, args);
 	}
 
@@ -66,7 +65,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group",
 			permission = "permissions.manage.groups.list",
 			description = "List all registered groups (alias)")
-	public void groupsListAnotherAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupsListAnotherAlias(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		this.groupsList(plugin, sender, args);
 	}
 
@@ -74,10 +73,10 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> weight [weight]",
 			permission = "permissions.manage.groups.weight.<group>",
 			description = "Print or set group weight")
-	public void groupPrintSetWeight(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupPrintSetWeight(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -100,10 +99,10 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> toggle debug",
 			permission = "permissions.manage.groups.debug.<group>",
 			description = "Toggle debug mode for group")
-	public void groupToggleDebug(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupToggleDebug(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -119,11 +118,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> prefix [newprefix] [world]",
 			permission = "permissions.manage.groups.prefix.<group>",
 			description = "Get or set <group> prefix.")
-	public void groupPrefix(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupPrefix(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -141,11 +140,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> suffix [newsuffix] [world]",
 			permission = "permissions.manage.groups.suffix.<group>",
 			description = "Get or set <group> suffix")
-	public void groupSuffix(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupSuffix(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -163,8 +162,8 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> create [parents]",
 			permission = "permissions.manage.groups.create.<group>",
 			description = "Create <group> and/or set [parents]")
-	public void groupCreate(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(args.get("group"));
+	public void groupCreate(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -181,7 +180,7 @@ public class GroupCommands extends PermissionsCommand {
 			List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
 			for (String parent : parents) {
-				groups.add(PermissionsEx.getPermissionManager().getGroup(parent));
+				groups.add(plugin.getPermissionsManager().getGroup(parent));
 			}
 
 			group.setParents(groups, null);
@@ -196,10 +195,10 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> delete",
 			permission = "permissions.manage.groups.remove.<group>",
 			description = "Remove <group>")
-	public void groupDelete(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupDelete(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -209,7 +208,7 @@ public class GroupCommands extends PermissionsCommand {
 		sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " removed!");
 
 		group.remove();
-		PermissionsEx.getPermissionManager().resetGroup(group.getIdentifier());
+		plugin.getPermissionsManager().resetGroup(group.getIdentifier());
 		group = null;
 	}
 
@@ -220,7 +219,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> parents [world]",
 			permission = "permissions.manage.groups.inheritance.<group>",
 			description = "List parents for <group> (alias)")
-	public void groupListParentsAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupListParentsAlias(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		this.groupListParents(plugin, sender, args);
 	}
 
@@ -228,11 +227,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> parents list [world]",
 			permission = "permissions.manage.groups.inheritance.<group>",
 			description = "List parents for <group>")
-	public void groupListParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupListParents(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -257,11 +256,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> parents set <parents> [world]",
 			permission = "permissions.manage.groups.inheritance.<group>",
 			description = "Set parent(s) for <group> (single or comma-separated list)")
-	public void groupSetParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupSetParents(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -273,7 +272,7 @@ public class GroupCommands extends PermissionsCommand {
 			List<PermissionGroup> groups = new LinkedList<PermissionGroup>();
 
 			for (String parent : parents) {
-				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
+				PermissionGroup parentGroup = plugin.getPermissionsManager().getGroup(this.autoCompleteGroupName(parent));
 
 				if (parentGroup != null && !groups.contains(parentGroup)) {
 					groups.add(parentGroup);
@@ -292,11 +291,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> parents add <parents> [world]",
 			permission = "permissions.manage.groups.inheritance.<group>",
 			description = "Set parent(s) for <group> (single or comma-separated list)")
-	public void groupAddParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupAddParents(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -308,7 +307,7 @@ public class GroupCommands extends PermissionsCommand {
 			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getOwnParents(worldName));
 
 			for (String parent : parents) {
-				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
+				PermissionGroup parentGroup = plugin.getPermissionsManager().getGroup(this.autoCompleteGroupName(parent));
 
 				if (parentGroup != null && !groups.contains(parentGroup)) {
 					groups.add(parentGroup);
@@ -327,11 +326,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> parents remove <parents> [world]",
 			permission = "permissions.manage.groups.inheritance.<group>",
 			description = "Set parent(s) for <group> (single or comma-separated list)")
-	public void groupRemoveParents(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupRemoveParents(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -343,7 +342,7 @@ public class GroupCommands extends PermissionsCommand {
 			List<PermissionGroup> groups = new LinkedList<PermissionGroup>(group.getOwnParents(worldName));
 
 			for (String parent : parents) {
-				PermissionGroup parentGroup = PermissionsEx.getPermissionManager().getGroup(this.autoCompleteGroupName(parent));
+				PermissionGroup parentGroup = plugin.getPermissionsManager().getGroup(this.autoCompleteGroupName(parent));
 
 				groups.remove(parentGroup);
 			}
@@ -363,7 +362,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group>",
 			permission = "permissions.manage.groups.permissions.<group>",
 			description = "List all <group> permissions (alias)")
-	public void groupListAliasPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupListAliasPermissions(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		this.groupListPermissions(plugin, sender, args);
 	}
 
@@ -371,11 +370,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> list [world]",
 			permission = "permissions.manage.groups.permissions.<group>",
 			description = "List all <group> permissions in [world]")
-	public void groupListPermissions(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupListPermissions(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -408,11 +407,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> add <permission> [world]",
 			permission = "permissions.manage.groups.permissions.<group>",
 			description = "Add <permission> to <group> in [world]")
-	public void groupAddPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupAddPermission(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -430,11 +429,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> set <option> <value> [world]",
 			permission = "permissions.manage.groups.permissions.<group>",
 			description = "Set <option> <value> for <group> in [world]")
-	public void groupSetOption(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupSetOption(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -456,11 +455,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> remove <permission> [world]",
 			permission = "permissions.manage.groups.permissions.<group>",
 			description = "Remove <permission> from <group> in [world]")
-	public void groupRemovePermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupRemovePermission(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -481,11 +480,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> swap <permission> <targetPermission> [world]",
 			permission = "permissions.manage.groups.permissions.<group>",
 			description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself")
-	public void userSwapPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void userSwapPermission(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
@@ -516,7 +515,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> timed add <permission> [lifetime] [world]",
 			permission = "permissions.manage.groups.permissions.timed.<group>",
 			description = "Add timed <permission> to <group> with [lifetime] in [world]")
-	public void groupAddTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupAddTimedPermission(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
@@ -526,7 +525,7 @@ public class GroupCommands extends PermissionsCommand {
 			lifetime = DateUtils.parseInterval(args.get("lifetime"));
 		}
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group does not exist");
@@ -546,11 +545,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> timed remove <permission> [world]",
 			permission = "permissions.manage.groups.permissions.timed.<group>",
 			description = "Remove timed <permissions> for <group> in [world]")
-	public void groupRemoveTimedPermission(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupRemoveTimedPermission(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group does not exist");
@@ -570,10 +569,10 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> users",
 			permission = "permissions.manage.membership.<group>",
 			description = "List all users in <group>")
-	public void groupUsersList(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupUsersList(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
-		Set<PermissionUser> users = PermissionsEx.getPermissionManager().getUsers(groupName);
+		Set<PermissionUser> users = plugin.getPermissionsManager().getUsers(groupName);
 
 		if (users == null || users.isEmpty()) {
 			sender.sendMessage(ChatColor.RED + "Group doesn't exist or empty");
@@ -591,7 +590,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> user add <user> [world]",
 			permission = "permissions.manage.membership.<group>",
 			description = "Add <user> (single or comma-separated list) to <group>")
-	public void groupUsersAdd(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupUsersAdd(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
@@ -605,7 +604,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		for (String userName : users) {
 			userName = this.autoCompletePlayerName(userName);
-			PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
 			if (user == null) {
 				sender.sendMessage(ChatColor.RED + "User does not exist");
@@ -623,7 +622,7 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "group <group> user remove <user> [world]",
 			permission = "permissions.manage.membership.<group>",
 			description = "Add <user> (single or comma-separated list) to <group>")
-	public void groupUsersRemove(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupUsersRemove(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
@@ -637,7 +636,7 @@ public class GroupCommands extends PermissionsCommand {
 
 		for (String userName : users) {
 			userName = this.autoCompletePlayerName(userName);
-			PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
 			if (user == null) {
 				sender.sendMessage(ChatColor.RED + "User does not exist");
@@ -656,11 +655,11 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "default group [world]",
 			permission = "permissions.manage.groups.inheritance",
 			description = "Print default group for specified world")
-	public void groupDefaultCheck(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupDefaultCheck(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
 
-		List<PermissionGroup> defaultGroups = PermissionsEx.getPermissionManager().getDefaultGroups(worldName);
+		List<PermissionGroup> defaultGroups = plugin.getPermissionsManager().getDefaultGroups(worldName);
 		sender.sendMessage("Default groups in world " + worldName + " are:");
 		for (PermissionGroup grp : defaultGroups) {
 			sender.sendMessage("  - " + grp.getIdentifier());
@@ -671,12 +670,12 @@ public class GroupCommands extends PermissionsCommand {
 			syntax = "set default group <group> <value> [world]",
 			permission = "permissions.manage.groups.inheritance",
 			description = "Set default group for specified world")
-	public void groupDefaultSet(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void groupDefaultSet(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		boolean def = Boolean.parseBoolean(args.get("value"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null || group.isVirtual()) {
 			sender.sendMessage(ChatColor.RED + "Specified group doesn't exist");

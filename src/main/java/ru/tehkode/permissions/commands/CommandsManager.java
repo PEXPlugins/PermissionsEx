@@ -40,12 +40,11 @@ import ru.tehkode.utils.StringUtils;
  */
 public class CommandsManager {
 
-	protected static final Logger logger = Logger.getLogger("Minecraft");
 	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new LinkedHashMap<String, Map<CommandSyntax, CommandBinding>>();
-	protected Plugin plugin;
+	protected PermissionsEx plugin;
 	protected List<Plugin> helpPlugins = new LinkedList<Plugin>();
 
-	public CommandsManager(Plugin plugin) {
+	public CommandsManager(PermissionsEx plugin) {
 		this.plugin = plugin;
 	}
 
@@ -102,7 +101,7 @@ public class CommandsManager {
 		// Check permission
 		if (sender instanceof Player) { // this method are not public and required permission
 			if (!selectedBinding.checkPermissions((Player) sender)) {
-				logger.warning("User " + ((Player) sender).getName() + " tried to access chat command \""
+				plugin.getLogger().warning("User " + sender.getName() + " tried to access chat command \""
 						+ command.getName() + " " + arguments
 						+ "\", but doesn't have permission to do this.");
 				sender.sendMessage(ChatColor.RED + "Sorry, you don't have enough permissions.");
@@ -121,7 +120,7 @@ public class CommandsManager {
 				throw new RuntimeException(e.getTargetException());
 			}
 		} catch (Exception e) {
-			logger.severe("There is bogus command handler for " + command.getName() + " command. (Is appropriate plugin is update?)");
+			plugin.getLogger().severe("There is bogus command handler for " + command.getName() + " command. (Is appropriate plugin is update?)");
 			if (e.getCause() != null) {
 				e.getCause().printStackTrace();
 			} else {

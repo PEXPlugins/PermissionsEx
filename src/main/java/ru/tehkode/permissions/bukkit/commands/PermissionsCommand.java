@@ -23,14 +23,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
@@ -48,18 +46,18 @@ public abstract class PermissionsCommand implements CommandListener {
 		this.manager = manager;
 	}
 
-	protected void informGroup(Plugin plugin, PermissionGroup group, String message) {
+	protected void informGroup(PermissionsEx plugin, PermissionGroup group, String message) {
 		for (PermissionUser user : group.getUsers()) {
 			this.informPlayer(plugin, user, message);
 		}
 	}
 
-	protected void informPlayer(Plugin plugin, PermissionUser user, String message) {
-		if (!(plugin instanceof PermissionsEx) || !plugin.getConfig().getBoolean("permissions.informplayers.changes", false)) {
+	protected void informPlayer(PermissionsEx plugin, PermissionUser user, String message) {
+		if (!plugin.getConfig().getBoolean("permissions.informplayers.changes", false)) {
 			return; // User informing is disabled
 		}
 
-		Player player = Bukkit.getServer().getPlayer(user.getName());
+		Player player = plugin.getServer().getPlayer(user.getName());
 		if (player == null) {
 			return;
 		}

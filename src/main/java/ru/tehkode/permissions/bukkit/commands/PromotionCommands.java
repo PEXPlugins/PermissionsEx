@@ -19,12 +19,10 @@
 package ru.tehkode.permissions.bukkit.commands;
 
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
@@ -38,10 +36,10 @@ public class PromotionCommands extends PermissionsCommand {
 			description = "Get or set <group> [rank] [ladder]",
 			isPrimary = true,
 			permission = "permissions.groups.rank.<group>")
-	public void rankGroup(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void rankGroup(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 
-		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup(groupName);
+		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" not found");
@@ -75,9 +73,9 @@ public class PromotionCommands extends PermissionsCommand {
 			syntax = "promote <user> [ladder]",
 			description = "Promotes <user> to next group on [ladder]",
 			isPrimary = true)
-	public void promoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void promoteUser(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
-		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
 		if (user == null) {
 			sender.sendMessage("Specified user \"" + args.get("user") + "\" not found!");
@@ -93,7 +91,7 @@ public class PromotionCommands extends PermissionsCommand {
 
 		PermissionUser promoter = null;
 		if (sender instanceof Player) {
-			promoter = PermissionsEx.getPermissionManager().getUser((Player) sender);
+			promoter = plugin.getPermissionsManager().getUser((Player) sender);
 			if (promoter == null || !promoter.has("permissions.user.promote." + ladder, ((Player) sender).getWorld().getName())) {
 				sender.sendMessage(ChatColor.RED + "You don't have enough permissions to promote on this ladder");
 				return;
@@ -118,9 +116,9 @@ public class PromotionCommands extends PermissionsCommand {
 			syntax = "demote <user> [ladder]",
 			description = "Demotes <user> to previous group or [ladder]",
 			isPrimary = true)
-	public void demoteUser(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void demoteUser(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
-		PermissionUser user = PermissionsEx.getPermissionManager().getUser(userName);
+		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
 		if (user == null) {
 			sender.sendMessage(ChatColor.RED + "Specified user \"" + args.get("user") + "\" not found!");
@@ -136,7 +134,7 @@ public class PromotionCommands extends PermissionsCommand {
 
 		PermissionUser demoter = null;
 		if (sender instanceof Player) {
-			demoter = PermissionsEx.getPermissionManager().getUser((Player) sender);
+			demoter = plugin.getPermissionsManager().getUser((Player) sender);
 
 			if (demoter == null || !demoter.has("permissions.user.demote." + ladder, ((Player) sender).getWorld().getName())) {
 				sender.sendMessage(ChatColor.RED + "You don't have enough permissions to demote on this ladder");
@@ -163,7 +161,7 @@ public class PromotionCommands extends PermissionsCommand {
 			description = "Promotes <user> to next group",
 			isPrimary = true,
 			permission = "permissions.user.rank.promote")
-	public void promoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void promoteUserAlias(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		this.promoteUser(plugin, sender, args);
 	}
 
@@ -172,7 +170,7 @@ public class PromotionCommands extends PermissionsCommand {
 			description = "Demotes <user> to previous group",
 			isPrimary = true,
 			permission = "permissions.user.rank.demote")
-	public void demoteUserAlias(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void demoteUserAlias(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		this.demoteUser(plugin, sender, args);
 	}
 }

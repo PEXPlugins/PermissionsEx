@@ -1,7 +1,6 @@
 package ru.tehkode.permissions.backends.memory;
 
 import com.google.common.collect.Sets;
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 

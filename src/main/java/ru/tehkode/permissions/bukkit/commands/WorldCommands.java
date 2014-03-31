@@ -22,11 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
@@ -39,10 +37,10 @@ public class WorldCommands extends PermissionsCommand {
 			description = "Print loaded worlds",
 			isPrimary = true,
 			permission = "permissions.manage.worlds")
-	public void worldsTree(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		List<World> worlds = Bukkit.getServer().getWorlds();
+	public void worldsTree(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		List<World> worlds = plugin.getServer().getWorlds();
 
-		PermissionManager manager = PermissionsEx.getPermissionManager();
+		PermissionManager manager = plugin.getPermissionsManager();
 
 		sender.sendMessage("Worlds on server: ");
 		for (World world : worlds) {
@@ -60,10 +58,10 @@ public class WorldCommands extends PermissionsCommand {
 			syntax = "world <world>",
 			description = "Print <world> inheritance info",
 			permission = "permissions.manage.worlds")
-	public void worldPrintInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void worldPrintInheritance(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
-		PermissionManager manager = PermissionsEx.getPermissionManager();
-		if (Bukkit.getServer().getWorld(worldName) == null) {
+		PermissionManager manager = plugin.getPermissionsManager();
+		if (plugin.getServer().getWorld(worldName) == null) {
 			sender.sendMessage("Specified world \"" + args.get("world") + "\" not found.");
 			return;
 		}
@@ -91,10 +89,10 @@ public class WorldCommands extends PermissionsCommand {
 			syntax = "world <world> inherit <parentWorlds>",
 			description = "Set <parentWorlds> for <world>",
 			permission = "permissions.manage.worlds.inheritance")
-	public void worldSetInheritance(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void worldSetInheritance(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
-		PermissionManager manager = PermissionsEx.getPermissionManager();
-		if (Bukkit.getServer().getWorld(worldName) == null) {
+		PermissionManager manager = plugin.getPermissionsManager();
+		if (plugin.getServer().getWorld(worldName) == null) {
 			sender.sendMessage("Specified world \"" + args.get("world") + "\" not found.");
 			return;
 		}

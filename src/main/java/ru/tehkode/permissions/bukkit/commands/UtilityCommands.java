@@ -22,7 +22,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.ErrorReport;
@@ -42,9 +41,9 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "reload",
 			permission = "permissions.manage.reload",
 			description = "Reload environment")
-	public void reload(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void reload(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		try {
-			PermissionsEx.getPermissionManager().reset();
+			plugin.getPermissionsManager().reset();
 			sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
 		} catch (PermissionBackendException e) {
 			sender.sendMessage(ChatColor.RED + "Failed to reload permissions! Check configuration!\n" +
@@ -57,7 +56,7 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "report",
 			permission = "permissions.manage.reportbug",
 			description = "Create an issue template to report an issue")
-	public void report(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void report(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		ErrorReport report = ErrorReport.withException("User-requested report", new Exception().fillInStackTrace());
 		sender.sendMessage("Fill in the information at " + report.getShortURL() + " to report an issue");
 		sender.sendMessage(ChatColor.RED + "NOTE: A GitHub account is necessary to report issues. Create one at https://github.com/");
@@ -67,7 +66,7 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "config <node> [value]",
 			permission = "permissions.manage.config",
 			description = "Print or set <node> [value]")
-	public void config(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void config(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		if (!(plugin instanceof PermissionsEx)) {
 			return;
 		}
@@ -108,21 +107,21 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "backend",
 			permission = "permissions.manage.backend",
 			description = "Print currently used backend")
-	public void getBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		sender.sendMessage("Current backend: " + PermissionsEx.getPermissionManager().getBackend());
+	public void getBackend(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		sender.sendMessage("Current backend: " + plugin.getPermissionsManager().getBackend());
 	}
 
 	@Command(name = "pex",
 			syntax = "backend <backend>",
 			permission = "permissions.manage.backend",
 			description = "Change permission backend on the fly (Use with caution!)")
-	public void setBackend(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void setBackend(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		if (args.get("backend") == null) {
 			return;
 		}
 
 		try {
-			PermissionsEx.getPermissionManager().setBackend(args.get("backend"));
+			plugin.getPermissionsManager().setBackend(args.get("backend"));
 			sender.sendMessage(ChatColor.WHITE + "Permission backend changed!");
 		} catch (RuntimeException e) {
 			if (e.getCause() instanceof ClassNotFoundException) {
@@ -142,7 +141,7 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "hierarchy [world]",
 			permission = "permissions.manage.users",
 			description = "Print complete user/group hierarchy")
-	public void printHierarchy(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void printHierarchy(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		sender.sendMessage("User/Group inheritance hierarchy:");
 		this.sendMessage(sender, this.printHierarchy(null, this.autoCompleteWorldName(args.get("world")), 0));
 	}
@@ -151,13 +150,13 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "import <backend>",
 			permission = "permissions.dump",
 			description = "Import data from <backend> as specified in the configuration")
-	public void dumpData(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void dumpData(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		if (!(plugin instanceof PermissionsEx)) {
 			return; // User informing is disabled
 		}
 
 		try {
-			PermissionManager mgr = PermissionsEx.getPermissionManager();
+			PermissionManager mgr = plugin.getPermissionsManager();
 			PermissionBackend backend = mgr.createBackend(args.get("backend"));
 			mgr.getBackend().loadFrom(backend);
 
@@ -181,8 +180,8 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "toggle debug",
 			permission = "permissions.debug",
 			description = "Enable/disable debug mode")
-	public void toggleFeature(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		PermissionManager manager = PermissionsEx.getPermissionManager();
+	public void toggleFeature(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		PermissionManager manager = plugin.getPermissionsManager();
 
 		manager.setDebug(!manager.isDebug());
 
@@ -212,7 +211,7 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "help [page] [count]",
 			permission = "permissions.manage",
 			description = "PermissionsEx commands help")
-	public void showHelp(Plugin plugin, CommandSender sender, Map<String, String> args) {
+	public void showHelp(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		List<CommandBinding> commands = this.manager.getCommands();
 
 		int count = tryGetInt(sender, args, "count", 4);

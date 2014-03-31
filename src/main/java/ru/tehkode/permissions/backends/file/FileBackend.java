@@ -19,8 +19,6 @@
 package ru.tehkode.permissions.backends.file;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
