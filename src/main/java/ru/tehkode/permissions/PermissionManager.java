@@ -89,6 +89,10 @@ public class PermissionManager {
 		return plugin.getConfiguration().createUserRecords();
 	}
 
+	public PermissionsEx getPlugin() {
+		return plugin;
+	}
+
 	private class RemoteEventListener implements Listener {
 		@EventHandler(priority = EventPriority.LOWEST)
 		public void onEntityEvent(PermissionEntityEvent event) {
