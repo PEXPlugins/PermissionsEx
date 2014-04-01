@@ -297,7 +297,7 @@ public class UserCommands extends PermissionsCommand {
 
 		user.remove();
 
-		plugin.getPermissionsManager().resetUser(userName);
+		plugin.getPermissionsManager().resetUser(user.getIdentifier());
 
 		sender.sendMessage(ChatColor.WHITE + "User \"" + describeUser(user) + "\" removed!");
 	}

@@ -235,29 +235,31 @@ public class PermissionManager {
 			throw new IllegalArgumentException("Null or empty name passed! Name must not be empty");
 		}
 
-		PermissionUser user = users.get(username);
-		if (user != null) {
-			return user;
-		}
-
 		try {
+			if (username.length() != 36) { // Speedup for things def not uuids
+				throw new IllegalArgumentException("not a uuid, try stuff");
+			}
 			return getUser(UUID.fromString(username)); // Username is uuid as string, just use it
 		} catch (IllegalArgumentException ex) {
+			OfflinePlayer player = plugin.getServer().getOfflinePlayer(username);
 			UUID userUUID = null;
 			try {
-				userUUID = plugin.getServer().getOfflinePlayer(username).getUniqueId();
+				userUUID = player.getUniqueId();
 			} catch (Throwable t) {
 				// Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
 			}
 
-			if (userUUID == null) {
-				plugin.getLogger().warning("Unable to convert user " + username + " to UUID-based storage: Could not determine UUID");
-				// We don't know the UUID, so we'll just have to return an unconverted user
+			if (userUUID != null && (player.isOnline() || backend.hasUser(userUUID.toString()))) {
+				return getUser(userUUID.toString(), username);
+			} else {
+				// The user is offline and unconverted, so we'll just have to return an unconverted user.
+				PermissionUser user = users.get(username);
+				if (user != null) {
+					return user;
+				}
 				user = createAndLoadUser(username);
 				this.users.put(username.toLowerCase(), user);
 				return user;
-			} else {
-				return getUser(userUUID.toString(), username);
 			}
 		}
 	}
