@@ -1,6 +1,11 @@
 package ru.tehkode.permissions;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -9,20 +14,26 @@ public class RegExpMatcher implements PermissionMatcher {
 	public static final String RAW_REGEX_CHAR = "$";
 	protected static Pattern rangeExpression = Pattern.compile("(\\d+)-(\\d+)");
 
-	protected static HashMap<String, Pattern> patternCache = new HashMap<>();
+	private final Cache<String, Pattern> patternCache = CacheBuilder.newBuilder().maximumSize(500).build(new CacheLoader<String, Pattern>() {
+		@Override
+		public Pattern load(String permission) throws Exception {
+			return createPattern(permission);
+		}
+	});
 
 	@Override
 	public boolean isMatches(String expression, String permission) {
-		Pattern permissionMatcher = patternCache.get(expression);
-
-		if (permissionMatcher == null) {
-			patternCache.put(expression, permissionMatcher = createPattern(expression));
+		try {
+			Pattern permissionMatcher = patternCache.get(expression);
+			return permissionMatcher.matcher(permission).matches();
+		} catch (ExecutionException e) {
+			return false;
 		}
 
-		return permissionMatcher.matcher(permission).matches();
+
 	}
 
-	protected Pattern createPattern(String expression) {
+	protected static Pattern createPattern(String expression) {
         try {
 		    return Pattern.compile(prepareRegexp(expression), Pattern.CASE_INSENSITIVE);
         } catch (PatternSyntaxException e) {

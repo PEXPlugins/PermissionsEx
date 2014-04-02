@@ -158,7 +158,6 @@ public class PermissionManager {
 
 			try {
 				if (backend != null) {
-					backend.close();
 					backend.reload();
 				}
 				clearCache();
@@ -430,8 +429,9 @@ public class PermissionManager {
 		this.users.remove(userName.toLowerCase());
 	}
 
-	public void resetUser(UUID uid) {
-		this.users.remove(uid.toString());
+	public void resetUser(Player ply) {
+		this.users.remove(ply.getUniqueId().toString());
+		resetUser(ply.getName());
 	}
 
 	/**
@@ -688,8 +688,7 @@ public class PermissionManager {
 			config.set("type", backendType = backendName);
 		}
 
-		PermissionBackend backend = PermissionBackend.getBackend(backendType, this, config);
-		return backend;
+		return PermissionBackend.getBackend(backendType, this, config);
 	}
 
 	/**
@@ -713,8 +712,7 @@ public class PermissionManager {
 		this.clearCache();
 
 		if (this.backend != null) {
-			this.backend.close();
-			initBackend();
+			this.backend.reload();
 		}
 		this.callEvent(PermissionSystemEvent.Action.RELOADED);
 	}

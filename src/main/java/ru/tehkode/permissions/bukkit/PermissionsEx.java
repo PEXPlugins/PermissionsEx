@@ -285,7 +285,9 @@ public class PermissionsEx extends JavaPlugin {
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			try {
 				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-				user.setOption("name", event.getPlayer().getName()); // Update name
+				if (!user.isVirtual()) { // Update name only if user exists in config
+					user.setOption("name", event.getPlayer().getName());
+				}
 				if (!config.shouldLogPlayers()) {
 					return;
 				}
@@ -304,7 +306,7 @@ public class PermissionsEx extends JavaPlugin {
 				getPermissionsManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 			}
 
-			getPermissionsManager().resetUser(event.getPlayer().getUniqueId());
+			getPermissionsManager().resetUser(event.getPlayer());
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);
 			}

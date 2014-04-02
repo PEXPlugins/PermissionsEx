@@ -173,7 +173,7 @@ public class SuperpermsListener implements Listener {
 	}
 
 	private void updateSelective(PermissionEntityEvent event, PermissionUser user) {
-		final Player p = plugin.getServer().getPlayer(UUID.fromString(user.getIdentifier()));
+		final Player p = user.getPlayer();
 		if (p != null) {
 			switch (event.getAction()) {
 				case SAVED:

@@ -88,7 +88,7 @@ public class UserCommands extends PermissionsCommand {
 		}
 		userName = user.getName();
 
-		sender.sendMessage("'" + user.getIdentifier() + '/' + userName + "' is a member of:");
+		sender.sendMessage("'" + describeUser(user) + "' is a member of:");
 		printEntityInheritance(sender, user.getParents());
 
 		Map<String, List<PermissionGroup>> allParents = user.getAllParents();

@@ -107,6 +107,9 @@ public class RegexPermissions {
 							success = true;
 							break;
 						}
+					} else {
+						success = true;
+						break;
 					}
 				}
 			}

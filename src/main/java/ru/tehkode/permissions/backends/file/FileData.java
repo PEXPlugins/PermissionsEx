@@ -59,12 +59,12 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	public List<String> getPermissions(String worldName) {
 		List<String> result = this.node.getStringList(formatPath(worldName, "permissions"));
 
-		return result == null ? new LinkedList<String>() : result;
+		return result == null ? Collections.<String>emptyList() : Collections.unmodifiableList(result);
 	}
 
 	@Override
 	public void setPermissions(List<String> permissions, String worldName) {
-		this.node.set(formatPath(worldName, "permissions"), permissions == null || permissions.isEmpty() ? null : permissions);
+		this.node.set(formatPath(worldName, "permissions"), permissions == null || permissions.isEmpty() ? null : new ArrayList<>(permissions));
 		save();
 	}
 
@@ -75,7 +75,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		// Common permissions
 		List<String> commonPermissions = this.node.getStringList("permissions");
 		if (commonPermissions != null) {
-			allPermissions.put(null, commonPermissions);
+			allPermissions.put(null, Collections.unmodifiableList(commonPermissions));
 		}
 
 		//World-specific permissions
@@ -84,12 +84,12 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			for (String world : worldsSection.getKeys(false)) {
 				List<String> worldPermissions = this.node.getStringList(FileBackend.buildPath("worlds", world, "permissions"));
 				if (commonPermissions != null) {
-					allPermissions.put(world, worldPermissions);
+					allPermissions.put(world, Collections.unmodifiableList(worldPermissions));
 				}
 			}
 		}
 
-		return allPermissions;
+		return Collections.unmodifiableMap(allPermissions);
 	}
 
 	@Override
@@ -97,10 +97,10 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		ConfigurationSection worldsSection = this.node.getConfigurationSection("worlds");
 
 		if (worldsSection == null) {
-			return new HashSet<>();
+			return Collections.emptySet();
 		}
 
-		return worldsSection.getKeys(false);
+		return Collections.unmodifiableSet(worldsSection.getKeys(false));
 	}
 
 	@Override
@@ -141,7 +141,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		ConfigurationSection optionsSection = this.node.getConfigurationSection(formatPath(worldName, "options"));
 
 		if (optionsSection == null) {
-			return new HashMap<>(0);
+			return Collections.emptyMap();
 		}
 
 		return collectOptions(optionsSection);
@@ -157,7 +157,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			allOptions.put(worldName, this.getOptions(worldName));
 		}
 
-		return allOptions;
+		return Collections.unmodifiableMap(allOptions);
 	}
 
 	@Override
@@ -199,7 +199,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void setParents(List<String> parents, String worldName) {
-		this.node.set(formatPath(worldName, parentPath), parents);
+		this.node.set(formatPath(worldName, parentPath), parents == null ? null : new ArrayList<>(parents));
 		save();
 	}
 
@@ -229,7 +229,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			options.put(key.replace(section.getRoot().options().pathSeparator(), '.'), section.getString(key));
 		}
 
-		return options;
+		return Collections.unmodifiableMap(options);
 	}
 
 	protected static String formatPath(String worldName, String node, String value) {

@@ -119,8 +119,8 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public boolean hasUser(String userName) {
-		try {
-			ResultSet res = getSQL().prepAndBind("SELECT `id` FROM `{permissions_entity}` WHERE `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
+		try (SQLConnection conn = getSQL()) {
+			ResultSet res = conn.prepAndBind("SELECT `id` FROM `{permissions_entity}` WHERE `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
 			return res.next();
 		} catch (SQLException e) {
 			return false;

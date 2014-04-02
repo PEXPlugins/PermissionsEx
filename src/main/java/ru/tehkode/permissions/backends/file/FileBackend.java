@@ -112,12 +112,38 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public boolean hasUser(String userName) {
-		return this.permissions.isConfigurationSection(buildPath("users", userName));
+		if (this.permissions.isConfigurationSection(buildPath("users", userName))) {
+			return true;
+		}
+
+		ConfigurationSection userSection = this.permissions.getConfigurationSection("users");
+		if (userSection != null) {
+			for (String name : userSection.getKeys(false)) {
+				if (userName.equalsIgnoreCase(name)) {
+					return true;
+				}
+			}
+
+		}
+		return false;
 	}
 
 	@Override
 	public boolean hasGroup(String group) {
-		return this.permissions.isConfigurationSection(buildPath("groups", group));
+		if (this.permissions.isConfigurationSection(buildPath("groups", group))) {
+			return true;
+		}
+
+		ConfigurationSection userSection = this.permissions.getConfigurationSection("groups");
+		if (userSection != null) {
+			for (String name : userSection.getKeys(false)) {
+				if (group.equalsIgnoreCase(name)) {
+					return true;
+				}
+			}
+
+		}
+		return false;
 	}
 
 	@Override
