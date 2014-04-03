@@ -26,4 +26,18 @@ public class FileConfig extends YamlConfiguration {
 	public void save() throws IOException {
 		this.save(file);
 	}
+
+	@Override
+	public void loadFromString(String contents) throws InvalidConfigurationException {
+		synchronized (this) {
+			super.loadFromString(contents);
+		}
+	}
+
+	@Override
+	public String saveToString() {
+		synchronized (this) {
+			return super.saveToString();
+		}
+	}
 }
