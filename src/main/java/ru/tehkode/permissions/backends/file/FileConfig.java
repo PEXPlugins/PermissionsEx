@@ -8,6 +8,7 @@ import java.io.IOException;
 
 public class FileConfig extends YamlConfiguration {
 	private final File file;
+	private boolean saveSuppressed;
 
 	public FileConfig(File file) {
 		super();
@@ -24,7 +25,17 @@ public class FileConfig extends YamlConfiguration {
 	}
 
 	public void save() throws IOException {
-		this.save(file);
+		if (!saveSuppressed) {
+			this.save(file);
+		}
+	}
+
+	public boolean isSaveSuppressed() {
+		return saveSuppressed;
+	}
+
+	void setSaveSuppressed(boolean saveSuppressed) {
+		this.saveSuppressed = saveSuppressed;
 	}
 
 	@Override

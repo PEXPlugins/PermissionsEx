@@ -11,24 +11,30 @@ import java.util.logging.Level;
 
 public class FileData implements PermissionsUserData, PermissionsGroupData {
 	protected transient final FileConfig config;
-	private String nodePath;
+	private String nodePath, entityName;
+	private final String basePath;
 	private ConfigurationSection node;
 	protected boolean virtual = true;
 	private final String parentPath;
 
 	public FileData(String basePath, String name, FileConfig config, String parentPath) {
 		this.config = config;
-		this.node = findNode(name, basePath);
+		this.basePath = basePath;
+		this.node = findNode(name);
 		this.parentPath = parentPath;
 	}
 
-	private ConfigurationSection findNode(String entityName, String basePath) {
-		this.nodePath = FileBackend.buildPath(basePath, entityName);
+	private ConfigurationSection findExistingNode(String entityName, boolean set) {
+		String nodePath = FileBackend.buildPath(basePath, entityName);
 
-		ConfigurationSection entityNode = this.config.getConfigurationSection(this.nodePath);
+		ConfigurationSection entityNode = this.config.getConfigurationSection(nodePath);
 
 		if (entityNode != null) {
 			this.virtual = false;
+			if (set) {
+				this.nodePath = nodePath;
+				this.entityName = entityName;
+			}
 			return entityNode;
 		}
 
@@ -38,18 +44,53 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
 				if (entry.getKey().equalsIgnoreCase(entityName)
 						&& entry.getValue() instanceof ConfigurationSection) {
-					this.nodePath = FileBackend.buildPath(basePath, entry.getKey());
+					if (set) {
+						this.nodePath = FileBackend.buildPath(basePath, entry.getKey());
+						this.entityName = entry.getKey();
+					}
 					return (ConfigurationSection) entry.getValue();
 				}
 			}
 		}
 
+		return null;
+	}
+
+	private ConfigurationSection findNode(String entityName) {
+		ConfigurationSection section = findExistingNode(entityName, true);
+		if (section != null) {
+			return section;
+		}
+
 		// Silly workaround for empty nodes
-		ConfigurationSection section = this.config.createSection(nodePath);
+		this.nodePath = FileBackend.buildPath(basePath, entityName);
+		section = this.config.createSection(nodePath);
+		this.entityName = entityName;
 		this.config.set(nodePath, null);
 
 		return section;
 
+	}
+
+	@Override
+	public String getIdentifier() {
+		return entityName;
+	}
+
+	@Override
+	public boolean setIdentifier(String identifier) {
+		ConfigurationSection section = findExistingNode(identifier, false);
+		if (section != null) {
+			return false;
+		}
+		this.nodePath = FileBackend.buildPath(basePath, identifier);
+		this.entityName = identifier;
+		if (!this.isVirtual()) {
+			this.config.set(nodePath, node);
+			this.save();
+
+		}
+		return true;
 	}
 
 	/**

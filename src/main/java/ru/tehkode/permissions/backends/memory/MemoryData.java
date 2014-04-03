@@ -14,7 +14,7 @@ import java.util.Set;
  * Data for in-memory permissions
  */
 public class MemoryData implements PermissionsGroupData, PermissionsUserData {
-	private final String name;
+	private String name;
 	private final HashMap<String, String> worldPrefix = new HashMap<>();
 	private final HashMap<String, String> worldSuffix = new HashMap<>();
 	private final HashMap<String, List<String>> worldsPermissions = new HashMap<>();
@@ -44,6 +44,11 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	@Override
 	public void setDefault(boolean def, String world) {
 		defaultVals.put(world, def);
+	}
+
+	@Override
+	public String getIdentifier() {
+		return name;
 	}
 
 	@Override
@@ -132,5 +137,11 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	@Override
 	public void remove() {
 
+	}
+
+	@Override
+	public boolean setIdentifier(String identifier) {
+		this.name = identifier;
+		return true;
 	}
 }

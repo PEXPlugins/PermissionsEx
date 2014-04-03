@@ -291,16 +291,18 @@ public class PermissionManager {
 		PermissionsUserData data = backend.getUserData(identifier);
 		if (data != null) {
 			if (fallbackName != null) {
-				if (!backend.hasUser(identifier) && backend.hasUser(fallbackName)) {
+				if (data.isVirtual() && backend.hasUser(fallbackName)) {
 					if (isDebug()) {
 						getLogger().info("Converting user " + fallbackName + " (UUID " + identifier + ") to UUID-based storage");
 					}
 
 					PermissionsUserData oldData = backend.getUserData(fallbackName);
-					BackendDataTransfer.transferUser(oldData, data);
-					resetUser(fallbackName); // In case somebody requested the old user but conversion was previously unsuccessful
-					oldData.remove();
-					// Convert
+					if (oldData.setIdentifier(identifier)) {
+						data = oldData;
+						resetUser(fallbackName); // In case somebody requested the old user but conversion was previously unsuccessful
+					} else {
+						throw new IllegalStateException("User already exists with new id " + identifier + " (converting from " + fallbackName + ")");
+					}
 				}
 				if (!data.isVirtual()) {
 					data.setOption("name", fallbackName, null);
@@ -309,7 +311,6 @@ public class PermissionManager {
 			user = new PermissionUser(identifier, data, this);
 			user.initialize();
 			if (store) {
-				System.out.println("Storing user " + fallbackName);
 				this.users.put(identifier.toLowerCase(), user);
 			}
 		} else {

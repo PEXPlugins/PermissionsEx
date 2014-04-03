@@ -277,9 +277,21 @@ public class FileBackend extends PermissionBackend {
 		}
 	}
 
+	@Override
+	public void loadFrom(PermissionBackend backend) {
+		final boolean oldSaveSuppr = this.permissions.isSaveSuppressed();
+		this.permissions.setSaveSuppressed(true);
+		try {
+			super.loadFrom(backend);
+		} finally {
+			this.permissions.setSaveSuppressed(oldSaveSuppr);
+		}
+		save();
+	}
+
 	public void save() {
 		try {
-			this.permissions.save(permissionsFile);
+			this.permissions.save();
 		} catch (IOException e) {
 			getManager().getLogger().severe("Error while saving permissions file: " + e.getMessage());
 		}

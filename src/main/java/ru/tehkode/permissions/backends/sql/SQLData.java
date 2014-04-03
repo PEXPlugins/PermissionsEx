@@ -167,6 +167,24 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
+	public boolean setIdentifier(String identifier) {
+		try (SQLConnection conn = backend.getSQL()) {
+			ResultSet set = conn.prepAndBind("SELECT `id` from `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", identifier, this.type.ordinal()).executeQuery();
+			if (set.next()) {
+				return false;
+			}
+
+			conn.prepAndBind("UPDATE `{permissions_entity}` SET `name` = ? WHERE `name` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
+			conn.prepAndBind("UPDATE `{permissions}` SET `name` = ? WHERE `name` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
+			conn.prepAndBind("UPDATE `{permissions_inheritance}` SET `child` = ? WHERE `child` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
+			this.identifier = identifier;
+			return true;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
 	public List<String> getPermissions(String worldName) {
 		List<String> permissions = new LinkedList<>();
 

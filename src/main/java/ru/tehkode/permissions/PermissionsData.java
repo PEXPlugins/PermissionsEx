@@ -5,6 +5,11 @@ import java.util.Map;
 import java.util.Set;
 
 public interface PermissionsData {
+	/**
+	 * Returns the current identifier of the user
+	 * @return
+	 */
+	public String getIdentifier();
 
 	/**
 	 * Returns all permissions for specified world
