@@ -249,16 +249,10 @@ public class PermissionManager {
 			}
 
 			if (userUUID != null && (player.isOnline() || backend.hasUser(userUUID.toString()))) {
-				return getUser(userUUID.toString(), username);
+				return getUser(userUUID.toString(), username, player.isOnline());
 			} else {
 				// The user is offline and unconverted, so we'll just have to return an unconverted user.
-				PermissionUser user = users.get(username);
-				if (user != null) {
-					return user;
-				}
-				user = createAndLoadUser(username);
-				this.users.put(username.toLowerCase(), user);
-				return user;
+				return getUser(username, null, player.isOnline());
 			}
 		}
 	}
@@ -270,13 +264,13 @@ public class PermissionManager {
 	 * @return PermissionUser instance
 	 */
 	public PermissionUser getUser(Player player) {
-		return this.getUser(player.getUniqueId().toString(), player.getName());
+		return this.getUser(player.getUniqueId().toString(), player.getName(), true);
 	}
 
 	public PermissionUser getUser(UUID uid) {
 		final String identifier = uid.toString();
-		if (users.containsKey(identifier)) {
-			return getUser(identifier, null);
+		if (users.containsKey(identifier.toLowerCase())) {
+			return getUser(identifier, null, false);
 		}
 		OfflinePlayer ply = plugin.getServer().getPlayer(uid); // to make things cheaper, we're just checking online players (can be improved later on)
 															   // Also, only online players are really necessary to convert to proper names
@@ -284,17 +278,20 @@ public class PermissionManager {
 		if (ply != null) {
 			fallbackName = ply.getName();
 		}
-		return getUser(identifier, fallbackName);
+		return getUser(identifier, fallbackName, ply != null);
 	}
 
-	private PermissionUser getUser(String identifier, String fallbackName) {
-		PermissionUser user = users.get(identifier);
+	private PermissionUser getUser(String identifier, String fallbackName, boolean store) {
+		PermissionUser user = users.get(identifier.toLowerCase());
 
-		if (user == null) {
-			PermissionsUserData data = backend.getUserData(identifier);
+		if (user != null) {
+			return user;
+		}
 
-			if (data != null) {
-				if (fallbackName != null && !backend.hasUser(identifier) && backend.hasUser(fallbackName)) {
+		PermissionsUserData data = backend.getUserData(identifier);
+		if (data != null) {
+			if (fallbackName != null) {
+				if (!backend.hasUser(identifier) && backend.hasUser(fallbackName)) {
 					if (isDebug()) {
 						getLogger().info("Converting user " + fallbackName + " (UUID " + identifier + ") to UUID-based storage");
 					}
@@ -305,30 +302,21 @@ public class PermissionManager {
 					oldData.remove();
 					// Convert
 				}
-				if (fallbackName != null) {
+				if (!data.isVirtual()) {
 					data.setOption("name", fallbackName, null);
 				}
-				user = new PermissionUser(identifier, data, this);
-				user.initialize();
-				this.users.put(identifier.toLowerCase(), user);
-			} else {
-				throw new IllegalStateException("User " + identifier + " is null");
 			}
+			user = new PermissionUser(identifier, data, this);
+			user.initialize();
+			if (store) {
+				System.out.println("Storing user " + fallbackName);
+				this.users.put(identifier.toLowerCase(), user);
+			}
+		} else {
+			throw new IllegalStateException("User " + identifier + " is null");
 		}
 
 		return user;
-	}
-
-	private PermissionUser createAndLoadUser(String identifier) {
-		PermissionUser user;
-		PermissionsUserData data = backend.getUserData(identifier);
-			if (data != null) {
-				user = new PermissionUser(identifier, data, this);
-				user.initialize();
-				return user;
-			} else {
-				throw new IllegalStateException("User " + identifier + " is null");
-			}
 	}
 
 	/**
