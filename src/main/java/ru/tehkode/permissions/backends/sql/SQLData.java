@@ -52,7 +52,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		}
 
 		try (SQLConnection conn = backend.getSQL()) {
-			conn.prepAndBind(sql, this.prefix, this.suffix, this.def ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
+			conn.prepAndBind(sql, nullToEmpty(this.prefix), nullToEmpty(this.suffix), this.def ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
 		} catch (SQLException e) {
 			if (this.isVirtual()) {
 				this.virtual = false;
@@ -131,9 +131,16 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		}
 	}
 
-	private String nullToEmpty(String enter) {
+	private String emptyToNull(String enter) {
 		if (enter == null || enter.equals("null")) {
 			return null;
+		}
+		return enter;
+	}
+
+	private String nullToEmpty(String enter) {
+		if (enter == null) {
+			return "null";
 		}
 		return enter;
 	}
@@ -143,8 +150,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			ResultSet result = conn.prepAndBind("SELECT `name`, `prefix`, `suffix`, `default` FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getIdentifier(), this.type.ordinal()).executeQuery();
 
 			if (result.next()) {
-				this.prefix = nullToEmpty(result.getString("prefix"));
-				this.suffix = nullToEmpty(result.getString("suffix"));
+				this.prefix = emptyToNull(result.getString("prefix"));
+				this.suffix = emptyToNull(result.getString("suffix"));
 				this.def = result.getBoolean("default");
 
 				// For teh case-insensetivity
