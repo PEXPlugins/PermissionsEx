@@ -479,7 +479,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 
 			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`, `world`) VALUES (?, ?, ?, ?)", this.getIdentifier(), "toset", this.type.ordinal(), worldName);
-			for (String group : parents) {
+			for (int i = parents.size() - 1; i >= 0; --i) {
+				final String group = parents.get(i);
 				if (group == null || group.isEmpty()) {
 					continue;
 				}

@@ -87,8 +87,8 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		this.nodePath = FileBackend.buildPath(basePath, identifier);
 		this.entityName = identifier;
 		if (!this.isVirtual()) {
-			this.config.set(nodePath, node);
 			this.config.set(oldNodePath, null);
+			this.config.set(nodePath, node);
 			this.save();
 
 		}
@@ -107,7 +107,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void setPermissions(List<String> permissions, String worldName) {
-		this.node.set(formatPath(worldName, "permissions"), permissions == null || permissions.isEmpty() ? null : new ArrayList<>(permissions));
+		this.node.set(formatPath(worldName, "permissions"), permissions == null ? null : new ArrayList<>(permissions));
 		save();
 	}
 
