@@ -220,17 +220,23 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		try (SQLConnection conn = backend.getSQL()) {
 			conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getIdentifier(), this.type.ordinal(), worldName).execute();
 
-			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getIdentifier(), "toset", worldName, this.type.ordinal());
-			for (int i = permissions.size() - 1; i >= 0; i--) { // insert in reverse order
-				statement.setString(2, permissions.get(i));
-				statement.addBatch();
+			if (permissions.size() > 0) {
+				Set<String> includedPerms = new HashSet<>();
+				PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getIdentifier(), "toset", worldName, this.type.ordinal());
+				for (int i = permissions.size() - 1; i >= 0; i--) { // insert in reverse order
+					if (!includedPerms.contains(permissions.get(i))) {
+						statement.setString(2, permissions.get(i));
+						statement.addBatch();
+						includedPerms.add(permissions.get(i));
+					}
+				}
+				statement.executeBatch();
 			}
-			statement.executeBatch();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
 
-		if (this.isVirtual()) {
+		if (permissions.size() > 0 && this.isVirtual()) {
 			this.save();
 		}
 
@@ -487,6 +493,12 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 		//reload inheritance
 		this.parents = null;
+		this.fetchInheritance();
+	}
+
+	@Override
+	public void load() {
+		this.fetchPermissions();
 		this.fetchInheritance();
 	}
 

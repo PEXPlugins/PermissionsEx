@@ -110,12 +110,12 @@ public abstract class PermissionBackend {
 	 * @param backend The backend to load data from
 	 */
 	public void loadFrom(PermissionBackend backend) {
-		for (String user : backend.getUserIdentifiers()) {
-			BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
-		}
-
 		for (String group : backend.getGroupNames()) {
 			BackendDataTransfer.transferGroup(backend.getGroupData(group), getGroupData(group));
+		}
+
+		for (String user : backend.getUserIdentifiers()) {
+			BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
 		}
 
 		for (Map.Entry<String, List<String>> ent : backend.getAllWorldInheritance().entrySet()) {

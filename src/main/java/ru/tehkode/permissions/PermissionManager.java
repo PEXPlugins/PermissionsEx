@@ -28,7 +28,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
-import ru.tehkode.permissions.backends.BackendDataTransfer;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
@@ -67,10 +66,10 @@ public class PermissionManager {
 				plugin.getServer().getPluginManager().registerEvents(new RemoteEventListener(), plugin);
 			}
 		}
-		this.initBackend();
 		this.debugMode = plugin.getConfiguration().isDebug();
 		this.allowOps = plugin.getConfiguration().allowOps();
 		this.userAddGroupsLast = plugin.getConfiguration().userAddGroupsLast();
+		this.initBackend();
 	}
 
 	UUID getServerUUID() {
@@ -475,6 +474,7 @@ public class PermissionManager {
 					group.initialize();
 				} catch (Exception e) {
 					this.groups.remove(groupname.toLowerCase());
+					throw new IllegalStateException("Error initializing group " + groupname, e);
 				}
 			} else {
 				throw new IllegalStateException("Group " + groupname + " is null");
@@ -580,6 +580,12 @@ public class PermissionManager {
 		this.groups.remove(groupName);
 	}
 
+	void preloadGroups() {
+		for (PermissionGroup group : getGroupList()) {
+			group.getData().load();
+		}
+	}
+
 	/**
 	 * Set debug mode
 	 *
@@ -661,6 +667,7 @@ public class PermissionManager {
 		synchronized (this) {
 			this.clearCache();
 			this.backend = createBackend(backendName);
+			this.preloadGroups();
 		}
 
 		this.callEvent(PermissionSystemEvent.Action.BACKEND_CHANGED);

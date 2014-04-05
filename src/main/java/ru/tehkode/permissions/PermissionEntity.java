@@ -75,7 +75,7 @@ public abstract class PermissionEntity {
 	}
 
 	public String getName() {
-		return getOption("name", null, getIdentifier());
+		return getOwnOption("name", null, getIdentifier());
 	}
 
 	/*protected void setName(String name) {

@@ -37,6 +37,10 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
+	public void load() {
+	}
+
+	@Override
 	public boolean isDefault(String world) {
 		return defaultVals.containsKey(world) ? defaultVals.get(world) : false;
 	}

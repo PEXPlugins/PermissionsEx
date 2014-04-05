@@ -247,6 +247,11 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
+	public void load() {
+		// Already loaded bc file
+	}
+
+	@Override
 	public boolean isDefault(String world) {
 		return world == null ? this.node.getBoolean("default") : this.node.getBoolean(formatPath(world, "default"));
 	}

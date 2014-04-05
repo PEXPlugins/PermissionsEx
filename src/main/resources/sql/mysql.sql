@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
   `suffix` varchar(255) NOT NULL,
   `default` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `name` (`name`, `type`),
   KEY `default` (`default`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
