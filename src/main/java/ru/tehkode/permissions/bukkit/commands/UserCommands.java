@@ -250,9 +250,9 @@ public class UserCommands extends PermissionsCommand {
 		String permission = user.getMatchingExpression(args.get("permission"), worldName);
 
 		if (permission == null) {
-			sender.sendMessage("Player \"" + describeUser(user) + "\" don't such have no permission");
+			sender.sendMessage("Permission \"" + permission + "\" has not been set for \"Player \"" + describeUser(user));
 		} else {
-			sender.sendMessage("Player \"" + describeUser(user) + "\" have \"" + permission + "\" = " + user.explainExpression(permission));
+			sender.sendMessage("Player \"" + describeUser(user) + "\" " + (user.explainExpression(permission) ? "has" : "doesn't have") + " \"" + permission + "\"");
 		}
 	}
 
