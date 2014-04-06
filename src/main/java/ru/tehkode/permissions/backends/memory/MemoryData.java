@@ -144,6 +144,11 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
+	public Map<String, List<String>> getParentsMap() {
+		return Collections.unmodifiableMap(parents);
+	}
+
+	@Override
 	public boolean setIdentifier(String identifier) {
 		this.name = identifier;
 		return true;

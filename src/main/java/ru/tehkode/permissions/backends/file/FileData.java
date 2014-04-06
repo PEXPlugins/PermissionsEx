@@ -228,6 +228,17 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		this.save();
 	}
 
+	@Override
+	public Map<String, List<String>> getParentsMap() {
+		Map<String, List<String>> ret = new HashMap<>();
+		ret.put(null, getParents(null));
+
+		for (String world : getWorlds()) {
+			ret.put(world, getParents(world));
+		}
+		return Collections.unmodifiableMap(ret);
+	}
+
 
 	@Override
 	public List<String> getParents(String worldName) {

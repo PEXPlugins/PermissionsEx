@@ -47,7 +47,7 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	protected void informGroup(PermissionsEx plugin, PermissionGroup group, String message) {
-		for (PermissionUser user : group.getUsers()) {
+		for (PermissionUser user : group.getActiveUsers()) {
 			this.informPlayer(plugin, user, message);
 		}
 	}

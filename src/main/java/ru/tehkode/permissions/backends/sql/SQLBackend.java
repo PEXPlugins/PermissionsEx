@@ -24,6 +24,8 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
+import ru.tehkode.permissions.backends.caching.CachingGroupData;
+import ru.tehkode.permissions.backends.caching.CachingUserData;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.utils.StringUtils;
 
@@ -41,6 +43,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author code
@@ -50,6 +55,7 @@ public class SQLBackend extends PermissionBackend {
 	private Map<String, Object> tableNames;
 	private BasicDataSource ds;
 	private String dbDriver;
+	private final ExecutorService executor;
 
 	public SQLBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
@@ -83,6 +89,7 @@ public class SQLBackend extends PermissionBackend {
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
+		executor = Executors.newSingleThreadExecutor();
 		this.setupAliases();
 		this.deployTables();
 	}
@@ -109,12 +116,12 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String name) {
-		return new SQLData(name, SQLData.Type.USER, this);
+		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), executor);
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String name) {
-		return new SQLData(name, SQLData.Type.GROUP, this);
+		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), executor);
 	}
 
 	@Override
@@ -317,12 +324,18 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public void close() throws PermissionBackendException {
+		executor.shutdown();
 		if (ds != null) {
 			try {
 				ds.close();
 			} catch (SQLException e) {
 				throw new PermissionBackendException("Error while closing", e);
 			}
+		}
+		try {
+			executor.awaitTermination(4 * 50, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			throw new PermissionBackendException(e);
 		}
 	}
 }

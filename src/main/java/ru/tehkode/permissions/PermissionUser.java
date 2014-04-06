@@ -532,7 +532,7 @@ public class PermissionUser extends PermissionEntity {
 	public Player getPlayer() {
 		try {
 			return manager.getPlugin().getServer().getPlayer(UUID.fromString(getIdentifier()));
-		} catch (IllegalArgumentException ex) {
+		} catch (Throwable ex) { // Not a UUID or method not implemented in server build
 			return manager.getPlugin().getServer().getPlayerExact(getIdentifier());
 		}
 	}

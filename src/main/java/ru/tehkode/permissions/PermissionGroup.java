@@ -250,8 +250,12 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		return this.manager.getUsers(this.getIdentifier());
 	}
 
-	protected Set<PermissionUser> getActiveUsers() {
+	public Set<PermissionUser> getActiveUsers() {
 		return this.manager.getActiveUsers(this.getIdentifier());
+	}
+
+	public Set<PermissionUser> getActiveUsers(boolean inheritance) {
+		return this.manager.getActiveUsers(this.getIdentifier(), inheritance);
 	}
 
 	public boolean isDefault(String worldName) {

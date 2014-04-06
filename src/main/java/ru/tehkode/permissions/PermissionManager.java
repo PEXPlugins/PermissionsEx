@@ -352,16 +352,20 @@ public class PermissionManager {
 		return backend.getUserNames();
 	}
 
-	Set<PermissionUser> getActiveUsers(String groupName) {
+	Set<PermissionUser> getActiveUsers(String groupName, boolean inheritance) {
 		Set<PermissionUser> users = new HashSet<>();
 
 		for (PermissionUser user : this.getActiveUsers()) {
-			if (user.inGroup(groupName, false)) {
+			if (user.inGroup(groupName, inheritance)) {
 				users.add(user);
 			}
 		}
 
 		return Collections.unmodifiableSet(users);
+	}
+
+	Set<PermissionUser> getActiveUsers(String groupName) {
+		return getActiveUsers(groupName, false);
 	}
 	/**
 	 * Return all users in group

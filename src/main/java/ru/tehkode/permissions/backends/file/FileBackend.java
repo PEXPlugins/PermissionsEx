@@ -23,24 +23,30 @@ import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.backends.caching.CachingGroupData;
+import ru.tehkode.permissions.backends.caching.CachingUserData;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author code
  */
 public class FileBackend extends PermissionBackend {
-
 	public final static char PATH_SEPARATOR = '/';
 	public FileConfig permissions;
 	public File permissionsFile;
+	private final ExecutorService executor;
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
+		this.executor = Executors.newSingleThreadExecutor();
 		String permissionFilename = getConfig().getString("file");
 
 		// Default settings
@@ -102,12 +108,12 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String userName) {
-		return new FileData("users", userName, this.permissions, "group");
+		return new CachingUserData(new FileData("users", userName, this.permissions, "group"), executor);
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
-		return new FileData("groups", groupName, this.permissions, "inheritance");
+		return new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), executor);
 	}
 
 	@Override
@@ -287,6 +293,16 @@ public class FileBackend extends PermissionBackend {
 			this.permissions.setSaveSuppressed(oldSaveSuppr);
 		}
 		save();
+	}
+
+	@Override
+	public void close() throws PermissionBackendException {
+		executor.shutdown();
+		try {
+			executor.awaitTermination(50 * 10, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			throw new PermissionBackendException(e);
+		}
 	}
 
 	public void save() {

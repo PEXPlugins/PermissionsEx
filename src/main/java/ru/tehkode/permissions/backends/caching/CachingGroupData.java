@@ -1,0 +1,61 @@
+package ru.tehkode.permissions.backends.caching;
+
+import ru.tehkode.permissions.PermissionsGroupData;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+
+/**
+ * Cached data for groups
+ */
+public class CachingGroupData extends CachingData implements PermissionsGroupData {
+	private final PermissionsGroupData backingData;
+	private final Map<String, Boolean> defaultsMap = new ConcurrentHashMap<>();
+	public CachingGroupData(PermissionsGroupData backingData, Executor executor) {
+		super(executor);
+		this.backingData = backingData;
+	}
+
+	@Override
+	protected PermissionsGroupData getBackingData() {
+		return backingData;
+	}
+
+	@Override
+	public void load() {
+		backingData.load();
+		loadInheritance();
+		loadOptions();
+		loadPermissions();
+		getWorlds();
+	}
+
+	@Override
+	protected void clearCache() {
+		super.clearCache();
+		defaultsMap.clear();
+	}
+
+	@Override
+	public boolean isDefault(String world) {
+		Boolean bool = defaultsMap.get(world);
+		if (bool == null) {
+			bool = getBackingData().isDefault(world);
+			defaultsMap.put(world, bool);
+		}
+		return bool;
+	}
+
+	@Override
+	public void setDefault(final boolean def, final String world) {
+		defaultsMap.put(world, def);
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				getBackingData().setDefault(def, world);
+			}
+		});
+
+	}
+}

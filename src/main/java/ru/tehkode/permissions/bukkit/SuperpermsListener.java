@@ -203,7 +203,7 @@ public class SuperpermsListener implements Listener {
 			if (event.getEntity() instanceof PermissionUser) { // update user only
 				updateSelective(event, (PermissionUser) event.getEntity());
 			} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-				for (PermissionUser user : plugin.getPermissionsManager().getUsers(event.getEntity().getIdentifier(), true)) {
+				for (PermissionUser user : ((PermissionGroup) event.getEntity()).getActiveUsers(true)) {
 					updateSelective(event, user);
 				}
 			}

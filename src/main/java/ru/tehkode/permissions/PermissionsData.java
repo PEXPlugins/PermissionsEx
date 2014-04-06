@@ -140,5 +140,10 @@ public interface PermissionsData {
 	 */
 	public void remove();
 
-
+	/**
+	 * Return map of parents for all worlds
+	 *
+	 * @return Parents for all worlds
+	 */
+	public Map<String,List<String>> getParentsMap();
 }
