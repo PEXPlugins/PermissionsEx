@@ -3,8 +3,8 @@ package ru.tehkode.permissions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import ru.tehkode.permissions.bukkit.ErrorReport;
 
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +27,7 @@ public class RegExpMatcher implements PermissionMatcher {
 			Pattern permissionMatcher = patternCache.get(expression);
 			return permissionMatcher.matcher(permission).matches();
 		} catch (ExecutionException e) {
+			ErrorReport.handleError("While checking for regex match for " + permission + " against expression " + expression, e);
 			return false;
 		}
 

@@ -6,6 +6,11 @@ import java.util.Set;
 
 public interface PermissionsData {
 	/**
+	 * Preload data from entity
+	 */
+	public void load();
+
+	/**
 	 * Returns the current identifier of the user
 	 * @return
 	 */

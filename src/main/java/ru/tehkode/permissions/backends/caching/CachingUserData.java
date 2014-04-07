@@ -9,8 +9,8 @@ import java.util.concurrent.Executor;
  */
 public class CachingUserData extends CachingData implements PermissionsUserData {
 	private final PermissionsUserData userData;
-	public CachingUserData(PermissionsUserData userData, Executor executor) {
-		super(executor);
+	public CachingUserData(PermissionsUserData userData, Executor executor, Object lock) {
+		super(executor, lock);
 		this.userData = userData;
 	}
 
@@ -21,7 +21,7 @@ public class CachingUserData extends CachingData implements PermissionsUserData 
 
 	@Override
 	public boolean setIdentifier(final String identifier) {
-		executor.execute(new Runnable() {
+		execute(new Runnable() {
 			@Override
 			public void run() {
 				getBackingData().setIdentifier(identifier);

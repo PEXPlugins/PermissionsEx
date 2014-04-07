@@ -12,23 +12,14 @@ import java.util.concurrent.Executor;
 public class CachingGroupData extends CachingData implements PermissionsGroupData {
 	private final PermissionsGroupData backingData;
 	private final Map<String, Boolean> defaultsMap = new ConcurrentHashMap<>();
-	public CachingGroupData(PermissionsGroupData backingData, Executor executor) {
-		super(executor);
+	public CachingGroupData(PermissionsGroupData backingData, Executor executor, Object lock) {
+		super(executor, lock);
 		this.backingData = backingData;
 	}
 
 	@Override
 	protected PermissionsGroupData getBackingData() {
 		return backingData;
-	}
-
-	@Override
-	public void load() {
-		backingData.load();
-		loadInheritance();
-		loadOptions();
-		loadPermissions();
-		getWorlds();
 	}
 
 	@Override
@@ -41,7 +32,9 @@ public class CachingGroupData extends CachingData implements PermissionsGroupDat
 	public boolean isDefault(String world) {
 		Boolean bool = defaultsMap.get(world);
 		if (bool == null) {
-			bool = getBackingData().isDefault(world);
+			synchronized (lock) {
+				bool = getBackingData().isDefault(world);
+			}
 			defaultsMap.put(world, bool);
 		}
 		return bool;
@@ -50,7 +43,7 @@ public class CachingGroupData extends CachingData implements PermissionsGroupDat
 	@Override
 	public void setDefault(final boolean def, final String world) {
 		defaultsMap.put(world, def);
-		executor.execute(new Runnable() {
+		execute(new Runnable() {
 			@Override
 			public void run() {
 				getBackingData().setDefault(def, world);

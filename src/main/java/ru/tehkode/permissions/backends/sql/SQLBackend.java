@@ -116,12 +116,12 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String name) {
-		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), executor);
+		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), executor, new Object());
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String name) {
-		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), executor);
+		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), executor, new Object());
 	}
 
 	@Override

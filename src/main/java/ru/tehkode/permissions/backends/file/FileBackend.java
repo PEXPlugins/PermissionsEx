@@ -43,6 +43,7 @@ public class FileBackend extends PermissionBackend {
 	public FileConfig permissions;
 	public File permissionsFile;
 	private final ExecutorService executor;
+	private final Object lock = new Object();
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
@@ -108,12 +109,16 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String userName) {
-		return new CachingUserData(new FileData("users", userName, this.permissions, "group"), executor);
+		final CachingUserData data = new CachingUserData(new FileData("users", userName, this.permissions, "group"), executor, lock);
+		data.load();
+		return data;
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
-		return new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), executor);
+		final CachingGroupData data = new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), executor, lock);
+		data.load();
+		return data;
 	}
 
 	@Override

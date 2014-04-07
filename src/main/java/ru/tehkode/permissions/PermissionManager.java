@@ -298,13 +298,11 @@ public class PermissionManager {
 					PermissionsUserData oldData = backend.getUserData(fallbackName);
 					if (oldData.setIdentifier(identifier)) {
 						data = oldData;
+						data.setOption("name", fallbackName, null);
 						resetUser(fallbackName); // In case somebody requested the old user but conversion was previously unsuccessful
 					} else {
 						throw new IllegalStateException("User already exists with new id " + identifier + " (converting from " + fallbackName + ")");
 					}
-				}
-				if (!data.isVirtual()) {
-					data.setOption("name", fallbackName, null);
 				}
 			}
 			user = new PermissionUser(identifier, data, this);

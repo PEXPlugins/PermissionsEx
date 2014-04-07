@@ -24,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
@@ -282,7 +283,7 @@ public class PermissionsEx extends JavaPlugin {
 
 	public class PlayerEventsListener implements Listener {
 		@EventHandler
-		public void onPlayerLogin(PlayerLoginEvent event) {
+		public void onPlayerLogin(PlayerJoinEvent event) {
 			try {
 				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
 				if (!user.isVirtual()) { // Update name only if user exists in config
