@@ -22,7 +22,7 @@ public abstract class CachingData implements PermissionsData {
 	private Map<String, Map<String, String>> options;
 	private Map<String, List<String>> parents;
 	private Map<String, String> prefixMap = new ConcurrentHashMap<>(), suffixMap = new ConcurrentHashMap<>();
-	private Set<String> worlds;
+	private volatile Set<String> worlds;
 
 	public CachingData(Executor executor, Object lock) {
 		this.executor = executor;
@@ -143,18 +143,17 @@ public abstract class CachingData implements PermissionsData {
 
 	@Override
 	public Set<String> getWorlds() {
-		synchronized (lock) {
-			if (worlds == null) {
-				worlds = getBackingData().getWorlds();
+		Set<String> worlds = this.worlds;
+		if (worlds == null) {
+			synchronized (lock) {
+				this.worlds = worlds = getBackingData().getWorlds();
 			}
-			return worlds;
 		}
+		return worlds;
 	}
 
 	protected void clearWorldsCache() {
-		synchronized (lock) {
-			worlds = null;
-		}
+		worlds = null;
 	}
 
 	@Override
