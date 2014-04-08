@@ -15,13 +15,11 @@ import java.util.concurrent.Executor;
  * Data backend implementing a simple cache
  */
 public abstract class CachingData implements PermissionsData {
-	private static final String MAP_NULL = "\uDEAD\uBEEFNULLVAL";
 	private final Executor executor;
 	protected final Object lock;
 	private Map<String, List<String>> permissions;
 	private Map<String, Map<String, String>> options;
 	private Map<String, List<String>> parents;
-	private Map<String, String> prefixMap = new ConcurrentHashMap<>(), suffixMap = new ConcurrentHashMap<>();
 	private volatile Set<String> worlds;
 
 	public CachingData(Executor executor, Object lock) {
@@ -38,14 +36,6 @@ public abstract class CachingData implements PermissionsData {
 				}
 			}
 		});
-	}
-
-	protected static String serializeNull(String obj) {
-		return obj == null ? MAP_NULL : obj;
-	}
-
-	protected static String deserializeNull(String obj) {
-		return obj == MAP_NULL ? null : obj;
 	}
 
 	protected abstract PermissionsData getBackingData();
@@ -76,8 +66,6 @@ public abstract class CachingData implements PermissionsData {
 			permissions = null;
 			options = null;
 			parents = null;
-			prefixMap.clear();
-			suffixMap.clear();
 			clearWorldsCache();
 		}
 	}
@@ -89,12 +77,6 @@ public abstract class CachingData implements PermissionsData {
 			loadInheritance();
 			loadOptions();
 			loadPermissions();
-			getPrefix(null);
-			getSuffix(null);
-			for (String world : getWorlds()) {
-				getPrefix(world);
-				getSuffix(world);
-			}
 		}
 	}
 
@@ -154,53 +136,6 @@ public abstract class CachingData implements PermissionsData {
 
 	protected void clearWorldsCache() {
 		worlds = null;
-	}
-
-	@Override
-	public String getPrefix(String worldName) {
-		String prefix = prefixMap.get(serializeNull(worldName));
-		if (prefix == null) {
-			synchronized (lock) {
-				prefix = getBackingData().getPrefix(worldName);
-			}
-			prefixMap.put(serializeNull(worldName), serializeNull(prefix));
-		}
-		return deserializeNull(prefix);
-
-	}
-
-	@Override
-	public void setPrefix(final String prefix, final String worldName) {
-		execute(new Runnable() {
-			@Override
-			public void run() {
-				getBackingData().setPrefix(prefix, worldName);
-			}
-		});
-		prefixMap.put(serializeNull(worldName), serializeNull(prefix));
-	}
-
-	@Override
-	public String getSuffix(String worldName) {
-		String suffix = suffixMap.get(serializeNull(worldName));
-		if (suffix == null) {
-			synchronized (lock) {
-				suffix = getBackingData().getPrefix(worldName);
-			}
-			suffixMap.put(serializeNull(worldName), serializeNull(suffix));
-		}
-		return deserializeNull(suffix);
-	}
-
-	@Override
-	public void setSuffix(final String suffix, final String worldName) {
-		execute(new Runnable() {
-			@Override
-			public void run() {
-				getBackingData().setPrefix(suffix, worldName);
-			}
-		});
-		suffixMap.put(serializeNull(worldName), serializeNull(suffix));
 	}
 
 	@Override

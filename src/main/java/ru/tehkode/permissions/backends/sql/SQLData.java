@@ -81,8 +81,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 				this.virtual.set(false);
 			} else {
-				this.globalPrefix = "";
-				this.globalSuffix = "";
+				this.globalPrefix = null;
+				this.globalSuffix = null;
 				this.virtual.set(true);
 			}
 		} catch (SQLException e) {
@@ -214,37 +214,15 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public String getPrefix(String worldName) {
-		return (worldName == null || worldName.isEmpty()) ? this.globalPrefix : this.getOption("prefix", worldName);
-	}
-
-	@Override
-	public void setPrefix(String prefix, String worldName) {
-		if (worldName == null || worldName.isEmpty()) {
-			this.globalPrefix = prefix;
-			this.updateInfo();
-		} else {
-			this.setOption("prefix", prefix, worldName);
-		}
-	}
-
-	@Override
-	public String getSuffix(String worldName) {
-		return (worldName == null || worldName.isEmpty()) ? this.globalSuffix : this.getOption("suffix", worldName);
-	}
-
-	@Override
-	public void setSuffix(String suffix, String worldName) {
-		if (worldName == null || worldName.isEmpty()) {
-			this.globalSuffix = suffix;
-			this.updateInfo();
-		} else {
-			this.setOption("suffix", suffix, worldName);
-		}
-	}
-
-	@Override
 	public String getOption(String option, String worldName) {
+		if (worldName == null || worldName.isEmpty()) {
+			if (option.equals("prefiix")) {
+				return globalPrefix;
+			} else if (option.equals("suffix")) {
+				return globalSuffix;
+			}
+		}
+
 		try (SQLConnection conn = backend.getSQL()) {
 			ResultSet res = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `permission` = ? AND `world` = ? AND CHAR_LENGTH(`value`) > 0 LIMIT 1", getIdentifier(), this.type.ordinal(), option, worldName == null ? "" : worldName).executeQuery();
 			if (res.next()) {
@@ -266,6 +244,18 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			worldName = "";
 		}
 
+		if (worldName.isEmpty()) {
+			if (option.equals("prefix")) {
+				this.globalPrefix = value;
+				updateInfo();
+				return;
+			} else if (option.equals("suffix")) {
+				this.globalSuffix = value;
+				updateInfo();
+				return;
+			}
+		}
+
 		if (value == null || value.isEmpty()) {
 			try (SQLConnection conn = backend.getSQL()) {
 				conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ? AND CHAR_LENGTH(`value`) > 0", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
@@ -284,6 +274,12 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public Map<String, String> getOptions(String worldName) {
 		Map<String, String> options = new HashMap<>();
+
+		if (worldName == null || worldName.isEmpty()) {
+			options.put("prefix", globalPrefix);
+			options.put("suffix", globalSuffix);
+		}
+
 		try (SQLConnection conn = backend.getSQL()) {
 			ResultSet set = conn.prepAndBind("SELECT `permission`, `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND CHAR_LENGTH(`value`) > 0", getIdentifier(), type.ordinal(), worldName == null ? "" : worldName).executeQuery();
 			while (set.next()) {
@@ -299,6 +295,12 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public Map<String, Map<String, String>> getOptionsMap() {
 		Map<String, Map<String, String>> allOptions = new HashMap<>();
+
+		// TODO: Make all prefixes options
+		Map<String, String> globalOpts = new HashMap<>();
+		allOptions.put(null, globalOpts);
+		globalOpts.put("prefix", globalPrefix);
+		globalOpts.put("suffix", globalSuffix);
 
 		try (SQLConnection conn = backend.getSQL()) {
 			ResultSet res = conn.prepAndBind("SELECT `permission`, `value`, `world` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND CHAR_LENGTH(`value`) > 0", getIdentifier(), type.ordinal()).executeQuery();

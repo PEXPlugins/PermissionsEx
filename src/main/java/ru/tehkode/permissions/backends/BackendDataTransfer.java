@@ -29,11 +29,7 @@ public class BackendDataTransfer {
 		}
 
 		to.setParents(from.getParents(null), null);
-		to.setPrefix(from.getPrefix(null), null);
-		to.setSuffix(from.getSuffix(null), null);
 		for (String world : from.getWorlds()) {
-			to.setPrefix(from.getPrefix(world), world);
-			to.setSuffix(from.getSuffix(world), world);
 			List<String> groups =  from.getParents(world);
 			if (groups == null || groups.isEmpty()) {
 				continue;

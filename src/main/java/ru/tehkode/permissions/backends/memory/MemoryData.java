@@ -77,26 +77,6 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
-	public String getPrefix(String worldName) {
-		return worldPrefix.containsKey(worldName) ? worldPrefix.get(worldName) : "";
-	}
-
-	@Override
-	public void setPrefix(String prefix, String worldName) {
-		worldPrefix.put(worldName, prefix);
-	}
-
-	@Override
-	public String getSuffix(String worldName) {
-		return worldSuffix.containsKey(worldName) ? worldSuffix.get(worldName) : "";
-	}
-
-	@Override
-	public void setSuffix(String suffix, String worldName) {
-		worldSuffix.put(worldName, suffix);
-	}
-
-	@Override
 	public String getOption(String option, String worldName) {
 		if (worldsOptions.containsKey(worldName)) {
 			Map<String, String> worldOption = worldsOptions.get(worldName);
@@ -111,7 +91,7 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	public void setOption(String option, String worldName, String value) {
 		Map<String, String> worldOptions = worldsOptions.get(worldName);
 		if (worldOptions == null) {
-			worldOptions = new HashMap<String, String>();
+			worldOptions = new HashMap<>();
 			worldsOptions.put(worldName, worldOptions);
 		}
 		worldOptions.put(option, value);

@@ -147,47 +147,37 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public String getPrefix(String worldName) {
-		return this.node.getString(formatPath(worldName, "prefix"));
-	}
-
-	@Override
-	public void setPrefix(String prefix, String worldName) {
-		this.node.set(formatPath(worldName, "prefix"), prefix);
-		save();
-	}
-
-	@Override
-	public String getSuffix(String worldName) {
-		return this.node.getString(formatPath(worldName, "suffix"));
-	}
-
-	@Override
-	public void setSuffix(String suffix, String worldName) {
-		this.node.set(formatPath(worldName, "suffix"), suffix);
-		save();
-	}
-
-	@Override
 	public String getOption(String option, String worldName) {
-		return this.node.getString(formatPath(worldName, "options", option));
+		if (option.equals("prefix") || option.equals("suffix")) {
+			return this.node.getString(formatPath(worldName, option));
+		} else {
+			return this.node.getString(formatPath(worldName, "options", option));
+		}
 	}
 
 	@Override
 	public void setOption(String option, String value, String worldName) {
-		this.node.set(formatPath(worldName, "options", option), value);
+		if (option.equals("prefix") || option.equals("suffix")) {
+			this.node.set(formatPath(worldName, option), value);
+		} else {
+			this.node.set(formatPath(worldName, "options", option), value);
+		}
 		save();
 	}
 
 	@Override
 	public Map<String, String> getOptions(String worldName) {
 		ConfigurationSection optionsSection = this.node.getConfigurationSection(formatPath(worldName, "options"));
+		Map<String, String> worldOptions = new LinkedHashMap<>();
+		worldOptions.put("prefix", this.node.getString(formatPath(worldName, "prefix")));
+		worldOptions.put("suffix", this.node.getString(formatPath(worldName, "suffix")));
 
 		if (optionsSection == null) {
 			return Collections.emptyMap();
 		}
 
-		return collectOptions(optionsSection);
+		return Collections.unmodifiableMap(collectOptions(worldOptions, optionsSection));
+
 	}
 
 	@Override
@@ -277,9 +267,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		save();
 	}
 
-	private Map<String, String> collectOptions(ConfigurationSection section) {
-		Map<String, String> options = new LinkedHashMap<>();
-
+	private Map<String, String> collectOptions(Map<String, String> options, ConfigurationSection section) {
 		for (String key : section.getKeys(true)) {
 			if (section.isConfigurationSection(key)) {
 				continue;
@@ -288,7 +276,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			options.put(key.replace(section.getRoot().options().pathSeparator(), '.'), section.getString(key));
 		}
 
-		return Collections.unmodifiableMap(options);
+		return options;
 	}
 
 	protected static String formatPath(String worldName, String node, String value) {

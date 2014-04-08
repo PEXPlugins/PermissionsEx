@@ -47,38 +47,6 @@ public interface PermissionsData {
 	public Set<String> getWorlds();
 
 	/**
-	 * Returns prefix in specified world
-	 *
-	 * @param worldName
-	 * @return
-	 */
-	public String getPrefix(String worldName);
-
-	/**
-	 * Sets prefix in specified world
-	 *
-	 * @param prefix
-	 * @param worldName
-	 */
-	public void setPrefix(String prefix, String worldName);
-
-	/**
-	 * Returns suffix in specified world
-	 *
-	 * @param worldName
-	 * @return
-	 */
-	public String getSuffix(String worldName);
-
-	/**
-	 * Set suffix in specified world
-	 *
-	 * @param suffix
-	 * @param worldName
-	 */
-	public void setSuffix(String suffix, String worldName);
-
-	/**
 	 * Returns option value in specified worlds.
 	 * null if option is not defined in that world
 	 *

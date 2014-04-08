@@ -96,7 +96,7 @@ public abstract class PermissionEntity {
 	}
 
 	public String getOwnPrefix(String worldName) {
-		return getData().getPrefix(worldName);
+		return getOwnOption("prefix", worldName);
 	}
 
 	/**
@@ -111,7 +111,7 @@ public abstract class PermissionEntity {
 	}
 
 	public String getOwnSuffix(String worldName) {
-		return getData().getSuffix(worldName);
+		return getOwnOption("suffix", worldName);
 	}
 
 	/**
@@ -145,7 +145,7 @@ public abstract class PermissionEntity {
 	 * @param prefix new prefix
 	 */
 	public void setPrefix(String prefix, String worldName) {
-		getData().setPrefix(prefix, worldName);
+		getData().setOption("prefix", prefix, worldName);
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -175,7 +175,7 @@ public abstract class PermissionEntity {
 	 * @param suffix new suffix
 	 */
 	public void setSuffix(String suffix, String worldName) {
-		getData().setSuffix(suffix, worldName);
+		getData().setOption("suffix", suffix, worldName);
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
