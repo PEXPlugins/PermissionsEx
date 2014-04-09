@@ -90,12 +90,6 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public void setOption(String option, String value, String worldName) {
-		clearCache();
-		super.setOption(option, value, worldName);
-	}
-
-	@Override
 	protected List<PermissionGroup> getParentsInternal(String worldName) {
 		if (!this.cachedGroups.containsKey(worldName)) {
 			List<PermissionGroup> groups = super.getParentsInternal(worldName);
@@ -108,13 +102,6 @@ public class PermissionUser extends PermissionEntity {
 
 		return this.cachedGroups.get(worldName);
 	}
-
-	@Override
-	public void setParentsIdentifier(List<String> parentsName, String world) {
-		clearCache();
-		super.setParentsIdentifier(parentsName, world);
-	}
-
 
 	@Deprecated
 	public Map<String, List<PermissionGroup>> getAllGroups() {
@@ -464,24 +451,6 @@ public class PermissionUser extends PermissionEntity {
 		return this.cachedPermissions.get(worldName);
 	}
 
-	@Override
-	public void setPermissions(List<String> permissions, String worldName) {
-		this.clearCache();
-		super.setPermissions(permissions, worldName);
-	}
-
-	@Override
-	public void addTimedPermission(String permission, String world, int lifeTime) {
-		this.clearCache();
-		super.addTimedPermission(permission, world, lifeTime);
-	}
-
-	@Override
-	public void removeTimedPermission(String permission, String world) {
-		this.clearCache();
-		super.removeTimedPermission(permission, world);
-	}
-
 	protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
 		if (!this.isRanked(ladderName)) { // not ranked
 			throw new RankingException("User are not in this ladder", this, promoter);
@@ -576,30 +545,6 @@ public class PermissionUser extends PermissionEntity {
 		this.cachedPermissions.clear();
 		this.cachedAnwsers.clear();
 		this.cachedOptions.clear();
-	}
-
-	@Override
-	public void setPrefix(String prefix, String worldName) {
-		this.clearCache();
-		super.setPrefix(prefix, worldName);
-	}
-
-	@Override
-	public void setSuffix(String postfix, String worldName) {
-		this.clearCache();
-		super.setSuffix(postfix, worldName);
-	}
-
-	@Override
-	public void remove() {
-		this.clearCache();
-		super.remove();
-	}
-
-	@Override
-	public void save() {
-		this.clearCache();
-		super.save();
 	}
 
 	@Override

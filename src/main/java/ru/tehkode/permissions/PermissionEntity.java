@@ -57,6 +57,11 @@ public abstract class PermissionEntity {
 	protected abstract PermissionsData getData();
 
 	/**
+	 * Clears cache of entity or members.
+	 */
+	protected abstract void clearCache();
+
+	/**
 	 * This method 100% run after all constructors have been run and entity
 	 * object, and entity object are completely ready to operate
 	 */
@@ -146,6 +151,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setPrefix(String prefix, String worldName) {
 		getData().setOption("prefix", prefix, worldName);
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -176,6 +182,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setSuffix(String suffix, String worldName) {
 		getData().setOption("suffix", suffix, worldName);
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -356,6 +363,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setPermissions(List<String> permissions, String world) {
 		getData().setPermissions(permissions, world);
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
 	}
 
@@ -478,6 +486,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setOption(String option, String value, String world) {
 		getData().setOption(option, value, world);
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
 	}
 
@@ -580,6 +589,7 @@ public abstract class PermissionEntity {
 	 */
 	public void save() {
 		getData().save();
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.SAVED);
 	}
 
@@ -588,6 +598,7 @@ public abstract class PermissionEntity {
 	 */
 	public void remove() {
 		getData().remove();
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.REMOVED);
 	}
 
@@ -680,6 +691,7 @@ public abstract class PermissionEntity {
 			this.timedPermissionsTime.put(world + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime);
 		}
 
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
 	}
 
@@ -701,6 +713,7 @@ public abstract class PermissionEntity {
 		this.timedPermissions.get(world).remove(permission);
 		this.timedPermissions.remove(world + ":" + permission);
 
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
 	}
 
@@ -899,6 +912,7 @@ public abstract class PermissionEntity {
 
 	public void setParentsIdentifier(List<String> parentNames, String world) {
 		getData().setParents(parentNames, world);
+		clearCache();
 		this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
 	}
 
