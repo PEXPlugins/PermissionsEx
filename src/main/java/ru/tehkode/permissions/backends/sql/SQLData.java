@@ -271,13 +271,19 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		}
 	}
 
+	private <K, V> void putIfNotNull(Map<K, V> map, K key, V value) {
+		if (value != null) {
+			map.put(key, value);
+		}
+	}
+
 	@Override
 	public Map<String, String> getOptions(String worldName) {
 		Map<String, String> options = new HashMap<>();
 
 		if (worldName == null || worldName.isEmpty()) {
-			options.put("prefix", globalPrefix);
-			options.put("suffix", globalSuffix);
+			putIfNotNull(options, "prefix", globalPrefix);
+			putIfNotNull(options, "suffix", globalSuffix);
 		}
 
 		try (SQLConnection conn = backend.getSQL()) {
@@ -299,8 +305,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		// TODO: Make all prefixes options
 		Map<String, String> globalOpts = new HashMap<>();
 		allOptions.put(null, globalOpts);
-		globalOpts.put("prefix", globalPrefix);
-		globalOpts.put("suffix", globalSuffix);
+		putIfNotNull(globalOpts, "prefix", globalPrefix);
+		putIfNotNull( globalOpts, "suffix", globalSuffix);
 
 		try (SQLConnection conn = backend.getSQL()) {
 			ResultSet res = conn.prepAndBind("SELECT `permission`, `value`, `world` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND CHAR_LENGTH(`value`) > 0", getIdentifier(), type.ordinal()).executeQuery();

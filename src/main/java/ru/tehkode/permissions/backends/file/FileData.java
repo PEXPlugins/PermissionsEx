@@ -165,12 +165,19 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		save();
 	}
 
+	private <K, V> void putIfNotNull(Map<K, V> map, K key, V value) {
+		if (value != null) {
+			map.put(key, value);
+		}
+	}
+
 	@Override
 	public Map<String, String> getOptions(String worldName) {
 		ConfigurationSection optionsSection = this.node.getConfigurationSection(formatPath(worldName, "options"));
 		Map<String, String> worldOptions = new LinkedHashMap<>();
-		worldOptions.put("prefix", this.node.getString(formatPath(worldName, "prefix")));
-		worldOptions.put("suffix", this.node.getString(formatPath(worldName, "suffix")));
+
+		putIfNotNull(worldOptions, "prefix", this.node.getString(formatPath(worldName, "prefix")));
+		putIfNotNull(worldOptions, "suffix", this.node.getString(formatPath(worldName, "suffix")));
 
 		if (optionsSection == null) {
 			return Collections.emptyMap();
