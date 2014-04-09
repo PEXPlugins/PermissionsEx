@@ -58,7 +58,7 @@ public class RegExpMatcher implements PermissionMatcher {
 
 		String regexp = rawRegexp ? expression : expression.replace(".", "\\.").replace("*", "(.*)");
 
-		try {
+	/*	try {
 			Matcher rangeMatcher = rangeExpression.matcher(regexp);
 			while (rangeMatcher.find()) {
 				StringBuilder range = new StringBuilder();
@@ -85,7 +85,7 @@ public class RegExpMatcher implements PermissionMatcher {
 				regexp = regexp.replace(rangeMatcher.group(0), range.toString());
 			}
 		} catch (Throwable ignore) {
-		}
+		}*/
 
 		return regexp;
 	}

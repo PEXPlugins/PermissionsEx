@@ -13,7 +13,7 @@ public abstract class PermissionMatcherTest {
         assertTrue(matcher.isMatches("PERMISSION.*", "permission.Case.Are.does.NOT.matter"));
     }
     
-    @Test
+    //@Test
     public void testRanges() {
         // low boundary
         assertTrue(matcher.isMatches("permission.range.(100-200)", "permission.range.100"));
