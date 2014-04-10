@@ -155,7 +155,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 				return true;
 			}
 
-			if (visitedParents != null && manager.getGroup(parentGroup).isChildOf(group, worldName, visitedParents)) {
+			if (visitedParents != null && manager.getGroup(parentGroup) != null && manager.getGroup(parentGroup).isChildOf(group, worldName, visitedParents)) {
 				return true;
 			}
 		}
