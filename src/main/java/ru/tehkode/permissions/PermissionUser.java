@@ -55,9 +55,7 @@ public class PermissionUser extends PermissionEntity {
 		super.initialize();
 
 		if (this.manager.shouldCreateUserRecords() && this.isVirtual()) {
-			this.setParentsIdentifier(this.getOwnParentIdentifiers(null), null);
-
-			this.save();
+			this.getData().setParents(this.getOwnParentIdentifiers(null), null);
 		}
 
 		if (this.isDebug()) {
