@@ -242,7 +242,7 @@ public class PermissionManager {
 			OfflinePlayer player = plugin.getServer().getOfflinePlayer(username);
 			UUID userUUID = null;
 			try {
-				userUUID = player.getUniqueId();
+				userUUID = player instanceof Player ? ((Player) player).getUniqueId() : player.getUniqueId();
 			} catch (Throwable t) {
 				// Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
 			}
