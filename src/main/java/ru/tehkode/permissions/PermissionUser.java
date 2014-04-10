@@ -18,7 +18,6 @@
  */
 package ru.tehkode.permissions;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;

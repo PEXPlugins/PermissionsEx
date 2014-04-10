@@ -33,12 +33,12 @@ public class PermissionEntityEvent extends PermissionEvent {
 	protected transient PermissionEntity entity;
 	protected Action action;
 	protected PermissionEntity.Type type;
-	protected String entityName;
+	protected String entityIdentifier;
 
 	public PermissionEntityEvent(UUID sourceUUID, PermissionEntity entity, Action action) {
 		super(sourceUUID);
 		this.entity = entity;
-		this.entityName = entity.getIdentifier();
+		this.entityIdentifier = entity.getIdentifier();
 		this.type = entity.getType();
 		this.action = action;
 	}
@@ -51,18 +51,18 @@ public class PermissionEntityEvent extends PermissionEvent {
 		if (entity == null) {
 			switch (type) {
 				case GROUP:
-					entity = PermissionsEx.getPermissionManager().getGroup(entityName);
+					entity = PermissionsEx.getPermissionManager().getGroup(entityIdentifier);
 					break;
 				case USER:
-					entity = PermissionsEx.getPermissionManager().getUser(entityName);
+					entity = PermissionsEx.getPermissionManager().getUser(entityIdentifier);
 					break;
 			}
 		}
 		return entity;
 	}
 
-	public String getEntityName() {
-		return entityName;
+	public String getEntityIdentifier() {
+		return entityIdentifier;
 	}
 
 	public PermissionEntity.Type getType() {

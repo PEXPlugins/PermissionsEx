@@ -123,10 +123,10 @@ public class PermissionManager {
 			if (reloadEntity) {
 				switch (event.getType()) {
 					case USER:
-						users.remove(event.getEntityName());
+						users.remove(event.getEntityIdentifier());
 						break;
 					case GROUP:
-						PermissionGroup group = groups.remove(event.getEntityName());
+						PermissionGroup group = groups.remove(event.getEntityIdentifier());
 						if (group != null) {
 							for (Iterator<PermissionUser> it = users.values().iterator(); it.hasNext(); ) {
 								if (it.next().inGroup(group, true)) {

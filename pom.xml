@@ -53,6 +53,32 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>org.jboss.seven2six</groupId>
+            <artifactId>seven2six</artifactId>
+            <version>1.1.Final</version>
+            <executions>
+              <!-- run after "compile", lets your artifact work on 1.6 -->
+              <execution>
+                <id>weave</id>
+                <phase>process-classes</phase>
+                <goals>
+                  <goal>transform</goal>
+                </goals>
+              </execution>
+              <!-- run after "test-compile", lets you run your tests on 1.6 -->
+              <execution>
+                <id>weave-tests</id>
+                <phase>process-test-classes</phase>
+                <goals>
+                  <goal>transform</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
     </build>
     <dependencies>
