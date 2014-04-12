@@ -236,6 +236,12 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public List<String> getParents(String worldName) {
 		List<String> parents = this.node.getStringList(formatPath(worldName, parentPath));
+		for (Iterator<String> it = parents.iterator(); it.hasNext();) {
+			final String test = it.next();
+			if (test == null || test.isEmpty()) {
+				it.remove();
+			}
+		}
 
 		if (parents == null || parents.isEmpty()) {
 			return Collections.emptyList();

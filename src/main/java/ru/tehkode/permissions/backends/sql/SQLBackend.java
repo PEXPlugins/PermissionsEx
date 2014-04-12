@@ -18,7 +18,7 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import org.apache.commons.dbcp.BasicDataSource;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
@@ -75,8 +75,8 @@ public class SQLBackend extends PermissionBackend {
 		this.ds.setUrl("jdbc:" + dbUri);
 		this.ds.setUsername(dbUser);
 		this.ds.setPassword(dbPassword);
-		this.ds.setMaxTotal(20);
-		this.ds.setMaxWaitMillis(200); // 4 ticks
+		this.ds.setMaxActive(20);
+		this.ds.setMaxWait(200); // 4 ticks
 
 		try (SQLConnection conn = getSQL()) {
 			conn.checkConnection();
