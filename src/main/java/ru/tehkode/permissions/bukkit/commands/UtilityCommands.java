@@ -19,9 +19,11 @@
 package ru.tehkode.permissions.bukkit.commands;
 
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.ErrorReport;
@@ -31,8 +33,10 @@ import ru.tehkode.permissions.commands.CommandsManager.CommandBinding;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class UtilityCommands extends PermissionsCommand {
@@ -141,6 +145,47 @@ public class UtilityCommands extends PermissionsCommand {
 	public void printHierarchy(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		sender.sendMessage("User/Group inheritance hierarchy:");
 		this.sendMessage(sender, this.printHierarchy(null, this.autoCompleteWorldName(args.get("world")), 0));
+	}
+
+	@Command(name = "pex",
+			syntax = "convert uuid [force]",
+	        permission = "permissions.convert",
+	        description = "Bulk convert user data to UUID-based storage")
+	public void convertUUID(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		PermissionBackend backend = plugin.getPermissionsManager().getBackend();
+		if (!plugin.getServer().getOnlineMode() && !"force".equals(args.get("force"))) {
+			sender.sendMessage(ChatColor.RED + "This server is running in offline mode and UUIDs may not be stable. Please run '/pex convert uuid force' to perform conversion anyway, or switch to online mode.");
+			return;
+		}
+		int count = 0;
+		sender.sendMessage("Beginning conversion to UUID (This may take a while (a long while))");
+		backend.setPersistent(false);
+		try {
+			Collection<String> userIdentifiers = backend.getUserIdentifiers();
+			for (String name : backend.getUserIdentifiers()) {
+				try {
+					UUID uid = UUID.fromString(name);
+					continue;
+				} catch (IllegalArgumentException ex) {
+					// We aren't doing uuid
+					OfflinePlayer player = plugin.getServer().getOfflinePlayer(name);
+					if (player.getName() == null || player.getUniqueId() == null) {
+						sender.sendMessage("Unable to convert user named " + name + " because name or UUID in profile was null!");
+						continue;
+					}
+
+					PermissionsUserData userData = backend.getUserData(name);
+					userData.setIdentifier(player.getUniqueId().toString());
+					userData.setOption("name", player.getName(), null);
+					if (++count % 100 == 0) {
+						sender.sendMessage(ChatColor.GRAY + "Converted " + count + " of " + userIdentifiers.size() + " users");
+					}
+				}
+			}
+		} finally {
+			backend.setPersistent(true);
+		}
+		sender.sendMessage(ChatColor.GREEN + "Conversion to UUID complete!");
 	}
 
 	@Command(name = "pex",

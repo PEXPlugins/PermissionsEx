@@ -18,6 +18,7 @@ commands:
            /<command> backend <backend> - Change permission backend on the fly (Use with caution!)
            /<command> hierarchy [world] - Print complete user/group hierarchy
            /<command> import <backend> - Import data from <backend> into currently selected backend
+           /<command> convert uuid - Bulk convert user data to UUID-based storage
            /<command> toggle debug - Enable/disable debug mode
            /<command> help [page] [count] - PermissionsEx commands help
            /<command> users list - List all registered users

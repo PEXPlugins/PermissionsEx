@@ -310,6 +310,14 @@ public class FileBackend extends PermissionBackend {
 		}
 	}
 
+	@Override
+	public void setPersistent(boolean persistent) {
+		this.permissions.setSaveSuppressed(!persistent);
+		if (persistent) {
+			this.save();
+		}
+	}
+
 	public void save() {
 		try {
 			this.permissions.save();

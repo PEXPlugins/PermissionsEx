@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 public abstract class PermissionBackend {
 	private final PermissionManager manager;
 	private final ConfigurationSection backendConfig;
+	private boolean persistent;
 
 	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		this.manager = manager;
@@ -111,18 +112,25 @@ public abstract class PermissionBackend {
 	 * @param backend The backend to load data from
 	 */
 	public void loadFrom(PermissionBackend backend) {
-		for (String group : backend.getGroupNames()) {
-			BackendDataTransfer.transferGroup(backend.getGroupData(group), getGroupData(group));
-		}
+		setPersistent(false);
+		try {
+			for (String group : backend.getGroupNames()) {
+				BackendDataTransfer.transferGroup(backend.getGroupData(group), getGroupData(group));
+			}
 
-		for (String user : backend.getUserIdentifiers()) {
-			BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
-		}
+			for (String user : backend.getUserIdentifiers()) {
+				BackendDataTransfer.transferUser(backend.getUserData(user), getUserData(user));
+			}
 
-		for (Map.Entry<String, List<String>> ent : backend.getAllWorldInheritance().entrySet()) {
-			setWorldInheritance(ent.getKey(), ent.getValue()); // Could merge data but too complicated & too lazy
+			for (Map.Entry<String, List<String>> ent : backend.getAllWorldInheritance().entrySet()) {
+				setWorldInheritance(ent.getKey(), ent.getValue()); // Could merge data but too complicated & too lazy
+			}
+		} finally {
+			setPersistent(true);
 		}
 	}
+
+	public void setPersistent(boolean persistent) {}
 
 	// -- Backend lookup/creation
 
