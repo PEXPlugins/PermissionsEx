@@ -263,16 +263,12 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public boolean isDefault(String world) {
-		return world == null ? this.node.getBoolean("default") : this.node.getBoolean(formatPath(world, "default"));
+		return this.node.getBoolean(formatPath(world, "default"));
 	}
 
 	@Override
 	public void setDefault(boolean def, String world) {
-		if (world == null) {
-			this.node.set("default", def);
-		} else {
-			this.node.set(formatPath(world, "default"), def);
-		}
+		this.node.set(formatPath(world, "default"), def);
 		save();
 	}
 
