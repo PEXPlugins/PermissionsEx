@@ -126,6 +126,11 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
 	}
 
+	@Override
+	protected List<String> getPermissionsInternal(String worldName, boolean filterNonInheritable) {
+		return super.getPermissionsInternal(worldName, true);
+	}
+
 	/**
 	 * Check if this group is descendant of specified group
 	 *

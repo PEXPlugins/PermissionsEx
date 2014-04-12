@@ -259,7 +259,7 @@ public abstract class PermissionEntity {
 					}
 
 					ret.add(perm);
-					getInheritedChildPermissions(perm, ret);
+					entity.getInheritedChildPermissions(perm, ret);
 				}
 
 				for (String perm : entity.getTimedPermissions(world)) {
@@ -268,7 +268,7 @@ public abstract class PermissionEntity {
 					}
 
 					ret.add(perm);
-					getInheritedChildPermissions(perm, ret);
+					entity.getInheritedChildPermissions(perm, ret);
 				}
 				return null;
 			}
