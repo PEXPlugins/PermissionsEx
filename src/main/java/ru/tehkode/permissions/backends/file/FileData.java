@@ -148,20 +148,16 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public String getOption(String option, String worldName) {
-		if (option.equals("prefix") || option.equals("suffix")) {
-			return this.node.getString(formatPath(worldName, option));
-		} else {
-			return this.node.getString(formatPath(worldName, "options", option));
+		String ret = this.node.getString(formatPath(worldName, "options", option));
+		if (ret == null && (option.equals("prefix") || option.equals("suffix"))) {
+			ret = this.node.getString(formatPath(worldName, option));
 		}
+		return ret;
 	}
 
 	@Override
 	public void setOption(String option, String value, String worldName) {
-		if (option.equals("prefix") || option.equals("suffix")) {
-			this.node.set(formatPath(worldName, option), value);
-		} else {
-			this.node.set(formatPath(worldName, "options", option), value);
-		}
+		this.node.set(formatPath(worldName, "options", option), value);
 		save();
 	}
 
