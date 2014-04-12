@@ -2,8 +2,8 @@ package ru.tehkode.permissions.backends.caching;
 
 import ru.tehkode.permissions.PermissionsGroupData;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 /**
@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
  */
 public class CachingGroupData extends CachingData implements PermissionsGroupData {
 	private final PermissionsGroupData backingData;
-	private final Map<String, Boolean> defaultsMap = new ConcurrentHashMap<>();
+	private final Map<String, Boolean> defaultsMap = new HashMap<>();
 	public CachingGroupData(PermissionsGroupData backingData, Executor executor, Object lock) {
 		super(executor, lock);
 		this.backingData = backingData;
