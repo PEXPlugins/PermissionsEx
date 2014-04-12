@@ -17,16 +17,34 @@ public class PermissionsExConfig {
 	private final boolean logPlayers;
 	private final boolean createUserRecords;
 	private final String defaultBackend;
+	private final boolean updaterEnabled;
 
 	public PermissionsExConfig(Configuration config) {
 		this.config = config;
-		this.useNetEvents = config.getBoolean("multiserver.use-netevents", true);
-		this.debug = config.getBoolean("permissions.debug", false);
-		this.allowOps = config.getBoolean("permissions.allowOps", false);
-		this.userAddGroupsLast = config.getBoolean("permissions.user-add-groups-last", false);
-		this.logPlayers = config.getBoolean("permissions.log-players", false);
-		this.createUserRecords = config.getBoolean("permissions.createUserRecords", false);
-		this.defaultBackend = config.getString("permissions.backend", PermissionBackend.DEFAULT_BACKEND);
+		this.useNetEvents = getBoolean("multiserver.use-netevents", true);
+		this.debug = getBoolean("permissions.debug", false);
+		this.allowOps = getBoolean("permissions.allowOps", false);
+		this.userAddGroupsLast = getBoolean("permissions.user-add-groups-last", false);
+		this.logPlayers = getBoolean("permissions.log-players", false);
+		this.createUserRecords = getBoolean("permissions.createUserRecords", false);
+		this.defaultBackend = getString("permissions.backend", PermissionBackend.DEFAULT_BACKEND);
+		this.updaterEnabled = getBoolean("updater", true);
+	}
+
+	private boolean getBoolean(String key, boolean def) {
+		if (!config.isSet(key)) {
+			config.set(key, def);
+		}
+		return config.getBoolean(key, def);
+	}
+
+	private String getString(String key, String def) {
+		String ret = config.getString(key);
+		if (ret == null) {
+			ret = def;
+			config.set(key, ret);
+		}
+		return ret;
 	}
 
 	public boolean useNetEvents() {
@@ -55,6 +73,10 @@ public class PermissionsExConfig {
 
 	public boolean createUserRecords() {
 		return createUserRecords;
+	}
+
+	public boolean updaterEnabled() {
+		return updaterEnabled;
 	}
 
 	public ConfigurationSection getBackendConfig(String backend) {

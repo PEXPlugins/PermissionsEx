@@ -24,10 +24,6 @@
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
-                <!--<targetPath>/</targetPath>-->
-                <includes>
-                    <include>**</include>
-                </includes>
                 <filtering>true</filtering>
             </resource>
         </resources>
@@ -50,6 +46,19 @@
                   <goal>shade</goal>
                 </goals>
                 <phase>package</phase>
+                <configuration>
+                  <createDependencyReducedPom>false</createDependencyReducedPom>
+                  <relocations>
+                    <relocation>
+                      <pattern>net.gravitydevelopment.updater</pattern>
+                      <shadedPattern>ru.tehkode.libs.net.gravitydevelopment.updater</shadedPattern>
+                    </relocation>
+                    <relocation>
+                      <pattern>org.apache</pattern>
+                      <shadedPattern>ru.tehkode.libs.org.apache</shadedPattern>
+                    </relocation>
+                  </relocations>
+                </configuration>
               </execution>
             </executions>
           </plugin>
@@ -113,6 +122,11 @@
             <artifactId>commons-dbcp2</artifactId>
             <version>2.0</version>
         </dependency>
+        <dependency>
+            <groupId>net.gravitydevelopment.updater</groupId>
+            <artifactId>updater</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
@@ -122,6 +136,10 @@
         <repository>
             <id>pex-repo</id>
             <url>http://pex-repo.zachsthings.com</url>
+        </repository>
+        <repository>
+            <id>gravity-repo</id>
+            <url>http://repo.gravitydevelopment.net</url>
         </repository>
     </repositories>
 </project>

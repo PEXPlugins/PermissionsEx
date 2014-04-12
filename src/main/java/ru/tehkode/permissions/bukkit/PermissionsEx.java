@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit;
 
+import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -59,6 +60,7 @@ import java.util.logging.LogRecord;
  * @author code
  */
 public class PermissionsEx extends JavaPlugin {
+	private static final int BUKKITDEV_ID = 31279;
 	protected PermissionManager permissionsManager;
 	protected CommandsManager commandsManager;
 	private PermissionsExConfig config;
@@ -177,6 +179,18 @@ public class PermissionsEx extends JavaPlugin {
 
 			// Start timed permissions cleaner timer
 			this.permissionsManager.initTimer();
+			if (config.updaterEnabled()) {
+				final Updater updater = new Updater(this, BUKKITDEV_ID, this.getFile(), Updater.UpdateType.DEFAULT, false); // Variable for future use
+				getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
+					@Override
+					public void run() {
+						switch (updater.getResult()) {
+							case SUCCESS:
+								getLogger().info("An update to " + updater.getLatestName() + " was downloaded and will be applied on next server launch.");
+						}
+					}
+				});
+			}
 		} catch (PermissionBackendException e) {
 			logBackendExc(e);
 			this.getPluginLoader().disablePlugin(this);
