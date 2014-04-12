@@ -9,3 +9,4 @@
 /.idea/
 /PermissionsEx.iml
 .DS_Store
+/dependency-reduced-pom.xml

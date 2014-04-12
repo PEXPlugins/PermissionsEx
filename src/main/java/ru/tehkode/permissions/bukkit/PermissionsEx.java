@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit;
 
+import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -31,18 +32,13 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.memory.MemoryBackend;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.file.FileBackend;
+import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.sql.SQLBackend;
-import ru.tehkode.permissions.bukkit.commands.GroupCommands;
-import ru.tehkode.permissions.bukkit.commands.PromotionCommands;
-import ru.tehkode.permissions.bukkit.commands.UserCommands;
-import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
-import ru.tehkode.permissions.bukkit.commands.WorldCommands;
+import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -173,6 +169,9 @@ public class PermissionsEx extends JavaPlugin {
 			regexPerms = new RegexPermissions(this);
 			superms = new SuperpermsListener(this);
 			this.getServer().getPluginManager().registerEvents(superms, this);
+            if (!this.getConfig().contains("updater")) {
+                this.getConfig().set("updater", true);
+            }
 			this.saveConfig();
 
 			// Start timed permissions cleaner timer
@@ -184,6 +183,10 @@ public class PermissionsEx extends JavaPlugin {
 			ErrorReport.handleError("Error while enabling: ", t);
 			this.getPluginLoader().disablePlugin(this);
 		}
+
+        if (this.getConfig().getBoolean("updater", true)) {
+            Updater updater = new Updater(this, 31279, this.getFile(), Updater.UpdateType.DEFAULT, false); // Variable for future use
+        }
 	}
 
 	@Override
@@ -302,11 +305,11 @@ public class PermissionsEx extends JavaPlugin {
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			try {
-			if (config.shouldLogPlayers()) {
-				getPermissionsManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
-			}
+                if (config.shouldLogPlayers()) {
+                    getPermissionsManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
+                }
 
-			getPermissionsManager().resetUser(event.getPlayer());
+                getPermissionsManager().resetUser(event.getPlayer());
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);
 			}
