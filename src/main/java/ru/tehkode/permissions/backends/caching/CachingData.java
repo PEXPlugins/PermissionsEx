@@ -184,7 +184,7 @@ public abstract class CachingData implements PermissionsData {
 	@Override
 	public Map<String, Map<String, String>> getOptionsMap() {
 		if (options == null) {
-			loadPermissions();
+			loadOptions();
 		}
 		Map<String, Map<String, String>> ret = new HashMap<>();
 		for (Map.Entry<String, Map<String, String>> e : options.entrySet()) {
