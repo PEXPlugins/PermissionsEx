@@ -48,7 +48,7 @@ public class UserCommands extends PermissionsCommand {
 
 		sender.sendMessage(ChatColor.WHITE + "Currently registered users: ");
 		for (PermissionUser user : users) {
-			sender.sendMessage(" " + user.getIdentifier() + " (last known name:  " + user.getName() + ") "  + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentIdentifiers(), ", ") + "]");
+			sender.sendMessage(user.getIdentifier() + ChatColor.GRAY + " (Last known username: " + user.getName() + ") "  + ChatColor.DARK_GREEN + "[" + StringUtils.implode(user.getParentIdentifiers(), ", ") + "]");
 		}
 	}
 
