@@ -9,6 +9,7 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -210,7 +211,7 @@ public abstract class PermissionBackend {
 	 * @param config      Configuration object to access backend settings
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, Configuration config) {
+	public static PermissionBackend getBackend(String backendName, Configuration config) throws PermissionBackendException {
 		return getBackend(backendName, PermissionsEx.getPermissionManager(), config, DEFAULT_BACKEND);
 	}
 
@@ -222,7 +223,7 @@ public abstract class PermissionBackend {
 	 * @param config      Configuration object to access backend settings
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config) {
+	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		return getBackend(backendName, manager, config, DEFAULT_BACKEND);
 	}
 
@@ -235,7 +236,7 @@ public abstract class PermissionBackend {
 	 * @param fallBackBackend name of backend that should be used if specified backend was not found or failed to initialize
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config, String fallBackBackend) {
+	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config, String fallBackBackend) throws PermissionBackendException{
 		if (backendName == null || backendName.isEmpty()) {
 			backendName = DEFAULT_BACKEND;
 		}
@@ -262,7 +263,13 @@ public abstract class PermissionBackend {
 			} else {
 				throw new RuntimeException(e);
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
+			if (e instanceof InvocationTargetException) {
+				e = e.getCause();
+				if (e instanceof PermissionBackendException) {
+					throw ((PermissionBackendException) e);
+				}
+			}
 			throw new RuntimeException(e);
 		}
 	}
