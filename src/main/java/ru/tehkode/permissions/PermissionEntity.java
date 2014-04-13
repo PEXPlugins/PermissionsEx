@@ -44,7 +44,6 @@ public abstract class PermissionEntity {
 
 	protected PermissionManager manager;
 	private String name;
-	protected boolean virtual = true;
 	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<>();
 	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<>();
 	protected boolean debugMode = false;
@@ -608,7 +607,7 @@ public abstract class PermissionEntity {
 	 * @return true if entity is only in-memory
 	 */
 	public boolean isVirtual() {
-		return this.virtual;
+		return getData().isVirtual();
 	}
 
 	/**
