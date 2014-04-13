@@ -176,7 +176,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		putIfNotNull(worldOptions, "suffix", this.node.getString(formatPath(worldName, "suffix")));
 
 		if (optionsSection == null) {
-			return Collections.emptyMap();
+			return Collections.unmodifiableMap(worldOptions);
 		}
 
 		return Collections.unmodifiableMap(collectOptions(worldOptions, optionsSection));

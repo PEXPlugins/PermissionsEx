@@ -306,7 +306,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		Map<String, String> globalOpts = new HashMap<>();
 		allOptions.put(null, globalOpts);
 		putIfNotNull(globalOpts, "prefix", globalPrefix);
-		putIfNotNull( globalOpts, "suffix", globalSuffix);
+		putIfNotNull(globalOpts, "suffix", globalSuffix);
 
 		try (SQLConnection conn = backend.getSQL()) {
 			ResultSet res = conn.prepAndBind("SELECT `permission`, `value`, `world` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND CHAR_LENGTH(`value`) > 0", getIdentifier(), type.ordinal()).executeQuery();
