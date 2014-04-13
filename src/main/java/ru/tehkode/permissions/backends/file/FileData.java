@@ -158,6 +158,9 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setOption(String option, String value, String worldName) {
 		this.node.set(formatPath(worldName, "options", option), value);
+		if (option.equals("prefix") || option.equals("suffix")) {
+			this.node.set(formatPath(worldName, option), null); // Delete old-style prefix/suffix
+		}
 		save();
 	}
 
