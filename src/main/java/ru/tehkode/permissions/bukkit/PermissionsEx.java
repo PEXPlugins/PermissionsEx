@@ -180,7 +180,49 @@ public class PermissionsEx extends JavaPlugin {
 			// Start timed permissions cleaner timer
 			this.permissionsManager.initTimer();
 			if (config.updaterEnabled()) {
-				final Updater updater = new Updater(this, BUKKITDEV_ID, this.getFile(), Updater.UpdateType.DEFAULT, false); // Variable for future use
+				final Updater updater = new Updater(this, BUKKITDEV_ID, this.getFile(), Updater.UpdateType.DEFAULT, false) {
+					/**
+					 * Customized update check function.
+					 * If update is only a difference in minor version (supermajor.major.minor)
+					 * @param localVerString Local version in string form
+					 * @param remoteVerString Remote version in string format
+					 * @return
+					 */
+					@Override
+					public boolean shouldUpdate(String localVerString, String remoteVerString) {
+						if (localVerString.equals(remoteVerString)) { // Versions are equal
+							return false;
+						}
+
+						if (localVerString.endsWith("-SNAPSHOT") || remoteVerString.endsWith("-SNAPSHOT")) { // Don't update when a dev build is involved
+							return false;
+						}
+
+						String[] localVer = localVerString.split("\\.");
+						int localSuperMajor = Integer.parseInt(localVer[0]);
+						int localMajor = localVer.length > 1 ? Integer.parseInt(localVer[1]) : 0;
+						int localMinor = localVer.length > 2 ? Integer.parseInt(localVer[2]) : 0;
+						String[] remoteVer = remoteVerString.split("\\.");
+						int remoteSuperMajor = Integer.parseInt(remoteVer[0]);
+						int remoteMajor = remoteVer.length > 1 ? Integer.parseInt(remoteVer[1]) : 0;
+						int remoteMinor = remoteVer.length > 2 ? Integer.parseInt(remoteVer[2]) : 0;
+
+						if (localSuperMajor > remoteSuperMajor
+								|| (localSuperMajor == remoteSuperMajor && localMajor > remoteMajor)
+								|| (localSuperMajor == remoteSuperMajor && localMajor == remoteMajor && localMinor >= remoteMinor)) {
+							return false; // Local version is newer or same as remote version
+						}
+						if (localSuperMajor == remoteSuperMajor && localMajor == remoteMajor) {
+							// Versions aren't equal but major version is, this is a minor update
+							return true;
+						} else {
+							getLogger().warning("An update to " + getDescription().getName() + " version " + remoteVerString + " is available to download from" +
+									" http://dev.bukkit.org/bukkit-plugins/permissionsex/. Please review the changes and update as soon as possible!");
+							return false;
+						}
+
+					}
+				};
 				getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
 					@Override
 					public void run() {
