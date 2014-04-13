@@ -54,7 +54,7 @@ public class SQLBackend extends PermissionBackend {
 	protected Map<String, List<String>> worldInheritanceCache = new HashMap<>();
 	private Map<String, Object> tableNames;
 	private BasicDataSource ds;
-	private String dbDriver;
+	protected final String dbDriver;
 	private final ExecutorService executor;
 
 	public SQLBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
@@ -72,6 +72,10 @@ public class SQLBackend extends PermissionBackend {
 		dbDriver = dbUri.split(":", 2)[0];
 
 		this.ds = new BasicDataSource();
+		String driverClass = getDriverClass(dbDriver);
+		if (driverClass != null) {
+			this.ds.setDriverClassName(driverClass);
+		}
 		this.ds.setUrl("jdbc:" + dbUri);
 		this.ds.setUsername(dbUser);
 		this.ds.setPassword(dbPassword);
@@ -92,6 +96,17 @@ public class SQLBackend extends PermissionBackend {
 		executor = Executors.newSingleThreadExecutor();
 		this.setupAliases();
 		this.deployTables();
+	}
+
+	protected static String getDriverClass(String alias) {
+		if (alias.equals("mysql")) {
+			return "com.mysql.jdbc.Driver";
+		} else if (alias.equals("sqlite")) {
+			return "org.sqlite.JDBC";
+		} else if (alias.matches("postgres?")) {
+			return "org.postgresql.Driver";
+		}
+		return null;
 	}
 
 	public SQLConnection getSQL() throws SQLException {

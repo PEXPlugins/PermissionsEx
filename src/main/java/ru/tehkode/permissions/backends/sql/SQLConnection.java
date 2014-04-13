@@ -93,7 +93,7 @@ public class SQLConnection implements AutoCloseable {
 	}
 
 	protected void checkConnection() throws SQLException {
-		if (this.db.getClass().getName().startsWith("org.sqlite")) {
+		if (this.backend.dbDriver.equals("sqlite")) {
 			return;
 		}
 
