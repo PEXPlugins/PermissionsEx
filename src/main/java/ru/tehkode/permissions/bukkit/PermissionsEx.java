@@ -194,6 +194,10 @@ public class PermissionsEx extends JavaPlugin {
 							return false;
 						}
 
+						if (config.alwaysUpdate()) {
+							return true;
+						}
+
 						if (localVerString.endsWith("-SNAPSHOT") || remoteVerString.endsWith("-SNAPSHOT")) { // Don't update when a dev build is involved
 							return false;
 						}
