@@ -271,8 +271,13 @@ public class PermissionManager {
 		if (users.containsKey(identifier.toLowerCase())) {
 			return getUser(identifier, null, false);
 		}
-		OfflinePlayer ply = plugin.getServer().getPlayer(uid); // to make things cheaper, we're just checking online players (can be improved later on)
-															   // Also, only online players are really necessary to convert to proper names
+		OfflinePlayer ply = null;
+		try {
+			ply = plugin.getServer().getPlayer(uid); // to make things cheaper, we're just checking online players (can be improved later on)
+			// Also, only online players are really necessary to convert to proper names
+		} catch (NoSuchMethodError e) {
+			// Old craftbukkit, guess we won't have a fallback name. Much shame.
+		}
 		String fallbackName = null;
 		if (ply != null) {
 			fallbackName = ply.getName();
