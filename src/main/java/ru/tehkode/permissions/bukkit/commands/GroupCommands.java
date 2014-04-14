@@ -18,11 +18,6 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import ru.tehkode.permissions.PermissionGroup;
@@ -31,6 +26,11 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.utils.DateUtils;
 import ru.tehkode.utils.StringUtils;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class GroupCommands extends PermissionsCommand {
 
@@ -75,9 +75,10 @@ public class GroupCommands extends PermissionsCommand {
 			description = "Print or set group weight")
 	public void groupPrintSetWeight(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
-
+		String groupName = this.autoCompleteGroupName(args.get("group"));
+		
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -99,11 +100,10 @@ public class GroupCommands extends PermissionsCommand {
 			description = "Toggle debug mode for group")
 	public void groupToggleDebug(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
-
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -123,7 +123,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -145,7 +145,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -161,10 +161,11 @@ public class GroupCommands extends PermissionsCommand {
 			permission = "permissions.manage.groups.create.<group>",
 			description = "Create <group> and/or set [parents]")
 	public void groupCreate(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		String groupName = this.autoCompleteGroupName(args.get("group"));
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -295,7 +296,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -330,7 +331,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -346,7 +347,7 @@ public class GroupCommands extends PermissionsCommand {
 
 			group.setParents(groups, worldName);
 
-			sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " inheritance updated!");
+			sender.sendMessage(ChatColor.WHITE + "Group \"" + group.getIdentifier() + "\" inheritance updated!");
 
 			group.save();
 		}
@@ -374,7 +375,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -411,13 +412,13 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
 		group.addPermission(args.get("permission"), worldName);
 
-		sender.sendMessage(ChatColor.WHITE + "Permission \"" + args.get("permission") + "\" added to " + group.getIdentifier() + " !");
+		sender.sendMessage(ChatColor.WHITE + "Permission \"" + args.get("permission") + "\" added to group \"" + group.getIdentifier() + "\"!");
 
 		this.informGroup(plugin, group, "Your permissions have been changed");
 	}
@@ -468,7 +469,7 @@ public class GroupCommands extends PermissionsCommand {
 		group.removePermission(permission, worldName);
 		group.removeTimedPermission(permission, worldName);
 
-		sender.sendMessage(ChatColor.WHITE + "Permission \"" + permission + "\" removed from " + group.getIdentifier() + " !");
+		sender.sendMessage(ChatColor.WHITE + "Permission \"" + permission + "\" removed from group \"" + group.getIdentifier() + "\"!");
 
 		this.informGroup(plugin, group, "Your permissions have been changed");
 	}
@@ -675,7 +676,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null || group.isVirtual()) {
-			sender.sendMessage(ChatColor.RED + "Specified group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
