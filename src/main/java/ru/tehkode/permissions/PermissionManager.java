@@ -577,13 +577,9 @@ public class PermissionManager {
 	 */
 	public List<PermissionGroup> getDefaultGroups(String worldName) {
 		List<PermissionGroup> defaults = new LinkedList<>();
-		for (String name : this.getBackend().getDefaultGroupNames(worldName)) {
-			defaults.add(getGroup(name));
-		}
-
-		if (worldName != null) {
-			for (String name : this.getBackend().getDefaultGroupNames(null)) {
-				defaults.add(getGroup(name));
+		for (PermissionGroup grp : getGroupList()) {
+			if (grp.isDefault(worldName) || (worldName != null && grp.isDefault(null))) {
+				defaults.add(grp);
 			}
 		}
 
