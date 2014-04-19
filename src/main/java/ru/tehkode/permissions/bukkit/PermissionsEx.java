@@ -24,7 +24,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
@@ -341,6 +343,13 @@ public class PermissionsEx extends JavaPlugin {
 	}
 
 	public class PlayerEventsListener implements Listener {
+		@EventHandler(priority = EventPriority.MONITOR)
+		public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
+				getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
+			}
+		}
+
 		@EventHandler
 		public void onPlayerLogin(PlayerJoinEvent event) {
 			try {

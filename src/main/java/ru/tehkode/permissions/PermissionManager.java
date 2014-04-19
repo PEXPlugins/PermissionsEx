@@ -89,6 +89,7 @@ public class PermissionManager {
 		return plugin;
 	}
 
+
 	private class RemoteEventListener implements Listener {
 		@EventHandler(priority = EventPriority.LOWEST)
 		public void onEntityEvent(PermissionEntityEvent event) {
@@ -256,6 +257,17 @@ public class PermissionManager {
 		}
 	}
 
+
+	/**
+	 * Update a user in cache. This method is thread-safe and should only be called in async phases of login.
+	 *
+	 * @param ident The user identifier
+	 * @param fallbackName Fallback name for user
+	 */
+	public void cacheUser(String ident, String fallbackName) {
+		getUser(ident, fallbackName, true);
+	}
+
 	/**
 	 * Return object of specified player
 	 *
@@ -268,7 +280,7 @@ public class PermissionManager {
 
 	public PermissionUser getUser(UUID uid) {
 		final String identifier = uid.toString();
-		if (users.containsKey(identifier.toLowerCase())) {
+		if (users.containsKey(identifier)) {
 			return getUser(identifier, null, false);
 		}
 		OfflinePlayer ply = null;
@@ -286,7 +298,7 @@ public class PermissionManager {
 	}
 
 	private PermissionUser getUser(String identifier, String fallbackName, boolean store) {
-		PermissionUser user = users.get(identifier.toLowerCase());
+		PermissionUser user = users.get(identifier);
 
 		if (user != null) {
 			return user;
@@ -313,7 +325,7 @@ public class PermissionManager {
 			user = new PermissionUser(identifier, data, this);
 			user.initialize();
 			if (store) {
-				this.users.put(identifier.toLowerCase(), user);
+				this.users.put(identifier, user);
 			}
 		} else {
 			throw new IllegalStateException("User " + identifier + " is null");
