@@ -333,7 +333,7 @@ public class PermissionManager {
 			users.add(getUser(p));
 		}
 		for (String name : backend.getUserIdentifiers()) {
-			users.add(getUser(name));
+			users.add(getUser(name, null, false));
 		}
 		return Collections.unmodifiableSet(users);
 	}
