@@ -304,7 +304,7 @@ public class FileBackend extends PermissionBackend {
 	public void close() throws PermissionBackendException {
 		executor.shutdown();
 		try {
-			executor.awaitTermination(50 * 10, TimeUnit.MILLISECONDS);
+			executor.awaitTermination(30, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			throw new PermissionBackendException(e);
 		}

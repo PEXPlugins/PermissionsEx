@@ -67,6 +67,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		section = this.config.createSection(nodePath);
 		this.entityName = entityName;
 		this.config.set(nodePath, null);
+		this.virtual = true; // Make sure
 
 		return section;
 
