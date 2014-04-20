@@ -184,9 +184,9 @@ public class UserCommands extends PermissionsCommand {
 
 		if (args.containsKey("newprefix")) {
 			user.setPrefix(args.get("newprefix"), worldName);
-			sender.sendMessage(describeUser(user) + "'s prefix" + (worldName != null ? " (in world \"" + worldName + "\") " : " ") + " has been set to \"" + user.getPrefix() + "\"");
+			sender.sendMessage(describeUser(user) + "'s prefix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " has been set to \"" + user.getPrefix() + "\"");
 		} else {
-			sender.sendMessage(describeUser(user) + "'s prefix" + (worldName != null ? " (in world \"" + worldName + "\") " : " ") + " is \"" + user.getPrefix() + "\"");
+			sender.sendMessage(describeUser(user) + "'s prefix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " is \"" + user.getPrefix() + "\"");
 		}
 	}
 

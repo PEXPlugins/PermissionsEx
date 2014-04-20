@@ -129,9 +129,10 @@ public class GroupCommands extends PermissionsCommand {
 
 		if (args.containsKey("newprefix")) {
 			group.setPrefix(args.get("newprefix"), worldName);
+			sender.sendMessage(group.getIdentifier() + "'s prefix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " has been set to \"" + group.getPrefix() + "\"");
+		} else {
+			sender.sendMessage(group.getIdentifier() + "'s prefix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " is \"" + group.getPrefix() + "\"");
 		}
-
-		sender.sendMessage(group.getIdentifier() + "'s prefix = \"" + group.getPrefix(worldName) + "\"");
 	}
 
 	@Command(name = "pex",
@@ -150,10 +151,11 @@ public class GroupCommands extends PermissionsCommand {
 		}
 
 		if (args.containsKey("newsuffix")) {
-			group.setSuffix(args.get("newsuffix"), worldName);
+			group.setPrefix(args.get("newsuffix"), worldName);
+			sender.sendMessage(group.getIdentifier() + "'s suffix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " has been set to \"" + group.getPrefix() + "\"");
+		} else {
+			sender.sendMessage(group.getIdentifier() + "'s suffix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " is \"" + group.getPrefix() + "\"");
 		}
-
-		sender.sendMessage(group.getIdentifier() + "'s suffix is = \"" + group.getSuffix(worldName) + "\"");
 	}
 
 	@Command(name = "pex",
