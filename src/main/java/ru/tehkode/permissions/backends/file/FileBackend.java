@@ -74,9 +74,11 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public List<String> getWorldInheritance(String world) {
 		if (world != null && !world.isEmpty()) {
-			List<String> parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "/inheritance"));
-			if (parentWorlds != null) {
-				return Collections.unmodifiableList(parentWorlds);
+			synchronized (lock) {
+				List<String> parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "/inheritance"));
+				if (parentWorlds != null) {
+					return Collections.unmodifiableList(parentWorlds);
+				}
 			}
 		}
 
@@ -85,16 +87,18 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public Map<String, List<String>> getAllWorldInheritance() {
-		ConfigurationSection worldsSection = this.permissions.getConfigurationSection("worlds");
-		if (worldsSection == null) {
-			return Collections.emptyMap();
-		}
+		synchronized (lock) {
+			ConfigurationSection worldsSection = this.permissions.getConfigurationSection("worlds");
+			if (worldsSection == null) {
+				return Collections.emptyMap();
+			}
 
-		Map<String, List<String>> ret = new HashMap<>();
-		for (String world : worldsSection.getKeys(false)) {
-			ret.put(world, getWorldInheritance(world));
+			Map<String, List<String>> ret = new HashMap<>();
+			for (String world : worldsSection.getKeys(false)) {
+				ret.put(world, getWorldInheritance(world));
+			}
+			return Collections.unmodifiableMap(ret);
 		}
-		return Collections.unmodifiableMap(ret);
 	}
 
 	@Override
@@ -103,40 +107,48 @@ public class FileBackend extends PermissionBackend {
 			return;
 		}
 
-		this.permissions.set(buildPath("worlds", world, "inheritance"), parentWorlds);
-		this.save();
+		synchronized (lock) {
+			this.permissions.set(buildPath("worlds", world, "inheritance"), parentWorlds);
+			this.save();
+		}
 	}
 
 	@Override
 	public PermissionsUserData getUserData(String userName) {
-		final CachingUserData data = new CachingUserData(new FileData("users", userName, this.permissions, "group"), executor, lock);
-		data.load();
-		return data;
+		synchronized (lock) {
+			final CachingUserData data = new CachingUserData(new FileData("users", userName, this.permissions, "group"), executor, lock);
+			data.load();
+			return data;
+		}
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
-		final CachingGroupData data = new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), executor, lock);
-		data.load();
-		return data;
+		synchronized (lock) {
+			final CachingGroupData data = new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), executor, lock);
+			data.load();
+			return data;
+		}
 	}
 
 	@Override
 	public boolean hasUser(String userName) {
-		if (this.permissions.isConfigurationSection(buildPath("users", userName))) {
-			return true;
-		}
-
-		ConfigurationSection userSection = this.permissions.getConfigurationSection("users");
-		if (userSection != null) {
-			for (String name : userSection.getKeys(false)) {
-				if (userName.equalsIgnoreCase(name)) {
-					return true;
-				}
+		synchronized (lock) {
+			if (this.permissions.isConfigurationSection(buildPath("users", userName))) {
+				return true;
 			}
 
+			ConfigurationSection userSection = this.permissions.getConfigurationSection("users");
+			if (userSection != null) {
+				for (String name : userSection.getKeys(false)) {
+					if (userName.equalsIgnoreCase(name)) {
+						return true;
+					}
+				}
+
+			}
+			return false;
 		}
-		return false;
 	}
 
 	@Override
@@ -159,65 +171,73 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public Set<String> getDefaultGroupNames(String worldName) {
-		ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
+		synchronized (lock) {
+			ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
 
-		if (groups == null) {
-			return Collections.emptySet();
-		}
+			if (groups == null) {
+				return Collections.emptySet();
+			}
 
-		Set<String> names = new HashSet<>();
+			Set<String> names = new HashSet<>();
 
-		String defaultGroupProperty = "default";
-		if (worldName != null) {
-			defaultGroupProperty = buildPath("worlds", worldName, defaultGroupProperty);
-		}
+			String defaultGroupProperty = "default";
+			if (worldName != null) {
+				defaultGroupProperty = buildPath("worlds", worldName, defaultGroupProperty);
+			}
 
-		for (Map.Entry<String, Object> entry : groups.getValues(false).entrySet()) {
-			if (entry.getValue() instanceof ConfigurationSection) {
-				ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
+			for (Map.Entry<String, Object> entry : groups.getValues(false).entrySet()) {
+				if (entry.getValue() instanceof ConfigurationSection) {
+					ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
 
-				if (groupSection.getBoolean(defaultGroupProperty, false)) {
-					names.add(entry.getKey());
+					if (groupSection.getBoolean(defaultGroupProperty, false)) {
+						names.add(entry.getKey());
+					}
 				}
 			}
-		}
 
-		return Collections.unmodifiableSet(names);
+			return Collections.unmodifiableSet(names);
+		}
 	}
 
 	@Override
 	public Collection<String> getUserIdentifiers() {
-		ConfigurationSection users = this.permissions.getConfigurationSection("users");
-		return users != null ? users.getKeys(false) : Collections.<String>emptyList();
+		synchronized (lock) {
+			ConfigurationSection users = this.permissions.getConfigurationSection("users");
+			return users != null ? users.getKeys(false) : Collections.<String>emptyList();
+		}
 	}
 
 	@Override
 	public Collection<String> getUserNames() {
-		ConfigurationSection users = this.permissions.getConfigurationSection("users");
+		synchronized (lock) {
+			ConfigurationSection users = this.permissions.getConfigurationSection("users");
 
-		if (users == null) {
-			return Collections.emptySet();
-		}
+			if (users == null) {
+				return Collections.emptySet();
+			}
 
-		Set<String> userNames = new HashSet<>();
+			Set<String> userNames = new HashSet<>();
 
-		for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
-			if (entry.getValue() instanceof ConfigurationSection) {
-				ConfigurationSection userSection = (ConfigurationSection) entry.getValue();
+			for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
+				if (entry.getValue() instanceof ConfigurationSection) {
+					ConfigurationSection userSection = (ConfigurationSection) entry.getValue();
 
-				String name = userSection.getString(buildPath("options", "name"));
-				if (name != null) {
-					userNames.add(name);
+					String name = userSection.getString(buildPath("options", "name"));
+					if (name != null) {
+						userNames.add(name);
+					}
 				}
 			}
+			return Collections.unmodifiableSet(userNames);
 		}
-		return Collections.unmodifiableSet(userNames);
 	}
 
 	@Override
 	public Collection<String> getGroupNames() {
-		ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
-		return groups != null ? groups.getKeys(false) : Collections.<String>emptySet();
+		synchronized (lock) {
+			ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
+			return groups != null ? groups.getKeys(false) : Collections.<String>emptySet();
+		}
 	}
 
 	public static String buildPath(String... path) {
