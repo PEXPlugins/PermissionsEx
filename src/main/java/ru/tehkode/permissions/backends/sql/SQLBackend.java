@@ -81,9 +81,8 @@ public class SQLBackend extends PermissionBackend {
 		this.ds.setPassword(dbPassword);
 		this.ds.setMaxActive(20);
 		this.ds.setMaxWait(200); // 4 ticks
-		if (this.dbDriver.equals("mysql")) {
-			this.ds.addConnectionProperty("autoReconnect", "true");
-		}
+		this.ds.setValidationQuery("SELECT 1 AS dbcp_validate");
+		this.ds.setTestOnBorrow(true);
 
 		try (SQLConnection conn = getSQL()) {
 			conn.checkConnection();
