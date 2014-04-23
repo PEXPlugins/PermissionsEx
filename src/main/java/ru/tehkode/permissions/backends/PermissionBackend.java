@@ -3,6 +3,7 @@ package ru.tehkode.permissions.backends;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
@@ -27,7 +28,6 @@ import java.util.logging.Logger;
 public abstract class PermissionBackend {
 	private final PermissionManager manager;
 	private final ConfigurationSection backendConfig;
-	private boolean persistent;
 
 	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		this.manager = manager;
@@ -127,6 +127,23 @@ public abstract class PermissionBackend {
 			}
 		} finally {
 			setPersistent(true);
+		}
+	}
+
+
+	public void revertUUID() {
+		this.setPersistent(false);
+		try {
+			for (String ident : getUserIdentifiers()) {
+				PermissionsUserData data = getUserData(ident);
+				String name = data.getOption("name", null);
+				if (name != null) {
+					data.setIdentifier(name);
+					data.setOption("name", null, null);
+				}
+			}
+		} finally {
+			this.setPersistent(true);
 		}
 	}
 
@@ -281,4 +298,10 @@ public abstract class PermissionBackend {
 			throw new RuntimeException(e);
 		}
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "{config=" + getConfig().getName() + "}";
+	}
+
 }
