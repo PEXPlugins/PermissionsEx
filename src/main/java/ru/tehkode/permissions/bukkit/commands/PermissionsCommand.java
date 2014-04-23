@@ -327,8 +327,8 @@ public abstract class PermissionsCommand implements CommandListener {
 			}
 		}
 
-		if (level == 0 && allPermissions.get("") != null) { // default world permissions
-			permissions.addAll(sprintPermissions("common", allPermissions.get("")));
+		if (level == 0 && allPermissions.get(null) != null) { // default world permissions
+			permissions.addAll(sprintPermissions("common", allPermissions.get(null)));
 		}
 
 		return permissions;
