@@ -148,7 +148,7 @@
         <dependency>
             <groupId>net.gravitydevelopment.updater</groupId>
             <artifactId>updater</artifactId>
-            <version>2.1</version>
+            <version>LATEST</version>
         </dependency>
     </dependencies>
     <repositories>
@@ -159,6 +159,10 @@
         <repository>
             <id>pex-repo</id>
             <url>http://pex-repo.zachsthings.com</url>
+        </repository>
+        <repository>
+            <id>gravity-repo</id>
+            <url>http://repo.gravitydevelopment.net</url>
         </repository>
     </repositories>
 </project>
