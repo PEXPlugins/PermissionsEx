@@ -356,7 +356,7 @@ public class PermissionsEx extends JavaPlugin {
 		public void onPlayerLogin(PlayerJoinEvent event) {
 			try {
 				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-				if (!user.isVirtual()) { // Update name only if user exists in config
+				if (!user.isVirtual() && !event.getPlayer().getName().equals(user.getOption("name"))) { // Update name only if user exists in config
 					user.setOption("name", event.getPlayer().getName());
 				}
 				if (!config.shouldLogPlayers()) {
