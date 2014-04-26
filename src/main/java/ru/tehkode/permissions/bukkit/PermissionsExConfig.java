@@ -19,6 +19,7 @@ public class PermissionsExConfig {
 	private final String defaultBackend;
 	private final boolean updaterEnabled;
 	private final boolean alwaysUpdate;
+	private final boolean informPlayers;
 
 	public PermissionsExConfig(Configuration config) {
 		this.config = config;
@@ -31,6 +32,7 @@ public class PermissionsExConfig {
 		this.defaultBackend = getString("permissions.backend", PermissionBackend.DEFAULT_BACKEND);
 		this.updaterEnabled = getBoolean("updater", true);
 		this.alwaysUpdate = getBoolean("alwaysUpdate", false);
+		this.informPlayers = getBoolean("permissions.informplayers.changes", false);
 	}
 
 	private boolean getBoolean(String key, boolean def) {
@@ -81,7 +83,13 @@ public class PermissionsExConfig {
 		return updaterEnabled;
 	}
 
-	public boolean alwaysUpdate() { return alwaysUpdate; }
+	public boolean alwaysUpdate() {
+		return alwaysUpdate;
+	}
+
+	public boolean informPlayers() {
+		return informPlayers;
+	}
 
 	public ConfigurationSection getBackendConfig(String backend) {
 		ConfigurationSection section = config.getConfigurationSection("permissions.backends." + backend);

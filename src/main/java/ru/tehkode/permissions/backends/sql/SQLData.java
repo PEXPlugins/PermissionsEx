@@ -3,7 +3,6 @@ package ru.tehkode.permissions.backends.sql;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 
-import javax.swing.plaf.synth.SynthSplitPaneUI;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;

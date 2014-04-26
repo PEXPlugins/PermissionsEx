@@ -53,7 +53,7 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	protected void informPlayer(PermissionsEx plugin, PermissionUser user, String message) {
-		if (!plugin.getConfig().getBoolean("permissions.informplayers.changes", false)) {
+		if (!plugin.getConfiguration().informPlayers()) {
 			return; // User informing is disabled
 		}
 
@@ -327,7 +327,7 @@ public abstract class PermissionsCommand implements CommandListener {
 			}
 		}
 
-		if (level == 0 && allPermissions.get(null) != null) { // default world permissions
+		if (level == 0 && world != null && allPermissions.get(null) != null) { // default world permissions
 			permissions.addAll(sprintPermissions("common", allPermissions.get(null)));
 		}
 
