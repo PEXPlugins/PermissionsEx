@@ -31,9 +31,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author code
@@ -42,12 +40,11 @@ public class FileBackend extends PermissionBackend {
 	public final static char PATH_SEPARATOR = '/';
 	public FileConfig permissions;
 	public File permissionsFile;
-	private final ExecutorService executor;
+	private final Map<String, List<String>> worldInheritanceCache = new ConcurrentHashMap<>();
 	private final Object lock = new Object();
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
-		this.executor = Executors.newSingleThreadExecutor();
 		String permissionFilename = getConfig().getString("file");
 
 		// Default settings
@@ -74,10 +71,15 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public List<String> getWorldInheritance(String world) {
 		if (world != null && !world.isEmpty()) {
-			synchronized (lock) {
-				List<String> parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "/inheritance"));
-				if (parentWorlds != null) {
-					return Collections.unmodifiableList(parentWorlds);
+			List<String> parentWorlds = worldInheritanceCache.get(world);
+			if (parentWorlds == null) {
+				synchronized (lock) {
+					parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "/inheritance"));
+					if (parentWorlds != null) {
+						parentWorlds = Collections.unmodifiableList(parentWorlds);
+						worldInheritanceCache.put(world, parentWorlds);
+						return parentWorlds;
+					}
 				}
 			}
 		}
@@ -102,21 +104,28 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public void setWorldInheritance(String world, List<String> parentWorlds) {
+	public void setWorldInheritance(final String world, List<String> rawParentWorlds) {
 		if (world == null || world.isEmpty()) {
 			return;
 		}
+		final List<String> parentWorlds = new ArrayList<>(rawParentWorlds);
+		worldInheritanceCache.put(world, parentWorlds);
 
-		synchronized (lock) {
-			this.permissions.set(buildPath("worlds", world, "inheritance"), parentWorlds);
-			this.save();
-		}
+		getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (lock) {
+					permissions.set(buildPath("worlds", world, "inheritance"), parentWorlds);
+					save();
+				}
+			}
+		});
 	}
 
 	@Override
 	public PermissionsUserData getUserData(String userName) {
 		synchronized (lock) {
-			final CachingUserData data = new CachingUserData(new FileData("users", userName, this.permissions, "group"), executor, lock);
+			final CachingUserData data = new CachingUserData(new FileData("users", userName, this.permissions, "group"), getExecutor(), lock);
 			data.load();
 			return data;
 		}
@@ -125,7 +134,7 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
 		synchronized (lock) {
-			final CachingGroupData data = new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), executor, lock);
+			final CachingGroupData data = new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), getExecutor(), lock);
 			data.load();
 			return data;
 		}
@@ -167,36 +176,6 @@ public class FileBackend extends PermissionBackend {
 
 		}
 		return false;
-	}
-
-	@Override
-	public Set<String> getDefaultGroupNames(String worldName) {
-		synchronized (lock) {
-			ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
-
-			if (groups == null) {
-				return Collections.emptySet();
-			}
-
-			Set<String> names = new HashSet<>();
-
-			String defaultGroupProperty = "default";
-			if (worldName != null) {
-				defaultGroupProperty = buildPath("worlds", worldName, defaultGroupProperty);
-			}
-
-			for (Map.Entry<String, Object> entry : groups.getValues(false).entrySet()) {
-				if (entry.getValue() instanceof ConfigurationSection) {
-					ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
-
-					if (groupSection.getBoolean(defaultGroupProperty, false)) {
-						names.add(entry.getKey());
-					}
-				}
-			}
-
-			return Collections.unmodifiableSet(names);
-		}
 	}
 
 	@Override
@@ -270,10 +249,12 @@ public class FileBackend extends PermissionBackend {
 		try {
 			newPermissions.load();
 			getLogger().info("Permissions file successfully reloaded");
+			worldInheritanceCache.clear();
 			this.permissions = newPermissions;
 		} catch (FileNotFoundException e) {
 			if (this.permissions == null) {
 				// First load, load even if the file doesn't exist
+				worldInheritanceCache.clear();
 				this.permissions = newPermissions;
 				initNewConfiguration();
 			}
@@ -310,28 +291,18 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public void loadFrom(PermissionBackend backend) {
-		final boolean oldSaveSuppr = this.permissions.isSaveSuppressed();
-		this.permissions.setSaveSuppressed(true);
+		this.setPersistent(false);
 		try {
 			super.loadFrom(backend);
 		} finally {
-			this.permissions.setSaveSuppressed(oldSaveSuppr);
+			this.setPersistent(true);
 		}
 		save();
 	}
 
 	@Override
-	public void close() throws PermissionBackendException {
-		executor.shutdown();
-		try {
-			executor.awaitTermination(30, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			throw new PermissionBackendException(e);
-		}
-	}
-
-	@Override
 	public void setPersistent(boolean persistent) {
+		super.setPersistent(persistent);
 		this.permissions.setSaveSuppressed(!persistent);
 		if (persistent) {
 			this.save();

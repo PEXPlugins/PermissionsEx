@@ -55,7 +55,6 @@ public class SQLBackend extends PermissionBackend {
 	private Map<String, Object> tableNames;
 	private BasicDataSource ds;
 	protected final String dbDriver;
-	private final ExecutorService executor;
 
 	public SQLBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
@@ -95,7 +94,6 @@ public class SQLBackend extends PermissionBackend {
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
-		executor = Executors.newSingleThreadExecutor();
 		this.setupAliases();
 		this.deployTables();
 	}
@@ -133,12 +131,12 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String name) {
-		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), executor, new Object());
+		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), getExecutor(), new Object());
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String name) {
-		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), executor, new Object());
+		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), getExecutor(), new Object());
 	}
 
 	@Override
@@ -160,29 +158,6 @@ public class SQLBackend extends PermissionBackend {
 			return false;
 		}
 	}
-
-	@Override
-	public Set<String> getDefaultGroupNames(String worldName) {
-		try (SQLConnection conn = getSQL()) {
-			ResultSet result;
-
-			if (worldName == null) {
-				result = conn.prepAndBind("SELECT `name` FROM `{permissions_entity}` WHERE `type` = ? AND `default` = 1", SQLData.Type.GROUP.ordinal()).executeQuery();
-			} else {
-				result = conn.prepAndBind("SELECT `name` FROM `{permissions}` WHERE `permission` = 'default' AND `value` = 'true' AND `type` = ? AND `world` = ?",
-						SQLData.Type.GROUP.ordinal(), worldName).executeQuery();
-			}
-			Set<String> ret = new HashSet<>();
-			while (result.next()) {
-				ret.add(result.getString("name"));
-			}
-
-			return ret;
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 
 	@Override
 	public Collection<String> getGroupNames() {
@@ -340,8 +315,10 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
+	public void setPersistent(boolean persist) {}
+
+	@Override
 	public void close() throws PermissionBackendException {
-		executor.shutdown();
 		if (ds != null) {
 			try {
 				ds.close();
@@ -349,10 +326,6 @@ public class SQLBackend extends PermissionBackend {
 				throw new PermissionBackendException("Error while closing", e);
 			}
 		}
-		try {
-			executor.awaitTermination(4 * 50, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			throw new PermissionBackendException(e);
-		}
+		super.close();
 	}
 }

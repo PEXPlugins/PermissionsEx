@@ -133,15 +133,6 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Set<String> getDefaultGroupNames(String worldName) {
-		Set<String> ret = new HashSet<>();
-		for (PermissionBackend backend : backends) {
-			ret.addAll(backend.getDefaultGroupNames(worldName));
-		}
-		return Collections.unmodifiableSet(ret);
-	}
-
-	@Override
 	public List<String> getWorldInheritance(String world) {
 		for (PermissionBackend backend : backends) {
 			List<String> potentialRet = backend.getWorldInheritance(world);

@@ -83,11 +83,6 @@ public class MemoryBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Set<String> getDefaultGroupNames(String worldName) {
-		return Collections.emptySet();
-	}
-
-	@Override
 	public List<String> getWorldInheritance(String world) {
 		return Collections.emptyList();
 	}
