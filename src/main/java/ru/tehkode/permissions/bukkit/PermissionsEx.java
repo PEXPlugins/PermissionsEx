@@ -20,6 +20,7 @@ package ru.tehkode.permissions.bukkit;
 
 import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -161,6 +162,17 @@ public class PermissionsEx extends JavaPlugin {
 		try {
 			if (this.permissionsManager == null) {
 				this.permissionsManager = new PermissionManager(this);
+			}
+
+			try {
+				OfflinePlayer.class.getMethod("getUniqueId");
+			} catch (NoSuchMethodException e) {
+				getLogger().severe("==== As of version 1.21, PEX requires a version of Bukkit with UUID support to function (>1.7.5). Please download a non-UUID version of PermissionsEx to continue.");
+				getLogger().warning("Beginning reversion of potential invalid UUID conversion");
+				getPermissionsManager().getBackend().revertUUID();
+				getLogger().warning("Reversion complete, disabling. Permissions will not work until downgrade is complete");
+				getPluginLoader().disablePlugin(this);
+				return;
 			}
 
 			// Register commands
