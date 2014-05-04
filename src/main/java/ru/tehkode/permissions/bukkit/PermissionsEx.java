@@ -167,10 +167,12 @@ public class PermissionsEx extends JavaPlugin {
 			try {
 				OfflinePlayer.class.getMethod("getUniqueId");
 			} catch (NoSuchMethodException e) {
-				getLogger().severe("==== As of version 1.21, PEX requires a version of Bukkit with UUID support to function (>1.7.5). Please download a non-UUID version of PermissionsEx to continue.");
-				getLogger().warning("Beginning reversion of potential invalid UUID conversion");
+				getLogger().severe("============================================================================================");
+				getLogger().severe("As of version 1.21, PEX requires a version of Bukkit with UUID support to function (>1.7.5). Please download a non-UUID version of PermissionsEx to continue.");
+				getLogger().severe("Beginning reversion of potential invalid UUID conversion");
 				getPermissionsManager().getBackend().revertUUID();
-				getLogger().warning("Reversion complete, disabling. Permissions will not work until downgrade is complete");
+				getLogger().severe("Reversion complete, disabling. Permissions will not work until downgrade is complete");
+				getLogger().severe("============================================================================================");
 				getPluginLoader().disablePlugin(this);
 				return;
 			}
