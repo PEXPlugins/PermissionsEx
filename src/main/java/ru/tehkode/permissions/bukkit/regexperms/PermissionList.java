@@ -19,7 +19,7 @@ import java.util.Map;
 public class PermissionList extends HashMap<String, Permission> {
 	private static FieldReplacer<PluginManager, Map> INJECTOR;
 
-    private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<>();
+	private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<>();
 	/**
 	 * k = child permission
 	 * v.k = parent permission
@@ -35,14 +35,14 @@ public class PermissionList extends HashMap<String, Permission> {
 		super(existing);
 	}
 
-    private FieldReplacer<Permission, Map> getFieldReplacer(Permission perm) {
-        FieldReplacer<Permission, Map> ret = CHILDREN_MAPS.get(perm.getClass());
-        if (ret == null) {
-            ret = new FieldReplacer<>(perm.getClass(), "children", Map.class);
-            CHILDREN_MAPS.put(perm.getClass(), ret);
-        }
-        return ret;
-    }
+	private FieldReplacer<Permission, Map> getFieldReplacer(Permission perm) {
+		FieldReplacer<Permission, Map> ret = CHILDREN_MAPS.get(perm.getClass());
+		if (ret == null) {
+			ret = new FieldReplacer<>(perm.getClass(), "children", Map.class);
+			CHILDREN_MAPS.put(perm.getClass(), ret);
+		}
+		return ret;
+	}
 
 	private void removeAllChildren(String perm) {
 		for (Iterator<Map.Entry<String, Map.Entry<String, Boolean>>> it = childParentMapping.entries().iterator(); it.hasNext();) {
@@ -52,39 +52,39 @@ public class PermissionList extends HashMap<String, Permission> {
 		}
 	}
 
-    private class NotifyingChildrenMap extends LinkedHashMap<String, Boolean> {
-        private final Permission perm;
-        public NotifyingChildrenMap(Permission perm) {
-            super(perm.getChildren());
-            this.perm = perm;
-        }
-        @Override
-        public Boolean remove(Object perm) {
-            removeFromMapping(String.valueOf(perm));
-            return super.remove(perm);
-        }
+	private class NotifyingChildrenMap extends LinkedHashMap<String, Boolean> {
+		private final Permission perm;
+		public NotifyingChildrenMap(Permission perm) {
+			super(perm.getChildren());
+			this.perm = perm;
+		}
+		@Override
+		public Boolean remove(Object perm) {
+			removeFromMapping(String.valueOf(perm));
+			return super.remove(perm);
+		}
 
-        private void removeFromMapping(String child) {
-            for (Iterator<Map.Entry<String, Boolean>> it = childParentMapping.get(child).iterator(); it.hasNext();) {
-                if (it.next().getKey().equals(perm.getName())) {
-                    it.remove();
-                }
-            }
-        }
+		private void removeFromMapping(String child) {
+			for (Iterator<Map.Entry<String, Boolean>> it = childParentMapping.get(child).iterator(); it.hasNext();) {
+				if (it.next().getKey().equals(perm.getName())) {
+					it.remove();
+				}
+			}
+		}
 
-        @Override
-        public Boolean put(String perm, Boolean val) {
-            //removeFromMapping(perm);
-            childParentMapping.put(perm, new SimpleEntry<>(this.perm.getName(), val));
-            return super.put(perm, val);
-        }
+		@Override
+		public Boolean put(String perm, Boolean val) {
+			//removeFromMapping(perm);
+			childParentMapping.put(perm, new SimpleEntry<>(this.perm.getName(), val));
+			return super.put(perm, val);
+		}
 
 		@Override
 		public void clear() {
 			removeAllChildren(perm.getName());
 			super.clear();
 		}
-    }
+	}
 
 
 	public static PermissionList inject(PluginManager manager) {
@@ -103,19 +103,19 @@ public class PermissionList extends HashMap<String, Permission> {
 		for (Map.Entry<String, Boolean> ent : v.getChildren().entrySet()) {
 			childParentMapping.put(ent.getKey(), new SimpleEntry<>(v.getName(), ent.getValue()));
 		}
-        FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
-        repl.set(v, new NotifyingChildrenMap(v));
+		FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
+		repl.set(v, new NotifyingChildrenMap(v));
 		return super.put(k, v);
 	}
 
 	@Override
 	public Permission remove(Object k) {
-		removeAllChildren(k.toString());
 		Permission ret = super.remove(k);
-        if (ret != null) {
-            getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
-        }
-        return ret;
+		if (ret != null) {
+			removeAllChildren(k.toString());
+			getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
+		}
+		return ret;
 	}
 
 	@Override
