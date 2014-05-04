@@ -145,6 +145,7 @@ public class SuperpermsListener implements Listener {
 		try {
 			final Player player = event.getPlayer();
 			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world in join event
+			removeAttachment(player);
 			updateAttachment(player, null);
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event login", t);
