@@ -144,7 +144,7 @@ public class SQLBackend extends PermissionBackend {
 		try (SQLConnection conn = getSQL()) {
 			ResultSet res = conn.prepAndBind("SELECT `id` FROM `{permissions_entity}` WHERE `type` = ? AND `name` = ?", SQLData.Type.USER.ordinal(), userName).executeQuery();
 			return res.next();
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			return false;
 		}
 	}
@@ -154,7 +154,7 @@ public class SQLBackend extends PermissionBackend {
 		try (SQLConnection conn = getSQL()) {
 			ResultSet res = conn.prepAndBind("SELECT `id` FROM `{permissions_entity}` WHERE `type` = ? AND `name` = ?", SQLData.Type.GROUP.ordinal(), group).executeQuery();
 			return res.next();
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			return false;
 		}
 	}
@@ -163,7 +163,7 @@ public class SQLBackend extends PermissionBackend {
 	public Collection<String> getGroupNames() {
 		try (SQLConnection conn = getSQL()) {
 			return SQLData.getEntitiesNames(conn, SQLData.Type.GROUP, false);
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -172,7 +172,7 @@ public class SQLBackend extends PermissionBackend {
 	public Collection<String> getUserIdentifiers() {
 		try (SQLConnection conn = getSQL()) {
 			return SQLData.getEntitiesNames(conn, SQLData.Type.USER, false);
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -185,7 +185,7 @@ public class SQLBackend extends PermissionBackend {
 			while (set.next()) {
 				ret.add(set.getString("value"));
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 		return Collections.unmodifiableSet(ret);
@@ -261,7 +261,7 @@ public class SQLBackend extends PermissionBackend {
 				}
 
 				this.worldInheritanceCache.put(world, Collections.unmodifiableList(worldParents));
-			} catch (SQLException e) {
+			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -282,7 +282,7 @@ public class SQLBackend extends PermissionBackend {
 				}
 			}
 			return Collections.unmodifiableMap(ret);
-		} catch (SQLException e) {
+		} catch (SQLException |IOException e) {
 			return Collections.unmodifiableMap(worldInheritanceCache);
 		}
 	}
@@ -305,7 +305,7 @@ public class SQLBackend extends PermissionBackend {
 
 			this.worldInheritanceCache.put(worldName, parentWorlds);
 
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

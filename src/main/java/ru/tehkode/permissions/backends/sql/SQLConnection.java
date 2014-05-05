@@ -18,6 +18,8 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -29,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * One connection per thread, don't share your connections
  */
-public class SQLConnection implements AutoCloseable {
+public class SQLConnection implements Closeable {
 	private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
 	private Statement statement;
 	private final Connection db;
@@ -103,15 +105,19 @@ public class SQLConnection implements AutoCloseable {
 	}
 
 	@Override
-	public void close() throws SQLException {
-		db.close();
+	public void close() throws IOException {
+		try {
+			db.close();
+		} catch (SQLException e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override
 	protected void finalize() throws Throwable {
 		try {
 			close();
-		} catch (SQLException e) {
+		} catch (IOException e) {
 			backend.getLogger().log(Level.WARNING, "Error while disconnecting from database: {0}", e.getMessage());
 		} finally {
 			super.finalize();

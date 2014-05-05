@@ -3,6 +3,7 @@ package ru.tehkode.permissions.backends.sql;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -61,7 +62,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			}
 
 			conn.prepAndBind(sql, nullToEmpty(this.globalPrefix), nullToEmpty(this.globalSuffix), this.globalDef ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			if (virtual.compareAndSet(true, false)) {
 				this.updateInfo();
 			}
@@ -91,7 +92,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				this.globalSuffix = null;
 				this.virtual.set(true);
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -119,7 +120,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			conn.prepAndBind("UPDATE `{permissions_inheritance}` SET `child` = ? WHERE `child` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
 			this.identifier = identifier;
 			return true;
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -135,7 +136,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			}
 
 			return Collections.unmodifiableList(permissions);
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -161,7 +162,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				}
 				statement.executeBatch();
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -188,7 +189,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				}
 				perms.add(res.getString("permission"));
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -214,7 +215,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			worlds.remove("");
 
 			return Collections.unmodifiableSet(worlds);
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -234,7 +235,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			if (res.next()) {
 				return res.getString("value");
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -265,7 +266,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		if (value == null || value.isEmpty()) {
 			try (SQLConnection conn = backend.getSQL()) {
 				conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ? AND LENGTH(`value`) > 0", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
-			} catch (SQLException e) {
+			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		} else {
@@ -275,7 +276,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				} else {
 					conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)", getIdentifier(), this.type.ordinal(), option, worldName, value).execute();
 				}
-			} catch (SQLException e) {
+			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -301,7 +302,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			while (set.next()) {
 				options.put(set.getString("permission"), set.getString("value"));
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -332,7 +333,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				}
 				worldOpts.put(res.getString("permission"), res.getString("value"));
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -359,7 +360,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
 				// clear info
 				conn.prepAndBind("DELETE FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
-			} catch (SQLException e) {
+			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -379,7 +380,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				}
 				worldParents.add(res.getString("parent"));
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 		return Collections.unmodifiableMap(ret);
@@ -398,7 +399,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			while (res.next()) {
 				ret.add(res.getString("parent"));
 			}
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -428,7 +429,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				statement.addBatch();
 			}
 			statement.executeBatch();
-		} catch (SQLException e) {
+		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
