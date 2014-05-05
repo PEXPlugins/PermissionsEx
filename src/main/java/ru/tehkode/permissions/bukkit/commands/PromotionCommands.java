@@ -108,7 +108,7 @@ public class PromotionCommands extends PermissionsCommand {
 			plugin.getLogger().info("User " + describeUser(user) + " has been promoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + promoterName);
 		} catch (RankingException e) {
 			sender.sendMessage(ChatColor.RED + "Promotion error: " + e.getMessage());
-			plugin.getLogger().severe("Ranking Error (" + promoterName + " > " + e.getTarget().getIdentifier() + "): " + e.getMessage());
+			plugin.getLogger().severe("Ranking Error (" + promoterName + " > " + describeUser(e.getTarget()) + "): " + e.getMessage());
 		}
 	}
 
@@ -152,7 +152,7 @@ public class PromotionCommands extends PermissionsCommand {
 			plugin.getLogger().info("User " + describeUser(user) + " has been demoted to " + targetGroup.getIdentifier() + " group on " + targetGroup.getRankLadder() + " ladder by " + demoterName);
 		} catch (RankingException e) {
 			sender.sendMessage(ChatColor.RED + "Demotion error: " + e.getMessage());
-			plugin.getLogger().severe("Ranking Error (" + demoterName + " demotes " + e.getTarget().getIdentifier() + "): " + e.getMessage());
+			plugin.getLogger().severe("Ranking Error (" + demoterName + " demotes " + describeUser(e.getTarget()) + "): " + e.getMessage());
 		}
 	}
 

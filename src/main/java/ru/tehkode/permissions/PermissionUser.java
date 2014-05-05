@@ -64,6 +64,20 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
+	public String getName() {
+		String name = getOwnOption("name", null, null);
+		if (name == null) {
+			Player player = getPlayer();
+			if (player != null) {
+				name = player.getName();
+				setOption("name", name);
+				return name;
+			}
+		}
+		return super.getName();
+	}
+
+	@Override
 	public Type getType() {
 		return Type.USER;
 	}
@@ -460,7 +474,7 @@ public class PermissionUser extends PermissionEntity {
 			promoterRank = promoter.getRank(ladderName);
 
 			if (promoterRank >= rank) {
-				throw new RankingException("Promoter don't have high enough rank to change " + this.getIdentifier() + "'s rank", this, promoter);
+				throw new RankingException("Promoter don't have high enough rank to change " + this.getIdentifier() + "/" + getName() + "'s rank", this, promoter);
 			}
 		}
 
