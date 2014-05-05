@@ -521,7 +521,7 @@ public class UserCommands extends PermissionsCommand {
 
 
 		sender.sendMessage(ChatColor.WHITE + "User \"" + describeUser(user) + "\" added to group \"" + groupName + "\"!");
-		this.informPlayer(plugin, user, "You are assigned to \"" + groupName + "\" group");
+		this.informPlayer(plugin, user, "You are assigned to group \"" + groupName + "\"");
 	}
 
 	@Command(name = "pex",

@@ -68,11 +68,12 @@ public class WorldCommands extends PermissionsCommand {
 
 		List<String> parentWorlds = manager.getWorldInheritance(worldName);
 
-		sender.sendMessage("World " + worldName + " inherits:");
 		if (parentWorlds.isEmpty()) {
-			sender.sendMessage("nothing :3");
+			sender.sendMessage("World \"" + worldName + "\" inherits nothing.");
 			return;
 		}
+
+		sender.sendMessage("World \"" + worldName + "\" inherits:");
 
 		for (String parentWorld : parentWorlds) {
 			List<String> parents = manager.getWorldInheritance(parentWorld);
@@ -112,6 +113,6 @@ public class WorldCommands extends PermissionsCommand {
 
 		manager.setWorldInheritance(worldName, parents);
 
-		sender.sendMessage("World " + worldName + " inherits " + StringUtils.implode(parents, ", "));
+		sender.sendMessage("World \"" + worldName + "\" inherits " + StringUtils.implode(parents, ", "));
 	}
 }
