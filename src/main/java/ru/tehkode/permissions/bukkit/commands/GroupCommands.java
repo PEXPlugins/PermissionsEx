@@ -72,8 +72,8 @@ public class GroupCommands extends PermissionsCommand {
 	@Command(name = "pex",
 			syntax = "group <group> weight [weight]",
 			permission = "permissions.manage.groups.weight.<group>",
-			description = "Print or set group weight")
-	public void groupPrintSetWeight(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+			description = "Display or set group weight")
+	public void groupDisplaySetWeight(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(args.get("group"));
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		
@@ -91,7 +91,7 @@ public class GroupCommands extends PermissionsCommand {
 			}
 		}
 
-		sender.sendMessage("Group " + group.getIdentifier() + " have " + group.getWeight() + " calories.");
+		sender.sendMessage("Group \"" + group.getIdentifier() + "\" has " + group.getWeight() + " calories.");
 	}
 
 	@Command(name = "pex",
@@ -172,7 +172,7 @@ public class GroupCommands extends PermissionsCommand {
 		}
 
 		if (!group.isVirtual()) {
-			sender.sendMessage(ChatColor.RED + "Group " + args.get("group") + " already exists");
+			sender.sendMessage(ChatColor.RED + "Group \"" + args.get("group") + "\" already exists.");
 			return;
 		}
 
@@ -187,7 +187,7 @@ public class GroupCommands extends PermissionsCommand {
 			group.setParents(groups, null);
 		}
 
-		sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " created!");
+		sender.sendMessage(ChatColor.WHITE + "Group \"" + group.getIdentifier() + "\" created!");
 
 		group.save();
 	}
@@ -202,11 +202,11 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
-		sender.sendMessage(ChatColor.WHITE + "Group " + group.getIdentifier() + " removed!");
+		sender.sendMessage(ChatColor.WHITE + "Group \"" + group.getIdentifier() + "\" removed!");
 
 		group.remove();
 		plugin.getPermissionsManager().resetGroup(group.getIdentifier());
@@ -234,13 +234,13 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
 		List<String> parentNames = group.getParentIdentifiers(worldName);
 		if (parentNames.isEmpty()) {
-			sender.sendMessage(ChatColor.RED + "Group " + group.getIdentifier() + " doesn't have parents");
+			sender.sendMessage(ChatColor.RED + "Group \"" + group.getIdentifier() + "\" has no parents.");
 			return;
 		}
 
@@ -263,7 +263,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -394,10 +394,10 @@ public class GroupCommands extends PermissionsCommand {
 			printEntityInheritance(sender, parents.get(world));
 		}
 
-		sender.sendMessage("Group " + group.getIdentifier() + "'s permissions:");
+		sender.sendMessage("Group \"" + group.getIdentifier() + "\"'s permissions:");
 		this.sendMessage(sender, this.mapPermissions(worldName, group, 0));
 
-		sender.sendMessage("Group " + group.getIdentifier() + "'s Options: ");
+		sender.sendMessage("Group \"" + group.getIdentifier() + "\"'s Options: ");
 		for (Map.Entry<String, String> option : group.getOptions(worldName).entrySet()) {
 			sender.sendMessage("  " + option.getKey() + " = \"" + option.getValue() + "\"");
 		}
@@ -436,7 +436,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -462,7 +462,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -487,7 +487,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -528,7 +528,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group does not exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -552,7 +552,7 @@ public class GroupCommands extends PermissionsCommand {
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
 
 		if (group == null) {
-			sender.sendMessage(ChatColor.RED + "Group does not exist");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
@@ -575,11 +575,16 @@ public class GroupCommands extends PermissionsCommand {
 		Set<PermissionUser> users = plugin.getPermissionsManager().getUsers(groupName);
 
 		if (users == null || users.isEmpty()) {
-			sender.sendMessage(ChatColor.RED + "Group doesn't exist or empty");
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
 		}
 
-		sender.sendMessage("Group " + groupName + " users:");
+		if (users.isEmpty()) {
+			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" has no users.");
+			return;
+		}
+
+		sender.sendMessage("Group \"" + groupName + "\"'s users:");
 
 		for (PermissionUser user : users) {
 			sender.sendMessage("   " + describeUser(user));
@@ -607,7 +612,7 @@ public class GroupCommands extends PermissionsCommand {
 			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
 			if (user == null) {
-				sender.sendMessage(ChatColor.RED + "User does not exist");
+				sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
 				return;
 			}
 
@@ -639,7 +644,7 @@ public class GroupCommands extends PermissionsCommand {
 			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
 			if (user == null) {
-				sender.sendMessage(ChatColor.RED + "User does not exist");
+				sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
 				return;
 			}
 
@@ -654,13 +659,13 @@ public class GroupCommands extends PermissionsCommand {
 	@Command(name = "pex",
 			syntax = "default group [world]",
 			permission = "permissions.manage.groups.inheritance",
-			description = "Print default group for specified world")
+			description = "Display default group for specified world")
 	public void groupDefaultCheck(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String worldName = this.autoCompleteWorldName(args.get("world"));
 
 
 		List<PermissionGroup> defaultGroups = plugin.getPermissionsManager().getDefaultGroups(worldName);
-		sender.sendMessage("Default groups in world " + worldName + " are:");
+		sender.sendMessage("Default groups in world \"" + worldName + "\" are:");
 		for (PermissionGroup grp : defaultGroups) {
 			sender.sendMessage("  - " + grp.getIdentifier());
 		}
@@ -683,6 +688,6 @@ public class GroupCommands extends PermissionsCommand {
 		}
 
 		group.setDefault(def, worldName);
-		sender.sendMessage("Group " + groupName + " is " + (def ? "now" : "no longer") + " default in world " + worldName);
+		sender.sendMessage("Group \"" + groupName + "\" is " + (def ? "now" : "no longer") + " default in world \"" + worldName + "\"");
 	}
 }

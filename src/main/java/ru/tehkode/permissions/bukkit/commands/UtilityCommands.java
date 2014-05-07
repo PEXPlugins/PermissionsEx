@@ -279,4 +279,16 @@ public class UtilityCommands extends PermissionsCommand {
 			sender.sendMessage(ChatColor.AQUA + "    " + command.description());
 		}
 	}
+
+	@Command(name = "pex",
+			syntax = "version",
+			permission = "permissions.manage",
+			description = "Display version of PermissionsEx")
+	public void showVersion(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		if (sender instanceof Player) {
+			sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + plugin.getDescription().getVersion() + ChatColor.WHITE + "]");
+		} else {
+			sender.sendMessage("[PermissionsEx] version [" + plugin.getDescription().getVersion() + "]");
+		}
+	}
 }

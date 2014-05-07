@@ -188,7 +188,7 @@ public class PermissionsEx extends JavaPlugin {
 			PlayerEventsListener cleaner = new PlayerEventsListener();
 			this.getServer().getPluginManager().registerEvents(cleaner, this);
 
-			//register service
+			// Register service
 			this.getServer().getServicesManager().register(PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal);
 			regexPerms = new RegexPermissions(this);
 			superms = new SuperpermsListener(this);
