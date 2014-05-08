@@ -124,7 +124,7 @@ public class PermissionManager {
 			if (reloadEntity) {
 				switch (event.getType()) {
 					case USER:
-						users.remove(event.getEntityIdentifier());
+						resetUser(event.getEntityIdentifier());
 						break;
 					case GROUP:
 						PermissionGroup group = groups.remove(event.getEntityIdentifier());
@@ -157,8 +157,8 @@ public class PermissionManager {
 			}
 
 			try {
-				if (backend != null) {
-					backend.reload();
+				if (getBackend() != null) {
+					getBackend().reload();
 				}
 				clearCache();
 			} catch (PermissionBackendException e) {
@@ -730,8 +730,10 @@ public class PermissionManager {
 
 	public void end() {
 		try {
-			this.backend.close();
-			this.backend = null;
+			if (this.backend != null) {
+				this.backend.close();
+				this.backend = null;
+			}
 			reset();
 		} catch (PermissionBackendException ignore) {
 			// Ignore because we're shutting down so who cares
