@@ -74,7 +74,7 @@ public class FileBackend extends PermissionBackend {
 			List<String> parentWorlds = worldInheritanceCache.get(world);
 			if (parentWorlds == null) {
 				synchronized (lock) {
-					parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "/inheritance"));
+					parentWorlds = this.permissions.getStringList(buildPath("worlds", world, "inheritance"));
 					if (parentWorlds != null) {
 						parentWorlds = Collections.unmodifiableList(parentWorlds);
 						worldInheritanceCache.put(world, parentWorlds);
