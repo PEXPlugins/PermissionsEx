@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS `{permissions}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
-  `permission` varchar(200) NOT NULL,
+  `permission` text NOT NULL,
   `world` varchar(50) NOT NULL,
   `value` text NOT NULL,
   PRIMARY KEY (`id`),
