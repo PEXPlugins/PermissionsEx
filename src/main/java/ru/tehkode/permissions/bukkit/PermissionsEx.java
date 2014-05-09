@@ -18,6 +18,11 @@
  */
 package ru.tehkode.permissions.bukkit;
 
+import java.lang.reflect.Field;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -35,30 +40,19 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import ru.tehkode.permissions.backends.MultiBackend;
-import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.backends.memory.MemoryBackend;
+import ru.tehkode.permissions.backends.MultiBackend;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.file.FileBackend;
+import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.sql.SQLBackend;
-import ru.tehkode.permissions.bukkit.commands.GroupCommands;
-import ru.tehkode.permissions.bukkit.commands.PromotionCommands;
-import ru.tehkode.permissions.bukkit.commands.UserCommands;
-import ru.tehkode.permissions.bukkit.commands.UtilityCommands;
-import ru.tehkode.permissions.bukkit.commands.WorldCommands;
+import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 import ru.tehkode.utils.StringUtils;
-
-import java.lang.reflect.Field;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 /**
  * @author code
@@ -171,7 +165,7 @@ public class PermissionsEx extends JavaPlugin {
 				getLogger().severe("As of version 1.21, PEX requires a version of Bukkit with UUID support to function (>1.7.5). Please download a non-UUID version of PermissionsEx to continue.");
 				getLogger().severe("Beginning reversion of potential invalid UUID conversion");
 				getPermissionsManager().getBackend().revertUUID();
-				getLogger().severe("Reversion complete, disabling. Permissions will not work until downgrade is complete");
+				getLogger().severe("Reversion complete, disabling. PermissionsEx will not work until downgrade is complete");
 				getLogger().severe("============================================================================================");
 				getPluginLoader().disablePlugin(this);
 				return;

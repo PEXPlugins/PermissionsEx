@@ -1,5 +1,11 @@
 package ru.tehkode.permissions.bukkit;
 
+import java.io.*;
+import java.net.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -9,18 +15,9 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import ru.tehkode.utils.StringUtils;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
- * Error report builder for PEX that provides additional information on top of report and generates a short URL to create a github issue
+ * Error report builder for PEX that provides additional information on top of report
+ * and generates a short URL to create a GitHub issue.
  */
 public class ErrorReport {
 	private static final ExecutorService ASYNC_EXEC = Executors.newSingleThreadExecutor();
@@ -61,36 +58,43 @@ public class ErrorReport {
 	}
 
 	/**
-	 * Returns a bit.ly shortened version of the input
+	 * Returns a git.io shortened version of the input
 	 *
-	 * @param url The input url
-	 * @return The shortened URl, or the input url if an error occurs
+	 * @param longUrl The input url
+	 * @return The shortened URL, or the input url if an error occurs
 	 */
-	public static String shortenURL(String url) {
-		URL shortUrlApi;
-		try {
-			shortUrlApi = new URL("http://is.gd/create.php?format=simple&url=" + URLEncoder.encode(url, UTF8_ENCODING));
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return url;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return url;
+	public static String shortenURL(String longUrl) {
+		if (longUrl == null) {
+			return longUrl;
 		}
 
-		URLConnection conn;
+		StringBuilder sb = null;
+		String line = null;
+		String urlStr = longUrl;
+
 		try {
-			conn = shortUrlApi.openConnection();
-			return StringUtils.readStream(conn.getInputStream());
-		} catch (IOException ex) {
-			/*ex.printStackTrace(); // Debug code, uncomment if needed
-			try {
-				if (conn != null) {
-					return StringUtils.readStream(((HttpURLConnection) conn).getErrorStream());
-				}
-			} catch (IOException ignore) {
-			}*/
-			return url;
+			URL url = new URL("http://git.io/create");
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setDoOutput(true);
+			connection.setRequestMethod("POST");
+			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+			String urlParameters = "url=" + longUrl;
+
+			DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+			wr.writeBytes(urlParameters);
+			wr.flush();
+			wr.close();
+
+			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			sb = new StringBuilder();
+			while ((line = rd.readLine()) != null) {
+				sb.append(line);
+			}
+
+			return "http://git.io/" + sb.toString();
+		} catch (Exception e) {
+			return longUrl;
 		}
 	}
 
@@ -103,15 +107,15 @@ public class ErrorReport {
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 
-			Map<String, Object> request = new HashMap<>();       // {
-			request.put("description", "PEX Error Report");       //     "description": "PEX Error Report",
-			request.put("public", "false");                       //     "public": false,
-			Map<String, Object> filesMap = new HashMap<>();      //     "files": {
-			Map<String, Object> singleFileMap = new HashMap<>(); //         "report.md": {
-			singleFileMap.put("content", text);                   //             "content": <text>
-			filesMap.put("report.md", singleFileMap);             //         }
-			request.put("files", filesMap);                       //     }
-			// }
+			Map<String, Object> request = new HashMap<>();		// {
+			request.put("description", "PEX Error Report");	   //	 "description": "PEX Error Report",
+			request.put("public", "false");					   //	 "public": false,
+			Map<String, Object> filesMap = new HashMap<>();	   //	 "files": {
+			Map<String, Object> singleFileMap = new HashMap<>();  //		 "report.md": {
+			singleFileMap.put("content", text);				   //			 "content": <text>
+			filesMap.put("report.md", singleFileMap);			 //		 }
+			request.put("files", filesMap);					   //	 }
+																  // }
 			yaml.dump(request, (requestWriter = new OutputStreamWriter(conn.getOutputStream())));
 
 			Map<?, ?> data = (Map<?, ?>) yaml.load((responseReader = conn.getInputStream()));
@@ -215,21 +219,21 @@ public class ErrorReport {
 
 		Plugin pexPlugin = PermissionsEx.getPlugin();
 		builder.addHeading("Basic info").
-				addText("**Bukkit version:** " + Bukkit.getBukkitVersion() + " running on " + Bukkit.getVersion());
+				addText("**Server version:** " + Bukkit.getBukkitVersion() + " *running on* " + Bukkit.getVersion());
 
 		if (pexPlugin != null) {
-			StringBuilder pluginList = new StringBuilder("**Plugins:** (*italics* are disabled)\n");
 			Plugin[] plugins = pexPlugin.getServer().getPluginManager().getPlugins();
+			StringBuilder pluginList = new StringBuilder("**Plugins (" + plugins.length + "):** (~~Strikeout~~ means disabled)\n");
 			for (Plugin plugin : plugins) {
 				pluginList.append("- ");
 				if (plugin.getDescription() != null) {
 					if (plugin.isEnabled()) {
-						pluginList.append(plugin.getDescription().getFullName());
+						pluginList.append(plugin.getDescription().getName() + " *v" + plugin.getDescription().getVersion() + "*");
 					} else {
-						pluginList.append("*").append(plugin.getDescription().getFullName()).append("*");
+						pluginList.append("~~").append(plugin.getDescription().getName() + " *v" + plugin.getDescription().getVersion() + "*").append("~~");
 					}
 				} else {
-					pluginList.append("Unknown");
+					pluginList.append("Unknown Plugin!");
 				}
 
 				pluginList.append(" (```").append(plugin.getClass().getName()).append("```)").append('\n');
