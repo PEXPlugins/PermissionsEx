@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS `{permissions}` (
   `permission` varchar(200) NOT NULL,
   `world` varchar(50) NOT NULL,
   `value` text NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique` (`name`,`permission`,`world`,`type`),
+  PRIMARY UNIQUE KEY (`id`),
+  KEY `data` (`name`,`permission`,`world`,`type`)
   KEY `user` (`name`,`type`),
   KEY `world` (`world`,`name`,`type`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
   `prefix` varchar(255) NOT NULL,
   `suffix` varchar(255) NOT NULL,
   `default` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`, `type`),
+  PRIMARY UNIQUE KEY (`id`),
+  KEY `name` (`name`, `type`),
   KEY `default` (`default`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS `{permissions_inheritance}` (
   `parent` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
   `world` varchar(50) NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `child` (`child`,`parent`,`type`,`world`),
+  PRIMARY UNIQUE KEY (`id`),
+  KEY `child` (`child`,`parent`,`type`,`world`),
   KEY `child_2` (`child`,`type`),
   KEY `parent` (`parent`,`type`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
