@@ -263,15 +263,17 @@ public class PermissionsEx extends JavaPlugin {
 		try {
 			if (this.permissionsManager != null) {
 				this.permissionsManager.end();
+				this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
 				this.permissionsManager = null;
 			}
 
-			this.getServer().getServicesManager().unregister(PermissionManager.class, this.permissionsManager);
 			if (this.regexPerms != null) {
 				this.regexPerms.onDisable();
+				this.regexPerms = null;
 			}
 			if (this.superms != null) {
 				this.superms.onDisable();
+				this.superms = null;
 			}
 
 		} catch (Throwable t) {
