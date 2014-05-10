@@ -81,6 +81,8 @@ public class FileBackend extends PermissionBackend {
 						return parentWorlds;
 					}
 				}
+			} else {
+				return parentWorlds;
 			}
 		}
 

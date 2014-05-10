@@ -47,11 +47,15 @@ public class SuperpermsListener implements Listener {
 			attach = player.addAttachment(plugin);
 			attachments.put(player.getUniqueId(), attach);
 			attach.setPermission(playerPerm, true);
+			attach.setPermission(playerOptionPerm, true);
 		}
 
 		PermissionUser user = plugin.getPermissionsManager().getUser(player);
 		if (user != null) {
-			updatePlayerPermission(playerPerm, player, user, worldName);
+			if (user.isDebug()) {
+				plugin.getLogger().info("Updating superperms for player " + player.getName());
+			}
+			updatePlayerPermission(playerPerm, user, worldName);
 			updatePlayerMetadata(playerOptionPerm, user, worldName);
 			player.recalculatePermissions();
 		}
@@ -77,9 +81,8 @@ public class SuperpermsListener implements Listener {
 
 	}
 
-	private void updatePlayerPermission(Permission permission, Player player, PermissionUser user, String worldName) {
+	private void updatePlayerPermission(Permission permission, PermissionUser user, String worldName) {
 		permission.getChildren().clear();
-		permission.getChildren().put(permissionName(player, ".options"), true);
 		for (String perm : user.getPermissions(worldName)) {
 			boolean value = true;
 			if (perm.startsWith("-")) {
@@ -182,7 +185,7 @@ public class SuperpermsListener implements Listener {
 
 				case PERMISSIONS_CHANGED:
 				case TIMEDPERMISSION_EXPIRED:
-					updatePlayerPermission(getCreateWrapper(p, ""), p, user, p.getWorld().getName());
+					updatePlayerPermission(getCreateWrapper(p, ""), user, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 

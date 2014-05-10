@@ -660,6 +660,9 @@ public class PermissionManager {
 	 */
 	public void setWorldInheritance(String world, List<String> parentWorlds) {
 		backend.setWorldInheritance(world, parentWorlds);
+		for (PermissionUser user : getActiveUsers()) { // Clear user cache
+			user.clearCache();
+		}
 		this.callEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED);
 	}
 
