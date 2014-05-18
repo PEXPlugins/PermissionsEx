@@ -5,9 +5,10 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import ru.tehkode.utils.FieldReplacer;
@@ -19,7 +20,7 @@ public class PermissionList extends HashMap<String, Permission> {
 
     private static FieldReplacer<PluginManager, Map> INJECTOR;
 
-    private static final HashMap<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<>();
+    private static final ConcurrentHashMap<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new ConcurrentHashMap<>();
     /**
      * k = child permission v.k = parent permission v.v = value parent gives
      * child
@@ -44,9 +45,9 @@ public class PermissionList extends HashMap<String, Permission> {
     }
 
     private void removeAllChildren(String perm) {
-        for (Iterator<Map.Entry<String, Map.Entry<String, Boolean>>> it = childParentMapping.entries().iterator(); it.hasNext();) {
-            if (it.next().getValue().getKey().equals(perm)) {
-                it.remove();
+        for (Map.Entry<String, Map.Entry<String, Boolean>> value : new CopyOnWriteArrayList<>(childParentMapping.entries())) {
+            if (value.getValue().getKey().equals(perm)) {
+                childParentMapping.remove(value.getKey(), value.getValue());
             }
         }
     }
@@ -67,9 +68,9 @@ public class PermissionList extends HashMap<String, Permission> {
         }
 
         private void removeFromMapping(String child) {
-            for (Iterator<Map.Entry<String, Boolean>> it = childParentMapping.get(child).iterator(); it.hasNext();) {
-                if (it.next().getKey().equals(perm.getName())) {
-                    it.remove();
+            for (Entry<String, Boolean> value : new CopyOnWriteArrayList<>(childParentMapping.get(child))) {
+                if (value.getKey().equals(perm.getName())) {
+                    childParentMapping.remove(value.getKey(), value.getValue());
                 }
             }
         }
