@@ -3,6 +3,7 @@ package ru.tehkode.permissions.bukkit.regexperms;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -45,7 +46,11 @@ public class PermissionList extends HashMap<String, Permission> {
     }
 
     private void removeAllChildren(String perm) {
-        for (Map.Entry<String, Map.Entry<String, Boolean>> value : new CopyOnWriteArrayList<>(childParentMapping.entries())) {
+        if (childParentMapping == null || childParentMapping.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<String, Map.Entry<String, Boolean>> value : new ArrayList<>(childParentMapping.entries())) {
             if (value.getValue().getKey().equals(perm)) {
                 childParentMapping.remove(value.getKey(), value.getValue());
             }
@@ -68,7 +73,11 @@ public class PermissionList extends HashMap<String, Permission> {
         }
 
         private void removeFromMapping(String child) {
-            for (Entry<String, Boolean> value : new CopyOnWriteArrayList<>(childParentMapping.get(child))) {
+            if (childParentMapping.get(child) == null || childParentMapping.get(child).isEmpty()) {
+                return;
+            }
+
+            for (Entry<String, Boolean> value : new ArrayList<>(childParentMapping.get(child))) {
                 if (value.getKey().equals(perm.getName())) {
                     childParentMapping.remove(value.getKey(), value.getValue());
                 }
