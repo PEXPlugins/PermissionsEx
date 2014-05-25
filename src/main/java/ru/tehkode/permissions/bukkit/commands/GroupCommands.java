@@ -151,10 +151,10 @@ public class GroupCommands extends PermissionsCommand {
 		}
 
 		if (args.containsKey("newsuffix")) {
-			group.setPrefix(args.get("newsuffix"), worldName);
-			sender.sendMessage(group.getIdentifier() + "'s suffix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " has been set to \"" + group.getPrefix() + "\"");
+			group.setSuffix(args.get("newsuffix"), worldName);
+			sender.sendMessage(group.getIdentifier() + "'s suffix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " has been set to \"" + group.getSuffix() + "\"");
 		} else {
-			sender.sendMessage(group.getIdentifier() + "'s suffix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " is \"" + group.getPrefix() + "\"");
+			sender.sendMessage(group.getIdentifier() + "'s suffix" + (worldName != null ? " (in world \"" + worldName + "\") " : "") + " is \"" + group.getSuffix() + "\"");
 		}
 	}
 
