@@ -18,6 +18,20 @@
  */
 package ru.tehkode.permissions.bukkit.regexperms;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
@@ -30,17 +44,6 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.FieldReplacer;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implements regex-based permission matching for superperms.
@@ -240,8 +243,8 @@ public class PermissiblePEX extends PermissibleBase {
 					}
 				}
 			}
-			if (res == PermissionCheckResult.UNDEFINED) {
-				for (Map.Entry<String, Boolean> ent : plugin.getRegexPerms().getPermissionList().getParents(permission)) {
+			if (res == PermissionCheckResult.UNDEFINED) {                                
+				for (Map.Entry<String, Boolean> ent : new CopyOnWriteArrayList<>(plugin.getRegexPerms().getPermissionList().getParents(permission))) {
 					if ((res = permissionValue(ent.getKey())) != PermissionCheckResult.UNDEFINED) {
 						res = PermissionCheckResult.fromBoolean(!(res.toBoolean() ^ ent.getValue()));
 						if (isDebug()) {

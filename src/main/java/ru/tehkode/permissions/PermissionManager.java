@@ -37,6 +37,7 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.*;
 import java.util.logging.Logger;
+import org.bukkit.ChatColor;
 
 /**
  * @author t3hk0d3
@@ -221,44 +222,43 @@ public class PermissionManager {
 
 		return user != null && user.has(permission, world);
 
-	}
+    }
 
-	/**
-	 * Return user's object
-	 *
-	 * @param username get PermissionUser with given name
-	 * @return PermissionUser instance
-	 */
-	public PermissionUser getUser(String username) {
-		if (username == null || username.isEmpty()) {
-			throw new IllegalArgumentException("Null or empty name passed! Name must not be empty");
-		}
+    /**
+     * Return user's object
+     *
+     * @param uuid get PermissionUser with given name
+     * @return PermissionUser instance
+     */
+    public PermissionUser getUser(String uuid) {
+        if (uuid == null || uuid.isEmpty()) {
+            throw new IllegalArgumentException("Null or empty name passed! Name must not be empty");
+        }
 
-		try {
-			if (username.length() != 36) { // Speedup for things def not uuids
-				throw new IllegalArgumentException("not a uuid, try stuff");
-			}
-			return getUser(UUID.fromString(username)); // Username is uuid as string, just use it
-		} catch (IllegalArgumentException ex) {
-			OfflinePlayer player = plugin.getServer().getOfflinePlayer(username);
-			UUID userUUID = null;
-			try {
-				userUUID = player instanceof Player ? ((Player) player).getUniqueId() : player.getUniqueId();
-			} catch (Throwable t) {
-				// Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
-			}
+        try {
+            if (uuid.length() != 36) { // Speedup for things def not uuids
+                throw new IllegalArgumentException("not a uuid, try stuff");
+            }
+            return getUser(UUID.fromString(uuid)); // Username is uuid as string, just use it
+        } catch (IllegalArgumentException ex) {
+            OfflinePlayer player = plugin.getServer().getOfflinePlayer(uuid);
+            UUID userUUID = null;
+            try {
+                userUUID = player instanceof Player ? ((Player) player).getUniqueId() : player.getUniqueId();
+            } catch (Throwable t) {
+                // Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
+            }
+            
+            if (userUUID != null && (player.isOnline())) {
+                return getUser(userUUID.toString(), uuid, player.isOnline());
+            } else {
+                // The user is offline and unconverted, so we'll just have to return an unconverted user.
+                return getUser(uuid, null, player.isOnline());
+            }
+        }
+    }
 
-			if (userUUID != null && (player.isOnline() || backend.hasUser(userUUID.toString()))) {
-				return getUser(userUUID.toString(), username, player.isOnline());
-			} else {
-				// The user is offline and unconverted, so we'll just have to return an unconverted user.
-				return getUser(username, null, player.isOnline());
-			}
-		}
-	}
-
-
-	/**
+    /**
 	 * Update a user in cache. This method is thread-safe and should only be called in async phases of login.
 	 *
 	 * @param ident The user identifier
