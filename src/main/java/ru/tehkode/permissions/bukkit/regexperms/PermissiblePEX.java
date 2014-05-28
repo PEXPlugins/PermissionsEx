@@ -20,6 +20,7 @@ package ru.tehkode.permissions.bukkit.regexperms;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -174,8 +175,7 @@ public class PermissiblePEX extends PermissibleBase {
 			synchronized (permissionsLock) {
 				clearPermissions();
 				cache.clear();
-				for (ListIterator<PermissionAttachment> it = this.attachments.listIterator(this.attachments.size()); it.hasPrevious(); ) {
-					PermissionAttachment attach = it.previous();
+				for (PermissionAttachment attach : new ArrayList<>(this.attachments)) {
 					calculateChildPerms(attach.getPermissions(), false, attach);
 				}
 
