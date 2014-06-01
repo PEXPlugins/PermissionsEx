@@ -384,9 +384,15 @@ public class PermissionsEx extends JavaPlugin {
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			try {
+
+				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
 			if (config.shouldLogPlayers()) {
-				getPermissionsManager().getUser(event.getPlayer()).setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
+				user.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 			}
+
+				if (!user.isVirtual()) {
+					user.getName(); // Set name if user was created during server run
+				}
 
 			getPermissionsManager().resetUser(event.getPlayer());
 			} catch (Throwable t) {
