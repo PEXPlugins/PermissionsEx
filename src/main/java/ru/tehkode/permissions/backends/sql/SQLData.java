@@ -27,7 +27,6 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	// Cache
 	private final AtomicBoolean virtual = new AtomicBoolean(true);
 	private volatile boolean globalDef;
-	private volatile String globalPrefix, globalSuffix;
 
 	public SQLData(String identifier, Type type, SQLBackend backend) {
 		this.identifier = identifier;
@@ -36,32 +35,10 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		fetchInfo();
 	}
 
-	// Cache updating
-	private String emptyToNull(String enter) {
-		if (enter == null || enter.equals("null")) {
-			return null;
-		}
-		return enter;
-	}
-
-	private String nullToEmpty(String enter) {
-		if (enter == null) {
-			return "null";
-		}
-		return enter;
-	}
-
 	protected void updateInfo() {
 		try (SQLConnection conn = backend.getSQL()) {
 
-			String sql;
-			if (this.isVirtual()) { // This section are suspicious, here was problem which are resolved mysticaly. Keep eye on it.
-				sql = "INSERT INTO `{permissions_entity}` (`prefix`, `suffix`, `default`, `name`, `type`) VALUES (?, ?, ?, ?, ?)";
-			} else {
-				sql = "UPDATE `{permissions_entity}` SET `prefix` = ?, `suffix` = ?, `default` = ? WHERE `name` = ? AND `type` = ?";
-			}
-
-			conn.prepAndBind(sql, nullToEmpty(this.globalPrefix), nullToEmpty(this.globalSuffix), this.globalDef ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
+			conn.prepAndBind("entity.update", this.globalDef ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
 		} catch (SQLException | IOException e) {
 			if (virtual.compareAndSet(true, false)) {
 				this.updateInfo();
@@ -76,11 +53,9 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	protected final void fetchInfo() {
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet result = conn.prepAndBind("SELECT `name`, `prefix`, `suffix`, `default` FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", this.getIdentifier(), this.type.ordinal()).executeQuery();
+			ResultSet result = conn.prepAndBind("entity.fetch", this.getIdentifier(), this.type.ordinal()).executeQuery();
 
 			if (result.next()) {
-				this.globalPrefix = emptyToNull(result.getString("prefix"));
-				this.globalSuffix = emptyToNull(result.getString("suffix"));
 				this.globalDef = result.getBoolean("default");
 
 				// For teh case-insensetivity
@@ -88,8 +63,6 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 				this.virtual.set(false);
 			} else {
-				this.globalPrefix = null;
-				this.globalSuffix = null;
 				this.virtual.set(true);
 			}
 		} catch (SQLException | IOException e) {
@@ -105,7 +78,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public boolean setIdentifier(String identifier) {
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet set = conn.prepAndBind("SELECT `id` from `{permissions_entity}` WHERE `name` = ? AND `type` = ? LIMIT 1", identifier, this.type.ordinal()).executeQuery();
+			ResultSet set = conn.prepAndBind("entity.exists", identifier, this.type.ordinal()).executeQuery();
 			if (set.next()) {
 				return false;
 			}
@@ -115,9 +88,9 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				return true;
 			}
 
-			conn.prepAndBind("UPDATE `{permissions_entity}` SET `name` = ? WHERE `name` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
-			conn.prepAndBind("UPDATE `{permissions}` SET `name` = ? WHERE `name` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
-			conn.prepAndBind("UPDATE `{permissions_inheritance}` SET `child` = ? WHERE `child` = ? AND `type` = ?", identifier, this.identifier, this.type.ordinal()).execute();
+			conn.prepAndBind("entity.rename.entity", identifier, this.identifier, this.type.ordinal()).execute();
+			conn.prepAndBind("entity.rename.permissions", identifier, this.identifier, this.type.ordinal()).execute();
+			conn.prepAndBind("entity.rename.inheritance", identifier, this.identifier, this.type.ordinal()).execute();
 			this.identifier = identifier;
 			return true;
 		} catch (SQLException | IOException e) {
@@ -129,7 +102,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	public List<String> getPermissions(String worldName) {
 		try (SQLConnection conn = backend.getSQL()) {
 			LinkedList<String> permissions = new LinkedList<>();
-			ResultSet set = conn.prepAndBind("SELECT `permission` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND LENGTH(`value`) = 0 ORDER BY `id` DESC", getIdentifier(), this.type.ordinal(), worldName == null ? "" : worldName).executeQuery();
+			ResultSet set = conn.prepAndBind("entity.permissions.get_world", getIdentifier(), this.type.ordinal(), worldName == null ? "" : worldName).executeQuery();
 
 			while (set.next()) {
 				permissions.add(set.getString("permission"));
@@ -148,11 +121,11 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		}
 
 		try (SQLConnection conn = backend.getSQL()) {
-			conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND `value` = ''", this.getIdentifier(), this.type.ordinal(), worldName).execute();
+			conn.prepAndBind("entity.permissions.clear", this.getIdentifier(), this.type.ordinal(), worldName).execute();
 
 			if (permissions.size() > 0) {
 				Set<String> includedPerms = new HashSet<>();
-				PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `permission`, `value`, `world`, `type`) VALUES (?, ?, '', ?, ?)", this.getIdentifier(), "toset", worldName, this.type.ordinal());
+				PreparedStatement statement = conn.prepAndBind("entity.permissions.add", this.getIdentifier(), "toset", worldName, this.type.ordinal());
 				for (int i = permissions.size() - 1; i >= 0; i--) { // insert in reverse order
 					if (!includedPerms.contains(permissions.get(i))) {
 						statement.setString(2, permissions.get(i));
@@ -176,7 +149,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		Map<String, List<String>> allPermissions = new HashMap<>();
 
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet res = conn.prepAndBind("SELECT `permission`, `world` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND LENGTH(`value`) = 0 ORDER BY `id` DESC", getIdentifier(), type.ordinal()).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.permissions.get_all", getIdentifier(), type.ordinal()).executeQuery();
 			while (res.next()) {
 				String world = res.getString("world");
 				if (world.isEmpty()) {
@@ -204,11 +177,11 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	public Set<String> getWorlds() {
 		Set<String> worlds = new HashSet<>();
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet res = conn.prepAndBind("SELECT `world` FROM `{permissions}` WHERE `name` = ? AND `type` = ?", getIdentifier(), type.ordinal()).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.worlds.permissions", getIdentifier(), type.ordinal()).executeQuery();
 			while (res.next()) {
 				worlds.add(res.getString("world"));
 			}
-			res = conn.prepAndBind("SELECT `world` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ?", getIdentifier(), type.ordinal()).executeQuery();
+			res = conn.prepAndBind("entity.worlds.inheritance", getIdentifier(), type.ordinal()).executeQuery();
 			while (res.next()) {
 				worlds.add(res.getString("world"));
 			}
@@ -222,16 +195,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public String getOption(String option, String worldName) {
-		if (worldName == null || worldName.isEmpty()) {
-			if (option.equals("prefiix")) {
-				return globalPrefix;
-			} else if (option.equals("suffix")) {
-				return globalSuffix;
-			}
-		}
-
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet res = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `permission` = ? AND `world` = ? AND LENGTH(`value`) > 0 LIMIT 1", getIdentifier(), this.type.ordinal(), option, worldName == null ? "" : worldName).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.options.get", getIdentifier(), this.type.ordinal(), option, worldName == null ? "" : worldName).executeQuery();
 			if (res.next()) {
 				return res.getString("value");
 			}
@@ -251,40 +216,18 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			worldName = "";
 		}
 
-		if (worldName.isEmpty()) {
-			if (option.equals("prefix")) {
-				this.globalPrefix = value;
-				updateInfo();
-				return;
-			} else if (option.equals("suffix")) {
-				this.globalSuffix = value;
-				updateInfo();
-				return;
-			}
-		}
-
 		if (value == null || value.isEmpty()) {
 			try (SQLConnection conn = backend.getSQL()) {
-				conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `permission` = ? AND `type` = ? AND `world` = ? AND LENGTH(`value`) > 0", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
+				conn.prepAndBind("entity.options.delete", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
 			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
 		} else {
 			try (SQLConnection conn = backend.getSQL()) {
-				if (this.backend.dbDriver.equals("sqlite")) {// Not really the best way, but too bad
-					conn.prepAndBind("INSERT OR REPLACE INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES (?, ?, ?, ?, ?)", getIdentifier(), this.type.ordinal(), option, worldName, value).execute();
-				} else {
-					conn.prepAndBind("INSERT INTO `{permissions}` (`name`, `type`, `permission`, `world`, `value`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)", getIdentifier(), this.type.ordinal(), option, worldName, value).execute();
-				}
+				conn.prepAndBind("entity.options.add", getIdentifier(), this.type.ordinal(), option, worldName, value).execute();
 			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
-		}
-	}
-
-	private <K, V> void putIfNotNull(Map<K, V> map, K key, V value) {
-		if (value != null) {
-			map.put(key, value);
 		}
 	}
 
@@ -292,13 +235,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	public Map<String, String> getOptions(String worldName) {
 		Map<String, String> options = new HashMap<>();
 
-		if (worldName == null || worldName.isEmpty()) {
-			putIfNotNull(options, "prefix", globalPrefix);
-			putIfNotNull(options, "suffix", globalSuffix);
-		}
-
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet set = conn.prepAndBind("SELECT `permission`, `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `world` = ? AND LENGTH(`value`) > 0", getIdentifier(), type.ordinal(), worldName == null ? "" : worldName).executeQuery();
+			ResultSet set = conn.prepAndBind("entity.options.get_world", getIdentifier(), type.ordinal(), worldName == null ? "" : worldName).executeQuery();
 			while (set.next()) {
 				options.put(set.getString("permission"), set.getString("value"));
 			}
@@ -313,14 +251,8 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	public Map<String, Map<String, String>> getOptionsMap() {
 		Map<String, Map<String, String>> allOptions = new HashMap<>();
 
-		// TODO: Make all prefixes options
-		Map<String, String> globalOpts = new HashMap<>();
-		allOptions.put(null, globalOpts);
-		putIfNotNull(globalOpts, "prefix", globalPrefix);
-		putIfNotNull(globalOpts, "suffix", globalSuffix);
-
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet res = conn.prepAndBind("SELECT `permission`, `value`, `world` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND LENGTH(`value`) > 0", getIdentifier(), type.ordinal()).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.options.get_all", getIdentifier(), type.ordinal()).executeQuery();
 			while (res.next()) {
 				String world = res.getString("world");
 				if (world.isEmpty()) {
@@ -355,11 +287,11 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		if (this.virtual.compareAndSet(false, true)) {
 			try (SQLConnection conn = backend.getSQL()) {
 				// clear inheritance info
-				conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
+				conn.prepAndBind("entity.delete.inheritance", this.getIdentifier(), this.type.ordinal()).execute();
 				// clear permissions
-				conn.prepAndBind("DELETE FROM `{permissions}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
+				conn.prepAndBind("entity.delete.permissions", this.getIdentifier(), this.type.ordinal()).execute();
 				// clear info
-				conn.prepAndBind("DELETE FROM `{permissions_entity}` WHERE `name` = ? AND `type` = ?", this.getIdentifier(), this.type.ordinal()).execute();
+				conn.prepAndBind("entity.delete.entity", this.getIdentifier(), this.type.ordinal()).execute();
 			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -370,7 +302,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	public Map<String, List<String>> getParentsMap() {
 		Map<String, List<String>> ret = new HashMap<>();
 		try (SQLConnection conn = backend.getSQL()) {
-			ResultSet res = conn.prepAndBind("SELECT `parent`, `world` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? ORDER BY `id` DESC", getIdentifier(), this.type.ordinal()).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.parents.get_all", getIdentifier(), this.type.ordinal()).executeQuery();
 			while (res.next()) {
 				String world = res.getString("world");
 				List<String> worldParents = ret.get(world);
@@ -394,7 +326,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			if (worldName == null) {
 				res = conn.prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND `world` IS NULL ORDER BY `id` DESC", getIdentifier(), type.ordinal()).executeQuery();
 			} else {
-				res = conn.prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND `world` = ? ORDER BY `id` DESC", getIdentifier(), type.ordinal(), worldName).executeQuery();
+				res = conn.prepAndBind("entity.parents.get_world", getIdentifier(), type.ordinal(), worldName).executeQuery();
 			}
 			while (res.next()) {
 				ret.add(res.getString("parent"));
@@ -414,12 +346,12 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 		try (SQLConnection conn = backend.getSQL()) {
 			// Clean out existing records
 			if (worldName != null) { // damn NULL
-				conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND `world` = ?", this.getIdentifier(), this.type.ordinal(), worldName).execute();
+				conn.prepAndBind("entity.parents.clear", this.getIdentifier(), this.type.ordinal(), worldName).execute();
 			} else {
 				conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ? AND `world` IS NULL", this.getIdentifier(), this.type.ordinal()).execute();
 			}
 
-			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`, `world`) VALUES (?, ?, ?, ?)", this.getIdentifier(), "toset", this.type.ordinal(), worldName);
+			PreparedStatement statement = conn.prepAndBind("entity.parents.add", this.getIdentifier(), "toset", this.type.ordinal(), worldName);
 			for (int i = parents.size() - 1; i >= 0; --i) {
 				final String group = parents.get(i);
 				if (group == null || group.isEmpty()) {
@@ -459,7 +391,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	public enum Type {
-		GROUP, USER
+		GROUP, USER, WORLD
 	}
 
 	public static Set<String> getEntitiesNames(SQLConnection sql, Type type, boolean defaultOnly) throws SQLException {

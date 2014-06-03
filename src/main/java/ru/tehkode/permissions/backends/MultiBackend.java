@@ -51,6 +51,16 @@ public class MultiBackend extends PermissionBackend {
 		}
 	}
 
+	@Override
+	public int getSchemaVersion() {
+		return -1;
+	}
+
+	@Override
+	protected void setSchemaVersion(int version) {
+		// no-op
+	}
+
 	public PermissionBackend getFallbackBackend(String type) {
 		if (fallbackBackends.containsKey(type)) {
 			return fallbackBackends.get(type);

@@ -53,6 +53,10 @@ public class SQLConnection implements Closeable {
 	 * @return The expanded query
 	 */
 	public String expandQuery(String query) {
+		String newQuery = backend.getQueryCache().getQuery(query);
+		if (newQuery != null) {
+			query = newQuery;
+		}
 		StringBuffer ret = new StringBuffer();
 		Matcher m = TABLE_PATTERN.matcher(query);
 		while (m.find()) {

@@ -2,9 +2,9 @@ CREATE TABLE `{permissions}` (
   `id`          integer PRIMARY KEY AUTOINCREMENT,
   `name`        varchar(50) NOT NULL,
   `type`        int NOT NULL DEFAULT 0,
-  `permission`  varchar(200) NOT NULL,
+  `permission`  TEXT NOT NULL,
   `world`       varchar(50) NOT NULL,
-  `value`       varchar(255) NOT NULL
+  `value`       TEXT NOT NULL
 );
 
 CREATE INDEX `permissions_Index01` ON `{permissions}` (`name`, `type`, `world`, `permission`);
@@ -14,8 +14,6 @@ CREATE TABLE `{permissions_entity}` (
   `id`         integer PRIMARY KEY AUTOINCREMENT NOT NULL,
   `name`       varchar(50) NOT NULL,
   `type`       int NOT NULL DEFAULT 0,
-  `prefix`     varchar(255) NOT NULL,
-  `suffix`     varchar(255) NOT NULL,
   `default`   int NOT NULL DEFAULT 0
 );
 

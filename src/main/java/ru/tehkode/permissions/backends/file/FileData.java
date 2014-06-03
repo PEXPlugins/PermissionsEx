@@ -149,41 +149,24 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public String getOption(String option, String worldName) {
-		String ret = this.node.getString(formatPath(worldName, "options", option));
-		if (ret == null && (option.equals("prefix") || option.equals("suffix"))) {
-			ret = this.node.getString(formatPath(worldName, option));
-		}
-		return ret;
+		return this.node.getString(formatPath(worldName, "options", option));
 	}
 
 	@Override
 	public void setOption(String option, String value, String worldName) {
 		this.node.set(formatPath(worldName, "options", option), value);
-		if (option.equals("prefix") || option.equals("suffix")) {
-			this.node.set(formatPath(worldName, option), null); // Delete old-style prefix/suffix
-		}
 		save();
-	}
-
-	private <K, V> void putIfNotNull(Map<K, V> map, K key, V value) {
-		if (value != null) {
-			map.put(key, value);
-		}
 	}
 
 	@Override
 	public Map<String, String> getOptions(String worldName) {
 		ConfigurationSection optionsSection = this.node.getConfigurationSection(formatPath(worldName, "options"));
-		Map<String, String> worldOptions = new LinkedHashMap<>();
-
-		putIfNotNull(worldOptions, "prefix", this.node.getString(formatPath(worldName, "prefix")));
-		putIfNotNull(worldOptions, "suffix", this.node.getString(formatPath(worldName, "suffix")));
 
 		if (optionsSection == null) {
-			return Collections.unmodifiableMap(worldOptions);
+			return Collections.emptyMap();
 		}
 
-		return Collections.unmodifiableMap(collectOptions(worldOptions, optionsSection));
+		return Collections.unmodifiableMap(collectOptions(optionsSection));
 
 	}
 
@@ -276,7 +259,8 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		save();
 	}
 
-	private Map<String, String> collectOptions(Map<String, String> options, ConfigurationSection section) {
+	private Map<String, String> collectOptions(ConfigurationSection section) {
+		Map<String, String> options = new LinkedHashMap<>();
 		for (String key : section.getKeys(true)) {
 			if (section.isConfigurationSection(key)) {
 				continue;

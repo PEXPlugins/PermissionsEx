@@ -16,8 +16,6 @@ CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `type` tinyint(1) NOT NULL,
-  `prefix` varchar(255) NOT NULL,
-  `suffix` varchar(255) NOT NULL,
   `default` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`, `type`),

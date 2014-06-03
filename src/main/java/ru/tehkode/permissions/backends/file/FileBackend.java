@@ -23,6 +23,7 @@ import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.backends.SchemaUpdate;
 import ru.tehkode.permissions.backends.caching.CachingGroupData;
 import ru.tehkode.permissions.backends.caching.CachingUserData;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -65,7 +66,68 @@ public class FileBackend extends PermissionBackend {
 		}
 
 		this.permissionsFile = new File(baseDir, permissionFilename);
+		addSchemaUpdate(new SchemaUpdate(0) {
+			@Override
+			public void performUpdate() {
+				ConfigurationSection userSection = permissions.getConfigurationSection("users");
+				if (userSection != null) {
+					for (Map.Entry<String, Object> e : userSection.getValues(false).entrySet()) {
+						if (e.getValue() instanceof ConfigurationSection) {
+							allWorlds((ConfigurationSection) e.getValue());
+						}
+					}
+				}
+				ConfigurationSection groupSection = permissions.getConfigurationSection("groups");
+				if (groupSection != null) {
+					for (Map.Entry<String, Object> e : groupSection.getValues(false).entrySet()) {
+						if (e.getValue() instanceof ConfigurationSection) {
+							allWorlds((ConfigurationSection) e.getValue());
+						}
+					}
+				}
+			}
+
+			private void allWorlds(ConfigurationSection section) {
+				singleWorld(section);
+				ConfigurationSection worldSection = section.getConfigurationSection("worlds");
+				if (worldSection != null) {
+					for (Map.Entry<String, Object> e : worldSection.getValues(false).entrySet()) {
+						if (e.getValue() instanceof ConfigurationSection) {
+							singleWorld((ConfigurationSection) e.getValue());
+						}
+					}
+				}
+			}
+
+			private void singleWorld(ConfigurationSection section) {
+				if (section.isSet("prefix")) {
+					section.set(buildPath("options", "prefix"), section.get("prefix"));
+					section.set("prefix", null);
+				}
+
+				if (section.isSet("suffix")) {
+					section.set(buildPath("options", "suffix"), section.get("suffix"));
+					section.set("suffix", null);
+				}
+			}
+		});
 		reload();
+		performSchemaUpdate();
+	}
+
+	@Override
+	public int getSchemaVersion() {
+		synchronized (lock) {
+			return this.permissions.getInt("schema-version", -1);
+		}
+	}
+
+	@Override
+	protected void setSchemaVersion(int version) {
+		synchronized (lock) {
+			this.permissions.set("schema-version", version);
+			save();
+		}
 	}
 
 	@Override
@@ -283,6 +345,7 @@ public class FileBackend extends PermissionBackend {
 				defaultPermissions.add("modifyworld.*");
 
 				permissions.set("groups/default/permissions", defaultPermissions);
+				permissions.set("schema-version", getLatestSchemaVersion());
 
 				this.save();
 			} catch (IOException e) {

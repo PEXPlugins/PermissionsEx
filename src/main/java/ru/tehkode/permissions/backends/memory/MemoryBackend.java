@@ -42,6 +42,16 @@ public class MemoryBackend extends PermissionBackend {
         super(manager, config);
     }
 
+	@Override
+	public int getSchemaVersion() {
+		return -1;
+	}
+
+	@Override
+	protected void setSchemaVersion(int version) {
+		// no-op
+	}
+
 
 	@Override
 	public void reload() throws PermissionBackendException {

@@ -5,13 +5,16 @@ import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
+import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +44,7 @@ public abstract class PermissionBackend {
 	private final Executor activeExecutorPtr,
 			onThreadExecutor;
 	private final ExecutorService asyncExecutor;
+	private final List<SchemaUpdate> schemaUpdates = new LinkedList<>();
 
 	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		this.manager = manager;
@@ -60,6 +64,55 @@ public abstract class PermissionBackend {
 				PermissionBackend.this.activeExecutor.execute(runnable);
 			}
 		};
+	}
+
+	protected void addSchemaUpdate(SchemaUpdate update) {
+		schemaUpdates.add(update);
+		Collections.sort(schemaUpdates);
+	}
+
+	protected void performSchemaUpdate() {
+		int version = getSchemaVersion();
+		int newVersion = version;
+		try {
+			for (SchemaUpdate update : schemaUpdates) {
+				try {
+					if (update.getUpdateVersion() <= version) {
+						continue;
+					}
+					update.performUpdate();
+					newVersion = Math.max(update.getUpdateVersion(), newVersion);
+				} catch (Throwable t) {
+					ErrorReport.handleError("While updating to " + update.getUpdateVersion() + " from " + newVersion, t);
+				}
+			}
+		} finally {
+			if (newVersion != version) {
+				setSchemaVersion(newVersion);
+			}
+		}
+	}
+
+	/**
+	 * Return the current schema version.
+	 * -1 indicates that the schema version is unknown.
+	 *
+	 * @return The current schema version
+	 */
+	public abstract int getSchemaVersion();
+
+	/**
+	 * Update the schema version. May be a no-op for unversioned schemas.
+	 *
+	 * @param version The new version
+	 */
+	protected abstract void setSchemaVersion(int version);
+
+	public int getLatestSchemaVersion() {
+		if (schemaUpdates.isEmpty()) {
+			return -1;
+		}
+		return schemaUpdates.get(schemaUpdates.size() - 1).getUpdateVersion();
 	}
 
 	protected Executor getExecutor() {
