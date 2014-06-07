@@ -36,6 +36,8 @@ import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 /**
@@ -44,9 +46,9 @@ import java.util.logging.Logger;
 public class PermissionManager {
 
 	public final static int TRANSIENT_PERMISSION = 0;
-	protected Map<String, PermissionUser> users = new HashMap<>();
-	protected Map<String, PermissionGroup> groups = new HashMap<>();
-	protected Map<String, PermissionGroup> defaultGroups = new HashMap<>();
+	protected ConcurrentMap<String, PermissionUser> users = new ConcurrentHashMap<>();
+	protected ConcurrentMap<String, PermissionGroup> groups = new ConcurrentHashMap<>();
+	protected Map<String, PermissionGroup> defaultGroups = new ConcurrentHashMap<>();
 	protected PermissionBackend backend = null;
 	private final PermissionsEx plugin;
 	protected Timer timer;
@@ -325,7 +327,10 @@ public class PermissionManager {
 			user = new PermissionUser(identifier, data, this);
 			user.initialize();
 			if (store) {
-				this.users.put(identifier, user);
+				PermissionUser newUser = this.users.put(identifier, user);
+				if (newUser != null) {
+					user = newUser;
+				}
 			}
 		} else {
 			throw new IllegalStateException("User " + identifier + " is null");
@@ -488,7 +493,10 @@ public class PermissionManager {
 			PermissionsGroupData data = this.backend.getGroupData(groupname);
 			if (data != null) {
 				group = new PermissionGroup(groupname, data, this);
-				this.groups.put(groupname.toLowerCase(), group);
+				PermissionGroup oldGroup;
+				if ((oldGroup = this.groups.putIfAbsent(groupname.toLowerCase(), group)) != null) {
+					return oldGroup;
+				}
 				try {
 					group.initialize();
 				} catch (Exception e) {
@@ -755,7 +763,6 @@ public class PermissionManager {
 	protected void clearCache() {
 		this.users.clear();
 		this.groups.clear();
-		this.defaultGroups.clear();
 
 		// Close old timed Permission Timer
 		this.initTimer();
