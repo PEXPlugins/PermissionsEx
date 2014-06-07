@@ -248,17 +248,6 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		// Already loaded bc file
 	}
 
-	@Override
-	public boolean isDefault(String world) {
-		return this.node.getBoolean(formatPath(world, "default"));
-	}
-
-	@Override
-	public void setDefault(boolean def, String world) {
-		this.node.set(formatPath(world, "default"), def);
-		save();
-	}
-
 	private Map<String, String> collectOptions(ConfigurationSection section) {
 		Map<String, String> options = new LinkedHashMap<>();
 		for (String key : section.getKeys(true)) {

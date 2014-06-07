@@ -113,6 +113,25 @@ public class SQLBackend extends PermissionBackend {
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
+		addSchemaUpdate(new SchemaUpdate(1) {
+			@Override
+			public void performUpdate() throws PermissionBackendException {
+				try (SQLConnection conn = getSQL()) {
+					PreparedStatement updateStmt = conn.prep("entity.options.add");
+					ResultSet res = conn.prepAndBind("SELECT `name`, `type` FROM `{permissions_entity}` WHERE `default`='1'").executeQuery();
+					while (res.next()) {
+							conn.bind(updateStmt, res.getString("name"), res.getInt("type"), "default", "", "true");
+							updateStmt.addBatch();
+					}
+					updateStmt.executeBatch();
+
+					// Update tables
+					conn.prep("ALTER TABLE `{permissions_entity}` DROP COLUMN `default`").execute();
+				} catch (SQLException | IOException e) {
+					throw new PermissionBackendException(e);
+				}
+			}
+		});
 		addSchemaUpdate(new SchemaUpdate(0) {
 			@Override
 			public void performUpdate() throws PermissionBackendException {
@@ -325,7 +344,7 @@ public class SQLBackend extends PermissionBackend {
 
 		PermissionsGroupData defGroup = getGroupData("default");
 		defGroup.setPermissions(Collections.singletonList("modifyworld.*"), null);
-		defGroup.setDefault(true, null);
+		defGroup.setOption("default", "true", null);
 		defGroup.save();
 
 		getLogger().info("Database scheme deploying complete.");

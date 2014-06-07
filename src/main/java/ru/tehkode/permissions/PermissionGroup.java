@@ -258,11 +258,11 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	}
 
 	public boolean isDefault(String worldName) {
-		return getData().isDefault(worldName);
+		return getOwnOptionBoolean("default", worldName, false);
 	}
 
 	public void setDefault(boolean def, String worldName) {
-		getData().setDefault(def, worldName);
+		setOption("default", String.valueOf(def), worldName);
 		callEvent(PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED);
 	}
 

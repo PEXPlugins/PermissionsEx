@@ -23,4 +23,9 @@ public abstract class SchemaUpdate implements Comparable<SchemaUpdate> {
 	public int compareTo(SchemaUpdate schemaUpdate) {
 		return Integer.valueOf(this.nextVersion).compareTo(schemaUpdate.nextVersion);
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "{version=" + getUpdateVersion() + "}";
+	}
 }

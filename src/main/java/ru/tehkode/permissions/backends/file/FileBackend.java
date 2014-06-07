@@ -66,7 +66,7 @@ public class FileBackend extends PermissionBackend {
 		}
 
 		this.permissionsFile = new File(baseDir, permissionFilename);
-		addSchemaUpdate(new SchemaUpdate(0) {
+		addSchemaUpdate(new SchemaUpdate(1) {
 			@Override
 			public void performUpdate() {
 				ConfigurationSection userSection = permissions.getConfigurationSection("users");
@@ -108,6 +108,11 @@ public class FileBackend extends PermissionBackend {
 				if (section.isSet("suffix")) {
 					section.set(buildPath("options", "suffix"), section.get("suffix"));
 					section.set("suffix", null);
+				}
+
+				if (section.isSet("default")) {
+					section.set(buildPath("options", "default"), section.get("default"));
+					section.set("default", null);
 				}
 			}
 		});

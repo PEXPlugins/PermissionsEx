@@ -26,7 +26,6 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	// Cache
 	private final AtomicBoolean virtual = new AtomicBoolean(true);
-	private volatile boolean globalDef;
 
 	public SQLData(String identifier, Type type, SQLBackend backend) {
 		this.identifier = identifier;
@@ -36,9 +35,12 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	protected void updateInfo() {
-		try (SQLConnection conn = backend.getSQL()) {
+		if (!this.isVirtual()) { // Non-virtual, no-op
+			return;
+		}
 
-			conn.prepAndBind("entity.update", this.globalDef ? 1 : 0, this.getIdentifier(), this.type.ordinal()).execute();
+		try (SQLConnection conn = backend.getSQL()) {
+			conn.prepAndBind("entity.update", this.getIdentifier(), this.type.ordinal()).execute();
 		} catch (SQLException | IOException e) {
 			if (virtual.compareAndSet(true, false)) {
 				this.updateInfo();
@@ -56,8 +58,6 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			ResultSet result = conn.prepAndBind("entity.fetch", this.getIdentifier(), this.type.ordinal()).executeQuery();
 
 			if (result.next()) {
-				this.globalDef = result.getBoolean("default");
-
 				// For teh case-insensetivity
 				this.identifier = result.getString("name");
 
@@ -279,7 +279,9 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void save() {
-		this.updateInfo();
+		if (this.isVirtual()) {
+			this.updateInfo();
+		}
 	}
 
 	@Override
@@ -369,25 +371,6 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void load() { // Nothing to load, we don't handle caching!
-	}
-
-	@Override
-	public boolean isDefault(String world) {
-		if (world == null) {
-			return this.globalDef;
-		} else {
-			return Boolean.parseBoolean(getOption("default", world));
-		}
-	}
-
-	@Override
-	public void setDefault(boolean def, String world) {
-		if (world == null) {
-			this.globalDef = def;
-			updateInfo();
-		} else {
-			this.setOption("default", world, String.valueOf(def));
-		}
 	}
 
 	public enum Type {
