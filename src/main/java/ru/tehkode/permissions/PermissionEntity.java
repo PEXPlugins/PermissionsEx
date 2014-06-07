@@ -222,7 +222,7 @@ public abstract class PermissionEntity {
 	 * @return Array of permission expressions
 	 */
 	public List<String> getPermissions(String world) {
-		return Collections.unmodifiableList(getPermissionsInternal(world, false));
+		return Collections.unmodifiableList(getPermissionsInternal(world));
 	}
 
 	/**
@@ -255,15 +255,14 @@ public abstract class PermissionEntity {
 		return Collections.unmodifiableMap(ret);
 	}
 
-	protected List<String> getPermissionsInternal(String worldName, final boolean filterNonInheritable) {
+	protected List<String> getPermissionsInternal(String worldName) {
 		final List<String> ret = new ArrayList<>();
-		// TODO: Handle non-inheritable permissions correctly
 
 		new HierarchyTraverser<Void>(this, worldName) {
 			@Override
 			protected Void fetchLocal(PermissionEntity entity, String world) {
 				for (String perm : entity.getOwnPermissions(world)) {
-					if (filterNonInheritable && entity != PermissionEntity.this && perm.startsWith(NON_INHERITABLE_PREFIX)) {
+					if (perm.startsWith(NON_INHERITABLE_PREFIX) && !PermissionEntity.this.getParents(world).contains(entity)) {
 						continue;
 					}
 
@@ -272,7 +271,7 @@ public abstract class PermissionEntity {
 				}
 
 				for (String perm : entity.getTimedPermissions(world)) {
-					if (filterNonInheritable && entity != PermissionEntity.this && perm.startsWith(NON_INHERITABLE_PREFIX)) {
+					if (perm.startsWith(NON_INHERITABLE_PREFIX) && !PermissionEntity.this.getParents(world).contains(entity)) {
 						continue;
 					}
 
