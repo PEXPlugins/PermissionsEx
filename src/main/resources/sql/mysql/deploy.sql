@@ -1,3 +1,27 @@
+/*CREATE TABLE IF NOT EXISTS `{pex_groups}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` TEXT NOT NULL,
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS `{pex_qualifiers}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `group` int(11) NOT NULL,
+  `key` TEXT NOT NULL,
+  `value` TEXT NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`group`) REFERENCES `{pex_groups}` (`id`) ON DELETE CASCADE
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS `{pex_entries}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `group` int(11) NOT NULL,
+  `key` TEXT NOT NULL,
+  `value` TEXT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`group`) REFERENCES `{pex_groups}` (`id`) ON DELETE CASCADE
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;*/
+
 CREATE TABLE IF NOT EXISTS `{permissions}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
