@@ -18,19 +18,12 @@
  */
 package ru.tehkode.permissions;
 
-import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 import ru.tehkode.permissions.backends.PermissionBackend;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
+import ru.tehkode.permissions.bukkit.PermissionsExConfig;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -48,126 +41,39 @@ public class PermissionManager {
 	public final static int TRANSIENT_PERMISSION = 0;
 	protected ConcurrentMap<String, PermissionUser> users = new ConcurrentHashMap<>();
 	protected ConcurrentMap<String, PermissionGroup> groups = new ConcurrentHashMap<>();
-	protected Map<String, PermissionGroup> defaultGroups = new ConcurrentHashMap<>();
 	protected PermissionBackend backend = null;
-	private final PermissionsEx plugin;
+	private final PermissionsExConfig config;
+	private final NativeInterface nativeI;
+	private final Logger logger;
 	protected Timer timer;
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 	protected boolean userAddGroupsLast = false;
-	private NetEventsPlugin netEvents;
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
 
-	public PermissionManager(PermissionsEx plugin) throws PermissionBackendException {
-		this.plugin = plugin;
-		if (plugin.getConfiguration().useNetEvents()) {
-			Plugin netEventsPlugin = plugin.getServer().getPluginManager().getPlugin("NetEvents");
-			if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
-				this.netEvents = (NetEventsPlugin) netEventsPlugin;
-				plugin.getServer().getPluginManager().registerEvents(new RemoteEventListener(), plugin);
-			}
-		}
-		this.debugMode = plugin.getConfiguration().isDebug();
-		this.allowOps = plugin.getConfiguration().allowOps();
-		this.userAddGroupsLast = plugin.getConfiguration().userAddGroupsLast();
+	public PermissionManager(PermissionsExConfig config, Logger logger, NativeInterface nativeI) throws PermissionBackendException {
+		this.config = config;
+		this.logger = logger;
+		this.nativeI = nativeI;
+		this.debugMode = config.isDebug();
+		this.allowOps = config.allowOps();
+		this.userAddGroupsLast = config.userAddGroupsLast();
 		this.initBackend();
 	}
 
 	UUID getServerUUID() {
-		return netEvents != null ? netEvents.getServerUUID() : null;
-	}
-
-	public boolean isLocal(PermissionEvent event) {
-		return netEvents == null || event.getSourceUUID().equals(netEvents.getServerUUID());
-
+		return nativeI.getServerUUID();
 	}
 
 	public boolean shouldCreateUserRecords() {
-		return plugin.getConfiguration().createUserRecords();
+		return config.createUserRecords();
 	}
 
-	public PermissionsEx getPlugin() {
-		return plugin;
+	public PermissionsExConfig getConfiguration() {
+		return config;
 	}
 
-
-	private class RemoteEventListener implements Listener {
-		@EventHandler(priority = EventPriority.LOWEST)
-		public void onEntityEvent(PermissionEntityEvent event) {
-			if (isLocal(event)) {
-				return;
-			}
-			final boolean reloadEntity, reloadAll;
-
-			switch (event.getAction()) {
-				case DEFAULTGROUP_CHANGED:
-				case RANK_CHANGED:
-				case INHERITANCE_CHANGED:
-					reloadAll = true;
-					reloadEntity = false;
-					break;
-				case SAVED:
-				case TIMEDPERMISSION_EXPIRED:
-					return;
-				default:
-					reloadEntity = true;
-					reloadAll = false;
-					break;
-			}
-
-			try {
-				if (backend != null) {
-					backend.reload();
-				}
-			} catch (PermissionBackendException e) {
-				e.printStackTrace();
-			}
-			if (reloadEntity) {
-				switch (event.getType()) {
-					case USER:
-						resetUser(event.getEntityIdentifier());
-						break;
-					case GROUP:
-						PermissionGroup group = groups.remove(event.getEntityIdentifier());
-						if (group != null) {
-							for (Iterator<PermissionUser> it = users.values().iterator(); it.hasNext(); ) {
-								if (it.next().inGroup(group, true)) {
-									it.remove();
-								}
-							}
-						}
-
-						break;
-				}
-			} else if (reloadAll) {
-				clearCache();
-			}
-		}
-
-		@EventHandler(priority = EventPriority.LOWEST)
-		public void onSystemEvent(PermissionSystemEvent event) {
-			if (isLocal(event)) {
-				return;
-			}
-
-			switch (event.getAction()) {
-				case BACKEND_CHANGED:
-				case DEBUGMODE_TOGGLE:
-				case REINJECT_PERMISSIBLES:
-					return;
-			}
-
-			try {
-				if (getBackend() != null) {
-					getBackend().reload();
-				}
-				clearCache();
-			} catch (PermissionBackendException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
 	/**
 	 * Check if specified player has specified permission
@@ -242,19 +148,14 @@ public class PermissionManager {
 			}
 			return getUser(UUID.fromString(username)); // Username is uuid as string, just use it
 		} catch (IllegalArgumentException ex) {
-			OfflinePlayer player = plugin.getServer().getOfflinePlayer(username);
-			UUID userUUID = null;
-			try {
-				userUUID = player instanceof Player ? ((Player) player).getUniqueId() : player.getUniqueId();
-			} catch (Throwable t) {
-				// Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
-			}
+			UUID userUUID = nativeI.nameToUUID(username);
+			boolean online = userUUID != null && nativeI.isOnline(userUUID);
 
-			if (userUUID != null && (player.isOnline() || backend.hasUser(userUUID.toString()))) {
-				return getUser(userUUID.toString(), username, player.isOnline());
+			if (userUUID != null && (nativeI.isOnline(userUUID) || backend.hasUser(userUUID.toString()))) {
+				return getUser(userUUID.toString(), username, online);
 			} else {
 				// The user is offline and unconverted, so we'll just have to return an unconverted user.
-				return getUser(username, null, player.isOnline());
+				return getUser(username, null, false);
 			}
 		}
 	}
@@ -285,18 +186,8 @@ public class PermissionManager {
 		if (users.containsKey(identifier)) {
 			return getUser(identifier, null, false);
 		}
-		OfflinePlayer ply = null;
-		try {
-			ply = plugin.getServer().getPlayer(uid); // to make things cheaper, we're just checking online players (can be improved later on)
-			// Also, only online players are really necessary to convert to proper names
-		} catch (NoSuchMethodError e) {
-			// Old craftbukkit, guess we won't have a fallback name. Much shame.
-		}
-		String fallbackName = null;
-		if (ply != null) {
-			fallbackName = ply.getName();
-		}
-		return getUser(identifier, fallbackName, ply != null);
+		String fallbackName = nativeI.UUIDToName(uid);
+		return getUser(identifier, fallbackName, fallbackName != null);
 	}
 
 	private PermissionUser getUser(String identifier, String fallbackName, boolean store) {
@@ -599,8 +490,8 @@ public class PermissionManager {
 	 *
 	 * @param groupName group's name
 	 */
-	public void resetGroup(String groupName) {
-		this.groups.remove(groupName);
+	public PermissionGroup resetGroup(String groupName) {
+		return this.groups.remove(groupName);
 	}
 
 	void preloadGroups() {
@@ -704,7 +595,7 @@ public class PermissionManager {
 	 * @param backendName Name of the configuration section which describes this backend
 	 */
 	public PermissionBackend createBackend(String backendName) throws PermissionBackendException {
-		ConfigurationSection config = plugin.getConfiguration().getBackendConfig(backendName);
+		ConfigurationSection config = this.config.getBackendConfig(backendName);
 		String backendType = config.getString("type");
 		if (backendType == null) {
 			config.set("type", backendType = backendName);
@@ -769,15 +660,11 @@ public class PermissionManager {
 	}
 
 	private void initBackend() throws PermissionBackendException {
-		this.setBackend(plugin.getConfiguration().getDefaultBackend());
+		this.setBackend(config.getDefaultBackend());
 	}
 
 	protected void callEvent(PermissionEvent event) {
-		if (netEvents != null) {
-			netEvents.callEvent(event);
-		} else {
-			Bukkit.getServer().getPluginManager().callEvent(event);
-		}
+		nativeI.callEvent(event);
 	}
 
 	protected void callEvent(PermissionSystemEvent.Action action) {
@@ -797,6 +684,6 @@ public class PermissionManager {
 	}
 
 	public Logger getLogger() {
-		return plugin.getLogger();
+		return logger;
 	}
 }

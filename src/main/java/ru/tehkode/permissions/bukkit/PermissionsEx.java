@@ -21,8 +21,11 @@ package ru.tehkode.permissions.bukkit;
 import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+
+import com.zachsthings.netevents.NetEventsPlugin;
 import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -40,6 +43,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.tehkode.permissions.NativeInterface;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.MultiBackend;
@@ -50,6 +54,7 @@ import ru.tehkode.permissions.backends.sql.SQLBackend;
 import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
 import ru.tehkode.permissions.commands.CommandsManager;
+import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
 import ru.tehkode.utils.StringUtils;
@@ -57,13 +62,14 @@ import ru.tehkode.utils.StringUtils;
 /**
  * @author code
  */
-public class PermissionsEx extends JavaPlugin {
+public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	private static final int BUKKITDEV_ID = 31279;
 	protected PermissionManager permissionsManager;
 	protected CommandsManager commandsManager;
 	private PermissionsExConfig config;
 	protected SuperpermsListener superms;
 	private RegexPermissions regexPerms;
+	private NetEventsPlugin netEvents;
 	private boolean errored = false;
 	private static PermissionsEx instance;
 	{
@@ -155,7 +161,7 @@ public class PermissionsEx extends JavaPlugin {
 		}
 		try {
 			if (this.permissionsManager == null) {
-				this.permissionsManager = new PermissionManager(this);
+				this.permissionsManager = new PermissionManager(config, getLogger(), this);
 			}
 
 			try {
@@ -249,6 +255,13 @@ public class PermissionsEx extends JavaPlugin {
 					}
 				});
 			}
+			if (getConfiguration().useNetEvents()) {
+				Plugin netEventsPlugin = getServer().getPluginManager().getPlugin("NetEvents");
+				if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
+					NetEventsPlugin netEvents = (NetEventsPlugin) netEventsPlugin;
+					getServer().getPluginManager().registerEvents(new RemoteEventListener(netEvents, permissionsManager), this);
+				}
+			}
 		} catch (PermissionBackendException e) {
 			logBackendExc(e);
 			this.getPluginLoader().disablePlugin(this);
@@ -319,6 +332,49 @@ public class PermissionsEx extends JavaPlugin {
 
 	public RegexPermissions getRegexPerms() {
 		return regexPerms;
+	}
+
+	@Override
+	public String UUIDToName(UUID uid) {
+		OfflinePlayer ply = null;
+		try {
+			ply = getServer().getPlayer(uid); // to make things cheaper, we're just checking online players (can be improved later on)
+			// Also, only online players are really necessary to convert to proper names
+		} catch (NoSuchMethodError e) {
+			// Old craftbukkit, guess we won't have a fallback name. Much shame.
+		}
+		return ply != null ? ply.getName() : null;
+	}
+
+	@Override
+	public UUID nameToUUID(String name) {
+		OfflinePlayer player = getServer().getOfflinePlayer(name);
+		UUID userUUID = null;
+		try {
+			userUUID = player.getUniqueId();
+		} catch (Throwable t) {
+			// Handle cases where the plugin is not running on a uuid-aware Bukkit by just not converting here
+		}
+		return userUUID;
+	}
+
+	@Override
+	public boolean isOnline(UUID uuid) {
+		return false;
+	}
+
+	@Override
+	public UUID getServerUUID() {
+		return netEvents == null ? null : netEvents.getServerUUID();
+	}
+
+	@Override
+	public void callEvent(PermissionEvent event) {
+		if (netEvents != null) {
+			netEvents.callEvent(event);
+		} else {
+			getServer().getPluginManager().callEvent(event);
+		}
 	}
 
 	public static boolean isAvailable() {
