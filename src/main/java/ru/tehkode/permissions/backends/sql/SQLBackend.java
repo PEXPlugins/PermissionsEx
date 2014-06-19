@@ -18,15 +18,15 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import com.google.common.collect.Multimap;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionsGroupData;
-import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.SchemaUpdate;
-import ru.tehkode.permissions.backends.caching.CachingGroupData;
-import ru.tehkode.permissions.backends.caching.CachingUserData;
+import ru.tehkode.permissions.callback.Callback;
+import ru.tehkode.permissions.data.MatcherGroup;
+import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.utils.StringUtils;
 
@@ -38,20 +38,24 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author code
  */
 public class SQLBackend extends PermissionBackend {
-	protected Map<String, List<String>> worldInheritanceCache = new HashMap<>();
-	private Map<String, Object> tableNames;
-	private SQLQueryCache queryCache;
+	private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
 	private static final SQLQueryCache DEFAULT_QUERY_CACHE;
 
 	static {
@@ -62,6 +66,11 @@ public class SQLBackend extends PermissionBackend {
 		}
 	}
 
+	private Map<String, Object> tableNames;
+	private String tablePrefix;
+	private SQLQueryCache queryCache;
+	private final ConcurrentMap<Integer, SQLMatcherGroup> matcherCache = new ConcurrentHashMap<>();
+
 	private BasicDataSource ds;
 	protected final String dbDriver;
 
@@ -70,11 +79,13 @@ public class SQLBackend extends PermissionBackend {
 		final String dbUri = getConfig().getString("uri", "");
 		final String dbUser = getConfig().getString("user", "");
 		final String dbPassword = getConfig().getString("password", "");
+		this.tablePrefix = getConfig().getString("prefix", "");
 
 		if (dbUri == null || dbUri.isEmpty()) {
 			getConfig().set("uri", "mysql://localhost/exampledb");
 			getConfig().set("user", "databaseuser");
 			getConfig().set("password", "databasepassword");
+			getConfig().set("prefix", "pex");
 			throw new PermissionBackendException("SQL connection is not configured, see config.yml");
 		}
 		dbDriver = dbUri.split(":", 2)[0];
@@ -113,6 +124,18 @@ public class SQLBackend extends PermissionBackend {
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
+
+		addSchemaUpdate(new SchemaUpdate(2) {
+			@Override
+			public void performUpdate() throws PermissionBackendException {
+				try (SQLConnection conn = getSQL()) {
+					// The new tables have been deployed, just gotta move the old data over
+					// Migrate everything over to matcher groups! So much fun :)
+				} catch (SQLException | IOException e) {
+					throw new PermissionBackendException(e);
+				}
+			}
+		});
 		addSchemaUpdate(new SchemaUpdate(1) {
 			@Override
 			public void performUpdate() throws PermissionBackendException {
@@ -120,8 +143,8 @@ public class SQLBackend extends PermissionBackend {
 					PreparedStatement updateStmt = conn.prep("entity.options.add");
 					ResultSet res = conn.prepAndBind("SELECT `name`, `type` FROM `{permissions_entity}` WHERE `default`='1'").executeQuery();
 					while (res.next()) {
-							conn.bind(updateStmt, res.getString("name"), res.getInt("type"), "default", "", "true");
-							updateStmt.addBatch();
+						conn.bind(updateStmt, res.getString("name"), res.getInt("type"), "default", "", "true");
+						updateStmt.addBatch();
 					}
 					updateStmt.executeBatch();
 
@@ -176,7 +199,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public int getSchemaVersion() {
 		try (SQLConnection conn = getSQL()) {
-			ResultSet res = conn.prepAndBind("entity.options.get", "system", SQLData.Type.WORLD.ordinal(), "schema_version", "").executeQuery();
+			ResultSet res = conn.prepAndBind("entity.options.get", "system", 2, "schema_version", "").executeQuery();
 			if (!res.next()) {
 				return -1;
 			}
@@ -189,7 +212,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	protected void setSchemaVersion(int version) {
 		try (SQLConnection conn = getSQL()) {
-			conn.prepAndBind("entity.options.add", "system", SQLData.Type.WORLD.ordinal(), "schema_version", "", version).execute();
+			conn.prepAndBind("entity.options.add", "system", 2, "schema_version", "", version).execute();
 		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -217,64 +240,41 @@ public class SQLBackend extends PermissionBackend {
 		return new SQLConnection(ds.getConnection(), this);
 	}
 
-	public String getTableName(String identifier) {
-		Map<String, Object> tableNames = this.tableNames;
-		if (tableNames == null) {
-			return identifier;
+	/**
+	 * Perform table name expansion on a query
+	 * Example: <pre>SELECT * FROM `{permissions}`;</pre>
+	 *
+	 * @param query the query to get
+	 * @return The expanded query
+	 */
+	public String expandQuery(String query) {
+		String newQuery = getQueryCache().getQuery(query);
+		if (newQuery != null) {
+			query = newQuery;
 		}
-
-		Object ret = tableNames.get(identifier);
-		if (ret == null) {
-			return identifier;
+		StringBuffer ret = new StringBuffer();
+		Matcher m = TABLE_PATTERN.matcher(query);
+		while (m.find()) {
+			m.appendReplacement(ret, getTableName(m.group(1)));
 		}
+		m.appendTail(ret);
 		return ret.toString();
 	}
 
-	@Override
-	public PermissionsUserData getUserData(String name) {
-		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), getExecutor(), new Object());
-	}
+	public String getTableName(String identifier) {
+		if (identifier.startsWith("permissions")) { // Legacy tables
+			Map<String, Object> tableNames = this.tableNames;
+			if (tableNames == null) {
+				return identifier;
+			}
 
-	@Override
-	public PermissionsGroupData getGroupData(String name) {
-		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), getExecutor(), new Object());
-	}
-
-	@Override
-	public boolean hasUser(String userName) {
-		try (SQLConnection conn = getSQL()) {
-			ResultSet res = conn.prepAndBind("entity.exists", SQLData.Type.USER.ordinal(), userName).executeQuery();
-			return res.next();
-		} catch (SQLException | IOException e) {
-			return false;
-		}
-	}
-
-	@Override
-	public boolean hasGroup(String group) {
-		try (SQLConnection conn = getSQL()) {
-			ResultSet res = conn.prepAndBind("entity.exists", SQLData.Type.GROUP.ordinal(), group).executeQuery();
-			return res.next();
-		} catch (SQLException | IOException e) {
-			return false;
-		}
-	}
-
-	@Override
-	public Collection<String> getGroupNames() {
-		try (SQLConnection conn = getSQL()) {
-			return SQLData.getEntitiesNames(conn, SQLData.Type.GROUP, false);
-		} catch (SQLException | IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public Collection<String> getUserIdentifiers() {
-		try (SQLConnection conn = getSQL()) {
-			return SQLData.getEntitiesNames(conn, SQLData.Type.USER, false);
-		} catch (SQLException | IOException e) {
-			throw new RuntimeException(e);
+			Object ret = tableNames.get(identifier);
+			if (ret == null) {
+				return identifier;
+			}
+			return ret.toString();
+		} else {
+			return this.tablePrefix == null || this.tablePrefix.isEmpty() ? identifier : tablePrefix + "_" + identifier;
 		}
 	}
 
@@ -282,7 +282,7 @@ public class SQLBackend extends PermissionBackend {
 	public Collection<String> getUserNames() {
 		Set<String> ret = new HashSet<>();
 		try (SQLConnection conn = getSQL()) {
-			ResultSet set = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
+			ResultSet set = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", 1).executeQuery();
 			while (set.next()) {
 				ret.add(set.getString("value"));
 			}
@@ -292,20 +292,227 @@ public class SQLBackend extends PermissionBackend {
 		return Collections.unmodifiableSet(ret);
 	}
 
+	SQLMatcherGroup getMatcherGroup(String name, int entityId) throws IOException, SQLException {
+		while (true) {
+			if (matcherCache.containsKey(entityId)) {
+				SQLMatcherGroup ret = matcherCache.get(entityId);
+				if (ret != null) {
+					return ret;
+				}
+			}
+			SQLMatcherGroup newGroup = new SQLMatcherGroup(this, name, entityId);
+			SQLMatcherGroup oldGroup = matcherCache.put(entityId, newGroup);
+			if (oldGroup != null) {
+				oldGroup.invalidate();
+			}
+		}
+	}
+
+	void resetMatcherGroup(int entityId) {
+		while (true) {
+			SQLMatcherGroup ret = matcherCache.get(entityId);
+			ret.invalidate();
+			if (matcherCache.remove(entityId, ret)) {
+				return;
+			}
+		}
+	}
+
+	@Override
+	public Future<Iterator<MatcherGroup>> getAllMatcherGroups(Callback<Iterator<MatcherGroup>> callback) {
+		return execute(new Callable<Iterator<MatcherGroup>>() {
+			@Override
+			public Iterator<MatcherGroup> call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					List<MatcherGroup> ret = new LinkedList<>();
+					ResultSet res = conn.prep("groups.get.all").executeQuery();
+					while (res.next()) {
+						ret.add(getMatcherGroup(res.getString("name"), res.getInt("id")));
+					}
+					return ret.iterator();
+				}
+			}
+		}, callback);
+	}
+
+	@Override
+	public Future<List<MatcherGroup>> getMatchingGroups(final String type, Callback<List<MatcherGroup>> callback) {
+		return execute(new Callable<List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					List<MatcherGroup> ret = new LinkedList<>();
+					ResultSet res = conn.prepAndBind("groups.get.name", type).executeQuery();
+					while (res.next()) {
+						ret.add(getMatcherGroup(type, res.getInt("id")));
+					}
+					return ret;
+				}
+			}
+		}, callback);
+	}
+
+	@Override
+	public Future<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier qual, final String qualValue, Callback<List<MatcherGroup>> callback) {
+		return execute(new Callable<List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					List<MatcherGroup> ret = new LinkedList<>();
+					ResultSet res = conn.prepAndBind("groups.get.name_qual", type, qual.getName(), qualValue).executeQuery();
+					while (res.next()) {
+						ret.add(getMatcherGroup(type, res.getInt(1)));
+					}
+					return ret;
+				}
+			}
+		}, callback);
+	}
+
+	private int newEntity(SQLConnection conn, String type) throws SQLException {
+		PreparedStatement stmt = conn.prepAndBind("groups.create", type);
+		stmt.execute();
+		ResultSet res = stmt.getGeneratedKeys();
+		if (res.next()) {
+			return res.getInt(1);
+		} else {
+			throw new SQLException("No generated ID returned when creating group!");
+		}
+	}
+
+	@Override
+	public Future<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+		return execute(new Callable<MatcherGroup>() {
+			@Override
+			public MatcherGroup call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					int entityId = newEntity(conn, type);
+					PreparedStatement entriesAdd = conn.prepAndBind("entries.add", entityId, "", "");
+					for (Map.Entry<String, String> entry : entries.entrySet()) {
+						entriesAdd.setString(2, entry.getKey());
+						entriesAdd.setString(3, entry.getValue());
+						entriesAdd.addBatch();
+					}
+					entriesAdd.executeBatch();
+
+					PreparedStatement ret = conn.prepAndBind("qualifiers.add", entityId, "", "");
+					for (Map.Entry<Qualifier, String> entry : qualifiers.entries()) {
+						ret.setString(2, entry.getKey().getName());
+						ret.setString(3, entry.getValue());
+						ret.addBatch();
+					}
+					ret.executeBatch();
+
+					resetMatcherGroup(entityId); // Just in case
+					return getMatcherGroup(type, entityId);
+				}
+			}
+		}, callback);
+	}
+
+	@Override
+	public Future<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+		return execute(new Callable<MatcherGroup>() {
+			@Override
+			public MatcherGroup call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					int entityId = newEntity(conn, type);
+					PreparedStatement entriesAdd = conn.prepAndBind("entries.add", entityId, "", null);
+					for (String entry : entries) {
+						entriesAdd.setString(2, entry);
+						entriesAdd.addBatch();
+					}
+					entriesAdd.executeBatch();
+
+					PreparedStatement ret = conn.prepAndBind("qualifiers.add", entityId, "", "");
+					for (Map.Entry<Qualifier, String> entry : qualifiers.entries()) {
+						ret.setString(2, entry.getKey().getName());
+						ret.setString(3, entry.getValue());
+						ret.addBatch();
+					}
+					ret.executeBatch();
+
+					resetMatcherGroup(entityId);
+					return getMatcherGroup(type, entityId);
+				}
+			}
+		}, callback);
+	}
+
+	@Override
+	public Future<Collection<String>> getAllValues(final Qualifier qualifier, Callback<Collection<String>> callback) {
+		return execute(new Callable<Collection<String>>() {
+			@Override
+			public Collection<String> call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					Set<String> ret = new HashSet<>();
+					ResultSet res = conn.prepAndBind("qualifiers.all_values", qualifier.getName()).executeQuery();
+					while (res.next()) {
+						ret.add(res.getString(1));
+					}
+					return ret;
+				}
+			}
+		}, callback);
+	}
+
+	@Override
+	public Future<Boolean> hasAnyQualifier(final Qualifier qualifier, final String value, Callback<Boolean> callback) {
+		return execute(new Callable<Boolean>() {
+			@Override
+			public Boolean call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					ResultSet res = conn.prepAndBind("qualifiers.any_with_value", qualifier.getName(), value).executeQuery();
+					return res.next();
+				}
+			}
+		}, callback);
+	}
+
+	@Override
+	public Future<Void> replaceQualifier(final Qualifier qualifier, final String old, final String newVal) {
+		return execute(new Callable<Void>() {
+			@Override
+			public Void call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					ResultSet res = conn.prepAndBind("qualifiers.replace", newVal, qualifier.getName(), old).executeQuery();
+					while (res.next()) {
+						resetMatcherGroup(res.getInt(1));
+					}
+				}
+				return null;
+			}
+		}, null);
+
+	}
+
+	@Override
+	public Future<List<MatcherGroup>> allWithQualifier(final Qualifier qualifier, Callback<List<MatcherGroup>> callback) {
+		return execute(new Callable<List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> call() throws Exception {
+				try (SQLConnection conn = getSQL()) {
+					List<MatcherGroup> ret = new LinkedList<>();
+					ResultSet res = conn.prepAndBind("qualifiers.any_with_key", qualifier.getName()).executeQuery();
+					while (res.next()) {
+						ret.add(getMatcherGroup(res.getString(1), res.getInt(2)));
+					}
+					return ret;
+				}
+			}
+		}, callback);
+	}
+
 	protected final void setupAliases() {
 		ConfigurationSection aliases = getConfig().getConfigurationSection("aliases");
-
 		if (aliases == null) {
 			return;
 		}
-
 		tableNames = aliases.getValues(false);
 	}
 
 	private void executeStream(SQLConnection conn, InputStream str) throws SQLException, IOException {
 		String deploySQL = StringUtils.readStream(str);
-
-
 		Statement s = conn.getStatement();
 
 		for (String sqlQuery : deploySQL.trim().split(";")) {
@@ -313,9 +520,7 @@ public class SQLBackend extends PermissionBackend {
 			if (sqlQuery.isEmpty()) {
 				continue;
 			}
-
-			sqlQuery = conn.expandQuery(sqlQuery + ";");
-
+			sqlQuery = expandQuery(sqlQuery + ";");
 			s.addBatch(sqlQuery);
 		}
 		s.executeBatch();
@@ -323,7 +528,7 @@ public class SQLBackend extends PermissionBackend {
 
 	protected final void deployTables() throws PermissionBackendException {
 		try (SQLConnection conn = getSQL()) {
-			if (conn.hasTable("{permissions}") && conn.hasTable("{permissions_entity}") && conn.hasTable("{permissions_inheritance}")) {
+			if (conn.hasTable("{groups}") && conn.hasTable("{qualifiers}") && conn.hasTable("{entries}")) {
 				return;
 			}
 			InputStream databaseDumpStream = getClass().getResourceAsStream("/sql/" + dbDriver + "/deploy.sql");
@@ -334,93 +539,32 @@ public class SQLBackend extends PermissionBackend {
 
 			getLogger().info("Deploying default database scheme");
 			executeStream(conn, databaseDumpStream);
-			System.out.println("Latest schema version: " + getLatestSchemaVersion());
-			System.out.println("current: " + getSchemaVersion());
 			setSchemaVersion(getLatestSchemaVersion());
-			System.out.println("new: " + getSchemaVersion());
 		} catch (Exception e) {
 			throw new PermissionBackendException("Deploying of default data failed. Please initialize database manually using " + dbDriver + ".sql", e);
 		}
 
-		PermissionsGroupData defGroup = getGroupData("default");
+		/*PermissionsGroupData defGroup = getGroupData("default");
 		defGroup.setPermissions(Collections.singletonList("modifyworld.*"), null);
 		defGroup.setOption("default", "true", null);
-		defGroup.save();
+		defGroup.save();*/
 
 		getLogger().info("Database scheme deploying complete.");
 	}
 
-	@Override
-	public List<String> getWorldInheritance(String world) {
-		if (world == null || world.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		if (!worldInheritanceCache.containsKey(world)) {
-			try (SQLConnection conn = getSQL()) {
-				ResultSet result = conn.prepAndBind("SELECT `parent` FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ?;", world, SQLData.Type.WORLD.ordinal()).executeQuery();
-				LinkedList<String> worldParents = new LinkedList<>();
-
-				while (result.next()) {
-					worldParents.add(result.getString("parent"));
-				}
-
-				this.worldInheritanceCache.put(world, Collections.unmodifiableList(worldParents));
-			} catch (SQLException | IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		return worldInheritanceCache.get(world);
-	}
-
-	@Override
-	public Map<String, List<String>> getAllWorldInheritance() {
-		try (SQLConnection conn = getSQL()) {
-			ResultSet result = conn.prepAndBind("SELECT `child` FROM `{permissions_inheritance}` WHERE `type` = ?", SQLData.Type.WORLD.ordinal()).executeQuery();
-
-			Map<String, List<String>> ret = new HashMap<>();
-			while (result.next()) {
-				final String world = result.getString("child");
-				if (!ret.containsKey(world)) {
-					ret.put(world, getWorldInheritance(world));
-				}
-			}
-			return Collections.unmodifiableMap(ret);
-		} catch (SQLException |IOException e) {
-			return Collections.unmodifiableMap(worldInheritanceCache);
-		}
-	}
-
-	@Override
-	public void setWorldInheritance(String worldName, List<String> parentWorlds) {
-		if (worldName == null || worldName.isEmpty()) {
-			return;
-		}
-
-		try (SQLConnection conn = getSQL()) {
-			conn.prepAndBind("DELETE FROM `{permissions_inheritance}` WHERE `child` = ? AND `type` = ?", worldName, SQLData.Type.WORLD.ordinal()).execute();
-
-			PreparedStatement statement = conn.prepAndBind("INSERT INTO `{permissions_inheritance}` (`child`, `parent`, `type`) VALUES (?, ?, ?)", worldName, "toset", SQLData.Type.WORLD.ordinal());
-			for (String parentWorld : parentWorlds) {
-				statement.setString(2, parentWorld);
-				statement.addBatch();
-			}
-			statement.executeBatch();
-
-			this.worldInheritanceCache.put(worldName, parentWorlds);
-
-		} catch (SQLException | IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public void reload() {
-		worldInheritanceCache.clear();
+		while (!matcherCache.isEmpty()) {
+			for (Iterator<SQLMatcherGroup> it = matcherCache.values().iterator(); it.hasNext(); ) {
+				it.next().invalidate();
+				it.remove();
+			}
+		}
+		matcherCache.clear();
 	}
 
 	@Override
-	public void setPersistent(boolean persist) {}
+	public void setPersistent(boolean persist) {
+	}
 
 	@Override
 	public void close() throws PermissionBackendException {
@@ -432,5 +576,14 @@ public class SQLBackend extends PermissionBackend {
 			}
 		}
 		super.close();
+	}
+
+	/**
+	 * Removes the given entity id from the cache.
+	 *
+	 * @param entityId The id to remove
+	 */
+	void uncache(int entityId) {
+		matcherCache.remove(entityId);
 	}
 }

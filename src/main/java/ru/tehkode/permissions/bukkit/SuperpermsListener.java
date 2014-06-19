@@ -12,9 +12,9 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionDefault;
 import ru.tehkode.permissions.PermissionGroup;
-import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
+import ru.tehkode.permissions.query.GetQuery;
 
 import java.util.HashMap;
 import java.util.List;
@@ -50,15 +50,12 @@ public class SuperpermsListener implements Listener {
 			attach.setPermission(playerOptionPerm, true);
 		}
 
-		PermissionUser user = plugin.getPermissionsManager().getUser(player);
-		if (user != null) {
-			if (user.isDebug()) {
+			if (plugin.getPermissionsManager().isDebug(player)) {
 				plugin.getLogger().info("Updating superperms for player " + player.getName());
 			}
-			updatePlayerPermission(playerPerm, user, worldName);
-			updatePlayerMetadata(playerOptionPerm, user, worldName);
+			updatePlayerPermission(playerPerm, player, worldName);
+			updatePlayerMetadata(playerOptionPerm, player, worldName);
 			player.recalculatePermissions();
-		}
 	}
 
 	private String permissionName(Player player, String suffix) {
@@ -81,9 +78,9 @@ public class SuperpermsListener implements Listener {
 
 	}
 
-	private void updatePlayerPermission(Permission permission, PermissionUser user, String worldName) {
+	private void updatePlayerPermission(Permission permission, Player user, String worldName) {
 		permission.getChildren().clear();
-		for (String perm : user.getPermissions(worldName)) {
+		for (String perm : plugin.getPermissionsManager().get().user(user).world(worldName).permissions()) {
 			boolean value = true;
 			if (perm.startsWith("-")) {
 				value = false;
@@ -95,10 +92,11 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	private void updatePlayerMetadata(Permission rootPermission, PermissionUser user, String worldName) {
+	private void updatePlayerMetadata(Permission rootPermission, Player user, String worldName) {
 		rootPermission.getChildren().clear();
-		final List<String> groups = user.getParentIdentifiers(worldName);
-		final Map<String, String> options = user.getOptions(worldName);
+		GetQuery query = plugin.getPermissionsManager().get().user(user).world(worldName);
+		final List<String> groups = query.parents();
+		final Map<String, String> options = query.options();
 		// Metadata
 		// Groups
 		for (String group : groups) {
@@ -112,8 +110,8 @@ public class SuperpermsListener implements Listener {
 		}
 
 		// Prefix and Suffix
-		rootPermission.getChildren().put("prefix." + user.getPrefix(worldName), true);
-		rootPermission.getChildren().put("suffix." + user.getSuffix(worldName), true);
+		rootPermission.getChildren().put("prefix." + query.option("prefix"), true);
+		rootPermission.getChildren().put("suffix." + query.option("suffix"), true);
 
 	}
 
@@ -176,44 +174,26 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	private void updateSelective(PermissionEntityEvent event, PermissionUser user) {
-		final Player p = user.getPlayer();
-		if (p != null) {
+	private void updateSelective(PermissionEntityEvent event, Player p) {
 			switch (event.getAction()) {
 				case SAVED:
 					break;
 
 				case PERMISSIONS_CHANGED:
 				case TIMEDPERMISSION_EXPIRED:
-					updatePlayerPermission(getCreateWrapper(p, ""), user, p.getWorld().getName());
+					updatePlayerPermission(getCreateWrapper(p, ""), p, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
 				case OPTIONS_CHANGED:
 				case INFO_CHANGED:
-					updatePlayerMetadata(getCreateWrapper(p, ".options"), user, p.getWorld().getName());
+					updatePlayerMetadata(getCreateWrapper(p, ".options"), p, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
 				default:
 					updateAttachment(p);
 			}
-		}
-	}
-
-	@EventHandler(priority = EventPriority.LOW)
-	public void onEntityEvent(PermissionEntityEvent event) {
-		try {
-			if (event.getEntity() instanceof PermissionUser) { // update user only
-				updateSelective(event, (PermissionUser) event.getEntity());
-			} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-				for (PermissionUser user : ((PermissionGroup) event.getEntity()).getActiveUsers(true)) {
-					updateSelective(event, user);
-				}
-			}
-		} catch (Throwable t) {
-			ErrorReport.handleError("Superperms event permission entity", t);
-		}
 	}
 
 	@EventHandler

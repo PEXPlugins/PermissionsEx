@@ -1,16 +1,22 @@
 package ru.tehkode.permissions.backends;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionsGroupData;
-import ru.tehkode.permissions.PermissionsUserData;
+import ru.tehkode.permissions.data.Context;
+import ru.tehkode.permissions.data.MatcherGroup;
+import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,11 +27,15 @@ import java.util.Set;
  * Backend priority is first-come-first-serve -- whatever's listed first gets priority
  */
 public class MultiBackend extends PermissionBackend {
+	public static final Qualifier BACKEND = new Qualifier("backend") {
+		@Override
+		public boolean matches(Context context, String value) {
+			return false;
+		}
+	};
 	private final List<PermissionBackend> backends = new ArrayList<>();
-	private final Map<String, PermissionBackend> fallbackBackends = new HashMap<>();
 	protected MultiBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		super(manager, backendConfig);
-		Map<String, PermissionBackend> backendMap = new HashMap<>();
 		List<String> backendNames = backendConfig.getStringList("backends");
 		if (backendNames.isEmpty()) {
 			backendConfig.set("backends", new ArrayList<String>());
@@ -34,20 +44,6 @@ public class MultiBackend extends PermissionBackend {
 		for (String name : backendConfig.getStringList("backends")) {
 			PermissionBackend backend = manager.createBackend(name);
 			backends.add(backend);
-			backendMap.put(name, backend);
-		}
-
-		// Fallbacks
-		ConfigurationSection fallbackSection = backendConfig.getConfigurationSection("fallback");
-		if (fallbackSection != null) {
-			for (Map.Entry<String, Object> ent : fallbackSection.getValues(false).entrySet()) {
-				@SuppressWarnings("SuspiciousMethodCalls")
-				PermissionBackend backend = backendMap.get(ent.getValue());
-				if (backend == null) {
-					throw new PermissionBackendException("Fallback backend type " + ent.getValue() + " is not listed in the backends section of MultiBackend (and must be for this contraption to work)");
-				}
-				fallbackBackends.put(ent.getKey(), backend);
-			}
 		}
 	}
 
@@ -61,67 +57,11 @@ public class MultiBackend extends PermissionBackend {
 		// no-op
 	}
 
-	public PermissionBackend getFallbackBackend(String type) {
-		if (fallbackBackends.containsKey(type)) {
-			return fallbackBackends.get(type);
-		}
-		return backends.get(0);
-	}
-
 	@Override
 	public void reload() throws PermissionBackendException {
 		for (PermissionBackend backend : backends) {
 			backend.reload();
 		}
-	}
-
-	@Override
-	public PermissionsUserData getUserData(String userName) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasUser(userName)) {
-				return backend.getUserData(userName);
-			}
-		}
-		return getFallbackBackend("user").getUserData(userName);
-	}
-
-	@Override
-	public PermissionsGroupData getGroupData(String groupName) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasGroup(groupName)) {
-				return backend.getGroupData(groupName);
-			}
-		}
-		return getFallbackBackend("group").getGroupData(groupName);
-	}
-
-	@Override
-	public boolean hasUser(String userName) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasUser(userName)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public boolean hasGroup(String group) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasGroup(group)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public Collection<String> getUserIdentifiers() {
-		Set<String> ret = new HashSet<>();
-		for (PermissionBackend backend : backends) {
-			ret.addAll(backend.getUserIdentifiers());
-		}
-		return Collections.unmodifiableSet(ret);
 	}
 
 	@Override
@@ -134,36 +74,73 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Collection<String> getGroupNames() {
+	public Iterator<MatcherGroup> getAllMatcherGroups() {
+		return Iterators.concat(Lists.transform(backends, new Function<PermissionBackend, Iterator<MatcherGroup>>() {
+			@Override
+			public Iterator<MatcherGroup> apply(PermissionBackend permissionBackend) {
+				return permissionBackend.getAllMatcherGroups();
+			}
+		}).iterator());
+	}
+
+	@Override
+	public List<MatcherGroup> getMatchingGroups(String type) {
+		return null;
+	}
+
+	@Override
+	public List<MatcherGroup> getMatchingGroups(String type, Qualifier qual, String qualValue) {
+		ImmutableList.Builder<MatcherGroup> build = ImmutableList.builder();
+		for (PermissionBackend backend : backends) {
+			build.addAll(backend.getMatchingGroups(type, qual, qualValue));
+		}
+		return build.build();
+	}
+
+
+	@Override
+	public MatcherGroup createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+		return backends.get(0).createMatcherGroup(type, entries, qualifiers); // TODO: Add backend= qualifier
+	}
+
+	@Override
+	public MatcherGroup createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
+		return backends.get(0).createMatcherGroup(type, entries, qualifiers);
+	}
+
+	@Override
+	public Collection<String> getAllValues(Qualifier qualifier) {
 		Set<String> ret = new HashSet<>();
 		for (PermissionBackend backend : backends) {
-			ret.addAll(backend.getGroupNames());
+			ret.addAll(backend.getAllValues(qualifier));
 		}
-		return Collections.unmodifiableSet(ret);
+		return ret;
 	}
 
 	@Override
-	public List<String> getWorldInheritance(String world) {
+	public boolean hasAnyQualifier(Qualifier qualifier, String value) {
 		for (PermissionBackend backend : backends) {
-			List<String> potentialRet = backend.getWorldInheritance(world);
-			if (potentialRet != null && potentialRet.size() > 0) {
-				return potentialRet;
+			if (backend.hasAnyQualifier(qualifier, value)) {
+				return true;
 			}
 		}
-		return Collections.emptyList();
+		return false;
 	}
 
 	@Override
-	public Map<String, List<String>> getAllWorldInheritance() {
-		Map<String, List<String>> ret = new HashMap<>();
-		for (int i = backends.size(); i >= 0; --i) {
-			ret.putAll(backends.get(i).getAllWorldInheritance());
+	public java.util.concurrent.Future<Void> replaceQualifier(Qualifier qualifier, String old, String newVal) {
+		for (PermissionBackend backend : backends) {
+			backend.replaceQualifier(qualifier, old, newVal);
 		}
-		return Collections.unmodifiableMap(ret);
+		return null;
 	}
 
 	@Override
-	public void setWorldInheritance(String world, List<String> inheritance) {
-		getFallbackBackend("world").setWorldInheritance(world, inheritance);
+	public List<MatcherGroup> allWithQualifier(Qualifier qualifier) {
+		List<MatcherGroup> ret = new ArrayList<>();
+		for (PermissionBackend backend : backends) {
+			ret.addAll(backend.allWithQualifier(qualifier));
+		}
+		return ret;
 	}
 }

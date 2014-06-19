@@ -19,6 +19,7 @@
 package ru.tehkode.permissions.events;
 
 import org.bukkit.event.HandlerList;
+import ru.tehkode.permissions.EntityType;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
@@ -27,12 +28,13 @@ import java.util.UUID;
 /**
  * @author t3hk0d3
  */
+@Deprecated
 public class PermissionEntityEvent extends PermissionEvent {
 
 	private static final HandlerList handlers = new HandlerList();
 	protected transient PermissionEntity entity;
 	protected Action action;
-	protected PermissionEntity.Type type;
+	protected EntityType type;
 	protected String entityIdentifier;
 
 	public PermissionEntityEvent(UUID sourceUUID, PermissionEntity entity, Action action) {
@@ -65,7 +67,7 @@ public class PermissionEntityEvent extends PermissionEvent {
 		return entityIdentifier;
 	}
 
-	public PermissionEntity.Type getType() {
+	public EntityType getType() {
 		return type;
 	}
 

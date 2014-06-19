@@ -53,7 +53,10 @@ import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.sql.SQLBackend;
 import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
+import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.commands.CommandsManager;
+import ru.tehkode.permissions.data.MatcherGroup;
+import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
@@ -415,23 +418,36 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		@EventHandler(priority = EventPriority.MONITOR)
 		public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
 			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
-				getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
+				// UUID conversion
+				String uuidIdent = event.getUniqueId().toString();
+				String nameIdent = event.getName();
+				if (!permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, uuidIdent) && permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, nameIdent)) {
+					permissionsManager.getBackend().replaceQualifier(Qualifier.USER, nameIdent, uuidIdent);
+				}
+				// Writing the name alias
+				MatcherGroup uuidGroup = permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY);
+				if (!nameIdent.equals(uuidGroup.getEntries().get(uuidIdent))) {
+					uuidGroup.putEntry(uuidIdent, nameIdent);
+				}
+
+				// Cache data for user (dunno how this will work
+				//getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
 			}
 		}
 
 		@EventHandler
 		public void onPlayerLogin(PlayerJoinEvent event) {
 			try {
-				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-				if (!user.isVirtual() && !event.getPlayer().getName().equals(user.getOption("name"))) { // Update name only if user exists in config
-					user.setOption("name", event.getPlayer().getName());
-				}
+				final Player player = event.getPlayer();
+
 				if (!config.shouldLogPlayers()) {
 					return;
 				}
 
-				user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
-				// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
+				permissionsManager.set().user(player)
+						.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L))
+						.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress())
+						.perform();
 			} catch (Throwable t) {
 				ErrorReport.handleError("While login cleanup event", t);
 			}
@@ -440,17 +456,31 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			try {
-
-				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-			if (config.shouldLogPlayers()) {
-				user.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
-			}
-
-				if (!user.isVirtual()) {
-					user.getName(); // Set name if user was created during server run
+				final Player player = event.getPlayer();
+				if (config.shouldLogPlayers()) {
+					permissionsManager.set().user(player)
+							.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L))
+							.perform();
 				}
 
-			getPermissionsManager().resetUser(event.getPlayer());
+				final String uuid = player.getUniqueId().toString();
+				final String name = player.getName();
+				permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, event.getPlayer().getUniqueId().toString(), new Callback<Boolean>() {
+					@Override
+					public void onSuccess(Boolean result) {
+						permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY, new Callback<MatcherGroup>() {
+							@Override
+							public void onSuccess(MatcherGroup result) {
+								result.putEntry(uuid, name);
+							}
+
+							@Override
+							public void onError(Throwable t) {}
+						});
+					}
+					@Override
+					public void onError(Throwable t) {}
+				});
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);
 			}

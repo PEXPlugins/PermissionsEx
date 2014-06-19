@@ -1,27 +1,30 @@
-/*CREATE TABLE IF NOT EXISTS `{pex_groups}` (
+CREATE TABLE IF NOT EXISTS `{groups}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` TEXT NOT NULL,
   PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
-CREATE TABLE IF NOT EXISTS `{pex_qualifiers}` (
+CREATE TABLE IF NOT EXISTS `{qualifiers}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `group` int(11) NOT NULL,
-  `key` TEXT NOT NULL,
-  `value` TEXT NOT NULL,
+  `key` VARCHAR(250) NOT NULL,
+  `value` VARCHAR(250) NOT NULL,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (`group`) REFERENCES `{pex_groups}` (`id`) ON DELETE CASCADE
+  UNIQUE KEY (`group`, `key`, `value`),
+  KEY (`key`),
+  KEY (`key`, `value`),
+  FOREIGN KEY (`group`) REFERENCES `{groups}` (`id`) ON DELETE CASCADE
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
-CREATE TABLE IF NOT EXISTS `{pex_entries}` (
+CREATE TABLE IF NOT EXISTS `{entries}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `group` int(11) NOT NULL,
   `key` TEXT NOT NULL,
   `value` TEXT NULL,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (`group`) REFERENCES `{pex_groups}` (`id`) ON DELETE CASCADE
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;*/
-
+  FOREIGN KEY (`group`) REFERENCES `{groups}` (`id`) ON DELETE CASCADE
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+/*
 CREATE TABLE IF NOT EXISTS `{permissions}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
@@ -57,3 +60,4 @@ CREATE TABLE IF NOT EXISTS `{permissions_inheritance}` (
   KEY `child_2` (`child`,`type`),
   KEY `parent` (`parent`,`type`)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+*/

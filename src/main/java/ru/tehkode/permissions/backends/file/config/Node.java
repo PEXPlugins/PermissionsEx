@@ -1,4 +1,4 @@
-package ru.tehkode.permissions.backends.file;
+package ru.tehkode.permissions.backends.file.config;
 
 import org.parboiled.trees.ImmutableTreeNode;
 import ru.tehkode.utils.StringUtils;
@@ -15,7 +15,8 @@ public class Node extends ImmutableTreeNode<Node> {
 		SCALAR,
 		QUALIFIER,
 		COMMENT,
-		ROOT
+		ROOT,
+		SECTION
 	}
 	private final String key;
 	private final Type type;
