@@ -1,4 +1,4 @@
-package ru.tehkode.permissions.backends.file;
+package ru.tehkode.permissions.backends.file.config;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -12,12 +12,12 @@ import org.parboiled.support.ParsingResult;
 
 import static org.junit.Assert.*;
 
-public class PEXFileParserTest {
-	private PEXFileParser parser;
+public class PEXMLParserTest {
+	private PEXMLParser parser;
 
 	@Before
 	public void setUp() {
-		parser = Parboiled.createParser(PEXFileParser.class);
+		parser = Parboiled.createParser(PEXMLParser.class);
 	}
 
 	// Basic test
@@ -40,7 +40,7 @@ public class PEXFileParserTest {
 		Node ret = runParse(parser.Document(), file);
 
 		Node test = new Node("root", Node.Type.ROOT,
-				new Node("permissions", Node.Type.MAPPING,
+				new Node("permissions", Node.Type.SECTION,
 						new Node("group", Node.Type.QUALIFIER,
 								new Node("Test", Node.Type.SCALAR)
 						),
@@ -53,7 +53,7 @@ public class PEXFileParserTest {
 								new Node("Commandbook teleporty", Node.Type.COMMENT)
 						)
 					),
-				new Node("options", Node.Type.MAPPING,
+				new Node("options", Node.Type.SECTION,
 						new Node("group", Node.Type.QUALIFIER,
 								new Node("admins", Node.Type.SCALAR)
 						),
@@ -62,7 +62,7 @@ public class PEXFileParserTest {
 								new Node("Admin\nAnother Thing", Node.Type.SCALAR)
 						)
 				),
-				new Node("inheritance", Node.Type.MAPPING,
+				new Node("inheritance", Node.Type.SECTION,
 						new Node("user", Node.Type.QUALIFIER,
 								new Node("zml2008", Node.Type.SCALAR)
 						),
@@ -81,7 +81,7 @@ public class PEXFileParserTest {
 				"- node2\n");
 
 		Node expected = new Node("root", Node.Type.ROOT,
-				new Node("section", Node.Type.MAPPING,
+				new Node("section", Node.Type.SECTION,
 						new Node("Pre-mapping comment", Node.Type.COMMENT),
 						new Node("After-section comment", Node.Type.COMMENT),
 						new Node("node", Node.Type.SCALAR,
@@ -105,7 +105,7 @@ public class PEXFileParserTest {
 				"+ plus-start\n");
 
 		Node expected = new Node("root", Node.Type.ROOT,
-				new Node("varieditems", Node.Type.MAPPING,
+				new Node("varieditems", Node.Type.SECTION,
 						new Node("minus.start", Node.Type.SCALAR),
 						new Node("star-start", Node.Type.SCALAR),
 						new Node("plus-start", Node.Type.SCALAR)
@@ -122,7 +122,7 @@ public class PEXFileParserTest {
 				"e: f\n");
 
 		Node expected = new Node("root", Node.Type.ROOT,
-				new Node("varieditems", Node.Type.MAPPING,
+				new Node("varieditems", Node.Type.SECTION,
 						new Node("a", Node.Type.MAPPING,
 								new Node("b", Node.Type.SCALAR)
 						),
@@ -149,7 +149,7 @@ public class PEXFileParserTest {
 				"     severely=indented");
 
 		Node expected = new Node("root", Node.Type.ROOT,
-				new Node("items", Node.Type.MAPPING,
+				new Node("items", Node.Type.SECTION,
 						new Node("a", Node.Type.QUALIFIER,
 								new Node("b", Node.Type.SCALAR)
 						),
@@ -165,7 +165,7 @@ public class PEXFileParserTest {
 						new Node("quotedindent", Node.Type.SCALAR),
 						new Node("trailingquoted", Node.Type.SCALAR)
 				),
-				new Node("mappings", Node.Type.MAPPING,
+				new Node("mappings", Node.Type.SECTION,
 						new Node("severely", Node.Type.MAPPING,
 								new Node("indented", Node.Type.SCALAR)
 						)
@@ -199,15 +199,41 @@ public class PEXFileParserTest {
 				"[options");
 	}
 
-	@Test(expected = ParsingException.class)
-	public void testEmptySection() {
-		runParse(parser.Document(), "[permissions]");
+	@Test
+	public void testEmptyMapping() {
+		Node ret = runParse(parser.Document(), "[permissions]\n" +
+				"a=");
+		Node expected = new Node("root", Node.Type.ROOT,
+				new Node("permissions", Node.Type.SECTION,
+						new Node("a", Node.Type.MAPPING,
+								new Node("", Node.Type.SCALAR)
+						)
+				)
+		);
+		assertEquals(expected, ret);
 	}
 
-	@Test(expected = ParsingException.class)
-	public void testUnmatchedMapping() {
-		runParse(parser.Document(), "[permissions]\n" +
-				"a=");
+	@Test
+	public void testEmptySection() {
+		Node ret = runParse(parser.Document(), "[permissions]");
+		Node expected = new Node("root", Node.Type.ROOT,
+				new Node("permissions", Node.Type.SECTION)
+		);
+		assertEquals(expected, ret);
+	}
+
+	@Test
+	public void testSpacedString() {
+		Node ret = runParse(parser.Document(), "[test]\n" +
+				"a=multi word");
+		Node expected = new Node("root", Node.Type.ROOT,
+				new Node("test", Node.Type.SECTION,
+						new Node("a", Node.Type.MAPPING,
+								new Node("multi word", Node.Type.SCALAR)
+						)
+				)
+		);
+		assertEquals(expected, ret);
 	}
 
 	// String parsing tests
@@ -249,6 +275,59 @@ public class PEXFileParserTest {
 		assertEquals("", ret);
 	}
 
+	@Test
+	public void testMultiLineComment() {
+		Node ret = runParse(parser.Document(), "# Multiline\n" +
+				"# Comment\n" +
+				"[test]\n" +
+				"- a");
+
+		Node expected = new Node("root", Node.Type.ROOT,
+				new Node("test", Node.Type.SECTION,
+						new Node("Multiline", Node.Type.COMMENT),
+						new Node("Comment", Node.Type.COMMENT),
+						new Node("a", Node.Type.SCALAR)
+				)
+		);
+
+		assertEquals(expected, ret);
+	}
+
+	@Test
+	public void testSplitMultilineComment() {
+		Node ret = runParse(parser.Document(), "# Split multiline\n" +
+				"\n" +
+				"# Comment\n" +
+				"[test]\n" +
+				"- a");
+
+		Node expected = new Node("root", Node.Type.ROOT,
+				new Node("test", Node.Type.SECTION,
+						new Node("Split multiline", Node.Type.COMMENT),
+						new Node("Comment", Node.Type.COMMENT),
+						new Node("a", Node.Type.SCALAR)
+				)
+		);
+
+		assertEquals(expected, ret);
+	}
+
+	@Test
+	public void testEndComment() {
+		Node ret = runParse(parser.Document(), "[test]\n" +
+				"- a\n" +
+				"# End comment!");
+
+		Node expected = new Node("root", Node.Type.ROOT,
+				new Node("test", Node.Type.SECTION,
+						new Node("a", Node.Type.SCALAR)
+				),
+				new Node("End comment!", Node.Type.COMMENT)
+		);
+
+		assertEquals(expected, ret);
+	}
+
 	private <T> T runParse(Rule rule, String input) {
 		ParseRunner<T> runner = new ReportingParseRunner<>(rule);
 		ParsingResult<T> res = runner.run(input);
@@ -257,5 +336,4 @@ public class PEXFileParserTest {
 		}
 		return res.resultValue;
 	}
-
 }

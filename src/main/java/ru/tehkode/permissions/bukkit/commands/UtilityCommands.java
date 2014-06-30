@@ -23,7 +23,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.ErrorReport;
@@ -161,7 +160,10 @@ public class UtilityCommands extends PermissionsCommand {
 		sender.sendMessage("Beginning conversion to UUID (This may take a while (a long while))");
 		backend.setPersistent(false);
 		try {
-			Collection<String> userIdentifiers = backend.getUserIdentifiers();
+			sender.sendMessage(ChatColor.RED + "NOT YET REIMPLEMENTED");
+
+			// TODO: Update for matchergroups
+			/*Collection<String> userIdentifiers = backend.getUserIdentifiers();
 			for (String name : backend.getUserIdentifiers()) {
 				try {
 					UUID uid = UUID.fromString(name);
@@ -181,7 +183,7 @@ public class UtilityCommands extends PermissionsCommand {
 						sender.sendMessage(ChatColor.GRAY + "Converted " + count + " of " + userIdentifiers.size() + " users");
 					}
 				}
-			}
+			}*/
 		} finally {
 			backend.setPersistent(true);
 		}

@@ -1,5 +1,8 @@
 package ru.tehkode.permissions.bukkit;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,10 +14,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionDefault;
-import ru.tehkode.permissions.PermissionGroup;
-import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
+import ru.tehkode.permissions.query.GetQuery;
 
 import java.util.HashMap;
 import java.util.List;
@@ -50,15 +52,12 @@ public class SuperpermsListener implements Listener {
 			attach.setPermission(playerOptionPerm, true);
 		}
 
-		PermissionUser user = plugin.getPermissionsManager().getUser(player);
-		if (user != null) {
-			if (user.isDebug()) {
+			if (plugin.getPermissionsManager().isDebug(player)) {
 				plugin.getLogger().info("Updating superperms for player " + player.getName());
 			}
-			updatePlayerPermission(playerPerm, user, worldName);
-			updatePlayerMetadata(playerOptionPerm, user, worldName);
+			updatePlayerPermission(playerPerm, player, worldName);
+			updatePlayerMetadata(playerOptionPerm, player, worldName);
 			player.recalculatePermissions();
-		}
 	}
 
 	private String permissionName(Player player, String suffix) {
@@ -81,40 +80,57 @@ public class SuperpermsListener implements Listener {
 
 	}
 
-	private void updatePlayerPermission(Permission permission, PermissionUser user, String worldName) {
-		permission.getChildren().clear();
-		for (String perm : user.getPermissions(worldName)) {
-			boolean value = true;
-			if (perm.startsWith("-")) {
-				value = false;
-				perm = perm.substring(1);
+	private ListenableFuture<?> updatePlayerPermission(final Permission permission, final Player user, final String worldName) {
+		return Futures.chain(plugin.getPermissionsManager().get().user(user).world(worldName).permissions(), new Function<List<String>, ListenableFuture<?>>() {
+			@Override
+			public ListenableFuture<?> apply(List<String> permissions) {
+				permission.getChildren().clear();
+				for (String perm : permissions) {
+					boolean value = true;
+					if (perm.startsWith("-")) {
+						value = false;
+						perm = perm.substring(1);
+					}
+					if (!permission.getChildren().containsKey(perm)) {
+						permission.getChildren().put(perm, value);
+					}
+				}
+				return Futures.<Void>immediateFuture(null);
 			}
-			if (!permission.getChildren().containsKey(perm)) {
-				permission.getChildren().put(perm, value);
-			}
-		}
+		}, PermissionsEx.mainThreadExecutor());
 	}
 
-	private void updatePlayerMetadata(Permission rootPermission, PermissionUser user, String worldName) {
-		rootPermission.getChildren().clear();
-		final List<String> groups = user.getParentIdentifiers(worldName);
-		final Map<String, String> options = user.getOptions(worldName);
-		// Metadata
-		// Groups
-		for (String group : groups) {
-			rootPermission.getChildren().put("groups." + group, true);
-			rootPermission.getChildren().put("group." + group, true);
-		}
+	private ListenableFuture<?> updatePlayerMetadata(final Permission rootPermission, Player user, String worldName) {
+		GetQuery query = plugin.getPermissionsManager().get().user(user).world(worldName);
+		return Futures.transform(Futures.allAsList(query.parents(), query.options()), new Function<List<Object>, Object>() {
+			@Override
+			public Object apply(List<Object> objects) {
+				rootPermission.getChildren().clear();
+				@SuppressWarnings("unchecked")
+				final List<String> parents = (List<String>) objects.get(0);
+				@SuppressWarnings("unchecked")
+				final Map<String, String> options = (Map<String, String>) objects.get(1);
 
-		// Options
-		for (Map.Entry<String, String> option : options.entrySet()) {
-			rootPermission.getChildren().put("options." + option.getKey() + "." + option.getValue(), true);
-		}
+				// Metadata
+				// Groups
+				for (String group : parents) {
+					rootPermission.getChildren().put("groups." + group, true);
+					rootPermission.getChildren().put("group." + group, true);
+				}
 
-		// Prefix and Suffix
-		rootPermission.getChildren().put("prefix." + user.getPrefix(worldName), true);
-		rootPermission.getChildren().put("suffix." + user.getSuffix(worldName), true);
+				// Options
+				for (Map.Entry<String, String> option : options.entrySet()) {
+					rootPermission.getChildren().put("options." + option.getKey() + "." + option.getValue(), true);
+				}
 
+				// Prefix and Suffix
+				final String prefix = options.get("prefix"),
+						suffix = options.get("suffix");
+				rootPermission.getChildren().put("prefix." + (prefix == null ? "" : prefix), true);
+				rootPermission.getChildren().put("suffix." + (suffix == null ? "" : suffix), true);
+				return null;
+			}
+		}, PermissionsEx.mainThreadExecutor());
 	}
 
 	protected void removeAttachment(Player player) {
@@ -176,44 +192,26 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	private void updateSelective(PermissionEntityEvent event, PermissionUser user) {
-		final Player p = user.getPlayer();
-		if (p != null) {
+	private void updateSelective(PermissionEntityEvent event, Player p) {
 			switch (event.getAction()) {
 				case SAVED:
 					break;
 
 				case PERMISSIONS_CHANGED:
 				case TIMEDPERMISSION_EXPIRED:
-					updatePlayerPermission(getCreateWrapper(p, ""), user, p.getWorld().getName());
+					updatePlayerPermission(getCreateWrapper(p, ""), p, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
 				case OPTIONS_CHANGED:
 				case INFO_CHANGED:
-					updatePlayerMetadata(getCreateWrapper(p, ".options"), user, p.getWorld().getName());
+					updatePlayerMetadata(getCreateWrapper(p, ".options"), p, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
 				default:
 					updateAttachment(p);
 			}
-		}
-	}
-
-	@EventHandler(priority = EventPriority.LOW)
-	public void onEntityEvent(PermissionEntityEvent event) {
-		try {
-			if (event.getEntity() instanceof PermissionUser) { // update user only
-				updateSelective(event, (PermissionUser) event.getEntity());
-			} else if (event.getEntity() instanceof PermissionGroup) { // update all members of group, might be resource hog
-				for (PermissionUser user : ((PermissionGroup) event.getEntity()).getActiveUsers(true)) {
-					updateSelective(event, user);
-				}
-			}
-		} catch (Throwable t) {
-			ErrorReport.handleError("Superperms event permission entity", t);
-		}
 	}
 
 	@EventHandler

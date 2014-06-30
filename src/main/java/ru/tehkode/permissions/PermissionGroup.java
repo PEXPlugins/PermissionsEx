@@ -18,26 +18,21 @@
  */
 package ru.tehkode.permissions;
 
-import ru.tehkode.permissions.events.PermissionEntityEvent;
+import com.google.common.util.concurrent.Futures;
+import ru.tehkode.permissions.query.SetQuery;
 
 import java.util.*;
 
 /**
  * @author t3hk0d3
  */
+@Deprecated
 public class PermissionGroup extends PermissionEntity implements Comparable<PermissionGroup> {
 	protected int weight = 0;
 	protected boolean dirtyWeight = true;
-	private final PermissionsGroupData data;
 
-	public PermissionGroup(String groupName, PermissionsGroupData data, PermissionManager manager) {
+	public PermissionGroup(String groupName, PermissionManager manager) {
 		super(groupName, manager);
-		this.data = data;
-	}
-
-	@Override
-	protected PermissionsGroupData getData() {
-		return data;
 	}
 
 	@Override
@@ -49,8 +44,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		}
 	}
 
-	public Type getType() {
-		return Type.GROUP;
+	public EntityType getType() {
+		return EntityType.GROUP;
 	}
 
 	public int getWeight() {
@@ -66,7 +61,6 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		this.setOption("weight", Integer.toString(weight));
 
 		this.dirtyWeight = true;
-		this.callEvent(PermissionEntityEvent.Action.WEIGHT_CHANGED);
 	}
 
 	/**
@@ -99,7 +93,6 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 			this.setOption("rank", null);
 		}
 
-		this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
 	}
 
 	/**
@@ -123,7 +116,6 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 
 		this.setOption("rank-ladder", rankLadder);
 
-		this.callEvent(PermissionEntityEvent.Action.RANK_CHANGED);
 	}
 
 	/**
@@ -146,7 +138,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 			visitedParents.add(this.getIdentifier());
 		}
 
-		for (String parentGroup : getData().getParents(worldName)) {
+		for (String parentGroup : Futures.getUnchecked(get().world(worldName).followInheritance(false).parents())) {
 			if (visitedParents != null && visitedParents.contains(parentGroup)) {
 				continue;
 			}
@@ -258,18 +250,17 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	}
 
 	public boolean isDefault(String worldName) {
-		return getOwnOptionBoolean("default", worldName, false);
+		return Futures.getUnchecked(this.manager.get().world(worldName).parents()).contains(getIdentifier());
 	}
 
 	public void setDefault(boolean def, String worldName) {
-		setOption("default", String.valueOf(def), worldName);
-		callEvent(PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED);
-	}
-
-	protected void clearCache() {
-		for (PermissionUser user : this.getActiveUsers()) {
-			user.clearCache();
+		SetQuery set = this.manager.set().world(worldName);
+		if (def) {
+			set.addParent(getIdentifier());
+		} else {
+			set.removeParent(getIdentifier());
 		}
+		set.perform();
 	}
 
 	@Override

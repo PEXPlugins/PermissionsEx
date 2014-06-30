@@ -1,7 +1,8 @@
-package ru.tehkode.permissions.backends.file;
+package ru.tehkode.permissions.backends.file.config;
 
 import org.parboiled.BaseParser;
 import org.parboiled.Rule;
+import org.parboiled.matchers.FirstOfStringsMatcher;
 import org.parboiled.support.StringBuilderVar;
 import org.parboiled.support.ValueStack;
 import org.parboiled.support.Var;
@@ -12,11 +13,9 @@ import java.util.LinkedList;
 /**
  * Parser for PEX configuration format. This format is INI-like, except for the addition of qualifiers on the section headings
  */
-//@BuildParseTree
-public class PEXFileParser extends BaseParser<Object> {
-
+public class PEXMLParser extends BaseParser<Object> {
 	public Rule Document() {
-		return FirstOf(EOI, Sequence(OneOrMore(Section(), Optional(LineBreak())), EOI, nodesToParent("root", Node.Type.ROOT)));
+		return FirstOf(EOI, Sequence(OneOrMore(Section(), Optional(LineBreak())), ZeroOrMore(Comment(), LineBreak()), EOI, nodesToParent("root", Node.Type.ROOT)));
 	}
 
 	Rule Section() {
@@ -24,8 +23,8 @@ public class PEXFileParser extends BaseParser<Object> {
 		return Sequence(
 				createSentinel(sentinel),
 				CommentCapable(Heading()),
-				OneOrMore(TestNot("["), Element()),
-				nodesToParent(popString(), Node.Type.MAPPING, sentinel.get()),
+				ZeroOrMore(TestNot("["), Element()),
+				nodesToParent(popString(), Node.Type.SECTION, sentinel.get()),
 				swap(),
 				popSentinel(sentinel));
 	}
@@ -36,7 +35,7 @@ public class PEXFileParser extends BaseParser<Object> {
 				ZeroOrMore(
 						TestNot("]"),
 						createSentinel(sentinel),
-						Mapping(),
+						Mapping(FirstOf(AnyOf(" ]"), LineBreak())),
 						nodesToParent(popString(), Node.Type.QUALIFIER, sentinel.get()),
 						swap(),
 						popSentinel(sentinel)
@@ -49,17 +48,17 @@ public class PEXFileParser extends BaseParser<Object> {
 		return Sequence(createSentinel(sentinel), WhiteSpace(),
 				FirstOf(
 					Sequence(CommentCapable(Sequence(ListEntryStart(), String())), nodesToParent(popString(), Node.Type.SCALAR, sentinel.get())),
-					Sequence(CommentCapable(Mapping()), nodesToParent(popString(), Node.Type.MAPPING, sentinel.get()))
+					Sequence(CommentCapable(Mapping(LineBreak())), nodesToParent(popString(), Node.Type.MAPPING, sentinel.get()))
 				),
 				swap(),
 				popSentinel(sentinel)
 		);
 	}
 
-	Rule Mapping() {
+	Rule Mapping(Rule ruleUntil) {
 		return Sequence(StringUntil(MappingDelimeter()),
 				MappingDelimeter(),
-				StringUntil(FirstOf(AnyOf(" ]"), LineBreak())),
+				FirstOf(StringUntil(ruleUntil), push("")),
 				push(new Node(popString(), Node.Type.SCALAR)),
 				swap());
 	}
@@ -102,7 +101,7 @@ public class PEXFileParser extends BaseParser<Object> {
 	}
 
 	Rule CommentCapable(Object rule) {
-		return Sequence(Optional(Comment(), LineBreak()), rule, WhiteSpace(), Optional(Comment()), LineBreak());
+		return Sequence(ZeroOrMore(Comment(), LineBreak()), rule, WhiteSpace(), Optional(Comment()), LineBreak());
 	}
 
 	Rule Comment() {
@@ -198,5 +197,4 @@ public class PEXFileParser extends BaseParser<Object> {
 		System.out.println(msg);
 		return true;
 	}
-
 }

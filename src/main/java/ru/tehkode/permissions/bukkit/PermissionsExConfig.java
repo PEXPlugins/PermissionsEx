@@ -6,10 +6,12 @@ import ru.tehkode.permissions.backends.PermissionBackend;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * @author zml2008
+ * Immutable configuration object
  */
 public class PermissionsExConfig {
 	private final Configuration config;
@@ -24,13 +26,13 @@ public class PermissionsExConfig {
 	private final boolean updaterEnabled;
 	private final boolean alwaysUpdate;
 	private final boolean informPlayers;
-	private final List<String> serverTags;
+	private final Set<String> serverTags;
 	private final String basedir;
 
 	public PermissionsExConfig(Configuration config) {
 		this.config = config;
 		this.useNetEvents = getBoolean("multiserver.use-netevents", true);
-		this.serverTags = getStringList("multiserver.server-tags");
+		this.serverTags = new HashSet<>(getStringList("multiserver.server-tags"));
 		this.debug = getBoolean("permissions.debug", false);
 		this.allowOps = getBoolean("permissions.allowOps", false);
 		this.userAddGroupsLast = getBoolean("permissions.user-add-groups-last", false);
@@ -108,7 +110,7 @@ public class PermissionsExConfig {
 		return informPlayers;
 	}
 
-	public List<String> getServerTags() {
+	public Set<String> getServerTags() {
 		return serverTags;
 	}
 

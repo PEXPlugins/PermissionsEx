@@ -1,19 +1,26 @@
 package ru.tehkode.permissions.backends;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.PermissionsGroupData;
-import ru.tehkode.permissions.PermissionsUserData;
+import ru.tehkode.permissions.data.Context;
+import ru.tehkode.permissions.data.MatcherGroup;
+import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -21,11 +28,15 @@ import java.util.Set;
  * Backend priority is first-come-first-serve -- whatever's listed first gets priority
  */
 public class MultiBackend extends PermissionBackend {
+	public static final Qualifier BACKEND = new Qualifier("backend") {
+		@Override
+		public boolean matches(Context context, String value) {
+			return false;
+		}
+	};
 	private final List<PermissionBackend> backends = new ArrayList<>();
-	private final Map<String, PermissionBackend> fallbackBackends = new HashMap<>();
 	protected MultiBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
-		super(manager, backendConfig);
-		Map<String, PermissionBackend> backendMap = new HashMap<>();
+		super(manager, backendConfig, Executors.newSingleThreadExecutor());
 		List<String> backendNames = backendConfig.getStringList("backends");
 		if (backendNames.isEmpty()) {
 			backendConfig.set("backends", new ArrayList<String>());
@@ -34,20 +45,6 @@ public class MultiBackend extends PermissionBackend {
 		for (String name : backendConfig.getStringList("backends")) {
 			PermissionBackend backend = manager.createBackend(name);
 			backends.add(backend);
-			backendMap.put(name, backend);
-		}
-
-		// Fallbacks
-		ConfigurationSection fallbackSection = backendConfig.getConfigurationSection("fallback");
-		if (fallbackSection != null) {
-			for (Map.Entry<String, Object> ent : fallbackSection.getValues(false).entrySet()) {
-				@SuppressWarnings("SuspiciousMethodCalls")
-				PermissionBackend backend = backendMap.get(ent.getValue());
-				if (backend == null) {
-					throw new PermissionBackendException("Fallback backend type " + ent.getValue() + " is not listed in the backends section of MultiBackend (and must be for this contraption to work)");
-				}
-				fallbackBackends.put(ent.getKey(), backend);
-			}
 		}
 	}
 
@@ -61,67 +58,11 @@ public class MultiBackend extends PermissionBackend {
 		// no-op
 	}
 
-	public PermissionBackend getFallbackBackend(String type) {
-		if (fallbackBackends.containsKey(type)) {
-			return fallbackBackends.get(type);
-		}
-		return backends.get(0);
-	}
-
 	@Override
 	public void reload() throws PermissionBackendException {
 		for (PermissionBackend backend : backends) {
 			backend.reload();
 		}
-	}
-
-	@Override
-	public PermissionsUserData getUserData(String userName) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasUser(userName)) {
-				return backend.getUserData(userName);
-			}
-		}
-		return getFallbackBackend("user").getUserData(userName);
-	}
-
-	@Override
-	public PermissionsGroupData getGroupData(String groupName) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasGroup(groupName)) {
-				return backend.getGroupData(groupName);
-			}
-		}
-		return getFallbackBackend("group").getGroupData(groupName);
-	}
-
-	@Override
-	public boolean hasUser(String userName) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasUser(userName)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public boolean hasGroup(String group) {
-		for (PermissionBackend backend : backends) {
-			if (backend.hasGroup(group)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public Collection<String> getUserIdentifiers() {
-		Set<String> ret = new HashSet<>();
-		for (PermissionBackend backend : backends) {
-			ret.addAll(backend.getUserIdentifiers());
-		}
-		return Collections.unmodifiableSet(ret);
 	}
 
 	@Override
@@ -134,36 +75,131 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Collection<String> getGroupNames() {
-		Set<String> ret = new HashSet<>();
+	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
+		List<ListenableFuture<Iterator<MatcherGroup>>> rawGroups = new ArrayList<>(backends.size());
 		for (PermissionBackend backend : backends) {
-			ret.addAll(backend.getGroupNames());
+			rawGroups.add(backend.getAll());
 		}
-		return Collections.unmodifiableSet(ret);
-	}
-
-	@Override
-	public List<String> getWorldInheritance(String world) {
-		for (PermissionBackend backend : backends) {
-			List<String> potentialRet = backend.getWorldInheritance(world);
-			if (potentialRet != null && potentialRet.size() > 0) {
-				return potentialRet;
+		return Futures.transform(Futures.allAsList(rawGroups), new Function<List<Iterator<MatcherGroup>>, Iterator<MatcherGroup>>() {
+			@Override
+			public Iterator<MatcherGroup> apply(List<Iterator<MatcherGroup>> iterators) {
+				return Iterators.concat(iterators.iterator());
 			}
+		});
+	}
+	private <T> List<T> concatList(List<List<T>> lists) {
+		if (lists.isEmpty()) {
+			return Collections.emptyList();
 		}
-		return Collections.emptyList();
+		final List<T> ret = new ArrayList<>(lists.get(0).size() * lists.size());
+		for (List<T> list : lists) {
+			ret.addAll(list);
+		}
+		return ret;
 	}
 
 	@Override
-	public Map<String, List<String>> getAllWorldInheritance() {
-		Map<String, List<String>> ret = new HashMap<>();
-		for (int i = backends.size(); i >= 0; --i) {
-			ret.putAll(backends.get(i).getAllWorldInheritance());
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type) {
+		final List<ListenableFuture<List<MatcherGroup>>> rawResults = new ArrayList<>(backends.size());
+		for (PermissionBackend backend : backends) {
+			rawResults.add(backend.getMatchingGroups(type));
 		}
-		return Collections.unmodifiableMap(ret);
+		return Futures.transform(Futures.allAsList(rawResults), new Function<List<List<MatcherGroup>>, List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> apply(List<List<MatcherGroup>> lists) {
+				return concatList(lists);
+			}
+		});
 	}
 
 	@Override
-	public void setWorldInheritance(String world, List<String> inheritance) {
-		getFallbackBackend("world").setWorldInheritance(world, inheritance);
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue) {
+		final List<ListenableFuture<List<MatcherGroup>>> rawResults = new ArrayList<>(backends.size());
+		for (PermissionBackend backend : backends) {
+			rawResults.add(backend.getMatchingGroups(type, qual, qualValue));
+		}
+		return Futures.transform(Futures.allAsList(rawResults), new Function<List<List<MatcherGroup>>, List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> apply(List<List<MatcherGroup>> lists) {
+				return concatList(lists);
+			}
+		});
+	}
+
+
+	@Override
+	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+		return backends.get(0).createMatcherGroup(type, entries, qualifiers); // TODO: Add backend= qualifier
+	}
+
+	@Override
+	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
+		return backends.get(0).createMatcherGroup(type, entries, qualifiers);
+	}
+
+	@Override
+	public ListenableFuture<Collection<String>> getAllValues(Qualifier qualifier) {
+		final List<ListenableFuture<Collection<String>>> rawResults = new ArrayList<>(backends.size());
+		for (PermissionBackend backend : backends) {
+			rawResults.add(backend.getAllValues(qualifier));
+		}
+		return Futures.transform(Futures.allAsList(rawResults), new Function<List<Collection<String>>, Collection<String>>() {
+			@Override
+			public Collection<String> apply(List<Collection<String>> lists) {
+				Set<String> ret = new HashSet<>();
+				for (Collection<String> raw : lists) {
+					ret.addAll(raw);
+				}
+				return ret;
+			}
+		});
+	}
+
+	@Override
+	public ListenableFuture<Boolean> hasAnyQualifier(Qualifier qualifier, String value) {
+		List<ListenableFuture<Boolean>> results = new ArrayList<>(backends.size());
+		for (PermissionBackend backend : backends) {
+			results.add(backend.hasAnyQualifier(qualifier, value));
+		}
+		return Futures.transform(Futures.allAsList(results), new Function<List<Boolean>, Boolean>() {
+			@Override
+			public Boolean apply(List<Boolean> booleans) {
+				for (Boolean bool : booleans) {
+					if (bool) {
+						return true;
+					}
+				}
+				return false;
+			}
+		});
+	}
+
+	@Override
+	public ListenableFuture<Void> replaceQualifier(Qualifier qualifier, String old, String newVal) {
+		List<ListenableFuture<Void>> join = new ArrayList<>(backends.size());
+		for (PermissionBackend backend : backends) {
+			join.add(backend.replaceQualifier(qualifier, old, newVal));
+		}
+		return Futures.transform(Futures.allAsList(join), new Function<List<Void>, Void>() {
+			@Override
+			public Void apply(List<Void> voids) {
+				return null;
+			}
+		});
+	}
+
+	@Override
+	public ListenableFuture<List<MatcherGroup>> allWithQualifier(Qualifier qualifier) {
+		List<ListenableFuture<List<MatcherGroup>>> ret = new ArrayList<>(backends.size());
+		for (PermissionBackend backend : backends) {
+			ret.add(backend.allWithQualifier(qualifier));
+		}
+
+		return Futures.transform(Futures.allAsList(ret), new Function<List<List<MatcherGroup>>, List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> apply(List<List<MatcherGroup>> lists) {
+				return concatList(lists);
+			}
+		});
 	}
 }

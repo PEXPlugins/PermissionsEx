@@ -25,14 +25,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * One connection per thread, don't share your connections
  */
 public class SQLConnection implements Closeable {
-	private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
 	private Statement statement;
 	private final Connection db;
 	private final SQLBackend backend;
@@ -43,27 +40,7 @@ public class SQLConnection implements Closeable {
 	}
 
 	public PreparedStatement prep(String query) throws SQLException {
-		return this.db.prepareStatement(expandQuery(query));
-	}
-
-	/**
-	 * Perform table name expansion on a query
-	 * Example: <pre>SELECT * FROM `{permissions}`;</pre>
-	 * @param query the query to get
-	 * @return The expanded query
-	 */
-	public String expandQuery(String query) {
-		String newQuery = backend.getQueryCache().getQuery(query);
-		if (newQuery != null) {
-			query = newQuery;
-		}
-		StringBuffer ret = new StringBuffer();
-		Matcher m = TABLE_PATTERN.matcher(query);
-		while (m.find()) {
-			m.appendReplacement(ret, this.backend.getTableName(m.group(1)));
-		}
-		m.appendTail(ret);
-		return ret.toString();
+		return this.db.prepareStatement(backend.expandQuery(query));
 	}
 
 	public Statement getStatement() throws SQLException {
@@ -76,7 +53,7 @@ public class SQLConnection implements Closeable {
 
 	public boolean hasTable(String table) throws SQLException {
 		this.checkConnection();
-		table = expandQuery(table);
+		table = backend.expandQuery(table);
 		return db.getMetaData().getTables(null, null, table, null).next();
 	}
 
