@@ -1,6 +1,8 @@
 package ru.tehkode.permissions.query;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import ru.tehkode.permissions.PermissionManager;
 
 import java.util.LinkedList;
@@ -63,8 +65,8 @@ public class SetQuery extends PermissionQuery<SetQuery> {
 	/**
 	 * Actually perform the operation specified
 	 */
-	public void perform() {
-
+	public ListenableFuture<Void> perform() {
+		return Futures.immediateFuture(null);
 	}
 
 }

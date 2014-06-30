@@ -1,5 +1,8 @@
 package ru.tehkode.permissions.bukkit;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,7 +14,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionDefault;
-import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.query.GetQuery;
@@ -78,41 +80,57 @@ public class SuperpermsListener implements Listener {
 
 	}
 
-	private void updatePlayerPermission(Permission permission, Player user, String worldName) {
-		permission.getChildren().clear();
-		for (String perm : plugin.getPermissionsManager().get().user(user).world(worldName).permissions()) {
-			boolean value = true;
-			if (perm.startsWith("-")) {
-				value = false;
-				perm = perm.substring(1);
+	private ListenableFuture<?> updatePlayerPermission(final Permission permission, final Player user, final String worldName) {
+		return Futures.chain(plugin.getPermissionsManager().get().user(user).world(worldName).permissions(), new Function<List<String>, ListenableFuture<?>>() {
+			@Override
+			public ListenableFuture<?> apply(List<String> permissions) {
+				permission.getChildren().clear();
+				for (String perm : permissions) {
+					boolean value = true;
+					if (perm.startsWith("-")) {
+						value = false;
+						perm = perm.substring(1);
+					}
+					if (!permission.getChildren().containsKey(perm)) {
+						permission.getChildren().put(perm, value);
+					}
+				}
+				return Futures.<Void>immediateFuture(null);
 			}
-			if (!permission.getChildren().containsKey(perm)) {
-				permission.getChildren().put(perm, value);
-			}
-		}
+		}, PermissionsEx.mainThreadExecutor());
 	}
 
-	private void updatePlayerMetadata(Permission rootPermission, Player user, String worldName) {
-		rootPermission.getChildren().clear();
+	private ListenableFuture<?> updatePlayerMetadata(final Permission rootPermission, Player user, String worldName) {
 		GetQuery query = plugin.getPermissionsManager().get().user(user).world(worldName);
-		final List<String> groups = query.parents();
-		final Map<String, String> options = query.options();
-		// Metadata
-		// Groups
-		for (String group : groups) {
-			rootPermission.getChildren().put("groups." + group, true);
-			rootPermission.getChildren().put("group." + group, true);
-		}
+		return Futures.transform(Futures.allAsList(query.parents(), query.options()), new Function<List<Object>, Object>() {
+			@Override
+			public Object apply(List<Object> objects) {
+				rootPermission.getChildren().clear();
+				@SuppressWarnings("unchecked")
+				final List<String> parents = (List<String>) objects.get(0);
+				@SuppressWarnings("unchecked")
+				final Map<String, String> options = (Map<String, String>) objects.get(1);
 
-		// Options
-		for (Map.Entry<String, String> option : options.entrySet()) {
-			rootPermission.getChildren().put("options." + option.getKey() + "." + option.getValue(), true);
-		}
+				// Metadata
+				// Groups
+				for (String group : parents) {
+					rootPermission.getChildren().put("groups." + group, true);
+					rootPermission.getChildren().put("group." + group, true);
+				}
 
-		// Prefix and Suffix
-		rootPermission.getChildren().put("prefix." + query.option("prefix"), true);
-		rootPermission.getChildren().put("suffix." + query.option("suffix"), true);
+				// Options
+				for (Map.Entry<String, String> option : options.entrySet()) {
+					rootPermission.getChildren().put("options." + option.getKey() + "." + option.getValue(), true);
+				}
 
+				// Prefix and Suffix
+				final String prefix = options.get("prefix"),
+						suffix = options.get("suffix");
+				rootPermission.getChildren().put("prefix." + (prefix == null ? "" : prefix), true);
+				rootPermission.getChildren().put("suffix." + (suffix == null ? "" : suffix), true);
+				return null;
+			}
+		}, PermissionsEx.mainThreadExecutor());
 	}
 
 	protected void removeAttachment(Player player) {

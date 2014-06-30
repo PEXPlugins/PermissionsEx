@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.util.concurrent.Futures;
 import org.bukkit.Bukkit;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.query.GetQuery;
@@ -110,16 +111,16 @@ public abstract class PermissionEntity {
 	 * @return prefix as string
 	 */
 	public String getOwnPrefix() {
-		return get()
+		return Futures.getUnchecked(get()
 				.followInheritance(false)
-				.option("prefix");
+				.option("prefix"));
 	}
 
 	public String getOwnPrefix(String worldName) {
-		return get()
+		return Futures.getUnchecked(get()
 				.world(worldName)
 				.followInheritance(false)
-				.option("prefix");
+				.option("prefix"));
 	}
 
 	/**
@@ -130,16 +131,16 @@ public abstract class PermissionEntity {
 	 * @return suffix as string
 	 */
 	public final String getOwnSuffix() {
-		return get()
+		return Futures.getUnchecked(get()
 				.followInheritance(false)
-				.option("suffix");
+				.option("suffix"));
 	}
 
 	public String getOwnSuffix(String worldName) {
-		return get()
+		return Futures.getUnchecked(get()
 				.world(worldName)
 				.followInheritance(false)
-				.option("suffix");
+				.option("suffix"));
 	}
 
 	/**
@@ -149,9 +150,9 @@ public abstract class PermissionEntity {
 	 * @return prefix
 	 */
 	public String getPrefix(String worldName) {
-		return get()
+		return Futures.getUnchecked(get()
 				.world(worldName)
-				.option("prefix");
+				.option("prefix"));
 	}
 
 	/**
@@ -169,10 +170,10 @@ public abstract class PermissionEntity {
 	 * @param prefix new prefix
 	 */
 	public void setPrefix(String prefix, String worldName) {
-		set()
+		Futures.getUnchecked(set()
 				.world(worldName)
 				.setOption("prefix", prefix)
-				.perform();
+				.perform());
 	}
 
 	/**
@@ -181,9 +182,9 @@ public abstract class PermissionEntity {
 	 * @return suffix
 	 */
 	public String getSuffix(String worldName) {
-		return get()
+		return Futures.getUnchecked(get()
 				.world(worldName)
-				.option("suffix");
+				.option("suffix"));
 	}
 
 	public String getSuffix() {
@@ -196,10 +197,10 @@ public abstract class PermissionEntity {
 	 * @param suffix new suffix
 	 */
 	public void setSuffix(String suffix, String worldName) {
-		set()
+		Futures.getUnchecked(set()
 				.world(worldName)
 				.setOption("suffix", suffix)
-				.perform();
+				.perform());
 	}
 
 	/**
@@ -224,7 +225,7 @@ public abstract class PermissionEntity {
 			return true;
 		}
 
-		return get().world(world).has(permission);
+		return Futures.getUnchecked(get().world(world).has(permission));
 		/*String expression = getMatchingExpression(permission, world);
 
 		if (this.isDebug()) {
@@ -241,7 +242,7 @@ public abstract class PermissionEntity {
 	 * @return Array of permission expressions
 	 */
 	public List<String> getPermissions(String world) {
-		return get().world(world).permissions();
+		return Futures.getUnchecked(get().world(world).permissions());
 	}
 
 	/**
@@ -251,7 +252,7 @@ public abstract class PermissionEntity {
 	 * @return Array of permissions for world
 	 */
 	public List<String> getOwnPermissions(String world) {
-		return get().world(world).followInheritance(false).permissions();
+		return Futures.getUnchecked(get().world(world).followInheritance(false).permissions());
 	}
 
 	/**
@@ -340,7 +341,7 @@ public abstract class PermissionEntity {
 	 * @return Value of option as String
 	 */
 	public String getOption(final String option, String world, String defaultValue) {
-		return get().world(world).option(option, defaultValue);
+		return Futures.getUnchecked(get().world(world).option(option, defaultValue));
 	}
 
 	/**
@@ -449,7 +450,7 @@ public abstract class PermissionEntity {
 	 * @return Option value as string Map
 	 */
 	public Map<String, String> getOptions(String world) {
-		return get().world(world).options();
+		return Futures.getUnchecked(get().world(world).options());
 	}
 
 	/**
@@ -476,7 +477,7 @@ public abstract class PermissionEntity {
 	 * @return option value or defaultValue if option is not set
 	 */
 	public String getOwnOption(String option, String world, String defaultValue) {
-		return get().world(world).followInheritance(false).option(option, defaultValue);
+		return Futures.getUnchecked(get().world(world).followInheritance(false).option(option, defaultValue));
 	}
 
 	/**
@@ -486,11 +487,11 @@ public abstract class PermissionEntity {
 	 * @return option value or empty string if option is not set
 	 */
 	public String getOwnOption(String option) {
-		return get().followInheritance(false).option(option);
+		return Futures.getUnchecked(get().followInheritance(false).option(option));
 	}
 
 	public String getOwnOption(String option, String world) {
-		return get().followInheritance(false).world(world).option(option);
+		return Futures.getUnchecked(get().followInheritance(false).world(world).option(option));
 	}
 
 	public int getOwnOptionInteger(String optionName, String world, int defaultValue) {
@@ -547,7 +548,7 @@ public abstract class PermissionEntity {
 	 */
 	public boolean isVirtual() {
 		try {
-			return !manager.getBackend().hasAnyQualifier(getType().getQualifier(), getIdentifier(), null).get();
+			return !manager.getBackend().hasAnyQualifier(getType().getQualifier(), getIdentifier()).get();
 		} catch (InterruptedException | ExecutionException e) {
 			return true;
 		}
@@ -561,7 +562,7 @@ public abstract class PermissionEntity {
 	public Set<String> getWorlds() {
 		// Just get the values for all entities since this is simpler
 		try {
-			return new HashSet<>(manager.getBackend().getAllValues(Qualifier.WORLD, null).get());
+			return new HashSet<>(manager.getBackend().getAllValues(Qualifier.WORLD).get());
 		} catch (InterruptedException | ExecutionException e) {
 			return Collections.emptySet();
 		}
@@ -682,7 +683,7 @@ public abstract class PermissionEntity {
 
 	// -- Inheritance -- //
 	public List<PermissionGroup> getOwnParents(String world) {
-		List<String> names = get().world(world).followInheritance(false).parents();
+		List<String> names = Futures.getUnchecked(get().world(world).followInheritance(false).parents());
 		List<PermissionGroup> ret = new ArrayList<>(names.size());
 		for (String name : names) {
 			ret.add(manager.getGroup(name));
@@ -695,7 +696,7 @@ public abstract class PermissionEntity {
 	}
 
 	public List<String> getOwnParentIdentifiers(String world) {
-		return get().world(world).followInheritance(false).parents();
+		return Futures.getUnchecked(get().world(world).followInheritance(false).parents());
 	}
 
 	public List<String> getOwnParentIdentifiers() {
@@ -703,7 +704,7 @@ public abstract class PermissionEntity {
 	}
 
 	public final List<PermissionGroup> getParents(String world) {
-		List<String> names = get().world(world).parents();
+		List<String> names = Futures.getUnchecked(get().world(world).parents());
 		List<PermissionGroup> ret = new ArrayList<>(names.size());
 		for (String name : names) {
 			ret.add(manager.getGroup(name));
@@ -718,7 +719,7 @@ public abstract class PermissionEntity {
 
 
 	public List<String> getParentIdentifiers(String world) {
-		return get().world(world).parents();
+		return Futures.getUnchecked(get().world(world).parents());
 	}
 
 	/**

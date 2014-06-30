@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions;
 
+import com.google.common.util.concurrent.Futures;
 import ru.tehkode.permissions.query.SetQuery;
 
 import java.util.*;
@@ -137,7 +138,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 			visitedParents.add(this.getIdentifier());
 		}
 
-		for (String parentGroup : get().world(worldName).followInheritance(false).parents()) {
+		for (String parentGroup : Futures.getUnchecked(get().world(worldName).followInheritance(false).parents())) {
 			if (visitedParents != null && visitedParents.contains(parentGroup)) {
 				continue;
 			}
@@ -249,7 +250,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	}
 
 	public boolean isDefault(String worldName) {
-		return this.manager.get().world(worldName).parents().contains(getIdentifier());
+		return Futures.getUnchecked(this.manager.get().world(worldName).parents()).contains(getIdentifier());
 	}
 
 	public void setDefault(boolean def, String worldName) {

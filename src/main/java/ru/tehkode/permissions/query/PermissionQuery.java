@@ -1,10 +1,12 @@
 package ru.tehkode.permissions.query;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.EntityType;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
@@ -94,39 +96,30 @@ public abstract class PermissionQuery<T extends PermissionQuery<T>> implements C
 	/**
 	 * Performs this query, traversing inheritance if necessary.
 	 * Duplicate groups may be present in the result if the same group is relevant in multiple places in the inheritance hierarchy.
-	 * @param sectionName The name of the section beeing looked up in this query.
+	 * @param sectionName The name of the section being looked up in this query.
 	 * @return the relevant matcher groups
 	 */
-	protected void performQuery(String sectionName, final Callback<List<MatcherGroup>> callback) {
-		List<MatcherGroup> groups;
-		Callback<List<MatcherGroup>> levelCallback = new Callback<List<MatcherGroup>>() {
-			@Override
-			public void onSuccess(List<MatcherGroup> result) {
-				for (Iterator<MatcherGroup> it = result.iterator(); it.hasNext();) {
-				if (!it.next().matches(PermissionQuery.this)) {
-					it.remove();
-				}
-				}
-				Collections.sort(result);
-				if (callback != null) {
-					callback.onSuccess(result);
-				}
-
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				if (callback != null) {
-					callback.onError(t);
-				}
-			}
-		};
-
+	protected ListenableFuture<List<MatcherGroup>> performQuery(String sectionName) {
+		ListenableFuture<List<MatcherGroup>> query;
 		if (primaryKey != null) {
-			this.manager.getBackend().getMatchingGroups(sectionName, primaryKey, primaryValue, callback);
+			query = this.manager.getBackend().getMatchingGroups(sectionName, primaryKey, primaryValue);
 		} else {
-			this.manager.getBackend().getMatchingGroups(sectionName, callback);
+			query = this.manager.getBackend().getMatchingGroups(sectionName);
 		}
+		return Futures.transform(query, new Function<List<MatcherGroup>, List<MatcherGroup>>() {
+			@Override
+			public List<MatcherGroup> apply(List<MatcherGroup> result) {
+				if (result != null) {
+					for (Iterator<MatcherGroup> it = result.iterator(); it.hasNext(); ) {
+						if (!it.next().matches(PermissionQuery.this)) {
+							it.remove();
+						}
+					}
+					Collections.sort(result);
+				}
+				return result;
+			}
+		});
 	}
 
 	// Context methods

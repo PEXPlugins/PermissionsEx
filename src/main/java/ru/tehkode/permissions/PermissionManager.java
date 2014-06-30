@@ -91,7 +91,7 @@ public class PermissionManager {
 	 * @return true on success false otherwise
 	 */
 	public boolean has(Player player, String permission) {
-		return get().userAndWorld(player).has(permission);
+		return Futures.getUnchecked(get().userAndWorld(player).has(permission));
 	}
 
 	/**
@@ -103,7 +103,7 @@ public class PermissionManager {
 	 * @return true on success false otherwise
 	 */
 	public boolean has(Player player, String permission, String world) {
-		return get().user(player).world(world).has(permission);
+		return Futures.getUnchecked(get().user(player).world(world).has(permission));
 	}
 
 	/**
@@ -115,7 +115,7 @@ public class PermissionManager {
 	 * @return true on success false otherwise
 	 */
 	public boolean has(String playerName, String permission, String world) {
-		return get().user(playerName).world(world).has(permission);
+		return Futures.getUnchecked(get().user(playerName).world(world).has(permission));
 	}
 
 	/**
@@ -127,7 +127,7 @@ public class PermissionManager {
 	 * @return true on success false otherwise
 	 */
 	public boolean has(UUID playerId, String permission, String world) {
-		return get().user(playerId).world(world).has(permission);
+		return Futures.getUnchecked(get().user(playerId).world(world).has(permission));
 	}
 
 	public GetQuery get() {
@@ -338,7 +338,7 @@ public class PermissionManager {
 		} catch (IllegalArgumentException ex) {
 			UUID userUUID = nativeI.nameToUUID(username);
 
-			if (userUUID != null && (nativeI.isOnline(userUUID) || Futures.getUnchecked(backend.hasAnyQualifier(Qualifier.USER, userUUID.toString(), null)))) {
+			if (userUUID != null && (nativeI.isOnline(userUUID) || Futures.getUnchecked(backend.hasAnyQualifier(Qualifier.USER, userUUID.toString())))) {
 				return getUser(userUUID);
 			} else {
 				// The user is offline and unconverted, so we'll just have to return an unconverted user.
@@ -359,10 +359,10 @@ public class PermissionManager {
 
 	@Deprecated
 	public List<String> getWorldInheritance(String worldName) {
-		return get()
+		return Futures.getUnchecked(get()
 				.followInheritance(false)
 				.world(worldName)
-				.parents();
+				.parents());
 	}
 
 	@Deprecated
@@ -373,7 +373,7 @@ public class PermissionManager {
 
 	@Deprecated
 	public Collection<String> getGroupNames() {
-		return Futures.getUnchecked(backend.getAllValues(Qualifier.GROUP, null));
+		return Futures.getUnchecked(backend.getAllValues(Qualifier.GROUP));
 	}
 
 	@Deprecated
@@ -382,7 +382,7 @@ public class PermissionManager {
 		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
 			users.add(getUser(p));
 		}
-		for (String name : Futures.getUnchecked(backend.getAllValues(Qualifier.USER, null))) {
+		for (String name : Futures.getUnchecked(backend.getAllValues(Qualifier.USER))) {
 			users.add(new PermissionUser(name, this));
 		}
 		return Collections.unmodifiableSet(users);
@@ -395,7 +395,7 @@ public class PermissionManager {
 
 	@Deprecated
 	public Collection<String> getUserIdentifiers() {
-		return Futures.getUnchecked(backend.getAllValues(Qualifier.USER, null));
+		return Futures.getUnchecked(backend.getAllValues(Qualifier.USER));
 	}
 
 	public Collection<String> getUserNames() {
@@ -488,7 +488,7 @@ public class PermissionManager {
 	@Deprecated
 	public List<PermissionGroup> getGroupList() {
 		List<PermissionGroup> ret = new LinkedList<>();
-		for (String name : Futures.getUnchecked(backend.getAllValues(Qualifier.GROUP, null))) {
+		for (String name : Futures.getUnchecked(backend.getAllValues(Qualifier.GROUP))) {
 			ret.add(getGroup(name));
 		}
 		return Collections.unmodifiableList(ret);

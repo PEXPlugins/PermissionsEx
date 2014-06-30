@@ -1,9 +1,11 @@
 package ru.tehkode.permissions.query;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permission;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.data.MatcherGroup;
 
 import java.util.ArrayList;
@@ -21,51 +23,29 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 		super(manager);
 	}
 
-	public void has(String permission, final Callback<Boolean> callback) {
-		permissions(new Callback<List<String>>() {
+	public ListenableFuture<Boolean> has(final String permission) {
+		return Futures.transform(permissions(), new Function<List<String>, Boolean>() {
 			@Override
-			public void onSuccess(List<String> result) {
+			public Boolean apply(List<String> result) {
 				for (String expression : result) {
 					if (getManager().getPermissionMatcher().isMatches(expression, permission)) {
-						if (callback != null) {
-							callback.onSuccess(true);
-						}
+						return true;
 					}
 				}
-				if (callback != null) {
-					callback.onSuccess(false);
-				}
-
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				if (callback != null) {
-					callback.onError(t);
-				}
+				return false;
 			}
 		});
 	}
 
-	public void permissions(final Callback<List<String>> callback) {
-		performQuery(MatcherGroup.PERMISSIONS_KEY, new Callback<List<MatcherGroup>>() {
+	public ListenableFuture<List<String>> permissions() {
+		return Futures.transform(performQuery(MatcherGroup.PERMISSIONS_KEY), new Function<List<MatcherGroup>, List<String>>() {
 			@Override
-			public void onSuccess(List<MatcherGroup> result) {
+			public List<String> apply(List<MatcherGroup> result) {
 				List<String> ret = new ArrayList<>();
 				for (MatcherGroup match : result) {
 					ret.addAll(match.getEntriesList());
 				}
-				if (callback != null) {
-					callback.onSuccess(ret);
-				}
-
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				if (callback != null) {
-					callback.onError(t);
-				}
+				return ret;
 			}
 		});
 	}
@@ -97,41 +77,60 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 		}
 	}
 
-	public String option(String option) {
+	public ListenableFuture<String> option(String option) {
 		return option(option, null);
 	}
 
-	public String option(String option, String defaultValue) {
-		for (MatcherGroup match : performQuery(MatcherGroup.OPTIONS_KEY)) {
-			if (match.getEntries().containsKey(option)) {
-				return match.getEntries().get(option);
+	public ListenableFuture<String> option(final String option, final String defaultValue) {
+		return Futures.transform(performQuery(MatcherGroup.OPTIONS_KEY), new Function<List<MatcherGroup>, String>() {
+			@Override
+			public String apply(List<MatcherGroup> matcherGroups) {
+				for (MatcherGroup match : matcherGroups) {
+					if (match.getEntries().containsKey(option)) {
+						return match.getEntries().get(option);
+					}
+				}
+				return defaultValue;
 			}
-		}
-		return defaultValue;
+		});
 	}
 
-	public Map<String, String> options() {
-		Map<String, String> options = new HashMap<>();
-		List<MatcherGroup> result = performQuery(MatcherGroup.OPTIONS_KEY);
-		for (ListIterator<MatcherGroup> it = result.listIterator(result.size() - 1); it.hasPrevious();) {
+	public ListenableFuture<Map<String, String>> options() {
+		return Futures.transform(performQuery(MatcherGroup.OPTIONS_KEY), new Function<List<MatcherGroup>, Map<String, String>>() {
+			@Override
+			public Map<String, String> apply(List<MatcherGroup> result) {
+				Map<String, String> options = new HashMap<>();
+			for (ListIterator<MatcherGroup> it = result.listIterator(result.size() - 1); it.hasPrevious();) {
 			options.putAll(it.previous().getEntries());
 		}
 		return options;
+			}
+		});
 	}
 
-	public List<String> parents() {
-		List<String> ret = new LinkedList<>();
-		for (MatcherGroup match : performQuery(MatcherGroup.INHERITANCE_KEY)) {
-			ret.addAll(match.getEntriesList());
-		}
-		return ret;
+	public ListenableFuture<List<String>> parents() {
+		return Futures.transform(performQuery(MatcherGroup.INHERITANCE_KEY), new Function<List<MatcherGroup>, List<String>>() {
+			@Override
+			public List<String> apply(List<MatcherGroup> matcherGroups) {
+				List<String> ret = new LinkedList<>();
+				for (MatcherGroup match : matcherGroups) {
+					ret.addAll(match.getEntriesList());
+				}
+				return ret;
+			}
+		});
 	}
 
-	public List<String> worldParents() {
-		List<String> ret = new LinkedList<>();
-		for (MatcherGroup match : performQuery(MatcherGroup.WORLD_INHERITANCE_KEY)) {
-			ret.addAll(match.getEntriesList());
-		}
-		return ret;
+	public ListenableFuture<List<String>> worldParents() {
+		return Futures.transform(performQuery(MatcherGroup.WORLD_INHERITANCE_KEY), new Function<List<MatcherGroup>, List<String>>() {
+			@Override
+			public List<String> apply(List<MatcherGroup> matcherGroups) {
+				List<String> ret = new LinkedList<>();
+				for (MatcherGroup match : matcherGroups) {
+					ret.addAll(match.getEntriesList());
+				}
+				return ret;
+			}
+		});
 	}
 }

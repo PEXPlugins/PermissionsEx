@@ -19,12 +19,12 @@
 package ru.tehkode.permissions.backends.sql;
 
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.SchemaUpdate;
-import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -47,7 +47,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,7 +75,7 @@ public class SQLBackend extends PermissionBackend {
 	protected final String dbDriver;
 
 	public SQLBackend(PermissionManager manager, final ConfigurationSection config) throws PermissionBackendException {
-		super(manager, config);
+		super(manager, config, Executors.newCachedThreadPool());
 		final String dbUri = getConfig().getString("uri", "");
 		final String dbUser = getConfig().getString("user", "");
 		final String dbPassword = getConfig().getString("password", "");
@@ -126,9 +126,15 @@ public class SQLBackend extends PermissionBackend {
 
 
 		addSchemaUpdate(new SchemaUpdate(2) {
+			private final int LEGACY_TYPE_GROUP = 0,
+							LEGACY_TYPE_USER = 1,
+							LEGACY_TYPE_WORLD_SYSTEM = 2;
 			@Override
 			public void performUpdate() throws PermissionBackendException {
 				try (SQLConnection conn = getSQL()) {
+					ResultSet entities = conn.prepAndBind("SELECT `name`, `type`, FROM `{permissions_entity}`").executeQuery();
+					while (entities.next()) {
+					}
 					// The new tables have been deployed, just gotta move the old data over
 					// Migrate everything over to matcher groups! So much fun :)
 				} catch (SQLException | IOException e) {
@@ -319,7 +325,7 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Future<Iterator<MatcherGroup>> getAllMatcherGroups(Callback<Iterator<MatcherGroup>> callback) {
+	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
 		return execute(new Callable<Iterator<MatcherGroup>>() {
 			@Override
 			public Iterator<MatcherGroup> call() throws Exception {
@@ -332,11 +338,11 @@ public class SQLBackend extends PermissionBackend {
 					return ret.iterator();
 				}
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> getMatchingGroups(final String type, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
@@ -349,11 +355,11 @@ public class SQLBackend extends PermissionBackend {
 					return ret;
 				}
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier qual, final String qualValue, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier qual, final String qualValue) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
@@ -366,7 +372,7 @@ public class SQLBackend extends PermissionBackend {
 					return ret;
 				}
 			}
-		}, callback);
+		});
 	}
 
 	private int newEntity(SQLConnection conn, String type) throws SQLException {
@@ -381,7 +387,7 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Future<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
@@ -407,11 +413,11 @@ public class SQLBackend extends PermissionBackend {
 					return getMatcherGroup(type, entityId);
 				}
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
@@ -436,11 +442,11 @@ public class SQLBackend extends PermissionBackend {
 					return getMatcherGroup(type, entityId);
 				}
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<Collection<String>> getAllValues(final Qualifier qualifier, Callback<Collection<String>> callback) {
+	public ListenableFuture<Collection<String>> getAllValues(final Qualifier qualifier) {
 		return execute(new Callable<Collection<String>>() {
 			@Override
 			public Collection<String> call() throws Exception {
@@ -453,11 +459,11 @@ public class SQLBackend extends PermissionBackend {
 					return ret;
 				}
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<Boolean> hasAnyQualifier(final Qualifier qualifier, final String value, Callback<Boolean> callback) {
+	public ListenableFuture<Boolean> hasAnyQualifier(final Qualifier qualifier, final String value) {
 		return execute(new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
@@ -466,11 +472,11 @@ public class SQLBackend extends PermissionBackend {
 					return res.next();
 				}
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<Void> replaceQualifier(final Qualifier qualifier, final String old, final String newVal) {
+	public ListenableFuture<Void> replaceQualifier(final Qualifier qualifier, final String old, final String newVal) {
 		return execute(new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
@@ -482,12 +488,12 @@ public class SQLBackend extends PermissionBackend {
 				}
 				return null;
 			}
-		}, null);
+		});
 
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> allWithQualifier(final Qualifier qualifier, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> allWithQualifier(final Qualifier qualifier) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
@@ -500,7 +506,7 @@ public class SQLBackend extends PermissionBackend {
 					return ret;
 				}
 			}
-		}, callback);
+		});
 	}
 
 	protected final void setupAliases() {

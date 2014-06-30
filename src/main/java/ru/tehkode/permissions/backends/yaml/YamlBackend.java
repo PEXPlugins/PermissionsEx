@@ -2,11 +2,11 @@ package ru.tehkode.permissions.backends.yaml;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.SchemaUpdate;
-import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
 
 /**
  * Backend using the yaml format
@@ -37,7 +37,7 @@ public class YamlBackend extends PermissionBackend {
 	private final Object lock = new Object();
 
 	public YamlBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
-		super(manager, config);
+		super(manager, config, Executors.newSingleThreadExecutor());
 		String permissionFilename = getConfig().getString("file");
 
 		// Default settings
@@ -155,7 +155,7 @@ public class YamlBackend extends PermissionBackend {
 	final Map<String, String> uuidMappings = new HashMap<>();
 
 	@Override
-	public Future<Iterator<MatcherGroup>> getAllMatcherGroups(Callback<Iterator<MatcherGroup>> callback) {
+	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
 		return execute(new Callable<Iterator<MatcherGroup>>() {
 			@Override
 			public Iterator<MatcherGroup> call() throws Exception {
@@ -179,7 +179,7 @@ public class YamlBackend extends PermissionBackend {
 
 				return provider.iterator();
 			}
-		}, callback);
+		});
 	}
 
 
@@ -255,42 +255,42 @@ public class YamlBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> getMatchingGroups(String type, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<Collection<String>> getAllValues(Qualifier qualifier, Callback<Collection<String>> callback) {
+	public ListenableFuture<Collection<String>> getAllValues(Qualifier qualifier) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<Boolean> hasAnyQualifier(Qualifier qualifier, String value, Callback<Boolean> callback) {
+	public ListenableFuture<Boolean> hasAnyQualifier(Qualifier qualifier, String value) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<Void> replaceQualifier(Qualifier qualifier, String old, String newVal) {
+	public ListenableFuture<Void> replaceQualifier(Qualifier qualifier, String old, String newVal) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> allWithQualifier(Qualifier qualifier, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> allWithQualifier(Qualifier qualifier) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 

@@ -5,7 +5,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import ru.tehkode.permissions.backends.PermissionBackend;
-import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
@@ -236,7 +235,7 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 	protected abstract T newGroup(AtomicReference<T> ptr, String type, List<String> entries, Multimap<Qualifier, String> qualifiers);
 
 	/**
-	 * @see PermissionBackend#createMatcherGroup(String, Map, Multimap, Callback)
+	 * @see PermissionBackend#createMatcherGroup(String, Map, Multimap)
 	 */
 	public MatcherGroup create(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
 		final AtomicReference<T> ptr = new AtomicReference<>();
@@ -248,7 +247,7 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 	}
 
 	/**
-	 * @see PermissionBackend#createMatcherGroup(String, Map, Multimap, Callback)
+	 * @see PermissionBackend#createMatcherGroup(String, Map, Multimap)
 	 */
 	public MatcherGroup create(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
 		final AtomicReference<T> ptr = new AtomicReference<>();
@@ -271,7 +270,7 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 	}
 
 	/**
-	 * @see PermissionBackend#getAllValues(Qualifier, Callback)
+	 * @see PermissionBackend#getAllValues(Qualifier)
 	 */
 	public Collection<String> getAllValues(Qualifier qualifier) {
 		final Set<String> ret = new HashSet<>();
@@ -285,7 +284,7 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 	}
 
 	/**
-	 * @see PermissionBackend#hasAnyQualifier(Qualifier, String, Callback)
+	 * @see PermissionBackend#hasAnyQualifier(Qualifier, String)
 	 */
 	public boolean hasAnyQualifier(Qualifier qualifier, String value) {
 		for (Map.Entry<String, AtomicReferenceArray<ConcurrentMap<String, Collection<AtomicReference<T>>>>> ent : lookup.entrySet()) {
@@ -300,7 +299,7 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 
 	/**
 	 *
-	 * @see PermissionBackend#getAllMatcherGroups(Callback)
+	 * @see PermissionBackend#getAll()
 	 */
 	public Iterator<MatcherGroup> getAll() {
 		return Iterators.transform(groups.iterator(), new Function<AtomicReference<T>, MatcherGroup>() {

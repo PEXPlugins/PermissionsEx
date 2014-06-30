@@ -1,20 +1,23 @@
 package ru.tehkode.permissions.backends;
 
+import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.util.concurrent.Callables;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.callback.Callback;
-import ru.tehkode.permissions.callback.CallbackTask;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -28,9 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,10 +58,10 @@ public abstract class PermissionBackend {
 	private final ExecutorService asyncExecutor;
 	private final List<SchemaUpdate> schemaUpdates = new LinkedList<>();
 
-	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
+	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig, ExecutorService asyncExecutor) throws PermissionBackendException {
 		this.manager = manager;
 		this.backendConfig = backendConfig;
-		this.asyncExecutor = Executors.newSingleThreadExecutor();
+		this.asyncExecutor = asyncExecutor;
 		this.onThreadExecutor = new Executor() {
 			@Override
 			public void execute(Runnable runnable) {
@@ -126,8 +127,8 @@ public abstract class PermissionBackend {
 		return schemaUpdates.get(schemaUpdates.size() - 1).getUpdateVersion();
 	}
 
-	protected <V> FutureTask<V> execute(Callable<V> func, Callback<V> callback) {
-		CallbackTask<V> ret = new CallbackTask<>(func, callback);
+	protected <V> ListenableFuture<V> execute(Callable<V> func) {
+		ListenableFutureTask<V> ret = ListenableFutureTask.create(func);
 		getExecutor().execute(ret);
 		return ret;
 	}
@@ -162,81 +163,72 @@ public abstract class PermissionBackend {
 	 *
 	 * @return
 	 */
-	public abstract Future<Iterator<MatcherGroup>> getAllMatcherGroups(Callback<Iterator<MatcherGroup>> callback);
+	public abstract ListenableFuture<Iterator<MatcherGroup>> getAll();
 
-	public Future<MatcherGroup> getOne(final String type, final Qualifier qual, final String qualValue, final Callback<MatcherGroup> callback) {
-		return execute(new Callable<MatcherGroup>() {
+	public ListenableFuture<MatcherGroup> getOne(final String type, final Qualifier qual, final String qualValue) {
+		return Futures.chain(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, ListenableFuture<? extends MatcherGroup>>() {
 			@Override
-			public MatcherGroup call() throws Exception {
-				List<MatcherGroup> groups = getMatchingGroups(type, qual, qualValue, null).get();
-				return groups.size() == 1 ? groups.get(0) : null;
-				}
-		}, callback);
+			public ListenableFuture<? extends MatcherGroup> apply(List<MatcherGroup> matcherGroups) {
+				return Futures.immediateFuture(matcherGroups.size() == 1 ? matcherGroups.get(0) : null);
+			}
+		});
 	}
 
-	public Future<MatcherGroup> getFirst(final String type, final Qualifier qual, final String qualValue, final Callback<MatcherGroup> callback) {
-		return execute(new Callable<MatcherGroup>() {
+	public ListenableFuture<MatcherGroup> getFirst(final String type, final Qualifier qual, final String qualValue) {
+		return Futures.chain(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, ListenableFuture<? extends MatcherGroup>>() {
 			@Override
-			public MatcherGroup call() throws Exception {
-				List<MatcherGroup> groups = getMatchingGroups(type, qual, qualValue, null).get();
-				if (!groups.isEmpty()) {
-					return groups.get(0);
+			public ListenableFuture<? extends MatcherGroup> apply(List<MatcherGroup> matcherGroups) {
+				if (!matcherGroups.isEmpty()) {
+					return Futures.immediateFuture(matcherGroups.get(0));
 				} else {
-					return null;
-				}
-			}
-		}, callback);
-	}
-
-	public Future<MatcherGroup> getOne(final String type, Callback<MatcherGroup> callback) {
-		return execute(new Callable<MatcherGroup>() {
-			@Override
-			public MatcherGroup call() throws Exception {
-				List<MatcherGroup> groups = getMatchingGroups(type, null).get();
-				return groups != null && groups.size() == 1 ? groups.get(0) : null;
-			}
-		}, callback);
-	}
-
-	public Future<MatcherGroup> getFirst(final String type, Callback<MatcherGroup> callback) {
-		return execute(new Callable<MatcherGroup>() {
-			@Override
-			public MatcherGroup call() throws Exception {
-				List<MatcherGroup> groups = getMatchingGroups(type, null).get();
-				return groups == null || groups.isEmpty() ? null : groups.get(0);
-			}
-		}, callback);
-	}
-
-	public Future<MatcherGroup> getFirstOrAdd(final String type, final Callback<MatcherGroup> callback) {
-		Future<MatcherGroup> ret = getFirst(type, new Callback<MatcherGroup>() {
-			@Override
-			public void onSuccess(MatcherGroup result) {
-				if (result == null) {
-					createMatcherGroup(type, Collections.<String, String>emptyMap(), ImmutableMultimap.<Qualifier, String>of(), callback);
-				} else {
-					if (callback != null) {
-						callback.onSuccess(result);
-					}
-				}
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				if (callback != null) {
-					callback.onError(t);
+					return Futures.immediateFuture(null);
 				}
 			}
 		});
-		return ret;
 	}
 
-	public Future<MatcherGroup> getFirstOrAdd(String type, Qualifier key, String value, Callback<MatcherGroup> callback) {
-		MatcherGroup ret = getFirst(type, key, value);
-		if (ret == null) {
-			ret = createMatcherGroup(type, Collections.<String, String>emptyMap(), ImmutableMultimap.of(key, value));
-		}
-		return ret;
+	public ListenableFuture<MatcherGroup> getOne(final String type) {
+		return Futures.transform(getMatchingGroups(type), new Function<List<MatcherGroup>, MatcherGroup>() {
+			@Override
+			public MatcherGroup apply(List<MatcherGroup> matcherGroups) {
+				return matcherGroups != null && matcherGroups.size() == 1 ? matcherGroups.get(0) : null;
+			}
+		});
+	}
+
+	public ListenableFuture<MatcherGroup> getFirst(final String type) {
+		return Futures.transform(getMatchingGroups(type), new Function<List<MatcherGroup>, MatcherGroup>() {
+			@Override
+			public MatcherGroup apply(@Nullable List<MatcherGroup> matcherGroups) {
+				return matcherGroups == null || matcherGroups.isEmpty() ? null : matcherGroups.get(0);
+			}
+		});
+	}
+
+	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type) {
+		return Futures.chain(getFirst(type), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
+			@Override
+			public ListenableFuture<? extends MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
+				if (matcherGroup == null) {
+					return createMatcherGroup(type, Collections.<String, String>emptyMap(), ImmutableMultimap.<Qualifier, String>of());
+				} else {
+					return Futures.immediateFuture(matcherGroup);
+				}
+			}
+		});
+	}
+
+	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type, final Qualifier key, final String value) {
+		return Futures.chain(getFirst(type, key, value), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
+			@Override
+			public ListenableFuture<? extends MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
+				if (matcherGroup == null) {
+					return createMatcherGroup(type, Collections.<String, String>emptyMap(), ImmutableMultimap.<Qualifier, String>of(key, value));
+				} else {
+					return Futures.immediateFuture(matcherGroup);
+				}
+			}
+		});
 	}
 
 	/**
@@ -245,7 +237,7 @@ public abstract class PermissionBackend {
 	 * @param type The name of the type of section to look up
 	 * @return Any matching groups. Empty if no values.
 	 */
-	public abstract Future<List<MatcherGroup>> getMatchingGroups(String type, Callback<List<MatcherGroup>> callback);
+	public abstract ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type);
 
 	/**
 	 * Returns all known groups of the requested type with {@code qual} set to {@code qualValue}
@@ -255,34 +247,33 @@ public abstract class PermissionBackend {
 	 * @param qualValue
 	 * @return Any matching groups. Empty if no values.
 	 */
-	public abstract Future<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue, Callback<List<MatcherGroup>> callback);
+	public abstract ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue);
 
-	public abstract Future<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback);
+	public abstract ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
 
-	public abstract Future<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback);
+	public abstract ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers);
 
-	public abstract Future<Collection<String>> getAllValues(Qualifier qualifier, Callback<Collection<String>> callback);
+	public abstract ListenableFuture<Collection<String>> getAllValues(Qualifier qualifier);
 
-	public abstract Future<Boolean> hasAnyQualifier(Qualifier qualifier, String value, Callback<Boolean> callback);
+	public abstract ListenableFuture<Boolean> hasAnyQualifier(Qualifier qualifier, String value);
 
-	public abstract Future<Void> replaceQualifier(Qualifier qualifier, String old, String newVal);
+	public abstract ListenableFuture<Void> replaceQualifier(Qualifier qualifier, String old, String newVal);
 
-	public abstract Future<List<MatcherGroup>> allWithQualifier(Qualifier qualifier, Callback<List<MatcherGroup>> callback);
+	public abstract ListenableFuture<List<MatcherGroup>> allWithQualifier(Qualifier qualifier);
 
-	public Future<String> getName(final String uuid, final Callback<String> callback) {
-		return execute(new Callable<String>() {
+	public ListenableFuture<String> getName(final String uuid) {
+		return Futures.transform(getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY), new Function<List<MatcherGroup>, String>() {
 			@Override
-			public String call() throws Exception {
-				List<MatcherGroup> result = getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY, null).get();
-				for (MatcherGroup group : result) {
+			public String apply(List<MatcherGroup> matcherGroups) {
+				for (MatcherGroup group : matcherGroups) {
 					String ret = group.getEntries().get(uuid);
 					if (ret != null) {
-						callback.onSuccess(ret);
+						return ret;
 					}
 				}
 				return uuid;
 			}
-		}, callback);
+		});
 	}
 
 	public void close() throws PermissionBackendException {
@@ -310,79 +301,66 @@ public abstract class PermissionBackend {
 	 * @param backend The backend to load data from
 	 */
 	public void loadFrom(PermissionBackend backend) {
-		setPersistent(false);
-		try {
-			backend.getAllMatcherGroups(new Callback<Iterator<MatcherGroup>>() {
+			Futures.addCallback(getAll(), new FutureCallback<Iterator<MatcherGroup>>() {
 				@Override
 				public void onSuccess(Iterator<MatcherGroup> result) {
-					while (result.hasNext()) {
-						MatcherGroup next = result.next();
-						createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers(), null);
+					setPersistent(false);
+					try {
+						while (result.hasNext()) {
+							MatcherGroup next = result.next();
+							createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers());
+						}
+					} finally {
+						setPersistent(true);
 					}
 				}
 
 				@Override
-				public void onError(Throwable t) {
+				public void onFailure(Throwable throwable) {
+
 				}
 			});
-		} finally {
-			setPersistent(true);
-		}
 	}
 
 	public void revertUUID() {
-		this.setPersistent(false);
-		try {
-			Future<List<MatcherGroup>> ret = getMatchingGroups("uuid-mapping", new Callback<List<MatcherGroup>>() {
-				@Override
-				public void onSuccess(final List<MatcherGroup> uuids) {
-					Future<?> res = getAllMatcherGroups(new Callback<Iterator<MatcherGroup>>() {
-						@Override
-						public void onSuccess(Iterator<MatcherGroup> result) {
-							while (result.hasNext()) {
-								MatcherGroup group = result.next();
-								Multimap<Qualifier, String> qualifiers = group.getQualifiers();
-								Collection<String> users = qualifiers.get(Qualifier.USER);
-								if (!users.isEmpty()) {
-									qualifiers = HashMultimap.create(qualifiers);
-									List<String> newUsers = new LinkedList<>();
-									for (String user : users) {
-										for (MatcherGroup uuidGroup : uuids) {
-											String name = uuidGroup.getEntries().get(user);
-											newUsers.add(name == null ? user : name);
-										}
-									}
-									qualifiers.replaceValues(Qualifier.USER, newUsers);
-									group.setQualifiers(qualifiers);
+		Futures.addCallback(Futures.allAsList(getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY), getAll()), new FutureCallback<List<Object>>() {
+			@Override
+			public void onSuccess(List<Object> objects) {
+				List<MatcherGroup> uuids = (List<MatcherGroup>) objects.get(0);
+				Iterator<MatcherGroup> all = (Iterator<MatcherGroup>) objects.get(1);
+
+				setPersistent(false);
+				try {
+					while (all.hasNext()) {
+						MatcherGroup group = all.next();
+						Multimap<Qualifier, String> qualifiers = group.getQualifiers();
+						Collection<String> users = qualifiers.get(Qualifier.USER);
+						if (!users.isEmpty()) {
+							qualifiers = HashMultimap.create(qualifiers);
+							List<String> newUsers = new LinkedList<>();
+							for (String user : users) {
+								for (MatcherGroup uuidGroup : uuids) {
+									String name = uuidGroup.getEntries().get(user);
+									newUsers.add(name == null ? user : name);
 								}
 							}
-							for (MatcherGroup matcher : uuids) {
-								matcher.remove();
-							}
+							qualifiers.replaceValues(Qualifier.USER, newUsers);
+							group.setQualifiers(qualifiers);
 						}
-
-						@Override
-						public void onError(Throwable t) {
-							handleException(t, "reverting uuids");
-						}
-					});
-					try {
-						res.get();
-					} catch (InterruptedException | ExecutionException e) {
-						// Ignore, handled in callback
 					}
+					for (MatcherGroup matcher : uuids) {
+						matcher.remove();
+					}
+				} finally {
+					setPersistent(true);
 				}
+			}
 
-				@Override
-				public void onError(Throwable t) {
-					handleException(t, "reverting uuids");
-				}
-			});
-			ret.get();
-		} catch (InterruptedException | ExecutionException e) {
-		} finally {
-			this.setPersistent(true);
-		}
+			@Override
+			public void onFailure(Throwable throwable) {
+				handleException(throwable, "reverting uuids");
+			}
+		});
 	}
 
 	public void setPersistent(boolean persistent) {

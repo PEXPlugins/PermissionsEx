@@ -21,12 +21,19 @@ package ru.tehkode.permissions.bukkit;
 import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.zachsthings.netevents.NetEventsPlugin;
 import net.gravitydevelopment.updater.Updater;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -53,7 +60,6 @@ import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.sql.SQLBackend;
 import ru.tehkode.permissions.bukkit.commands.*;
 import ru.tehkode.permissions.bukkit.regexperms.RegexPermissions;
-import ru.tehkode.permissions.callback.Callback;
 import ru.tehkode.permissions.commands.CommandsManager;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
@@ -77,6 +83,17 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	private static PermissionsEx instance;
 	{
 		instance = this;
+	}
+
+	private static final Executor MAIN_THREAD_EXECUTOR = new Executor() {
+		@Override
+		public void execute(Runnable command) {
+			Bukkit.getServer().getScheduler().runTask(PermissionsEx.instance, command);
+		}
+	};
+
+	public static Executor mainThreadExecutor() {
+		return MAIN_THREAD_EXECUTOR;
 	}
 
 	public PermissionsEx() {
@@ -262,6 +279,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 				Plugin netEventsPlugin = getServer().getPluginManager().getPlugin("NetEvents");
 				if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
 					NetEventsPlugin netEvents = (NetEventsPlugin) netEventsPlugin;
+					this.netEvents = netEvents;
 					getServer().getPluginManager().registerEvents(new RemoteEventListener(netEvents, permissionsManager), this);
 				}
 			}
@@ -419,16 +437,35 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
 			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
 				// UUID conversion
-				String uuidIdent = event.getUniqueId().toString();
-				String nameIdent = event.getName();
-				if (!permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, uuidIdent) && permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, nameIdent)) {
-					permissionsManager.getBackend().replaceQualifier(Qualifier.USER, nameIdent, uuidIdent);
-				}
-				// Writing the name alias
-				MatcherGroup uuidGroup = permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY);
-				if (!nameIdent.equals(uuidGroup.getEntries().get(uuidIdent))) {
-					uuidGroup.putEntry(uuidIdent, nameIdent);
-				}
+				final String uuidIdent = event.getUniqueId().toString();
+				final String nameIdent = event.getName();
+				Futures.addCallback(Futures.chain(Futures.allAsList(permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, uuidIdent),
+						permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, nameIdent)),
+						new Function<List<Boolean>, ListenableFuture<MatcherGroup>>() {
+					@Override
+					public ListenableFuture<MatcherGroup> apply(List<Boolean> booleans) {
+						boolean hasUuid = booleans.get(0);
+						boolean hasName = booleans.get(1);
+						if (!hasUuid && hasName) {
+							permissionsManager.getBackend().replaceQualifier(Qualifier.USER, nameIdent, uuidIdent);
+						}
+
+						return permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY);
+					}
+				}), new FutureCallback<MatcherGroup>() {
+					@Override
+					public void onSuccess(MatcherGroup uuidGroup) {
+						// Writing the name alias
+						if (!nameIdent.equals(uuidGroup.getEntries().get(uuidIdent))) {
+							uuidGroup.putEntry(uuidIdent, nameIdent);
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+
+					}
+				});
 
 				// Cache data for user (dunno how this will work
 				//getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
@@ -463,23 +500,31 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 							.perform();
 				}
 
+				// Update player name
 				final String uuid = player.getUniqueId().toString();
 				final String name = player.getName();
-				permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, event.getPlayer().getUniqueId().toString(), new Callback<Boolean>() {
+				Futures.addCallback(Futures.chain(permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, uuid), new Function<Boolean, ListenableFuture<MatcherGroup>>() {
 					@Override
-					public void onSuccess(Boolean result) {
-						permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY, new Callback<MatcherGroup>() {
-							@Override
-							public void onSuccess(MatcherGroup result) {
-								result.putEntry(uuid, name);
-							}
-
-							@Override
-							public void onError(Throwable t) {}
-						});
+					public ListenableFuture<MatcherGroup> apply(Boolean bool) {
+						if (bool) {
+							return permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY);
+						} else {
+							return null;
+						}
 					}
+				}), new FutureCallback<MatcherGroup>() {
 					@Override
-					public void onError(Throwable t) {}
+					public void onSuccess(MatcherGroup matcherGroup) {
+						if (matcherGroup != null) {
+							if (!name.equals(matcherGroup.getEntries().get(uuid))) {
+								matcherGroup.putEntry(uuid, name);
+							}
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+					}
 				});
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);

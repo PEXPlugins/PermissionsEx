@@ -20,12 +20,12 @@ package ru.tehkode.permissions.backends.file;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.yaml.YamlBackend;
-import ru.tehkode.permissions.callback.Callback;
-import ru.tehkode.permissions.callback.CallbackTask;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 /**
@@ -48,7 +48,7 @@ public class FileBackend extends PermissionBackend {
 	private final Object loadSaveLock = new Object();
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
-		super(manager, config);
+		super(manager, config, Executors.newSingleThreadExecutor());
 		String permissionFilename = getConfig().getString("file");
 		String oldFilename = null;
 
@@ -86,8 +86,8 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	protected <V> java.util.concurrent.FutureTask<V> execute(Callable<V> func, Callback<V> callback) {
-		CallbackTask<V> ret = new CallbackTask<V>(func, callback);
+	protected <V> ListenableFuture<V> execute(Callable<V> func) {
+		ListenableFutureTask<V> ret = ListenableFutureTask.create(func);
 		ret.run();
 		return ret;
 	}
@@ -96,7 +96,7 @@ public class FileBackend extends PermissionBackend {
 	public int getSchemaVersion() {
 		MatcherGroup ret;
 		try {
-			ret = this.getOne(MatcherGroup.GENERAL_KEY, null).get();
+			ret = this.getOne(MatcherGroup.GENERAL_KEY).get();
 		} catch (InterruptedException | ExecutionException e) {
 			return -1;
 		}
@@ -106,7 +106,7 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	protected void setSchemaVersion(int version) {
 		try {
-			this.getFirstOrAdd(MatcherGroup.GENERAL_KEY, null).get().putEntry("schema-version", String.valueOf(version));
+			this.getFirstOrAdd(MatcherGroup.GENERAL_KEY).get().putEntry("schema-version", String.valueOf(version));
 		} catch (InterruptedException | ExecutionException e) {
 			handleException(e, "setting schema version");
 		}
@@ -122,94 +122,94 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Future<Iterator<MatcherGroup>> getAllMatcherGroups(Callback<Iterator<MatcherGroup>> callback) {
+	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
 		return execute(new Callable<Iterator<MatcherGroup>>() {
 			@Override
 			public Iterator<MatcherGroup> call() throws Exception {
 				return matcherGroups.getAll();
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> getMatchingGroups(final String type, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
 				return matcherGroups.get(type);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier key, final String value, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier key, final String value) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
 				return matcherGroups.get(type, key, value);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers, final Callback<MatcherGroup> callback) {
+	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
 				return matcherGroups.create(type, entries, qualifiers);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers, Callback<MatcherGroup> callback) {
+	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
 				return matcherGroups.create(type, entries, qualifiers);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<Collection<String>> getAllValues(final Qualifier qualifier, Callback<Collection<String>> callback) {
+	public ListenableFuture<Collection<String>> getAllValues(final Qualifier qualifier) {
 		return execute(new Callable<Collection<String>>() {
 			@Override
 			public Collection<String> call() throws Exception {
 				return matcherGroups.getAllValues(qualifier);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<Boolean> hasAnyQualifier(final Qualifier qualifier, final String value, Callback<Boolean> callback) {
+	public ListenableFuture<Boolean> hasAnyQualifier(final Qualifier qualifier, final String value) {
 		return execute(new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
 				return matcherGroups.hasAnyQualifier(qualifier, value);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
-	public Future<Void> replaceQualifier(final Qualifier qualifier, final String old, final String newVal) {
+	public ListenableFuture<Void> replaceQualifier(final Qualifier qualifier, final String old, final String newVal) {
 		return execute(new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
 				matcherGroups.replace(qualifier, old, newVal);
 				return null;
 			}
-		}, null);
+		});
 	}
 
 	@Override
-	public Future<List<MatcherGroup>> allWithQualifier(final Qualifier qualifier, Callback<List<MatcherGroup>> callback) {
+	public ListenableFuture<List<MatcherGroup>> allWithQualifier(final Qualifier qualifier) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
 				return matcherGroups.allWithQualifier(qualifier);
 			}
-		}, callback);
+		});
 	}
 
 	@Override
@@ -240,13 +240,13 @@ public class FileBackend extends PermissionBackend {
 				loader.getFile().createNewFile();
 
 				// Load default permissions
-				createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of(), null);
+				createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of());
 
 				List<String> defaultPermissions = new ArrayList<>(1);
 				// Specify here default permissions
 				defaultPermissions.add("modifyworld.*");
 
-				createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, defaultPermissions, ImmutableMultimap.of(Qualifier.GROUP, "default"), null);
+				createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, defaultPermissions, ImmutableMultimap.of(Qualifier.GROUP, "default"));
 				setSchemaVersion(getLatestSchemaVersion());
 			} catch (IOException e) {
 				throw new PermissionBackendException(e);
