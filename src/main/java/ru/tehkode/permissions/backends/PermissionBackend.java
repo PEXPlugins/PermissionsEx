@@ -465,6 +465,7 @@ public abstract class PermissionBackend {
 			public void onSuccess(@Nonnull List<MatcherGroup> uuids) {
 				setPersistent(false);
 				try {
+					List<ListenableFuture<?>> toWaitFor = new LinkedList<>();
 					for (MatcherGroup group : getAll()) {
 						Multimap<Qualifier, String> qualifiers = group.getQualifiers();
 						Collection<String> users = qualifiers.get(Qualifier.USER);
@@ -478,11 +479,15 @@ public abstract class PermissionBackend {
 								}
 							}
 							qualifiers.replaceValues(Qualifier.USER, newUsers);
-							group.setQualifiers(qualifiers);
+							toWaitFor.add(group.setQualifiers(qualifiers));
 						}
 					}
 					for (MatcherGroup matcher : uuids) {
-						matcher.remove();
+						toWaitFor.add(matcher.remove());
+					}
+
+					for (ListenableFuture<?> future : toWaitFor) {
+						Futures.getUnchecked(future);
 					}
 				} finally {
 					setPersistent(true);

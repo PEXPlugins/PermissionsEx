@@ -256,6 +256,11 @@ public class SQLBackend extends PermissionBackend {
 		}
 	}
 
+	@Override
+	protected <T> ListenableFuture<T> execute(Callable<T> func) {
+		return super.execute(func);
+	}
+
 	SQLQueryCache getQueryCache() {
 		return queryCache;
 	}

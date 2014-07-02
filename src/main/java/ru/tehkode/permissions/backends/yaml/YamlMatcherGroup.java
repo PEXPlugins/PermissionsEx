@@ -1,6 +1,8 @@
 package ru.tehkode.permissions.backends.yaml;
 
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
@@ -41,9 +43,13 @@ public final class YamlMatcherGroup extends MatcherGroup {
 		return qualifiers;
 	}
 
+	private <T> ListenableFuture<T> readOnly() {
+		return Futures.immediateFailedFuture(new UnsupportedOperationException("YAAML backend is read-only").fillInStackTrace());
+	}
+
 	@Override
-	public MatcherGroup setQualifiers(Multimap<Qualifier, String> qualifiers) {
-		throw new UnsupportedOperationException("YAML backend is read-only");
+	public ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers) {
+		return readOnly();
 	}
 
 	@Override
@@ -57,13 +63,13 @@ public final class YamlMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public MatcherGroup setEntries(Map<String, String> value) {
-		throw new UnsupportedOperationException("YAML backend is read-only");
+	public ListenableFuture<MatcherGroup> setEntries(Map<String, String> value) {
+		return readOnly();
 	}
 
 	@Override
-	public MatcherGroup setEntries(List<String> value) {
-		throw new UnsupportedOperationException("YAML backend is read-only");
+	public ListenableFuture<MatcherGroup> setEntries(List<String> value) {
+		return readOnly();
 	}
 
 	@Override
@@ -72,7 +78,7 @@ public final class YamlMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public boolean remove() {
-		throw new UnsupportedOperationException("YAML backend is read-only");
+	public ListenableFuture<Boolean> remove() {
+		return readOnly();
 	}
 }

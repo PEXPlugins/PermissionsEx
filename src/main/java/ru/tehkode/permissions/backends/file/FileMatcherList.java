@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -24,16 +25,19 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, List<Node>> {
 	private List<String> comments;
 	private final FileConfig config;
+	private final Executor executor;
 
-	public FileMatcherList(FileConfig config) {
+	public FileMatcherList(FileConfig config, Executor executor) {
 		comments = Collections.emptyList();
 		this.config = config;
+		this.executor = executor;
 		// Empty list
 	}
 
-	public FileMatcherList(List<Node> nodes, FileConfig config) throws IOException {
+	public FileMatcherList(List<Node> nodes, FileConfig config, Executor executor) throws IOException {
 		super(nodes);
 		this.config = config;
+		this.executor = executor;
 	}
 
 	// -- Load/save
@@ -174,6 +178,10 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 				}
 			}
 		}
+	}
+
+	Executor getExecutor() {
+		return this.executor;
 	}
 
 	@Override

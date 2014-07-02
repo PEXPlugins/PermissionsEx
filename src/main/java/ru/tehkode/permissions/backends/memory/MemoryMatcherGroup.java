@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
@@ -14,17 +16,17 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Matcher group used when storing a matcher group structure in memory
  */
-public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extends MatcherGroup {
+public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V extends MemoryMatcherList<T, ?>> extends MatcherGroup {
 	private final String name;
 	@SuppressWarnings("unchecked")
 	private final T self = (T) this;
 	protected final AtomicReference<T> selfRef;
-	protected final MemoryMatcherList<T, ?> listRef;
+	protected final V listRef;
 	private final Multimap<Qualifier, String> qualifiers;
 	private final Map<String, String> entries;
 	private final List<String> entriesList;
 
-	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, MemoryMatcherList<T, ?> listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
+	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, V listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
 		this.name = name;
 		this.selfRef = selfRef;
 		this.listRef = listRef;
@@ -33,7 +35,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 		this.entriesList = null;
 	}
 
-	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, MemoryMatcherList<T, ?> listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
+	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, V listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
 		this.name = name;
 		this.selfRef = selfRef;
 		this.listRef = listRef;
@@ -56,7 +58,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	}
 
 	@Override
-	public MatcherGroup setQualifiers(Multimap<Qualifier, String> qualifiers) {
+	public ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers) {
 		if (selfRef.compareAndSet(self, null)) {
 			listRef.deltaUpdate(selfRef, getName(), getQualifiers(), qualifiers);
 			T newGroup;
@@ -65,14 +67,14 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 			} else if (isList()) {
 				newGroup = newSelf(getEntriesList(), qualifiers);
 			} else {
-				throw new IllegalStateException("I'm not a list or a map? This shouldn't be possible");
+				return Futures.immediateFailedFuture(new IllegalStateException("I'm not a list or a map? This shouldn't be possible").fillInStackTrace());
 			}
 			if (!selfRef.compareAndSet(null, newGroup)) {
-				throw new IllegalStateException("Invalid state change occurred, somebody modified my reference while it was null");
+				return Futures.immediateFailedFuture(new IllegalStateException("Invalid state change occurred, somebody modified my reference while it was null").fillInStackTrace());
 			}
-			return newGroup;
+			return Futures.<MatcherGroup>immediateFuture(newGroup);
 		} else {
-			return null;
+			return Futures.immediateFailedFuture(new InvalidGroupException());
 		}
 	}
 
@@ -87,15 +89,23 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	}
 
 	@Override
-	public MatcherGroup setEntries(Map<String, String> value) {
+	public ListenableFuture<MatcherGroup> setEntries(Map<String, String> value) {
 		T newGroup = newSelf(value, getQualifiers());
-		return selfRef.compareAndSet(self, newGroup) ? newGroup : null;
+		if (selfRef.compareAndSet(self, newGroup)) {
+			return Futures.<MatcherGroup>immediateFuture(newGroup);
+		} else {
+			return Futures.immediateFailedFuture(new InvalidGroupException().fillInStackTrace());
+		}
 	}
 
 	@Override
-	public MatcherGroup setEntries(List<String> value) {
+	public ListenableFuture<MatcherGroup> setEntries(List<String> value) {
 		T newGroup = newSelf(value, getQualifiers());
-		return selfRef.compareAndSet(self, newGroup) ? newGroup : null;
+		if (selfRef.compareAndSet(self, newGroup)) {
+			return Futures.<MatcherGroup>immediateFuture(newGroup);
+		} else {
+			return Futures.immediateFailedFuture(new InvalidGroupException().fillInStackTrace());
+		}
 	}
 
 	@Override
@@ -104,11 +114,11 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	}
 
 	@Override
-	public boolean remove() {
+	public ListenableFuture<Boolean> remove() {
 		if (selfRef.compareAndSet(self, null)) {
 			listRef.remove(selfRef, self);
-			return true;
+			return Futures.immediateFuture(true);
 		}
-		return false;
+		return Futures.immediateFuture(false);
 	}
 }

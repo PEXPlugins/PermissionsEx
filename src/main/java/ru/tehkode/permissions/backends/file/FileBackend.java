@@ -71,7 +71,7 @@ public class FileBackend extends PermissionBackend {
 			baseDirectory.mkdirs();
 		}
 
-		this.loader = new FileConfig(new File(baseDir, permissionFilename));
+		this.loader = new FileConfig(new File(baseDir, permissionFilename), getExecutor());
 		if (oldFilename != null && !loader.getFile().exists()) {
 			try {
 				loader.getFile().createNewFile();
@@ -223,7 +223,7 @@ public class FileBackend extends PermissionBackend {
 		} catch (FileNotFoundException e) {
 			if (this.matcherGroups == null) {
 				// First load, load even if the file doesn't exist
-				this.matcherGroups = new FileMatcherList(this.loader);
+				this.matcherGroups = new FileMatcherList(this.loader, getExecutor());
 				initializeDefaultConfiguration();
 			}
 		} catch (Throwable e) {

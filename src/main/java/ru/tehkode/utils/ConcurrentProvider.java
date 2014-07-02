@@ -95,7 +95,6 @@ public class ConcurrentProvider<V> implements Iterable<V> {
 					setElement = setElement.next;
 				}
 				if (tail.compareAndSet(null, setElement)) {
-					System.out.println("Set element " + setElement);
 					break;
 				}
 				waitCondition.notifyAll();

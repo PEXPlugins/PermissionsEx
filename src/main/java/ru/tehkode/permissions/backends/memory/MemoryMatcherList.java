@@ -4,6 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.Futures;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
@@ -19,13 +20,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * A thread-safe data structure for managing matcher groups stored in memory (with the capability to save)
  */
-public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, SerializedType> {
+public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T, ? extends MemoryMatcherList<T, ?>>, SerializedType> {
 	protected final ConcurrentLinkedQueue<AtomicReference<T>> groups = new ConcurrentLinkedQueue<>();
 	// map(type->array[qualifier](map(value,list(groups))))
 	private final ConcurrentMap<String, AtomicReferenceArray<ConcurrentMap<String, Collection<AtomicReference<T>>>>> lookup = new ConcurrentHashMap<>();
@@ -318,7 +322,7 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 					for (AtomicReference<T> ptr : toMove) {
 						T matcher;
 						Multimap<Qualifier, String> newQuals;
-						do {
+						while (true) {
 							matcher = valFromPtr(ptr);
 							newQuals = HashMultimap.create(matcher.getQualifiers());
 							if (newQuals.remove(qualifier, old)) {
@@ -326,7 +330,18 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 							} else {
 								break;
 							}
-						} while (matcher.setQualifiers(newQuals) == null);
+							try {
+								matcher.setQualifiers(newQuals).get(2, TimeUnit.MILLISECONDS);
+								break;
+							} catch (InterruptedException | ExecutionException e) {
+								if (e.getCause() instanceof MatcherGroup.InvalidGroupException) {
+									continue;
+								}
+								throw new RuntimeException(e);
+							} catch (TimeoutException e) {
+								continue;
+							}
+						}
 					}
 				}
 			}

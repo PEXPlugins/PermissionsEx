@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.concurrent.Executor;
 
 public class FileConfig {
 	public static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
@@ -27,11 +28,13 @@ public class FileConfig {
 	private boolean saveSuppressed;
 	private final ThreadLocal<PEXMLParser> parser;
 	private final Object saveLock = new Object();
+	private final Executor executor;
 
-	public FileConfig(File file) {
+	public FileConfig(File file, Executor executor) {
 		this.file = file;
 		this.tempFile = new File(file.getPath() + ".tmp");
 		this.oldFile = new File(file.getPath() + ".old");
+		this.executor = executor;
 
 		final PEXMLParser localParser = Parboiled.createParser(PEXMLParser.class);
 		parser = new ThreadLocal<PEXMLParser>() {
@@ -70,7 +73,7 @@ public class FileConfig {
 			throw new IOException("No result value for parser!");
 		}
 
-		return new FileMatcherList(result.resultValue.getChildren(), this);
+		return new FileMatcherList(result.resultValue.getChildren(), this, executor);
 	}
 
 	/**
