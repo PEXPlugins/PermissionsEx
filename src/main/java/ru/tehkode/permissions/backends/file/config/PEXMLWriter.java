@@ -135,6 +135,7 @@ public class PEXMLWriter implements Closeable {
 	}
 
 	public void close() throws IOException {
+		flush();
 		writer.close();
 	}
 

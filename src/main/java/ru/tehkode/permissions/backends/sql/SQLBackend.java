@@ -637,13 +637,4 @@ public class SQLBackend extends PermissionBackend {
 		}
 		super.close();
 	}
-
-	/**
-	 * Removes the given entity id from the cache.
-	 *
-	 * @param entityId The id to remove
-	 */
-	void uncache(int entityId) {
-		matcherCache.remove(entityId);
-	}
 }

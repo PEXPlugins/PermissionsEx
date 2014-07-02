@@ -6,7 +6,6 @@ import com.google.common.collect.Multimap;
 import ru.tehkode.permissions.backends.file.config.Node;
 import ru.tehkode.permissions.backends.file.config.PEXMLWriter;
 import ru.tehkode.permissions.backends.memory.MemoryMatcherList;
-import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
 import java.io.IOException;

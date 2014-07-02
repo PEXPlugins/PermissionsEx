@@ -13,16 +13,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Matcher group that sources data from SQL
  */
 public class SQLMatcherGroup extends MatcherGroup {
+	private static enum State {
+		VALID, UPDATING, INVALID
+	}
 	private final SQLBackend backend;
 	private final String name;
 	private final int entityId;
-	private final AtomicBoolean valid = new AtomicBoolean(true);
+	private final AtomicReference<State> valid = new AtomicReference<>(State.VALID);
 	private final Map<String, String> entries;
 	private final Multimap<Qualifier, String> qualifiers;
 
@@ -64,19 +67,28 @@ public class SQLMatcherGroup extends MatcherGroup {
 
 	@Override
 	public MatcherGroup setQualifiers(Multimap<Qualifier, String> qualifiers) {
-		try (SQLConnection conn = backend.getSQL()) {
-			conn.prepAndBind("qualifiers.clear").execute();
-			PreparedStatement stmt = conn.prepAndBind("qualifiers.add", entityId, "", "");
-			for (Map.Entry<Qualifier, String> entry : qualifiers.entries()) {
-				stmt.setString(2, entry.getKey().getName());
-				stmt.setString(3, entry.getValue());
-				stmt.addBatch();
+		if (valid.compareAndSet(State.VALID, State.UPDATING)) {
+			try (SQLConnection conn = backend.getSQL()) {
+				conn.beginTransaction();
+				try {
+					conn.prepAndBind("qualifiers.clear").execute();
+					PreparedStatement stmt = conn.prepAndBind("qualifiers.add", entityId, "", "");
+					for (Map.Entry<Qualifier, String> entry : qualifiers.entries()) {
+						stmt.setString(2, entry.getKey().getName());
+						stmt.setString(3, entry.getValue());
+						stmt.addBatch();
+					}
+					stmt.executeBatch();
+				} finally {
+					conn.endTransaction();
+				}
+				backend.resetMatcherGroup(getEntityId());
+				return backend.getMatcherGroup(getName(), getEntityId());
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return null;
 			}
-			stmt.executeBatch();
-			backend.resetMatcherGroup(getEntityId());
-			return backend.getMatcherGroup(getName(), getEntityId());
-		} catch (SQLException | IOException e) {
-			e.printStackTrace();
+		} else {
 			return null;
 		}
 	}
@@ -94,56 +106,75 @@ public class SQLMatcherGroup extends MatcherGroup {
 
 	@Override
 	public MatcherGroup setEntries(Map<String, String> value) {
-		try (SQLConnection conn = backend.getSQL()) {
-			conn.prepAndBind("entries.clear").execute();
-			PreparedStatement stmt = conn.prepAndBind("entries.add", entityId, "", "");
-			for (Map.Entry<String, String> entry : value.entrySet()) {
-				stmt.setString(2, entry.getKey());
-				stmt.setString(3, entry.getValue());
-				stmt.addBatch();
+		if (valid.compareAndSet(State.VALID, State.UPDATING)) {
+			try (SQLConnection conn = backend.getSQL()) {
+				conn.beginTransaction();
+				try {
+					conn.prepAndBind("entries.clear").execute();
+					PreparedStatement stmt = conn.prepAndBind("entries.add", entityId, "", "");
+					for (Map.Entry<String, String> entry : value.entrySet()) {
+						stmt.setString(2, entry.getKey());
+						stmt.setString(3, entry.getValue());
+						stmt.addBatch();
+					}
+					stmt.executeBatch();
+				} finally {
+					conn.endTransaction();
+				}
+				backend.resetMatcherGroup(getEntityId());
+				return backend.getMatcherGroup(getName(), getEntityId());
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return null;
 			}
-			stmt.executeBatch();
-			backend.resetMatcherGroup(getEntityId());
-			return backend.getMatcherGroup(getName(), getEntityId());
-		} catch (SQLException | IOException e) {
-			e.printStackTrace();
+		} else {
 			return null;
 		}
 	}
 
 	@Override
 	public MatcherGroup setEntries(List<String> value) {
-		try (SQLConnection conn = backend.getSQL()) {
-			conn.prepAndBind("entries.clear").execute();
-			PreparedStatement stmt = conn.prepAndBind("entries.add", entityId, "", null);
-			for (String entry : value) {
-				stmt.setString(2, entry);
-				stmt.addBatch();
+		if (valid.compareAndSet(State.VALID, State.UPDATING)) {
+			try (SQLConnection conn = backend.getSQL()) {
+				conn.beginTransaction();
+				try {
+					conn.prepAndBind("entries.clear").execute();
+					PreparedStatement stmt = conn.prepAndBind("entries.add", entityId, "", null);
+					for (String entry : value) {
+						stmt.setString(2, entry);
+						stmt.addBatch();
+					}
+					stmt.executeBatch();
+				} finally {
+					conn.endTransaction();
+				}
+				backend.resetMatcherGroup(getEntityId());
+				return backend.getMatcherGroup(getName(), getEntityId());
+			} catch (SQLException | IOException e) {
+				e.printStackTrace();
+				return null;
 			}
-			stmt.executeBatch();
-			backend.resetMatcherGroup(getEntityId());
-			return backend.getMatcherGroup(getName(), getEntityId());
-		} catch (SQLException | IOException e) {
-			e.printStackTrace();
+		} else {
 			return null;
 		}
 	}
 
 	void invalidate() {
-		valid.set(false);
+		valid.set(State.INVALID);
 	}
 
 	@Override
 	public boolean isValid() {
-		return valid.get();
+		return valid.get() != State.INVALID;
 	}
 
 	@Override
 	public boolean remove() {
-		if (valid.compareAndSet(true, false)) {
+		if (valid.compareAndSet(State.VALID, State.UPDATING)) {
 			try (SQLConnection conn = backend.getSQL()) {
 				conn.prepAndBind("groups.delete", getEntityId()).execute();
 			} catch (SQLException | IOException e) {
+				valid.set(State.VALID);
 				e.printStackTrace();
 			}
 			backend.resetMatcherGroup(this.entityId);

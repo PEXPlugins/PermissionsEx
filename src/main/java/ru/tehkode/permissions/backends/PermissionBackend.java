@@ -20,6 +20,7 @@ import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -461,7 +462,7 @@ public abstract class PermissionBackend {
 	public void revertUUID() {
 		Futures.addCallback(getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY), new FutureCallback<List<MatcherGroup>>() {
 			@Override
-			public void onSuccess(List<MatcherGroup> uuids) {
+			public void onSuccess(@Nonnull List<MatcherGroup> uuids) {
 				setPersistent(false);
 				try {
 					for (MatcherGroup group : getAll()) {
@@ -489,7 +490,7 @@ public abstract class PermissionBackend {
 			}
 
 			@Override
-			public void onFailure(Throwable throwable) {
+			public void onFailure(@Nonnull Throwable throwable) {
 				handleException(throwable, "reverting uuids");
 			}
 		});
@@ -507,6 +508,7 @@ public abstract class PermissionBackend {
 	 * This method is called when the file the permissions config is supposed to save to
 	 * does not exist yet,This adds default permissions & stuff
 	 */
+	@SuppressWarnings("unchecked")
 	protected void initializeDefaultConfiguration() throws PermissionBackendException {
 				// Load default permissions
 				Futures.getUnchecked(Futures.allAsList(createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of()),
@@ -552,8 +554,8 @@ public abstract class PermissionBackend {
 	 * Returns Class object for specified alias, if there is no alias registered
 	 * then try to find it using Class.forName(alias)
 	 *
-	 * @param alias
-	 * @return
+	 * @param alias The short name to look the backend up by
+	 * @return The backend class, if any.
 	 * @throws ClassNotFoundException
 	 */
 	public static Class<? extends PermissionBackend> getBackendClass(String alias) throws ClassNotFoundException {
@@ -571,8 +573,8 @@ public abstract class PermissionBackend {
 	/**
 	 * Register new alias for specified backend class
 	 *
-	 * @param alias
-	 * @param backendClass
+	 * @param alias The short name that the provided class can be looked up by
+	 * @param backendClass The class to be aliased
 	 */
 	public static void registerBackendAlias(String alias, Class<? extends PermissionBackend> backendClass) {
 		if (!PermissionBackend.class.isAssignableFrom(backendClass)) {
@@ -589,7 +591,7 @@ public abstract class PermissionBackend {
 	 * If there is no such class registered the fullname of this class would
 	 * be returned using backendClass.getName();
 	 *
-	 * @param backendClass
+	 * @param backendClass The backend class to get the alias for.
 	 * @return alias or class fullname when not found using backendClass.getName()
 	 */
 	public static String getBackendAlias(Class<? extends PermissionBackend> backendClass) {

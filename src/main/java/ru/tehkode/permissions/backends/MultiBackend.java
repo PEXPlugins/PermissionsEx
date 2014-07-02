@@ -1,8 +1,9 @@
 package ru.tehkode.permissions.backends;
 
 import com.google.common.base.Function;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +36,7 @@ public class MultiBackend extends PermissionBackend {
 		}
 	};
 	private final List<PermissionBackend> backends = new ArrayList<>();
+	private final Map<String, PermissionBackend> backendMap;
 	protected MultiBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		super(manager, backendConfig, Executors.newSingleThreadExecutor());
 		List<String> backendNames = backendConfig.getStringList("backends");
@@ -43,10 +44,13 @@ public class MultiBackend extends PermissionBackend {
 			backendConfig.set("backends", new ArrayList<String>());
 			throw new PermissionBackendException("No backends configured for multi backend! Please configure this!");
 		}
+		ImmutableMap.Builder<String, PermissionBackend> backendMapBuilder = ImmutableMap.builder();
 		for (String name : backendConfig.getStringList("backends")) {
 			PermissionBackend backend = manager.createBackend(name);
 			backends.add(backend);
+			backendMapBuilder.put(name.toLowerCase(), backend);
 		}
+		backendMap = backendMapBuilder.build();
 	}
 
 	@Override
@@ -122,15 +126,36 @@ public class MultiBackend extends PermissionBackend {
 		});
 	}
 
-
 	@Override
 	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
-		return backends.get(0).createMatcherGroup(type, entries, qualifiers); // TODO: Add backend= qualifier
+		PermissionBackend addBackend = backends.get(0);
+		if (qualifiers.containsKey(BACKEND)) {
+			qualifiers = HashMultimap.create(qualifiers);
+			String lookupKey = qualifiers.removeAll(BACKEND).iterator().next().toLowerCase();
+			PermissionBackend newAdd = backendMap.get(lookupKey);
+			if (newAdd == null) {
+				getLogger().warning("Backend specified '" + lookupKey + "' is unknown, falling back to first-listed backend");
+			} else {
+				addBackend = newAdd;
+			}
+		}
+		return addBackend.createMatcherGroup(type, entries, qualifiers);
 	}
 
 	@Override
 	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
-		return backends.get(0).createMatcherGroup(type, entries, qualifiers);
+		PermissionBackend addBackend = backends.get(0);
+		if (qualifiers.containsKey(BACKEND)) {
+			qualifiers = HashMultimap.create(qualifiers);
+			String lookupKey = qualifiers.removeAll(BACKEND).iterator().next().toLowerCase();
+			PermissionBackend newAdd = backendMap.get(lookupKey);
+			if (newAdd == null) {
+				getLogger().warning("Backend specified '" + lookupKey + "' is unknown, falling back to first-listed backend");
+			} else {
+				addBackend = newAdd;
+			}
+		}
+		return addBackend.createMatcherGroup(type, entries, qualifiers);
 	}
 
 	@Override

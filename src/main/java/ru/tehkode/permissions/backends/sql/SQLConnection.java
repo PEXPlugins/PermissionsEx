@@ -104,4 +104,13 @@ public class SQLConnection implements Closeable {
 			super.finalize();
 		}
 	}
+
+	public void beginTransaction() throws SQLException {
+		db.setAutoCommit(false);
+	}
+
+	public void endTransaction() throws SQLException {
+		db.commit();
+		db.setAutoCommit(true);
+	}
 }
