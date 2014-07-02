@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import ru.tehkode.permissions.backends.file.config.Node;
 import ru.tehkode.permissions.backends.file.config.PEXMLWriter;
 import ru.tehkode.permissions.backends.memory.MemoryMatcherList;
+import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 	}
 
 	// -- Load/save
+	@Override
 	protected void load(List<Node> nodes) throws IOException {
 		comments = new ArrayList<>();
 		for (Node node : nodes) {
@@ -44,6 +46,7 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 				case SECTION:
 					Multimap<Qualifier, String> qualifiers = HashMultimap.create();
 					Map<String, String> entries = new HashMap<>();
+					List<String> entriesList = new LinkedList<>();
 					List<String> comments = new LinkedList<>();
 					Multimap<String, String> entryComments = ArrayListMultimap.create();
 
@@ -75,7 +78,7 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 								}
 								break;
 							case SCALAR:
-								entries.put(child.getKey(), null);
+								entriesList.add(child.getKey());
 							case COMMENT:
 								comments.add(child.getKey());
 								break;
@@ -85,7 +88,11 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 					}
 
 					final AtomicReference<FileMatcherGroup> ref = new AtomicReference<>();
-					ref.set(new FileMatcherGroup(node.getKey(), ref, this, qualifiers, entries, comments, entryComments));
+					if (entries.isEmpty()) {
+						ref.set(new FileMatcherGroup(node.getKey(), ref, this, qualifiers, entriesList, comments, entryComments));
+					} else {
+						ref.set(new FileMatcherGroup(node.getKey(), ref, this, qualifiers, entries, comments, entryComments));
+					}
 					groups.add(ref);
 					insertIntoLookup(ref, ref.get());
 					break;
@@ -98,6 +105,7 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 		}
 	}
 
+	@Override
 	public void save() throws IOException {
 		this.config.save(this);
 	}
@@ -122,6 +130,18 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 			}
 			writer.endHeader();
 
+			if (group.isMap()) {
+				for (Map.Entry<String, String> ent : group.getEntries().entrySet()) {
+					writeEntryComments(group, ent.getKey(), writer);
+					writer.writeMapping(ent.getKey(), ent.getValue());
+				}
+
+			} else if (group.isList()) {
+				for (String entry : group.getEntriesList()) {
+					writeEntryComments(group, entry, writer);
+					writer.writeListEntry(entry);
+				}
+			}
 			for (Map.Entry<String, String> ent : group.getEntries().entrySet()) {
 				if (group.getEntryComments() != null) {
 					Collection<String> entryComments = group.getEntryComments().get(ent.getKey());
@@ -146,6 +166,18 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 		}
 	}
 
+	private void writeEntryComments(FileMatcherGroup group, String entry, PEXMLWriter writer) throws IOException {
+		if (group.getEntryComments() != null) {
+			Collection<String> entryComments = group.getEntryComments().get(entry);
+			if (entryComments != null && !entryComments.isEmpty()) {
+				for (String comment : entryComments) {
+					writer.writeComment(comment);
+				}
+			}
+		}
+	}
+
+	@Override
 	protected FileMatcherGroup newGroup(AtomicReference<FileMatcherGroup> ptr, String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
 		return new FileMatcherGroup(type, ptr, this, qualifiers, entries, null, null);
 	}

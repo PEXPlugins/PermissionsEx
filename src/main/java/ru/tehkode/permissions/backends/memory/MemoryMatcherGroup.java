@@ -1,13 +1,12 @@
 package ru.tehkode.permissions.backends.memory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,13 +22,15 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	protected final MemoryMatcherList<T, ?> listRef;
 	private final Multimap<Qualifier, String> qualifiers;
 	private final Map<String, String> entries;
+	private final List<String> entriesList;
 
 	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, MemoryMatcherList<T, ?> listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
 		this.name = name;
 		this.selfRef = selfRef;
 		this.listRef = listRef;
 		this.qualifiers = ImmutableMultimap.copyOf(qualifiers);
-		this.entries = Collections.unmodifiableMap(new LinkedHashMap<>(entries));
+		this.entries = ImmutableMap.copyOf(entries);
+		this.entriesList = null;
 	}
 
 	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, MemoryMatcherList<T, ?> listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
@@ -37,22 +38,20 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 		this.selfRef = selfRef;
 		this.listRef = listRef;
 		this.qualifiers = ImmutableMultimap.copyOf(qualifiers);
-		Map<String, String> entries = new LinkedHashMap<>();
-		for (String entry : entriesList) {
-			entries.put(entry, null);
-		}
-		this.entries = Collections.unmodifiableMap(entries);
+		this.entriesList = ImmutableList.copyOf(entriesList);
+		this.entries = null;
 	}
 
 	protected abstract T newSelf(Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
+	protected abstract T newSelf(List<String> entries, Multimap<Qualifier, String> qualifiers);
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return this.name;
 	}
 
 	@Override
-	public Multimap<Qualifier, String> getQualifiers() {
+	public final Multimap<Qualifier, String> getQualifiers() {
 		return this.qualifiers;
 	}
 
@@ -60,7 +59,14 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	public MatcherGroup setQualifiers(Multimap<Qualifier, String> qualifiers) {
 		if (selfRef.compareAndSet(self, null)) {
 			listRef.deltaUpdate(selfRef, getName(), getQualifiers(), qualifiers);
-			T newGroup = newSelf(getEntries(), qualifiers);
+			T newGroup;
+			if (isMap()) {
+				newGroup = newSelf(getEntries(), qualifiers);
+			} else if (isList()) {
+				newGroup = newSelf(getEntriesList(), qualifiers);
+			} else {
+				throw new IllegalStateException("I'm not a list or a map? This shouldn't be possible");
+			}
 			if (!selfRef.compareAndSet(null, newGroup)) {
 				throw new IllegalStateException("Invalid state change occurred, somebody modified my reference while it was null");
 			}
@@ -71,8 +77,13 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	}
 
 	@Override
-	public Map<String, String> getEntries() {
+	public final Map<String, String> getEntries() {
 		return this.entries;
+	}
+
+	@Override
+	public final List<String> getEntriesList() {
+		return this.entriesList;
 	}
 
 	@Override
@@ -82,7 +93,13 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	}
 
 	@Override
-	public boolean isValid() {
+	public MatcherGroup setEntries(List<String> value) {
+		T newGroup = newSelf(value, getQualifiers());
+		return selfRef.compareAndSet(self, newGroup) ? newGroup : null;
+	}
+
+	@Override
+	public final boolean isValid() {
 		return this.equals(selfRef.get());
 	}
 

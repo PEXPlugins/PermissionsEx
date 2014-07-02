@@ -1,6 +1,7 @@
 package ru.tehkode.permissions.backends;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
@@ -75,17 +76,12 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
-		List<ListenableFuture<Iterator<MatcherGroup>>> rawGroups = new ArrayList<>(backends.size());
+	public Iterable<MatcherGroup> getAll() {
+		List<Iterable<MatcherGroup>> rawGroups = new ArrayList<>(backends.size());
 		for (PermissionBackend backend : backends) {
 			rawGroups.add(backend.getAll());
 		}
-		return Futures.transform(Futures.allAsList(rawGroups), new Function<List<Iterator<MatcherGroup>>, Iterator<MatcherGroup>>() {
-			@Override
-			public Iterator<MatcherGroup> apply(List<Iterator<MatcherGroup>> iterators) {
-				return Iterators.concat(iterators.iterator());
-			}
-		});
+		return Iterables.concat(rawGroups);
 	}
 	private <T> List<T> concatList(List<List<T>> lists) {
 		if (lists.isEmpty()) {

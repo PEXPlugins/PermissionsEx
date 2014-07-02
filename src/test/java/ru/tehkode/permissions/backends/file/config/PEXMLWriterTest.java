@@ -84,5 +84,4 @@ public class PEXMLWriterTest {
 		}
 		return res.resultValue;
 	}
-
 }

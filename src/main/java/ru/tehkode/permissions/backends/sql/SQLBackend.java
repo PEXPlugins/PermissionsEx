@@ -30,6 +30,7 @@ import ru.tehkode.permissions.backends.SchemaUpdate;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
+import ru.tehkode.utils.ConcurrentProvider;
 import ru.tehkode.utils.StringUtils;
 
 import java.io.IOException;
@@ -355,21 +356,38 @@ public class SQLBackend extends PermissionBackend {
 		}
 	}
 
+	// TODO evaluate whether some of this query work should be done async (anyway, the majority of the data *should* be received asynchronously)
 	@Override
-	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
-		return execute(new Callable<Iterator<MatcherGroup>>() {
+	public Iterable<MatcherGroup> getAll() {
+		final ResultSet res;
+		final ConcurrentProvider<MatcherGroup> provider;
+		try (SQLConnection conn = getSQL()) {
+			res = conn.prep("groups.get.all").executeQuery();
+			if (!res.next()) {
+				return Collections.emptySet();
+			}
+			provider = ConcurrentProvider.newProvider();
+		} catch (SQLException | IOException e) {
+			handleException(e, "getting all groups");
+			return Collections.emptySet();
+		}
+
+		execute(new Callable<Void>() {
 			@Override
-			public Iterator<MatcherGroup> call() throws Exception {
-				try (SQLConnection conn = getSQL()) {
-					List<MatcherGroup> ret = new LinkedList<>();
-					ResultSet res = conn.prep("groups.get.all").executeQuery();
-					while (res.next()) {
-						ret.add(getMatcherGroup(res.getString("name"), res.getInt("id")));
+			public Void call() throws SQLException, IOException {
+				while (true) {
+					MatcherGroup match = getMatcherGroup(res.getString("name"), res.getInt("id"));
+					if (res.next()) {
+						provider.provide(match);
+					} else {
+						provider.provideAndClose(match);
+						break;
 					}
-					return ret.iterator();
 				}
+				return null;
 			}
 		});
+		return provider;
 	}
 
 	@Override
@@ -432,13 +450,13 @@ public class SQLBackend extends PermissionBackend {
 					}
 					entriesAdd.executeBatch();
 
-					PreparedStatement ret = conn.prepAndBind("qualifiers.add", entityId, "", "");
+					PreparedStatement qualifiersAdd = conn.prepAndBind("qualifiers.add", entityId, "", "");
 					for (Map.Entry<Qualifier, String> entry : qualifiers.entries()) {
-						ret.setString(2, entry.getKey().getName());
-						ret.setString(3, entry.getValue());
-						ret.addBatch();
+						qualifiersAdd.setString(2, entry.getKey().getName());
+						qualifiersAdd.setString(3, entry.getValue());
+						qualifiersAdd.addBatch();
 					}
-					ret.executeBatch();
+					qualifiersAdd.executeBatch();
 
 					resetMatcherGroup(entityId); // Just in case
 					return getMatcherGroup(type, entityId);

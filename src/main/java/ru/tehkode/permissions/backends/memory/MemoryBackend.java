@@ -20,11 +20,9 @@ package ru.tehkode.permissions.backends.memory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -76,13 +74,8 @@ public class MemoryBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
-		return execute(new Callable<Iterator<MatcherGroup>>() {
-			@Override
-			public Iterator<MatcherGroup> call() throws Exception {
-				return matcherList.getAll();
-			}
-		});
+	public Iterable<MatcherGroup> getAll() {
+		return matcherList.getAll();
 	}
 
 	@Override

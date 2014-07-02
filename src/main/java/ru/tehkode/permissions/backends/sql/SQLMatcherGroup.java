@@ -1,5 +1,6 @@
 package ru.tehkode.permissions.backends.sql;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -85,6 +87,12 @@ public class SQLMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
+	public List<String> getEntriesList() {
+		// TODO Implement more correctly
+		return ImmutableList.copyOf(entries.keySet());
+	}
+
+	@Override
 	public MatcherGroup setEntries(Map<String, String> value) {
 		try (SQLConnection conn = backend.getSQL()) {
 			conn.prepAndBind("entries.clear").execute();
@@ -92,6 +100,24 @@ public class SQLMatcherGroup extends MatcherGroup {
 			for (Map.Entry<String, String> entry : value.entrySet()) {
 				stmt.setString(2, entry.getKey());
 				stmt.setString(3, entry.getValue());
+				stmt.addBatch();
+			}
+			stmt.executeBatch();
+			backend.resetMatcherGroup(getEntityId());
+			return backend.getMatcherGroup(getName(), getEntityId());
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public MatcherGroup setEntries(List<String> value) {
+		try (SQLConnection conn = backend.getSQL()) {
+			conn.prepAndBind("entries.clear").execute();
+			PreparedStatement stmt = conn.prepAndBind("entries.add", entityId, "", null);
+			for (String entry : value) {
+				stmt.setString(2, entry);
 				stmt.addBatch();
 			}
 			stmt.executeBatch();

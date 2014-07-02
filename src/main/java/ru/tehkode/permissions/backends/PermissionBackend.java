@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
@@ -77,11 +78,23 @@ public abstract class PermissionBackend {
 		};
 	}
 
+	/**
+	 * Add a schema update to the list of updates that will be considered for {@link #performSchemaUpdate()}
+	 *
+	 * @param update The update to add
+	 */
 	protected void addSchemaUpdate(SchemaUpdate update) {
 		schemaUpdates.add(update);
 		Collections.sort(schemaUpdates);
 	}
 
+	/**
+	 * Actually perform the schema update using updates registered with {@link #addSchemaUpdate(SchemaUpdate)}
+	 *
+	 * This will update the schema from its current version to the latest version with an associated updater.
+	 * It makes no attempt to roll back partially failed updates, but will update the saved schema version
+	 * to the latest update which completed successfully.
+	 */
 	protected void performSchemaUpdate() {
 		int version = getSchemaVersion();
 		int newVersion = version;
@@ -106,7 +119,7 @@ public abstract class PermissionBackend {
 
 	/**
 	 * Return the current schema version.
-	 * -1 indicates that the schema version is unknown.
+	 * -1 indicates that the schema version is unknown or this backend does not use schema versioning (For example in a transient backend).
 	 *
 	 * @return The current schema version
 	 */
@@ -119,6 +132,11 @@ public abstract class PermissionBackend {
 	 */
 	protected abstract void setSchemaVersion(int version);
 
+	/**
+	 * Returns the latest schema version known for this backend, or -1 if no schema updates are present.
+	 *
+	 * @return The latest known schema version
+	 */
 	public int getLatestSchemaVersion() {
 		if (schemaUpdates.isEmpty()) {
 			return -1;
@@ -128,6 +146,12 @@ public abstract class PermissionBackend {
 
 	protected <V> ListenableFuture<V> execute(Callable<V> func) {
 		ListenableFutureTask<V> ret = ListenableFutureTask.create(func);
+		getExecutor().execute(ret);
+		return ret;
+	}
+
+	protected ListenableFuture<Void> execute(Runnable run) {
+		ListenableFutureTask<Void> ret = ListenableFutureTask.create(run, null);
 		getExecutor().execute(ret);
 		return ret;
 	}
@@ -145,6 +169,12 @@ public abstract class PermissionBackend {
 	}
 
 
+	/**
+	 * Clear any cached data for this backend.
+	 *
+	 * @throws PermissionBackendException If an error occurs with accessing the updated data.
+	 * Implementations may try to fall back to using existing cached data.
+	 */
 	public abstract void reload() throws PermissionBackendException;
 
 	/**
@@ -158,34 +188,60 @@ public abstract class PermissionBackend {
 	// -- World inheritance
 
 	/**
-	 * Returns an iterator that will produce all matcher groups known to this backend.
+	 * Returns an iterator that will produce all matcher groups known to this backend. This may be an extremely long list.
+	 * This iterable may not be completely filled. The backend may choose to asynchronously load results.
+	 * In this case, calls to {@link Iterator#next()} may block.
 	 *
-	 * @return
+	 * @return An iterable that will provide all matcher groups.
 	 */
-	public abstract ListenableFuture<Iterator<MatcherGroup>> getAll();
+	public abstract Iterable<MatcherGroup> getAll();
 
+	/**
+	 * Returns a matcher group only if there is only a single result. If multiple groups match, or no groups match, null is returned.
+	 *
+	 * @param type The name of the section.
+	 * @param qual The primary-key qualifier
+	 * @param qualValue The value of the qualifier used.
+	 * @return the result if only one result is present, otherwise null
+	 */
 	public ListenableFuture<MatcherGroup> getOne(final String type, final Qualifier qual, final String qualValue) {
-		return Futures.chain(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, ListenableFuture<? extends MatcherGroup>>() {
+		return Futures.transform(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, MatcherGroup>() {
 			@Override
-			public ListenableFuture<? extends MatcherGroup> apply(List<MatcherGroup> matcherGroups) {
-				return Futures.immediateFuture(matcherGroups.size() == 1 ? matcherGroups.get(0) : null);
+			public MatcherGroup apply(List<MatcherGroup> matcherGroups) {
+				return matcherGroups.size() == 1 ? matcherGroups.get(0) : null;
 			}
 		});
 	}
 
+	/**
+	 * Returns the first known matcher group, or null if no groups match.
+	 * Ordering of groups is backend-dependant currently.
+	 * This may be changed to be based on a sorted list of matching groups.
+	 *
+	 * @param type The name of the section
+	 * @param qual The primary-key qualifier
+	 * @param qualValue The value of the qualifier used.
+	 * @return the result, or null if no groups matched
+	 */
 	public ListenableFuture<MatcherGroup> getFirst(final String type, final Qualifier qual, final String qualValue) {
-		return Futures.chain(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, ListenableFuture<? extends MatcherGroup>>() {
+		return Futures.transform(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, MatcherGroup>() {
 			@Override
-			public ListenableFuture<? extends MatcherGroup> apply(List<MatcherGroup> matcherGroups) {
+			public MatcherGroup apply(List<MatcherGroup> matcherGroups) {
 				if (!matcherGroups.isEmpty()) {
-					return Futures.immediateFuture(matcherGroups.get(0));
+					return matcherGroups.get(0);
 				} else {
-					return Futures.immediateFuture(null);
+					return null;
 				}
 			}
 		});
 	}
 
+	/**
+	 * Returns a matcher group only if there is only a single result. If multiple groups match, or no groups match, null is returned.
+	 *
+	 * @param type The name of the section
+	 * @return the result if only one result is present, otherwise null
+	 */
 	public ListenableFuture<MatcherGroup> getOne(final String type) {
 		return Futures.transform(getMatchingGroups(type), new Function<List<MatcherGroup>, MatcherGroup>() {
 			@Override
@@ -195,7 +251,14 @@ public abstract class PermissionBackend {
 		});
 	}
 
-	public ListenableFuture<MatcherGroup> getFirst(final String type) {
+	/**
+	 * Returns the first known matcher group, or null if no groups match.
+	 * Ordering of groups is backend-dependant currently.
+	 * This may be changed to be based on a sorted list of matching groups.
+	 *
+	 * @param type The name of the section
+	 * @return the result, or null if no groups matched
+	 */	public ListenableFuture<MatcherGroup> getFirst(final String type) {
 		return Futures.transform(getMatchingGroups(type), new Function<List<MatcherGroup>, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(@Nullable List<MatcherGroup> matcherGroups) {
@@ -204,6 +267,13 @@ public abstract class PermissionBackend {
 		});
 	}
 
+	/**
+	 * Returns the first known matcher group, or creates a new group if none match.
+	 * What 'first' means is entirely backend-dependant.
+	 *
+	 * @param type The name of the section
+	 * @return Either an existing or new group, never null.
+	 */
 	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type) {
 		return Futures.chain(getFirst(type), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
 			@Override
@@ -217,6 +287,15 @@ public abstract class PermissionBackend {
 		});
 	}
 
+	/**
+	 * Returns the first known matcher group, or creates a new group if none match.
+	 * What 'first' means is entirely backend-dependant.
+	 *
+	 * @param type The name of the section
+	 * @param key The primary-key qualifier
+	 * @param value The qualifier's value
+	 * @return Either an existing or new group, never null.
+	 */
 	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type, final Qualifier key, final String value) {
 		return Futures.chain(getFirst(type, key, value), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
 			@Override
@@ -233,7 +312,7 @@ public abstract class PermissionBackend {
 	/**
 	 * Returns all known groups of the requested type.
 	 *
-	 * @param type The name of the type of section to look up
+	 * @param type The type of group to look up
 	 * @return Any matching groups. Empty if no values.
 	 */
 	public abstract ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type);
@@ -241,25 +320,78 @@ public abstract class PermissionBackend {
 	/**
 	 * Returns all known groups of the requested type with {@code qual} set to {@code qualValue}
 	 *
-	 * @param type      The type
-	 * @param qual
-	 * @param qualValue
+	 * @param type The type of group to look up
+	 * @param qual A primary-key qualifier
+	 * @param qualValue A value for the primary-key qualifier
 	 * @return Any matching groups. Empty if no values.
 	 */
 	public abstract ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue);
 
+	/**
+	 * Creates a new matcher group with the provided parameters.
+	 * Null values are not permitted in the entries list.
+	 *
+	 * @param type The type of group to create.
+	 * @param entries The entries the created group will have
+	 * @param qualifiers The qualifiers the created group will have
+	 * @return Future of the created group, result never null
+	 */
 	public abstract ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
 
+	/**
+	 * Creates a new matcher group with the provided parameters.
+	 * Null values are not permitted in the entries list.
+	 *
+	 * @param type The type of group to create.
+	 * @param entries The entries the created group will have
+	 * @param qualifiers The qualifiers the created group will have
+	 * @return Future of the created group, result never null
+	 */
 	public abstract ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers);
 
+	/**
+	 * Returns all values this qualifier has across every matcher group.
+	 * The result of the future will never be null, instead returning an empty collection representing no values.
+	 *
+	 * @param qualifier The qualifier to get values for
+	 * @return Future of all values, no duplicates.
+	 */
 	public abstract ListenableFuture<Collection<String>> getAllValues(Qualifier qualifier);
 
+	/**
+	 * Returns whether any group has the gives qualifier set to the given value.
+	 *
+	 * @param qualifier The qualifier to check
+	 * @param value The value to check.
+	 * @return Future of the result
+	 */
 	public abstract ListenableFuture<Boolean> hasAnyQualifier(Qualifier qualifier, String value);
 
+	/**
+	 * Replace all occurrences of the given qualifier set to {@code old} with {@code newVal}.
+	 *
+	 * @param qualifier The qualifier to operate on
+	 * @param old The old value
+	 * @param newVal The new value
+	 * @return A value-less future, really only useful for completion listeners
+	 */
 	public abstract ListenableFuture<Void> replaceQualifier(Qualifier qualifier, String old, String newVal);
 
+	/**
+	 * Return any matcher group containing the given qualifier with any value.
+	 * The result is never null.
+	 *
+	 * @param qualifier The qualifier to check
+	 * @return Future of the list of matcher groups.
+	 */
 	public abstract ListenableFuture<List<MatcherGroup>> allWithQualifier(Qualifier qualifier);
 
+	/**
+	 * Return the stored name for a given uuid, or null if the uuid is unknown.
+	 *
+	 * @param uuid The uuid to check
+	 * @return The name if known, otherwise {@code uuid}
+	 */
 	public ListenableFuture<String> getName(final String uuid) {
 		return Futures.transform(getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY), new Function<List<MatcherGroup>, String>() {
 			@Override
@@ -275,6 +407,11 @@ public abstract class PermissionBackend {
 		});
 	}
 
+	/**
+	 * Performs any cleanup necessary to shut down this backend.
+	 *
+	 * @throws PermissionBackendException if shutdown does not occur successfully
+	 */
 	public void close() throws PermissionBackendException {
 		asyncExecutor.shutdown();
 		try {
@@ -299,42 +436,35 @@ public abstract class PermissionBackend {
 	 *
 	 * @param backend The backend to load data from
 	 */
-	public void loadFrom(PermissionBackend backend) {
-			Futures.addCallback(backend.getAll(), new FutureCallback<Iterator<MatcherGroup>>() {
-				@Override
-				public void onSuccess(Iterator<MatcherGroup> result) {
-					List<ListenableFuture<MatcherGroup>> toWait = new LinkedList<>();
-					setPersistent(false);
-					while (result.hasNext()) {
-						MatcherGroup next = result.next();
-						toWait.add(createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers()));
+	public void loadFrom(final PermissionBackend backend) {
+		getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				List<ListenableFuture<MatcherGroup>> toWait = new LinkedList<>();
+				setPersistent(false);
+				for (MatcherGroup next : backend.getAll()) {
+					toWait.add(createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers()));
+				}
+				Futures.allAsList(toWait).addListener(new Runnable() {
+					@Override
+					public void run() {
+						setPersistent(true);
 					}
-					Futures.allAsList(toWait).addListener(new Runnable() {
-						@Override
-						public void run() {
-							setPersistent(true);
-						}
-					}, asyncExecutor);
-				}
-
-				@Override
-				public void onFailure(Throwable throwable) {
-
-				}
-			});
+				}, MoreExecutors.sameThreadExecutor());
+			}
+		});
 	}
 
+	/**
+	 * Revert any occurrences of UUID-using data from the PEX database. This allows recovering from any incorrect UUID assignments.
+	 */
 	public void revertUUID() {
-		Futures.addCallback(Futures.allAsList(getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY), getAll()), new FutureCallback<List<Object>>() {
+		Futures.addCallback(getMatchingGroups(MatcherGroup.UUID_ALIASES_KEY), new FutureCallback<List<MatcherGroup>>() {
 			@Override
-			public void onSuccess(List<Object> objects) {
-				List<MatcherGroup> uuids = (List<MatcherGroup>) objects.get(0);
-				Iterator<MatcherGroup> all = (Iterator<MatcherGroup>) objects.get(1);
-
+			public void onSuccess(List<MatcherGroup> uuids) {
 				setPersistent(false);
 				try {
-					while (all.hasNext()) {
-						MatcherGroup group = all.next();
+					for (MatcherGroup group : getAll()) {
 						Multimap<Qualifier, String> qualifiers = group.getQualifiers();
 						Collection<String> users = qualifiers.get(Qualifier.USER);
 						if (!users.isEmpty()) {
@@ -379,8 +509,8 @@ public abstract class PermissionBackend {
 	 */
 	protected void initializeDefaultConfiguration() throws PermissionBackendException {
 				// Load default permissions
-				createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of());
-				createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, ImmutableList.of("modifyworld.*"), ImmutableMultimap.of(Qualifier.GROUP, "default"));
+				Futures.getUnchecked(Futures.allAsList(createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of()),
+				createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, ImmutableList.of("modifyworld.*"), ImmutableMultimap.of(Qualifier.GROUP, "default"))));
 				setSchemaVersion(getLatestSchemaVersion());
 	}
 

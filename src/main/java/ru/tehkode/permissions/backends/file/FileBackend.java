@@ -128,13 +128,8 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
-		return execute(new Callable<Iterator<MatcherGroup>>() {
-			@Override
-			public Iterator<MatcherGroup> call() throws Exception {
-				return matcherGroups.getAll();
-			}
-		});
+	public Iterable<MatcherGroup> getAll() {
+		return matcherGroups.getAll();
 	}
 
 	@Override

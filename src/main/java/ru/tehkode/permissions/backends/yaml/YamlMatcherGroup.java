@@ -1,38 +1,34 @@
 package ru.tehkode.permissions.backends.yaml;
 
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Super-simple matcher group for the yaml backend
  */
-public class YamlMatcherGroup extends MatcherGroup {
+public final class YamlMatcherGroup extends MatcherGroup {
 	private final String name;
 	private final Multimap<Qualifier, String> qualifiers;
 	private final Map<String, String> entries;
+	private final List<String> entriesList;
 
-	public YamlMatcherGroup(String name, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
+	YamlMatcherGroup(String name, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
 		this.name = name;
 		this.qualifiers = qualifiers;
 		this.entries = Collections.unmodifiableMap(entries);
+		this.entriesList = null;
 	}
 
-	public YamlMatcherGroup(String name, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
-		Map<String, String> entries = new LinkedHashMap<>();
-		for (String entry : entriesList) {
-			entries.put(entry, null);
-		}
+	YamlMatcherGroup(String name, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
 		this.name = name;
 		this.qualifiers = qualifiers;
-		this.entries = Collections.unmodifiableMap(entries);
+		this.entriesList = Collections.unmodifiableList(entriesList);
+		this.entries = null;
 	}
 
 	@Override
@@ -56,7 +52,17 @@ public class YamlMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
+	public List<String> getEntriesList() {
+		return entriesList;
+	}
+
+	@Override
 	public MatcherGroup setEntries(Map<String, String> value) {
+		throw new UnsupportedOperationException("YAML backend is read-only");
+	}
+
+	@Override
+	public MatcherGroup setEntries(List<String> value) {
 		throw new UnsupportedOperationException("YAML backend is read-only");
 	}
 

@@ -76,6 +76,6 @@ public abstract class Qualifier {
 	}
 
 	public int getFlag() {
-		return 0b1 << (30 - getId());
+		return 1 << getId();
 	}
 }

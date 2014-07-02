@@ -25,4 +25,9 @@ public class MemoryMatcherGroupImpl extends MemoryMatcherGroup<MemoryMatcherGrou
 	protected MemoryMatcherGroupImpl newSelf(Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
 		return new MemoryMatcherGroupImpl(getName(), selfRef, listRef, qualifiers, entries);
 	}
+
+	@Override
+	protected MemoryMatcherGroupImpl newSelf(List<String> entries, Multimap<Qualifier, String> qualifiers) {
+		return new MemoryMatcherGroupImpl(getName(), selfRef, listRef, qualifiers, entries);
+	}
 }

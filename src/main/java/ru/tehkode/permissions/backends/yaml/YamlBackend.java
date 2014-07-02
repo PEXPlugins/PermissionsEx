@@ -155,31 +155,26 @@ public class YamlBackend extends PermissionBackend {
 	final Map<String, String> uuidMappings = new HashMap<>();
 
 	@Override
-	public ListenableFuture<Iterator<MatcherGroup>> getAll() {
-		return execute(new Callable<Iterator<MatcherGroup>>() {
-			@Override
-			public Iterator<MatcherGroup> call() throws Exception {
-				List<MatcherGroup> provider = new LinkedList<>();
-				synchronized (lock) {
-					uuidMappings.clear();
-					entityList(provider, permissions.getConfigurationSection("groups"), Qualifier.GROUP, "inheritance");
-					entityList(provider, permissions.getConfigurationSection("users"), Qualifier.USER, "group");
-					ConfigurationSection worldInheritanceSection = permissions.getConfigurationSection("worlds");
-					if (worldInheritanceSection != null) {
-						for (Map.Entry<String, Object> entry : worldInheritanceSection.getValues(false).entrySet()) {
-							if (entry.getValue() instanceof ConfigurationSection) {
-								worldSection(provider, entry.getKey(), (ConfigurationSection) entry.getValue());
-							}
-						}
-					}
-					if (!uuidMappings.isEmpty()) {
-						provider.add(new YamlMatcherGroup(MatcherGroup.UUID_ALIASES_KEY, ImmutableMultimap.<Qualifier, String>of(), new HashMap<>(uuidMappings)));
+	public Iterable<MatcherGroup> getAll() {
+		List<MatcherGroup> provider = new LinkedList<>();
+		synchronized (lock) {
+			uuidMappings.clear();
+			entityList(provider, permissions.getConfigurationSection("groups"), Qualifier.GROUP, "inheritance");
+			entityList(provider, permissions.getConfigurationSection("users"), Qualifier.USER, "group");
+			ConfigurationSection worldInheritanceSection = permissions.getConfigurationSection("worlds");
+			if (worldInheritanceSection != null) {
+				for (Map.Entry<String, Object> entry : worldInheritanceSection.getValues(false).entrySet()) {
+					if (entry.getValue() instanceof ConfigurationSection) {
+						worldSection(provider, entry.getKey(), (ConfigurationSection) entry.getValue());
 					}
 				}
-
-				return provider.iterator();
 			}
-		});
+			if (!uuidMappings.isEmpty()) {
+				provider.add(new YamlMatcherGroup(MatcherGroup.UUID_ALIASES_KEY, ImmutableMultimap.<Qualifier, String>of(), new HashMap<>(uuidMappings)));
+			}
+		}
+
+		return provider;
 	}
 
 

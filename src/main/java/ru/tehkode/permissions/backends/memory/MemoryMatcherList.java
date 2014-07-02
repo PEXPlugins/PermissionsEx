@@ -2,6 +2,7 @@ package ru.tehkode.permissions.backends.memory;
 
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import ru.tehkode.permissions.backends.PermissionBackend;
@@ -301,8 +302,8 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T>, Seriali
 	 *
 	 * @see PermissionBackend#getAll()
 	 */
-	public Iterator<MatcherGroup> getAll() {
-		return Iterators.transform(groups.iterator(), new Function<AtomicReference<T>, MatcherGroup>() {
+	public Iterable<MatcherGroup> getAll() {
+		return Iterables.transform(groups, new Function<AtomicReference<T>, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(AtomicReference<T> ptr) {
 				return valFromPtr(ptr);

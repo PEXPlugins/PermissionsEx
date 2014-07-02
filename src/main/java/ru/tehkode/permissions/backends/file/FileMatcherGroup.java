@@ -18,18 +18,18 @@ import java.util.logging.Logger;
 /**
  * Memory matcher group supporting additional matcher data from files
  */
-public class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
+public final class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
 	private static final Logger LOGGER = Logger.getLogger(FileMatcherGroup.class.getCanonicalName());
 	private final List<String> comments;
 	private final Multimap<String, String> entryComments;
 
-	protected FileMatcherGroup(String name, AtomicReference<FileMatcherGroup> selfRef, MemoryMatcherList<FileMatcherGroup, ?> listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries, List<String> comments, Multimap<String, String> entryComments) {
+	FileMatcherGroup(String name, AtomicReference<FileMatcherGroup> selfRef, MemoryMatcherList<FileMatcherGroup, ?> listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries, List<String> comments, Multimap<String, String> entryComments) {
 		super(name, selfRef, listRef, qualifiers, entries);
 		this.comments = comments == null ? null : Collections.unmodifiableList(comments);
 		this.entryComments = entryComments == null ? null : ImmutableMultimap.copyOf(entryComments);
 	}
 
-	protected FileMatcherGroup(String name, AtomicReference<FileMatcherGroup> selfRef, MemoryMatcherList<FileMatcherGroup, ?> listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList, List<String> comments, Multimap<String, String> entryComments) {
+	FileMatcherGroup(String name, AtomicReference<FileMatcherGroup> selfRef, MemoryMatcherList<FileMatcherGroup, ?> listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList, List<String> comments, Multimap<String, String> entryComments) {
 		super(name, selfRef, listRef, qualifiers, entriesList);
 		this.comments = comments == null ? null : Collections.unmodifiableList(comments);
 		this.entryComments = entryComments == null ? null : ImmutableMultimap.copyOf(entryComments);
@@ -57,6 +57,13 @@ public class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
 		return ret;
 	}
 
+	@Override
+	public MatcherGroup setEntries(List<String> entries) {
+		MatcherGroup ret = super.setEntries(entries);
+		save();
+		return ret;
+	}
+
 	private void save() {
 		try {
 			listRef.save();
@@ -67,6 +74,11 @@ public class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
 
 	@Override
 	protected FileMatcherGroup newSelf(Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+		return new FileMatcherGroup(getName(), selfRef, listRef, qualifiers, entries, getComments(), getEntryComments());
+	}
+
+	@Override
+	protected FileMatcherGroup newSelf(List<String> entries, Multimap<Qualifier, String> qualifiers) {
 		return new FileMatcherGroup(getName(), selfRef, listRef, qualifiers, entries, getComments(), getEntryComments());
 	}
 
