@@ -26,6 +26,7 @@ public class FileConfig {
 	private final File file, tempFile, oldFile;
 	private boolean saveSuppressed;
 	private final ThreadLocal<PEXMLParser> parser;
+	private final Object saveLock = new Object();
 
 	public FileConfig(File file) {
 		this.file = file;
@@ -91,13 +92,16 @@ public class FileConfig {
 
 		configWriter.close();
 
-		oldFile.delete();
-		if (!file.exists() || file.renameTo(oldFile)) {
-			if (!tempFile.renameTo(file)) {
-				throw new IOException("Unable to overwrite config with temporary file! New config is at " + tempFile + ", old config at" + oldFile);
-			} else {
-				if (!oldFile.delete()) {
-					throw new IOException("Unable to delete old file " + oldFile);
+		synchronized (saveLock) {
+			oldFile.delete();
+			boolean fileExists = file.exists();
+			if (!fileExists || file.renameTo(oldFile)) {
+				if (!tempFile.renameTo(file)) {
+					throw new IOException("Unable to overwrite config with temporary file! New config is at " + tempFile + ", old config at" + oldFile);
+				} else {
+					if (fileExists && !oldFile.delete()) {
+						throw new IOException("Unable to delete old file " + oldFile);
+					}
 				}
 			}
 		}

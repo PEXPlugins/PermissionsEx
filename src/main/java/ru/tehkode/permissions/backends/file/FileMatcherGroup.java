@@ -25,8 +25,8 @@ public class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
 
 	protected FileMatcherGroup(String name, AtomicReference<FileMatcherGroup> selfRef, MemoryMatcherList<FileMatcherGroup, ?> listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries, List<String> comments, Multimap<String, String> entryComments) {
 		super(name, selfRef, listRef, qualifiers, entries);
-		this.comments = comments == null ? Collections.<String>emptyList() : Collections.unmodifiableList(comments);
-		this.entryComments = entryComments == null ? ImmutableMultimap.<String, String>of() : ImmutableMultimap.copyOf(entryComments);
+		this.comments = comments == null ? null : Collections.unmodifiableList(comments);
+		this.entryComments = entryComments == null ? null : ImmutableMultimap.copyOf(entryComments);
 	}
 
 	protected FileMatcherGroup(String name, AtomicReference<FileMatcherGroup> selfRef, MemoryMatcherList<FileMatcherGroup, ?> listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList, List<String> comments, Multimap<String, String> entryComments) {
@@ -72,8 +72,9 @@ public class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
 
 	@Override
 	public String toString() {
+		final FileMatcherGroup selfRefValue = selfRef.get();
 		return "FileMatcherGroup{name=" + getName()
-				+ ",selfRef=" + selfRef
+				+ ",selfRef=" + (selfRefValue == null ? "null" : selfRefValue == this ? "me" : selfRefValue)
 				+ ",listRef=" + listRef
 				+ ",entries=" + getEntries()
 				+ ",qualifiers=" + getQualifiers()

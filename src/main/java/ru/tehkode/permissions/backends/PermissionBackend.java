@@ -2,6 +2,7 @@ package ru.tehkode.permissions.backends;
 
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.FutureCallback;
@@ -28,10 +29,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -301,18 +300,21 @@ public abstract class PermissionBackend {
 	 * @param backend The backend to load data from
 	 */
 	public void loadFrom(PermissionBackend backend) {
-			Futures.addCallback(getAll(), new FutureCallback<Iterator<MatcherGroup>>() {
+			Futures.addCallback(backend.getAll(), new FutureCallback<Iterator<MatcherGroup>>() {
 				@Override
 				public void onSuccess(Iterator<MatcherGroup> result) {
+					List<ListenableFuture<MatcherGroup>> toWait = new LinkedList<>();
 					setPersistent(false);
-					try {
-						while (result.hasNext()) {
-							MatcherGroup next = result.next();
-							createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers());
-						}
-					} finally {
-						setPersistent(true);
+					while (result.hasNext()) {
+						MatcherGroup next = result.next();
+						toWait.add(createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers()));
 					}
+					Futures.allAsList(toWait).addListener(new Runnable() {
+						@Override
+						public void run() {
+							setPersistent(true);
+						}
+					}, asyncExecutor);
 				}
 
 				@Override
@@ -369,6 +371,17 @@ public abstract class PermissionBackend {
 		} else {
 			this.activeExecutor = onThreadExecutor;
 		}
+	}
+
+	/**
+	 * This method is called when the file the permissions config is supposed to save to
+	 * does not exist yet,This adds default permissions & stuff
+	 */
+	protected void initializeDefaultConfiguration() throws PermissionBackendException {
+				// Load default permissions
+				createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of());
+				createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, ImmutableList.of("modifyworld.*"), ImmutableMultimap.of(Qualifier.GROUP, "default"));
+				setSchemaVersion(getLatestSchemaVersion());
 	}
 
 	/**

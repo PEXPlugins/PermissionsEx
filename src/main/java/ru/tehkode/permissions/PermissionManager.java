@@ -33,7 +33,6 @@ import ru.tehkode.permissions.query.GetQuery;
 import ru.tehkode.permissions.query.SetQuery;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

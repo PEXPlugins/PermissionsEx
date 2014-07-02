@@ -100,7 +100,7 @@ public class PEXMLWriter implements Closeable {
 
 		switch (type) {
 			case PLAIN:
-				writer.write(WriterOptions.SPECIAL_CHARACTERS.matcher(string).replaceAll("\\\\$1"));
+				writer.write(escapedString(string, null));
 				break;
 			case SINGLE_QUOTED:
 				writer.write("'");
@@ -127,7 +127,11 @@ public class PEXMLWriter implements Closeable {
 	}
 
 	private String escapedString(String input, String quoteChar) {
-		return WriterOptions.SPECIAL_CHARACTERS.matcher(input.replace(quoteChar, "\\" + quoteChar)).replaceAll("\\$1");
+		if (quoteChar == null) {
+			return WriterOptions.SPECIAL_CHARACTERS.matcher(input).replaceAll("\\\\$1");
+		} else {
+			return input.replace(quoteChar, "\\" + quoteChar);
+		}
 	}
 
 	public void close() throws IOException {

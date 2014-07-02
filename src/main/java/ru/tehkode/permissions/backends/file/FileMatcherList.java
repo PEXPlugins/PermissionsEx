@@ -10,6 +10,7 @@ import ru.tehkode.permissions.data.Qualifier;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -121,8 +122,15 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 			}
 			writer.endHeader();
 
-			// TODO: Write entry comments!
 			for (Map.Entry<String, String> ent : group.getEntries().entrySet()) {
+				if (group.getEntryComments() != null) {
+					Collection<String> entryComments = group.getEntryComments().get(ent.getKey());
+					if (entryComments != null && !entryComments.isEmpty()) {
+						for (String comment : entryComments) {
+							writer.writeComment(comment);
+						}
+					}
+				}
 				if (ent.getValue() == null) {
 					writer.writeListEntry(ent.getKey());
 				} else {

@@ -2,20 +2,20 @@ package ru.tehkode.permissions.backends.file.config;
 
 import org.parboiled.BaseParser;
 import org.parboiled.Rule;
-import org.parboiled.matchers.FirstOfStringsMatcher;
 import org.parboiled.support.StringBuilderVar;
 import org.parboiled.support.ValueStack;
 import org.parboiled.support.Var;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
- * Parser for PEX configuration format. This format is INI-like, except for the addition of qualifiers on the section headings
+ * Parser for PEX configuration format. This format is INI-like, except for the addition of qualifiers on the section headings and support for list values.
  */
 public class PEXMLParser extends BaseParser<Object> {
 	public Rule Document() {
-		return FirstOf(EOI, Sequence(OneOrMore(Section(), Optional(LineBreak())), ZeroOrMore(Comment(), LineBreak()), EOI, nodesToParent("root", Node.Type.ROOT)));
+		return FirstOf(EOI, Sequence(Optional(LineBreak()), OneOrMore(Section(), Optional(LineBreak())), ZeroOrMore(Comment(), LineBreak()), EOI, nodesToParent("root", Node.Type.ROOT)));
 	}
 
 	Rule Section() {
@@ -24,7 +24,7 @@ public class PEXMLParser extends BaseParser<Object> {
 				createSentinel(sentinel),
 				CommentCapable(Heading()),
 				ZeroOrMore(TestNot("["), Element()),
-				nodesToParent(popString(), Node.Type.SECTION, sentinel.get()),
+				nodesToParent(null, Node.Type.SECTION, sentinel.get()),
 				swap(),
 				popSentinel(sentinel));
 	}
@@ -36,7 +36,7 @@ public class PEXMLParser extends BaseParser<Object> {
 						TestNot("]"),
 						createSentinel(sentinel),
 						Mapping(FirstOf(AnyOf(" ]"), LineBreak())),
-						nodesToParent(popString(), Node.Type.QUALIFIER, sentinel.get()),
+						nodesToParent(null, Node.Type.QUALIFIER, sentinel.get()),
 						swap(),
 						popSentinel(sentinel)
 				),
@@ -47,8 +47,8 @@ public class PEXMLParser extends BaseParser<Object> {
 		Var<Object> sentinel = new Var<>();
 		return Sequence(createSentinel(sentinel), WhiteSpace(),
 				FirstOf(
-					Sequence(CommentCapable(Sequence(ListEntryStart(), String())), nodesToParent(popString(), Node.Type.SCALAR, sentinel.get())),
-					Sequence(CommentCapable(Mapping(LineBreak())), nodesToParent(popString(), Node.Type.MAPPING, sentinel.get()))
+					Sequence(CommentCapable(Sequence(ListEntryStart(), String())), nodesToParent(null, Node.Type.SCALAR, sentinel.get())),
+					Sequence(CommentCapable(Mapping(LineBreak())), nodesToParent(null, Node.Type.MAPPING, sentinel.get()))
 				),
 				swap(),
 				popSentinel(sentinel)
@@ -59,7 +59,7 @@ public class PEXMLParser extends BaseParser<Object> {
 		return Sequence(StringUntil(MappingDelimeter()),
 				MappingDelimeter(),
 				FirstOf(StringUntil(ruleUntil), push("")),
-				push(new Node(popString(), Node.Type.SCALAR)),
+				push(new Node((String) pop(), Node.Type.SCALAR)),
 				swap());
 	}
 
@@ -151,33 +151,24 @@ public class PEXMLParser extends BaseParser<Object> {
 		if (stack.isEmpty()) {
 			return false;
 		}
-		LinkedList<Node> nodes = new LinkedList<>();
+		List<Node> nodes = new ArrayList<>(Math.max(stack.size() - 5, 1));
 		while (!stack.isEmpty()) {
 			Object o = stack.peek();
 			if (sentinel != null && o == sentinel) {
 				break;
 			}
-			if (!(o instanceof Node)) {
-				throw new IllegalStateException("Unexpected object not of Node type: " + o);
+			if (o instanceof String && key == null) {
+				key = (String) stack.pop();
+			} else {
+				if (!(o instanceof Node)) {
+					throw new IllegalStateException("Unexpected object not of Node type: " + o);
+				}
+				nodes.add((Node) stack.pop());
 			}
-
-			nodes.add((Node) stack.pop());
 		}
 		Collections.reverse(nodes);
 		push(new Node(key, type, nodes));
 		return true;
-	}
-
-	protected String popString() {
-		ValueStack<Object> valueStack = getContext().getValueStack();
-		int i = 0;
-		while (i < valueStack.size()) {
-			if (valueStack.peek(i) instanceof String) {
-				return (String) valueStack.pop(i);
-			}
-			i++;
-		}
-		throw new IllegalStateException("No string-typed objects contained in value stack");
 	}
 
 	protected boolean createSentinel(Var<Object> sentinel) {

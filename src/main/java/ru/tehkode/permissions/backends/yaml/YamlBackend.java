@@ -329,7 +329,7 @@ public class YamlBackend extends PermissionBackend {
 			if (this.permissions == null) {
 				// First load, load even if the file doesn't exist
 				this.permissions = newPermissions;
-				initNewConfiguration();
+				initializeDefaultConfiguration();
 			}
 		} catch (Throwable e) {
 			throw new PermissionBackendException("Error loading permissions file!", e);
@@ -340,7 +340,7 @@ public class YamlBackend extends PermissionBackend {
 	 * This method is called when the file the permissions config is supposed to save to
 	 * does not exist yet,This adds default permissions & stuff
 	 */
-	private void initNewConfiguration() throws PermissionBackendException {
+	protected void initializeDefaultConfiguration() throws PermissionBackendException {
 		if (!permissionsFile.exists()) {
 			try {
 				permissionsFile.createNewFile();

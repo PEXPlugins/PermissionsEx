@@ -18,7 +18,9 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.bukkit.configuration.ConfigurationSection;
@@ -32,12 +34,11 @@ import ru.tehkode.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -124,19 +125,49 @@ public class SQLBackend extends PermissionBackend {
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
-
 		addSchemaUpdate(new SchemaUpdate(2) {
-			private final int LEGACY_TYPE_GROUP = 0,
-							LEGACY_TYPE_USER = 1,
-							LEGACY_TYPE_WORLD_SYSTEM = 2;
 			@Override
 			public void performUpdate() throws PermissionBackendException {
 				try (SQLConnection conn = getSQL()) {
 					ResultSet entities = conn.prepAndBind("SELECT `name`, `type`, FROM `{permissions_entity}`").executeQuery();
+					final List<ListenableFuture<MatcherGroup>> actionsHappening = new LinkedList<>();
 					while (entities.next()) {
+						SQLData entityData = new SQLData(entities.getString(1), SQLData.Type.values()[entities.getInt(2)], SQLBackend.this);
+						for (Map.Entry<String, List<String>> ent : entityData.getPermissionsMap().entrySet()) {
+							actionsHappening.add(createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, ent.getValue(), ent.getKey() == null ? ImmutableMultimap.of(entityData.getQualifier(), entityData.getIdentifier()) :
+									ImmutableMultimap.of(entityData.getQualifier(), entityData.getIdentifier(), Qualifier.WORLD, ent.getKey())));
+						}
+
+						for (Map.Entry<String, Map<String, String>> ent : entityData.getOptionsMap().entrySet()) {
+							actionsHappening.add(createMatcherGroup(MatcherGroup.OPTIONS_KEY, ent.getValue(), ent.getKey() == null ? ImmutableMultimap.of(entityData.getQualifier(), entityData.getIdentifier()) :
+									ImmutableMultimap.of(entityData.getQualifier(), entityData.getIdentifier(), Qualifier.WORLD, ent.getKey())));
+						}
+
+						for (Map.Entry<String, List<String>> ent : entityData.getParentsMap().entrySet()) {
+							actionsHappening.add(createMatcherGroup(MatcherGroup.INHERITANCE_KEY, ent.getValue(), ent.getKey() == null ? ImmutableMultimap.of(entityData.getQualifier(), entityData.getIdentifier()) :
+									ImmutableMultimap.of(entityData.getQualifier(), entityData.getIdentifier(), Qualifier.WORLD, ent.getKey())));
+						}
 					}
-					// The new tables have been deployed, just gotta move the old data over
-					// Migrate everything over to matcher groups! So much fun :)
+
+					ResultSet worlds = conn.prepAndBind("SELECT `parent`, `child` FROM `{permissions_inheritance}` WHERE `type`=2").executeQuery();
+					Map<String, List<String>> worldInheritance = new HashMap<>();
+					while (worlds.next()) {
+						List<String> parents = worldInheritance.get(worlds.getString(2));
+						if (parents == null) {
+							parents = new ArrayList<>();
+							worldInheritance.put(worlds.getString(2), parents);
+						}
+						parents.add(worlds.getString(1));
+					}
+
+					for (Map.Entry<String, List<String>> ent : worldInheritance.entrySet()) {
+						actionsHappening.add(createMatcherGroup(MatcherGroup.WORLD_INHERITANCE_KEY, ent.getValue(), ImmutableMultimap.of(Qualifier.WORLD, ent.getKey())));
+					}
+
+					conn.prepAndBind("DROP TABLE `{permissions}`").execute();
+					conn.prepAndBind("DROP TABLE `{permissions_entity}`").execute();
+					conn.prepAndBind("DROP TABLE `{permissions_inheritance}`").execute();
+					Futures.getUnchecked(Futures.allAsList(actionsHappening)); // Wait for it all to finish
 				} catch (SQLException | IOException e) {
 					throw new PermissionBackendException(e);
 				}
@@ -481,9 +512,12 @@ public class SQLBackend extends PermissionBackend {
 			@Override
 			public Void call() throws Exception {
 				try (SQLConnection conn = getSQL()) {
-					ResultSet res = conn.prepAndBind("qualifiers.replace", newVal, qualifier.getName(), old).executeQuery();
-					while (res.next()) {
-						resetMatcherGroup(res.getInt(1));
+					ResultSet res = conn.prepAndBind("qualifiers.replace", newVal, qualifier.getName(), old).executeQuery(); // TODO: Make this a stored procedure that'll do the change and return the changed ids
+					if (res.next()) {
+						String[] ids = res.getString(1).split(",");
+						for (String id : ids) {
+							resetMatcherGroup(Integer.parseInt(id));
+						}
 					}
 				}
 				return null;
@@ -509,6 +543,7 @@ public class SQLBackend extends PermissionBackend {
 		});
 	}
 
+	@Deprecated
 	protected final void setupAliases() {
 		ConfigurationSection aliases = getConfig().getConfigurationSection("aliases");
 		if (aliases == null) {
@@ -546,17 +581,18 @@ public class SQLBackend extends PermissionBackend {
 			getLogger().info("Deploying default database scheme");
 			executeStream(conn, databaseDumpStream);
 			setSchemaVersion(getLatestSchemaVersion());
+			if (!conn.hasTable("{permissions}")) {
+				initializeDefaultConfiguration();
+			}
+		} catch (PermissionBackendException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new PermissionBackendException("Deploying of default data failed. Please initialize database manually using " + dbDriver + ".sql", e);
 		}
-
-		/*PermissionsGroupData defGroup = getGroupData("default");
-		defGroup.setPermissions(Collections.singletonList("modifyworld.*"), null);
-		defGroup.setOption("default", "true", null);
-		defGroup.save();*/
-
 		getLogger().info("Database scheme deploying complete.");
 	}
+
+
 
 	public void reload() {
 		while (!matcherCache.isEmpty()) {

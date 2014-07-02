@@ -18,7 +18,6 @@
  */
 package ru.tehkode.permissions.backends.file;
 
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
@@ -73,6 +72,13 @@ public class FileBackend extends PermissionBackend {
 		}
 
 		this.loader = new FileConfig(new File(baseDir, permissionFilename));
+		if (oldFilename != null && !loader.getFile().exists()) {
+			try {
+				loader.getFile().createNewFile();
+			} catch (IOException e) {
+				throw new PermissionBackendException(e);
+			}
+		}
 		reload();
 		performSchemaUpdate();
 
@@ -223,46 +229,11 @@ public class FileBackend extends PermissionBackend {
 			if (this.matcherGroups == null) {
 				// First load, load even if the file doesn't exist
 				this.matcherGroups = new FileMatcherList(this.loader);
-				initNewConfiguration();
+				initializeDefaultConfiguration();
 			}
 		} catch (Throwable e) {
 			throw new PermissionBackendException("Error loading permissions file!", e);
 		}
-	}
-
-	/**
-	 * This method is called when the file the permissions config is supposed to save to
-	 * does not exist yet,This adds default permissions & stuff
-	 */
-	private void initNewConfiguration() throws PermissionBackendException {
-		if (!loader.getFile().exists()) {
-			try {
-				loader.getFile().createNewFile();
-
-				// Load default permissions
-				createMatcherGroup(MatcherGroup.INHERITANCE_KEY, Collections.singletonList("default"), ImmutableMultimap.<Qualifier, String>of());
-
-				List<String> defaultPermissions = new ArrayList<>(1);
-				// Specify here default permissions
-				defaultPermissions.add("modifyworld.*");
-
-				createMatcherGroup(MatcherGroup.PERMISSIONS_KEY, defaultPermissions, ImmutableMultimap.of(Qualifier.GROUP, "default"));
-				setSchemaVersion(getLatestSchemaVersion());
-			} catch (IOException e) {
-				throw new PermissionBackendException(e);
-			}
-		}
-	}
-
-	@Override
-	public void loadFrom(PermissionBackend backend) {
-		this.setPersistent(false);
-		try {
-			super.loadFrom(backend);
-		} finally {
-			this.setPersistent(true);
-		}
-		save();
 	}
 
 	@Override
