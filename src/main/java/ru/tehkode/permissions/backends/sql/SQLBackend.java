@@ -31,6 +31,7 @@ import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.utils.ConcurrentProvider;
+import ru.tehkode.utils.PrefixedThreadFactory;
 import ru.tehkode.utils.StringUtils;
 
 import java.io.IOException;
@@ -77,7 +78,7 @@ public class SQLBackend extends PermissionBackend {
 	protected final String dbDriver;
 
 	public SQLBackend(PermissionManager manager, final ConfigurationSection config) throws PermissionBackendException {
-		super(manager, config, Executors.newCachedThreadPool());
+		super(manager, config, Executors.newCachedThreadPool(new PrefixedThreadFactory("PEX-sql")));
 		final String dbUri = getConfig().getString("uri", "");
 		final String dbUser = getConfig().getString("user", "");
 		final String dbPassword = getConfig().getString("password", "");

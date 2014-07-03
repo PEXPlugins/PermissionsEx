@@ -10,6 +10,7 @@ import ru.tehkode.permissions.backends.SchemaUpdate;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
+import ru.tehkode.utils.PrefixedThreadFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -35,7 +36,7 @@ public class YamlBackend extends PermissionBackend {
 	private final Object lock = new Object();
 
 	public YamlBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
-		super(manager, config, Executors.newSingleThreadExecutor());
+		super(manager, config, Executors.newSingleThreadExecutor(new PrefixedThreadFactory("PEX-yaml")));
 		String permissionFilename = getConfig().getString("file");
 
 		// Default settings

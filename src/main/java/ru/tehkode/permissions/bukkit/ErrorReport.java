@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import ru.tehkode.utils.PrefixedThreadFactory;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -20,7 +21,7 @@ import ru.tehkode.utils.StringUtils;
  * and generates a short URL to create a GitHub issue.
  */
 public class ErrorReport {
-	private static final ExecutorService ASYNC_EXEC = Executors.newSingleThreadExecutor();
+	private static final ExecutorService ASYNC_EXEC = Executors.newSingleThreadExecutor(new PrefixedThreadFactory("PEX-errorreport"));
 	private static final String UTF8_ENCODING = "utf-8";
 	private static final ThreadLocal<Yaml> YAML_INSTANCE = new ThreadLocal<Yaml>() {
 		@Override
@@ -65,12 +66,8 @@ public class ErrorReport {
 	 */
 	public static String shortenURL(String longUrl) {
 		if (longUrl == null) {
-			return longUrl;
+			return null;
 		}
-
-		StringBuilder sb = null;
-		String line = null;
-		String urlStr = longUrl;
 
 		try {
 			URL url = new URL("http://git.io/create");
@@ -79,7 +76,7 @@ public class ErrorReport {
 			connection.setRequestMethod("POST");
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-			String urlParameters = "url=" + longUrl;
+			String urlParameters = "url=" + URLEncoder.encode(longUrl, UTF8_ENCODING);
 
 			DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 			wr.writeBytes(urlParameters);
@@ -87,7 +84,8 @@ public class ErrorReport {
 			wr.close();
 
 			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			sb = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
+			String line;
 			while ((line = rd.readLine()) != null) {
 				sb.append(line);
 			}
@@ -107,15 +105,15 @@ public class ErrorReport {
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 
-			Map<String, Object> request = new HashMap<>();		// {
-			request.put("description", "PEX Error Report");	   //	 "description": "PEX Error Report",
-			request.put("public", "false");					   //	 "public": false,
-			Map<String, Object> filesMap = new HashMap<>();	   //	 "files": {
-			Map<String, Object> singleFileMap = new HashMap<>();  //		 "report.md": {
-			singleFileMap.put("content", text);				   //			 "content": <text>
+			Map<String, Object> request = new HashMap<>();		 // {
+			request.put("description", "PEX Error Report");	     //	 "description": "PEX Error Report",
+			request.put("public", "false");					     //	 "public": false,
+			Map<String, Object> filesMap = new HashMap<>();	     //	 "files": {
+			Map<String, Object> singleFileMap = new HashMap<>(); //		 "report.md": {
+			singleFileMap.put("content", text);				     //			 "content": <text>
 			filesMap.put("report.md", singleFileMap);			 //		 }
-			request.put("files", filesMap);					   //	 }
-																  // }
+			request.put("files", filesMap);					     //	 }
+																 // }
 			yaml.dump(request, (requestWriter = new OutputStreamWriter(conn.getOutputStream())));
 
 			Map<?, ?> data = (Map<?, ?>) yaml.load((responseReader = conn.getInputStream()));

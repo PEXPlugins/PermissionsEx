@@ -31,6 +31,7 @@ import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.query.GetQuery;
 import ru.tehkode.permissions.query.SetQuery;
+import ru.tehkode.utils.PrefixedThreadFactory;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -285,7 +286,7 @@ public class PermissionManager {
 			service.shutdown();
 		}
 
-		service = Executors.newSingleThreadScheduledExecutor();
+		service = Executors.newSingleThreadScheduledExecutor(new PrefixedThreadFactory("PEX-manager"));
 	}
 
 	protected void clearCache() {
