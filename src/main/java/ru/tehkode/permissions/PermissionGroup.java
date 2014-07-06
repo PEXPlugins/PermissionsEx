@@ -19,6 +19,7 @@
 package ru.tehkode.permissions;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import ru.tehkode.permissions.query.SetQuery;
 
 import java.util.*;
@@ -255,12 +256,13 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 
 	public void setDefault(boolean def, String worldName) {
 		SetQuery set = this.manager.set().world(worldName);
+		ListenableFuture<Boolean> future;
 		if (def) {
-			set.addParent(getIdentifier());
+			future = set.addParent(getIdentifier());
 		} else {
-			set.removeParent(getIdentifier());
+			future = set.removeParent(getIdentifier());
 		}
-		set.perform();
+		Futures.getUnchecked(future);
 	}
 
 	@Override

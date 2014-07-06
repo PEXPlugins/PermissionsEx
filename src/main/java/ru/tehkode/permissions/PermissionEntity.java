@@ -172,8 +172,7 @@ public abstract class PermissionEntity {
 	public void setPrefix(String prefix, String worldName) {
 		Futures.getUnchecked(set()
 				.world(worldName)
-				.setOption("prefix", prefix)
-				.perform());
+				.setOption("prefix", prefix));
 	}
 
 	/**
@@ -199,8 +198,7 @@ public abstract class PermissionEntity {
 	public void setSuffix(String suffix, String worldName) {
 		Futures.getUnchecked(set()
 				.world(worldName)
-				.setOption("suffix", suffix)
-				.perform());
+				.setOption("suffix", suffix));
 	}
 
 	/**
@@ -279,7 +277,7 @@ public abstract class PermissionEntity {
 	 * @param worldName      World name to add permission to
 	 */
 	public void addPermission(String permission, String worldName) {
-		set().world(worldName).addPermission(permission).perform();
+		Futures.getUnchecked(set().world(worldName).addPermission(permission));
 
 	}
 
@@ -320,7 +318,7 @@ public abstract class PermissionEntity {
 	 * @param world       World to set permissions for
 	 */
 	public void setPermissions(List<String> permissions, String world) {
-		set().world(world).setPermissions(permissions).perform();
+		Futures.getUnchecked(set().world(world).setPermissions(permissions));
 	}
 
 	/**
@@ -430,7 +428,7 @@ public abstract class PermissionEntity {
 	 * @param world  World name
 	 */
 	public void setOption(String option, String value, String world) {
-		set().world(world).setOption(option, value).perform();
+		Futures.getUnchecked(set().world(world).setOption(option, value));
 	}
 
 	/**
@@ -759,7 +757,7 @@ public abstract class PermissionEntity {
 	}
 
 	public void setParentsIdentifier(List<String> parentNames, String world) {
-		set().world(world).setParents(parentNames).perform();
+		Futures.getUnchecked(set().world(world).setParents(parentNames));
 	}
 
 	public void setParentsIdentifier(List<String> parentNames) {

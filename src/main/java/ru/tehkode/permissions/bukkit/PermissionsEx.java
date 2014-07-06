@@ -66,6 +66,7 @@ import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.exceptions.PermissionsNotAvailable;
+import ru.tehkode.permissions.query.SetQuery;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -481,10 +482,9 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 					return;
 				}
 
-				permissionsManager.set().user(player)
-						.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L))
-						.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress())
-						.perform();
+				SetQuery query = permissionsManager.set().user(player);
+				query.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
+				query.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress());
 			} catch (Throwable t) {
 				ErrorReport.handleError("While login cleanup event", t);
 			}
@@ -496,8 +496,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 				final Player player = event.getPlayer();
 				if (config.shouldLogPlayers()) {
 					permissionsManager.set().user(player)
-							.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L))
-							.perform();
+							.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
 				}
 
 				// Update player name

@@ -1,6 +1,9 @@
 package ru.tehkode.permissions.query;
 
 import com.google.common.base.Function;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.World;
@@ -93,13 +96,19 @@ public abstract class PermissionQuery<T extends PermissionQuery<T>> implements C
 		return self;
 	}
 
+
+	protected ListenableFuture<List<MatcherGroup>> performQuery(String sectionName) {
+		return performQuery(sectionName, false);
+	}
+
 	/**
 	 * Performs this query, traversing inheritance if necessary.
 	 * Duplicate groups may be present in the result if the same group is relevant in multiple places in the inheritance hierarchy.
 	 * @param sectionName The name of the section being looked up in this query.
+	 * @param createIfEmpty Create a new matcher group if none match
 	 * @return the relevant matcher groups
 	 */
-	protected ListenableFuture<List<MatcherGroup>> performQuery(String sectionName) {
+	protected ListenableFuture<List<MatcherGroup>> performQuery(final String sectionName, final boolean createIfEmpty) {
 		ListenableFuture<List<MatcherGroup>> query;
 		if (primaryKey != null) {
 			query = this.manager.getBackend().getMatchingGroups(sectionName, primaryKey, primaryValue);
@@ -116,6 +125,18 @@ public abstract class PermissionQuery<T extends PermissionQuery<T>> implements C
 						}
 					}
 					Collections.sort(result);
+					if (result.isEmpty() && createIfEmpty) {
+						Multimap<Qualifier, String> qualifiers = HashMultimap.create();
+						qualifiers.put(primaryKey, primaryValue);
+						if (world != null && primaryKey != Qualifier.WORLD) {
+							qualifiers.put(Qualifier.WORLD, world);
+						}
+						if (until != 0) {
+							qualifiers.put(Qualifier.UNTIL, String.valueOf(until));
+						}
+
+						result.add(Futures.getUnchecked(manager.getBackend().createMatcherGroup(sectionName, ImmutableMap.<String, String>of(), qualifiers)));
+					}
 				}
 				return result;
 			}
