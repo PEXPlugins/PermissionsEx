@@ -349,7 +349,7 @@ public class FileBackend extends PermissionBackend {
 				// Specify here default permissions
 				defaultPermissions.add("modifyworld.*");
 
-				permissions.set("groups/default/permissions", defaultPermissions);
+				permissions.set("groups/default/options/permissions", defaultPermissions);
 				permissions.set("schema-version", getLatestSchemaVersion());
 
 				this.save();
