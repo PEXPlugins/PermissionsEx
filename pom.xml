@@ -4,20 +4,61 @@
     <artifactId>PermissionsEx</artifactId>
     <version>2.0-SNAPSHOT</version>
     <name>PermissionsEx</name>
+    <description>A powerful permissions plugin for Bukkit</description>
     <url>https://github.com/PEXPlugins/PermissionsEx</url>
     <properties>
-        <netbeans.hint.license>gpl2</netbeans.hint.license>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/PEXPlugins/PermissionsEx/issues</url>
     </issueManagement>
+    <ciManagement>
+        <system>Jenkins</system>
+        <url>http://ci.nixium.com/job/PermissionsEx</url>
+    </ciManagement>
+    <licenses>
+        <license>
+            <name>GPL v2</name>
+            <url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+            <distribution>manual</distribution>
+        </license>
+    </licenses>
     <scm>
         <connection>scm:git:git://github.com/PEXPlugins/PermissionsEx.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/PEXPlugins/PermissionsEx.git</developerConnection>
-        <url>https://github.com/PEXPlugins/PermissionsEx.git</url>
+        <url>https://github.com/PEXPlugins/PermissionsEx</url>
     </scm>
+    <profiles>
+        <profile>
+            <id>publish-site</id>
+            <properties>
+                <github.global.server>github</github.global.server>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.github</groupId>
+                        <artifactId>site-maven-plugin</artifactId>
+                        <version>0.9</version>
+                        <configuration>
+                            <message>Updating site for ${project.version}</message>
+                            <path>${project.version}</path>
+                            <merge>true</merge>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>site</goal>
+                                </goals>
+                                <phase>site</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <finalName>${project.artifactId}</finalName>
@@ -143,11 +184,11 @@
             <artifactId>updater</artifactId>
             <version>LATEST</version>
         </dependency>
-      <dependency>
-        <groupId>org.parboiled</groupId>
-        <artifactId>parboiled-java</artifactId>
-        <version>1.1.6</version>
-      </dependency>
+        <dependency>
+            <groupId>org.parboiled</groupId>
+            <artifactId>parboiled-java</artifactId>
+            <version>1.1.6</version>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
@@ -163,4 +204,15 @@
             <url>http://repo.gravitydevelopment.net</url>
         </repository>
     </repositories>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
