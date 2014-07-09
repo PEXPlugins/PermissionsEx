@@ -1,0 +1,14 @@
+ru.tehkode.permissions
+ru.tehkode.permissions.backends
+ru.tehkode.permissions.backends.caching
+ru.tehkode.permissions.backends.file
+ru.tehkode.permissions.backends.memory
+ru.tehkode.permissions.backends.sql
+ru.tehkode.permissions.bukkit
+ru.tehkode.permissions.bukkit.commands
+ru.tehkode.permissions.bukkit.regexperms
+ru.tehkode.permissions.commands
+ru.tehkode.permissions.commands.exceptions
+ru.tehkode.permissions.events
+ru.tehkode.permissions.exceptions
+ru.tehkode.utils
