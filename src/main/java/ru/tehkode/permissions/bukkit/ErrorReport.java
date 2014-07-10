@@ -286,8 +286,9 @@ public class ErrorReport {
 				.addCode(configuration, "yaml");
 
 		// Permissions database
+		// TODO: Allow backend to report its own report data
 		if (pexPlugin != null && pexConfig.getString("permissions.backend", "file").equalsIgnoreCase("file")) {
-			File file = new File(pexPlugin.getDataFolder(), pexConfig.getString("permissions.backends.file.file", "permissions.yml"));
+			File file = new File(pexPlugin.getDataFolder(), pexConfig.getString("permissions.backends.file.file", "permissions.pex"));
 			if (file.exists()) {
 				try {
 					permissionsDb = StringUtils.readStream(new FileInputStream(file));
@@ -302,7 +303,7 @@ public class ErrorReport {
 		if (!successfulLoad) {
 			builder.addText("PEX configuration could not be successfully loaded, attempting to read default permissions file");
 		}
-		builder.addCode(permissionsDb, "yaml");
+		builder.addCode(permissionsDb, "ini");
 
 		return builder.build();
 	}
