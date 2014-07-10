@@ -29,7 +29,8 @@ import java.util.UUID;
 public abstract class PermissionEvent extends Event implements Serializable {
 	private final UUID serverId;
 
-	public PermissionEvent(UUID id) {
+	PermissionEvent(UUID id, boolean async) {
+		super(async);
 		serverId = id;
 	}
 

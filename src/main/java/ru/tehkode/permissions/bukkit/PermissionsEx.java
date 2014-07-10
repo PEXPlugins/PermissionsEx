@@ -89,7 +89,11 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	private static final Executor MAIN_THREAD_EXECUTOR = new Executor() {
 		@Override
 		public void execute(Runnable command) {
-			Bukkit.getServer().getScheduler().runTask(PermissionsEx.instance, command);
+			if (Bukkit.getServer().isPrimaryThread()) {
+				command.run();
+			} else {
+				Bukkit.getServer().getScheduler().runTask(PermissionsEx.instance, command);
+			}
 		}
 	};
 
@@ -214,6 +218,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 			regexPerms = new RegexPermissions(this);
 			superms = new SuperpermsListener(this);
 			this.getServer().getPluginManager().registerEvents(superms, this);
+			this.getServer().getPluginManager().registerEvents(new EventConversionListener(this), this);
 			this.saveConfig();
 
 			// Start timed permissions cleaner timer

@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public class FileConfig {
@@ -28,13 +30,13 @@ public class FileConfig {
 	private boolean saveSuppressed;
 	private final ThreadLocal<PEXMLParser> parser;
 	private final Object saveLock = new Object();
-	private final Executor executor;
+	private final FileBackend backend;
 
-	public FileConfig(File file, Executor executor) {
+	public FileConfig(FileBackend backend, File file) {
 		this.file = file;
 		this.tempFile = new File(file.getPath() + ".tmp");
 		this.oldFile = new File(file.getPath() + ".old");
-		this.executor = executor;
+		this.backend = backend;
 
 		final PEXMLParser localParser = Parboiled.createParser(PEXMLParser.class);
 		parser = new ThreadLocal<PEXMLParser>() {
@@ -69,11 +71,14 @@ public class FileConfig {
 			throw new IOException(ErrorUtils.printParseErrors(result));
 		}
 
+		List<Node> children;
 		if (result.resultValue == null) {
-			throw new IOException("No result value for parser!");
+			children = Collections.emptyList();
+		} else {
+			children = result.resultValue.getChildren();
 		}
 
-		return new FileMatcherList(result.resultValue.getChildren(), this, executor);
+		return new FileMatcherList(backend, children, this);
 	}
 
 	/**

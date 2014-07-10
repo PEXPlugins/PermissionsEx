@@ -25,7 +25,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsExConfig;
+import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
+import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -299,7 +301,7 @@ public class PermissionManager {
 		this.setBackend(config.getDefaultBackend());
 	}
 
-	protected void callEvent(PermissionEvent event) {
+	public void callEvent(PermissionEvent event) {
 		nativeI.callEvent(event);
 	}
 
@@ -555,4 +557,7 @@ public class PermissionManager {
 		return null;
 	}
 
+	public void callEvent(MatcherGroup old, MatcherGroup newGroup, MatcherGroupEvent.Action action) {
+		callEvent(new MatcherGroupEvent(getServerUUID(), old, newGroup, action));
+	}
 }

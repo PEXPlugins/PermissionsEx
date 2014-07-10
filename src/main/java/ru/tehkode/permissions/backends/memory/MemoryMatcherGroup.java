@@ -27,6 +27,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V e
 	private final List<String> entriesList;
 
 	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, V listRef, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
+		super(listRef.getBackend());
 		this.name = name;
 		this.selfRef = selfRef;
 		this.listRef = listRef;
@@ -36,6 +37,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V e
 	}
 
 	protected MemoryMatcherGroup(String name, AtomicReference<T> selfRef, V listRef, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
+		super(listRef.getBackend());
 		this.name = name;
 		this.selfRef = selfRef;
 		this.listRef = listRef;
@@ -58,7 +60,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V e
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> setQualifiersImpl(Multimap<Qualifier, String> qualifiers) {
 		if (selfRef.compareAndSet(self, null)) {
 			listRef.deltaUpdate(selfRef, getName(), getQualifiers(), qualifiers);
 			T newGroup;
@@ -89,7 +91,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V e
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(Map<String, String> value) {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(Map<String, String> value) {
 		T newGroup = newSelf(value, getQualifiers());
 		if (selfRef.compareAndSet(self, newGroup)) {
 			return Futures.<MatcherGroup>immediateFuture(newGroup);
@@ -99,7 +101,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V e
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(List<String> value) {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(List<String> value) {
 		T newGroup = newSelf(value, getQualifiers());
 		if (selfRef.compareAndSet(self, newGroup)) {
 			return Futures.<MatcherGroup>immediateFuture(newGroup);
@@ -114,7 +116,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T, V>, V e
 	}
 
 	@Override
-	public ListenableFuture<Boolean> remove() {
+	protected ListenableFuture<Boolean> removeImpl() {
 		if (selfRef.compareAndSet(self, null)) {
 			listRef.remove(selfRef, self);
 			return Futures.immediateFuture(true);

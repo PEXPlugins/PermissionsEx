@@ -1,6 +1,7 @@
 package ru.tehkode.permissions.bukkit;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.entity.Player;
@@ -14,7 +15,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionDefault;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
+import ru.tehkode.permissions.data.MatcherGroup;
+import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.query.GetQuery;
 
@@ -37,11 +39,11 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	protected void updateAttachment(Player player) {
-		updateAttachment(player, player.getWorld().getName());
+	protected ListenableFuture<?> updateAttachment(Player player) {
+		return updateAttachment(player, player.getWorld().getName());
 	}
 
-	protected void updateAttachment(Player player, String worldName) {
+	protected ListenableFuture<?> updateAttachment(final Player player, String worldName) {
 		PermissionAttachment attach = attachments.get(player.getUniqueId());
 		Permission playerPerm = getCreateWrapper(player, "");
 		Permission playerOptionPerm = getCreateWrapper(player, ".options");
@@ -52,12 +54,20 @@ public class SuperpermsListener implements Listener {
 			attach.setPermission(playerOptionPerm, true);
 		}
 
-			if (plugin.getPermissionsManager().isDebug(player)) {
-				plugin.getLogger().info("Updating superperms for player " + player.getName());
+		if (plugin.getPermissionsManager().isDebug(player)) {
+			plugin.getLogger().info("Updating superperms for player " + player.getName());
+		}
+		updatePlayerPermission(playerPerm, player, worldName);
+		updatePlayerMetadata(playerOptionPerm, player, worldName);
+		ListenableFuture<?> future = Futures.allAsList(updatePlayerPermission(playerPerm, player, worldName),
+				updatePlayerMetadata(playerOptionPerm, player, worldName));
+		future.addListener(new Runnable() {
+			@Override
+			public void run() {
+				player.recalculatePermissions();
 			}
-			updatePlayerPermission(playerPerm, player, worldName);
-			updatePlayerMetadata(playerOptionPerm, player, worldName);
-			player.recalculatePermissions();
+		}, PermissionsEx.mainThreadExecutor());
+		return future;
 	}
 
 	private String permissionName(Player player, String suffix) {
@@ -152,11 +162,7 @@ public class SuperpermsListener implements Listener {
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		try {
-			updateAttachment(event.getPlayer());
-		} catch (Throwable t) {
-			ErrorReport.handleError("Superperms event join", t);
-		}
+		handleError(updateAttachment(event.getPlayer()), "Superperms event join");
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
@@ -165,7 +171,7 @@ public class SuperpermsListener implements Listener {
 			final Player player = event.getPlayer();
 			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world in join event
 			removeAttachment(player);
-			updateAttachment(player, null);
+			handleError(updateAttachment(player, null), "Superperms event login-update");
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event login", t);
 		}
@@ -192,35 +198,30 @@ public class SuperpermsListener implements Listener {
 		}
 	}
 
-	private void updateSelective(PermissionEntityEvent event, Player p) {
-			switch (event.getAction()) {
-				case SAVED:
-					break;
-
-				case PERMISSIONS_CHANGED:
-				case TIMEDPERMISSION_EXPIRED:
-					updatePlayerPermission(getCreateWrapper(p, ""), p, p.getWorld().getName());
-					p.recalculatePermissions();
-					break;
-
-				case OPTIONS_CHANGED:
-				case INFO_CHANGED:
-					updatePlayerMetadata(getCreateWrapper(p, ".options"), p, p.getWorld().getName());
-					p.recalculatePermissions();
-					break;
-
-				default:
-					updateAttachment(p);
+	@EventHandler
+	public void onMatcherGroup(MatcherGroupEvent event) {
+		try {
+			for (Player player : event.getChangedPlayers()) {
+				switch (event.getGroupType()) {
+					case MatcherGroup.PERMISSIONS_KEY:
+						recalcOnFinish(updatePlayerPermission(getCreateWrapper(player, ""), player, player.getWorld().getName()), player);
+						break;
+					case MatcherGroup.OPTIONS_KEY:
+						recalcOnFinish(updatePlayerMetadata(getCreateWrapper(player, ".options"), player, player.getWorld().getName()), player);
+						break;
+					default:
+						updateAttachment(player);
+						break;
+				}
 			}
+		} catch (Throwable t) {
+			ErrorReport.handleError("Superperms event matcher group", t);
+		}
 	}
 
 	@EventHandler
 	public void onWorldChanged(PlayerChangedWorldEvent event) {
-		try {
-			updateAttachment(event.getPlayer());
-		} catch (Throwable t) {
-			ErrorReport.handleError("Superperms event world change", t);
-		}
+		handleError(updateAttachment(event.getPlayer()), "Superperms event world change");
 	}
 
 	@EventHandler(priority = EventPriority.LOW)
@@ -235,11 +236,35 @@ public class SuperpermsListener implements Listener {
 					return;
 				default:
 					for (Player p : plugin.getServer().getOnlinePlayers()) {
-						updateAttachment(p);
+						handleError(updateAttachment(p), "Superperms event permission system event for " + p.getName());
 					}
 			}
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event permission system event", t);
 		}
+	}
+
+
+	// Callback helper methods
+	private void handleError(ListenableFuture<?> future, final String desc) {
+		Futures.addCallback(future, new FutureCallback<Object>() {
+			@Override
+			public void onSuccess(Object o) {
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+				ErrorReport.handleError(desc, throwable);
+			}
+		});
+	}
+
+	private void recalcOnFinish(ListenableFuture<?> future, final Player player) {
+		future.addListener(new Runnable() {
+			@Override
+			public void run() {
+				player.recalculatePermissions();
+			}
+		}, PermissionsEx.mainThreadExecutor());
 	}
 }

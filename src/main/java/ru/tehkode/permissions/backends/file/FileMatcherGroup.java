@@ -47,8 +47,8 @@ public final class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup,
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers) {
-		return Futures.transform(super.setQualifiers(qualifiers), new Function<MatcherGroup, MatcherGroup>() {
+	protected ListenableFuture<MatcherGroup> setQualifiersImpl(Multimap<Qualifier, String> qualifiers) {
+		return Futures.transform(super.setQualifiersImpl(qualifiers), new Function<MatcherGroup, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(@Nullable MatcherGroup matcherGroup) {
 				save();
@@ -58,8 +58,8 @@ public final class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup,
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(Map<String, String> entries) {
-		return Futures.transform(super.setEntries(entries), new Function<MatcherGroup, MatcherGroup>() {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(Map<String, String> entries) {
+		return Futures.transform(super.setEntriesImpl(entries), new Function<MatcherGroup, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(@Nullable MatcherGroup matcherGroup) {
 				save();
@@ -69,8 +69,8 @@ public final class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup,
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(List<String> entries) {
-		return Futures.transform(super.setEntries(entries), new Function<MatcherGroup, MatcherGroup>() {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(List<String> entries) {
+		return Futures.transform(super.setEntriesImpl(entries), new Function<MatcherGroup, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(@Nullable MatcherGroup matcherGroup) {
 				save();
@@ -80,8 +80,8 @@ public final class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup,
 	}
 
 	@Override
-	public ListenableFuture<Boolean> remove() {
-		return Futures.transform(super.remove(), new Function<Boolean, Boolean>() {
+	protected ListenableFuture<Boolean> removeImpl() {
+		return Futures.transform(super.removeImpl(), new Function<Boolean, Boolean>() {
 			@Override
 			public Boolean apply(@Nullable Boolean val) {
 				if (val != null && val) {

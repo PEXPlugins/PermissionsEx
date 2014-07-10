@@ -1,6 +1,7 @@
 package ru.tehkode.permissions.backends.memory.impl;
 
 import com.google.common.collect.Multimap;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.memory.MemoryMatcherList;
 import ru.tehkode.permissions.data.Qualifier;
 
@@ -13,6 +14,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * Simple implementation of MemoryMatcherList
  */
 public class MemoryMatcherListImpl extends MemoryMatcherList<MemoryMatcherGroupImpl, Void> {
+	public MemoryMatcherListImpl(PermissionBackend backend) {
+		super(backend);
+	}
+
 	@Override
 	protected void load(Void aVoid) throws IOException {
 	}

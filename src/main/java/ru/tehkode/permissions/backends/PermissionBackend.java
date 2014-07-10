@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
@@ -17,6 +18,7 @@ import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
+import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import javax.annotation.Nullable;
@@ -179,7 +181,7 @@ public abstract class PermissionBackend {
 	public abstract void reload() throws PermissionBackendException;
 
 	/**
-	 * Return friendly names of known users. These may not
+	 * Return known friendly names of registered users. These may not contain names for every registered user.
 	 *
 	 * @return Names associated with users
 	 */
@@ -337,8 +339,28 @@ public abstract class PermissionBackend {
 	 * @param qualifiers The qualifiers the created group will have
 	 * @return Future of the created group, result never null
 	 */
-	public abstract ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
+	public final ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+		return callCreate(createMatcherGroupImpl(type, entries, qualifiers));
+	}
 
+	protected abstract ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
+
+	private ListenableFuture<MatcherGroup> callCreate(ListenableFuture<MatcherGroup> future) {
+		Futures.addCallback(future, new FutureCallback<MatcherGroup>() {
+			@Override
+			public void onSuccess(MatcherGroup matcherGroup) {
+				if (matcherGroup != null) {
+					callEvent(null, matcherGroup, MatcherGroupEvent.Action.CREATE);
+				}
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+
+			}
+		}, PermissionsEx.mainThreadExecutor());
+		return future;
+	}
 	/**
 	 * Creates a new matcher group with the provided parameters.
 	 * Null values are not permitted in the entries list.
@@ -348,7 +370,16 @@ public abstract class PermissionBackend {
 	 * @param qualifiers The qualifiers the created group will have
 	 * @return Future of the created group, result never null
 	 */
-	public abstract ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers);
+	public final ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
+		return callCreate(createMatcherGroupImpl(type, entries, qualifiers));
+	}
+
+	/**
+	 * Non-event calling implementation of matcher group creation
+	 *
+	 * @see #createMatcherGroup(String, java.util.List, com.google.common.collect.Multimap)
+	 */
+	protected abstract ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, List<String> entries, Multimap<Qualifier, String> qualifiers);
 
 	/**
 	 * Returns all values this qualifier has across every matcher group.
@@ -427,6 +458,10 @@ public abstract class PermissionBackend {
 		}
 	}
 
+	public void callEvent(MatcherGroup old, MatcherGroup newGroup, MatcherGroupEvent.Action action) {
+		manager.callEvent(old, newGroup, action);
+	}
+
 	public final Logger getLogger() {
 		return manager.getLogger();
 	}
@@ -444,14 +479,24 @@ public abstract class PermissionBackend {
 				List<ListenableFuture<MatcherGroup>> toWait = new LinkedList<>();
 				setPersistent(false);
 				for (MatcherGroup next : backend.getAll()) {
-					toWait.add(createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers()));
+					if (next.isMap()) {
+						toWait.add(createMatcherGroup(next.getName(), next.getEntries(), next.getQualifiers()));
+					} else if (next.isList()) {
+						toWait.add(createMatcherGroup(next.getName(), next.getEntriesList(), next.getQualifiers()));
+					}
 				}
-				Futures.allAsList(toWait).addListener(new Runnable() {
+				Futures.addCallback(Futures.allAsList(toWait), new FutureCallback<List<MatcherGroup>>() {
 					@Override
-					public void run() {
+					public void onSuccess(List<MatcherGroup> matcherGroups) {
 						setPersistent(true);
 					}
-				}, MoreExecutors.sameThreadExecutor());
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						setPersistent(true);
+						ErrorReport.handleError("Converting from " + backend, throwable);
+					}
+				});
 			}
 		});
 	}

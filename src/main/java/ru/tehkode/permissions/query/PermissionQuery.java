@@ -3,6 +3,7 @@ package ru.tehkode.permissions.query;
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -14,6 +15,7 @@ import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -134,8 +136,7 @@ public abstract class PermissionQuery<T extends PermissionQuery<T>> implements C
 						if (until != 0) {
 							qualifiers.put(Qualifier.UNTIL, String.valueOf(until));
 						}
-
-						result.add(Futures.getUnchecked(manager.getBackend().createMatcherGroup(sectionName, ImmutableMap.<String, String>of(), qualifiers)));
+						result = Lists.newArrayList(Futures.getUnchecked(manager.getBackend().createMatcherGroup(sectionName, ImmutableMap.<String, String>of(), qualifiers)));
 					}
 				}
 				return result;

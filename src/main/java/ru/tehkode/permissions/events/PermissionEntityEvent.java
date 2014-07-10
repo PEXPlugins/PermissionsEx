@@ -38,10 +38,12 @@ public class PermissionEntityEvent extends PermissionEvent {
 	protected String entityIdentifier;
 
 	public PermissionEntityEvent(UUID sourceUUID, PermissionEntity entity, Action action) {
-		super(sourceUUID);
-		this.entity = entity;
-		this.entityIdentifier = entity.getIdentifier();
-		this.type = entity.getType();
+		this(sourceUUID, entity.getIdentifier(), entity.getType(), action);
+	}
+	public PermissionEntityEvent(UUID sourceUUID, String entityIdentifier, EntityType type, Action action) {
+		super(sourceUUID, false);
+		this.entityIdentifier = entityIdentifier;
+		this.type = type;
 		this.action = action;
 	}
 

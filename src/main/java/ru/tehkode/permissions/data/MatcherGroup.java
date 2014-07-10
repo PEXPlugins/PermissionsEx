@@ -1,11 +1,18 @@
 package ru.tehkode.permissions.data;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import ru.tehkode.permissions.backends.PermissionBackend;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.events.MatcherGroupEvent;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +30,13 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 								WORLD_INHERITANCE_KEY = "world-inheritance",
 								GENERAL_KEY = "general",
 								UUID_ALIASES_KEY = "uuid-aliases";
+
+	private final PermissionBackend backend;
+
+	protected MatcherGroup(PermissionBackend backend) {
+		this.backend = backend;
+	}
+
 	/**
 	 * Return the name of this matcher group
 	 *
@@ -38,13 +52,34 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 	 */
 	public abstract Multimap<Qualifier, String> getQualifiers();
 
+	protected abstract ListenableFuture<MatcherGroup> setQualifiersImpl(Multimap<Qualifier, String> qualifiers);
+
 	/**
-	 * Set the qualifiers in this group, returning an updated group object.
+	 * Set the qualifiers in this group, returning an updated group object. <br>
+	 * A {@link ru.tehkode.permissions.events.MatcherGroupEvent} will be called for this method
+	 * with action {@link ru.tehkode.permissions.events.MatcherGroupEvent.Action#CHANGE_QUALIFIERS}
 	 *
 	 * @param qualifiers The qualifiers to set for this group.
 	 * @return an updated group object
 	 */
-	public abstract ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers);
+	public final ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers) {
+		ListenableFuture<MatcherGroup> ret = setQualifiersImpl(qualifiers);
+		Futures.addCallback(ret, new FutureCallback<MatcherGroup>() {
+			@Override
+			public void onSuccess(MatcherGroup matcherGroup) {
+				if (matcherGroup == null) {
+					return;
+				}
+				backend.callEvent(MatcherGroup.this, matcherGroup, MatcherGroupEvent.Action.CHANGE_QUALIFIERS);
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+
+			}
+		}, PermissionsEx.mainThreadExecutor());
+		return ret;
+	}
 
 	/**
 	 * Return the entries associated with this group.
@@ -80,21 +115,68 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 	/**
 	 * Sets this group's entries to a map.
 	 * An immutable copy of the provided map will be made for storage.
-	 * Values must not be null.
-	 *
+	 * Values must not be null. <br>
+	 * A {@link ru.tehkode.permissions.events.MatcherGroupEvent} will be called for this method
+	 * with action {@link ru.tehkode.permissions.events.MatcherGroupEvent.Action#CHANGE_ENTRIES}
 	 * @param value the value to set as entries.
 	 * @return the new matcher group object, or null if this group's already invalid
 	 */
-	public abstract ListenableFuture<MatcherGroup> setEntries(Map<String, String> value);
+	public final ListenableFuture<MatcherGroup> setEntries(Map<String, String> value) {
+		ListenableFuture<MatcherGroup> ret = setEntriesImpl(value);
+		Futures.addCallback(ret, new FutureCallback<MatcherGroup>() {
+			@Override
+			public void onSuccess(MatcherGroup matcherGroup) {
+				if (matcherGroup == null) {
+					return;
+				}
+				backend.callEvent(MatcherGroup.this, matcherGroup, MatcherGroupEvent.Action.CHANGE_ENTRIES);
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+
+			}
+		}, PermissionsEx.mainThreadExecutor());
+		return ret;
+	}
+
+	/**
+	 * Implementation of the set entries method
+	 * not handling event calling logic
+	 * @see #setEntries(java.util.List)
+	 */
+	protected abstract ListenableFuture<MatcherGroup> setEntriesImpl(Map<String, String> value);
 
 	/**
 	 * Sets this group's entries as a list.
-	 * An immutable copy of the provided list will be made for storage.
+	 * An immutable copy of the provided list will be made for storage. <br>
+	 * A {@link ru.tehkode.permissions.events.MatcherGroupEvent} will be called for this method
+	 * with action {@link ru.tehkode.permissions.events.MatcherGroupEvent.Action#CHANGE_ENTRIES}
 	 *
 	 * @param value The values to set as entries.
 	 * @return the new matcher group object, or null if this group's already invalid.
 	 */
-	public abstract ListenableFuture<MatcherGroup> setEntries(List<String> value);
+	public final ListenableFuture<MatcherGroup> setEntries(List<String> value) {
+		ListenableFuture<MatcherGroup> ret = setEntriesImpl(value);
+		Futures.addCallback(ret, new FutureCallback<MatcherGroup>() {
+			@Override
+			public void onSuccess(MatcherGroup matcherGroup) {
+				if (matcherGroup == null) {
+					return;
+				}
+				backend.callEvent(MatcherGroup.this, matcherGroup, MatcherGroupEvent.Action.CHANGE_ENTRIES);
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+
+			}
+		}, PermissionsEx.mainThreadExecutor());
+		return ret;
+	}
+
+
+	protected abstract ListenableFuture<MatcherGroup> setEntriesImpl(List<String> value);
 
 	/**
 	 * Adds an entry to the current mapping of entries.
@@ -106,8 +188,12 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 	 */
 	public ListenableFuture<MatcherGroup> putEntry(String key, String value) {
 		Map<String, String> entries = getEntries();
-		if (getEntries() == null) {
-			return Futures.immediateFailedFuture(new IllegalStateException("Group is not a map!").fillInStackTrace());
+		if (entries == null) {
+			if (isEmpty()) {
+				entries = ImmutableMap.of();
+			} else {
+				return Futures.immediateFailedFuture(new IllegalStateException("Group is not a map!").fillInStackTrace());
+			}
 		}
 		Map<String, String> newEntries = new HashMap<>(entries);
 		newEntries.put(key, value);
@@ -124,7 +210,11 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 	public ListenableFuture<MatcherGroup> addEntry(String value) {
 		List<String> entries = getEntriesList();
 		if (entries == null) {
-			return Futures.immediateFailedFuture(new IllegalStateException("Group is not a list!").fillInStackTrace());
+			if (isEmpty()) {
+				entries = ImmutableList.of();
+			} else {
+				return Futures.immediateFailedFuture(new IllegalStateException("Group is not a list!").fillInStackTrace());
+			}
 		}
 		List<String> newEntries = new ArrayList<>(entries.size() + 1);
 		newEntries.addAll(entries);
@@ -161,6 +251,10 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 		} else { // What are we?
 			return Futures.immediateFailedFuture(new IllegalStateException("Group is not a list or map!").fillInStackTrace());
 		}
+	}
+
+	public boolean isEmpty() {
+		return (isList() && getEntriesList().isEmpty()) || (isMap() && getEntries().isEmpty());
 	}
 
 	/**
@@ -205,7 +299,26 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 	 * @return true if matcher was removed, false if {@link #isValid()} returns false or
 	 * 	if for some other reason the backend doesn't feel like removing this matcher.
 	 */
-	public abstract ListenableFuture<Boolean> remove();
+	public final ListenableFuture<Boolean> remove() {
+		ListenableFuture<Boolean> ret = removeImpl();
+		Futures.addCallback(ret, new FutureCallback<Boolean>() {
+			@Override
+			public void onSuccess(Boolean success) {
+				if (success == null || !success) {
+					return;
+				}
+				backend.callEvent(MatcherGroup.this, null, MatcherGroupEvent.Action.REMOVE);
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+
+			}
+		}, PermissionsEx.mainThreadExecutor());
+		return ret;
+	}
+
+	protected abstract ListenableFuture<Boolean> removeImpl();
 
 	public int getQualifierTypeMask() {
 		int ret = 0;

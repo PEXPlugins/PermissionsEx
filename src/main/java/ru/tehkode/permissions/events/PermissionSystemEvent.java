@@ -30,7 +30,7 @@ public class PermissionSystemEvent extends PermissionEvent {
 	private static final HandlerList handlers = new HandlerList();
 
 	public PermissionSystemEvent(UUID sourceUUID, Action action) {
-		super(sourceUUID);
+		super(sourceUUID, false);
 		this.action = action;
 	}
 

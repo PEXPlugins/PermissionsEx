@@ -43,7 +43,9 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 			public List<String> apply(List<MatcherGroup> result) {
 				List<String> ret = new ArrayList<>();
 				for (MatcherGroup match : result) {
-					ret.addAll(match.getEntriesList());
+					if (match.isList()) {
+						ret.addAll(match.getEntriesList());
+					}
 				}
 				return ret;
 			}
@@ -86,8 +88,10 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 			@Override
 			public String apply(List<MatcherGroup> matcherGroups) {
 				for (MatcherGroup match : matcherGroups) {
-					if (match.getEntries().containsKey(option)) {
-						return match.getEntries().get(option);
+					if (match.isMap()) {
+						if (match.getEntries().containsKey(option)) {
+							return match.getEntries().get(option);
+						}
 					}
 				}
 				return defaultValue;
@@ -100,9 +104,11 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 			@Override
 			public Map<String, String> apply(List<MatcherGroup> result) {
 				Map<String, String> options = new HashMap<>();
-			for (ListIterator<MatcherGroup> it = result.listIterator(result.size() - 1); it.hasPrevious();) {
-			options.putAll(it.previous().getEntries());
-		}
+				if (!result.isEmpty()) {
+					for (ListIterator<MatcherGroup> it = result.listIterator(result.size() - 1); it.hasPrevious(); ) {
+						options.putAll(it.previous().getEntries());
+					}
+				}
 		return options;
 			}
 		});
@@ -114,7 +120,9 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 			public List<String> apply(List<MatcherGroup> matcherGroups) {
 				List<String> ret = new LinkedList<>();
 				for (MatcherGroup match : matcherGroups) {
-					ret.addAll(match.getEntriesList());
+					if (match.isList()) {
+						ret.addAll(match.getEntriesList());
+					}
 				}
 				return ret;
 			}
@@ -127,7 +135,9 @@ public class GetQuery extends PermissionQuery<GetQuery> {
 			public List<String> apply(List<MatcherGroup> matcherGroups) {
 				List<String> ret = new LinkedList<>();
 				for (MatcherGroup match : matcherGroups) {
-					ret.addAll(match.getEntriesList());
+					if (match.isList()) {
+						ret.addAll(match.getEntriesList());
+					}
 				}
 				return ret;
 			}

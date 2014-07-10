@@ -442,7 +442,7 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
@@ -472,7 +472,7 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {

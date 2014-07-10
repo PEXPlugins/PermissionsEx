@@ -3,6 +3,7 @@ package ru.tehkode.permissions.backends.file;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.file.config.Node;
 import ru.tehkode.permissions.backends.file.config.PEXMLWriter;
 import ru.tehkode.permissions.backends.memory.MemoryMatcherList;
@@ -25,19 +26,17 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, List<Node>> {
 	private List<String> comments;
 	private final FileConfig config;
-	private final Executor executor;
 
-	public FileMatcherList(FileConfig config, Executor executor) {
+	public FileMatcherList(PermissionBackend backend, FileConfig config) {
+		super(backend);
 		comments = Collections.emptyList();
 		this.config = config;
-		this.executor = executor;
 		// Empty list
 	}
 
-	public FileMatcherList(List<Node> nodes, FileConfig config, Executor executor) throws IOException {
-		super(nodes);
+	public FileMatcherList(PermissionBackend backend, List<Node> nodes, FileConfig config) throws IOException {
+		super(backend, nodes);
 		this.config = config;
-		this.executor = executor;
 	}
 
 	// -- Load/save
@@ -145,21 +144,6 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 					writer.writeListEntry(entry);
 				}
 			}
-			for (Map.Entry<String, String> ent : group.getEntries().entrySet()) {
-				if (group.getEntryComments() != null) {
-					Collection<String> entryComments = group.getEntryComments().get(ent.getKey());
-					if (entryComments != null && !entryComments.isEmpty()) {
-						for (String comment : entryComments) {
-							writer.writeComment(comment);
-						}
-					}
-				}
-				if (ent.getValue() == null) {
-					writer.writeListEntry(ent.getKey());
-				} else {
-					writer.writeMapping(ent.getKey(), ent.getValue());
-				}
-			}
 		}
 
 		if (comments != null) {
@@ -181,7 +165,7 @@ public final class FileMatcherList extends MemoryMatcherList<FileMatcherGroup, L
 	}
 
 	Executor getExecutor() {
-		return this.executor;
+		return ((FileBackend) this.getBackend()).getExecutor();
 	}
 
 	@Override

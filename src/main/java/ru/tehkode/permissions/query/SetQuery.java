@@ -23,7 +23,7 @@ public class SetQuery extends PermissionQuery<SetQuery> {
 			@Override
 			public ListenableFuture<? extends Boolean> apply(List<MatcherGroup> matcherGroups) {
 				for (MatcherGroup group : matcherGroups) {
-					if (group.isList()) {
+					if (group.isList() || group.isEmpty()) {
 						return Futures.transform(group.addEntry(permission), new Function<MatcherGroup, Boolean>() {
 							@Override
 							public Boolean apply(@Nullable MatcherGroup matcherGroup) {
@@ -58,7 +58,7 @@ public class SetQuery extends PermissionQuery<SetQuery> {
 			@Override
 			public ListenableFuture<? extends Boolean> apply(List<MatcherGroup> matcherGroups) {
 				for (MatcherGroup group : matcherGroups) {
-					if (group.isList()) {
+					if (group.isList() || group.isEmpty()) {
 						return Futures.transform(group.setEntries(permissions), new Function<MatcherGroup, Boolean>() {
 							@Override
 							public Boolean apply(@Nullable MatcherGroup matcherGroup) {
@@ -77,7 +77,7 @@ public class SetQuery extends PermissionQuery<SetQuery> {
 			@Override
 			public ListenableFuture<? extends Boolean> apply(List<MatcherGroup> matcherGroups) {
 				for (MatcherGroup group : matcherGroups) {
-					if (group.isMap()) {
+					if (group.isMap() || group.isEmpty()) {
 						return Futures.transform(group.putEntry(key, value), new Function<MatcherGroup, Boolean>() {
 							@Override
 							public Boolean apply(@Nullable MatcherGroup matcherGroup) {
@@ -112,14 +112,13 @@ public class SetQuery extends PermissionQuery<SetQuery> {
 			@Override
 			public ListenableFuture<? extends Boolean> apply(List<MatcherGroup> matcherGroups) {
 				for (MatcherGroup group : matcherGroups) {
-					if (group.isList()) {
+					if (group.isList() || group.isEmpty())
 						return Futures.transform(group.addEntry(parent), new Function<MatcherGroup, Boolean>() {
 							@Override
 							public Boolean apply(@Nullable MatcherGroup matcherGroup) {
 								return matcherGroup != null;
 							}
 						});
-					}
 				}
 				return Futures.immediateFuture(false);
 			}
@@ -147,7 +146,7 @@ public class SetQuery extends PermissionQuery<SetQuery> {
 			@Override
 			public ListenableFuture<? extends Boolean> apply(List<MatcherGroup> matcherGroups) {
 				for (MatcherGroup group : matcherGroups) {
-					if (group.isList()) {
+					if (group.isList() || group.isEmpty()) {
 						return Futures.transform(group.setEntries(parents), new Function<MatcherGroup, Boolean>() {
 							@Override
 							public Boolean apply(@Nullable MatcherGroup matcherGroup) {

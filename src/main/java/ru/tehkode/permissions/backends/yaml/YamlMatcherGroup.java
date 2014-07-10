@@ -19,14 +19,16 @@ public final class YamlMatcherGroup extends MatcherGroup {
 	private final Map<String, String> entries;
 	private final List<String> entriesList;
 
-	YamlMatcherGroup(String name, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
+	YamlMatcherGroup(YamlBackend backend, String name, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
+		super(backend);
 		this.name = name;
 		this.qualifiers = qualifiers;
 		this.entries = Collections.unmodifiableMap(entries);
 		this.entriesList = null;
 	}
 
-	YamlMatcherGroup(String name, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
+	YamlMatcherGroup(YamlBackend backend, String name, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
+		super(backend);
 		this.name = name;
 		this.qualifiers = qualifiers;
 		this.entriesList = Collections.unmodifiableList(entriesList);
@@ -48,7 +50,7 @@ public final class YamlMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setQualifiers(Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> setQualifiersImpl(Multimap<Qualifier, String> qualifiers) {
 		return readOnly();
 	}
 
@@ -63,12 +65,12 @@ public final class YamlMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(Map<String, String> value) {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(Map<String, String> value) {
 		return readOnly();
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(List<String> value) {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(List<String> value) {
 		return readOnly();
 	}
 
@@ -78,7 +80,17 @@ public final class YamlMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<Boolean> remove() {
+	protected ListenableFuture<Boolean> removeImpl() {
 		return readOnly();
+	}
+
+	@Override
+	public String toString() {
+		return "YamlMatcherGroup{" +
+				"name='" + name + '\'' +
+				", qualifiers=" + qualifiers +
+				", entries=" + entries +
+				", entriesList=" + entriesList +
+				'}';
 	}
 }

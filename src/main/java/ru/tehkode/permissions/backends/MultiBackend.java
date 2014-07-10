@@ -12,6 +12,7 @@ import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
+import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.ArrayList;
@@ -127,7 +128,7 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
 		PermissionBackend addBackend = backends.get(0);
 		if (qualifiers.containsKey(BACKEND)) {
 			qualifiers = HashMultimap.create(qualifiers);
@@ -143,7 +144,7 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
 		PermissionBackend addBackend = backends.get(0);
 		if (qualifiers.containsKey(BACKEND)) {
 			qualifiers = HashMultimap.create(qualifiers);
@@ -193,6 +194,11 @@ public class MultiBackend extends PermissionBackend {
 				return false;
 			}
 		});
+	}
+
+	@Override
+	public void callEvent(MatcherGroup old, MatcherGroup newGroup, MatcherGroupEvent.Action action) {
+		// No-op because we aren't a real backend
 	}
 
 	@Override

@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
@@ -72,7 +73,7 @@ public class FileBackend extends PermissionBackend {
 			baseDirectory.mkdirs();
 		}
 
-		this.loader = new FileConfig(new File(baseDir, permissionFilename), getExecutor());
+		this.loader = new FileConfig(this, new File(baseDir, permissionFilename));
 		if (oldFilename != null && !loader.getFile().exists()) {
 			try {
 				loader.getFile().createNewFile();
@@ -87,9 +88,15 @@ public class FileBackend extends PermissionBackend {
 		if (oldFilename != null) {
 			YamlBackend oldBackend = new YamlBackend(manager, config);
 			loadFrom(oldBackend);
+			System.out.println("Imported from yaml format");
 			oldBackend.close();
 			getConfig().set("file", permissionFilename);
 		}
+	}
+
+	@Override
+	protected Executor getExecutor() {
+		return super.getExecutor();
 	}
 
 	@Override
@@ -154,21 +161,26 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
-				return matcherGroups.create(type, entries, qualifiers);
+				MatcherGroup ret = matcherGroups.create(type, entries, qualifiers);
+				save();
+				return ret;
 			}
 		});
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
 		return execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
-				return matcherGroups.create(type, entries, qualifiers);
+				MatcherGroup ret = matcherGroups.create(type, entries, qualifiers);
+				save();
+				return ret;
+
 			}
 		});
 	}
@@ -224,7 +236,7 @@ public class FileBackend extends PermissionBackend {
 		} catch (FileNotFoundException e) {
 			if (this.matcherGroups == null) {
 				// First load, load even if the file doesn't exist
-				this.matcherGroups = new FileMatcherList(this.loader, getExecutor());
+				this.matcherGroups = new FileMatcherList(this, this.loader);
 				initializeDefaultConfiguration();
 			}
 		} catch (Throwable e) {
@@ -235,6 +247,7 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public void setPersistent(boolean persistent) {
 		super.setPersistent(persistent);
+		System.out.println("Setting persistent: " + persistent);
 		this.loader.setSaveSuppressed(!persistent);
 		if (persistent) {
 			this.save();

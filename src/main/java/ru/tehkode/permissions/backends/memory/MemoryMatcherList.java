@@ -35,6 +35,8 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T, ? extend
 	private final ConcurrentMap<String, AtomicReferenceArray<ConcurrentMap<String, Collection<AtomicReference<T>>>>> lookup = new ConcurrentHashMap<>();
 	private final ConcurrentMap<String, Collection<AtomicReference<T>>> anyTypeLookup = new ConcurrentHashMap<>();
 
+	private final PermissionBackend backend;
+
 	/**
 	 * Returns the section list relevant for the specified parameters, navigating the nested maps
 	 *
@@ -160,11 +162,13 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T, ? extend
 
 	// -- Load/save
 
-	public MemoryMatcherList() {
+	public MemoryMatcherList(PermissionBackend backend) {
+		this.backend = backend;
 		// Empty list
 	}
 
-	public MemoryMatcherList(SerializedType nodes) throws IOException {
+	public MemoryMatcherList(PermissionBackend backend, SerializedType nodes) throws IOException {
+		this.backend = backend;
 		load(nodes);
 	}
 
@@ -370,5 +374,9 @@ public abstract class MemoryMatcherList<T extends MemoryMatcherGroup<T, ? extend
 		for (AtomicReference<T> matcher : groups) {
 			matcher.set(null);
 		}
+	}
+
+	protected PermissionBackend getBackend() {
+		return backend;
 	}
 }

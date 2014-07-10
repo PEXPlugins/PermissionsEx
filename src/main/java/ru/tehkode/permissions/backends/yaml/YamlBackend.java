@@ -169,7 +169,7 @@ public class YamlBackend extends PermissionBackend {
 				}
 			}
 			if (!uuidMappings.isEmpty()) {
-				provider.add(new YamlMatcherGroup(MatcherGroup.UUID_ALIASES_KEY, ImmutableMultimap.<Qualifier, String>of(), new HashMap<>(uuidMappings)));
+				provider.add(new YamlMatcherGroup(this, MatcherGroup.UUID_ALIASES_KEY, ImmutableMultimap.<Qualifier, String>of(), new HashMap<>(uuidMappings)));
 			}
 		}
 
@@ -180,7 +180,7 @@ public class YamlBackend extends PermissionBackend {
 	private void worldSection(List<MatcherGroup> provider, String world, ConfigurationSection section) {
 		List<String> worldInheritance = section.getStringList("inheritance");
 		if (worldInheritance != null && !worldInheritance.isEmpty()) {
-			provider.add(new YamlMatcherGroup(MatcherGroup.WORLD_INHERITANCE_KEY, ImmutableMultimap.of(Qualifier.WORLD, world), worldInheritance));
+			provider.add(new YamlMatcherGroup(this, MatcherGroup.WORLD_INHERITANCE_KEY, ImmutableMultimap.of(Qualifier.WORLD, world), worldInheritance));
 		}
 	}
 
@@ -211,7 +211,7 @@ public class YamlBackend extends PermissionBackend {
 		// Permissions
 		List<String> permissions = section.getStringList("permissions");
 		if (permissions != null && !permissions.isEmpty()) {
-			provider.add(new YamlMatcherGroup(MatcherGroup.PERMISSIONS_KEY, qualifiers, permissions));
+			provider.add(new YamlMatcherGroup(this, MatcherGroup.PERMISSIONS_KEY, qualifiers, permissions));
 		}
 
 		// Options
@@ -233,14 +233,14 @@ public class YamlBackend extends PermissionBackend {
 				options.put(key.replace(optionsSection.getRoot().options().pathSeparator(), '.'), optionsSection.getString(key));
 			}
 			if (!options.isEmpty()) {
-				provider.add(new YamlMatcherGroup(MatcherGroup.OPTIONS_KEY, qualifiers, options));
+				provider.add(new YamlMatcherGroup(this, MatcherGroup.OPTIONS_KEY, qualifiers, options));
 			}
 		}
 
 		// Inheritance
 		List<String> inheritance = section.getStringList(inheritanceKey);
 		if (inheritance != null && !inheritance.isEmpty()) {
-			provider.add(new YamlMatcherGroup(MatcherGroup.INHERITANCE_KEY, qualifiers, inheritance));
+			provider.add(new YamlMatcherGroup(this, MatcherGroup.INHERITANCE_KEY, qualifiers, inheritance));
 		}
 	}
 
@@ -259,12 +259,12 @@ public class YamlBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> createMatcherGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 

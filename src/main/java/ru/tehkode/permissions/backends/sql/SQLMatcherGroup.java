@@ -32,6 +32,7 @@ public class SQLMatcherGroup extends MatcherGroup {
 	private final Multimap<Qualifier, String> qualifiers;
 
 	public SQLMatcherGroup(SQLBackend backend, String name, int entityId) throws SQLException, IOException {
+		super(backend);
 		this.backend = backend;
 		this.name = name;
 		this.entityId = entityId;
@@ -68,7 +69,7 @@ public class SQLMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setQualifiers(final Multimap<Qualifier, String> qualifiers) {
+	protected ListenableFuture<MatcherGroup> setQualifiersImpl(final Multimap<Qualifier, String> qualifiers) {
 		return backend.execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
@@ -109,7 +110,7 @@ public class SQLMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(final Map<String, String> value) {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(final Map<String, String> value) {
 		return backend.execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
@@ -139,7 +140,7 @@ public class SQLMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<MatcherGroup> setEntries(final List<String> value) {
+	protected ListenableFuture<MatcherGroup> setEntriesImpl(final List<String> value) {
 		return backend.execute(new Callable<MatcherGroup>() {
 			@Override
 			public MatcherGroup call() throws Exception {
@@ -177,7 +178,7 @@ public class SQLMatcherGroup extends MatcherGroup {
 	}
 
 	@Override
-	public ListenableFuture<Boolean> remove() {
+	protected ListenableFuture<Boolean> removeImpl() {
 		return backend.execute(new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
