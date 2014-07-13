@@ -20,9 +20,7 @@ public class EventConversionListener implements Listener {
 	}
 	/*
 		TIMEDPERMISSION_EXPIRED,
-		RANK_CHANGED,
 		DEFAULTGROUP_CHANGED,
-		WEIGHT_CHANGED,
 	 */
 	/**
 	 *
@@ -66,6 +64,10 @@ public class EventConversionListener implements Listener {
 							legacyEvent = PermissionEntityEvent.Action.OPTIONS_CHANGED;
 							if (difference(event, "prefix") || difference(event, "suffix")) {
 								legacyEvent = PermissionEntityEvent.Action.INFO_CHANGED;
+							} else if (difference(event, "rank") || difference(event, "rank-ladder")) {
+								legacyEvent = PermissionEntityEvent.Action.RANK_CHANGED;
+							} else if (difference(event, "weight")) {
+								legacyEvent = PermissionEntityEvent.Action.WEIGHT_CHANGED;
 							}
 							break;
 						case MatcherGroup.PERMISSIONS_KEY:
