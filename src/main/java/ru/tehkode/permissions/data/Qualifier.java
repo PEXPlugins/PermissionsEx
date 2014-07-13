@@ -28,7 +28,7 @@ public abstract class Qualifier {
 		}
 
 		@Override
-		protected Qualifier getInheritanceQualifier() {
+		public Qualifier getInheritanceQualifier() {
 			return GROUP;
 		}
 
@@ -111,7 +111,7 @@ public abstract class Qualifier {
 		return null;
 	}
 
-	protected Qualifier getInheritanceQualifier() {
+	public Qualifier getInheritanceQualifier() {
 		return this;
 	}
 
@@ -151,7 +151,9 @@ public abstract class Qualifier {
 					inheritanceGroups.add(match);
 					for (String entry : match.getEntriesList()) {
 						if (inherited.contains(entry)) {
-							backend.getLogger().warning("Potential circular inheritance detected while iterating " + qual + " " + inherited.get(0));
+							if (backend.isDebug()) {
+								backend.getLogger().warning("Potential circular inheritance detected while iterating " + qual + " " + inherited.get(0));
+							}
 							continue;
 						}
 

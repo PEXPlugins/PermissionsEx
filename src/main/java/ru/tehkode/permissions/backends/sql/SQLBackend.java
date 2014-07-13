@@ -420,6 +420,7 @@ public class SQLBackend extends PermissionBackend {
 			public List<MatcherGroup> call() throws Exception {
 				try (SQLConnection conn = getSQL()) {
 					List<MatcherGroup> ret = new LinkedList<>();
+					// TODO: Ensure retrieval of groups that don't have the qualifier
 					ResultSet res = conn.prepAndBind("groups.get.name_qual", type, qual.getName(), qualValue).executeQuery();
 					while (res.next()) {
 						ret.add(getMatcherGroup(type, res.getInt(1)));

@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
@@ -159,18 +160,19 @@ public abstract class AbstractMemoryBackend<T extends MemoryMatcherGroup<T>> ext
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
-				if (qualValue == null) {
-					return Lists.<MatcherGroup>newArrayList(matcherList.retrieve(and(
+				Iterable<T> ret = matcherList.retrieve(and(
 							equal(cast(MemoryMatcherGroup.NAME), type),
+						// TODO: Include some sort of 'co-qualifier' mechanism to prevent queries that are not for users returning *all* users
 							not(equal(cast(MemoryMatcherGroup.QUALIFIERS), qual))
-					)));
-				} else {
-					return Lists.<MatcherGroup>newArrayList(matcherList.retrieve(and(
+					));
+				if (qualValue != null) {
+					ret = Iterables.concat(ret, matcherList.retrieve(and(
 							equal(cast(MemoryMatcherGroup.NAME), type),
 							equal(cast(MemoryMatcherGroup.QUALIFIERS), qual),
 							equal(cast(MemoryMatcherGroup.valuesForQualifier(qual)), qualValue)
 					)));
 				}
+				return Lists.<MatcherGroup>newArrayList(ret);
 			}
 		});
 	}

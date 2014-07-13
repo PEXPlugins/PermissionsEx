@@ -5,6 +5,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.World;
@@ -15,6 +16,7 @@ import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -22,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 /**
  * Object holding state for a permission query about to happen.
@@ -111,35 +114,78 @@ public abstract class PermissionQuery<T extends PermissionQuery<T>> implements C
 	 * @return the relevant matcher groups
 	 */
 	protected ListenableFuture<List<MatcherGroup>> performQuery(final String sectionName, final boolean createIfEmpty) {
-		ListenableFuture<List<MatcherGroup>> query;
+		final ListenableFuture<List<MatcherGroup>> query;
 		if (primaryKey != null) {
 			query = this.manager.getBackend().getMatchingGroups(sectionName, primaryKey, primaryValue);
 		} else {
 			query = this.manager.getBackend().getMatchingGroups(sectionName);
 		}
-		return Futures.transform(query, new Function<List<MatcherGroup>, List<MatcherGroup>>() {
+
+		final Function<List<MatcherGroup>, List<MatcherGroup>> func = new Function<List<MatcherGroup>, List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> apply(List<MatcherGroup> result) {
+				final Set<String> allowedWorlds = world == null ? Sets.<String>newHashSet() : Sets.newHashSet(world);
 				if (result != null) {
 					for (Iterator<MatcherGroup> it = result.iterator(); it.hasNext(); ) {
-						if (!it.next().matches(PermissionQuery.this)) {
+						final MatcherGroup group = it.next();
+						if (!group.matches(PermissionQuery.this, primaryKey)) {
 							it.remove();
+							continue;
+						}
+						if (inheritance) {
+							if (group.getQualifiers().containsKey(Qualifier.WORLD)) {
+								for (String world : group.getQualifiers().get(Qualifier.WORLD)) {
+									allowedWorlds.addAll(Futures.getUnchecked(Qualifier.WORLD.getInheritedValues(manager.getBackend(), world)));
+								}
+							}
 						}
 					}
 					Collections.sort(result);
-					if (result.isEmpty() && createIfEmpty) {
-						Multimap<Qualifier, String> qualifiers = HashMultimap.create();
-						qualifiers.put(primaryKey, primaryValue);
-						if (world != null && primaryKey != Qualifier.WORLD) {
-							qualifiers.put(Qualifier.WORLD, world);
-						}
-						if (until != 0) {
-							qualifiers.put(Qualifier.UNTIL, String.valueOf(until));
-						}
-						result = Lists.newArrayList(Futures.getUnchecked(manager.getBackend().createMatcherGroup(sectionName, ImmutableMap.<String, String>of(), qualifiers)));
-					}
+
 				}
 				return result;
+			}
+		};
+		// TODO: Make inheritance work with any qualifier
+		ListenableFuture<List<String>> parents = (inheritance && primaryKey != null && primaryKey != Qualifier.WORLD) ?
+				primaryKey.getInheritedValues(manager.getBackend(), primaryValue)
+				: Futures.immediateFuture(Collections.<String>emptyList());
+
+		return Futures.chain(parents, new Function<List<String>, ListenableFuture<List<MatcherGroup>>>() {
+			@Override
+			public ListenableFuture<List<MatcherGroup>> apply(@Nullable List<String> parents) {
+				List<ListenableFuture<List<MatcherGroup>>> toWait = new ArrayList<>();
+				toWait.add(Futures.transform(query, func));
+				if (parents != null) {
+					for (String parent : parents) {
+						toWait.add(Futures.transform(manager.getBackend().getMatchingGroups(sectionName, primaryKey.getInheritanceQualifier(), parent), func));
+					}
+				}
+				return Futures.transform(Futures.allAsList(toWait), new Function<List<List<MatcherGroup>>, List<MatcherGroup>>() {
+					@Override
+					public List<MatcherGroup> apply(@Nullable List<List<MatcherGroup>> lists) {
+						List<MatcherGroup> result = null;
+						if (lists != null && !lists.isEmpty()) {
+							result = new ArrayList<>(lists.size() * Math.max(1, lists.get(0).size()));
+							for (List<MatcherGroup> list : lists) {
+								result.addAll(list);
+							}
+						}
+
+						if ((result == null || result.isEmpty()) && createIfEmpty) {
+							Multimap<Qualifier, String> qualifiers = HashMultimap.create();
+							qualifiers.put(primaryKey, primaryValue);
+							if (world != null && primaryKey != Qualifier.WORLD) {
+								qualifiers.put(Qualifier.WORLD, world);
+							}
+							if (until != 0) {
+								qualifiers.put(Qualifier.UNTIL, String.valueOf(until));
+							}
+							result = Lists.newArrayList(Futures.getUnchecked(manager.getBackend().createMatcherGroup(sectionName, ImmutableMap.<String, String>of(), qualifiers)));
+						}
+						return result;
+					}
+				});
 			}
 		});
 	}

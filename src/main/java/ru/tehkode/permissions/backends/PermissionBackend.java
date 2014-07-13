@@ -730,4 +730,8 @@ public abstract class PermissionBackend {
 	public String toString() {
 		return getClass().getSimpleName() + "{config=" + getConfig().getName() + "}";
 	}
+
+	public boolean isDebug() {
+		return manager.isDebug();
+	}
 }
