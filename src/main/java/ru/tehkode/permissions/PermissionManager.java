@@ -364,7 +364,7 @@ public class PermissionManager {
 		return Futures.getUnchecked(get()
 				.followInheritance(false)
 				.world(worldName)
-				.parents());
+				.worldParents());
 	}
 
 	@Deprecated

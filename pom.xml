@@ -29,6 +29,9 @@
         <developerConnection>scm:git:ssh://git@github.com/PEXPlugins/PermissionsEx.git</developerConnection>
         <url>https://github.com/PEXPlugins/PermissionsEx</url>
     </scm>
+    <prerequisites>
+        <maven>3.0.3</maven>
+    </prerequisites>
     <profiles>
         <profile>
             <id>publish-site</id>
@@ -188,6 +191,11 @@
             <groupId>org.parboiled</groupId>
             <artifactId>parboiled-java</artifactId>
             <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.cqengine</groupId>
+            <artifactId>cqengine</artifactId>
+            <version>1.2.7</version>
         </dependency>
     </dependencies>
     <repositories>

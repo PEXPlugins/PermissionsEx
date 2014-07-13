@@ -3,6 +3,7 @@ package ru.tehkode.permissions;
 
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.MemoryConfiguration;
+import org.junit.After;
 import org.junit.Before;
 import ru.tehkode.permissions.bukkit.PermissionsExConfig;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -18,11 +19,18 @@ public abstract class PermissionManagerTest {
 
 	@Before
 	public void setUp() throws PermissionBackendException {
-		manager = new PermissionManager(new PermissionsExConfig(new MemoryConfiguration()), LOGGER, new NullNativeInterface());
+		final Configuration config = new MemoryConfiguration();
+		applyConfiguration(config);
+		manager = new PermissionManager(new PermissionsExConfig(config), LOGGER, new NullNativeInterface());
+	}
+
+	@After
+	public void tearDown() {
+		manager.end();
 	}
 
 	protected void applyConfiguration(Configuration permissionsConfig) {
-		permissionsConfig.set("permissions.backend", "memory");
+		permissionsConfig.set("permissions.backend", "ru.tehkode.permissions.backends.memory.MemoryBackend");
 
 	}
 

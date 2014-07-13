@@ -22,8 +22,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import org.bukkit.configuration.ConfigurationSection;
-import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.backends.memory.ConfigInstance;
+import ru.tehkode.permissions.backends.memory.AbstractMemoryBackend;
 import ru.tehkode.permissions.backends.yaml.YamlBackend;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
@@ -38,14 +39,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 
 /**
  * @author code
  */
-public class FileBackend extends PermissionBackend {
+public class FileBackend extends AbstractMemoryBackend<FileMatcherGroup> {
 	private final FileConfig loader;
-	private volatile FileMatcherList matcherGroups;
 	private final Object loadSaveLock = new Object();
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
@@ -74,21 +73,24 @@ public class FileBackend extends PermissionBackend {
 		}
 
 		this.loader = new FileConfig(this, new File(baseDir, permissionFilename));
-		if (oldFilename != null && !loader.getFile().exists()) {
+		reload();
+		if (!loader.getFile().exists()) {
 			try {
 				loader.getFile().createNewFile();
+				if (oldFilename == null) {
+					initializeDefaultConfiguration();
+				}
 			} catch (IOException e) {
 				throw new PermissionBackendException(e);
 			}
 		}
-		reload();
+
 		performSchemaUpdate();
 
 		// Perform conversion from YAML
 		if (oldFilename != null) {
 			YamlBackend oldBackend = new YamlBackend(manager, config);
 			loadFrom(oldBackend);
-			System.out.println("Imported from yaml format");
 			oldBackend.close();
 			getConfig().set("file", permissionFilename);
 		}
@@ -127,150 +129,44 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	@Override
-	public Collection<String> getUserNames() {
-		Set<String> userNames = new HashSet<>();
-		for (MatcherGroup group : this.matcherGroups.get(MatcherGroup.UUID_ALIASES_KEY)) {
-			userNames.addAll(group.getEntries().values());
+	protected ConfigInstance<FileMatcherGroup> load() throws PermissionBackendException {
+		try {
+			return loader.load();
+		} catch (FileNotFoundException e) {
+			return new ConfigInstance.Memory<>();
+		} catch (IOException e) {
+			throw new PermissionBackendException(e);
 		}
-		return Collections.unmodifiableSet(userNames);
 	}
 
 	@Override
-	public Iterable<MatcherGroup> getAll() {
-		return matcherGroups.getAll();
-	}
-
-	@Override
-	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type) {
-		return execute(new Callable<List<MatcherGroup>>() {
-			@Override
-			public List<MatcherGroup> call() throws Exception {
-				return matcherGroups.get(type);
-			}
-		});
-	}
-
-	@Override
-	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier key, final String value) {
-		return execute(new Callable<List<MatcherGroup>>() {
-			@Override
-			public List<MatcherGroup> call() throws Exception {
-				return matcherGroups.get(type, key, value);
-			}
-		});
-	}
-
-	@Override
-	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(final String type, final Map<String, String> entries, final Multimap<Qualifier, String> qualifiers) {
-		return execute(new Callable<MatcherGroup>() {
-			@Override
-			public MatcherGroup call() throws Exception {
-				MatcherGroup ret = matcherGroups.create(type, entries, qualifiers);
-				save();
-				return ret;
-			}
-		});
-	}
-
-	@Override
-	protected ListenableFuture<MatcherGroup> createMatcherGroupImpl(final String type, final List<String> entries, final Multimap<Qualifier, String> qualifiers) {
-		return execute(new Callable<MatcherGroup>() {
-			@Override
-			public MatcherGroup call() throws Exception {
-				MatcherGroup ret = matcherGroups.create(type, entries, qualifiers);
-				save();
-				return ret;
-
-			}
-		});
-	}
-
-	@Override
-	public ListenableFuture<Collection<String>> getAllValues(final Qualifier qualifier) {
-		return execute(new Callable<Collection<String>>() {
-			@Override
-			public Collection<String> call() throws Exception {
-				return matcherGroups.getAllValues(qualifier);
-			}
-		});
-	}
-
-	@Override
-	public ListenableFuture<Boolean> hasAnyQualifier(final Qualifier qualifier, final String value) {
-		return execute(new Callable<Boolean>() {
-			@Override
-			public Boolean call() throws Exception {
-				return matcherGroups.hasAnyQualifier(qualifier, value);
-			}
-		});
-	}
-
-	@Override
-	public ListenableFuture<Void> replaceQualifier(final Qualifier qualifier, final String old, final String newVal) {
-		return execute(new Callable<Void>() {
-			@Override
-			public Void call() throws Exception {
-				matcherGroups.replace(qualifier, old, newVal);
-				return null;
-			}
-		});
-	}
-
-	@Override
-	public ListenableFuture<List<MatcherGroup>> allWithQualifier(final Qualifier qualifier) {
-		return execute(new Callable<List<MatcherGroup>>() {
-			@Override
-			public List<MatcherGroup> call() throws Exception {
-				return matcherGroups.allWithQualifier(qualifier);
-			}
-		});
-	}
-
-	@Override
-	public void reload() throws PermissionBackendException {
+	protected void save(ConfigInstance<FileMatcherGroup> data) {
 		try {
 			synchronized (loadSaveLock) {
-				this.matcherGroups = loader.load();
+				loader.save(data);
 			}
-			getLogger().info("Permissions file successfully reloaded");
-		} catch (FileNotFoundException e) {
-			if (this.matcherGroups == null) {
-				// First load, load even if the file doesn't exist
-				this.matcherGroups = new FileMatcherList(this, this.loader);
-				initializeDefaultConfiguration();
-			}
-		} catch (Throwable e) {
-			throw new PermissionBackendException("Error loading permissions file!", e);
+		} catch (IOException e) {
+			handleException(e, "saving");
 		}
+
+	}
+
+	@Override
+	protected FileMatcherGroup newGroup(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+		return new FileMatcherGroup(type, this, qualifiers, entries, null, null);
+	}
+
+	@Override
+	protected FileMatcherGroup newGroup(String type, List<String> entries, Multimap<Qualifier, String> qualifiers) {
+		return new FileMatcherGroup(type, this, qualifiers, entries, null, null);
 	}
 
 	@Override
 	public void setPersistent(boolean persistent) {
 		super.setPersistent(persistent);
-		System.out.println("Setting persistent: " + persistent);
 		this.loader.setSaveSuppressed(!persistent);
 		if (persistent) {
 			this.save();
-		}
-	}
-
-	public void save() {
-		if (matcherGroups != null) {
-			getExecutor().execute(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						synchronized (loadSaveLock) {
-							final FileMatcherList matcherGroups = FileBackend.this.matcherGroups;
-							if (matcherGroups != null) {
-								matcherGroups.save();
-							}
-						}
-					} catch (IOException e) {
-						getLogger().log(Level.SEVERE, "Error saving file backend data!", e);
-					}
-				}
-			});
 		}
 	}
 }

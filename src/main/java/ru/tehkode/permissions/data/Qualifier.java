@@ -115,6 +115,11 @@ public abstract class Qualifier {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return getName();
+	}
+
 	public ListenableFuture<List<String>> getInheritedValues(PermissionBackend backend, String value) {
 		final String inheritanceSectionName = getInheritanceSectionName();
 		if (inheritanceSectionName == null) {
@@ -157,5 +162,9 @@ public abstract class Qualifier {
 				return inheritanceGroups;
 			}
 		});
+	}
+
+	public static Iterable<? extends Qualifier> getAll() {
+		return STRING_LOOKUP.values();
 	}
 }
