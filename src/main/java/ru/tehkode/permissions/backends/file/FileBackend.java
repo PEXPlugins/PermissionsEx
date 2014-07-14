@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.memory.ConfigInstance;
-import ru.tehkode.permissions.backends.memory.AbstractMemoryBackend;
+import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.yaml.YamlBackend;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
@@ -43,7 +43,7 @@ import java.util.concurrent.Executors;
 /**
  * @author code
  */
-public class FileBackend extends AbstractMemoryBackend<FileMatcherGroup> {
+public class FileBackend extends MemoryBackend {
 	private final FileConfig loader;
 	private final Object loadSaveLock = new Object();
 
@@ -129,18 +129,18 @@ public class FileBackend extends AbstractMemoryBackend<FileMatcherGroup> {
 	}
 
 	@Override
-	protected ConfigInstance<FileMatcherGroup> load() throws PermissionBackendException {
+	protected ConfigInstance load() throws PermissionBackendException {
 		try {
 			return loader.load();
 		} catch (FileNotFoundException e) {
-			return new ConfigInstance.Memory<>();
+			return new ConfigInstance.Memory();
 		} catch (IOException e) {
 			throw new PermissionBackendException(e);
 		}
 	}
 
 	@Override
-	protected void save(ConfigInstance<FileMatcherGroup> data) {
+	protected void save(ConfigInstance data) {
 		try {
 			synchronized (loadSaveLock) {
 				loader.save(data);

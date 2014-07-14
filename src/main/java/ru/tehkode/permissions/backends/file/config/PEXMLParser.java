@@ -117,7 +117,7 @@ public class PEXMLParser extends BaseParser<Object> {
 	}
 
 	Rule MappingDelimeter() {
-		return FirstOf("= ", "-> ", ": ");
+		return Sequence(FirstOf("=", "->", ":"), WhiteSpace());
 	}
 
 	/* Copied from parboiled example code:

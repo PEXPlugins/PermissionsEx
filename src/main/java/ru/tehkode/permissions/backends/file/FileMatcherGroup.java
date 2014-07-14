@@ -2,30 +2,28 @@ package ru.tehkode.permissions.backends.file;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import ru.tehkode.permissions.backends.memory.AbstractMemoryBackend;
+import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.memory.MemoryMatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Memory matcher group supporting additional matcher data from files
  */
-public final class FileMatcherGroup extends MemoryMatcherGroup<FileMatcherGroup> {
-	private static final Logger LOGGER = Logger.getLogger(FileMatcherGroup.class.getCanonicalName());
+public final class FileMatcherGroup extends MemoryMatcherGroup {
 	private final List<String> comments;
 	private final Multimap<String, String> entryComments;
 
-	FileMatcherGroup(String name, AbstractMemoryBackend<FileMatcherGroup> backend, Multimap<Qualifier, String> qualifiers, Map<String, String> entries, List<String> comments, Multimap<String, String> entryComments) {
+	FileMatcherGroup(String name, MemoryBackend backend, Multimap<Qualifier, String> qualifiers, Map<String, String> entries, List<String> comments, Multimap<String, String> entryComments) {
 		super(name, backend, qualifiers, entries);
 		this.comments = comments == null ? null : Collections.unmodifiableList(comments);
 		this.entryComments = entryComments == null ? null : ImmutableMultimap.copyOf(entryComments);
 	}
 
-	FileMatcherGroup(String name, AbstractMemoryBackend<FileMatcherGroup> backend, Multimap<Qualifier, String> qualifiers, List<String> entriesList, List<String> comments, Multimap<String, String> entryComments) {
+	FileMatcherGroup(String name, MemoryBackend backend, Multimap<Qualifier, String> qualifiers, List<String> entriesList, List<String> comments, Multimap<String, String> entryComments) {
 		super(name, backend, qualifiers, entriesList);
 		this.comments = comments == null ? null : Collections.unmodifiableList(comments);
 		this.entryComments = entryComments == null ? null : ImmutableMultimap.copyOf(entryComments);

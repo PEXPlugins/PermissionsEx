@@ -21,38 +21,37 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Matcher group used when storing a matcher group structure in memory
  */
-public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extends MatcherGroup {
+public class MemoryMatcherGroup extends MatcherGroup {
 	private final String name;
 	@SuppressWarnings("unchecked")
-	private final T self = (T) this;
 	private final Multimap<Qualifier, String> qualifiers;
 	private final Map<String, String> entries;
 	private final List<String> entriesList;
-	protected final AbstractMemoryBackend<T> backend;
+	protected final MemoryBackend backend;
 	private final AtomicBoolean valid = new AtomicBoolean(true);
 
-	public static final Attribute<MemoryMatcherGroup<?>, String> NAME = new SimpleAttribute<MemoryMatcherGroup<?>, String>() {
+	public static final Attribute<MemoryMatcherGroup, String> NAME = new SimpleAttribute<MemoryMatcherGroup, String>() {
 		@Override
-		public String getValue(MemoryMatcherGroup<?> memoryMatcherGroup) {
+		public String getValue(MemoryMatcherGroup memoryMatcherGroup) {
 			return memoryMatcherGroup.getName();
 		}
 	};
 
-	public static final Attribute<MemoryMatcherGroup<?>, Qualifier> QUALIFIERS = new MultiValueAttribute<MemoryMatcherGroup<?>, Qualifier>() {
+	public static final Attribute<MemoryMatcherGroup, Qualifier> QUALIFIERS = new MultiValueAttribute<MemoryMatcherGroup, Qualifier>() {
 		@Override
-		public List<Qualifier> getValues(MemoryMatcherGroup<?> memoryMatcherGroup) {
+		public List<Qualifier> getValues(MemoryMatcherGroup memoryMatcherGroup) {
 			return ImmutableList.copyOf(memoryMatcherGroup.getQualifiers().keySet());
 		}
 	};
 
 	@SuppressWarnings("unchecked")
-	private static AtomicReference<Attribute<MemoryMatcherGroup<?>, String>[]> QUAL_ATTRS = new AtomicReference(new Attribute[Qualifier.getRegisteredCount()]);
+	private static AtomicReference<Attribute<MemoryMatcherGroup, String>[]> QUAL_ATTRS = new AtomicReference(new Attribute[Qualifier.getRegisteredCount()]);
 
-	public static Attribute<MemoryMatcherGroup<?>, String> valuesForQualifier(final Qualifier qualifier) {
-		Attribute<MemoryMatcherGroup<?>, String> ret;
+	public static Attribute<MemoryMatcherGroup, String> valuesForQualifier(final Qualifier qualifier) {
+		Attribute<MemoryMatcherGroup, String> ret;
 		// TODO: clean this up
 		while (true) {
-			Attribute<MemoryMatcherGroup<?>, String>[] oldArr = QUAL_ATTRS.get(), arr;
+			Attribute<MemoryMatcherGroup, String>[] oldArr = QUAL_ATTRS.get(), arr;
 			if (qualifier.getId() >= oldArr.length) {
 				arr = new Attribute[Qualifier.getRegisteredCount()];
 				System.arraycopy(oldArr, 0, arr, 0, oldArr.length);
@@ -63,9 +62,9 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 					break;
 				}
 			}
-			ret = arr[qualifier.getId()] = new MultiValueAttribute<MemoryMatcherGroup<?>, String>() {
+			ret = arr[qualifier.getId()] = new MultiValueAttribute<MemoryMatcherGroup, String>() {
 				@Override
-				public List<String> getValues(MemoryMatcherGroup<?> object) {
+				public List<String> getValues(MemoryMatcherGroup object) {
 					return ImmutableList.copyOf(object.getQualifiers().get(qualifier));
 				}
 			};
@@ -78,7 +77,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 	}
 
 
-	protected MemoryMatcherGroup(String name, AbstractMemoryBackend<T> backend, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
+	protected MemoryMatcherGroup(String name, MemoryBackend backend, Multimap<Qualifier, String> qualifiers, Map<String, String> entries) {
 		super(backend);
 		this.backend = backend;
 		this.name = name;
@@ -87,7 +86,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 		this.entriesList = null;
 	}
 
-	protected MemoryMatcherGroup(String name, AbstractMemoryBackend<T> backend, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
+	protected MemoryMatcherGroup(String name, MemoryBackend backend, Multimap<Qualifier, String> qualifiers, List<String> entriesList) {
 		super(backend);
 		this.backend = backend;
 		this.name = name;
@@ -96,8 +95,13 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 		this.entries = null;
 	}
 
-	protected abstract T newSelf(Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
-	protected abstract T newSelf(List<String> entries, Multimap<Qualifier, String> qualifiers);
+	protected MemoryMatcherGroup newSelf(Map<String, String> entries, Multimap<Qualifier, String> qualifiers) {
+		return new MemoryMatcherGroup(getName(), backend, qualifiers, entries);
+	}
+
+	protected MemoryMatcherGroup newSelf(List<String> entries, Multimap<Qualifier, String> qualifiers) {
+		return new MemoryMatcherGroup(getName(), backend, qualifiers, entries);
+	}
 
 	@Override
 	public final String getName() {
@@ -111,10 +115,10 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 
 	@Override
 	protected ListenableFuture<MatcherGroup> setQualifiersImpl(final Multimap<Qualifier, String> qualifiers) {
-		return backend.transformGroup(self, new Callable<T>() {
+		return backend.transformGroup(this, new Callable<MemoryMatcherGroup>() {
 			@Override
-			public T call() throws Exception {
-				T newGroup;
+			public MemoryMatcherGroup call() throws Exception {
+				MemoryMatcherGroup newGroup;
 				if (isMap()) {
 					newGroup = newSelf(getEntries(), qualifiers);
 				} else if (isList()) {
@@ -139,9 +143,9 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 
 	@Override
 	protected ListenableFuture<MatcherGroup> setEntriesImpl(final Map<String, String> value) {
-		return backend.transformGroup(self, new Callable<T>() {
+		return backend.transformGroup(this, new Callable<MemoryMatcherGroup>() {
 			@Override
-			public T call() throws Exception {
+			public MemoryMatcherGroup call() throws Exception {
 				return newSelf(value, getQualifiers());
 			}
 		});
@@ -149,9 +153,9 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 
 	@Override
 	protected ListenableFuture<MatcherGroup> setEntriesImpl(final List<String> value) {
-		return backend.transformGroup(self, new Callable<T>() {
+		return backend.transformGroup(this, new Callable<MemoryMatcherGroup>() {
 			@Override
-			public T call() throws Exception {
+			public MemoryMatcherGroup call() throws Exception {
 				return newSelf(value, getQualifiers());
 			}
 		});
@@ -164,7 +168,7 @@ public abstract class MemoryMatcherGroup<T extends MemoryMatcherGroup<T>> extend
 
 	@Override
 	protected ListenableFuture<Boolean> removeImpl() {
-		return Futures.immediateFuture(backend.removeGroup(self));
+		return Futures.immediateFuture(backend.removeGroup(this));
 	}
 
 	public boolean invalidate() {
