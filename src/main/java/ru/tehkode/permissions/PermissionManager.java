@@ -25,6 +25,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.bukkit.PermissionsExConfig;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.events.MatcherGroupEvent;
@@ -32,10 +33,13 @@ import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import ru.tehkode.permissions.query.GetQuery;
+import ru.tehkode.permissions.query.PermissionQuery;
 import ru.tehkode.permissions.query.SetQuery;
 import ru.tehkode.utils.PrefixedThreadFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +60,7 @@ public class PermissionManager {
 	protected boolean userAddGroupsLast = false;
 	protected PermissionMatcher matcher = new RegExpMatcher();
 	private final Set<UUID> debugUsers = new HashSet<>();
+	private final ConcurrentMap<PermissionQuery.CacheKey, PermissionQuery.CacheElement> queryCache = new ConcurrentHashMap<>();
 
 	public PermissionManager(PermissionsExConfig config, Logger logger, NativeInterface nativeI) throws PermissionBackendException {
 		this.config = config;
@@ -133,11 +138,11 @@ public class PermissionManager {
 	}
 
 	public GetQuery get() {
-		return new GetQuery(this);
+		return new GetQuery(this, queryCache);
 	}
 
 	public SetQuery set() {
-		return new SetQuery(this);
+		return new SetQuery(this, queryCache);
 	}
 
 	/**
@@ -292,7 +297,7 @@ public class PermissionManager {
 	}
 
 	protected void clearCache() {
-
+		queryCache.clear();
 		// Close old timed Permission Timer
 		this.initTimer();
 	}

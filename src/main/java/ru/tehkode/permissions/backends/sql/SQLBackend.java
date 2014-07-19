@@ -27,6 +27,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.SchemaUpdate;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -414,18 +415,19 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier qual, final String qualValue) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Context context) {
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
 				try (SQLConnection conn = getSQL()) {
 					List<MatcherGroup> ret = new LinkedList<>();
-					// TODO: Ensure retrieval of groups that don't have the qualifier
-					ResultSet res = conn.prepAndBind("groups.get.name_qual", type, qual.getName(), qualValue).executeQuery();
+					throw new UnsupportedOperationException("Not yet implemented");
+					// TODO: Update for Context
+					/*ResultSet res = conn.prepAndBind("groups.get.name_qual", type, qual.getName(), qualValue).executeQuery();
 					while (res.next()) {
 						ret.add(getMatcherGroup(type, res.getInt(1)));
 					}
-					return ret;
+					return r*/
 				}
 			}
 		});

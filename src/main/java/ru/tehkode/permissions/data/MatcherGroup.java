@@ -272,12 +272,8 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 	 * @param context The context to verify
 	 * @return whether or not a match is performed.
 	 */
-	public boolean matches(Context context, Qualifier ignoreMismatches) {
+	public boolean matches(Context context) {
 		int matches = 0;
-		if (ignoreMismatches != null) {
-			matches |= ignoreMismatches.getFlag();
-			matches |= ignoreMismatches.getInheritanceQualifier().getFlag();
-		}
 		for (Map.Entry<Qualifier, String> ent : getQualifiers().entries()) {
 			if ((matches & ~ent.getKey().getFlag()) != 0) { // We have already matched a qualifier of this type, don't need to check again
 				continue;
@@ -286,8 +282,7 @@ public abstract class MatcherGroup implements Comparable<MatcherGroup> {
 				matches |= ent.getKey().getFlag();
 			}
 		}
-		final int typeMask = getQualifierTypeMask();
-		return (matches | ~typeMask) == 0xFFFFFFFF; // same flags are masked as were expected to be matched
+		return matches == getQualifierTypeMask(); // same flags are masked as were expected to be matched
 	}
 
 	/**

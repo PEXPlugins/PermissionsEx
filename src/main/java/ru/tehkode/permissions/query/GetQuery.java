@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permission;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 
 import java.util.ArrayList;
@@ -14,13 +15,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Query type used to get permissions data.
  */
 public class GetQuery extends PermissionQuery<GetQuery> {
-	public GetQuery(PermissionManager manager) {
-		super(manager);
+	public GetQuery(PermissionManager manager, ConcurrentMap<CacheKey, CacheElement> cache) {
+		super(manager, cache);
 	}
 
 	public ListenableFuture<Boolean> has(final String permission) {

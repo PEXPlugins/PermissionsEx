@@ -4,11 +4,12 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import ru.tehkode.permissions.EntityType;
 import ru.tehkode.permissions.backends.PermissionBackend;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -17,16 +18,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
 * A qualifier for a match group.
 */
-public abstract class Qualifier {
+public class Qualifier {
 	private static final AtomicInteger REGISTERED_COUNT = new AtomicInteger(0);
 	private static final ConcurrentMap<String, Qualifier> STRING_LOOKUP = new ConcurrentHashMap<>();
 
 	public static final Qualifier USER = new Qualifier("user") {
-		@Override
-		public boolean matches(Context context, String value) {
-			return context.getEntityType() == EntityType.USER && context.getEntityName().equals(value);
-		}
-
 		@Override
 		public Qualifier getInheritanceQualifier() {
 			return GROUP;
@@ -39,21 +35,11 @@ public abstract class Qualifier {
 	};
 	public static final Qualifier GROUP = new Qualifier("group") {
 		@Override
-		public boolean matches(Context context, String value) {
-			return context.getEntityType() == EntityType.GROUP && context.getEntityName().equals(value);
-		}
-
-		@Override
 		public String getInheritanceSectionName() {
 			return MatcherGroup.INHERITANCE_KEY;
 		}
 	};
 	public static final Qualifier WORLD = new Qualifier("world") {
-		@Override
-		public boolean matches(Context context, String value) {
-			return context.getWorld() != null && context.getWorld().equals(value);
-		}
-
 		@Override
 		public String getInheritanceSectionName() {
 			return MatcherGroup.WORLD_INHERITANCE_KEY;
@@ -61,20 +47,26 @@ public abstract class Qualifier {
 	};
 	public static final Qualifier UNTIL = new Qualifier("until") {
 		@Override
-		public boolean matches(Context context, String value) {
+		public boolean matches(Context context, String rawValue) {
 			// null or stored until is after the context until means this matches
-			return context.getUntil() == 0 || Long.parseLong(value) > context.getUntil();
+			final Collection<String> until = context.getValues(this);
+			if (until == null || until.isEmpty()) {
+				return true;
+			}
+			long value = Long.parseLong(rawValue);
+			for (String test : until) {
+				if (value <= Long.parseLong(test)) {
+					return false;
+				}
+			}
+			return true;
 		}
 	};
-	public static final Qualifier SERVER = new Qualifier("server") {
-		@Override
-		public boolean matches(Context context, String value) {
-			return context.getServerTags().contains(value);
-		}
-	};
+	public static final Qualifier SERVER = new Qualifier("server");
 
 	private final String name;
 	private final int id;
+	private final boolean simpleMatches;
 
 	public Qualifier(String name) {
 		this.name = name;
@@ -83,6 +75,13 @@ public abstract class Qualifier {
 		} else {
 			throw new IllegalStateException("A qualifier named " + this.name + " already exists!");
 		}
+		boolean simpleMatches;
+		try {
+			simpleMatches = getClass() == Qualifier.class || getClass().getDeclaredMethod("matches") == null;
+		} catch (NoSuchMethodException e) {
+			simpleMatches = true;
+		}
+		this.simpleMatches = simpleMatches;
 	}
 
 	public static int getRegisteredCount() {
@@ -93,7 +92,9 @@ public abstract class Qualifier {
 		return STRING_LOOKUP.get(key);
 	}
 
-	public abstract boolean matches(Context context, String value);
+	public boolean matches(Context context, String value) {
+		return context.getValues(this).contains(value);
+	}
 
 	public String getName() {
 		return name;
@@ -115,6 +116,9 @@ public abstract class Qualifier {
 		return this;
 	}
 
+	public boolean usesSimpleMatches() {
+		return simpleMatches;
+	}
 	@Override
 	public String toString() {
 		return getName();
@@ -137,7 +141,7 @@ public abstract class Qualifier {
 	}
 
 	private ListenableFuture<List<MatcherGroup>> processInherited(final PermissionBackend backend, final Qualifier qual, final List<String> inherited, String current) {
-		return Futures.transform(backend.getMatchingGroups(qual.getInheritanceSectionName(), qual, current), new Function<List<MatcherGroup>, List<MatcherGroup>>() {
+		return Futures.transform(backend.getMatchingGroups(qual.getInheritanceSectionName(), StaticContext.of(qual, current)), new Function<List<MatcherGroup>, List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> apply(@Nullable List<MatcherGroup> matcherGroups) {
 				final List<MatcherGroup> inheritanceGroups = new ArrayList<>();

@@ -28,6 +28,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -39,12 +40,16 @@ import com.googlecode.cqengine.CQEngine;
 import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.standingquery.StandingQueryIndex;
+import com.googlecode.cqengine.query.Query;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
+
+import javax.annotation.Nullable;
 
 import static com.googlecode.cqengine.query.QueryFactory.*;
 
@@ -54,7 +59,7 @@ import static com.googlecode.cqengine.query.QueryFactory.*;
  * This class functions as a base class for backends that read their data from the contents of a file loaded into memory
  *
  */
-public abstract class MemoryBackend extends PermissionBackend {
+public class MemoryBackend extends PermissionBackend {
 	private IndexedCollection<MemoryMatcherGroup> matcherList;
 	private ConfigInstance config;
 
@@ -95,7 +100,8 @@ public abstract class MemoryBackend extends PermissionBackend {
 		newMatchers.addIndex(HashIndex.onAttribute(MemoryMatcherGroup.NAME));
 		for (Qualifier qual : Qualifier.getAll()) {
 			newMatchers.addIndex(StandingQueryIndex.onQuery(equal(MemoryMatcherGroup.QUALIFIERS, qual)));
-			//newMatchers.addIndex(RadixTreeIndex.onAttribute(cast(MemoryMatcherGroup.valuesForQualifier(qual))));
+			// CONFIRMED TODO: Things are really slow without this working properly!
+			//newMatchers.addIndex(HashIndex.onAttribute(MemoryMatcherGroup.valuesForQualifier(qual)));
 		}
 
 		matcherList = newMatchers;
@@ -151,25 +157,40 @@ public abstract class MemoryBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Qualifier qual, final String qualValue) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(final String type, final Context context) {
 		Preconditions.checkNotNull(type);
-		Preconditions.checkNotNull(qual);
+		Preconditions.checkNotNull(context);
+		System.out.println(context);
+		if (context.getValues().isEmpty()) {
+			return getMatchingGroups(type);
+		}
+
 		return execute(new Callable<List<MatcherGroup>>() {
 			@Override
 			public List<MatcherGroup> call() throws Exception {
-				Iterable<MemoryMatcherGroup> ret = matcherList.retrieve(and(
-							equal(MemoryMatcherGroup.NAME, type),
-						// TODO: Include some sort of 'co-qualifier' mechanism to prevent queries that are not for users returning *all* users
-							not(equal(MemoryMatcherGroup.QUALIFIERS, qual))
-					));
-				if (qualValue != null) {
-					ret = Iterables.concat(ret, matcherList.retrieve(and(
-							equal(MemoryMatcherGroup.NAME, type),
-							equal(MemoryMatcherGroup.QUALIFIERS, qual),
-							equal(MemoryMatcherGroup.valuesForQualifier(qual), qualValue)
-					)));
+				Set<Query<MemoryMatcherGroup>> qualifierExistsQueries = new HashSet<>(), qualifierValueQueries = new HashSet<>();
+				for (Qualifier qual : context.getValues().keySet()) {
+					qualifierExistsQueries.add(equal(MemoryMatcherGroup.QUALIFIERS, qual));
 				}
-				return Lists.<MatcherGroup>newArrayList(ret);
+				// TODO: Explicitly forbid values that have qualifiers not in the context directly in the query
+
+				for (Map.Entry<Qualifier, Collection<String>> ent : context.getValues().asMap().entrySet()) {
+					if (ent.getValue().size() > 1) {
+						qualifierValueQueries.add(in(MemoryMatcherGroup.valuesForQualifier(ent.getKey()), ent.getValue()));
+					} else if (ent.getValue().size() == 1) {
+						qualifierValueQueries.add(equal(MemoryMatcherGroup.valuesForQualifier(ent.getKey()), ent.getValue().iterator().next()));
+					}
+				}
+				return Lists.<MatcherGroup>newArrayList(Iterables.filter(matcherList.retrieve(and(
+						equal(MemoryMatcherGroup.NAME, type),
+						qualifierExistsQueries.size() > 1 ? and(qualifierExistsQueries) : qualifierExistsQueries.iterator().next(),
+						qualifierValueQueries.size() > 1 ? and(qualifierValueQueries) : qualifierValueQueries.iterator().next()
+				)), new Predicate<MemoryMatcherGroup>() {
+					@Override
+					public boolean apply(@Nullable MemoryMatcherGroup memoryMatcherGroup) {
+						return memoryMatcherGroup != null && memoryMatcherGroup.matches(context);
+					}
+				}));
 			}
 		});
 	}

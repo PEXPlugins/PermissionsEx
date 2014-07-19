@@ -16,6 +16,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.events.MatcherGroupEvent;
@@ -203,12 +204,11 @@ public abstract class PermissionBackend {
 	 * Returns a matcher group only if there is only a single result. If multiple groups match, or no groups match, null is returned.
 	 *
 	 * @param type The name of the section.
-	 * @param qual The primary-key qualifier
-	 * @param qualValue The value of the qualifier used.
+	 * @param context The context to check against
 	 * @return the result if only one result is present, otherwise null
 	 */
-	public ListenableFuture<MatcherGroup> getOne(final String type, final Qualifier qual, final String qualValue) {
-		return Futures.transform(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, MatcherGroup>() {
+	public ListenableFuture<MatcherGroup> getOne(final String type, final Context context) {
+		return Futures.transform(getMatchingGroups(type, context), new Function<List<MatcherGroup>, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(List<MatcherGroup> matcherGroups) {
 				return matcherGroups.size() == 1 ? matcherGroups.get(0) : null;
@@ -222,12 +222,11 @@ public abstract class PermissionBackend {
 	 * This may be changed to be based on a sorted list of matching groups.
 	 *
 	 * @param type The name of the section
-	 * @param qual The primary-key qualifier
-	 * @param qualValue The value of the qualifier used.
+	 * @param context The context to check against
 	 * @return the result, or null if no groups matched
 	 */
-	public ListenableFuture<MatcherGroup> getFirst(final String type, final Qualifier qual, final String qualValue) {
-		return Futures.transform(getMatchingGroups(type, qual, qualValue), new Function<List<MatcherGroup>, MatcherGroup>() {
+	public ListenableFuture<MatcherGroup> getFirst(final String type, final Context context) {
+		return Futures.transform(getMatchingGroups(type, context), new Function<List<MatcherGroup>, MatcherGroup>() {
 			@Override
 			public MatcherGroup apply(List<MatcherGroup> matcherGroups) {
 				if (!matcherGroups.isEmpty()) {
@@ -295,16 +294,15 @@ public abstract class PermissionBackend {
 	 * What 'first' means is entirely backend-dependant.
 	 *
 	 * @param type The name of the section
-	 * @param key The primary-key qualifier
-	 * @param value The qualifier's value
+	 * @param context The context to check against
 	 * @return Either an existing or new group, never null.
 	 */
-	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type, final Qualifier key, final String value) {
-		return Futures.chain(getFirst(type, key, value), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
+	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type, final Context context) {
+		return Futures.chain(getFirst(type, context), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
 			@Override
 			public ListenableFuture<? extends MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
 				if (matcherGroup == null) {
-					return createMatcherGroup(type, Collections.<String, String>emptyMap(), ImmutableMultimap.<Qualifier, String>of(key, value));
+					return createMatcherGroup(type, Collections.<String, String>emptyMap(), context.getValues());
 				} else {
 					return Futures.immediateFuture(matcherGroup);
 				}
@@ -324,11 +322,10 @@ public abstract class PermissionBackend {
 	 * Returns all known groups of the requested type with {@code qual} set to {@code qualValue}
 	 *
 	 * @param type The type of group to look up
-	 * @param qual A primary-key qualifier
-	 * @param qualValue A value for the primary-key qualifier
+	 * @param context The context to check against
 	 * @return Any matching groups. Empty if no values.
 	 */
-	public abstract ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue);
+	public abstract ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Context context);
 
 	/**
 	 * Creates a new matcher group with the provided parameters.
@@ -345,22 +342,7 @@ public abstract class PermissionBackend {
 
 	protected abstract ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, Map<String, String> entries, Multimap<Qualifier, String> qualifiers);
 
-	private ListenableFuture<MatcherGroup> callCreate(ListenableFuture<MatcherGroup> future) {
-		Futures.addCallback(future, new FutureCallback<MatcherGroup>() {
-			@Override
-			public void onSuccess(MatcherGroup matcherGroup) {
-				if (matcherGroup != null) {
-					callEvent(null, matcherGroup, MatcherGroupEvent.Action.CREATE);
-				}
-			}
 
-			@Override
-			public void onFailure(Throwable throwable) {
-
-			}
-		}, PermissionsEx.mainThreadExecutor());
-		return future;
-	}
 	/**
 	 * Creates a new matcher group with the provided parameters.
 	 * Null values are not permitted in the entries list.
@@ -380,6 +362,23 @@ public abstract class PermissionBackend {
 	 * @see #createMatcherGroup(String, java.util.List, com.google.common.collect.Multimap)
 	 */
 	protected abstract ListenableFuture<MatcherGroup> createMatcherGroupImpl(String type, List<String> entries, Multimap<Qualifier, String> qualifiers);
+
+	private ListenableFuture<MatcherGroup> callCreate(ListenableFuture<MatcherGroup> future) {
+		Futures.addCallback(future, new FutureCallback<MatcherGroup>() {
+			@Override
+			public void onSuccess(MatcherGroup matcherGroup) {
+				if (matcherGroup != null) {
+					callEvent(null, matcherGroup, MatcherGroupEvent.Action.CREATE);
+				}
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+
+			}
+		}, PermissionsEx.mainThreadExecutor());
+		return future;
+	}
 
 	/**
 	 * Returns all values this qualifier has across every matcher group.

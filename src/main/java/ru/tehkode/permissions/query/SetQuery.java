@@ -4,17 +4,19 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Query used to set permissions data
  */
 public class SetQuery extends PermissionQuery<SetQuery> {
-	public SetQuery(PermissionManager manager) {
-		super(manager);
+	public SetQuery(PermissionManager manager, ConcurrentMap<CacheKey, CacheElement> cache) {
+		super(manager, cache);
 		followInheritance(false); // When setting, we usually don't want to go up in the inheritance tree to look for sections to modify
 	}
 

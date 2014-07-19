@@ -114,10 +114,10 @@ public class MultiBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Context context) {
 		final List<ListenableFuture<List<MatcherGroup>>> rawResults = new ArrayList<>(backends.size());
 		for (PermissionBackend backend : backends) {
-			rawResults.add(backend.getMatchingGroups(type, qual, qualValue));
+			rawResults.add(backend.getMatchingGroups(type, context));
 		}
 		return Futures.transform(Futures.allAsList(rawResults), new Function<List<List<MatcherGroup>>, List<MatcherGroup>>() {
 			@Override

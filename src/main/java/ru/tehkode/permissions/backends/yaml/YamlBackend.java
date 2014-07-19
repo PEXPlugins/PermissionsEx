@@ -7,6 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.SchemaUpdate;
+import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -254,7 +255,7 @@ public class YamlBackend extends PermissionBackend {
 	}
 
 	@Override
-	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Qualifier qual, String qualValue) {
+	public ListenableFuture<List<MatcherGroup>> getMatchingGroups(String type, Context context) {
 		throw new UnsupportedOperationException("YAML backend is import-only.");
 	}
 
