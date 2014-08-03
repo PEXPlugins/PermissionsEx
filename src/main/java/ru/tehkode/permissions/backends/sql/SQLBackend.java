@@ -243,7 +243,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public boolean hasUser(String userName) {
 		try (SQLConnection conn = getSQL()) {
-			ResultSet res = conn.prepAndBind("entity.exists", SQLData.Type.USER.ordinal(), userName).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.exists", userName, SQLData.Type.USER.ordinal()).executeQuery();
 			return res.next();
 		} catch (SQLException | IOException e) {
 			return false;
@@ -253,7 +253,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	public boolean hasGroup(String group) {
 		try (SQLConnection conn = getSQL()) {
-			ResultSet res = conn.prepAndBind("entity.exists", SQLData.Type.GROUP.ordinal(), group).executeQuery();
+			ResultSet res = conn.prepAndBind("entity.exists", group, SQLData.Type.GROUP.ordinal()).executeQuery();
 			return res.next();
 		} catch (SQLException | IOException e) {
 			return false;
@@ -282,7 +282,7 @@ public class SQLBackend extends PermissionBackend {
 	public Collection<String> getUserNames() {
 		Set<String> ret = new HashSet<>();
 		try (SQLConnection conn = getSQL()) {
-			ResultSet set = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `type` = ? AND `name` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
+			ResultSet set = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `type` = ? AND `permission` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
 			while (set.next()) {
 				ret.add(set.getString("value"));
 			}
