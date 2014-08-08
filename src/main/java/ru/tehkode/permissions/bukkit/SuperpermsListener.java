@@ -73,7 +73,12 @@ public class SuperpermsListener implements Listener {
 		final String name = permissionName(player, suffix);
 		Permission perm = plugin.getServer().getPluginManager().getPermission(name);
 		if (perm == null) {
-			perm = new Permission(name, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE);
+			perm = new Permission(name, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE) {
+				@Override
+				public void recalculatePermissibles() {
+					// no-op
+				}
+			};
 			plugin.getServer().getPluginManager().addPermission(perm);
 		}
 
