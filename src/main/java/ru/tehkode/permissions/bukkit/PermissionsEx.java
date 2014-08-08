@@ -44,6 +44,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -153,9 +154,9 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 
 	private void logBackendExc(PermissionBackendException e) {
 		getLogger().log(Level.SEVERE, "\n========== UNABLE TO LOAD PERMISSIONS BACKEND =========\n" +
-									  "Your configuration must be fixed before PEX will enable\n" +
-									  "Details: " + e.getMessage() + "\n" +
-									  "=======================================================", e);
+				"Your configuration must be fixed before PEX will enable\n" +
+				"Details: " + e.getMessage() + "\n" +
+				"=======================================================", e);
 	}
 
 	@Override
@@ -345,6 +346,10 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		}
 	}
 
+	public boolean requiresLateUserSetup() {
+		return getServer().getPluginManager().isPluginEnabled("LilyPad-Connect");
+	}
+
 	public PermissionsExConfig getConfiguration() {
 		return config;
 	}
@@ -441,41 +446,49 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	public class PlayerEventsListener implements Listener {
 		@EventHandler(priority = EventPriority.MONITOR)
 		public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
-				// UUID conversion
-				final String uuidIdent = event.getUniqueId().toString();
-				final String nameIdent = event.getName();
-				Futures.addCallback(Futures.chain(Futures.allAsList(permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, uuidIdent),
-						permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, nameIdent)),
-						new Function<List<Boolean>, ListenableFuture<MatcherGroup>>() {
-					@Override
-					public ListenableFuture<MatcherGroup> apply(List<Boolean> booleans) {
-						boolean hasUuid = booleans.get(0);
-						boolean hasName = booleans.get(1);
-						if (!hasUuid && hasName) {
-							permissionsManager.getBackend().replaceQualifier(Qualifier.USER, nameIdent, uuidIdent);
-						}
-
-						return permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY);
-					}
-				}), new FutureCallback<MatcherGroup>() {
-					@Override
-					public void onSuccess(MatcherGroup uuidGroup) {
-						// Writing the name alias
-						if (!nameIdent.equals(uuidGroup.getEntries().get(uuidIdent))) {
-							uuidGroup.putEntry(uuidIdent, nameIdent);
-						}
-					}
-
-					@Override
-					public void onFailure(Throwable throwable) {
-
-					}
-				});
-
+			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED && !requiresLateUserSetup()) {
+				earlyUserSetup(event.getUniqueId().toString(), event.getName());
 				// Cache data for user (dunno how this will work
 				//getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
 			}
+		}
+
+		@EventHandler
+		public void onPlayerLogin(PlayerLoginEvent event) {
+			if (event.getResult() == PlayerLoginEvent.Result.ALLOWED && requiresLateUserSetup()) {
+				earlyUserSetup(event.getPlayer().getUniqueId().toString(), event.getPlayer().getName());
+			}
+		}
+
+		private void earlyUserSetup(final String uuidIdent, final String nameIdent) {
+			// UUID conversion
+			Futures.addCallback(Futures.chain(Futures.allAsList(permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, uuidIdent),
+							permissionsManager.getBackend().hasAnyQualifier(Qualifier.USER, nameIdent)),
+					new Function<List<Boolean>, ListenableFuture<MatcherGroup>>() {
+						@Override
+						public ListenableFuture<MatcherGroup> apply(List<Boolean> booleans) {
+							boolean hasUuid = booleans.get(0);
+							boolean hasName = booleans.get(1);
+							if (!hasUuid && hasName) {
+								permissionsManager.getBackend().replaceQualifier(Qualifier.USER, nameIdent, uuidIdent);
+							}
+
+							return permissionsManager.getBackend().getFirstOrAdd(MatcherGroup.UUID_ALIASES_KEY);
+						}
+					}), new FutureCallback<MatcherGroup>() {
+				@Override
+				public void onSuccess(MatcherGroup uuidGroup) {
+					// Writing the name alias
+					if (!nameIdent.equals(uuidGroup.getEntries().get(uuidIdent))) {
+						uuidGroup.putEntry(uuidIdent, nameIdent);
+					}
+				}
+
+				@Override
+				public void onFailure(Throwable throwable) {
+
+				}
+			});
 		}
 
 		@EventHandler
