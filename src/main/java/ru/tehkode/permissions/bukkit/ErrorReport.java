@@ -68,10 +68,6 @@ public class ErrorReport {
 			return longUrl;
 		}
 
-		StringBuilder sb = null;
-		String line = null;
-		String urlStr = longUrl;
-
 		try {
 			URL url = new URL("http://git.io/create");
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -82,12 +78,13 @@ public class ErrorReport {
 			String urlParameters = "url=" + longUrl;
 
 			DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
-			wr.writeBytes(urlParameters);
+			wr.writeBytes(URLEncoder.encode(urlParameters, UTF8_ENCODING));
 			wr.flush();
 			wr.close();
 
 			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			sb = new StringBuilder();
+			String line;
+			StringBuilder sb = new StringBuilder();
 			while ((line = rd.readLine()) != null) {
 				sb.append(line);
 			}
