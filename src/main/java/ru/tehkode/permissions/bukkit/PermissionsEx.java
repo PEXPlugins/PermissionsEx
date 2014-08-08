@@ -350,7 +350,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	}
 
 	public boolean isDebug() {
-		return permissionsManager.isDebug();
+		return permissionsManager != null && permissionsManager.isDebug();
 	}
 
 	public static Plugin getPlugin() {
