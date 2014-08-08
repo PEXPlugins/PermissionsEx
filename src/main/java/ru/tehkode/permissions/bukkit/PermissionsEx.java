@@ -305,6 +305,10 @@ public class PermissionsEx extends JavaPlugin {
 		}
 	}
 
+	public boolean requiresLateUserSetup() {
+		return getServer().getPluginManager().isPluginEnabled("LilyPad-Connect");
+	}
+
 	public PermissionsExConfig getConfiguration() {
 		return config;
 	}
@@ -358,7 +362,7 @@ public class PermissionsEx extends JavaPlugin {
 	public class PlayerEventsListener implements Listener {
 		@EventHandler(priority = EventPriority.MONITOR)
 		public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
+			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED && !requiresLateUserSetup()) {
 				getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
 			}
 		}
