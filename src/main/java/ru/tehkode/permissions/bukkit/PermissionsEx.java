@@ -292,7 +292,7 @@ public class PermissionsEx extends JavaPlugin {
 				if (sender instanceof Player) {
 					sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]");
 
-					return !this.permissionsManager.has((Player) sender, "permissions.manage");
+					return this.permissionsManager == null || !this.permissionsManager.has((Player) sender, "permissions.manage");
 				} else {
 					sender.sendMessage("[PermissionsEx] version [" + pdf.getVersion() + "]");
 
