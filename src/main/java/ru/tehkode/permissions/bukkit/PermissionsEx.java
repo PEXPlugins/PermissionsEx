@@ -310,7 +310,7 @@ public class PermissionsEx extends JavaPlugin {
 	}
 
 	public boolean isDebug() {
-		return permissionsManager.isDebug();
+		return permissionsManager != null && permissionsManager.isDebug();
 	}
 
 	public static Plugin getPlugin() {
