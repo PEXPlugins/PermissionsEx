@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.backends.file.config.PEXMLWriter;
+import ru.tehkode.permissions.backends.file.config.WriterOptions;
 import ru.tehkode.permissions.backends.memory.ConfigInstance;
 import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.yaml.YamlBackend;
@@ -34,6 +36,7 @@ import ru.tehkode.utils.PrefixedThreadFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -167,6 +170,13 @@ public class FileBackend extends MemoryBackend {
 		this.loader.setSaveSuppressed(!persistent);
 		if (persistent) {
 			this.save();
+		}
+	}
+
+	@Override
+	public void writeContents(ConfigInstance config, Writer writer) throws IOException {
+		try (PEXMLWriter pexml = new PEXMLWriter(writer, new WriterOptions())) {
+			this.loader.writeGroups(config, pexml);
 		}
 	}
 }

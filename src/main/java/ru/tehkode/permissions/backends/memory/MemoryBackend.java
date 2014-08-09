@@ -18,6 +18,8 @@
  */
 package ru.tehkode.permissions.backends.memory;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -331,5 +333,18 @@ public class MemoryBackend extends PermissionBackend {
 	public boolean removeGroup(MemoryMatcherGroup group) {
 		Preconditions.checkNotNull(group);
 		return matcherList.remove(group);
+	}
+
+	@Override
+	public void writeContents(Writer writer) throws IOException {
+		final IndexedCollection<MemoryMatcherGroup> matcherList = this.matcherList;
+		final ConfigInstance config = this.config;
+		if (matcherList != null) {
+			config.setGroups(matcherList);
+			writeContents(config, writer);
+		}
+	}
+
+	public void writeContents(ConfigInstance config, Writer writer) throws IOException {
 	}
 }

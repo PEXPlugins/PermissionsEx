@@ -212,7 +212,7 @@ public class FileConfig {
 		}
 	}
 
-	private void writeGroups(ConfigInstance list, PEXMLWriter writer) throws IOException {
+	protected void writeGroups(ConfigInstance list, PEXMLWriter writer) throws IOException {
 		for (MemoryMatcherGroup group : list.getGroups()) {
 			FileMatcherGroup fGroup = group instanceof FileMatcherGroup ? (FileMatcherGroup) group : null;
 			if (fGroup != null) {

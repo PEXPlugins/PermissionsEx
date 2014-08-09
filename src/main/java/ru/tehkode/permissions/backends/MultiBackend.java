@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.bukkit.configuration.ConfigurationSection;
+import org.json.simple.JSONObject;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
@@ -15,6 +16,9 @@ import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -228,5 +232,16 @@ public class MultiBackend extends PermissionBackend {
 				return concatList(lists);
 			}
 		});
+	}
+
+	@Override
+	public void writeContents(Writer writer) throws IOException {
+		JSONObject obj = new JSONObject();
+		for (PermissionBackend backend : backends) {
+			final StringWriter stringW = new StringWriter();
+			backend.writeContents(stringW);
+			obj.put(backend.toString(), stringW.toString());
+		}
+		obj.writeJSONString(writer);
 	}
 }

@@ -37,8 +37,12 @@ import ru.tehkode.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.*;
 import java.util.ArrayList;
+import java.io.Writer;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,6 +94,7 @@ public class SQLBackend extends PermissionBackend {
 			getConfig().set("user", "databaseuser");
 			getConfig().set("password", "databasepassword");
 			getConfig().set("prefix", "pex");
+			manager.getConfiguration().save();
 			throw new PermissionBackendException("SQL connection is not configured, see config.yml");
 		}
 		dbDriver = dbUri.split(":", 2)[0];
@@ -128,7 +133,7 @@ public class SQLBackend extends PermissionBackend {
 
 		getManager().getLogger().info("Successfully connected to SQL database");
 
-		addSchemaUpdate(new SchemaUpdate(2) {
+		addSchemaUpdate(new SchemaUpdate(3) {
 			@Override
 			public void performUpdate() throws PermissionBackendException {
 				try (SQLConnection conn = getSQL()) {
@@ -171,6 +176,21 @@ public class SQLBackend extends PermissionBackend {
 					conn.prepAndBind("DROP TABLE `{permissions_entity}`").execute();
 					conn.prepAndBind("DROP TABLE `{permissions_inheritance}`").execute();
 					Futures.getUnchecked(Futures.allAsList(actionsHappening)); // Wait for it all to finish
+				} catch (SQLException | IOException e) {
+					throw new PermissionBackendException(e);
+				}
+			}
+		});
+		addSchemaUpdate(new SchemaUpdate(3) {
+			@Override
+			public void performUpdate() throws PermissionBackendException {
+				// Change encoding for all columns to utf8mb4
+				// Change collation for all columns to utf8mb4_general_ci
+				try (SQLConnection conn = getSQL()) {
+					conn.prep("ALTER TABLE `{permissions}` DROP INDEX `unique`, MODIFY COLUMN `permission` TEXT NOT NULL").execute();
+					conn.prep("ALTER TABLE `{permissions}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
+					conn.prep("ALTER TABLE `{permissions_entity}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
+					conn.prep("ALTER TABLE `{permissions_inheritance}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
 				} catch (SQLException | IOException e) {
 					throw new PermissionBackendException(e);
 				}
@@ -633,6 +653,57 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public void setPersistent(boolean persist) {
+	}
+
+	@Override
+	public void writeContents(Writer writer) throws IOException {
+		try (SQLConnection conn = getSQL()) {
+			writeTable("groups", conn, writer);
+			writeTable("qualifiers", conn, writer);
+			writeTable("entries", conn, writer);
+		} catch (SQLException e) {
+			throw new IOException(e);
+		}
+	}
+
+	private void writeTable(String table, SQLConnection conn, Writer writer) throws IOException, SQLException {
+		ResultSet res = conn.prep("SHOW CREATE TABLE `{" + table + "}`").executeQuery();
+		if (!res.next()) {
+			throw new IOException("No value for table create for table " + table);
+		}
+		writer.write(res.getString(2));
+		writer.write(";\n");
+
+		res = conn.prep("SELECT * FROM `{" + table + "}`").executeQuery();
+		while (res.next()) {
+			writer.write("INSERT INTO `{");
+			writer.write(table);
+			writer.write("}` VALUES (");
+
+			for (int i = 1; i <= res.getMetaData().getColumnCount(); ++i) {
+				String value = res.getString(i);
+				Class<?> columnClazz;
+				try {
+					columnClazz = Class.forName(res.getMetaData().getColumnClassName(i));
+				} catch (ClassNotFoundException e) {
+					throw new IOException(e);
+				}
+				if (value == null) {
+					value = "null";
+				} else {
+					if (String.class.equals(columnClazz)) {
+						value = "'" + value + "'";
+					}
+				}
+				writer.write(value);
+				if (i == res.getMetaData().getColumnCount()) { // Last column
+					writer.write(");\n");
+				} else {
+					writer.write(", ");
+				}
+			}
+		}
+		writer.write('\n');
 	}
 
 	@Override
