@@ -76,7 +76,7 @@ public class GroupCommands extends PermissionsCommand {
 	public void groupDisplaySetWeight(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String groupName = this.autoCompleteGroupName(args.get("group"));
 		PermissionGroup group = plugin.getPermissionsManager().getGroup(groupName);
-		
+
 		if (group == null) {
 			sender.sendMessage(ChatColor.RED + "Group \"" + groupName + "\" doesn't exist.");
 			return;
@@ -584,7 +584,7 @@ public class GroupCommands extends PermissionsCommand {
 			return;
 		}
 
-		sender.sendMessage("Group \"" + groupName + "\"'s users:");
+		sender.sendMessage("Group \"" + groupName + "\"'s users (" + users.size() + "):");
 
 		for (PermissionUser user : users) {
 			sender.sendMessage("   " + describeUser(user));
