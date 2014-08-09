@@ -9,6 +9,10 @@ import ru.tehkode.permissions.bukkit.ErrorReport;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -80,16 +84,26 @@ public abstract class PermissionBackend {
 					if (update.getUpdateVersion() <= version) {
 						continue;
 					}
+					if (newVersion == version) { // No updates have been performed yet
+						backupDatabase();
+					}
 					update.performUpdate();
 					newVersion = Math.max(update.getUpdateVersion(), newVersion);
 				} catch (Throwable t) {
 					ErrorReport.handleError("While updating to " + update.getUpdateVersion() + " from " + newVersion, t);
+					break;
 				}
 			}
 		} finally {
 			if (newVersion != version) {
 				setSchemaVersion(newVersion);
 			}
+		}
+	}
+
+	protected void backupDatabase() throws IOException {
+		try (Writer w = new FileWriter(new File(manager.getPlugin().getDataFolder(), getConfig().getName() + "-backup." + getSchemaVersion() + ".bak"))) {
+			writeContents(w);
 		}
 	}
 
@@ -243,6 +257,12 @@ public abstract class PermissionBackend {
 			this.activeExecutor = onThreadExecutor;
 		}
 	}
+
+	/**
+	 * Allow this backend to write its contents to a file.
+	 * @param writer The writer to dump contents to.
+	 */
+	public abstract void writeContents(Writer writer) throws IOException;
 
 	// -- Backend lookup/creation
 

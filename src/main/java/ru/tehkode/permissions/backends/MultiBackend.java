@@ -1,11 +1,15 @@
 package ru.tehkode.permissions.backends;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.json.simple.JSONObject;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -165,5 +169,16 @@ public class MultiBackend extends PermissionBackend {
 	@Override
 	public void setWorldInheritance(String world, List<String> inheritance) {
 		getFallbackBackend("world").setWorldInheritance(world, inheritance);
+	}
+
+	@Override
+	public void writeContents(Writer writer) throws IOException {
+		JSONObject obj = new JSONObject();
+		for (PermissionBackend backend : backends) {
+			final StringWriter stringW = new StringWriter();
+			backend.writeContents(stringW);
+			obj.put(backend.toString(), stringW.toString());
+		}
+		obj.writeJSONString(writer);
 	}
 }
