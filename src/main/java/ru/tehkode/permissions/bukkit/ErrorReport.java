@@ -75,10 +75,10 @@ public class ErrorReport {
 			connection.setRequestMethod("POST");
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-			String urlParameters = "url=" + longUrl;
+			String urlParameters = "url=" + URLEncoder.encode(longUrl, UTF8_ENCODING);
 
 			DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
-			wr.writeBytes(URLEncoder.encode(urlParameters, UTF8_ENCODING));
+			wr.writeBytes(urlParameters);
 			wr.flush();
 			wr.close();
 
