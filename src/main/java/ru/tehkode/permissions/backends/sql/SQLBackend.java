@@ -121,7 +121,7 @@ public class SQLBackend extends PermissionBackend {
 				// Change encoding for all columns to utf8mb4
 				// Change collation for all columns to utf8mb4_general_ci
 				try (SQLConnection conn = getSQL()) {
-					conn.prep("ALTER TABLE `{permissions}` DROP INDEX `unique`, MODIFY COLUMN `permission` TEXT NOT NULL").execute();
+					conn.prep("ALTER TABLE `{permissions}` DROP KEY `unique`, MODIFY COLUMN `permission` TEXT NOT NULL").execute();
 					conn.prep("ALTER TABLE `{permissions}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
 					conn.prep("ALTER TABLE `{permissions_entity}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
 					conn.prep("ALTER TABLE `{permissions_inheritance}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
@@ -206,6 +206,7 @@ public class SQLBackend extends PermissionBackend {
 	@Override
 	protected void setSchemaVersion(int version) {
 		try (SQLConnection conn = getSQL()) {
+			conn.prepAndBind("entity.options.delete", "system", "schema_version", SQLData.Type.WORLD.ordinal(), "").execute();
 			conn.prepAndBind("entity.options.add", "system", SQLData.Type.WORLD.ordinal(), "schema_version", "", version).execute();
 		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
@@ -351,10 +352,7 @@ public class SQLBackend extends PermissionBackend {
 
 			getLogger().info("Deploying default database scheme");
 			executeStream(conn, databaseDumpStream);
-			System.out.println("Latest schema version: " + getLatestSchemaVersion());
-			System.out.println("current: " + getSchemaVersion());
 			setSchemaVersion(getLatestSchemaVersion());
-			System.out.println("new: " + getSchemaVersion());
 		} catch (Exception e) {
 			throw new PermissionBackendException("Deploying of default data failed. Please initialize database manually using " + dbDriver + ".sql", e);
 		}
