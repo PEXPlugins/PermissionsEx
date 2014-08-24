@@ -24,6 +24,7 @@ import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.permissions.PermissionDefault;
 import ru.tehkode.permissions.PermissionCheckResult;
 import ru.tehkode.permissions.PermissionMatcher;
 import ru.tehkode.permissions.PermissionUser;
@@ -138,7 +139,7 @@ public class PermissiblePEX extends PermissibleBase {
 					}
 					return ret;
 				} else {
-					return false;
+					return Permission.DEFAULT_PERMISSION.getValue(isOp());
 				}
 		}
 	}
