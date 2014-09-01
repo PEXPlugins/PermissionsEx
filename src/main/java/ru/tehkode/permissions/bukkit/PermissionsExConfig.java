@@ -13,6 +13,7 @@ import java.util.List;
  */
 public class PermissionsExConfig {
 	private final Configuration config;
+	private final PermissionsEx plugin;
 
 	private final boolean useNetEvents;
 	private final boolean debug;
@@ -27,8 +28,9 @@ public class PermissionsExConfig {
 	private final List<String> serverTags;
 	private final String basedir;
 
-	public PermissionsExConfig(Configuration config) {
+	public PermissionsExConfig(Configuration config, PermissionsEx plugin) {
 		this.config = config;
+		this.plugin = plugin;
 		this.useNetEvents = getBoolean("multiserver.use-netevents", true);
 		this.serverTags = getStringList("multiserver.server-tags");
 		this.debug = getBoolean("permissions.debug", false);
@@ -122,5 +124,9 @@ public class PermissionsExConfig {
 			section = config.createSection("permissions.backends." + backend);
 		}
 		return section;
+	}
+
+	public void save() {
+		plugin.saveConfig();
 	}
 }

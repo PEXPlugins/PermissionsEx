@@ -136,7 +136,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	@Override
 	public void onLoad() {
 		try {
-			this.config = new PermissionsExConfig(this.getConfig());
+			this.config = new PermissionsExConfig(this.getConfig(), this);
 			this.commandsManager = new CommandsManager(this);
 
 			if (!getServer().getOnlineMode()) {
@@ -260,6 +260,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 				if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
 					NetEventsPlugin netEvents = (NetEventsPlugin) netEventsPlugin;
 					getServer().getPluginManager().registerEvents(new RemoteEventListener(netEvents, permissionsManager), this);
+					this.netEvents = netEvents;
 				}
 			}
 		} catch (PermissionBackendException e) {
@@ -305,7 +306,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 				if (sender instanceof Player) {
 					sender.sendMessage("[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]");
 
-					return !this.permissionsManager.has((Player) sender, "permissions.manage");
+					return this.permissionsManager == null || !this.permissionsManager.has((Player) sender, "permissions.manage");
 				} else {
 					sender.sendMessage("[PermissionsEx] version [" + pdf.getVersion() + "]");
 
@@ -318,12 +319,16 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		}
 	}
 
+	public boolean requiresLateUserSetup() {
+		return getServer().getPluginManager().isPluginEnabled("LilyPad-Connect");
+	}
+
 	public PermissionsExConfig getConfiguration() {
 		return config;
 	}
 
 	public boolean isDebug() {
-		return permissionsManager.isDebug();
+		return permissionsManager != null && permissionsManager.isDebug();
 	}
 
 	public static Plugin getPlugin() {
@@ -414,7 +419,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	public class PlayerEventsListener implements Listener {
 		@EventHandler(priority = EventPriority.MONITOR)
 		public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
+			if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED && !requiresLateUserSetup()) {
 				getPermissionsManager().cacheUser(event.getUniqueId().toString(), event.getName());
 			}
 		}

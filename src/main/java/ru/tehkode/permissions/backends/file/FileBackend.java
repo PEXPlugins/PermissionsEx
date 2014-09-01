@@ -31,6 +31,7 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -342,7 +343,7 @@ public class FileBackend extends PermissionBackend {
 				permissionsFile.createNewFile();
 
 				// Load default permissions
-				permissions.set("groups/default/default", true);
+				permissions.set("groups/default/options/default", true);
 
 
 				List<String> defaultPermissions = new LinkedList<>();
@@ -377,6 +378,11 @@ public class FileBackend extends PermissionBackend {
 		if (persistent) {
 			this.save();
 		}
+	}
+
+	@Override
+	public void writeContents(Writer writer) throws IOException {
+		writer.write(this.permissions.saveToString());
 	}
 
 	public void save() {

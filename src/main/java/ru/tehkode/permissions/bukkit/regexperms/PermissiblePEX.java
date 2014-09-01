@@ -138,7 +138,8 @@ public class PermissiblePEX extends PermissibleBase {
 					}
 					return ret;
 				} else {
-					return false;
+					Permission perm = player.getServer().getPluginManager().getPermission(permission);
+					return perm == null ? Permission.DEFAULT_PERMISSION.getValue(player.isOp()) : perm.getDefault().getValue(player.isOp());
 				}
 		}
 	}

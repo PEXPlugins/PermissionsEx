@@ -13,6 +13,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.utils.StringUtils;
 
 /**
@@ -68,10 +70,6 @@ public class ErrorReport {
 			return longUrl;
 		}
 
-		StringBuilder sb = null;
-		String line = null;
-		String urlStr = longUrl;
-
 		try {
 			URL url = new URL("http://git.io/create");
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -79,7 +77,7 @@ public class ErrorReport {
 			connection.setRequestMethod("POST");
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-			String urlParameters = "url=" + longUrl;
+			String urlParameters = "url=" + URLEncoder.encode(longUrl, UTF8_ENCODING);
 
 			DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 			wr.writeBytes(urlParameters);
@@ -87,7 +85,8 @@ public class ErrorReport {
 			wr.close();
 
 			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			sb = new StringBuilder();
+			String line;
+			StringBuilder sb = new StringBuilder();
 			while ((line = rd.readLine()) != null) {
 				sb.append(line);
 			}
@@ -217,7 +216,7 @@ public class ErrorReport {
 	public static ErrorReport withException(String cause, Throwable error) {
 		Builder builder = builder(error);
 
-		Plugin pexPlugin = PermissionsEx.getPlugin();
+		PermissionsEx pexPlugin = (PermissionsEx) PermissionsEx.getPlugin();
 		builder.addHeading("Basic info").
 				addText("**Server version:** " + Bukkit.getBukkitVersion() + " *running on* " + Bukkit.getVersion());
 
@@ -265,6 +264,7 @@ public class ErrorReport {
 		final File mainConfigFile = pexPlugin != null ? new File(pexPlugin.getDataFolder(), "config.yml") : null;
 		String configuration;
 		String permissionsDb = "Permissions configuration could not be read. Does it exist?";
+		String activeBackend = "unknown";
 
 		if (mainConfigFile == null) {
 			configuration = "PEX plugin was inaccessible!";
@@ -288,19 +288,38 @@ public class ErrorReport {
 				.addCode(configuration, "yaml");
 
 		// Permissions database
-		if (pexPlugin != null && pexConfig.getString("permissions.backend", "file").equalsIgnoreCase("file")) {
-			File file = new File(pexPlugin.getDataFolder(), pexConfig.getString("permissions.backends.file.file", "permissions.yml"));
-			if (file.exists()) {
+		if (pexPlugin != null) {
+			PermissionManager manager = pexPlugin.getPermissionsManager();
+			if (manager != null) {
+				PermissionBackend backend = manager.getBackend();
 				try {
-					permissionsDb = StringUtils.readStream(new FileInputStream(file));
-				} catch (IOException ignore) {
+					if (backend != null) {
+						final StringWriter writer = new StringWriter();
+						backend.writeContents(writer);
+						permissionsDb = writer.toString();
+						activeBackend = backend.toString();
+					}
+				} catch (Throwable t) {
+					// Continue
 				}
 			}
-		} else {
+			if (permissionsDb == null && pexConfig.getString("permissions.backends." + pexConfig.getString("permissions.backend", "file") + ".type", "file").equalsIgnoreCase("file")) {
+				File file = new File(pexPlugin.getDataFolder(), pexConfig.getString("permissions.backends.file.file", "permissions.yml"));
+				if (file.exists()) {
+					try {
+						permissionsDb = StringUtils.readStream(new FileInputStream(file));
+						activeBackend = "file";
+					} catch (IOException ignore) {
+					}
+				}
+			}
+		}
+		if (permissionsDb == null) {
 			permissionsDb = "Backend is not file or plugin was not accessible, see configuration file for details";
 		}
 
 		builder.addHeading("Permissions database");
+		builder.addText("**Active backend:** " + activeBackend);
 		if (!successfulLoad) {
 			builder.addText("PEX configuration could not be successfully loaded, attempting to read default permissions file");
 		}

@@ -73,7 +73,12 @@ public class SuperpermsListener implements Listener {
 		final String name = permissionName(player, suffix);
 		Permission perm = plugin.getServer().getPluginManager().getPermission(name);
 		if (perm == null) {
-			perm = new Permission(name, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE);
+			perm = new Permission(name, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE) {
+				@Override
+				public void recalculatePermissibles() {
+					// no-op
+				}
+			};
 			plugin.getServer().getPluginManager().addPermission(perm);
 		}
 
@@ -145,6 +150,19 @@ public class SuperpermsListener implements Listener {
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerLogin(PlayerLoginEvent event) {
+		if (!plugin.requiresLateUserSetup()) {
+			handleLogin(event);
+		}
+	}
+
+	@EventHandler
+	public void onPlayerLoginLate(PlayerLoginEvent event) {
+		if (plugin.requiresLateUserSetup()) {
+			handleLogin(event);
+		}
+	}
+
+	private void handleLogin(PlayerLoginEvent event) {
 		try {
 			final Player player = event.getPlayer();
 			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world in join event

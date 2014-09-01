@@ -216,18 +216,13 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			worldName = "";
 		}
 
-		if (value == null || value.isEmpty()) {
-			try (SQLConnection conn = backend.getSQL()) {
-				conn.prepAndBind("entity.options.delete", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
-			} catch (SQLException | IOException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			try (SQLConnection conn = backend.getSQL()) {
+		try (SQLConnection conn = backend.getSQL()) {
+			conn.prepAndBind("entity.options.delete", this.getIdentifier(), option, this.type.ordinal(), worldName).execute();
+			if (value != null && !value.isEmpty()) {
 				conn.prepAndBind("entity.options.add", getIdentifier(), this.type.ordinal(), option, worldName, value).execute();
-			} catch (SQLException | IOException e) {
-				throw new RuntimeException(e);
 			}
+		} catch (SQLException | IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

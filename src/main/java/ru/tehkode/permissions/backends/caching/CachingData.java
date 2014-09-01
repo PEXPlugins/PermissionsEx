@@ -168,7 +168,11 @@ public abstract class CachingData implements PermissionsData {
 				options.put(world, optionsMap);
 				clearWorldsCache();
 			}
-			optionsMap.put(option, value);
+			if (value == null) {
+				optionsMap.remove(option);
+			} else {
+				optionsMap.put(option, value);
+			}
 		}
 	}
 

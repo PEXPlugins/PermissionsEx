@@ -23,9 +23,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -80,13 +82,24 @@ public abstract class PermissionsCommand implements CommandListener {
 		}
 	}
 
+	private String nameToUUID(String name) {
+		OfflinePlayer player = Bukkit.getServer().getOfflinePlayer(name);
+		if (player != null) {
+			UUID uid = player.getUniqueId();
+			if (uid != null) {
+				return uid.toString();
+			}
+		}
+		return name;
+	}
+
 	protected String autoCompletePlayerName(String playerName, String argName) {
 		if (playerName == null) {
 			return null;
 		}
 
 		if (playerName.startsWith("#")) {
-			return playerName.substring(1);
+			return nameToUUID(playerName.substring(1));
 		}
 
 		List<String> players = new LinkedList<>();
@@ -105,11 +118,14 @@ public abstract class PermissionsCommand implements CommandListener {
 		// Collect registered PEX user names
 		for (String user : PermissionsEx.getPermissionManager().getUserNames()) {
 			if (user.equalsIgnoreCase(playerName)) {
-				return user;
+				return nameToUUID(user);
 			}
 
-			if (user.toLowerCase().startsWith(playerName.toLowerCase()) && !players.contains(user)) {
-				players.add(user);
+			if (user.toLowerCase().startsWith(playerName.toLowerCase())) {
+				final String uid = nameToUUID(user);
+				if (!players.contains(uid)) {
+					players.add(uid);
+				}
 			}
 		}
 

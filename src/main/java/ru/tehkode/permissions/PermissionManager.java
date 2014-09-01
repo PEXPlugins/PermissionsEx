@@ -31,6 +31,10 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -45,7 +49,8 @@ public class PermissionManager {
 	private final PermissionsExConfig config;
 	private final NativeInterface nativeI;
 	private final Logger logger;
-	protected Timer timer;
+	protected ScheduledExecutorService executor;
+	private final Map<String, ScheduledFuture<?>> clearTimedGroupsTasks = new HashMap<>();
 	protected boolean debugMode = false;
 	protected boolean allowOps = false;
 	protected boolean userAddGroupsLast = false;
@@ -72,6 +77,21 @@ public class PermissionManager {
 
 	public PermissionsExConfig getConfiguration() {
 		return config;
+	}
+
+	void scheduleTimedGroupsCheck(long nextExpiration, final String identifier) {
+		ScheduledFuture<?> future = clearTimedGroupsTasks.get(identifier);
+		long newDelay = (nextExpiration - (System.currentTimeMillis() / 1000));
+
+		if (future == null || future.isDone() || future.getDelay(TimeUnit.SECONDS) > newDelay) {
+			clearTimedGroupsTasks.put(identifier, executor.schedule(new Runnable() {
+				@Override
+				public void run() {
+					getUser(identifier).updateTimedGroups();
+					clearTimedGroupsTasks.remove(identifier);
+				}
+			}, newDelay, TimeUnit.SECONDS));
+		}
 	}
 
 
@@ -611,11 +631,11 @@ public class PermissionManager {
 	 * @param delay delay in seconds
 	 */
 	protected void registerTask(TimerTask task, int delay) {
-		if (timer == null || delay == TRANSIENT_PERMISSION) {
+		if (executor == null || delay == TRANSIENT_PERMISSION) {
 			return;
 		}
 
-		timer.schedule(task, delay * 1000);
+		executor.schedule(task, delay, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -640,15 +660,16 @@ public class PermissionManager {
 		} catch (PermissionBackendException ignore) {
 			// Ignore because we're shutting down so who cares
 		}
-		timer.cancel();
+		executor.shutdown();
+		executor = null;
 	}
 
 	public void initTimer() {
-		if (timer != null) {
-			timer.cancel();
+		if (executor != null) {
+			executor.shutdown();
 		}
 
-		timer = new Timer("PermissionsEx-Cleaner");
+		executor = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	protected void clearCache() {

@@ -18,6 +18,8 @@
  */
 package ru.tehkode.permissions.backends.memory;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -104,5 +106,10 @@ public class MemoryBackend extends PermissionBackend {
 
 	@Override
 	public void setWorldInheritance(String world, List<String> inheritance) {
+	}
+
+	@Override
+	public void writeContents(Writer writer) throws IOException {
+
 	}
 }
