@@ -57,6 +57,7 @@ public class PermissionUser extends PermissionEntity {
 		if (this.manager.shouldCreateUserRecords() && this.isVirtual()) {
 			this.getData().setParents(this.getOwnParentIdentifiers(null), null);
 		}
+		updateTimedGroups();
 
 		if (this.isDebug()) {
 			manager.getLogger().info("User " + this.getIdentifier() + " initialized");
@@ -170,6 +171,7 @@ public class PermissionUser extends PermissionEntity {
 
 		if (lifetime > 0) {
 			this.setOption("group-" + groupName + "-until", Long.toString(System.currentTimeMillis() / 1000 + lifetime), worldName);
+			updateTimedGroups();
 		}
 	}
 
@@ -570,17 +572,38 @@ public class PermissionUser extends PermissionEntity {
 		return super.explainExpression(expression);
 	}
 
-	protected boolean checkMembership(PermissionGroup group, String worldName) {
-		int groupLifetime = this.getOwnOptionInteger("group-" + group.getIdentifier() + "-until", worldName, 0);
-
-		if (groupLifetime > 0 && groupLifetime < System.currentTimeMillis() / 1000) { // check for expiration
-			this.setOption("group-" + group.getIdentifier() + "-until", null, worldName); // remove option
-			this.removeGroup(group, worldName); // remove membership
-			// @TODO Make notification of player about expired memebership
-			return false;
+	protected void updateTimedGroups() {
+		long nextExpiration = Long.MAX_VALUE;
+		for (Map.Entry<String, Map<String, String>> world : getAllOptions().entrySet()) {
+			for (Map.Entry<String, String> entry : world.getValue().entrySet()) {
+				final String group = getTimedGroupName(entry.getKey());
+				if (group == null) { // Not a timed group
+					continue;
+				}
+				long groupLifetime = Long.parseLong(entry.getValue());
+				if (groupLifetime > 0 && groupLifetime < System.currentTimeMillis() / 1000) { // check for expiration
+					this.setOption("group-" + group + "-until", null, world.getKey()); // remove option
+					this.removeGroup(group, world.getKey()); // remove membership
+					// @TODO Make notification of player about expired memebership
+				} else {
+					nextExpiration = Math.min(nextExpiration, groupLifetime);
+				}
+			}
 		}
 
-		return true;
+		if (nextExpiration < Long.MAX_VALUE) {
+			// Schedule the next timed groups check with the permissions manager
+			manager.scheduleTimedGroupsCheck(nextExpiration, getIdentifier());
+		}
+	}
+
+	static String getTimedGroupName(String option) {
+		if (!option.startsWith("group-") && !option.endsWith("-until")) {
+			return null;
+		}
+		String groupName = option.substring("group-".length(), option.length() - "-until".length());
+		System.out.println(groupName);
+		return groupName;
 	}
 
 	// Compatibility methods
