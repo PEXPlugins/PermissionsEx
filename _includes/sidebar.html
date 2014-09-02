@@ -1,0 +1,13 @@
+<ul>
+        {% for item in site.pages | sort: 'title' %}
+          {% if item.title and item.title != 'Home' %}
+          <li>
+              {% if page.url == item.url %}
+              <span class="page-link">{{ item.title }}</span>
+               {% else %}
+                <a class="page-link" href="{{ item.url | prepend: site.baseurl }}">{{ item.title }}</a>
+               {% endif %}
+          </li>
+          {% endif %}
+        {% endfor %}
+</ul>

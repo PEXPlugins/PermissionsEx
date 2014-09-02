@@ -1,0 +1,11 @@
+# Site settings
+title: PermissionsEx
+email: zml@todo
+description: >
+    PermissionsEx is a powerful permissions plugin that can handle anything from the simplest server with friends to the largest server networks running on Bukkit and soon whatever comes after
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "http://pexplugins.github.io" # the base hostname & protocol for your site
+github_username:  PEXPlugins
+
+# Build settings
+markdown: kramdown
