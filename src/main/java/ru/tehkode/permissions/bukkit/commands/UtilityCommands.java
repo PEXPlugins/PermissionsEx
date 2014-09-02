@@ -18,6 +18,10 @@
  */
 package ru.tehkode.permissions.bukkit.commands;
 
+import com.google.common.collect.Iterables;
+import com.mojang.api.profiles.HttpProfileRepository;
+import com.mojang.api.profiles.Profile;
+import com.mojang.api.profiles.ProfileRepository;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -34,9 +38,12 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 public class UtilityCommands extends PermissionsCommand {
@@ -151,41 +158,59 @@ public class UtilityCommands extends PermissionsCommand {
 			syntax = "convert uuid [force]",
 	        permission = "permissions.convert",
 	        description = "Bulk convert user data to UUID-based storage")
-	public void convertUUID(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
-		PermissionBackend backend = plugin.getPermissionsManager().getBackend();
+	public void convertUUID(final PermissionsEx plugin, final CommandSender sender, Map<String, String> args) {
+		final PermissionBackend backend = plugin.getPermissionsManager().getBackend();
 		if (!plugin.getServer().getOnlineMode() && !"force".equals(args.get("force"))) {
 			sender.sendMessage(ChatColor.RED + "This server is running in offline mode and UUIDs may not be stable. Please run '/pex convert uuid force' to perform conversion anyway, or switch to online mode.");
 			return;
 		}
-		int count = 0;
-		sender.sendMessage("Beginning conversion to UUID (This may take a while (a long while))");
-		backend.setPersistent(false);
-		try {
-			Collection<String> userIdentifiers = backend.getUserIdentifiers();
-			for (String name : backend.getUserIdentifiers()) {
-				try {
-					UUID uid = UUID.fromString(name);
-					continue;
-				} catch (IllegalArgumentException ex) {
-					// We aren't doing uuid
-					OfflinePlayer player = plugin.getServer().getOfflinePlayer(name);
-					if (player.getName() == null || player.getUniqueId() == null) {
-						sender.sendMessage("Unable to convert user named " + name + " because name or UUID in profile was null!");
-						continue;
-					}
+		final ProfileRepository repo = new HttpProfileRepository("minecraft");
+		final Collection<String> userIdentifiers = backend.getUserIdentifiers();
+		for (Iterator<String> it = backend.getUserIdentifiers().iterator(); it.hasNext(); ) {
+			try {
+				UUID.fromString(it.next());
+				it.remove();
+			} catch (IllegalArgumentException ex) {
+			}
+		}
 
-					PermissionsUserData userData = backend.getUserData(name);
-					userData.setIdentifier(player.getUniqueId().toString());
-					userData.setOption("name", player.getName(), null);
-					if (++count % 100 == 0) {
-						sender.sendMessage(ChatColor.GRAY + "Converted " + count + " of " + userIdentifiers.size() + " users");
+		if (userIdentifiers.isEmpty()) {
+			sender.sendMessage(ChatColor.RED + "No users to convert!");
+			return;
+		}
+
+		sender.sendMessage("Beginning conversion to UUID in " + (int) Math.ceil(userIdentifiers.size() / 50000.0) + " batches of max 50k (1 batch is executed every 10 minutes)");
+		backend.setPersistent(false);
+		final Iterator<List<String>> splitIdentifiers = Iterables.partition(userIdentifiers, 50 * 1000).iterator(); // 50k users per 10 minutes
+		final AtomicInteger batchNum = new AtomicInteger(1);
+
+		plugin.getPermissionsManager().getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				List<String> names = splitIdentifiers.next();
+				try {
+					for (Profile profile : repo.findProfilesByNames(names.toArray(new String[names.size()]))) {
+						PermissionsUserData data = backend.getUserData(profile.getName());
+						data.setIdentifier(profile.getId().replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
+						data.setOption("name", profile.getName(), null);
 					}
+				} catch (Exception e) {
+					ErrorReport.handleError("While converting batch " + batchNum.get() + " to UUID", e);
+					backend.setPersistent(true);
+					return;
+				}
+				if (splitIdentifiers.hasNext()) {
+					plugin.getPermissionsManager().getExecutor().schedule(this, 10, TimeUnit.MINUTES);
+					plugin.getLogger().info("Completed conversion batch " + batchNum.getAndIncrement() + " of " + (int) Math.ceil(userIdentifiers.size() / 50000.0));
+				} else {
+					plugin.getLogger().info("UUID conversion complete");
+					if (!(sender instanceof Player) || ((Player) sender).isOnline()) {
+						sender.sendMessage("UUID conversion complete");
+					}
+					backend.setPersistent(true);
 				}
 			}
-		} finally {
-			backend.setPersistent(true);
-		}
-		sender.sendMessage(ChatColor.GREEN + "Conversion to UUID complete!");
+		});
 	}
 
 	@Command(name = "pex",

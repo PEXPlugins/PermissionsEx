@@ -707,4 +707,8 @@ public class PermissionManager {
 	public Logger getLogger() {
 		return logger;
 	}
+
+	public ScheduledExecutorService getExecutor() {
+		return executor;
+	}
 }
