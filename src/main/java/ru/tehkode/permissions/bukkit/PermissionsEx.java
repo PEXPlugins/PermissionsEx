@@ -428,15 +428,16 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		public void onPlayerLogin(PlayerJoinEvent event) {
 			try {
 				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-				if (!user.isVirtual() && !event.getPlayer().getName().equals(user.getOption("name"))) { // Update name only if user exists in config
-					user.setOption("name", event.getPlayer().getName());
+				if (!user.isVirtual()) {
+					if (!event.getPlayer().getName().equals(user.getOption("name"))) { // Update name only if user exists in config
+						user.setOption("name", event.getPlayer().getName());
+					}
+					if (!config.shouldLogPlayers()) {
+						return;
+					}
+					user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
+					// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
 				}
-				if (!config.shouldLogPlayers()) {
-					return;
-				}
-
-				user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
-				// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
 			} catch (Throwable t) {
 				ErrorReport.handleError("While login cleanup event", t);
 			}
@@ -445,17 +446,15 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		@EventHandler
 		public void onPlayerQuit(PlayerQuitEvent event) {
 			try {
-
 				PermissionUser user = getPermissionsManager().getUser(event.getPlayer());
-			if (config.shouldLogPlayers()) {
-				user.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
-			}
-
 				if (!user.isVirtual()) {
+					if (config.shouldLogPlayers()) {
+						user.setOption("last-logout-time", Long.toString(System.currentTimeMillis() / 1000L));
+					}
+
 					user.getName(); // Set name if user was created during server run
 				}
-
-			getPermissionsManager().resetUser(event.getPlayer());
+				getPermissionsManager().resetUser(event.getPlayer());
 			} catch (Throwable t) {
 				ErrorReport.handleError("While logout cleanup event", t);
 			}
