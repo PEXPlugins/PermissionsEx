@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions.bukkit.regexperms;
 
+import org.apache.commons.lang.Validate;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
@@ -223,6 +224,7 @@ public class PermissiblePEX extends PermissibleBase {
 
 	protected PermissionCheckResult permissionValue(String permission) {
 		try {
+			Validate.notNull(permission, "Permissions being checked must not be null!");
 			permission = permission.toLowerCase();
 			PermissionCheckResult res = cache.get(permission);
 			if (res != null) {
