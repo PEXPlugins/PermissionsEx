@@ -56,6 +56,9 @@
                     <relocation>
                       <pattern>org.apache</pattern>
                       <shadedPattern>ru.tehkode.libs.org.apache</shadedPattern>
+                      <excludes>
+                        <exclude>org.apache.commons.lang.*</exclude>
+                      </excludes>
                     </relocation>
                     <relocation>
                       <pattern>com.mojang</pattern>
