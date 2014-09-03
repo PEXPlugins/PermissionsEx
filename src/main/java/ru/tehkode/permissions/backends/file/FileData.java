@@ -86,12 +86,14 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		}
 		String oldNodePath = this.nodePath;
 		this.nodePath = FileBackend.buildPath(basePath, identifier);
+		this.node = this.config.createSection(nodePath, node.getValues(false));
 		this.entityName = identifier;
+		this.config.set(oldNodePath, null);
 		if (!this.isVirtual()) {
-			this.config.set(oldNodePath, null);
 			this.config.set(nodePath, node);
 			this.save();
-
+		} else {
+			this.config.set(nodePath, null);
 		}
 		return true;
 	}
