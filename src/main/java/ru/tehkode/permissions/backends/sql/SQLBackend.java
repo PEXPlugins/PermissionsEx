@@ -18,9 +18,11 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.PermissionsData;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
@@ -45,12 +47,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author code
  */
 public class SQLBackend extends PermissionBackend {
 	protected Map<String, List<String>> worldInheritanceCache = new HashMap<>();
+	private final AtomicReference<ImmutableSet<String>> userNamesCache = new AtomicReference<>(), groupNamesCache = new AtomicReference<>();
 	private Map<String, Object> tableNames;
 	private SQLQueryCache queryCache;
 	private static final SQLQueryCache DEFAULT_QUERY_CACHE;
@@ -250,12 +254,78 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String name) {
-		return new CachingUserData(new SQLData(name, SQLData.Type.USER, this), getExecutor(), new Object());
+		CachingUserData data = new CachingUserData(new SQLData(name, SQLData.Type.USER, this), getExecutor(), new Object());
+		updateNameCache(userNamesCache, data);
+		return data;
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String name) {
-		return new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), getExecutor(), new Object());
+		CachingGroupData data = new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), getExecutor(), new Object());
+		updateNameCache(groupNamesCache, data);
+		return data;
+	}
+
+	/**
+	 * Update the cache of names for a newly created data object, if necessary.
+	 *
+	 * @param list The pointer to current cache state
+	 * @param data The data to check for presence
+	 */
+	private void updateNameCache(AtomicReference<ImmutableSet<String>> list, PermissionsData data) {
+		ImmutableSet<String> cache, newVal;
+		do {
+			newVal = cache = list.get();
+			if (cache == null || (!cache.contains(data.getIdentifier()) && !data.isVirtual())) {
+				newVal = null;
+			}
+
+		} while (!list.compareAndSet(cache, newVal));
+	}
+
+	/**
+	 * Clear the names cache for the type of the provided data object
+	 *
+	 * @param data The data object that was updated making this necessary.
+	 */
+	void updateNameCache(SQLData data) {
+		final AtomicReference<ImmutableSet<String>> ref;
+		switch (data.getType()) {
+			case USER:
+				ref = userNamesCache;
+				break;
+			case GROUP:
+				ref = groupNamesCache;
+				break;
+			default:
+				return; // No cache for you
+		}
+		updateNameCache(ref, data);
+	}
+
+	/**
+	 * Gets the names of known entities of the give type, returning cached values if possible
+	 *
+	 * @param cacheRef The cache reference to check
+	 * @param type The type to get
+	 * @return A set of known entity names
+	 */
+	private ImmutableSet<String> getEntityNames(AtomicReference<ImmutableSet<String>> cacheRef, SQLData.Type type) {
+		while (true) {
+			ImmutableSet<String> cache = cacheRef.get();
+			if (cache != null) {
+				return cache;
+			} else {
+				try (SQLConnection conn = getSQL()) {
+					ImmutableSet<String> newCache = ImmutableSet.copyOf(SQLData.getEntitiesNames(conn, type, false));
+					if (cacheRef.compareAndSet(null, newCache)) {
+						return newCache;
+					}
+				} catch (SQLException | IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -280,24 +350,17 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public Collection<String> getGroupNames() {
-		try (SQLConnection conn = getSQL()) {
-			return SQLData.getEntitiesNames(conn, SQLData.Type.GROUP, false);
-		} catch (SQLException | IOException e) {
-			throw new RuntimeException(e);
-		}
+		return getEntityNames(groupNamesCache, SQLData.Type.GROUP);
 	}
 
 	@Override
 	public Collection<String> getUserIdentifiers() {
-		try (SQLConnection conn = getSQL()) {
-			return SQLData.getEntitiesNames(conn, SQLData.Type.USER, false);
-		} catch (SQLException | IOException e) {
-			throw new RuntimeException(e);
-		}
+		return getEntityNames(userNamesCache, SQLData.Type.USER);
 	}
 
 	@Override
 	public Collection<String> getUserNames() {
+		// TODO: Look at implementing caching
 		Set<String> ret = new HashSet<>();
 		try (SQLConnection conn = getSQL()) {
 			ResultSet set = conn.prepAndBind("SELECT `value` FROM `{permissions}` WHERE `type` = ? AND `permission` = 'name' AND `value` IS NOT NULL", SQLData.Type.USER.ordinal()).executeQuery();
@@ -432,6 +495,8 @@ public class SQLBackend extends PermissionBackend {
 
 	public void reload() {
 		worldInheritanceCache.clear();
+		userNamesCache.set(null);
+		groupNamesCache.set(null);
 	}
 
 	@Override
@@ -499,4 +564,5 @@ public class SQLBackend extends PermissionBackend {
 		}
 		super.close();
 	}
+
 }

@@ -49,6 +49,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			throw new RuntimeException(e);
 		}
 
+		backend.updateNameCache(this);
 		this.virtual.set(false);
 	}
 
@@ -92,6 +93,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 			conn.prepAndBind("entity.rename.permissions", identifier, this.identifier, this.type.ordinal()).execute();
 			conn.prepAndBind("entity.rename.inheritance", identifier, this.identifier, this.type.ordinal()).execute();
 			this.identifier = identifier;
+			backend.updateNameCache(this);
 			return true;
 		} catch (SQLException | IOException e) {
 			throw new RuntimeException(e);
@@ -289,6 +291,7 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 				conn.prepAndBind("entity.delete.permissions", this.getIdentifier(), this.type.ordinal()).execute();
 				// clear info
 				conn.prepAndBind("entity.delete.entity", this.getIdentifier(), this.type.ordinal()).execute();
+				backend.updateNameCache(this);
 			} catch (SQLException | IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -366,6 +369,10 @@ public class SQLData implements PermissionsUserData, PermissionsGroupData {
 
 	@Override
 	public void load() { // Nothing to load, we don't handle caching!
+	}
+
+	public Type getType() {
+		return type;
 	}
 
 	public enum Type {
