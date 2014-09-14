@@ -18,28 +18,16 @@
  */
 package ru.tehkode.permissions;
 
-import com.google.common.util.concurrent.Futures;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 import ru.tehkode.permissions.backends.PermissionBackend;
-import ru.tehkode.permissions.bukkit.PermissionsExConfig;
-import ru.tehkode.permissions.data.Context;
+import ru.tehkode.permissions.sponge.PermissionsExConfig;
 import ru.tehkode.permissions.data.MatcherGroup;
-import ru.tehkode.permissions.data.Qualifier;
 import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
-import ru.tehkode.permissions.query.GetQuery;
-import ru.tehkode.permissions.query.PermissionQuery;
-import ru.tehkode.permissions.query.SetQuery;
 import ru.tehkode.utils.PrefixedThreadFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +48,6 @@ public class PermissionManager {
 	protected boolean userAddGroupsLast = false;
 	protected PermissionMatcher matcher = new RegExpMatcher();
 	private final Set<UUID> debugUsers = new HashSet<>();
-	private final ConcurrentMap<PermissionQuery.CacheKey, PermissionQuery.CacheElement> queryCache = new ConcurrentHashMap<>();
 
 	public PermissionManager(PermissionsExConfig config, Logger logger, NativeInterface nativeI) throws PermissionBackendException {
 		this.config = config;
@@ -88,61 +75,6 @@ public class PermissionManager {
 
 	public PermissionsExConfig getConfiguration() {
 		return config;
-	}
-
-	/**
-	 * Check if specified player has specified permission
-	 *
-	 * @param player     player object
-	 * @param permission permission string to check against
-	 * @return true on success false otherwise
-	 */
-	public boolean has(Player player, String permission) {
-		return Futures.getUnchecked(get().userAndWorld(player).has(permission));
-	}
-
-	/**
-	 * Check if player has specified permission in world
-	 *
-	 * @param player     player object
-	 * @param permission permission as string to check against
-	 * @param world      world's name as string
-	 * @return true on success false otherwise
-	 */
-	public boolean has(Player player, String permission, String world) {
-		return Futures.getUnchecked(get().user(player).world(world).has(permission));
-	}
-
-	/**
-	 * Check if player with name has permission in world
-	 *
-	 * @param playerName player name
-	 * @param permission permission as string to check against
-	 * @param world      world's name as string
-	 * @return true on success false otherwise
-	 */
-	public boolean has(String playerName, String permission, String world) {
-		return Futures.getUnchecked(get().user(playerName).world(world).has(permission));
-	}
-
-	/**
-	 * Check if player with UUID has permission in world
-	 *
-	 * @param playerId player name
-	 * @param permission permission as string to check against
-	 * @param world      world's name as string
-	 * @return true on success false otherwise
-	 */
-	public boolean has(UUID playerId, String permission, String world) {
-		return Futures.getUnchecked(get().user(playerId).world(world).has(permission));
-	}
-
-	public GetQuery get() {
-		return new GetQuery(this, queryCache);
-	}
-
-	public SetQuery set() {
-		return new SetQuery(this, queryCache);
 	}
 
 	/**
@@ -297,21 +229,12 @@ public class PermissionManager {
 	}
 
 	protected void clearCache() {
-		queryCache.clear();
 		// Close old timed Permission Timer
 		this.initTimer();
 	}
 
 	private void initBackend() throws PermissionBackendException {
 		this.setBackend(config.getDefaultBackend());
-	}
-
-	public void callEvent(PermissionEvent event) {
-		nativeI.callEvent(event);
-	}
-
-	protected void callEvent(PermissionSystemEvent.Action action) {
-		this.callEvent(new PermissionSystemEvent(getServerUUID(), action));
 	}
 
 	public PermissionMatcher getPermissionMatcher() {
@@ -324,245 +247,5 @@ public class PermissionManager {
 
 	public Logger getLogger() {
 		return logger;
-	}
-
-	/*
-	 * DEPRECATED METHODS FOLLOW. IF THE FUNCTIONALITY THEY PROVIDE IS NOT IN THE NEW API, IT WILL PROBABLY BE ADDED
-	 * Javadocs not provided
-	 */
-
-	@Deprecated
-	public PermissionUser getUser(String username) {
-		if (username == null || username.isEmpty()) {
-			throw new IllegalArgumentException("Null or empty name passed! Name must not be empty");
-		}
-
-		try {
-			if (username.length() != 36) { // Speedup for things def not uuids
-				throw new IllegalArgumentException("not a uuid, try stuff");
-			}
-			return getUser(UUID.fromString(username)); // Username is uuid as string, just use it
-		} catch (IllegalArgumentException ex) {
-			UUID userUUID = nativeI.nameToUUID(username);
-
-			if (userUUID != null && (nativeI.isOnline(userUUID) || Futures.getUnchecked(backend.hasAnyQualifier(Qualifier.USER, userUUID.toString())))) {
-				return getUser(userUUID);
-			} else {
-				// The user is offline and unconverted, so we'll just have to return an unconverted user.
-				return new PermissionUser(username, this);
-			}
-		}
-	}
-
-	@Deprecated
-	public PermissionUser getUser(Player player) {
-		return this.getUser(player.getUniqueId().toString());
-	}
-
-	@Deprecated
-	public PermissionUser getUser(UUID uid) {
-		return new PermissionUser(uid.toString(), this);
-	}
-
-	@Deprecated
-	public List<String> getWorldInheritance(String worldName) {
-		return Futures.getUnchecked(get()
-				.followInheritance(false)
-				.world(worldName)
-				.worldParents());
-	}
-
-	@Deprecated
-	public void setWorldInheritance(String world, List<String> parentWorlds) {
-		set().world(world).setParents(parentWorlds);
-		this.callEvent(PermissionSystemEvent.Action.WORLDINHERITANCE_CHANGED);
-	}
-
-	@Deprecated
-	public Collection<String> getGroupNames() {
-		return Futures.getUnchecked(backend.getAllValues(Qualifier.GROUP));
-	}
-
-	@Deprecated
-	public Set<PermissionUser> getUsers() {
-		Set<PermissionUser> users = new HashSet<>();
-		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
-			users.add(getUser(p));
-		}
-		for (String name : Futures.getUnchecked(backend.getAllValues(Qualifier.USER))) {
-			users.add(new PermissionUser(name, this));
-		}
-		return Collections.unmodifiableSet(users);
-	}
-
-	@Deprecated
-	public Set<PermissionUser> getActiveUsers() {
-		return new HashSet<>();
-	}
-
-	@Deprecated
-	public Collection<String> getUserIdentifiers() {
-		return Futures.getUnchecked(backend.getAllValues(Qualifier.USER));
-	}
-
-	public Collection<String> getUserNames() {
-		return backend.getUserNames();
-	}
-
-	@Deprecated
-	Set<PermissionUser> getActiveUsers(String groupName, boolean inheritance) {
-		Set<PermissionUser> users = new HashSet<>();
-
-		for (PermissionUser user : this.getActiveUsers()) {
-			if (user.inGroup(groupName, inheritance)) {
-				users.add(user);
-			}
-		}
-
-		return Collections.unmodifiableSet(users);
-	}
-
-	@Deprecated
-	Set<PermissionUser> getActiveUsers(String groupName) {
-		return getActiveUsers(groupName, false);
-	}
-
-	@Deprecated
-	public Set<PermissionUser> getUsers(String groupName, String worldName) {
-		return getUsers(groupName, worldName, false);
-	}
-
-	@Deprecated
-	public Set<PermissionUser> getUsers(String groupName) {
-		return getUsers(groupName, false);
-	}
-
-	@Deprecated
-	public Set<PermissionUser> getUsers(String groupName, String worldName, boolean inheritance) {
-		Set<PermissionUser> users = new HashSet<>();
-
-		for (PermissionUser user : this.getUsers()) {
-			if (user.inGroup(groupName, worldName, inheritance)) {
-				users.add(user);
-			}
-		}
-
-		return Collections.unmodifiableSet(users);
-	}
-
-	@Deprecated
-	public Set<PermissionUser> getUsers(String groupName, boolean inheritance) {
-		Set<PermissionUser> users = new HashSet<>();
-
-		for (PermissionUser user : this.getUsers()) {
-			if (user.inGroup(groupName, inheritance)) {
-				users.add(user);
-			}
-		}
-
-		return Collections.unmodifiableSet(users);
-	}
-
-	@Deprecated
-	public void resetUser(String userName) {
-	}
-
-	@Deprecated
-	public void resetUser(Player ply) {
-	}
-
-	@Deprecated
-	public void clearUserCache(String userName) {
-	}
-
-	@Deprecated
-	public void clearUserCache(UUID uid) {
-	}
-
-	@Deprecated
-	public void clearUserCache(Player player) {
-	}
-
-	@Deprecated
-	public PermissionGroup getGroup(String groupname) {
-		if (groupname == null || groupname.isEmpty()) {
-			return null;
-		}
-
-		return new PermissionGroup(groupname, this);
-	}
-
-	@Deprecated
-	public List<PermissionGroup> getGroupList() {
-		List<PermissionGroup> ret = new LinkedList<>();
-		for (String name : Futures.getUnchecked(backend.getAllValues(Qualifier.GROUP))) {
-			ret.add(getGroup(name));
-		}
-		return Collections.unmodifiableList(ret);
-	}
-
-	@Deprecated
-	public PermissionGroup[] getGroups() {
-		return getGroupList().toArray(new PermissionGroup[0]);
-	}
-
-	@Deprecated
-	public List<PermissionGroup> getGroups(String groupName, String worldName) {
-		return getGroups(groupName, worldName, false);
-	}
-
-	@Deprecated
-	public List<PermissionGroup> getGroups(String groupName) {
-		return getGroups(groupName, null);
-	}
-
-	@Deprecated
-	public List<PermissionGroup> getGroups(String groupName, String worldName, boolean inheritance) {
-		List<PermissionGroup> groups = new LinkedList<>();
-
-		for (PermissionGroup group : this.getGroupList()) {
-			if (!groups.contains(group) && group.isChildOf(groupName, worldName, inheritance)) {
-				groups.add(group);
-			}
-		}
-
-		return Collections.unmodifiableList(groups);
-	}
-
-	@Deprecated
-	public List<PermissionGroup> getGroups(String groupName, boolean inheritance) {
-		List<PermissionGroup> groups = new ArrayList<>();
-
-		for (World world : Bukkit.getServer().getWorlds()) {
-			groups.addAll(getGroups(groupName, world.getName(), inheritance));
-		}
-
-		// Common space users
-		groups.addAll(getGroups(groupName, null, inheritance));
-
-		Collections.sort(groups);
-
-		return Collections.unmodifiableList(groups);
-	}
-
-	@Deprecated
-	public List<PermissionGroup> getDefaultGroups(String worldName) {
-		List<PermissionGroup> defaults = new LinkedList<>();
-		for (PermissionGroup grp : getGroupList()) {
-			if (grp.isDefault(worldName) || (worldName != null && grp.isDefault(null))) {
-				defaults.add(grp);
-			}
-		}
-
-		return Collections.unmodifiableList(defaults);
-	}
-
-	@Deprecated
-	public PermissionGroup resetGroup(String groupName) {
-		return null;
-	}
-
-	public void callEvent(MatcherGroup old, MatcherGroup newGroup, MatcherGroupEvent.Action action) {
-		callEvent(new MatcherGroupEvent(getServerUUID(), old, newGroup, action));
 	}
 }

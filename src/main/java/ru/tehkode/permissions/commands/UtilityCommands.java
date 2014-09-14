@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.bukkit.commands;
+package ru.tehkode.permissions.commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -25,17 +25,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.bukkit.ErrorReport;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.commands.Command;
+import ru.tehkode.permissions.sponge.ErrorReport;
+import ru.tehkode.permissions.sponge.PermissionsEx;
 import ru.tehkode.permissions.commands.CommandsManager.CommandBinding;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.logging.Level;
 
 public class UtilityCommands extends PermissionsCommand {

@@ -1,4 +1,4 @@
-package ru.tehkode.permissions.bukkit;
+package ru.tehkode.permissions.sponge;
 
 import java.io.*;
 import java.net.*;

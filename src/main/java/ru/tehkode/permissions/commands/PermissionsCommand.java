@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.bukkit.commands;
+package ru.tehkode.permissions.commands;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -32,9 +32,7 @@ import org.bukkit.entity.Player;
 import ru.tehkode.permissions.PermissionEntity;
 import ru.tehkode.permissions.PermissionGroup;
 import ru.tehkode.permissions.PermissionUser;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.commands.CommandListener;
-import ru.tehkode.permissions.commands.CommandsManager;
+import ru.tehkode.permissions.sponge.PermissionsEx;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 

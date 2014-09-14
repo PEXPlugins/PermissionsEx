@@ -1,4 +1,4 @@
-package ru.tehkode.permissions.bukkit;
+package ru.tehkode.permissions.sponge;
 
 import com.zachsthings.netevents.NetEventsPlugin;
 import org.bukkit.event.EventHandler;

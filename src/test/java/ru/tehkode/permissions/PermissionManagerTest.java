@@ -5,7 +5,7 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.junit.After;
 import org.junit.Before;
-import ru.tehkode.permissions.bukkit.PermissionsExConfig;
+import ru.tehkode.permissions.sponge.PermissionsExConfig;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.util.logging.Logger;

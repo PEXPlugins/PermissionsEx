@@ -7,12 +7,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import ru.tehkode.permissions.backends.PermissionBackend;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.sponge.PermissionsEx;
 import ru.tehkode.permissions.events.MatcherGroupEvent;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

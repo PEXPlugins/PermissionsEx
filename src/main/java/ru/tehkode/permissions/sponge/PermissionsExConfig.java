@@ -1,7 +1,5 @@
-package ru.tehkode.permissions.bukkit;
+package ru.tehkode.permissions.sponge;
 
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.backends.PermissionBackend;
 
 import java.util.Arrays;
@@ -14,7 +12,7 @@ import java.util.Set;
  * Immutable configuration object
  */
 public class PermissionsExConfig {
-	private final Configuration config;
+	private final Config config;
 	private final PermissionsEx plugin;
 
 	private final boolean useNetEvents;
@@ -30,13 +28,12 @@ public class PermissionsExConfig {
 	private final Set<String> serverTags;
 	private final String basedir;
 
-	public PermissionsExConfig(Configuration config, PermissionsEx plugin) {
+	public PermissionsExConfig(Config config, PermissionsEx plugin) {
 		this.config = config;
 		this.plugin = plugin;
 		this.useNetEvents = getBoolean("multiserver.use-netevents", true);
 		this.serverTags = new HashSet<>(getStringList("multiserver.server-tags"));
 		this.debug = getBoolean("permissions.debug", false);
-		this.allowOps = getBoolean("permissions.allowOps", false);
 		this.userAddGroupsLast = getBoolean("permissions.user-add-groups-last", false);
 		this.logPlayers = getBoolean("permissions.log-players", false);
 		this.createUserRecords = getBoolean("permissions.createUserRecords", false);

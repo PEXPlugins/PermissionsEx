@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package ru.tehkode.permissions.bukkit.commands;
+package ru.tehkode.permissions.commands;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +26,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
-import ru.tehkode.permissions.commands.Command;
+import ru.tehkode.permissions.sponge.PermissionsEx;
 import ru.tehkode.utils.StringUtils;
 
 public class WorldCommands extends PermissionsCommand {

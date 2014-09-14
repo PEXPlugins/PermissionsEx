@@ -3,10 +3,9 @@ package ru.tehkode.permissions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import ru.tehkode.permissions.bukkit.ErrorReport;
+import ru.tehkode.permissions.sponge.ErrorReport;
 
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
