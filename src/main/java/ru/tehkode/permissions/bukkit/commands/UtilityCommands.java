@@ -54,7 +54,7 @@ public class UtilityCommands extends PermissionsCommand {
 			description = "Reload environment")
 	public void reload(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		try {
-			plugin.getPermissionsManager().reset();
+			plugin.getPermissionsManager().reset(true);
 			sender.sendMessage(ChatColor.WHITE + "Permissions reloaded");
 		} catch (PermissionBackendException e) {
 			sender.sendMessage(ChatColor.RED + "Failed to reload permissions! Check configuration!\n" +
