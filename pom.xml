@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.tehkode</groupId>
     <artifactId>PermissionsEx</artifactId>
-    <version>1.22.5-SNAPSHOT</version>
+    <version>1.22.5</version>
     <name>PermissionsEx</name>
     <url>https://github.com/PEXPlugins/PermissionsEx</url>
     <properties>
