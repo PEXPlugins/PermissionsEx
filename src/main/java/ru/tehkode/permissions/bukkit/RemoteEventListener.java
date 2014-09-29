@@ -92,7 +92,7 @@ public class RemoteEventListener implements Listener {
 		}
 
 		try {
-			manager.reset();
+			manager.reset(false);
 		} catch (PermissionBackendException e) {
 			e.printStackTrace();
 		}

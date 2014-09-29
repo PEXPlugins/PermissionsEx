@@ -511,7 +511,7 @@ public class PermissionManager {
 	 * @param groupName group's name
 	 */
 	public PermissionGroup resetGroup(String groupName) {
-		return this.groups.remove(groupName);
+		return this.groups.remove(groupName.toLowerCase());
 	}
 
 	void preloadGroups() {
@@ -642,12 +642,21 @@ public class PermissionManager {
 	 * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
 	 */
 	public void reset() throws PermissionBackendException {
+		reset(true);
+	}
+
+	/**
+	 * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
+	 *
+	 * @param callEvent Call the reload event
+	 */
+	public void reset(boolean callEvent) throws PermissionBackendException {
 		this.clearCache();
 
 		if (this.backend != null) {
 			this.backend.reload();
 		}
-		this.callEvent(PermissionSystemEvent.Action.RELOADED);
+		if (callEvent) this.callEvent(PermissionSystemEvent.Action.RELOADED);
 	}
 
 	public void end() {
