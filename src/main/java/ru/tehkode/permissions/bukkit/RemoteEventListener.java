@@ -71,7 +71,7 @@ public class RemoteEventListener implements Listener {
 					break;
 			}
 		} else if (reloadAll) {
-			manager.reset(true);
+			manager.reset();
 		}
 		} catch (PermissionBackendException e) {
 			e.printStackTrace();

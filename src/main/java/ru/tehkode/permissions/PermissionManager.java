@@ -641,6 +641,15 @@ public class PermissionManager {
 	/**
 	 * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
 	 */
+	public void reset() throws PermissionBackendException {
+		reset(true);
+	}
+
+	/**
+	 * Reset all in-memory groups and users, clean up runtime stuff, reloads backend
+	 *
+	 * @param callEvent Call the reload event
+	 */
 	public void reset(boolean callEvent) throws PermissionBackendException {
 		this.clearCache();
 
@@ -656,7 +665,7 @@ public class PermissionManager {
 				this.backend.close();
 				this.backend = null;
 			}
-			reset(true);
+			reset();
 		} catch (PermissionBackendException ignore) {
 			// Ignore because we're shutting down so who cares
 		}
