@@ -166,8 +166,10 @@ public class SuperpermsListener implements Listener {
 		try {
 			final Player player = event.getPlayer();
 			// Because player world is inaccurate in the login event (at least with MV), start with null world and then reset to the real world in join event
-			removeAttachment(player);
-			updateAttachment(player, null);
+			if (player != null && !player.isOnline()) {
+				removeAttachment(player);
+				updateAttachment(player, null);
+			}
 		} catch (Throwable t) {
 			ErrorReport.handleError("Superperms event login", t);
 		}
@@ -175,11 +177,13 @@ public class SuperpermsListener implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void playerLoginDeny(PlayerLoginEvent event) {
-		if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
-			try {
-				removeAttachment(event.getPlayer());
-			} catch (Throwable t) {
-				ErrorReport.handleError("Superperms event login denied", t);
+		if (event.getResult() != PlayerLoginEvent.Result.ALLOWED && event.getPlayer() != null) {
+			if (!event.getPlayer().isOnline()) {
+				try {
+					removeAttachment(event.getPlayer());
+				} catch (Throwable t) {
+					ErrorReport.handleError("Superperms event login denied", t);
+				}
 			}
 		}
 	}
