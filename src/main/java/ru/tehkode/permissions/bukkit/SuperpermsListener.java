@@ -178,6 +178,10 @@ public class SuperpermsListener implements Listener {
 		if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
 			try {
 				removeAttachment(event.getPlayer());
+				Player player = plugin.getServer().getPlayer(event.getPlayer().getUniqueId());
+				if (player != null && player.isOnline()) {
+					updateAttachment(player);
+				}
 			} catch (Throwable t) {
 				ErrorReport.handleError("Superperms event login denied", t);
 			}
