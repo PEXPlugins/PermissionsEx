@@ -1,12 +1,17 @@
 package ru.tehkode.permissions.backends.file;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class FileConfig extends YamlConfiguration {
+	private final List<String> lowerCaseSections;
 	private final File file, tempFile, oldFile;
 	private final Object lock;
 	private boolean saveSuppressed;
@@ -15,9 +20,10 @@ public class FileConfig extends YamlConfiguration {
 		this(file, new Object());
 	}
 
-	public FileConfig(File file, Object lock) {
+	public FileConfig(File file, Object lock, String... lowerCaseSections) {
 		super();
 		this.lock = lock;
+		this.lowerCaseSections = Arrays.asList(lowerCaseSections);
 		this.options().pathSeparator(FileBackend.PATH_SEPARATOR);
 		this.file = file;
 		this.tempFile = new File(file.getPath() + ".tmp");
@@ -60,6 +66,22 @@ public class FileConfig extends YamlConfiguration {
 	public void loadFromString(String contents) throws InvalidConfigurationException {
 		synchronized (lock) {
 			super.loadFromString(contents);
+			for (String sectionKey : lowerCaseSections) {
+				ConfigurationSection section = getConfigurationSection(sectionKey);
+				if (section != null) {
+					for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+						final String lowerString = entry.getKey().toLowerCase();
+						if (!lowerString.equals(entry.getKey())) {
+							section.set(entry.getKey(), null);
+							if (entry.getValue() instanceof  ConfigurationSection) {
+								section.createSection(lowerString, ((ConfigurationSection) entry.getValue()).getValues(false));
+							} else {
+								section.set(lowerString, entry.getValue());
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -68,5 +90,9 @@ public class FileConfig extends YamlConfiguration {
 		synchronized (lock) {
 			return super.saveToString();
 		}
+	}
+
+	public boolean isLowerCased(String basePath) {
+		return lowerCaseSections.contains(basePath);
 	}
 }

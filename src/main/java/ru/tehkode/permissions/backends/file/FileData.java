@@ -25,6 +25,9 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	private ConfigurationSection findExistingNode(String entityName, boolean set) {
+		if (config.isLowerCased(basePath)) {
+			entityName = entityName.toLowerCase();
+		}
 		String nodePath = FileBackend.buildPath(basePath, entityName);
 
 		ConfigurationSection entityNode = this.config.getConfigurationSection(nodePath);
@@ -38,17 +41,19 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			return entityNode;
 		}
 
-		ConfigurationSection users = this.config.getConfigurationSection(basePath);
+		if (!config.isLowerCased(basePath)) {
+			ConfigurationSection users = this.config.getConfigurationSection(basePath);
 
-		if (users != null) {
-			for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
-				if (entry.getKey().equalsIgnoreCase(entityName)
-						&& entry.getValue() instanceof ConfigurationSection) {
-					if (set) {
-						this.nodePath = FileBackend.buildPath(basePath, entry.getKey());
-						this.entityName = entry.getKey();
+			if (users != null) {
+				for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
+					if (entry.getKey().equalsIgnoreCase(entityName)
+							&& entry.getValue() instanceof ConfigurationSection) {
+						if (set) {
+							this.nodePath = FileBackend.buildPath(basePath, entry.getKey());
+							this.entityName = entry.getKey();
+						}
+						return (ConfigurationSection) entry.getValue();
 					}
-					return (ConfigurationSection) entry.getValue();
 				}
 			}
 		}
@@ -57,6 +62,9 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	private ConfigurationSection findNode(String entityName) {
+		if (config.isLowerCased(basePath)) {
+			entityName = entityName.toLowerCase();
+		}
 		ConfigurationSection section = findExistingNode(entityName, true);
 		if (section != null) {
 			return section;
@@ -84,8 +92,9 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		if (section != null) {
 			return false;
 		}
+		String caseCorrectedIdentifier = config.isLowerCased(basePath) ? identifier.toLowerCase() : identifier;
 		String oldNodePath = this.nodePath;
-		this.nodePath = FileBackend.buildPath(basePath, identifier);
+		this.nodePath = FileBackend.buildPath(basePath, caseCorrectedIdentifier);
 		this.node = this.config.createSection(nodePath, node.getValues(false));
 		this.entityName = identifier;
 		this.config.set(oldNodePath, null);
