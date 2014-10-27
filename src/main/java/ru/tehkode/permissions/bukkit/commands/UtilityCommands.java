@@ -55,18 +55,6 @@ public class UtilityCommands extends PermissionsCommand {
 			plugin.getLogger().log(Level.WARNING, "Failed to reload permissions when " + sender.getName() + " ran `pex reload`", e);
 		}
 	}
-        
-	@Command(name = "pex",
-			syntax = "cuser",
-			description = "Invalidate user cache")
-	public void cuser(Plugin plugin, CommandSender sender, Map<String, String> args) {
-		try {
-                        PermissionsEx.getPermissionManager().resetBackend();
-                        PermissionsEx.getPermissionManager().clearUserCache(sender.getName());
-		} catch (PermissionBackendException e) {
-			plugin.getLogger().log(Level.WARNING, "Failed to reload permissions when " + sender.getName() + " ran `pex cuser`", e);
-		}
-	}
 
 	@Command(name = "pex",
 			syntax = "report",
