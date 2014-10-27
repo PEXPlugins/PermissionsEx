@@ -24,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -234,13 +235,13 @@ public class PermissionsEx extends JavaPlugin {
 
 		protected boolean logLastPlayerLogin = false;
 
-		@EventHandler
+		@EventHandler(priority = EventPriority.HIGH)
 		public void onPlayerLogin(PlayerLoginEvent event) {
 			try {
+                        getPermissionManager().reset();
 			if (!logLastPlayerLogin) {
 				return;
 			}
-                        getPermissionManager().reset();
 			PermissionUser user = getPermissionManager().getUser(event.getPlayer());
 			user.setOption("last-login-time", Long.toString(System.currentTimeMillis() / 1000L));
 			// user.setOption("last-login-ip", event.getPlayer().getAddress().getAddress().getHostAddress()); // somehow this won't work
