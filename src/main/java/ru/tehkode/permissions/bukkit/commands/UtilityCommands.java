@@ -38,6 +38,7 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -165,8 +166,8 @@ public class UtilityCommands extends PermissionsCommand {
 			return;
 		}
 		final ProfileRepository repo = new HttpProfileRepository("minecraft");
-		final Collection<String> userIdentifiers = backend.getUserIdentifiers();
-		for (Iterator<String> it = backend.getUserIdentifiers().iterator(); it.hasNext(); ) {
+		final Collection<String> userIdentifiers = new HashSet<>(backend.getUserIdentifiers());
+		for (Iterator<String> it = userIdentifiers.iterator(); it.hasNext(); ) {
 			try {
 				UUID.fromString(it.next());
 				it.remove();
