@@ -163,8 +163,8 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 
 		@Override
 		public Set<Permissible> keySet() {
-			Player[] players = plugin.getServer().getOnlinePlayers();
-			Set<Permissible> pexMatches = new HashSet<Permissible>(players.length);
+			Collection<? extends Player> players = plugin.getServer().getOnlinePlayers();
+			Set<Permissible> pexMatches = new HashSet<Permissible>(players.size());
 			for (Player player : players) {
 				if (player.hasPermission(permission)) {
 					pexMatches.add(player);
