@@ -18,12 +18,13 @@
  */
 package ru.tehkode.permissions.backends.sql;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.commons.dbcp.BasicDataSource;
-import org.bukkit.configuration.ConfigurationSection;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValue;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.SchemaUpdate;
@@ -35,8 +36,10 @@ import ru.tehkode.utils.ConcurrentProvider;
 import ru.tehkode.utils.PrefixedThreadFactory;
 import ru.tehkode.utils.StringUtils;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.io.Writer;
 import java.sql.PreparedStatement;
@@ -74,23 +77,23 @@ public class SQLBackend extends PermissionBackend {
 		}
 	}
 
-	private Map<String, Object> tableNames;
+	private Map<String, String> tableNames;
 	private String tablePrefix;
 	private SQLQueryCache queryCache;
 	private final ConcurrentMap<Integer, SQLMatcherGroup> matcherCache = new ConcurrentHashMap<>();
 
-	private BasicDataSource ds;
+	private final DataSource ds;
 	protected final String dbDriver;
 
-	public SQLBackend(PermissionManager manager, final ConfigurationSection config) throws PermissionBackendException {
+	public SQLBackend(PermissionManager manager, final Config config) throws PermissionBackendException {
 		super(manager, config, Executors.newCachedThreadPool(new PrefixedThreadFactory("PEX-sql")));
-		final String dbUri = getConfig().getString("uri", "");
-		final String dbUser = getConfig().getString("user", "");
-		final String dbPassword = getConfig().getString("password", "");
-		this.tablePrefix = getConfig().getString("prefix", "");
+		final String dbUri = getConfig().getString("uri");
+		final String dbUser = getConfig().getString("user");
+		final String dbPassword = getConfig().getString("password");
+		this.tablePrefix = getConfig().getString("prefix");
 
 		if (dbUri == null || dbUri.isEmpty()) {
-			getConfig().set("uri", "mysql://localhost/exampledb");
+			getConfig().getValue("uri"); //("uri", "mysql://localhost/exampledb");
 			getConfig().set("user", "databaseuser");
 			getConfig().set("password", "databasepassword");
 			getConfig().set("prefix", "pex");
@@ -99,7 +102,7 @@ public class SQLBackend extends PermissionBackend {
 		}
 		dbDriver = dbUri.split(":", 2)[0];
 
-		this.ds = new BasicDataSource();
+		this.ds = new PoolingDataSource(new GenericObjectPool());
 		String driverClass = getDriverClass(dbDriver);
 		if (driverClass != null) {
 			this.ds.setDriverClassName(driverClass);
@@ -328,16 +331,16 @@ public class SQLBackend extends PermissionBackend {
 
 	public String getTableName(String identifier) {
 		if (identifier.startsWith("permissions")) { // Legacy tables
-			Map<String, Object> tableNames = this.tableNames;
+			Map<String, String> tableNames = this.tableNames;
 			if (tableNames == null) {
 				return identifier;
 			}
 
-			Object ret = tableNames.get(identifier);
+			String ret = tableNames.get(identifier);
 			if (ret == null) {
 				return identifier;
 			}
-			return ret.toString();
+			return ret;
 		} else {
 			return this.tablePrefix == null || this.tablePrefix.isEmpty() ? identifier : tablePrefix + "_" + identifier;
 		}
@@ -592,11 +595,15 @@ public class SQLBackend extends PermissionBackend {
 
 	@Deprecated
 	protected final void setupAliases() {
-		ConfigurationSection aliases = getConfig().getConfigurationSection("aliases");
+		Config aliases = getConfig().getConfig("aliases");
 		if (aliases == null) {
 			return;
 		}
-		tableNames = aliases.getValues(false);
+		final Map<String, String> tableNames = new HashMap<>();
+		for (Map.Entry<String, ConfigValue> ent : aliases.entrySet()) {
+			tableNames.put(ent.getKey(), ent.getValue().unwrapped().toString());
+		}
+		this.tableNames = ImmutableMap.<String, String>copyOf(tableNames);
 	}
 
 	private void executeStream(SQLConnection conn, InputStream str) throws SQLException, IOException {

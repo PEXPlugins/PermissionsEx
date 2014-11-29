@@ -21,6 +21,7 @@ package ru.tehkode.permissions.backends.file;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
+import com.typesafe.config.Config;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.file.config.PEXMLWriter;
@@ -50,7 +51,7 @@ public class FileBackend extends MemoryBackend {
 	private final FileConfig loader;
 	private final Object loadSaveLock = new Object();
 
-	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
+	public FileBackend(PermissionManager manager, Config config) throws PermissionBackendException {
 		super(manager, config, Executors.newSingleThreadExecutor(new PrefixedThreadFactory("PEX-file")));
 		String permissionFilename = getConfig().getString("file");
 		String oldFilename = null;

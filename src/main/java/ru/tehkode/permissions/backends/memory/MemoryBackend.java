@@ -43,7 +43,7 @@ import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.standingquery.StandingQueryIndex;
 import com.googlecode.cqengine.query.Query;
-import org.bukkit.configuration.ConfigurationSection;
+import com.typesafe.config.Config;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.data.Context;
@@ -65,11 +65,11 @@ public class MemoryBackend extends PermissionBackend {
 	private IndexedCollection<MemoryMatcherGroup> matcherList;
 	private ConfigInstance config;
 
-	public MemoryBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
+	public MemoryBackend(PermissionManager manager, Config config) throws PermissionBackendException {
 		super(manager, config, MoreExecutors.sameThreadExecutor());
 	}
 
-	protected MemoryBackend(PermissionManager manager, ConfigurationSection config, ExecutorService executor) throws PermissionBackendException {
+	protected MemoryBackend(PermissionManager manager, Config config, ExecutorService executor) throws PermissionBackendException {
 		super(manager, config, executor);
 	}
 

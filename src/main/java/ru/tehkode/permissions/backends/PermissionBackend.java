@@ -5,21 +5,18 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
+import com.typesafe.config.Config;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.sponge.ErrorReport;
 import ru.tehkode.permissions.sponge.PermissionsEx;
 import ru.tehkode.permissions.data.Context;
 import ru.tehkode.permissions.data.MatcherGroup;
 import ru.tehkode.permissions.data.Qualifier;
-import ru.tehkode.permissions.events.MatcherGroupEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import javax.annotation.Nullable;
@@ -53,7 +50,7 @@ import java.util.logging.Logger;
  */
 public abstract class PermissionBackend {
 	private final PermissionManager manager;
-	private final ConfigurationSection backendConfig;
+	private final Config backendConfig;
 	/**
 	 * Executor currently being used to execute backend tasks
 	 */
@@ -66,7 +63,7 @@ public abstract class PermissionBackend {
 	private final ExecutorService asyncExecutor;
 	private final List<SchemaUpdate> schemaUpdates = new LinkedList<>();
 
-	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig, ExecutorService asyncExecutor) throws PermissionBackendException {
+	protected PermissionBackend(PermissionManager manager, Config backendConfig, ExecutorService asyncExecutor) throws PermissionBackendException {
 		this.manager = manager;
 		this.backendConfig = backendConfig;
 		this.asyncExecutor = asyncExecutor;
@@ -130,7 +127,8 @@ public abstract class PermissionBackend {
 	}
 
 	protected void backupDatabase() throws IOException {
-		try (Writer w = new FileWriter(new File(manager.getConfiguration().getBasedir(), getConfig().getName() + "-backup." + getSchemaVersion() + ".bak"))) {
+		// TODO: Find way to get name of section
+		try (Writer w = new FileWriter(new File(manager.getConfiguration().getBasedir(), getConfig().origin().resource() + "-backup." + getSchemaVersion() + ".bak"))) {
 			writeContents(w);
 		}
 	}
@@ -182,7 +180,7 @@ public abstract class PermissionBackend {
 		return manager;
 	}
 
-	protected final ConfigurationSection getConfig() {
+	protected final Config getConfig() {
 		return backendConfig;
 	}
 
@@ -291,9 +289,9 @@ public abstract class PermissionBackend {
 	 * @return Either an existing or new group, never null.
 	 */
 	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type) {
-		return Futures.chain(getFirst(type), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
+		return Futures.transform(getFirst(type), new AsyncFunction<MatcherGroup, MatcherGroup>() {
 			@Override
-			public ListenableFuture<? extends MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
+			public ListenableFuture<MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
 				if (matcherGroup == null) {
 					return createMatcherGroup(type, Collections.<String, String>emptyMap(), ImmutableMultimap.<Qualifier, String>of());
 				} else {
@@ -312,9 +310,9 @@ public abstract class PermissionBackend {
 	 * @return Either an existing or new group, never null.
 	 */
 	public ListenableFuture<MatcherGroup> getFirstOrAdd(final String type, final Context context) {
-		return Futures.chain(getFirst(type, context), new Function<MatcherGroup, ListenableFuture<? extends MatcherGroup>>() {
+		return Futures.transform(getFirst(type, context), new AsyncFunction<MatcherGroup, MatcherGroup>() {
 			@Override
-			public ListenableFuture<? extends MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
+			public ListenableFuture<MatcherGroup> apply(@Nullable MatcherGroup matcherGroup) {
 				if (matcherGroup == null) {
 					return createMatcherGroup(type, Collections.<String, String>emptyMap(), context.getValues());
 				} else {
@@ -382,7 +380,7 @@ public abstract class PermissionBackend {
 			@Override
 			public void onSuccess(MatcherGroup matcherGroup) {
 				if (matcherGroup != null) {
-					callEvent(null, matcherGroup, MatcherGroupEvent.Action.CREATE);
+					//callEvent(null, matcherGroup, MatcherGroupEvent.Action.CREATE);
 				}
 			}
 
@@ -469,10 +467,6 @@ public abstract class PermissionBackend {
 		} catch (InterruptedException e) {
 			throw new PermissionBackendException(e);
 		}
-	}
-
-	public void callEvent(MatcherGroup old, MatcherGroup newGroup, MatcherGroupEvent.Action action) {
-		manager.callEvent(old, newGroup, action);
 	}
 
 	public final Logger getLogger() {
@@ -682,7 +676,7 @@ public abstract class PermissionBackend {
 	 * @param config      Configuration object to access backend settings
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, Configuration config) throws PermissionBackendException {
+	public static PermissionBackend getBackend(String backendName, Config config) throws PermissionBackendException {
 		return getBackend(backendName, PermissionsEx.getPermissionManager(), config, DEFAULT_BACKEND);
 	}
 
@@ -694,7 +688,7 @@ public abstract class PermissionBackend {
 	 * @param config      Configuration object to access backend settings
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
+	public static PermissionBackend getBackend(String backendName, PermissionManager manager, Config config) throws PermissionBackendException {
 		return getBackend(backendName, manager, config, DEFAULT_BACKEND);
 	}
 
@@ -707,7 +701,7 @@ public abstract class PermissionBackend {
 	 * @param fallBackBackend name of backend that should be used if specified backend was not found or failed to initialize
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config, String fallBackBackend) throws PermissionBackendException {
+	public static PermissionBackend getBackend(String backendName, PermissionManager manager, Config config, String fallBackBackend) throws PermissionBackendException {
 		if (backendName == null || backendName.isEmpty()) {
 			backendName = DEFAULT_BACKEND;
 		}
@@ -719,7 +713,7 @@ public abstract class PermissionBackend {
 
 			manager.getLogger().info("Initializing " + backendName + " backend");
 
-			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, ConfigurationSection.class);
+			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Config.class);
 			return constructor.newInstance(manager, config);
 		} catch (ClassNotFoundException e) {
 
@@ -747,7 +741,7 @@ public abstract class PermissionBackend {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "{config=" + getConfig().getName() + "}";
+		return getClass().getSimpleName() + "{config=" + getConfig().toString() + "}";
 	}
 
 	public boolean isDebug() {

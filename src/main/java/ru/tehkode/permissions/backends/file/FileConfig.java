@@ -2,6 +2,10 @@ package ru.tehkode.permissions.backends.file;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigRenderOptions;
 import org.parboiled.Parboiled;
 import org.parboiled.errors.ErrorUtils;
 import org.parboiled.parserunners.ParseRunner;
@@ -37,7 +41,6 @@ public class FileConfig {
 
 	private final File file, tempFile, oldFile;
 	private boolean saveSuppressed;
-	private final ThreadLocal<PEXMLParser> parser;
 	private final Object saveLock = new Object();
 	private final FileBackend backend;
 
@@ -46,18 +49,8 @@ public class FileConfig {
 		this.tempFile = new File(file.getPath() + ".tmp");
 		this.oldFile = new File(file.getPath() + ".old");
 		this.backend = backend;
-
-		final PEXMLParser localParser = Parboiled.createParser(PEXMLParser.class);
-		parser = new ThreadLocal<PEXMLParser>() {
-			@Override
-			protected PEXMLParser initialValue() {
-				return localParser.newInstance();
-			}
-		};
-	}
-
-	private PEXMLParser getParser() {
-		return parser.get();
+		Config config = ConfigFactory.parseFile(this.file);
+		config.root().render(ConfigRenderOptions.defaults());
 	}
 
 	public File getFile() {
