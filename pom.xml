@@ -169,16 +169,16 @@
     </dependencies>
     <repositories>
         <repository>
-            <id>bukkit-repo</id>
-            <url>http://repo.bukkit.org/content/groups/public</url>
-        </repository>
-        <repository>
             <id>pex-repo</id>
-            <url>http://pex-repo.zachsthings.com</url>
+            <url>http://pex-repo.aoeu.xyz</url>
         </repository>
         <repository>
             <id>gravity-repo</id>
             <url>http://repo.gravitydevelopment.net</url>
         </repository>
+      <repository>
+        <id>spigot-repo</id>
+        <url>https://hub.spigotmc.org/nexus/content/groups/public</url>
+      </repository>
     </repositories>
 </project>
