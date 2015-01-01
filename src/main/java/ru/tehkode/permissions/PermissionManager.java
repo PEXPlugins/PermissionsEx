@@ -238,6 +238,7 @@ public class PermissionManager {
 			user = new PermissionUser(identifier, data, this);
 			user.initialize();
 			if (store) {
+				user.getData().save();
 				PermissionUser newUser = this.users.put(identifier, user);
 				if (newUser != null) {
 					user = newUser;
