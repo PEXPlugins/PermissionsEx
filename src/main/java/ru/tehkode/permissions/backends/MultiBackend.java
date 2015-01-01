@@ -27,7 +27,7 @@ import java.util.Set;
 public class MultiBackend extends PermissionBackend {
 	private final List<PermissionBackend> backends = new ArrayList<>();
 	private final Map<String, PermissionBackend> fallbackBackends = new HashMap<>();
-	protected MultiBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
+	public MultiBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
 		super(manager, backendConfig);
 		Map<String, PermissionBackend> backendMap = new HashMap<>();
 		List<String> backendNames = backendConfig.getStringList("backends");
