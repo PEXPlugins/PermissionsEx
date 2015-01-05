@@ -9,73 +9,111 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * Data backend implementing a simple cache
  */
 public abstract class CachingData implements PermissionsData {
 	private final Executor executor;
-	protected final Object lock;
+	protected final ReadWriteLock lock;
 	private Map<String, List<String>> permissions;
 	private Map<String, Map<String, String>> options;
 	private Map<String, List<String>> parents;
 	private volatile Set<String> worlds;
 
-	public CachingData(Executor executor, Object lock) {
+	public CachingData(Executor executor, ReadWriteLock lock) {
 		this.executor = executor;
 		this.lock = lock;
 	}
 
-	protected void execute(final Runnable run) {
+	protected void executeWrite(final Runnable run) {
 		executor.execute(new Runnable() {
 			@Override
 			public void run() {
-				synchronized (lock) {
+				lock.writeLock().lock();
+				try {
 					run.run();
+				} finally {
+					lock.readLock().lock();
+					try {
+						lock.writeLock().unlock();
+						getBackingData().save();
+					} finally {
+						lock.readLock().unlock();
+					}
 				}
 			}
 		});
 	}
+	protected void executeRead(final Runnable run) {
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				lock.readLock().lock();
+				try {
+					run.run();
+				} finally {
+					lock.readLock().unlock();
+				}
+			}
+		});
+		}
 
 	protected abstract PermissionsData getBackingData();
 
 	protected void loadPermissions() {
-		synchronized (lock) {
+		lock.readLock().lock();
+		try {
 			this.permissions = new HashMap<>(getBackingData().getPermissionsMap());
+		} finally {
+			lock.readLock().unlock();
 		}
 	}
 
 	protected void loadOptions() {
-		synchronized (lock) {
+		lock.readLock().lock();
+		try {
 			this.options = new HashMap<>();
 			for (Map.Entry<String, Map<String, String>> e : getBackingData().getOptionsMap().entrySet()) {
 				this.options.put(e.getKey(), new HashMap<>(e.getValue()));
 			}
+		} finally {
+			lock.readLock().unlock();
 		}
 	}
 
 	protected void loadInheritance() {
-		synchronized (lock) {
+		lock.readLock().lock();
+		try {
 			this.parents = new HashMap<>(getBackingData().getParentsMap());
+		} finally {
+			lock.readLock().unlock();
 		}
 	}
 
 	protected void clearCache() {
-		synchronized (lock) {
+		lock.writeLock().lock();
+		try {
 			permissions = null;
 			options = null;
 			parents = null;
 			clearWorldsCache();
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
 	@Override
 	public void load() {
-		synchronized (lock) {
+		lock.writeLock().lock();
+		try {
 			getBackingData().load();
 			loadInheritance();
 			loadOptions();
 			loadPermissions();
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
@@ -99,7 +137,7 @@ public abstract class CachingData implements PermissionsData {
 			loadPermissions();
 		}
 		final List<String> safePermissions = new ArrayList<>(permissions);
-		execute(new Runnable() {
+		executeWrite(new Runnable() {
 			@Override
 			public void run() {
 				clearWorldsCache();
@@ -126,8 +164,11 @@ public abstract class CachingData implements PermissionsData {
 	public Set<String> getWorlds() {
 		Set<String> worlds = this.worlds;
 		if (worlds == null) {
-			synchronized (lock) {
+			lock.readLock().lock();
+			try {
 				this.worlds = worlds = getBackingData().getWorlds();
+			} finally {
+				lock.readLock().unlock();
 			}
 		}
 		return worlds;
@@ -154,26 +195,26 @@ public abstract class CachingData implements PermissionsData {
 		if (options == null) {
 			loadOptions();
 		}
-		execute(new Runnable() {
+		executeWrite(new Runnable() {
 			@Override
 			public void run() {
+				if (options != null) {
+					Map<String, String> optionsMap = options.get(world);
+					if (optionsMap == null) {
+						// TODO Concurrentify
+						optionsMap = new HashMap<>();
+						options.put(world, optionsMap);
+						clearWorldsCache();
+					}
+					if (value == null) {
+						optionsMap.remove(option);
+					} else {
+						optionsMap.put(option, value);
+					}
+				}
 				getBackingData().setOption(option, value, world);
 			}
 		});
-		if (options != null) {
-			Map<String, String> optionsMap = options.get(world);
-			if (optionsMap == null) {
-				// TODO Concurrentify
-				optionsMap = new HashMap<>();
-				options.put(world, optionsMap);
-				clearWorldsCache();
-			}
-			if (value == null) {
-				optionsMap.remove(option);
-			} else {
-				optionsMap.put(option, value);
-			}
-		}
 	}
 
 	@Override
@@ -213,13 +254,13 @@ public abstract class CachingData implements PermissionsData {
 			loadInheritance();
 		}
 		final List<String> safeParents = new ArrayList<>(rawParents);
-		execute(new Runnable() {
+		executeWrite(new Runnable() {
 			@Override
 			public void run() {
+				parents.put(worldName, Collections.unmodifiableList(safeParents));
 				getBackingData().setParents(safeParents, worldName);
 			}
 		});
-		this.parents.put(worldName, Collections.unmodifiableList(safeParents));
 	}
 
 	@Override
@@ -229,7 +270,7 @@ public abstract class CachingData implements PermissionsData {
 
 	@Override
 	public void save() {
-		execute(new Runnable() {
+		executeRead(new Runnable() {
 			@Override
 			public void run() {
 				getBackingData().save();
@@ -239,9 +280,12 @@ public abstract class CachingData implements PermissionsData {
 
 	@Override
 	public void remove() {
-		synchronized (lock) {
+		lock.writeLock().lock();
+		try {
 			getBackingData().remove();
 			clearCache();
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 
