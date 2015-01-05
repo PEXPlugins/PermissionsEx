@@ -75,7 +75,10 @@ public abstract class PermissibleInjector {
 		// Attachments
 		Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
 		attachmentField.setAccessible(true);
-        ((List) attachmentField.get(newPerm)).addAll((List)attachmentField.get(old));
+		@SuppressWarnings("unchecked")
+		List<Object> attachmentPerms = (List<Object>) attachmentField.get(newPerm);
+		attachmentPerms.clear();
+		attachmentPerms.addAll((List) attachmentField.get(old));
 		newPerm.recalculatePermissions();
 	}
 
