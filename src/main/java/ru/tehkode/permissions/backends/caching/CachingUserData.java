@@ -3,13 +3,14 @@ package ru.tehkode.permissions.backends.caching;
 import ru.tehkode.permissions.PermissionsUserData;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * User data using a cache.
  */
 public class CachingUserData extends CachingData implements PermissionsUserData {
 	private final PermissionsUserData userData;
-	public CachingUserData(PermissionsUserData userData, Executor executor, Object lock) {
+	public CachingUserData(PermissionsUserData userData, Executor executor, ReadWriteLock lock) {
 		super(executor, lock);
 		this.userData = userData;
 	}
@@ -21,7 +22,7 @@ public class CachingUserData extends CachingData implements PermissionsUserData 
 
 	@Override
 	public boolean setIdentifier(final String identifier) {
-		execute(new Runnable() {
+		executeWrite(new Runnable() {
 			@Override
 			public void run() {
 				getBackingData().setIdentifier(identifier);

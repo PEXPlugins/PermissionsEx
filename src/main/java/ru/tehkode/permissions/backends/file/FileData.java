@@ -11,98 +11,47 @@ import java.util.logging.Level;
 
 public class FileData implements PermissionsUserData, PermissionsGroupData {
 	protected transient final FileConfig config;
-	private String nodePath, entityName;
-	private final String basePath;
 	private ConfigurationSection node;
 	protected boolean virtual = true;
 	private final String parentPath;
 
-	public FileData(String basePath, String name, FileConfig config, String parentPath) {
-		this.config = config;
-		this.basePath = basePath;
-		this.node = findNode(name);
+	public FileData(ConfigurationSection node, String parentPath) {
+		this.config = (FileConfig) node.getRoot();
+		this.node = node;
+		this.virtual = node.getParent().getConfigurationSection(node.getName()) == null;
 		this.parentPath = parentPath;
 	}
 
-	private ConfigurationSection findExistingNode(String entityName, boolean set) {
-		if (config.isLowerCased(basePath)) {
-			entityName = entityName.toLowerCase();
-		}
-		String nodePath = FileBackend.buildPath(basePath, entityName);
+	@Override
+	public String getIdentifier() {
+		return node.getName();
+	}
 
-		ConfigurationSection entityNode = this.config.getConfigurationSection(nodePath);
-
-		if (entityNode != null) {
-			this.virtual = false;
-			if (set) {
-				this.nodePath = nodePath;
-				this.entityName = entityName;
-			}
-			return entityNode;
-		}
-
-		if (!config.isLowerCased(basePath)) {
-			ConfigurationSection users = this.config.getConfigurationSection(basePath);
+	@Override
+	public boolean setIdentifier(String identifier) {
+		String caseCorrectedIdentifier = config.isLowerCased(node.getParent().getCurrentPath()) ? identifier.toLowerCase() : identifier;
+		ConfigurationSection existing = node.getParent().getConfigurationSection(identifier);
+		if (existing == null && config.isLowerCased(node.getParent().getCurrentPath())) {
+			ConfigurationSection users = node.getParent();
 
 			if (users != null) {
 				for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
-					if (entry.getKey().equalsIgnoreCase(entityName)
+					if (entry.getKey().equalsIgnoreCase(caseCorrectedIdentifier)
 							&& entry.getValue() instanceof ConfigurationSection) {
-						if (set) {
-							this.nodePath = FileBackend.buildPath(basePath, entry.getKey());
-							this.entityName = entry.getKey();
-						}
-						return (ConfigurationSection) entry.getValue();
+						existing = (ConfigurationSection) entry.getValue();
 					}
 				}
 			}
 		}
 
-		return null;
-	}
-
-	private ConfigurationSection findNode(String entityName) {
-		if (config.isLowerCased(basePath)) {
-			entityName = entityName.toLowerCase();
-		}
-		ConfigurationSection section = findExistingNode(entityName, true);
-		if (section != null) {
-			return section;
-		}
-
-		// Silly workaround for empty nodes
-		this.nodePath = FileBackend.buildPath(basePath, entityName);
-		section = this.config.createSection(nodePath);
-		this.entityName = entityName;
-		this.config.set(nodePath, null);
-		this.virtual = true; // Make sure
-
-		return section;
-
-	}
-
-	@Override
-	public String getIdentifier() {
-		return entityName;
-	}
-
-	@Override
-	public boolean setIdentifier(String identifier) {
-		ConfigurationSection section = findExistingNode(identifier, false);
-		if (section != null) {
+		if (existing != null) {
 			return false;
 		}
-		String caseCorrectedIdentifier = config.isLowerCased(basePath) ? identifier.toLowerCase() : identifier;
-		String oldNodePath = this.nodePath;
-		this.nodePath = FileBackend.buildPath(basePath, caseCorrectedIdentifier);
-		this.node = this.config.createSection(nodePath, node.getValues(false));
-		this.entityName = identifier;
-		this.config.set(oldNodePath, null);
-		if (!this.isVirtual()) {
-			this.config.set(nodePath, node);
-			this.save();
-		} else {
-			this.config.set(nodePath, null);
+		ConfigurationSection oldNode = node;
+		this.node = oldNode.getParent().createSection(caseCorrectedIdentifier, node.getValues(false));
+		oldNode.getParent().set(oldNode.getName(), null);
+		if (this.isVirtual()) {
+			node.getParent().set(node.getName(), null);
 		}
 		return true;
 	}
@@ -120,7 +69,6 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setPermissions(List<String> permissions, String worldName) {
 		this.node.set(formatPath(worldName, "permissions"), permissions == null ? null : new ArrayList<>(permissions));
-		save();
 	}
 
 	@Override
@@ -166,7 +114,6 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setOption(String option, String value, String worldName) {
 		this.node.set(formatPath(worldName, "options", option), value);
-		save();
 	}
 
 	@Override
@@ -202,21 +149,21 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void save() {
 		if (isVirtual()) {
-			this.config.set(nodePath, node);
+			this.node.getParent().set(node.getName(), node);
 			virtual = false;
 		}
 
 		try {
 			this.config.save();
 		} catch (IOException e) {
-			PermissionsEx.getPermissionManager().getLogger().log(Level.SEVERE, "Error saving data for  " + nodePath, e);
+			PermissionsEx.getPermissionManager().getLogger().log(Level.SEVERE, "Error saving data for  " + node.getCurrentPath(), e);
 		}
 	}
 
 	@Override
 	public void remove() {
-		this.config.set(nodePath, null);
-		this.save();
+		node.getParent().set(node.getName(), null);
+		this.virtual = true;
 	}
 
 	@Override
@@ -234,7 +181,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public List<String> getParents(String worldName) {
 		List<String> parents = this.node.getStringList(formatPath(worldName, parentPath));
-		for (Iterator<String> it = parents.iterator(); it.hasNext();) {
+		for (Iterator<String> it = parents.iterator(); it.hasNext(); ) {
 			final String test = it.next();
 			if (test == null || test.isEmpty()) {
 				it.remove();
@@ -251,7 +198,6 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	@Override
 	public void setParents(List<String> parents, String worldName) {
 		this.node.set(formatPath(worldName, parentPath), parents == null ? null : new ArrayList<>(parents));
-		save();
 	}
 
 	@Override
