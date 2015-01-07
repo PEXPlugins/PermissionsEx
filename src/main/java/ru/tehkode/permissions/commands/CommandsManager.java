@@ -114,7 +114,7 @@ public class CommandsManager {
 				sender.sendMessage("Autocomplete for <" + autocomplete.getArgName() + ">:");
 				sender.sendMessage("    " + StringUtils.implode(autocomplete.getChoices(), "   "));
 			} else {
-				throw new RuntimeException(e.getTargetException());
+				throw new RuntimeException(e.getCause());
 			}
 		} catch (Exception e) {
 			plugin.getLogger().severe("There is bogus command handler for " + command.getName() + " command. (Is appropriate plugin is update?)");
