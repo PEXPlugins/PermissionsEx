@@ -365,7 +365,8 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 
 	@Override
 	public boolean isOnline(UUID uuid) {
-		return getServer().getPlayer(uuid).isOnline();
+		Player player = getServer().getPlayer(uuid);
+		return (player != null && player.isOnline());
 	}
 
 	@Override
