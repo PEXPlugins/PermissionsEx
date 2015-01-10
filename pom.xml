@@ -20,7 +20,6 @@
     </scm>
 
     <build>
-        <finalName>${project.artifactId}</finalName>
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
