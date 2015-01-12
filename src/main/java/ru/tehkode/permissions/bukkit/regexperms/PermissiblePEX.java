@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Implements regex-based permission matching for superperms.
  * If a permission match is found using existing superperms methods, it takes priority.
  * However, if a match is not found we use a {@link PermissionMatcher} set in the plugin object to check for a permissions match, caching values.
- * <p/>
+ *
  * Class should be thread-safe
  */
 public class PermissiblePEX extends PermissibleBase {

@@ -611,7 +611,7 @@ public class PermissionManager {
 	}
 
 	/**
-	 * Creates a backend but does not set it as the active backend. Useful for data transfer & such
+	 * Creates a backend but does not set it as the active backend. Useful for data transfer &amp; such
 	 * @param backendName Name of the configuration section which describes this backend
 	 */
 	public PermissionBackend createBackend(String backendName) throws PermissionBackendException {
