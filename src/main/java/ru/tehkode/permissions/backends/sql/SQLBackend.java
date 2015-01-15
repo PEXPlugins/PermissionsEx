@@ -94,7 +94,8 @@ public class SQLBackend extends PermissionBackend {
 		this.ds.setUrl("jdbc:" + dbUri);
 		this.ds.setUsername(dbUser);
 		this.ds.setPassword(dbPassword);
-		this.ds.setMaxActive(20);
+		// https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
+		this.ds.setMaxActive((Runtime.getRuntime().availableProcessors() * 2) + 1);
 		this.ds.setMaxWait(200); // 4 ticks
 		this.ds.setValidationQuery("SELECT 1 AS dbcp_validate");
 		this.ds.setTestOnBorrow(true);
