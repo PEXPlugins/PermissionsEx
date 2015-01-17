@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import com.google.common.cache.CacheBuilder;
 import com.zachsthings.netevents.NetEventsPlugin;
 import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
@@ -160,6 +161,17 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 			return;
 		}
 		try {
+			try {
+				CacheBuilder.class.getMethod("maximumSize", long.class);
+			} catch (NoSuchMethodException e) {
+				getLogger().severe("=================================================================================");
+				getLogger().severe("As of version 1.23, PEX is only compatible with versions of Minecraft 1.8 or greater. " +
+						"Please downgrade to the most recent 1.22.x series version of PEX to continue.");
+				getLogger().severe("=================================================================================");
+				getPluginLoader().disablePlugin(this);
+				return;
+			}
+
 			if (this.permissionsManager == null) {
 				this.permissionsManager = new PermissionManager(config, getLogger(), this);
 			}
@@ -167,12 +179,12 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 			try {
 				OfflinePlayer.class.getMethod("getUniqueId");
 			} catch (NoSuchMethodException e) {
-				getLogger().severe("============================================================================================");
+				getLogger().severe("=================================================================================");
 				getLogger().severe("As of version 1.21, PEX requires a version of Bukkit with UUID support to function (>1.7.5). Please download a non-UUID version of PermissionsEx to continue.");
 				getLogger().severe("Beginning reversion of potential invalid UUID conversion");
 				getPermissionsManager().getBackend().revertUUID();
 				getLogger().severe("Reversion complete, disabling. PermissionsEx will not work until downgrade is complete");
-				getLogger().severe("============================================================================================");
+				getLogger().severe("=================================================================================");
 				getPluginLoader().disablePlugin(this);
 				return;
 			}
