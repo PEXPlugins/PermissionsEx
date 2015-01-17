@@ -128,9 +128,6 @@ public class SQLBackend extends PermissionBackend {
 				// Change collation for all columns to utf8mb4_general_ci
 				try (SQLConnection conn = getSQL()) {
 					conn.prep("ALTER TABLE `{permissions}` DROP KEY `unique`, MODIFY COLUMN `permission` TEXT NOT NULL").execute();
-					conn.prep("ALTER TABLE `{permissions}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
-					conn.prep("ALTER TABLE `{permissions_entity}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
-					conn.prep("ALTER TABLE `{permissions_inheritance}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
 				} catch (SQLException | IOException e) {
 					throw new PermissionBackendException(e);
 				}
@@ -194,6 +191,14 @@ public class SQLBackend extends PermissionBackend {
 		this.setupAliases();
 		this.deployTables();
 		performSchemaUpdate();
+
+		try (SQLConnection conn = getSQL()) {
+			conn.prep("ALTER TABLE `{permissions}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
+			conn.prep("ALTER TABLE `{permissions_entity}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
+			conn.prep("ALTER TABLE `{permissions_inheritance}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci").execute();
+		} catch (SQLException | IOException e) {
+			// Ignore, this MySQL version just doesn't support it.
+		}
 	}
 
 	@Override
@@ -557,6 +562,7 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public void close() throws PermissionBackendException {
+		super.close();
 		if (ds != null) {
 			try {
 				ds.close();
@@ -564,7 +570,6 @@ public class SQLBackend extends PermissionBackend {
 				throw new PermissionBackendException("Error while closing", e);
 			}
 		}
-		super.close();
 	}
 
 }

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `{permissions}` (
   #UNIQUE KEY `unique` (`name`,`permission`,`world`,`type`),
   KEY `user` (`name`,`type`),
   KEY `world` (`world`,`name`,`type`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 
 CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`, `type`),
   KEY `default` (`default`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 CREATE TABLE IF NOT EXISTS `{permissions_inheritance}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -32,4 +32,4 @@ CREATE TABLE IF NOT EXISTS `{permissions_inheritance}` (
   UNIQUE KEY `child` (`child`,`parent`,`type`,`world`),
   KEY `child_2` (`child`,`type`),
   KEY `parent` (`parent`,`type`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
