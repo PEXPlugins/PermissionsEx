@@ -50,6 +50,7 @@ import ru.tehkode.permissions.PermissionUser;
 import ru.tehkode.permissions.backends.MultiBackend;
 import ru.tehkode.permissions.backends.PermissionBackend;
 import ru.tehkode.permissions.backends.file.FileBackend;
+import ru.tehkode.permissions.backends.hybrid.HybridBackend;
 import ru.tehkode.permissions.backends.memory.MemoryBackend;
 import ru.tehkode.permissions.backends.sql.SQLBackend;
 import ru.tehkode.permissions.bukkit.commands.*;
@@ -91,6 +92,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 		PermissionBackend.registerBackendAlias("file", FileBackend.class);
 		PermissionBackend.registerBackendAlias("memory", MemoryBackend.class);
 		PermissionBackend.registerBackendAlias("multi", MultiBackend.class);
+		PermissionBackend.registerBackendAlias("hybrid", HybridBackend.class);
 
 	}
 
