@@ -11,7 +11,6 @@ public class ConfigTransformations {
     private static final TransformAction DELETE_ITEM = new TransformAction() {
         @Override
         public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-            System.out.println("Deleting value " + valueAtPath.getValue());
             valueAtPath.setValue(null);
             return null;
         }

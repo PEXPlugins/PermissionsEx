@@ -121,9 +121,7 @@ public class PermissionsExPlugin implements PermissionService {
         if (bukkitConfigFile.isFile()) {
             ConfigurationLoader<ConfigurationNode> yamlReader = YAMLConfigurationLoader.builder().setFile(bukkitConfigFile).build();
             ConfigurationNode bukkitConfig = yamlReader.load();
-            System.out.println("Loaded old Bukkit configuration as " + bukkitConfig.getValue());
             ConfigTransformations.fromBukkit().apply(bukkitConfig);
-            System.out.println("Saving converted configuration " + bukkitConfig.getValue() + " as HOCON");
             configLoader.save(bukkitConfig);
             if (!bukkitConfigFile.renameTo(new File(configDir, "config.yml.bukkit"))) {
                 logger.warn("Could not rename old Bukkit configuration file to old name");
