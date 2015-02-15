@@ -1,4 +1,23 @@
-CREATE TABLE `{permissions}` (
+CREATE TABLE IF NOT EXISTS `{pex_groups}` (
+  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+  `name` TEXT NOT NULL,
+);
+
+CREATE TABLE IF NOT EXISTS `{pex_qualifiers}` (
+  `id` integer PRIMARY KEY NOT NULL AUTOINCREMENT,
+  `group` integer NOT NULL REFERENCES `{pex_groups}` (`id`) ON DELETE CASCADE,
+  `key` TEXT NOT NULL,
+  `value` TEXT NOT NULL,
+);
+
+CREATE TABLE IF NOT EXISTS `{pex_entries}` (
+  `id` integer PRIMARY KEY NOT NULL AUTOINCREMENT,
+  `group` integer NOT NULL REFERENCES `{pex_groups}` (`id`) ON DELETE CASCADE,
+  `key` TEXT NOT NULL,
+  `value` TEXT NULL,
+);
+
+/*CREATE TABLE `{permissions}` (
   `id`          integer PRIMARY KEY AUTOINCREMENT,
   `name`        varchar(50) NOT NULL,
   `type`        int NOT NULL DEFAULT 0,
@@ -29,4 +48,4 @@ CREATE TABLE `{permissions_inheritance}` (
 
 CREATE INDEX `permissions_inheritance_Index01` ON `{permissions_inheritance}` (`child`, `type`, `world`);
 
-CREATE INDEX `permissions_inheritance_Index02` ON `{permissions_inheritance}` (`parent`, `type`);
+CREATE INDEX `permissions_inheritance_Index02` ON `{permissions_inheritance}` (`parent`, `type`);*/
