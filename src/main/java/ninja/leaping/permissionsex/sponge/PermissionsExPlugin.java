@@ -1,3 +1,19 @@
+/**
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Optional;
@@ -8,13 +24,14 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
-import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.exception.PEBKACException;
-import ninja.leaping.permissionsex.sponge.config.ConfigTransformations;
-import ninja.leaping.permissionsex.util.DataStoreSerializer;
+import ninja.leaping.permissionsex.config.ConfigTransformations;
+import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.config.DataStoreSerializer;
 import org.slf4j.Logger;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppedEvent;
@@ -47,29 +64,19 @@ public class PermissionsExPlugin implements PermissionService {
         TypeSerializers.registerSerializer(new DataStoreSerializer());
     }
 
-    private static final ObjectMapper<PermissionsExConfiguration> CONFIG_MAPPER;
-
-    static {
-        try {
-            CONFIG_MAPPER = ObjectMapper.mapperForClass(PermissionsExConfiguration.class);
-        } catch (ObjectMappingException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-
     private ServiceReference<SqlService> sql;
     private ServiceReference<Scheduler> scheduler;
     @Inject private ServiceManager services;
     @Inject private Logger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
-    private PEXService service;
+    private PermissionsEx manager;
     private PermissionsExConfiguration config;
     private ConfigurationNode rawConfig;
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
-        logger.info("Pre-init of PermissionsEx v" + PomData.VERSION);
+        logger.info("Pre-init of " + PomData.NAME + " v" + PomData.VERSION);
         sql = services.potentiallyProvide(SqlService.class);
         scheduler = services.potentiallyProvide(Scheduler.class);
 
@@ -84,7 +91,7 @@ public class PermissionsExPlugin implements PermissionService {
 
         try {
             configDir.mkdirs();
-            CONFIG_MAPPER.serializeObject(config, rawConfig);
+            PermissionsExConfiguration.MAPPER.serializeObject(config, rawConfig);
             configLoader.save(rawConfig);
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
@@ -94,8 +101,17 @@ public class PermissionsExPlugin implements PermissionService {
         try {
             event.getGame().getServiceManager().setProvider(this, PermissionService.class, this);
         } catch (ProviderExistsException e) {
-            service.close();
+            manager.close();
             throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
+        }
+    }
+
+    @Subscribe
+    public void disable(ServerStoppedEvent event) {
+        logger.debug("Disabling PermissionsEx");
+        if (manager != null) {
+            manager.close();
+            manager = null;
         }
     }
 
@@ -139,19 +155,15 @@ public class PermissionsExPlugin implements PermissionService {
                 throw new Error("PEX's default configuration could not be loaded!", e);
             }
             rawConfig.mergeValuesFrom(fallbackConfig);
-            config = CONFIG_MAPPER.newInstance(rawConfig);
+            config = PermissionsExConfiguration.MAPPER.newInstance(rawConfig);
+            PermissionsEx oldManager = manager;
+            manager = new PermissionsEx(config, configDir);
+            if (oldManager != null) {
+                oldManager.close();
+            }
 
         } catch (IOException e) {
             throw new PEBKACException("Error while loading configuration: " + e.getLocalizedMessage());
-        }
-    }
-
-    @Subscribe
-    public void disable(ServerStoppedEvent event) {
-        logger.debug("Disabling PermissionsEx");
-        if (service != null) {
-            service.close();
-            service = null;
         }
     }
 

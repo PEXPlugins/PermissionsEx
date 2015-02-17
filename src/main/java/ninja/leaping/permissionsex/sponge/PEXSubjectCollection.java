@@ -1,3 +1,19 @@
+/**
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ninja.leaping.permissionsex.sponge;
 
 import ninja.leaping.permissionsex.backends.DataStore;
@@ -14,12 +30,10 @@ import java.util.Set;
  */
 public class PEXSubjectCollection implements SubjectCollection {
     private final DataStore data;
-    private final SubjectCollection parents;
     private final String type;
 
-    public PEXSubjectCollection(DataStore data, SubjectCollection parents, String type) {
+    public PEXSubjectCollection(DataStore data, String type) {
         this.data = data;
-        this.parents = parents == null ? this : parents;
         this.type = type;
     }
 
@@ -30,7 +44,7 @@ public class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public Subject get(String identifier) {
-        return new PermissionsExSubject(identifier, data.getData(type, identifier, null), null);
+        return null;
     }
 
     @Override

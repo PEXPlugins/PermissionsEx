@@ -1,3 +1,35 @@
+# Possible 2.0 Schema
+CREATE TABLE IF NOT EXISTS `{segments}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` VARCHAR(50),
+  `identifier` VARCHAR(50),
+  UNIQUE KEY `unique` (`type`,`identifier`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS `{permissions}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
+  `key` TEXT,
+  `value` ENUM ('false_strong', 'false', 'undefined', 'true', 'true_strong')
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS `{options}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
+  `key` TEXT,
+  `value` TEXT
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS `{inheritance}` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
+  `parent` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
+  UNIQUE KEY `unique` (`segment`, `parent`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+
+# Current
+
 CREATE TABLE IF NOT EXISTS `{permissions}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
