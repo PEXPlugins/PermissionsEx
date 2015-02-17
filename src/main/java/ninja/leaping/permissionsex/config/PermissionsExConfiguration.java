@@ -37,9 +37,9 @@ public class PermissionsExConfiguration {
         }
     }
 
-    @Setting("backends") private Map<String, DataStore> backends;
+    @Setting private Map<String, DataStore> backends;
     @Setting("default-backend") private String defaultBackend;
-    @Setting("debug") private boolean debugEnabled;
+    @Setting private boolean debug;
 
     protected PermissionsExConfiguration() {}
 
@@ -52,6 +52,6 @@ public class PermissionsExConfiguration {
     }
 
     public boolean isDebugEnabled() {
-        return debugEnabled;
+        return debug;
     }
 }
