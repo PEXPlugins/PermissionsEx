@@ -20,6 +20,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backends.DataStore;
+import ninja.leaping.permissionsex.exception.PEBKACException;
 
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class PermissionsExConfiguration {
 
     static {
         try {
-            MAPPER = ObjectMapper.mapperForClass(PermissionsExConfiguration.class);
+            MAPPER = ObjectMapper.forClass(PermissionsExConfiguration.class);
         } catch (ObjectMappingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -48,10 +49,25 @@ public class PermissionsExConfiguration {
     }
 
     public DataStore getDefaultDataStore() {
+        System.out.println("Default backend: " + defaultBackend);
+        System.out.println("Backends: " + backends);
         return backends.get(defaultBackend);
     }
 
     public boolean isDebugEnabled() {
         return debug;
+    }
+
+    public void validate() throws PEBKACException {
+        if (backends.isEmpty()) {
+            throw new PEBKACException("No backends defined!");
+        }
+        if (defaultBackend == null) {
+            throw new PEBKACException("Default backend is not set!");
+        }
+
+        if (!backends.containsKey(defaultBackend)) {
+            throw new PEBKACException("Default backend " + defaultBackend + " is not an available backend! Choices are: " + backends.keySet());
+        }
     }
 }

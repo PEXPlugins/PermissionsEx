@@ -35,6 +35,7 @@ import ninja.leaping.permissionsex.config.DataStoreSerializer;
 import org.slf4j.Logger;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppedEvent;
+import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.ProviderExistsException;
 import org.spongepowered.api.service.ServiceManager;
@@ -82,6 +83,7 @@ public class PermissionsExPlugin implements PermissionService {
 
         try {
             convertFromBukkit();
+            configDir.mkdirs();
             reloadSync();
         } catch (PEBKACException e) {
             throw e;
@@ -90,8 +92,7 @@ public class PermissionsExPlugin implements PermissionService {
         }
 
         try {
-            configDir.mkdirs();
-            PermissionsExConfiguration.MAPPER.serializeObject(config, rawConfig);
+            PermissionsExConfiguration.MAPPER.bind(config).serialize(rawConfig);
             configLoader.save(rawConfig);
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
@@ -107,7 +108,7 @@ public class PermissionsExPlugin implements PermissionService {
     }
 
     @Subscribe
-    public void disable(ServerStoppedEvent event) {
+    public void disable(ServerStoppingEvent event) {
         logger.debug("Disabling PermissionsEx");
         if (manager != null) {
             manager.close();
@@ -155,7 +156,8 @@ public class PermissionsExPlugin implements PermissionService {
                 throw new Error("PEX's default configuration could not be loaded!", e);
             }
             rawConfig.mergeValuesFrom(fallbackConfig);
-            config = PermissionsExConfiguration.MAPPER.newInstance(rawConfig);
+            config = PermissionsExConfiguration.MAPPER.bindToNew().populate(rawConfig);
+            config.validate();
             PermissionsEx oldManager = manager;
             manager = new PermissionsEx(config, configDir);
             if (oldManager != null) {

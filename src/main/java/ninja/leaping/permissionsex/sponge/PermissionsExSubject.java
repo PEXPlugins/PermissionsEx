@@ -114,14 +114,4 @@ public class PermissionsExSubject implements Subject, Caching {
     public void clearCache() {
 
     }
-
-    @Override
-    public void clearNodeCache(String node) {
-
-    }
-
-    @Override
-    public void clearInheritanceCache(Subject subject) {
-
-    }
 }

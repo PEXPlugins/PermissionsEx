@@ -19,7 +19,6 @@ package ninja.leaping.permissionsex.backends.file;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import org.spongepowered.api.service.permission.Subject;
@@ -84,20 +83,32 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public Map<Set<Context>, Map<String, Tristate>> getAllPermissions() {
-        return Maps.transformValues(contexts, new Function<DataEntry, Map<String, Tristate>>() {
+    public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
+        return Maps.transformValues(contexts, new Function<DataEntry, Map<String, Boolean>>() {
             @Nullable
             @Override
-            public Map<String, Tristate> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.nodes;
+            public Map<String, Boolean> apply(@Nullable DataEntry dataEntry) {
+                return Maps.transformValues(dataEntry.nodes, new Function<Tristate, Boolean>() {
+                    @Nullable
+                    @Override
+                    public Boolean apply(@Nullable Tristate tristate) {
+                        return tristate.asBoolean();
+                    }
+                });
             }
         });
     }
 
     @Override
-    public Map<String, Tristate> getPermissions(Set<Context> set) {
+    public Map<String, Boolean> getPermissions(Set<Context> set) {
         final DataEntry entry = this.contexts.get(set);
-        return entry == null ? null : entry.nodes;
+        return entry == null ? null : Maps.transformValues(entry.nodes, new Function<Tristate, Boolean>() {
+            @Nullable
+            @Override
+            public Boolean apply(@Nullable Tristate tristate) {
+                return tristate.asBoolean();
+            }
+        });
     }
 
     @Override

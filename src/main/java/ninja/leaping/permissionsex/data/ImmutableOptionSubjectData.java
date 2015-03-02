@@ -35,9 +35,9 @@ public interface ImmutableOptionSubjectData {
 
     ImmutableOptionSubjectData clearOptions();
 
-    Map<Set<Context>, Map<String, Tristate>> getAllPermissions();
+    Map<Set<Context>, Map<String, Boolean>> getAllPermissions();
 
-    Map<String, Tristate> getPermissions(Set<Context> set);
+    Map<String, Boolean> getPermissions(Set<Context> set);
 
     ImmutableOptionSubjectData setPermission(Set<Context> set, String s, Tristate tristate);
 

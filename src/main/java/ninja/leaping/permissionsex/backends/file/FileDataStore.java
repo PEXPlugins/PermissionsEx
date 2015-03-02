@@ -48,7 +48,7 @@ public class FileDataStore implements DataStore {
 
     static {
         try {
-            MAPPER = ObjectMapper.mapperForClass(FileDataStore.class);
+            MAPPER = ObjectMapper.forClass(FileDataStore.class);
         } catch (ObjectMappingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -237,7 +237,7 @@ public class FileDataStore implements DataStore {
     @Override
     public String serialize(ConfigurationNode node) throws PermissionsLoadingException {
         try {
-            MAPPER.serializeObject(this, node);
+            MAPPER.bind(this).serialize(node);
         } catch (ObjectMappingException e) {
             throw new PermissionsLoadingException("Error while serializing backend " + identifier, e);
         }
@@ -249,7 +249,7 @@ public class FileDataStore implements DataStore {
         public DataStore createDataStore(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
             FileDataStore store = new FileDataStore(identifier);
             try {
-                MAPPER.populateObject(store, config);
+                MAPPER.bind(store).populate(config);
             } catch (ObjectMappingException e) {
                 throw new PermissionsLoadingException("Error while deserializing backend " + identifier, e);
             }
