@@ -16,36 +16,39 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import ninja.leaping.permissionsex.backends.DataStore;
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.util.Tristate;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-public class SpongeOptionSubjectData implements OptionSubjectData, Caching {
-	private final DataStore source;
-	private final String type, identifier;
+public class PEXOptionSubjectData implements OptionSubjectData, Caching {
+	private final SubjectCache cache;
+	private final String identifier;
 	private volatile ImmutableOptionSubjectData data;
 
-	public SpongeOptionSubjectData(DataStore source, String type, String identifier) {
-		this.source = source;
-		this.type = type;
+	public PEXOptionSubjectData(SubjectCache cache, String identifier) throws ExecutionException {
+		this.cache = cache;
 		this.identifier = identifier;
-		this.data = source.getData(type, identifier, this);
+		clearCache(cache.getData(identifier, this));
 	}
 
 	@Override
-	public void clearCache() {
-		this.data = source.getData(type, identifier, this);
+	public void clearCache(ImmutableOptionSubjectData newData) {
+		this.data = newData;
 	}
 
 	@Override
@@ -60,47 +63,80 @@ public class SpongeOptionSubjectData implements OptionSubjectData, Caching {
 
 	@Override
 	public boolean setOption(Set<Context> contexts, String key, String value) {
-		this.source.setData(type, identifier, data.setOption(contexts, key, value));
+		this.cache.update(identifier, data.setOption(contexts, key, value));
 		return true;
 	}
 
 	@Override
 	public boolean clearOptions(Set<Context> contexts) {
-		this.source.setData(type, identifier, data.clearOptions(contexts));
+		this.cache.update(identifier, data.clearOptions(contexts));
 		return false;
 	}
 
 	@Override
 	public boolean clearOptions() {
-		this.source.setData(type, identifier, data.clearOptions());
+		this.cache.update(identifier, data.clearOptions());
 		return false;
 	}
 
 	@Override
 	public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-		return data.getAllPermissions();
+		return Maps.transformValues(data.getAllPermissions(), new Function<Map<String, Integer>, Map<String, Boolean>>() {
+			@Nullable
+			@Override
+			public Map<String, Boolean> apply(Map<String, Integer> stringIntegerMap) {
+				return Maps.transformValues(stringIntegerMap, new Function<Integer, Boolean>() {
+					@Nullable
+					@Override
+					public Boolean apply(@Nullable Integer integer) {
+						return integer != null && integer > 0;
+					}
+				});
+			}
+		});
 	}
 
 	@Override
 	public Map<String, Boolean> getPermissions(Set<Context> set) {
-		return data.getPermissions(set);
+		return Maps.transformValues(data.getPermissions(set), new Function<Integer, Boolean>() {
+			@Nullable
+			@Override
+			public Boolean apply(@Nullable Integer integer) {
+				return integer != null && integer > 0;
+			}
+		});
 	}
 
 	@Override
 	public boolean setPermission(Set<Context> set, String s, Tristate tristate) {
-		this.source.setData(type, identifier, data.setPermission(set, s, tristate));
+		int val;
+		switch (tristate) {
+			case TRUE:
+				val = 1;
+				break;
+			case FALSE:
+				val = -1;
+				break;
+			case UNDEFINED:
+				val = 0;
+				break;
+			default:
+				throw new IllegalStateException("Unknown tristate provided " + tristate);
+		}
+
+		this.cache.update(identifier, data.setPermission(set, s, val));
 		return false;
 	}
 
 	@Override
 	public boolean clearPermissions() {
-		this.source.setData(type, identifier, data.clearPermissions());
+		this.cache.update(identifier, data.clearPermissions());
 		return false;
 	}
 
 	@Override
 	public boolean clearPermissions(Set<Context> set) {
-		this.source.setData(type, identifier, data.clearPermissions(set));
+		this.cache.update(identifier, data.clearPermissions(set));
 		return false;
 	}
 

@@ -16,22 +16,43 @@
  */
 package ninja.leaping.permissionsex;
 
+import com.google.common.base.Preconditions;
 import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class PermissionsEx {
     private final PermissionsExConfiguration config;
     private final File basedir;
     private DataStore activeDataStore;
+    private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>();
+    private final SubjectCache userCache, groupCache;
 
     public PermissionsEx(PermissionsExConfiguration config, File basedir) throws PermissionsLoadingException {
         this.config = config;
         this.basedir = basedir;
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
+        this.userCache = getSubjects("users");
+        this.groupCache = getSubjects("groups");
+    }
+
+    public SubjectCache getSubjects(String type) {
+        Preconditions.checkNotNull(type, "type");
+        SubjectCache cache = subjectCaches.get(type);
+        if (cache == null) {
+            cache = new SubjectCache(type, activeDataStore);
+            SubjectCache newCache = subjectCaches.putIfAbsent(type, cache);
+            if (newCache != null) {
+                cache = newCache;
+            }
+        }
+        return cache;
     }
 
     public void close() {

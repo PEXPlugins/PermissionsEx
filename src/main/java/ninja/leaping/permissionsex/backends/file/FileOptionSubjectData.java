@@ -23,7 +23,6 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
-import org.spongepowered.api.util.Tristate;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -31,13 +30,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileOptionSubjectData implements ImmutableOptionSubjectData {
-    private static class DataEntry {
-        @Setting("permissions") private Map<String, Tristate> nodes;
+    static class DataEntry {
+        @Setting("permissions") private Map<String, Integer> nodes;
         @Setting("options") private Map<String, String> options;
         private Multimap<String, String> parents;
-        @Setting("permissions-default") private Tristate defaultValue;
+        @Setting("permissions-default") private int defaultValue;
 
-        public DataEntry(Map<String, Tristate> nodes, Map<String, String> options, Multimap<String, String> parents, Tristate defaultValue) {
+        public DataEntry(Map<String, Integer> nodes, Map<String, String> options, Multimap<String, String> parents, Integer defaultValue) {
             this.nodes = nodes;
             this.options = options;
             this.parents = parents;
@@ -83,36 +82,24 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-        return Maps.transformValues(contexts, new Function<DataEntry, Map<String, Boolean>>() {
+    public Map<Set<Context>, Map<String, Integer>> getAllPermissions() {
+        return Maps.transformValues(contexts, new Function<DataEntry, Map<String, Integer>>() {
             @Nullable
             @Override
-            public Map<String, Boolean> apply(@Nullable DataEntry dataEntry) {
-                return Maps.transformValues(dataEntry.nodes, new Function<Tristate, Boolean>() {
-                    @Nullable
-                    @Override
-                    public Boolean apply(@Nullable Tristate tristate) {
-                        return tristate.asBoolean();
-                    }
-                });
+            public Map<String, Integer> apply(@Nullable DataEntry dataEntry) {
+                return dataEntry.nodes;
             }
         });
     }
 
     @Override
-    public Map<String, Boolean> getPermissions(Set<Context> set) {
+    public Map<String, Integer> getPermissions(Set<Context> set) {
         final DataEntry entry = this.contexts.get(set);
-        return entry == null ? null : Maps.transformValues(entry.nodes, new Function<Tristate, Boolean>() {
-            @Nullable
-            @Override
-            public Boolean apply(@Nullable Tristate tristate) {
-                return tristate.asBoolean();
-            }
-        });
+        return entry == null ? null : entry.nodes;
     }
 
     @Override
-    public ImmutableOptionSubjectData setPermission(Set<Context> set, String s, Tristate tristate) {
+    public ImmutableOptionSubjectData setPermission(Set<Context> contexts, String permission, int value) {
         return null;
     }
 

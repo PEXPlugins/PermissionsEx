@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.data;
 
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
-import org.spongepowered.api.util.Tristate;
 
 import java.util.List;
 import java.util.Map;
@@ -35,11 +34,11 @@ public interface ImmutableOptionSubjectData {
 
     ImmutableOptionSubjectData clearOptions();
 
-    Map<Set<Context>, Map<String, Boolean>> getAllPermissions();
+    Map<Set<Context>, Map<String, Integer>> getAllPermissions();
 
-    Map<String, Boolean> getPermissions(Set<Context> set);
+    Map<String, Integer> getPermissions(Set<Context> set);
 
-    ImmutableOptionSubjectData setPermission(Set<Context> set, String s, Tristate tristate);
+    ImmutableOptionSubjectData setPermission(Set<Context> set, String s, int value);
 
     ImmutableOptionSubjectData clearPermissions();
 

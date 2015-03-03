@@ -16,45 +16,56 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import ninja.leaping.permissionsex.backends.DataStore;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
+import ninja.leaping.permissionsex.data.SubjectCache;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
+import org.spongepowered.api.util.command.CommandSource;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Subject collection
  */
 public class PEXSubjectCollection implements SubjectCollection {
-    private final DataStore data;
-    private final String type;
+    private final PermissionsExPlugin plugin;
+    private final SubjectCache cache;
+    private volatile Function<String, Optional<CommandSource>> commandSourceProvider;
 
-    public PEXSubjectCollection(DataStore data, String type) {
-        this.data = data;
-        this.type = type;
+    public PEXSubjectCollection(PermissionsExPlugin plugin, SubjectCache cache) {
+        this.plugin = plugin;
+        this.cache = cache;
     }
 
     @Override
     public String getIdentifier() {
-        return this.type;
+        return cache.getType();
     }
 
     @Override
     public Subject get(String identifier) {
-        return null;
+        System.out.println("Getting subject for " + identifier);
+        try {
+            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier), plugin);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean hasRegistered(String identifier) {
-        return data.isRegistered(type, identifier);
+        return cache.isRegistered(identifier);
     }
 
     @Override
     public Iterable<Subject> getAllSubjects() {
-        return Collections.emptyList(); //data.getAll(type);
+        return Collections.emptySet();
     }
 
     @Override
@@ -65,5 +76,17 @@ public class PEXSubjectCollection implements SubjectCollection {
     @Override
     public Map<Subject, Boolean> getAllWithPermission(Set<Context> contexts, String permission) {
         return null;
+    }
+
+    public Optional<CommandSource> getCommandSource(String identifier) {
+        if (commandSourceProvider != null) {
+            return commandSourceProvider.apply(identifier);
+        } else {
+            return Optional.absent();
+        }
+    }
+
+    public void setCommandSourceProvider(Function<String, Optional<CommandSource>> provider) {
+        this.commandSourceProvider = provider;
     }
 }

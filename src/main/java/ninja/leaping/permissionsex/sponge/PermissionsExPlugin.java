@@ -16,7 +16,12 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
@@ -33,6 +38,8 @@ import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.config.DataStoreSerializer;
 import org.slf4j.Logger;
+import org.spongepowered.api.Game;
+import org.spongepowered.api.Server;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppedEvent;
 import org.spongepowered.api.event.state.ServerStoppingEvent;
@@ -42,19 +49,29 @@ import org.spongepowered.api.service.ServiceManager;
 import org.spongepowered.api.service.ServiceReference;
 import org.spongepowered.api.service.config.ConfigDir;
 import org.spongepowered.api.service.config.DefaultConfig;
+import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.Scheduler;
 import org.spongepowered.api.service.sql.SqlService;
+import org.spongepowered.api.util.command.CommandCallable;
+import org.spongepowered.api.util.command.CommandException;
+import org.spongepowered.api.util.command.CommandSource;
 import org.spongepowered.api.util.event.Subscribe;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 
 /**
  * PermissionsEx plugin
@@ -71,9 +88,20 @@ public class PermissionsExPlugin implements PermissionService {
     @Inject private Logger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
+    @Inject private Game game;
+
     private PermissionsEx manager;
     private PermissionsExConfiguration config;
     private ConfigurationNode rawConfig;
+
+    private final List<ContextCalculator> contextCalculators = new CopyOnWriteArrayList<>();
+    private final LoadingCache<String, PEXSubjectCollection> subjectCollections = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubjectCollection>() {
+        @Override
+        public PEXSubjectCollection load(String s) throws Exception {
+            return new PEXSubjectCollection(PermissionsExPlugin.this, manager.getSubjects(s));
+        }
+    });
+    private final MemorySubjectData defaults = new MemorySubjectData(this);
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
@@ -100,11 +128,64 @@ public class PermissionsExPlugin implements PermissionService {
 
         // Registering the PEX service *must* occur after the plugin has been completely initialized
         try {
-            event.getGame().getServiceManager().setProvider(this, PermissionService.class, this);
+            services.setProvider(this, PermissionService.class, this);
         } catch (ProviderExistsException e) {
             manager.close();
             throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
         }
+        getUserSubjects().setCommandSourceProvider(new Function<String, Optional<CommandSource>>() {
+            @Nullable
+            @Override
+            public Optional<CommandSource> apply(String s) {
+                UUID uid;
+                try {
+                    uid = UUID.fromString(s);
+                } catch (IllegalArgumentException ex) {
+                    return Optional.absent();
+                }
+                Optional<Server> server = game.getServer();
+                if (!server.isPresent()) {
+                    return Optional.absent();
+                }
+                // Yeah, java generics are stupid
+                return (Optional) server.get().getPlayer(uid);
+
+            }
+        });
+
+        this.game.getCommandDispatcher().register(this, new CommandCallable() {
+            @Override
+            public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
+                source.sendMessage("Your command ran!!");
+                source.sendMessage("Has permission: " + source.hasPermission("permissionsex.test"));
+                return true;
+            }
+
+            @Override
+            public boolean testPermission(CommandSource source) {
+                return source.hasPermission("permissionsex.test");
+            }
+
+            @Override
+            public Optional<String> getShortDescription() {
+                return Optional.absent();
+            }
+
+            @Override
+            public Optional<String> getHelp() {
+                return Optional.absent();
+            }
+
+            @Override
+            public String getUsage() {
+                return "Useless";
+            }
+
+            @Override
+            public List<String> getSuggestions(CommandSource source, String arguments) throws CommandException {
+                return Collections.emptyList();
+            }
+        }, "pextest");
     }
 
     @Subscribe
@@ -163,6 +244,8 @@ public class PermissionsExPlugin implements PermissionService {
             if (oldManager != null) {
                 oldManager.close();
             }
+            // TODO: Make subject collections persist past reloads
+            subjectCollections.invalidateAll();
 
         } catch (IOException e) {
             throw new PEBKACException("Error while loading configuration: " + e.getLocalizedMessage());
@@ -181,32 +264,51 @@ public class PermissionsExPlugin implements PermissionService {
 
 
     @Override
-    public SubjectCollection getUserSubjects() {
-        return null;
+    public PEXSubjectCollection getUserSubjects() {
+        try {
+            return subjectCollections.get(SUBJECTS_USER);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public SubjectCollection getGroupSubjects() {
-        return null;
+    public PEXSubjectCollection getGroupSubjects() {
+        try {
+            return subjectCollections.get(SUBJECTS_GROUP);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public SubjectData getDefaultData() {
-        return null;
+        return defaults;
     }
 
     @Override
     public Optional<SubjectCollection> getSubjects(String identifier) {
-        return null;
+        Preconditions.checkNotNull(identifier, "identifier");
+        try {
+            return Optional.<SubjectCollection>fromNullable(subjectCollections.get(identifier));
+        } catch (ExecutionException e) {
+            logger.error("Unable to get subject collection for type " + identifier, e);
+            return Optional.absent();
+        }
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Map<String, SubjectCollection> getKnownSubjects() {
-        return null;
+        return (Map) subjectCollections.asMap();
     }
 
     @Override
     public void registerContextCalculator(ContextCalculator calculator) {
+        contextCalculators.add(calculator);
+    }
 
+    public List<ContextCalculator> getContextCalculators() {
+        return contextCalculators;
     }
 }

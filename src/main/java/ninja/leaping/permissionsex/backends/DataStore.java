@@ -23,6 +23,8 @@ import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
+import java.util.Map;
+
 /**
  * Data type abstraction for permissions data
  */
@@ -52,7 +54,9 @@ public interface DataStore {
 
     boolean isRegistered(String type, String identifier);
 
-    Iterable<ImmutableOptionSubjectData> getAll(String type);
+    Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(String type);
+
+    Iterable<String> getAllIdentifiers(String type);
 
     /**
      * Return the type name for this data store

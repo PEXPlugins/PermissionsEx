@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `{permissions}` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
   `key` TEXT,
-  `value` ENUM ('false_strong', 'false', 'undefined', 'true', 'true_strong')
+  `value` int(11)
 ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 CREATE TABLE IF NOT EXISTS `{options}` (

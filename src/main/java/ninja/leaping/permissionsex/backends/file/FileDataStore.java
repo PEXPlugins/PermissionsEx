@@ -34,11 +34,14 @@ import ninja.leaping.permissionsex.backends.LegacyConversionUtils;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import org.spongepowered.api.service.permission.context.Context;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
@@ -149,8 +152,8 @@ public class FileDataStore implements DataStore {
                                     public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
                                         List<String> existing = configurationNode.getList(Functions.toStringFunction());
                                         for (String permission : existing) {
-                                            boolean value = !permission.startsWith("-");
-                                            if (!value) {
+                                            int value = permission.startsWith("-") ? -1 : 1;
+                                            if (value < 0) {
                                                 permission = permission.substring(1);
                                             }
                                             if (permission.equals("*")) {
@@ -211,7 +214,7 @@ public class FileDataStore implements DataStore {
 
     @Override
     public ImmutableOptionSubjectData getData(String type, String identifier, Caching listener) {
-        return null;
+        return new FileOptionSubjectData(Collections.<Set<Context>, FileOptionSubjectData.DataEntry>emptyMap());
     }
 
     @Override
@@ -225,13 +228,20 @@ public class FileDataStore implements DataStore {
     }
 
     @Override
-    public Iterable<ImmutableOptionSubjectData> getAll(String type) {
+    public Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(String type) {
         return null;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public Iterable<String> getAllIdentifiers(String type) {
+        return (Set) this.permissionsConfig.getNode(type).getChildrenMap().keySet();
+    }
+
+
+    @Override
     public String getTypeName() {
-        return null;
+        return "file";
     }
 
     @Override
