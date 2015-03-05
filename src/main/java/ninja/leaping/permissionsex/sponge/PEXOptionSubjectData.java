@@ -169,4 +169,8 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
 	public boolean clearParents(Set<Context> set) {
 		return false;
 	}
+
+	public ImmutableOptionSubjectData getCurrent() {
+		return this.data;
+	}
 }

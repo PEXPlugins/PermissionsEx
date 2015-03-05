@@ -33,6 +33,7 @@ import org.spongepowered.api.util.command.CommandSource;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,10 +41,11 @@ import java.util.Set;
  */
 public class PEXSubject implements Subject, Caching {
     private final PermissionsExPlugin plugin;
-    private final SubjectData data, transientData;
+    private final PEXOptionSubjectData data;
+    private final SubjectData transientData;
     private final String identifier;
 
-    public PEXSubject(String identifier, OptionSubjectData data, PermissionsExPlugin plugin) {
+    public PEXSubject(String identifier, PEXOptionSubjectData data, PermissionsExPlugin plugin) {
         this.plugin = plugin;
         this.data = data;
         this.identifier = identifier;
@@ -77,18 +79,30 @@ public class PEXSubject implements Subject, Caching {
 
     @Override
     public boolean hasPermission(Set<Context> contexts, String permission) {
-        return false;
+        return getPermissionValue(contexts, permission).asBoolean();
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        System.out.println("Checking permission " + permission + " for " + identifier);
-        return false;
+        return hasPermission(getActiveContexts(), permission);
+    }
+
+    private <K, V> Map<K, V> emptyOrNull(Map<K, V> test) {
+        return test == null ? Collections.<K, V>emptyMap() : test;
     }
 
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        return null;
+        Integer contextValue = emptyOrNull(data.getCurrent().getPermissions(contexts)).get(permission);
+        Integer globalValue = emptyOrNull(data.getCurrent().getPermissions(SubjectData.GLOBAL_CONTEXT)).get(permission);
+        if (contextValue != null) {
+            return contextValue > 0 ? Tristate.TRUE : Tristate.FALSE;
+
+        } else if (globalValue != null) {
+            return globalValue > 0 ? Tristate.TRUE : Tristate.FALSE;
+        } else {
+            return Tristate.UNDEFINED;
+        }
     }
 
     @Override

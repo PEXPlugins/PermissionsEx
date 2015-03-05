@@ -21,25 +21,28 @@ import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class PermissionsEx {
+    private final Logger logger;
     private final PermissionsExConfiguration config;
     private final File basedir;
     private DataStore activeDataStore;
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>();
     private final SubjectCache userCache, groupCache;
 
-    public PermissionsEx(PermissionsExConfiguration config, File basedir) throws PermissionsLoadingException {
+    public PermissionsEx(PermissionsExConfiguration config, File basedir, Logger logger) throws PermissionsLoadingException {
         this.config = config;
         this.basedir = basedir;
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
         this.userCache = getSubjects("users");
         this.groupCache = getSubjects("groups");
+        this.logger = logger;
     }
 
     public SubjectCache getSubjects(String type) {
@@ -65,5 +68,9 @@ public class PermissionsEx {
 
     public DataStore getActiveDataStore() {
         return this.activeDataStore;
+    }
+
+    public Logger getLogger() {
+        return this.logger;
     }
 }

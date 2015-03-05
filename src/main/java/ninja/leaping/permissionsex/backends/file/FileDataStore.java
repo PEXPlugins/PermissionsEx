@@ -16,7 +16,12 @@
  */
 package ninja.leaping.permissionsex.backends.file;
 
+import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -34,11 +39,11 @@ import ninja.leaping.permissionsex.backends.LegacyConversionUtils;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import org.spongepowered.api.service.permission.context.Context;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +75,7 @@ public class FileDataStore implements DataStore {
     private static ConfigurationTransformation.Builder tBuilder() {
         return ConfigurationTransformation.builder();
     }
-    public void initialize(PermissionsEx permissionsEx) throws PermissionsLoadingException {
+    public void initialize(final PermissionsEx permissionsEx) throws PermissionsLoadingException {
         File permissionsFile = new File(permissionsEx.getBaseDirectory(), file);
         if (file.endsWith(".yml")) {
             File legacyPermissionsFile = permissionsFile;
@@ -162,7 +167,7 @@ public class FileDataStore implements DataStore {
                                             }
                                             permission = LegacyConversionUtils.convertPermission(permission);
                                             if (permission.contains("*")) {
-                                                // TODO Logging "The permission at configurationNode.getPath() contains a now-illegal character '*'
+                                                permissionsEx.getLogger().warn("The permission at " + Arrays.toString(configurationNode.getPath()) + " contains a now-illegal character '*'");
                                             }
                                             configurationNode.getNode(permission).setValue(value);
                                         }
@@ -195,7 +200,7 @@ public class FileDataStore implements DataStore {
         versionUpdater.apply(permissionsConfig);
         int endVersion = permissionsConfig.getNode("schema-version").getInt();
         if (endVersion > startVersion) {
-            // TODO Logging: permissionsConfigFile + " schema version updated from" + startVersion + " to " + endVersion;
+            permissionsEx.getLogger().info(permissionsFile + " schema version updated from " + startVersion + " to " + endVersion);
             save();
         }
     }
@@ -212,30 +217,66 @@ public class FileDataStore implements DataStore {
         }
     }
 
+    private String typeToSection(String type) {
+        return type + "s";
+    }
+
     @Override
     public ImmutableOptionSubjectData getData(String type, String identifier, Caching listener) {
-        return new FileOptionSubjectData(Collections.<Set<Context>, FileOptionSubjectData.DataEntry>emptyMap());
+        try {
+            return new FileOptionSubjectData(permissionsConfig.getNode(typeToSection(type), identifier));
+        } catch (ObjectMappingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public ListenableFuture<ImmutableOptionSubjectData> setData(String type, String identifier, ImmutableOptionSubjectData data) {
-        return null;
+        Preconditions.checkNotNull(type, "type");
+        Preconditions.checkNotNull(identifier, "identifier");
+        Preconditions.checkNotNull(data, "data");
+
+        if (data instanceof FileOptionSubjectData) {
+            try {
+                ((FileOptionSubjectData) data).serialize(permissionsConfig.getNode(typeToSection(type), identifier));
+            } catch (ObjectMappingException e) {
+                return Futures.immediateFailedFuture(e);
+            }
+        } else {
+            return Futures.immediateFailedFuture(new IllegalArgumentException("Data passed was not a FileOptionSubjectData"));
+        }
+        try {
+            save();
+        } catch (PermissionsLoadingException e) {
+            return Futures.immediateFailedFuture(e);
+        }
+        return Futures.immediateFuture(data);
     }
 
     @Override
     public boolean isRegistered(String type, String identifier) {
-        return false;
+        return !permissionsConfig.getNode(typeToSection(type), identifier).isVirtual();
     }
 
     @Override
     public Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(String type) {
-        return null;
+        return Iterables.transform(permissionsConfig.getNode(typeToSection(type)).getChildrenMap().entrySet(), new Function<Map.Entry<Object, ? extends ConfigurationNode>, Map.Entry<String, ImmutableOptionSubjectData>>() {
+            @Nullable
+            @Override
+            public Map.Entry<String, ImmutableOptionSubjectData> apply(Map.Entry<Object, ? extends ConfigurationNode> configurationNode) {
+                try {
+                    return Maps.<String, ImmutableOptionSubjectData>immutableEntry(configurationNode.getKey().toString(), new FileOptionSubjectData(configurationNode.getValue()));
+                } catch (ObjectMappingException e) {
+                    return null;
+                }
+            }
+        });
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Iterable<String> getAllIdentifiers(String type) {
-        return (Set) this.permissionsConfig.getNode(type).getChildrenMap().keySet();
+        return (Set) this.permissionsConfig.getNode(typeToSection(type)).getChildrenMap().keySet();
     }
 
 

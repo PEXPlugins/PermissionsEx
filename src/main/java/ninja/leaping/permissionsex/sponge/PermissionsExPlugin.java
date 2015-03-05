@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.event.state.PreInitializationEvent;
-import org.spongepowered.api.event.state.ServerStoppedEvent;
 import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.ProviderExistsException;
@@ -133,6 +132,7 @@ public class PermissionsExPlugin implements PermissionService {
             manager.close();
             throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
         }
+
         getUserSubjects().setCommandSourceProvider(new Function<String, Optional<CommandSource>>() {
             @Nullable
             @Override
@@ -240,7 +240,7 @@ public class PermissionsExPlugin implements PermissionService {
             config = PermissionsExConfiguration.MAPPER.bindToNew().populate(rawConfig);
             config.validate();
             PermissionsEx oldManager = manager;
-            manager = new PermissionsEx(config, configDir);
+            manager = new PermissionsEx(config, configDir, logger);
             if (oldManager != null) {
                 oldManager.close();
             }
