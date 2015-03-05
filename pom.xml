@@ -272,7 +272,7 @@
     </repository>
     <repository>
       <id>sponge-repo</id>
-      <url>https://repo.spongepowered.org/maven</url>
+      <url>http://repo.spongepowered.org/maven</url>
     </repository>
     <repository>
       <id>sonatype-snapshots</id>
