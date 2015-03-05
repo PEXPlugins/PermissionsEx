@@ -271,8 +271,15 @@
       <url>http://pex-repo.aoeu.xyz</url>
     </repository>
     <repository>
-      <id>sponge-repo</id>
+      <id>sponge-maven-repo</id>
+      <name>Sponge maven repo</name>
       <url>http://repo.spongepowered.org/maven</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
     <repository>
       <id>sonatype-snapshots</id>
