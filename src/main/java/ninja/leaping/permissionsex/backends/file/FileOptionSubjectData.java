@@ -195,7 +195,18 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
 
     @Override
     public ImmutableOptionSubjectData clearOptions() {
-        return null;
+        if (this.contexts.isEmpty()) {
+            return this;
+        }
+
+        Map<Set<Context>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
+            @Nullable
+            @Override
+            public DataEntry apply(@Nullable DataEntry dataEntry) {
+                return dataEntry.withoutOptions();
+            }
+        });
+        return new FileOptionSubjectData(newValue);
     }
 
     @Override
@@ -226,7 +237,18 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
 
     @Override
     public ImmutableOptionSubjectData clearPermissions() {
-        return null;
+        if (this.contexts.isEmpty()) {
+            return this;
+        }
+
+        Map<Set<Context>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
+            @Nullable
+            @Override
+            public DataEntry apply(@Nullable DataEntry dataEntry) {
+                return dataEntry.withoutPermissions();
+            }
+        });
+        return new FileOptionSubjectData(newValue);
     }
 
     @Override
@@ -287,6 +309,15 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
             }
             DataEntry.MAPPER.bind(ent.getValue()).serialize(contextSection);
         }
+    }
+
+    public int getDefaultValue(Set<Context> contexts) {
+        DataEntry ent = this.contexts.get(contexts);
+        return ent == null ? 0 : ent.defaultValue;
+    }
+
+    public ImmutableOptionSubjectData setDefaultValue(Set<Context> contexts, int defaultValue) {
+        return new FileOptionSubjectData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(contexts, getDataEntryOrNew(contexts).withDefaultValue(defaultValue)).build());
     }
 
     @Override

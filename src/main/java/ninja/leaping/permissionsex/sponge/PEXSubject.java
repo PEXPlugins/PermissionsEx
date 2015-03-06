@@ -20,10 +20,8 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
-import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
 import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
@@ -40,16 +38,16 @@ import java.util.Set;
  * Permissions subject implementation
  */
 public class PEXSubject implements Subject, Caching {
-    private final PermissionsExPlugin plugin;
+    private final PEXSubjectCollection collection;
     private final PEXOptionSubjectData data;
     private final SubjectData transientData;
     private final String identifier;
 
-    public PEXSubject(String identifier, PEXOptionSubjectData data, PermissionsExPlugin plugin) {
-        this.plugin = plugin;
-        this.data = data;
+    public PEXSubject(String identifier, PEXOptionSubjectData data, PEXSubjectCollection collection) {
         this.identifier = identifier;
-        this.transientData = new MemorySubjectData(plugin);
+        this.data = data;
+        this.collection = collection;
+        this.transientData = new MemorySubjectData(collection.getPlugin());
     }
 
     @Override
@@ -64,7 +62,7 @@ public class PEXSubject implements Subject, Caching {
 
     @Override
     public PEXSubjectCollection getContainingCollection() {
-        return null;
+        return this.collection;
     }
 
     @Override
@@ -93,15 +91,23 @@ public class PEXSubject implements Subject, Caching {
 
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        Integer contextValue = emptyOrNull(data.getCurrent().getPermissions(contexts)).get(permission);
-        Integer globalValue = emptyOrNull(data.getCurrent().getPermissions(SubjectData.GLOBAL_CONTEXT)).get(permission);
-        if (contextValue != null) {
-            return contextValue > 0 ? Tristate.TRUE : Tristate.FALSE;
+        Integer value = emptyOrNull(data.getCurrent().getPermissions(contexts)).get(permission);
+        if (value == null) {
+             value = emptyOrNull(data.getCurrent().getPermissions(SubjectData.GLOBAL_CONTEXT)).get(permission);
+        }
+        if (value == null) {
+            value = data.getCurrent().getDefaultValue(contexts);
+        }
+        if (value == 0) {
+            value = data.getCurrent().getDefaultValue(SubjectData.GLOBAL_CONTEXT);
+        }
 
-        } else if (globalValue != null) {
-            return globalValue > 0 ? Tristate.TRUE : Tristate.FALSE;
-        } else {
+        if (value < 0) {
+            return Tristate.FALSE;
+        } else if (value == 0) {
             return Tristate.UNDEFINED;
+        } else {
+            return Tristate.TRUE;
         }
     }
 
@@ -118,7 +124,7 @@ public class PEXSubject implements Subject, Caching {
     @Override
     public Set<Context> getActiveContexts() {
         Set<Context> set = new HashSet<>();
-        for (ContextCalculator calc : plugin.getContextCalculators()) {
+        for (ContextCalculator calc : this.collection.getPlugin().getContextCalculators()) {
             calc.accumulateContexts(this, set);
         }
         return ImmutableSet.copyOf(set);

@@ -234,23 +234,27 @@ public class FileDataStore implements DataStore {
     public ListenableFuture<ImmutableOptionSubjectData> setData(String type, String identifier, ImmutableOptionSubjectData data) {
         Preconditions.checkNotNull(type, "type");
         Preconditions.checkNotNull(identifier, "identifier");
-        Preconditions.checkNotNull(data, "data");
-
-        if (data instanceof FileOptionSubjectData) {
-            try {
-                ((FileOptionSubjectData) data).serialize(permissionsConfig.getNode(typeToSection(type), identifier));
-            } catch (ObjectMappingException e) {
-                return Futures.immediateFailedFuture(e);
-            }
-        } else {
-            return Futures.immediateFailedFuture(new IllegalArgumentException("Data passed was not a FileOptionSubjectData"));
-        }
         try {
-            save();
-        } catch (PermissionsLoadingException e) {
+            return Futures.immediateFuture(setDataSync(type, identifier, data));
+        } catch (PermissionsLoadingException | ObjectMappingException e) {
             return Futures.immediateFailedFuture(e);
         }
-        return Futures.immediateFuture(data);
+
+    }
+
+    private ImmutableOptionSubjectData setDataSync(String type, String identifier, ImmutableOptionSubjectData data) throws ObjectMappingException, PermissionsLoadingException {
+        if (data == null) {
+            permissionsConfig.getNode(typeToSection(type), identifier).setValue(null);
+            return null;
+        }
+
+        if (data instanceof FileOptionSubjectData) {
+            ((FileOptionSubjectData) data).serialize(permissionsConfig.getNode(typeToSection(type), identifier));
+        } else {
+            throw new IllegalArgumentException("Data passed was not a FileOptionSubjectData");
+        }
+        save();
+        return data;
     }
 
     @Override

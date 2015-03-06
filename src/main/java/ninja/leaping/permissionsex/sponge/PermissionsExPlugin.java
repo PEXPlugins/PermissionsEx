@@ -157,13 +157,13 @@ public class PermissionsExPlugin implements PermissionService {
             @Override
             public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
                 source.sendMessage("Your command ran!!");
-                source.sendMessage("Has permission: " + source.hasPermission("permissionsex.test"));
+                source.sendMessage("Has permission: " + source.hasPermission("permissionsex.test.check"));
                 return true;
             }
 
             @Override
             public boolean testPermission(CommandSource source) {
-                return source.hasPermission("permissionsex.test");
+                return source.hasPermission("permissionsex.test.run");
             }
 
             @Override

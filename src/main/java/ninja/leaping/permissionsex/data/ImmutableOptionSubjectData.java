@@ -36,23 +36,27 @@ public interface ImmutableOptionSubjectData {
 
     Map<Set<Context>, Map<String, Integer>> getAllPermissions();
 
-    Map<String, Integer> getPermissions(Set<Context> set);
+    Map<String, Integer> getPermissions(Set<Context> contexts);
 
-    ImmutableOptionSubjectData setPermission(Set<Context> set, String s, int value);
+    ImmutableOptionSubjectData setPermission(Set<Context> contexts, String permission, int value);
 
     ImmutableOptionSubjectData clearPermissions();
 
-    ImmutableOptionSubjectData clearPermissions(Set<Context> set);
+    ImmutableOptionSubjectData clearPermissions(Set<Context> contexts);
 
     Map<Set<Context>, List<Subject>> getAllParents();
 
-    List<Subject> getParents(Set<Context> set);
+    List<Subject> getParents(Set<Context> contexts);
 
-    ImmutableOptionSubjectData addParent(Set<Context> set, Subject subject);
+    ImmutableOptionSubjectData addParent(Set<Context> contexts, Subject subject);
 
-    ImmutableOptionSubjectData removeParent(Set<Context> set, Subject subject);
+    ImmutableOptionSubjectData removeParent(Set<Context> contexts, Subject subject);
 
     ImmutableOptionSubjectData clearParents();
 
-    ImmutableOptionSubjectData clearParents(Set<Context> set);
+    ImmutableOptionSubjectData clearParents(Set<Context> contexts);
+
+    int getDefaultValue(Set<Context> contexts);
+
+    ImmutableOptionSubjectData setDefaultValue(Set<Context> contexts, int defaultValue);
 }

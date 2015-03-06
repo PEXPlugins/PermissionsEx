@@ -80,4 +80,8 @@ public class SubjectCache {
     public String getType() {
         return type;
     }
+
+    public Iterable<String> getAllIdentifiers() {
+        return dataStore.getAllIdentifiers(type);
+    }
 }

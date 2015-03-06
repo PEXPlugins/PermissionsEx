@@ -19,13 +19,14 @@ package ninja.leaping.permissionsex.sponge;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Iterables;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.util.command.CommandSource;
 
-import java.util.Collections;
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -48,11 +49,15 @@ public class PEXSubjectCollection implements SubjectCollection {
         return cache.getType();
     }
 
+    PermissionsExPlugin getPlugin() {
+        return this.plugin;
+    }
+
     @Override
     public Subject get(String identifier) {
         System.out.println("Getting subject for " + identifier);
         try {
-            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier), plugin);
+            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier), this);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -65,11 +70,18 @@ public class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public Iterable<Subject> getAllSubjects() {
-        return Collections.emptySet();
+        return Iterables.transform(cache.getAllIdentifiers(), new Function<String, Subject>() {
+            @Nullable
+            @Override
+            public Subject apply(String s) {
+                return get(s);
+            }
+        });
     }
 
     @Override
     public Map<Subject, Boolean> getAllWithPermission(String permission) {
+        // TODO: Alter the specification to only return active subjects?
         return null;
     }
 
