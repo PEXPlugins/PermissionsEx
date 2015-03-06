@@ -57,7 +57,7 @@ public class PEXSubjectCollection implements SubjectCollection {
     public Subject get(String identifier) {
         System.out.println("Getting subject for " + identifier);
         try {
-            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier), this);
+            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier, plugin), this);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }

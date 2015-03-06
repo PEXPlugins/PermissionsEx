@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.data;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backends.DataStore;
 
 import java.util.Map;
@@ -64,8 +65,8 @@ public class SubjectCache {
         return cache.getIfPresent(key) != null || dataStore.isRegistered(type, key);
     }
 
-    public void update(String identifier, ImmutableOptionSubjectData newData) {
-        dataStore.setData(type, identifier, newData);
+    public ListenableFuture<ImmutableOptionSubjectData> update(String identifier, ImmutableOptionSubjectData newData) {
+        return dataStore.setData(type, identifier, newData);
     }
 
     private Caching clearListener(final String name) {
