@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import ninja.leaping.permissionsex.Combinations;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import org.spongepowered.api.service.permission.MemorySubjectData;
@@ -85,31 +86,29 @@ public class PEXSubject implements Subject, Caching {
         return hasPermission(getActiveContexts(), permission);
     }
 
-    private <K, V> Map<K, V> emptyOrNull(Map<K, V> test) {
-        return test == null ? Collections.<K, V>emptyMap() : test;
-    }
-
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        Integer value = emptyOrNull(data.getCurrent().getPermissions(contexts)).get(permission);
-        if (value == null) {
-             value = emptyOrNull(data.getCurrent().getPermissions(SubjectData.GLOBAL_CONTEXT)).get(permission);
-        }
-        if (value == null) {
-            value = data.getCurrent().getDefaultValue(contexts);
-        }
-        if (value == 0) {
-            value = data.getCurrent().getDefaultValue(SubjectData.GLOBAL_CONTEXT);
+        final ImmutableOptionSubjectData current = data.getCurrent();
+        Integer value = null;
+        for (Set<Context> context : Combinations.of(contexts)) {
+            Map<String, Integer> perms = current.getPermissions(context);
+            if (perms != null) {
+                value = perms.get(permission);
+                if (value != null) {
+                    break;
+                }
+            }
         }
 
-        if (value < 0) {
-            return Tristate.FALSE;
-        } else if (value == 0) {
+        if (value == null || value == 0) {
             return Tristate.UNDEFINED;
+        } else if (value < 0) {
+            return Tristate.FALSE;
         } else {
             return Tristate.TRUE;
         }
     }
+
 
     @Override
     public boolean isChildOf(Subject parent) {

@@ -37,6 +37,7 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.config.DataStoreSerializer;
+import ninja.leaping.permissionsex.exception.PermissionsException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
@@ -55,6 +56,7 @@ import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.Scheduler;
 import org.spongepowered.api.service.sql.SqlService;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
 import org.spongepowered.api.util.command.CommandSource;
@@ -75,6 +77,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * PermissionsEx plugin
  */
+@NonnullByDefault
 @Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION)
 public class PermissionsExPlugin implements PermissionService {
     static {
@@ -89,6 +92,7 @@ public class PermissionsExPlugin implements PermissionService {
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
 
+    @Nullable
     private PermissionsEx manager;
     private PermissionsExConfiguration config;
     private ConfigurationNode rawConfig;
@@ -97,6 +101,9 @@ public class PermissionsExPlugin implements PermissionService {
     private final LoadingCache<String, PEXSubjectCollection> subjectCollections = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubjectCollection>() {
         @Override
         public PEXSubjectCollection load(String s) throws Exception {
+            if (manager == null) {
+                throw new PermissionsException("Manager is not currently loaded!");
+            }
             return new PEXSubjectCollection(PermissionsExPlugin.this, manager.getSubjects(s));
         }
     });
@@ -134,9 +141,13 @@ public class PermissionsExPlugin implements PermissionService {
         }
 
         getUserSubjects().setCommandSourceProvider(new Function<String, Optional<CommandSource>>() {
-            @Nullable
             @Override
-            public Optional<CommandSource> apply(String s) {
+            @SuppressWarnings("unchecked")
+            public Optional<CommandSource> apply(@Nullable String s) {
+                if (s == null) {
+                    return Optional.absent();
+                }
+
                 UUID uid;
                 try {
                     uid = UUID.fromString(s);
@@ -190,7 +201,7 @@ public class PermissionsExPlugin implements PermissionService {
 
     @Subscribe
     public void disable(ServerStoppingEvent event) {
-        logger.debug("Disabling PermissionsEx");
+        logger.debug("Disabling " + PomData.NAME);
         if (manager != null) {
             manager.close();
             manager = null;
