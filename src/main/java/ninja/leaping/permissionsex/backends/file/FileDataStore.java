@@ -179,6 +179,9 @@ public class FileDataStore implements DataStore {
                                     public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
                                         Object[] retPath = nodePath.getArray();
                                         retPath[retPath.length - 1] = "parents";
+                                        for (ConfigurationNode child : configurationNode.getChildrenList()) {
+                                            child.setValue("group:" + child.getValue());
+                                        }
                                         return retPath;
                                     }
                                 })
@@ -187,6 +190,9 @@ public class FileDataStore implements DataStore {
                                     public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
                                         Object[] retPath = nodePath.getArray();
                                         retPath[retPath.length - 1] = "parents";
+                                        for (ConfigurationNode child : configurationNode.getChildrenList()) {
+                                            child.setValue("group:" + child.getValue());
+                                        }
                                         return retPath;
                                     }
                                 })

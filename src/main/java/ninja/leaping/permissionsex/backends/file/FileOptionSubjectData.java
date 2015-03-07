@@ -21,6 +21,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
@@ -54,10 +55,10 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
 
         @Setting private Map<String, Integer> permissions;
         @Setting private Map<String, String> options;
-        @Setting private Map<String, List<String>> parents;
+        @Setting private List<String> parents;
         @Setting("permissions-default") private int defaultValue;
 
-        private DataEntry(Map<String, Integer> permissions, Map<String, String> options, Map<String, List<String>> parents, int defaultValue) {
+        private DataEntry(Map<String, Integer> permissions, Map<String, String> options, List<String> parents, int defaultValue) {
             this.permissions = permissions;
             this.options = options;
             this.parents = parents;
@@ -109,18 +110,18 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
             return new DataEntry(permissions, options, parents, defaultValue);
         }
 
-        public DataEntry withParents(String type, List<String> parents) {
-            if (parents == null) {
-                Map<String, List<String>> newParents = new HashMap<>(this.parents);
-                newParents.remove(type);
-                return new DataEntry(permissions, options, newParents, defaultValue);
-            } else {
-                return new DataEntry(permissions, options, ImmutableMap.<String, List<String>>builder().putAll(this.parents).put(type, parents).build(), defaultValue);
-            }
+        public DataEntry withAddedParent(String parent) {
+                return new DataEntry(permissions, options, ImmutableList.<String>builder().add(parent).addAll(parents).build(), defaultValue);
+        }
+
+        public DataEntry withRemovedParent(String parent) {
+            final List<String> newParents = new ArrayList<>(parents);
+            newParents.remove(parent);
+            return new DataEntry(permissions, options, newParents, defaultValue);
         }
 
         public DataEntry withoutParents() {
-            return new DataEntry(permissions, options, ImmutableMap.<String, List<String>>of(), defaultValue);
+            return new DataEntry(permissions, options, ImmutableList.<String>of(), defaultValue);
         }
 
         @Override
@@ -275,46 +276,36 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
 
     }
 
+    private static final Function<String, Map.Entry<String, String>> PARENT_TRANSFORM_FUNC = new Function<String, Map.Entry<String, String>>() {
+                    @Nullable
+                    @Override
+                    public Map.Entry<String, String> apply(String input) {
+                        String[] split = input.split(":", 2);
+                        return Maps.immutableEntry(split.length > 1 ? split[0] : "group", split.length > 1 ? split[1]: split[0]);
+                    }
+                };
+
     @Override
     public Map<Set<Context>, List<Map.Entry<String, String>>> getAllParents() {
         return Maps.transformValues(contexts, new Function<DataEntry, List<Map.Entry<String, String>>>() {
             @Nullable
             @Override
             public List<Map.Entry<String, String>> apply(@Nullable DataEntry dataEntry) {
-                return unwrapNestedMap(dataEntry.parents);
+                return Lists.transform(dataEntry.parents, PARENT_TRANSFORM_FUNC);
             }
         });
-    }
-
-    private <K, V> List<Map.Entry<K, V>> unwrapNestedMap(Map<K, List<V>> map) {
-        List<Map.Entry<K, V>> ret = new ArrayList<>();
-        for (Map.Entry<K, List<V>> ent : map.entrySet()) {
-            for (V val : ent.getValue()) {
-                ret.add(Maps.immutableEntry(ent.getKey(), val));
-            }
-        }
-        return ret;
     }
 
     @Override
     public List<Map.Entry<String, String>> getParents(Set<Context> contexts) {
         DataEntry ent = this.contexts.get(contexts);
-        return ent == null ? null : unwrapNestedMap(ent.parents);
-    }
-
-    private <T> List<T> addToCopyOrNew(List<T> orig, T addItem) {
-        ImmutableList.Builder<T> build = ImmutableList.builder();
-        if (orig != null) {
-            build.addAll(orig);
-        }
-        build.add(addItem);
-        return build.build();
+        return ent == null ? null : Lists.transform(ent.parents, PARENT_TRANSFORM_FUNC);
     }
 
     @Override
     public ImmutableOptionSubjectData addParent(Set<Context> contexts, String type, String ident) {
         DataEntry entry = getDataEntryOrNew(contexts);
-        return new FileOptionSubjectData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(contexts, entry.withParents(type, addToCopyOrNew(entry.parents.get(type), ident))).build());
+        return new FileOptionSubjectData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(contexts, entry.withAddedParent(type + ":" + ident)).build());
     }
 
     @Override
@@ -324,16 +315,11 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
             return this;
         }
 
-        List<String> oldParents = ent.parents.get(type), newParents;
-        if (oldParents == null) {
+        final String combined = type + ":" + identifier;
+        if (!ent.parents.contains(combined)) {
             return this;
         }
-        newParents = new ArrayList<>(oldParents);
-        newParents.remove(identifier);
-        if (newParents.isEmpty()) {
-            newParents = null;
-        }
-        return new FileOptionSubjectData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(contexts, ent.withParents(type, newParents)).build());
+        return new FileOptionSubjectData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(contexts, ent.withRemovedParent(combined)).build());
     }
 
     @Override
