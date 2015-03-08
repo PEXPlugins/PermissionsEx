@@ -17,10 +17,16 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.Combinations;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.sponge.option.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.sponge.option.OptionSubject;
+import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
 import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectData;
@@ -34,21 +40,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Permissions subject implementation
  */
-public class PEXSubject implements Subject, Caching {
+public class PEXSubject implements OptionSubject, Caching {
     private final PEXSubjectCollection collection;
     private final PEXOptionSubjectData data;
-    private final SubjectData transientData;
+    private final OptionSubjectData transientData;
     private final String identifier;
+    private final LoadingCache<Set<Context>, BakedSubjectData> dataCache = CacheBuilder.newBuilder().maximumSize(5)
+            .build(new CacheLoader<Set<Context>, BakedSubjectData>() {
+                @Override
+                public BakedSubjectData load(Set<Context> key) throws Exception {
+                    return new SubjectDataBaker(PEXSubject.this, key).bake();
+                }
+            });
 
     public PEXSubject(String identifier, PEXOptionSubjectData data, PEXSubjectCollection collection) {
         this.identifier = identifier;
         this.data = data;
         this.collection = collection;
-        this.transientData = new MemorySubjectData(collection.getPlugin());
+        this.transientData = new MemoryOptionSubjectData(collection.getPlugin());
     }
 
     @Override
@@ -67,13 +81,27 @@ public class PEXSubject implements Subject, Caching {
     }
 
     @Override
-    public SubjectData getData() {
+    public PEXOptionSubjectData getData() {
         return data;
     }
 
     @Override
-    public SubjectData getTransientData() {
+    public OptionSubjectData getTransientData() {
         return transientData;
+    }
+
+    @Override
+    public Optional<String> getOption(Set<Context> contexts, String key) {
+        try {
+            return Optional.fromNullable(dataCache.get(contexts).getOptions().get(key));
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Optional<String> getOption(String key) {
+        return getOption(getActiveContexts(), key);
     }
 
     @Override
@@ -88,36 +116,22 @@ public class PEXSubject implements Subject, Caching {
 
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        final ImmutableOptionSubjectData current = data.getCurrent();
-        Integer value = null;
-        for (Set<Context> context : Combinations.of(contexts)) {
-            Map<String, Integer> perms = current.getPermissions(context);
-            if (perms != null) {
-                value = perms.get(permission);
-                if (value != null) {
-                    break;
-                }
-            }
-        }
-
-        if (value == null || value == 0) {
-            return Tristate.UNDEFINED;
-        } else if (value < 0) {
-            return Tristate.FALSE;
-        } else {
-            return Tristate.TRUE;
+        try {
+            return dataCache.get(contexts).getPermissions().get(permission);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
     }
 
 
     @Override
     public boolean isChildOf(Subject parent) {
-        return false;
+        return isChildOf(getActiveContexts(), parent);
     }
 
     @Override
     public boolean isChildOf(Set<Context> contexts, Subject parent) {
-        return false;
+        return getParents(contexts).contains(parent);
     }
 
     @Override
@@ -126,23 +140,27 @@ public class PEXSubject implements Subject, Caching {
         for (ContextCalculator calc : this.collection.getPlugin().getContextCalculators()) {
             calc.accumulateContexts(this, set);
         }
-        return ImmutableSet.copyOf(set);
+        return Collections.unmodifiableSet(set);
     }
 
     @Override
     public List<Subject> getParents() {
-        return Collections.emptyList();
+        return getParents(getActiveContexts());
     }
 
     @Override
     public List<Subject> getParents(Set<Context> contexts) {
-        return null;
+        try {
+            return dataCache.get(contexts).getParents();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
     @Override
     public void clearCache(ImmutableOptionSubjectData newData) {
-
+        dataCache.invalidateAll();
     }
 
     @Override

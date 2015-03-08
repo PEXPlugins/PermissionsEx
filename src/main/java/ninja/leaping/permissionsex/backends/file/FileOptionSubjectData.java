@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.backends.file;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -84,7 +85,7 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withoutOptions() {
-            return new DataEntry(permissions, ImmutableMap.<String, String>of(), parents, defaultValue);
+            return new DataEntry(permissions, null, parents, defaultValue);
         }
 
         public DataEntry withPermission(String permission, int value) {
@@ -103,7 +104,7 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withoutPermissions() {
-            return new DataEntry(ImmutableMap.<String, Integer>of(), options, parents, defaultValue);
+            return new DataEntry(null, options, parents, defaultValue);
         }
 
         public DataEntry withDefaultValue(int defaultValue) {
@@ -121,7 +122,7 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withoutParents() {
-            return new DataEntry(permissions, options, ImmutableList.<String>of(), defaultValue);
+            return new DataEntry(permissions, options, null, defaultValue);
         }
 
         @Override
@@ -227,19 +228,19 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
 
     @Override
     public Map<Set<Context>, Map<String, Integer>> getAllPermissions() {
-        return Maps.transformValues(contexts, new Function<DataEntry, Map<String, Integer>>() {
+        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Map<String, Integer>>() {
             @Nullable
             @Override
             public Map<String, Integer> apply(@Nullable DataEntry dataEntry) {
                 return dataEntry.permissions;
             }
-        });
+        }), Predicates.notNull());
     }
 
     @Override
     public Map<String, Integer> getPermissions(Set<Context> set) {
         final DataEntry entry = this.contexts.get(set);
-        return entry == null ? null : entry.permissions;
+        return entry == null || entry.permissions == null ? Collections.<String, Integer>emptyMap() : entry.permissions;
     }
 
     @Override
@@ -287,19 +288,19 @@ public class FileOptionSubjectData implements ImmutableOptionSubjectData {
 
     @Override
     public Map<Set<Context>, List<Map.Entry<String, String>>> getAllParents() {
-        return Maps.transformValues(contexts, new Function<DataEntry, List<Map.Entry<String, String>>>() {
+        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, List<Map.Entry<String, String>>>() {
             @Nullable
             @Override
             public List<Map.Entry<String, String>> apply(@Nullable DataEntry dataEntry) {
-                return Lists.transform(dataEntry.parents, PARENT_TRANSFORM_FUNC);
+                return dataEntry.parents == null ? null : Lists.transform(dataEntry.parents, PARENT_TRANSFORM_FUNC);
             }
-        });
+        }), Predicates.notNull());
     }
 
     @Override
     public List<Map.Entry<String, String>> getParents(Set<Context> contexts) {
         DataEntry ent = this.contexts.get(contexts);
-        return ent == null ? null : Lists.transform(ent.parents, PARENT_TRANSFORM_FUNC);
+        return ent == null || ent.parents == null ? Collections.<Map.Entry<String, String>>emptyList() : Lists.transform(ent.parents, PARENT_TRANSFORM_FUNC);
     }
 
     @Override

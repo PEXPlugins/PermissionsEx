@@ -38,6 +38,8 @@ import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.config.DataStoreSerializer;
 import ninja.leaping.permissionsex.exception.PermissionsException;
+import ninja.leaping.permissionsex.sponge.option.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
@@ -52,7 +54,6 @@ import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
-import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.Scheduler;
 import org.spongepowered.api.service.sql.SqlService;
@@ -107,7 +108,7 @@ public class PermissionsExPlugin implements PermissionService {
             return new PEXSubjectCollection(PermissionsExPlugin.this, manager.getSubjects(s));
         }
     });
-    private final MemorySubjectData defaults = new MemorySubjectData(this);
+    private final MemoryOptionSubjectData defaults = new MemoryOptionSubjectData(this);
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
@@ -293,7 +294,7 @@ public class PermissionsExPlugin implements PermissionService {
     }
 
     @Override
-    public SubjectData getDefaultData() {
+    public OptionSubjectData getDefaultData() {
         return defaults;
     }
 

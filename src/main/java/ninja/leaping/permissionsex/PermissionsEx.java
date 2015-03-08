@@ -38,11 +38,11 @@ public class PermissionsEx {
     public PermissionsEx(PermissionsExConfiguration config, File basedir, Logger logger) throws PermissionsLoadingException {
         this.config = config;
         this.basedir = basedir;
+        this.logger = logger;
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
         this.userCache = getSubjects("users");
         this.groupCache = getSubjects("groups");
-        this.logger = logger;
     }
 
     public SubjectCache getSubjects(String type) {
