@@ -212,4 +212,8 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
     public ImmutableOptionSubjectData getCurrent() {
         return this.data;
     }
+
+    public void addListener(Caching caching) {
+        cache.addListener(this.identifier, caching);
+    }
 }

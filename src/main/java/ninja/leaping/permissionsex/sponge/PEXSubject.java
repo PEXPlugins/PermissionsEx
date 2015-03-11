@@ -17,19 +17,16 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableSet;
-import ninja.leaping.permissionsex.Combinations;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.sponge.option.MemoryOptionSubjectData;
 import ninja.leaping.permissionsex.sponge.option.OptionSubject;
 import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
-import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.util.Tristate;
@@ -38,7 +35,6 @@ import org.spongepowered.api.util.command.CommandSource;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -61,6 +57,7 @@ public class PEXSubject implements OptionSubject, Caching {
     public PEXSubject(String identifier, PEXOptionSubjectData data, PEXSubjectCollection collection) {
         this.identifier = identifier;
         this.data = data;
+        data.addListener(this);
         this.collection = collection;
         this.transientData = new MemoryOptionSubjectData(collection.getPlugin());
     }
@@ -92,6 +89,8 @@ public class PEXSubject implements OptionSubject, Caching {
 
     @Override
     public Optional<String> getOption(Set<Context> contexts, String key) {
+        Preconditions.checkNotNull(contexts, "contexts");
+        Preconditions.checkNotNull(key, "key");
         try {
             return Optional.fromNullable(dataCache.get(contexts).getOptions().get(key));
         } catch (ExecutionException e) {
@@ -116,6 +115,9 @@ public class PEXSubject implements OptionSubject, Caching {
 
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
+        Preconditions.checkNotNull(contexts, "contexts");
+        Preconditions.checkNotNull(permission, "permission");
+
         try {
             return dataCache.get(contexts).getPermissions().get(permission);
         } catch (ExecutionException e) {
@@ -131,6 +133,8 @@ public class PEXSubject implements OptionSubject, Caching {
 
     @Override
     public boolean isChildOf(Set<Context> contexts, Subject parent) {
+        Preconditions.checkNotNull(contexts, "contexts");
+        Preconditions.checkNotNull(parent, "parent");
         return getParents(contexts).contains(parent);
     }
 
@@ -150,6 +154,7 @@ public class PEXSubject implements OptionSubject, Caching {
 
     @Override
     public List<Subject> getParents(Set<Context> contexts) {
+        Preconditions.checkNotNull(contexts, "contexts");
         try {
             return dataCache.get(contexts).getParents();
         } catch (ExecutionException e) {
@@ -161,6 +166,13 @@ public class PEXSubject implements OptionSubject, Caching {
     @Override
     public void clearCache(ImmutableOptionSubjectData newData) {
         dataCache.invalidateAll();
+        /* TODO parent handling
+        for (Subject child : plugin.getAllActiveSubjects()) {
+            if (child.isChildOf(this)) {
+                child.dataCache.invalidateAll(); // (or something that clears cache without requiring a param)
+            }
+        }
+         */
     }
 
     @Override

@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -29,6 +30,7 @@ public class SubjectCache {
     private final String type;
     private final DataStore dataStore;
     private final LoadingCache<String, ImmutableOptionSubjectData> cache;
+    private final CacheListenerHolder<String> listeners = new CacheListenerHolder<>();
 
     public SubjectCache(final String type, final DataStore dataStore) {
         this.type = type;
@@ -44,14 +46,24 @@ public class SubjectCache {
     }
 
     public ImmutableOptionSubjectData getData(String identifier, Caching listener) throws ExecutionException {
-        return cache.get(identifier);
+        Preconditions.checkNotNull(identifier, "identifier");
+
+        ImmutableOptionSubjectData ret = cache.get(identifier);
+        if (listener != null) {
+            listeners.addListener(identifier, listener);
+        }
+        return ret;
     }
 
     public void load(String identifier) throws ExecutionException {
+        Preconditions.checkNotNull(identifier, "identifier");
+
         cache.get(identifier);
     }
 
     public void invalidate(String identifier) {
+        Preconditions.checkNotNull(identifier, "identifier");
+
         cache.invalidate(identifier);
     }
 
@@ -61,11 +73,16 @@ public class SubjectCache {
         }
     }
 
-    public boolean isRegistered(String key) {
-        return cache.getIfPresent(key) != null || dataStore.isRegistered(type, key);
+    public boolean isRegistered(String identifier) {
+        Preconditions.checkNotNull(identifier, "identifier");
+
+        return cache.getIfPresent(identifier) != null || dataStore.isRegistered(type, identifier);
     }
 
     public ListenableFuture<ImmutableOptionSubjectData> update(String identifier, ImmutableOptionSubjectData newData) {
+        Preconditions.checkNotNull(identifier, "identifier");
+        Preconditions.checkNotNull(newData, "newData");
+
         return dataStore.setData(type, identifier, newData);
     }
 
@@ -74,8 +91,17 @@ public class SubjectCache {
             @Override
             public void clearCache(ImmutableOptionSubjectData newData) {
                 cache.put(name, newData);
+                listeners.call(name, newData);
             }
         };
+    }
+
+    public void addListener(String identifier, Caching listener) {
+        Preconditions.checkNotNull(identifier, "identifier");
+        Preconditions.checkNotNull(listener, "listener");
+
+        listeners.addListener(identifier, listener);
+
     }
 
     public String getType() {

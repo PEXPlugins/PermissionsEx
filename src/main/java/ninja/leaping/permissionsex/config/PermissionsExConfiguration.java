@@ -49,8 +49,6 @@ public class PermissionsExConfiguration {
     }
 
     public DataStore getDefaultDataStore() {
-        System.out.println("Default backend: " + defaultBackend);
-        System.out.println("Backends: " + backends);
         return backends.get(defaultBackend);
     }
 

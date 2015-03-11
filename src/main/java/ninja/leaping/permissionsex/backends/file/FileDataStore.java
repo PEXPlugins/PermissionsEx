@@ -21,6 +21,7 @@ import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -36,6 +37,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.backends.DataStoreFactory;
 import ninja.leaping.permissionsex.backends.LegacyConversionUtils;
+import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -67,6 +69,7 @@ public class FileDataStore implements DataStore {
     private String file;
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
+    private final CacheListenerHolder<Map.Entry<String, String>> cacheListeners = new CacheListenerHolder<>();
 
     public FileDataStore(String identifier) {
         this.identifier = identifier;
@@ -230,18 +233,34 @@ public class FileDataStore implements DataStore {
     @Override
     public ImmutableOptionSubjectData getData(String type, String identifier, Caching listener) {
         try {
-            return new FileOptionSubjectData(permissionsConfig.getNode(typeToSection(type), identifier));
+            FileOptionSubjectData ret = new FileOptionSubjectData(permissionsConfig.getNode(typeToSection(type), identifier));
+            if (listener != null) {
+                cacheListeners.addListener(Maps.immutableEntry(type, identifier), listener);
+            }
+            return ret;
         } catch (ObjectMappingException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public ListenableFuture<ImmutableOptionSubjectData> setData(String type, String identifier, ImmutableOptionSubjectData data) {
+    public ListenableFuture<ImmutableOptionSubjectData> setData(final String type, final String identifier, ImmutableOptionSubjectData data) {
         Preconditions.checkNotNull(type, "type");
         Preconditions.checkNotNull(identifier, "identifier");
         try {
-            return Futures.immediateFuture(setDataSync(type, identifier, data));
+            ListenableFuture<ImmutableOptionSubjectData> ret = Futures.immediateFuture(setDataSync(type, identifier, data));
+            Futures.addCallback(ret, new FutureCallback<ImmutableOptionSubjectData>() {
+                @Override
+                public void onSuccess(@Nullable ImmutableOptionSubjectData newData) {
+                    cacheListeners.call(Maps.immutableEntry(type, identifier), newData);
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+
+                }
+            });
+            return ret;
         } catch (PermissionsLoadingException | ObjectMappingException e) {
             return Futures.immediateFailedFuture(e);
         }

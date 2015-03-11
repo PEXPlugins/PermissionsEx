@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileOptionSubjectData implements ImmutableOptionSubjectData {
-    private static final String KEY_CONTEXTS = "contexts";
+    private static final String KEY_CONTEXTS = "context";
     @ConfigSerializable
     static class DataEntry {
         private static final ObjectMapper<DataEntry> MAPPER;
