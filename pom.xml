@@ -10,7 +10,7 @@
   <url>https://github.com/PEXPlugins/PermissionsEx</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <version.configurate>1.0-SNAPSHOT</version.configurate>
+    <version.configurate>1.0</version.configurate>
   </properties>
   <issueManagement>
     <system>GitHub</system>
@@ -272,10 +272,10 @@
     </dependency>
   </dependencies>
   <repositories>
-    <!--<repository>
+    <repository>
       <id>pex-repo</id>
       <url>http://pex-repo.aoeu.xyz</url>
-    </repository>-->
+    </repository>
     <repository>
       <id>sponge-repo</id>
       <url>https://repo.spongepowered.org/maven</url>
