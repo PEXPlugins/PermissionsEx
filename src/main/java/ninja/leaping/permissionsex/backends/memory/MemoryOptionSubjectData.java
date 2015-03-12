@@ -28,7 +28,6 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
-import org.spongepowered.api.service.permission.context.Context;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -37,6 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Map.Entry;
 
 public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     protected static final ObjectMapper<DataEntry> MAPPER;
@@ -81,6 +82,10 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
 
         }
 
+        public DataEntry withOptions(Map<String, String> values) {
+            return new DataEntry(permissions, ImmutableMap.copyOf(values), parents, defaultValue);
+        }
+
         public DataEntry withoutOptions() {
             return new DataEntry(permissions, null, parents, defaultValue);
         }
@@ -98,6 +103,10 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             Map<String, Integer> newPermissions = new HashMap<>(permissions);
             newPermissions.remove(permission);
             return new DataEntry(newPermissions, options, parents, defaultValue);
+        }
+
+        public DataEntry withPermissions(Map<String, Integer> values) {
+            return new DataEntry(ImmutableMap.copyOf(values), options, parents, defaultValue);
         }
 
         public DataEntry withoutPermissions() {
@@ -118,6 +127,10 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             return new DataEntry(permissions, options, newParents, defaultValue);
         }
 
+        public DataEntry withParents(List<String> transform) {
+            return new DataEntry(permissions, options, ImmutableList.copyOf(transform), defaultValue);
+        }
+
         public DataEntry withoutParents() {
             return new DataEntry(permissions, options, null, defaultValue);
         }
@@ -131,27 +144,28 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
                     ", defaultValue=" + defaultValue +
                     '}';
         }
+
     }
 
     protected static DataEntry newEntry() {
         return new DataEntry();
     }
 
-    protected MemoryOptionSubjectData newData(Map<Set<Context>, DataEntry> contexts) {
+    protected MemoryOptionSubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
         return new MemoryOptionSubjectData(contexts);
     }
 
-    protected final Map<Set<Context>, DataEntry> contexts;
+    protected final Map<Set<Entry<String, String>>, DataEntry> contexts;
 
-    MemoryOptionSubjectData() {
+    protected MemoryOptionSubjectData() {
         this.contexts = ImmutableMap.of();
     }
 
-    protected MemoryOptionSubjectData(Map<Set<Context>, DataEntry> contexts) {
+    protected MemoryOptionSubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
         this.contexts = contexts;
     }
 
-    private DataEntry getDataEntryOrNew(Set<Context> contexts) {
+    private DataEntry getDataEntryOrNew(Set<Entry<String, String>> contexts) {
         DataEntry res = this.contexts.get(contexts);
         if (res == null) {
             res = new DataEntry();
@@ -164,7 +178,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public Map<Set<Context>, Map<String, String>> getAllOptions() {
+    public Map<Set<Entry<String, String>>, Map<String, String>> getAllOptions() {
         return Maps.transformValues(contexts, new Function<DataEntry, Map<String, String>>() {
             @Nullable
             @Override
@@ -175,26 +189,31 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public Map<String, String> getOptions(Set<Context> contexts) {
+    public Map<String, String> getOptions(Set<Entry<String, String>> contexts) {
         final DataEntry entry = this.contexts.get(contexts);
         return entry == null || entry.options == null ? Collections.<String, String>emptyMap() : entry.options;
     }
 
     @Override
-    public ImmutableOptionSubjectData setOption(Set<Context> contexts, String key, String value) {
+    public ImmutableOptionSubjectData setOption(Set<Entry<String, String>> contexts, String key, String value) {
         if (value == null) {
-            return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutOption(key)).build());
+            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutOption(key)).build());
         } else {
-            return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withOption(key, value)).build());
+            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withOption(key, value)).build());
         }
     }
 
     @Override
-    public ImmutableOptionSubjectData clearOptions(Set<Context> contexts) {
+    public ImmutableOptionSubjectData setOptions(Set<Entry<String, String>> contexts, Map<String, String> values) {
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withOptions(values)).build());
+    }
+
+    @Override
+    public ImmutableOptionSubjectData clearOptions(Set<Entry<String, String>> contexts) {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutOptions()).build());
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutOptions()).build());
     }
 
     @Override
@@ -203,7 +222,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             return this;
         }
 
-        Map<Set<Context>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
+        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
             @Nullable
             @Override
             public DataEntry apply(@Nullable DataEntry dataEntry) {
@@ -214,7 +233,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public Map<Set<Context>, Map<String, Integer>> getAllPermissions() {
+    public Map<Set<Entry<String, String>>, Map<String, Integer>> getAllPermissions() {
         return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Map<String, Integer>>() {
             @Nullable
             @Override
@@ -225,18 +244,23 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public Map<String, Integer> getPermissions(Set<Context> set) {
+    public Map<String, Integer> getPermissions(Set<Entry<String, String>> set) {
         final DataEntry entry = this.contexts.get(set);
         return entry == null || entry.permissions == null ? Collections.<String, Integer>emptyMap() : entry.permissions;
     }
 
     @Override
-    public ImmutableOptionSubjectData setPermission(Set<Context> contexts, String permission, int value) {
+    public ImmutableOptionSubjectData setPermission(Set<Entry<String, String>> contexts, String permission, int value) {
         if (value == 0) {
-            return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutPermission(permission)).build());
+            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutPermission(permission)).build());
         } else {
-            return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withPermission(permission, value)).build());
+            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withPermission(permission, value)).build());
         }
+    }
+
+    @Override
+    public ImmutableOptionSubjectData setPermissions(Set<Entry<String, String>> contexts, Map<String, Integer> values) {
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withPermissions(values)).build());
     }
 
     @Override
@@ -245,7 +269,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             return this;
         }
 
-        Map<Set<Context>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
+        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
             @Nullable
             @Override
             public DataEntry apply(@Nullable DataEntry dataEntry) {
@@ -256,11 +280,11 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public ImmutableOptionSubjectData clearPermissions(Set<Context> contexts) {
+    public ImmutableOptionSubjectData clearPermissions(Set<Entry<String, String>> contexts) {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutPermissions()).build());
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutPermissions()).build());
 
     }
 
@@ -274,7 +298,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
                 };
 
     @Override
-    public Map<Set<Context>, List<Map.Entry<String, String>>> getAllParents() {
+    public Map<Set<Entry<String, String>>, List<Entry<String, String>>> getAllParents() {
         return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, List<Map.Entry<String, String>>>() {
             @Nullable
             @Override
@@ -285,19 +309,19 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public List<Map.Entry<String, String>> getParents(Set<Context> contexts) {
+    public List<Map.Entry<String, String>> getParents(Set<Entry<String, String>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
         return ent == null || ent.parents == null ? Collections.<Map.Entry<String, String>>emptyList() : Lists.transform(ent.parents, PARENT_TRANSFORM_FUNC);
     }
 
     @Override
-    public ImmutableOptionSubjectData addParent(Set<Context> contexts, String type, String ident) {
+    public ImmutableOptionSubjectData addParent(Set<Entry<String, String>> contexts, String type, String ident) {
         DataEntry entry = getDataEntryOrNew(contexts);
-        return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), entry.withAddedParent(type + ":" + ident)).build());
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), entry.withAddedParent(type + ":" + ident)).build());
     }
 
     @Override
-    public ImmutableOptionSubjectData removeParent(Set<Context> contexts, String type, String identifier) {
+    public ImmutableOptionSubjectData removeParent(Set<Entry<String, String>> contexts, String type, String identifier) {
         DataEntry ent = this.contexts.get(contexts);
         if (ent == null) {
             return this;
@@ -307,7 +331,19 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         if (!ent.parents.contains(combined)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), ent.withRemovedParent(combined)).build());
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), ent.withRemovedParent(combined)).build());
+    }
+
+    @Override
+    public ImmutableOptionSubjectData setParents(Set<Entry<String, String>> contexts, List<Entry<String, String>> parents) {
+        DataEntry entry = getDataEntryOrNew(contexts);
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), entry.withParents(Lists.transform(parents, new Function<Entry<String,String>, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable Entry<String, String> input) {
+                return input.getKey() + ":" + input.getValue();
+            }
+        }))).build());
     }
 
     @Override
@@ -316,7 +352,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             return this;
         }
 
-        Map<Set<Context>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
+        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
             @Nullable
             @Override
             public DataEntry apply(@Nullable DataEntry dataEntry) {
@@ -327,25 +363,36 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     @Override
-    public ImmutableOptionSubjectData clearParents(Set<Context> contexts) {
+    public ImmutableOptionSubjectData clearParents(Set<Entry<String, String>> contexts) {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutParents()).build());
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutParents()).build());
     }
 
-    public int getDefaultValue(Set<Context> contexts) {
+    public int getDefaultValue(Set<Entry<String, String>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
         return ent == null ? 0 : ent.defaultValue;
     }
 
-    public ImmutableOptionSubjectData setDefaultValue(Set<Context> contexts, int defaultValue) {
-        return newData(ImmutableMap.<Set<Context>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withDefaultValue(defaultValue)).build());
+    public ImmutableOptionSubjectData setDefaultValue(Set<Entry<String, String>> contexts, int defaultValue) {
+        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withDefaultValue(defaultValue)).build());
     }
 
     @Override
-    public Iterable<Set<Context>> getActiveContexts() {
+    public Iterable<Set<Entry<String, String>>> getActiveContexts() {
         return contexts.keySet();
+    }
+
+    @Override
+    public Map<Set<Entry<String, String>>, Integer> getAllDefaultValues() {
+        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Integer>() {
+            @Nullable
+            @Override
+            public Integer apply(@Nullable DataEntry dataEntry) {
+                return dataEntry.defaultValue;
+            }
+        }), Predicates.notNull());
     }
 
     @Override

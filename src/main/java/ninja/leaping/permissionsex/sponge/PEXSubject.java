@@ -165,13 +165,11 @@ public class PEXSubject implements OptionSubject, Caching {
     @Override
     public void clearCache(ImmutableOptionSubjectData newData) {
         dataCache.invalidateAll();
-        /* TODO parent handling
-        for (Subject child : plugin.getAllActiveSubjects()) {
-            if (child.isChildOf(this)) {
-                child.dataCache.invalidateAll(); // (or something that clears cache without requiring a param)
+        for (PEXSubject subj : collection.getPlugin().getAllActiveSubjects()) {
+            if (subj.isChildOf(this)) {
+                subj.dataCache.invalidateAll(); // (or something that clears cache without requiring a param)
             }
         }
-         */
     }
 
     @Override

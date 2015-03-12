@@ -16,52 +16,59 @@
  */
 package ninja.leaping.permissionsex.data;
 
-import org.spongepowered.api.service.permission.context.Context;
-
+import javax.annotation.concurrent.Immutable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface ImmutableOptionSubjectData {
-    Map<Set<Context>, Map<String, String>> getAllOptions();
+    Map<Set<Map.Entry<String, String>>, Map<String, String>> getAllOptions();
 
-    Map<String, String> getOptions(Set<Context> contexts);
+    Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts);
 
-    ImmutableOptionSubjectData setOption(Set<Context> contexts, String key, String value);
+    ImmutableOptionSubjectData setOption(Set<Map.Entry<String, String>> contexts, String key, String value);
 
-    ImmutableOptionSubjectData clearOptions(Set<Context> contexts);
+    ImmutableOptionSubjectData setOptions(Set<Map.Entry<String, String>> contexts, Map<String, String> values);
+
+    ImmutableOptionSubjectData clearOptions(Set<Map.Entry<String, String>> contexts);
 
     ImmutableOptionSubjectData clearOptions();
 
-    Map<Set<Context>, Map<String, Integer>> getAllPermissions();
+    Map<Set<Map.Entry<String, String>>, Map<String, Integer>> getAllPermissions();
 
-    Map<String, Integer> getPermissions(Set<Context> contexts);
+    Map<String, Integer> getPermissions(Set<Map.Entry<String, String>> contexts);
 
-    ImmutableOptionSubjectData setPermission(Set<Context> contexts, String permission, int value);
+    ImmutableOptionSubjectData setPermission(Set<Map.Entry<String, String>> contexts, String permission, int value);
+
+    ImmutableOptionSubjectData setPermissions(Set<Map.Entry<String, String>> contexts, Map<String, Integer> values);
 
     ImmutableOptionSubjectData clearPermissions();
 
-    ImmutableOptionSubjectData clearPermissions(Set<Context> contexts);
+    ImmutableOptionSubjectData clearPermissions(Set<Map.Entry<String, String>> contexts);
 
-    Map<Set<Context>, List<Map.Entry<String, String>>> getAllParents();
+    Map<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> getAllParents();
 
-    List<Map.Entry<String, String>> getParents(Set<Context> contexts);
+    List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts);
 
-    ImmutableOptionSubjectData addParent(Set<Context> contexts, String type, String identifier);
+    ImmutableOptionSubjectData addParent(Set<Map.Entry<String, String>> contexts, String type, String identifier);
 
-    ImmutableOptionSubjectData removeParent(Set<Context> contexts, String type, String identifier);
+    ImmutableOptionSubjectData removeParent(Set<Map.Entry<String, String>> contexts, String type, String identifier);
+
+    ImmutableOptionSubjectData setParents(Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents);
 
     ImmutableOptionSubjectData clearParents();
 
-    ImmutableOptionSubjectData clearParents(Set<Context> contexts);
+    ImmutableOptionSubjectData clearParents(Set<Map.Entry<String, String>> contexts);
 
-    int getDefaultValue(Set<Context> contexts);
+    int getDefaultValue(Set<Map.Entry<String, String>> contexts);
 
-    ImmutableOptionSubjectData setDefaultValue(Set<Context> contexts, int defaultValue);
+    ImmutableOptionSubjectData setDefaultValue(Set<Map.Entry<String, String>> contexts, int defaultValue);
 
     /**
      * Gets the contexts we have data for
      * @return
      */
-    Iterable<Set<Context>> getActiveContexts();
+    Iterable<Set<Map.Entry<String, String>>> getActiveContexts();
+
+    Map<Set<Map.Entry<String, String>>, Integer> getAllDefaultValues();
 }

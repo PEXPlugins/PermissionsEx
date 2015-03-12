@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static ninja.leaping.permissionsex.sponge.PEXOptionSubjectData.parSet;
+
 /**
  * Handles baking of subject data inheritance tree and context tree into a single data set
  */
@@ -76,14 +78,14 @@ public class SubjectDataBaker {
 
     private void visitSingle(PEXOptionSubjectData data, Set<Context> specificCombination, Map<String, Integer> combinedPermissions, List<Subject> parents, Map<String, String> options) {
         ImmutableOptionSubjectData current = data.getCurrent();
-        for (Map.Entry<String, Integer> ent : current.getPermissions(specificCombination).entrySet()) {
+        for (Map.Entry<String, Integer> ent : current.getPermissions(parSet(specificCombination)).entrySet()) {
             Integer existing = combinedPermissions.get(ent.getKey());
             if (existing == null || Math.abs(ent.getValue()) > Math.abs(existing)) {
                 combinedPermissions.put(ent.getKey(), ent.getValue());
             }
         }
         parents.addAll(data.getParents(specificCombination));
-        for (Map.Entry<String, String> ent : current.getOptions(specificCombination).entrySet()) {
+        for (Map.Entry<String, String> ent : current.getOptions(parSet(specificCombination)).entrySet()) {
             if (!options.containsKey(ent.getKey())) {
                 options.put(ent.getKey(), ent.getValue());
             }

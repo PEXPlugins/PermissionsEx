@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
@@ -32,6 +33,7 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
@@ -42,6 +44,8 @@ import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
+import org.spongepowered.api.event.entity.living.player.PlayerJoinEvent;
+import org.spongepowered.api.event.entity.living.player.PlayerQuitEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
@@ -52,8 +56,9 @@ import org.spongepowered.api.service.config.ConfigDir;
 import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
+import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
-import org.spongepowered.api.service.scheduler.Scheduler;
+import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandCallable;
@@ -62,14 +67,18 @@ import org.spongepowered.api.util.command.CommandSource;
 import org.spongepowered.api.util.event.Subscribe;
 
 import javax.annotation.Nullable;
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -78,13 +87,13 @@ import java.util.concurrent.ExecutionException;
  */
 @NonnullByDefault
 @Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION)
-public class PermissionsExPlugin implements PermissionService {
+public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
     static {
         TypeSerializers.registerSerializer(new DataStoreSerializer());
     }
 
     private ServiceReference<SqlService> sql;
-    private ServiceReference<Scheduler> scheduler;
+    private ServiceReference<AsynchronousScheduler> scheduler;
     @Inject private ServiceManager services;
     @Inject private Logger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
@@ -97,6 +106,7 @@ public class PermissionsExPlugin implements PermissionService {
     private ConfigurationNode rawConfig;
 
     private final List<ContextCalculator> contextCalculators = new CopyOnWriteArrayList<>();
+    private final ConcurrentMap<String, Function<String, Optional<CommandSource>>> commandSourceProviders = new ConcurrentHashMap<>();
     private final LoadingCache<String, PEXSubjectCollection> subjectCollections = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubjectCollection>() {
         @Override
         public PEXSubjectCollection load(String type) throws Exception {
@@ -112,7 +122,7 @@ public class PermissionsExPlugin implements PermissionService {
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
         logger.info("Pre-init of " + PomData.NAME + " v" + PomData.VERSION);
         sql = services.potentiallyProvide(SqlService.class);
-        scheduler = services.potentiallyProvide(Scheduler.class);
+        scheduler = services.potentiallyProvide(AsynchronousScheduler.class);
 
         try {
             convertFromBukkit();
@@ -139,7 +149,7 @@ public class PermissionsExPlugin implements PermissionService {
             throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
         }
 
-        getUserSubjects().setCommandSourceProvider(new Function<String, Optional<CommandSource>>() {
+        setCommandSourceProvider(getUserSubjects(), new Function<String, Optional<CommandSource>>() {
             @Override
             @SuppressWarnings("unchecked")
             public Optional<CommandSource> apply(@Nullable String s) {
@@ -207,6 +217,22 @@ public class PermissionsExPlugin implements PermissionService {
         }
     }
 
+    @Subscribe
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        final String identifier = event.getPlayer().getIdentifier();
+        final PEXSubject subject = getUserSubjects().get(identifier);
+        if (getUserSubjects().hasRegistered(identifier)) {
+            if (!event.getPlayer().getName().equals(subject.getOption(SubjectData.GLOBAL_CONTEXT, "name").orNull())) {
+                subject.getData().setOption(SubjectData.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
+            }
+        }
+    }
+
+    @Subscribe
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        getUserSubjects().uncache(event.getPlayer().getIdentifier());
+    }
+
     static ConfigurationNode loadDefaultConfiguration() throws IOException {
         final URL defaultConfig = PermissionsExPlugin.class.getResource("default.conf");
         if (defaultConfig == null) {
@@ -250,7 +276,7 @@ public class PermissionsExPlugin implements PermissionService {
             config = PermissionsExConfiguration.MAPPER.bindToNew().populate(rawConfig);
             config.validate();
             PermissionsEx oldManager = manager;
-            manager = new PermissionsEx(config, configDir, logger);
+            manager = new PermissionsEx(config, this);
             if (oldManager != null) {
                 oldManager.close();
             }
@@ -324,5 +350,52 @@ public class PermissionsExPlugin implements PermissionService {
 
     public List<ContextCalculator> getContextCalculators() {
         return contextCalculators;
+    }
+
+    @Override
+    public File getBaseDirectory() {
+        return configDir;
+    }
+
+    @Override
+    public Logger getLogger() {
+        return logger;
+    }
+
+    @Override
+    @Nullable
+    public DataSource getDataSourceForURL(String url) {
+        if (!sql.ref().isPresent()) {
+            return null;
+        }
+        try {
+            return sql.ref().get().getDataSource(url);
+        } catch (SQLException e) {
+            logger.error("Unable to get data source for jdbc url " + url, e);
+            return null;
+        }
+    }
+
+    @Override
+    public void executeAsyncronously(Runnable run) {
+        scheduler.ref().get().runTask(this, run);
+    }
+
+    Function<String, Optional<CommandSource>> getCommandSourceProvider(PEXSubjectCollection subjectCollection) {
+        return commandSourceProviders.get(subjectCollection.getIdentifier());
+    }
+
+    public void setCommandSourceProvider(PEXSubjectCollection subjectCollection, Function<String, Optional<CommandSource>> provider) {
+        commandSourceProviders.put(subjectCollection.getIdentifier(), provider);
+    }
+
+    public Iterable<PEXSubject> getAllActiveSubjects() {
+        return Iterables.concat(Iterables.transform(subjectCollections.asMap().values(), new Function<PEXSubjectCollection, Iterable<PEXSubject>>() {
+            @Nullable
+            @Override
+            public Iterable<PEXSubject> apply(@Nullable PEXSubjectCollection input) {
+                return input.getActiveSubjects();
+            }
+        }));
     }
 }

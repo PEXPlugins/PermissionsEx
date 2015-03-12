@@ -18,11 +18,16 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
+import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.command.CommandSource;
 
 import javax.annotation.Nullable;
@@ -37,6 +42,14 @@ public class PEXSubjectCollection implements SubjectCollection {
     private final PermissionsExPlugin plugin;
     private final SubjectCache cache, transientCache;
     private volatile Function<String, Optional<CommandSource>> commandSourceProvider;
+
+    private final LoadingCache<String, PEXSubject> subjectCache = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubject>() {
+        @Override
+        public PEXSubject load(String identifier) throws Exception {
+            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier, plugin),
+                    new PEXOptionSubjectData(transientCache, identifier, plugin), PEXSubjectCollection.this);
+        }
+    });
 
     public PEXSubjectCollection(PermissionsExPlugin plugin, SubjectCache cache, SubjectCache transientCache) {
         this.plugin = plugin;
@@ -54,14 +67,19 @@ public class PEXSubjectCollection implements SubjectCollection {
     }
 
     @Override
-    public Subject get(String identifier) {
+    public PEXSubject get(String identifier) {
         System.out.println("Getting subject for " + identifier);
         try {
-            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier, plugin),
-                    new PEXOptionSubjectData(transientCache, identifier, plugin), this);
+            return subjectCache.get(identifier);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void uncache(String identifier) {
+        subjectCache.invalidate(identifier);
+        cache.invalidate(identifier);
+        transientCache.invalidate(identifier);
     }
 
     @Override
@@ -82,24 +100,32 @@ public class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public Map<Subject, Boolean> getAllWithPermission(String permission) {
-        // TODO: Alter the specification to only return active subjects?
-        return null;
+        return getAllWithPermission(null, permission);
     }
 
     @Override
     public Map<Subject, Boolean> getAllWithPermission(Set<Context> contexts, String permission) {
-        return null;
+        final ImmutableMap.Builder<Subject, Boolean> ret = ImmutableMap.builder();
+        for (PEXSubject subject : subjectCache.asMap().values()) {
+                Tristate permissionValue = subject.getPermissionValue(contexts == null ? subject.getActiveContexts() : contexts, permission);
+                if (permissionValue != Tristate.UNDEFINED) {
+                    ret.put(subject, permissionValue.asBoolean());
+                }
+        }
+        return ret.build();
     }
 
     public Optional<CommandSource> getCommandSource(String identifier) {
-        if (commandSourceProvider != null) {
-            return commandSourceProvider.apply(identifier);
+        final Function<String, Optional<CommandSource>> provider = plugin.getCommandSourceProvider(this);
+        if (provider != null) {
+
+            return provider.apply(identifier);
         } else {
             return Optional.absent();
         }
     }
 
-    public void setCommandSourceProvider(Function<String, Optional<CommandSource>> provider) {
-        this.commandSourceProvider = provider;
+    Iterable<PEXSubject> getActiveSubjects() {
+        return subjectCache.asMap().values();
     }
 }

@@ -24,26 +24,26 @@ import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.slf4j.Logger;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class PermissionsEx {
-    private final Logger logger;
+public class PermissionsEx implements ImplementationInterface {
     private final PermissionsExConfiguration config;
-    private final File basedir;
+    private final ImplementationInterface impl;
     private DataStore activeDataStore;
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
     private final MemoryDataStore transientData;
 
-    public PermissionsEx(PermissionsExConfiguration config, File basedir, Logger logger) throws PermissionsLoadingException {
+    public PermissionsEx(PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.config = config;
-        this.basedir = basedir;
-        this.logger = logger;
+        this.impl = impl;
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
+        getSubjects("group").cacheAll();
     }
 
     public SubjectCache getSubjects(String type) {
@@ -81,10 +81,20 @@ public class PermissionsEx {
     }
 
     public File getBaseDirectory() {
-        return this.basedir;
+        return impl.getBaseDirectory();
     }
 
     public Logger getLogger() {
-        return this.logger;
+        return impl.getLogger();
+    }
+
+    @Override
+    public DataSource getDataSourceForURL(String url) {
+        return impl.getDataSourceForURL(url);
+    }
+
+    @Override
+    public void executeAsyncronously(Runnable run) {
+        impl.executeAsyncronously(run);
     }
 }

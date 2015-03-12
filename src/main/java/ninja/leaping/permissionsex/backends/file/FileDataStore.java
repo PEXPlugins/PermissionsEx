@@ -16,9 +16,11 @@
  */
 package ninja.leaping.permissionsex.backends.file;
 
+import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -30,16 +32,18 @@ import ninja.leaping.configurate.transformation.TransformAction;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backends.AbstractDataStore;
-import ninja.leaping.permissionsex.backends.LegacyConversionUtils;
+import ninja.leaping.permissionsex.backends.ConversionUtils;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
@@ -51,6 +55,7 @@ public class FileDataStore extends AbstractDataStore {
     private String file;
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
+    private PermissionsEx manager;
 
     public FileDataStore() {
         super(FACTORY);
@@ -60,6 +65,7 @@ public class FileDataStore extends AbstractDataStore {
         return ConfigurationTransformation.builder();
     }
     public void initialize(final PermissionsEx permissionsEx) throws PermissionsLoadingException {
+        this.manager = permissionsEx;
         File permissionsFile = new File(permissionsEx.getBaseDirectory(), file);
         if (file.endsWith(".yml")) {
             File legacyPermissionsFile = permissionsFile;
@@ -149,7 +155,7 @@ public class FileDataStore extends AbstractDataStore {
                                                 configurationNode.getParent().getNode("permissions-default").setValue(value);
                                                 continue;
                                             }
-                                            permission = LegacyConversionUtils.convertPermission(permission);
+                                            permission = ConversionUtils.convertLegacyPermission(permission);
                                             if (permission.contains("*")) {
                                                 permissionsEx.getLogger().warn("The permission at " + Arrays.toString(configurationNode.getPath()) + " contains a now-illegal character '*'");
                                             }
@@ -199,12 +205,16 @@ public class FileDataStore extends AbstractDataStore {
 
     }
 
-    private void save() throws PermissionsLoadingException {
-        try {
-            permissionsFileLoader.save(permissionsConfig);
-        } catch (IOException e) {
-            throw new PermissionsLoadingException("While saving permissions file to " + file, e);
-        }
+    private ListenableFuture<Void> save() {
+        final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                permissionsFileLoader.save(permissionsConfig);
+                return null;
+            }
+        });
+        manager.executeAsyncronously(ret);
+        return ret;
     }
 
     private String typeToSection(String type) {
@@ -221,7 +231,7 @@ public class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, ImmutableOptionSubjectData data) {
+    protected ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, final ImmutableOptionSubjectData data) {
         try {
             if (data == null) {
                 permissionsConfig.getNode(typeToSection(type), identifier).setValue(null);
@@ -229,14 +239,23 @@ public class FileDataStore extends AbstractDataStore {
                 return null;
             }
 
+            final FileOptionSubjectData fileData;
+
             if (data instanceof FileOptionSubjectData) {
-                ((FileOptionSubjectData) data).serialize(permissionsConfig.getNode(typeToSection(type), identifier));
+                fileData = (FileOptionSubjectData) data;
             } else {
-                throw new IllegalArgumentException("Data passed was not a FileOptionSubjectData");
+                fileData = new FileOptionSubjectData();
+                ConversionUtils.transfer(data, fileData);
             }
-            save();
-            return Futures.immediateFuture(data);
-        } catch (PermissionsLoadingException | ObjectMappingException e) {
+            fileData.serialize(permissionsConfig.getNode(typeToSection(type), identifier));
+            return Futures.transform(save(), new Function<Void, ImmutableOptionSubjectData>() {
+                @Nullable
+                @Override
+                public ImmutableOptionSubjectData apply(Void input) {
+                    return fileData;
+                }
+            });
+        } catch (ObjectMappingException e) {
             return Futures.immediateFailedFuture(e);
         }
     }

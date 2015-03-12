@@ -23,7 +23,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class LegacyConversionUtilsTest {
+public class ConversionUtilsTest {
     @Test
     public void testConvertPermission() {
         final Map<String, String> expectedConversions = ImmutableMap.of(
@@ -33,7 +33,7 @@ public class LegacyConversionUtilsTest {
                 "worldedit.navigation.(jumpto.*", "worldedit.navigation.(jumpto"
         );
         for (Map.Entry<String, String> ent : expectedConversions.entrySet()) {
-            assertEquals(ent.getValue(), LegacyConversionUtils.convertPermission(ent.getKey()));
+            assertEquals(ent.getValue(), ConversionUtils.convertLegacyPermission(ent.getKey()));
         }
     }
 }
