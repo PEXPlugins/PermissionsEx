@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex;
 
 import com.google.common.base.Preconditions;
 import ninja.leaping.permissionsex.backends.DataStore;
+import ninja.leaping.permissionsex.backends.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -32,17 +33,17 @@ public class PermissionsEx {
     private final PermissionsExConfiguration config;
     private final File basedir;
     private DataStore activeDataStore;
-    private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>();
-    private final SubjectCache userCache, groupCache;
+    private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
+    private final MemoryDataStore transientData;
 
     public PermissionsEx(PermissionsExConfiguration config, File basedir, Logger logger) throws PermissionsLoadingException {
         this.config = config;
         this.basedir = basedir;
         this.logger = logger;
+        this.transientData = new MemoryDataStore();
+        this.transientData.initialize(this);
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
-        this.userCache = getSubjects("users");
-        this.groupCache = getSubjects("groups");
     }
 
     public SubjectCache getSubjects(String type) {
@@ -58,16 +59,29 @@ public class PermissionsEx {
         return cache;
     }
 
+    public SubjectCache getTransientSubjects(String type) {
+        Preconditions.checkNotNull(type, "type");
+        SubjectCache cache = transientSubjectCaches.get(type);
+        if (cache == null) {
+            cache = new SubjectCache(type, transientData);
+            SubjectCache newCache = transientSubjectCaches.putIfAbsent(type, cache);
+            if (newCache != null) {
+                cache = newCache;
+            }
+        }
+        return cache;
+    }
+
+    public boolean hasDebugMode() {
+        return config.isDebugEnabled();
+    }
+
     public void close() {
         this.activeDataStore.close();
     }
 
     public File getBaseDirectory() {
         return this.basedir;
-    }
-
-    public DataStore getActiveDataStore() {
-        return this.activeDataStore;
     }
 
     public Logger getLogger() {

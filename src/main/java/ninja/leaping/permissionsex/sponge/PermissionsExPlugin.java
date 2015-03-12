@@ -38,8 +38,7 @@ import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.config.DataStoreSerializer;
 import ninja.leaping.permissionsex.exception.PermissionsException;
-import ninja.leaping.permissionsex.sponge.option.MemoryOptionSubjectData;
-import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
+import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
@@ -51,7 +50,6 @@ import org.spongepowered.api.service.ServiceManager;
 import org.spongepowered.api.service.ServiceReference;
 import org.spongepowered.api.service.config.ConfigDir;
 import org.spongepowered.api.service.config.DefaultConfig;
-import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
@@ -101,14 +99,14 @@ public class PermissionsExPlugin implements PermissionService {
     private final List<ContextCalculator> contextCalculators = new CopyOnWriteArrayList<>();
     private final LoadingCache<String, PEXSubjectCollection> subjectCollections = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubjectCollection>() {
         @Override
-        public PEXSubjectCollection load(String s) throws Exception {
+        public PEXSubjectCollection load(String type) throws Exception {
             if (manager == null) {
                 throw new PermissionsException("Manager is not currently loaded!");
             }
-            return new PEXSubjectCollection(PermissionsExPlugin.this, manager.getSubjects(s));
+            return new PEXSubjectCollection(PermissionsExPlugin.this, manager.getSubjects(type), manager.getTransientSubjects(type));
         }
     });
-    private final MemoryOptionSubjectData defaults = new MemoryOptionSubjectData(this);
+    private PEXSubject defaults;
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
@@ -239,7 +237,7 @@ public class PermissionsExPlugin implements PermissionService {
         }
     }
 
-    private void reloadSync() throws Exception {
+    private void reloadSync() throws PEBKACException, ObjectMappingException, PermissionsLoadingException {
         try {
             rawConfig = configLoader.load();
             ConfigurationNode fallbackConfig;
@@ -258,7 +256,7 @@ public class PermissionsExPlugin implements PermissionService {
             }
             // TODO: Make subject collections persist past reloads
             subjectCollections.invalidateAll();
-
+            defaults = (PEXSubject) getSubjects("default").get().get("global");
         } catch (IOException e) {
             throw new PEBKACException("Error while loading configuration: " + e.getLocalizedMessage());
         }
@@ -294,7 +292,11 @@ public class PermissionsExPlugin implements PermissionService {
     }
 
     @Override
-    public OptionSubjectData getDefaultData() {
+    public PEXOptionSubjectData getDefaultData() {
+        return defaults.getTransientData();
+    }
+
+    public PEXSubject getDefaultSubject() {
         return defaults;
     }
 

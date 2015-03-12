@@ -50,9 +50,8 @@ public class SubjectDataBaker {
         Map<String, String> options = new HashMap<>();
         final Combinations<Context> combos = Combinations.of(activeContexts);
         visitSubject(start, combos, combinedPermissions, parents, options);
-        /*for (Set<Context> combo : combos) { // TODO: Bring transient data into the system
-            visitSingle(start.getContainingCollection().getPlugin().getDefaultData(), combo, combinedPermissions, parents, options);
-        }*/
+        visitSubject(start.getContainingCollection().getPlugin().getDefaultSubject(), combos, combinedPermissions, parents, options);
+
         return new BakedSubjectData(activeContexts, NodeTree.of(Maps.transformValues(combinedPermissions, new Function<Integer, Boolean>() {
             @Nullable
             @Override
@@ -64,10 +63,10 @@ public class SubjectDataBaker {
 
     private void visitSubject(PEXSubject subject, Combinations<Context> contexts, Map<String, Integer> combinedPermissions, List<Subject> parents, Map<String, String> options) {
         for (Set<Context> combo : contexts) {
-            /* visitSingle(subject.getTransientData(), combo, combinedPermissions, parents, options); // TODO: Bring transient data into the system
+            visitSingle(subject.getTransientData(), combo, combinedPermissions, parents, options);
             for (Subject parent : subject.getTransientData().getParents(combo)) {
                 visitSubject((PEXSubject) parent, contexts, combinedPermissions, parents, options);
-            }*/
+            }
             visitSingle(subject.getData(), combo, combinedPermissions, parents, options);
             for (Subject parent : subject.getData().getParents(combo)) {
                 visitSubject((PEXSubject) parent, contexts, combinedPermissions, parents, options);

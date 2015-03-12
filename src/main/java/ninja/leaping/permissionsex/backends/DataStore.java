@@ -59,13 +59,6 @@ public interface DataStore {
     Iterable<String> getAllIdentifiers(String type);
 
     /**
-     * Return the type name for this data store
-     *
-     * @return The type name of this data store
-     */
-    public String getTypeName();
-
-    /**
      * Serialize the configuration state of this data store to a configuration node
      *
      * @param node The node to serialize state to

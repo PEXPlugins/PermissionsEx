@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import org.spongepowered.api.service.permission.Subject;
@@ -36,12 +35,13 @@ import java.util.concurrent.ExecutionException;
  */
 public class PEXSubjectCollection implements SubjectCollection {
     private final PermissionsExPlugin plugin;
-    private final SubjectCache cache;
+    private final SubjectCache cache, transientCache;
     private volatile Function<String, Optional<CommandSource>> commandSourceProvider;
 
-    public PEXSubjectCollection(PermissionsExPlugin plugin, SubjectCache cache) {
+    public PEXSubjectCollection(PermissionsExPlugin plugin, SubjectCache cache, SubjectCache transientCache) {
         this.plugin = plugin;
         this.cache = cache;
+        this.transientCache = transientCache;
     }
 
     @Override
@@ -57,7 +57,8 @@ public class PEXSubjectCollection implements SubjectCollection {
     public Subject get(String identifier) {
         System.out.println("Getting subject for " + identifier);
         try {
-            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier, plugin), this);
+            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier, plugin),
+                    new PEXOptionSubjectData(transientCache, identifier, plugin), this);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }

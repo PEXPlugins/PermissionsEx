@@ -23,9 +23,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
-import ninja.leaping.permissionsex.sponge.option.MemoryOptionSubjectData;
 import ninja.leaping.permissionsex.sponge.option.OptionSubject;
-import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
@@ -44,7 +42,7 @@ import java.util.concurrent.ExecutionException;
 public class PEXSubject implements OptionSubject, Caching {
     private final PEXSubjectCollection collection;
     private final PEXOptionSubjectData data;
-    private final OptionSubjectData transientData;
+    private final PEXOptionSubjectData transientData;
     private final String identifier;
     private final LoadingCache<Set<Context>, BakedSubjectData> dataCache = CacheBuilder.newBuilder().maximumSize(5)
             .build(new CacheLoader<Set<Context>, BakedSubjectData>() {
@@ -54,12 +52,13 @@ public class PEXSubject implements OptionSubject, Caching {
                 }
             });
 
-    public PEXSubject(String identifier, PEXOptionSubjectData data, PEXSubjectCollection collection) {
+    public PEXSubject(String identifier, PEXOptionSubjectData data, PEXOptionSubjectData transientData, PEXSubjectCollection collection) {
         this.identifier = identifier;
         this.data = data;
+        this.transientData = transientData;
         data.addListener(this);
+        transientData.addListener(this);
         this.collection = collection;
-        this.transientData = new MemoryOptionSubjectData(collection.getPlugin());
     }
 
     @Override
@@ -83,7 +82,7 @@ public class PEXSubject implements OptionSubject, Caching {
     }
 
     @Override
-    public OptionSubjectData getTransientData() {
+    public PEXOptionSubjectData getTransientData() {
         return transientData;
     }
 

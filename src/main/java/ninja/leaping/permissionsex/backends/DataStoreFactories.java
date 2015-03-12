@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.backends;
 
 import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.backends.file.FileDataStore;
+import ninja.leaping.permissionsex.backends.memory.MemoryDataStore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +27,8 @@ public class DataStoreFactories {
     private static final Map<String, DataStoreFactory> REGISTRY = new ConcurrentHashMap<>();
 
     static {
-        register("file", new FileDataStore.Factory());
+        register("file", FileDataStore.FACTORY);
+        register("memory", MemoryDataStore.FACTORY);
     }
 
     private DataStoreFactories() {

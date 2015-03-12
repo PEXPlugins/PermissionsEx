@@ -27,7 +27,7 @@ import java.util.Set;
  * An iterable class that provides all combinations of any of a given set of values
  * The algorithm used is a version of Algorithm T in section 7.2.1.3 of Knuth's The Art of Computer Programming,
  * modified to function as an Iterator. This implementation also begins with the original set,
- * and accepts the empty set as an input (unlike the original algorithm, only defined for n>0 where n is the length of the set).
+ * and accepts the empty set as an input (unlike the original algorithm, only defined for n&gt;0 where n is the length of the set).
  */
 public class Combinations<T> implements Iterable<Set<T>> {
     private final T[] items;
