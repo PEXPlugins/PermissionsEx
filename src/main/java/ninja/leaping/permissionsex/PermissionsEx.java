@@ -80,10 +80,12 @@ public class PermissionsEx implements ImplementationInterface {
         this.activeDataStore.close();
     }
 
+    @Override
     public File getBaseDirectory() {
         return impl.getBaseDirectory();
     }
 
+    @Override
     public Logger getLogger() {
         return impl.getLogger();
     }
@@ -96,5 +98,9 @@ public class PermissionsEx implements ImplementationInterface {
     @Override
     public void executeAsyncronously(Runnable run) {
         impl.executeAsyncronously(run);
+    }
+
+    public PermissionsExConfiguration getConfig() {
+        return this.config;
     }
 }

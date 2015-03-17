@@ -88,9 +88,6 @@ import java.util.concurrent.ExecutionException;
 @NonnullByDefault
 @Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION)
 public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
-    static {
-        TypeSerializers.registerSerializer(new DataStoreSerializer());
-    }
 
     private ServiceReference<SqlService> sql;
     private ServiceReference<AsynchronousScheduler> scheduler;
@@ -117,6 +114,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     });
     private PEXSubject defaults;
+    private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
@@ -172,6 +170,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
             }
         });
+        registerContextCalculator(contextCalculator);
 
         this.game.getCommandDispatcher().register(this, new CommandCallable() {
             @Override
@@ -283,6 +282,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             // TODO: Make subject collections persist past reloads
             subjectCollections.invalidateAll();
             defaults = (PEXSubject) getSubjects("default").get().get("global");
+            contextCalculator.update(config);
         } catch (IOException e) {
             throw new PEBKACException("Error while loading configuration: " + e.getLocalizedMessage());
         }

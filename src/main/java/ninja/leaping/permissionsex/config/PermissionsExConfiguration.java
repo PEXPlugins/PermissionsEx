@@ -19,9 +19,12 @@ package ninja.leaping.permissionsex.config;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,10 +40,14 @@ public class PermissionsExConfiguration {
             throw new ExceptionInInitializerError(e);
         }
     }
+    static {
+        TypeSerializers.registerSerializer(new DataStoreSerializer());
+    }
 
     @Setting private Map<String, DataStore> backends;
     @Setting("default-backend") private String defaultBackend;
     @Setting private boolean debug;
+    @Setting("server-tags") private List<String> serverTags;
 
     protected PermissionsExConfiguration() {}
 
@@ -54,6 +61,10 @@ public class PermissionsExConfiguration {
 
     public boolean isDebugEnabled() {
         return debug;
+    }
+
+    public List<String> getServerTags() {
+        return Collections.unmodifiableList(serverTags);
     }
 
     public void validate() throws PEBKACException {
