@@ -66,6 +66,11 @@ public class PEXSubject implements OptionSubject, Caching {
         return identifier;
     }
 
+    private String identifyUser() {
+        final Optional<CommandSource> source = getCommandSource();
+        return getIdentifier() + (source.isPresent() ? "/" + source.get().getName() : "");
+    }
+
     @Override
     public Optional<CommandSource> getCommandSource() {
         return getContainingCollection().getCommandSource(this.identifier);
@@ -91,7 +96,11 @@ public class PEXSubject implements OptionSubject, Caching {
         Preconditions.checkNotNull(contexts, "contexts");
         Preconditions.checkNotNull(key, "key");
         try {
-            return Optional.fromNullable(dataCache.get(contexts).getOptions().get(key));
+            final String val = dataCache.get(contexts).getOptions().get(key);
+            if (collection.getPlugin().getManager().hasDebugMode()) {
+                collection.getPlugin().getLogger().info("Option " + key + " checked in " + contexts + " for user " + identifyUser() + ": " + val);
+            }
+            return Optional.fromNullable(val);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -118,7 +127,11 @@ public class PEXSubject implements OptionSubject, Caching {
         Preconditions.checkNotNull(permission, "permission");
 
         try {
-            return dataCache.get(contexts).getPermissions().get(permission);
+            Tristate ret = dataCache.get(contexts).getPermissions().get(permission);
+            if (collection.getPlugin().getManager().hasDebugMode()) {
+                collection.getPlugin().getLogger().info("Permission " + permission + " checked in " + contexts + " for user " + identifyUser() + ": " + ret);
+            }
+            return ret;
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -155,7 +168,11 @@ public class PEXSubject implements OptionSubject, Caching {
     public List<Subject> getParents(Set<Context> contexts) {
         Preconditions.checkNotNull(contexts, "contexts");
         try {
-            return dataCache.get(contexts).getParents();
+            final List<Subject> parents = dataCache.get(contexts).getParents();
+            if (collection.getPlugin().getManager().hasDebugMode()) {
+                collection.getPlugin().getLogger().info("Parents checked in " + contexts + " for user " + identifyUser() + ": " + parents);
+            }
+            return parents;
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }

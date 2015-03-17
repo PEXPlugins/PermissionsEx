@@ -298,6 +298,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         });
     }
 
+    PermissionsEx getManager() {
+        return this.manager;
+    }
+
 
     @Override
     public PEXSubjectCollection getUserSubjects() {
