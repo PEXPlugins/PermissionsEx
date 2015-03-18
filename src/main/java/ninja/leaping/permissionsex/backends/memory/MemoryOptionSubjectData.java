@@ -48,10 +48,14 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             throw new ExceptionInInitializerError(e); // This error indicates a programming issue
         }
     }
+
+    protected static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
+        Map<K, V> ret = new HashMap<>(input);
+        ret.put(newKey, newVal);
+        return Collections.unmodifiableMap(ret);
+    }
     @ConfigSerializable
     protected static class DataEntry {
-
-
         @Setting private Map<String, Integer> permissions;
         @Setting private Map<String, String> options;
         @Setting private List<String> parents;
@@ -68,7 +72,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withOption(String key, String value) {
-            return new DataEntry(permissions, ImmutableMap.<String, String>builder().putAll(options).put(key, value).build(), parents, defaultValue);
+            return new DataEntry(permissions, updateImmutable(options, key, value), parents, defaultValue);
         }
 
         public DataEntry withoutOption(String key) {
@@ -91,7 +95,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withPermission(String permission, int value) {
-            return new DataEntry(ImmutableMap.<String, Integer>builder().putAll(permissions).put(permission, value).build(), options, parents, defaultValue);
+            return new DataEntry(updateImmutable(permissions, permission, value), options, parents, defaultValue);
 
         }
 
@@ -151,6 +155,10 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         return new DataEntry();
     }
 
+    protected final MemoryOptionSubjectData newWithUpdated(Set<Entry<String, String>> key, DataEntry val) {
+        return newData(updateImmutable(contexts, immutSet(key), val));
+    }
+
     protected MemoryOptionSubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
         return new MemoryOptionSubjectData(contexts);
     }
@@ -197,15 +205,15 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     @Override
     public ImmutableOptionSubjectData setOption(Set<Entry<String, String>> contexts, String key, String value) {
         if (value == null) {
-            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutOption(key)).build());
+            return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutOption(key));
         } else {
-            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withOption(key, value)).build());
+            return newWithUpdated(contexts, getDataEntryOrNew(contexts).withOption(key, value));
         }
     }
 
     @Override
     public ImmutableOptionSubjectData setOptions(Set<Entry<String, String>> contexts, Map<String, String> values) {
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withOptions(values)).build());
+        return newWithUpdated(contexts, getDataEntryOrNew(contexts).withOptions(values));
     }
 
     @Override
@@ -213,7 +221,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutOptions()).build());
+        return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutOptions());
     }
 
     @Override
@@ -252,15 +260,15 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     @Override
     public ImmutableOptionSubjectData setPermission(Set<Entry<String, String>> contexts, String permission, int value) {
         if (value == 0) {
-            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutPermission(permission)).build());
+            return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutPermission(permission));
         } else {
-            return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withPermission(permission, value)).build());
+            return newWithUpdated(contexts, getDataEntryOrNew(contexts).withPermission(permission, value));
         }
     }
 
     @Override
     public ImmutableOptionSubjectData setPermissions(Set<Entry<String, String>> contexts, Map<String, Integer> values) {
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withPermissions(values)).build());
+        return newWithUpdated(contexts, getDataEntryOrNew(contexts).withPermissions(values));
     }
 
     @Override
@@ -284,7 +292,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutPermissions()).build());
+        return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutPermissions());
 
     }
 
@@ -317,7 +325,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     @Override
     public ImmutableOptionSubjectData addParent(Set<Entry<String, String>> contexts, String type, String ident) {
         DataEntry entry = getDataEntryOrNew(contexts);
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), entry.withAddedParent(type + ":" + ident)).build());
+        return newWithUpdated(contexts, entry.withAddedParent(type + ":" + ident));
     }
 
     @Override
@@ -331,19 +339,19 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         if (!ent.parents.contains(combined)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), ent.withRemovedParent(combined)).build());
+        return newWithUpdated(contexts, ent.withRemovedParent(combined));
     }
 
     @Override
     public ImmutableOptionSubjectData setParents(Set<Entry<String, String>> contexts, List<Entry<String, String>> parents) {
         DataEntry entry = getDataEntryOrNew(contexts);
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), entry.withParents(Lists.transform(parents, new Function<Entry<String,String>, String>() {
+        return newWithUpdated(contexts, entry.withParents(Lists.transform(parents, new Function<Entry<String,String>, String>() {
             @Nullable
             @Override
             public String apply(@Nullable Entry<String, String> input) {
                 return input.getKey() + ":" + input.getValue();
             }
-        }))).build());
+        })));
     }
 
     @Override
@@ -367,7 +375,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withoutParents()).build());
+        return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutParents());
     }
 
     public int getDefaultValue(Set<Entry<String, String>> contexts) {
@@ -376,7 +384,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     public ImmutableOptionSubjectData setDefaultValue(Set<Entry<String, String>> contexts, int defaultValue) {
-        return newData(ImmutableMap.<Set<Entry<String, String>>, DataEntry>builder().putAll(this.contexts).put(immutSet(contexts), getDataEntryOrNew(contexts).withDefaultValue(defaultValue)).build());
+        return newWithUpdated(contexts, getDataEntryOrNew(contexts).withDefaultValue(defaultValue));
     }
 
     @Override

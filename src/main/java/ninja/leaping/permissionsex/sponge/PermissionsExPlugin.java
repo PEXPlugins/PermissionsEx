@@ -382,7 +382,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public void executeAsyncronously(Runnable run) {
-        scheduler.ref().get().runTask(this, run);
+        scheduler.ref().get().runTask(PermissionsExPlugin.this, run);
     }
 
     Function<String, Optional<CommandSource>> getCommandSourceProvider(PEXSubjectCollection subjectCollection) {
