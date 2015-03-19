@@ -50,6 +50,9 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     }
 
     protected static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
+        if (input == null) {
+            return ImmutableMap.of(newKey, newVal);
+        }
         Map<K, V> ret = new HashMap<>(input);
         ret.put(newKey, newVal);
         return Collections.unmodifiableMap(ret);
