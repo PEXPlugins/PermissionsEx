@@ -64,5 +64,12 @@ public interface DataStore {
      * @param node The node to serialize state to
      * @return The type name of this data store
      */
-    public String serialize(ConfigurationNode node) throws PermissionsLoadingException;
+     String serialize(ConfigurationNode node) throws PermissionsLoadingException;
+
+    /**
+     * Returns all subjects present in this data store
+     *
+     * @return An iterable containing all subjects
+     */
+    Iterable<Map.Entry<Map.Entry<String,String>,ImmutableOptionSubjectData>> getAll();
 }

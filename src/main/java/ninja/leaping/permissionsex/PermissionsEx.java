@@ -16,16 +16,24 @@
  */
 package ninja.leaping.permissionsex;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.backends.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -70,6 +78,34 @@ public class PermissionsEx implements ImplementationInterface {
             }
         }
         return cache;
+    }
+
+    /**
+     * Imports data into the currently active backend from the backend identified by the provided identifier
+     *
+     * @param dataStoreIdentifier The identifier of the backend to import from
+     * @return A future that completes once the import operation is complete
+     */
+    public ListenableFuture<Void> importDataFrom(String dataStoreIdentifier) {
+        DataStore expected = config.getDataStore(dataStoreIdentifier);
+        if (expected == null) {
+            return Futures.immediateFailedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
+        }
+
+        // TODO: Actually suppress saves while running this -- maybe with a bulk setAll method?
+        return Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>, ListenableFuture<ImmutableOptionSubjectData>>() {
+            @Nullable
+            @Override
+            public ListenableFuture<ImmutableOptionSubjectData> apply(Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> input) {
+                return activeDataStore.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue());
+            }
+        })), new Function<List<ImmutableOptionSubjectData>, Void>() {
+            @Nullable
+            @Override
+            public Void apply(@Nullable List<ImmutableOptionSubjectData> input) {
+                return null;
+            }
+        });
     }
 
     public boolean hasDebugMode() {

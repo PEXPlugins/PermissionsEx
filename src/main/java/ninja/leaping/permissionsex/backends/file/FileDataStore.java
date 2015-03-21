@@ -18,6 +18,10 @@ package ninja.leaping.permissionsex.backends.file;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.base.Objects;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
@@ -44,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
@@ -116,7 +121,8 @@ public class FileDataStore extends AbstractDataStore {
 
         ConfigurationTransformation versionUpdater = ConfigurationTransformation.versionedBuilder()
                 .setVersionKey("schema-version")
-                .addVersion(2, ConfigurationTransformation.chain(tBuilder()
+                .addVersion(2, ConfigurationTransformation.chain(
+                        tBuilder()
                                 .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
                                     @Override
                                     public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
@@ -134,7 +140,7 @@ public class FileDataStore extends AbstractDataStore {
                                         ConfigurationNode entityNode = configurationNode.getParent().getParent();
                                         for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
                                             entityNode.getAppendedNode().setValue(ent.getValue())
-                                                    .getNode("context", "world").setValue(ent.getKey());
+                                                    .getNode(FileOptionSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
 
                                         }
                                         configurationNode.setValue(null);
@@ -157,7 +163,7 @@ public class FileDataStore extends AbstractDataStore {
                                             }
                                             permission = ConversionUtils.convertLegacyPermission(permission);
                                             if (permission.contains("*")) {
-                                                permissionsEx.getLogger().warn("The permission at " + Arrays.toString(configurationNode.getPath()) + " contains a now-illegal character '*'");
+                                                permissionsEx.getLogger().warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
                                             }
                                             configurationNode.getNode(permission).setValue(value);
                                         }
@@ -186,7 +192,32 @@ public class FileDataStore extends AbstractDataStore {
                                         return retPath;
                                     }
                                 })
-                                .build()))
+                                .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
+                                    @Override
+                                    public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
+                                        ConfigurationNode defaultNode = valueAtPath.getNode("options", "default");
+                                        System.out.println("Checking default node at " + Arrays.toString(defaultNode.getPath()));
+                                        if (!defaultNode.isVirtual()) {
+                                            if (defaultNode.getBoolean()) {
+                                                ConfigurationNode addToNode = null;
+                                                final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("defaults", "global");
+                                                for (ConfigurationNode node : defaultsParent.getChildrenList()) {
+                                                    if (Objects.equal(node.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue())) {
+                                                        addToNode = node;
+                                                        break;
+                                                    }
+                                                }
+                                                if (addToNode == null) {
+                                                    addToNode = defaultsParent.getAppendedNode();
+                                                }
+                                                addToNode.getNode("parents").getAppendedNode().setValue("group:" + valueAtPath.getParent().getKey());
+                                            }
+                                            defaultNode.setValue(null);
+                                        }
+                                        return null;
+                                    }
+                                }).build()
+                ))
                 .addVersion(1, ConfigurationTransformation.builder()
                         .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
                         .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, "worlds", WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
@@ -196,8 +227,12 @@ public class FileDataStore extends AbstractDataStore {
         versionUpdater.apply(permissionsConfig);
         int endVersion = permissionsConfig.getNode("schema-version").getInt();
         if (endVersion > startVersion) {
-            permissionsEx.getLogger().info(permissionsFile + " schema version updated from " + startVersion + " to " + endVersion);
-            save();
+            permissionsEx.getLogger().info("{} schema version updated from {} to {}", permissionsFile, startVersion, endVersion);
+            try {
+                save().get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new PermissionsLoadingException("While performing version upgrade", e);
+            }
         }
     }
 
@@ -209,6 +244,7 @@ public class FileDataStore extends AbstractDataStore {
         final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+                System.out.println("Saving permissions config!");
                 permissionsFileLoader.save(permissionsConfig);
                 return null;
             }
@@ -269,5 +305,22 @@ public class FileDataStore extends AbstractDataStore {
     @SuppressWarnings("unchecked")
     public Iterable<String> getAllIdentifiers(String type) {
         return (Set) this.permissionsConfig.getNode(typeToSection(type)).getChildrenMap().keySet();
+    }
+
+    @Override
+    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
+        return Iterables.concat(Iterables.transform(permissionsConfig.getChildrenMap().keySet(), new Function<Object, Iterable<Map.Entry<Map.Entry<String,String>,ImmutableOptionSubjectData>>>() {
+            @Nullable
+            @Override
+            public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> apply(@Nullable final Object type) {
+                return Iterables.transform(getAll(type.toString()), new Function<Map.Entry<String, ImmutableOptionSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>() {
+                    @Nullable
+                    @Override
+                    public Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> apply(Map.Entry<String, ImmutableOptionSubjectData> input2) {
+                        return Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue());
+                    }
+                });
+            }
+        }));
     }
 }

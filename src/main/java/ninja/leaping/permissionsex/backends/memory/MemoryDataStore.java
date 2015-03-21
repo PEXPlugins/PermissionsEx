@@ -101,4 +101,9 @@ public class MemoryDataStore extends AbstractDataStore {
             }
         });
     }
+
+    @Override
+    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
+        return Iterables.unmodifiableIterable(data.entrySet());
+    }
 }

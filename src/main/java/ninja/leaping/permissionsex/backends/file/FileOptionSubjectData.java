@@ -34,7 +34,7 @@ import java.util.Set;
 import static java.util.Map.Entry;
 
 public class FileOptionSubjectData extends MemoryOptionSubjectData {
-    private static final String KEY_CONTEXTS = "context";
+    static final String KEY_CONTEXTS = "contexts";
 
     static FileOptionSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException {
         ImmutableMap.Builder<Set<Entry<String, String>>, DataEntry> map = ImmutableMap.builder();
