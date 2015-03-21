@@ -196,7 +196,6 @@ public class FileDataStore extends AbstractDataStore {
                                     @Override
                                     public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
                                         ConfigurationNode defaultNode = valueAtPath.getNode("options", "default");
-                                        System.out.println("Checking default node at " + Arrays.toString(defaultNode.getPath()));
                                         if (!defaultNode.isVirtual()) {
                                             if (defaultNode.getBoolean()) {
                                                 ConfigurationNode addToNode = null;
@@ -244,7 +243,6 @@ public class FileDataStore extends AbstractDataStore {
         final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                System.out.println("Saving permissions config!");
                 permissionsFileLoader.save(permissionsConfig);
                 return null;
             }
