@@ -37,6 +37,7 @@ import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backends.AbstractDataStore;
 import ninja.leaping.permissionsex.backends.ConversionUtils;
+import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
@@ -49,6 +50,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
@@ -61,6 +64,7 @@ public class FileDataStore extends AbstractDataStore {
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
     private PermissionsEx manager;
+    private final AtomicInteger saveSuppressed = new AtomicInteger();
 
     public FileDataStore() {
         super(FACTORY);
@@ -240,15 +244,19 @@ public class FileDataStore extends AbstractDataStore {
     }
 
     private ListenableFuture<Void> save() {
-        final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                permissionsFileLoader.save(permissionsConfig);
-                return null;
-            }
-        });
-        manager.executeAsyncronously(ret);
-        return ret;
+        if (saveSuppressed.get() <= 0) {
+            final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    permissionsFileLoader.save(permissionsConfig);
+                    return null;
+                }
+            });
+            manager.executeAsyncronously(ret);
+            return ret;
+        } else {
+            return Futures.immediateFuture(null);
+        }
     }
 
     private String typeToSection(String type) {
@@ -269,8 +277,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             if (data == null) {
                 permissionsConfig.getNode(typeToSection(type), identifier).setValue(null);
-                save();
-                return null;
+                return Futures.transform(save(), Functions.<ImmutableOptionSubjectData>constant(null));
             }
 
             final FileOptionSubjectData fileData;
@@ -320,5 +327,17 @@ public class FileDataStore extends AbstractDataStore {
                 });
             }
         }));
+    }
+
+    @Override
+    public <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function) {
+        saveSuppressed.getAndIncrement();
+        T ret;
+        try {
+            ret = function.apply(this);
+        } finally {
+            saveSuppressed.getAndDecrement();
+        }
+        return Futures.transform(save(), Functions.constant(ret));
     }
 }

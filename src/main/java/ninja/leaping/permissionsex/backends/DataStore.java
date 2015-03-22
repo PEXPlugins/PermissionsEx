@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.backends;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
@@ -72,4 +74,12 @@ public interface DataStore {
      * @return An iterable containing all subjects
      */
     Iterable<Map.Entry<Map.Entry<String,String>,ImmutableOptionSubjectData>> getAll();
+
+    /**
+     * Perform a bulk operation on this data store. While this operation is in progress, all writes must be suppressed
+     * (meaning changes must be cached in memory until the operation is complete)
+     *
+     * @param function The function to call containing the operation.
+     */
+    <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function);
 }

@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -113,25 +114,33 @@ public class PermissionsEx implements ImplementationInterface {
      * @return A future that completes once the import operation is complete
      */
     public ListenableFuture<Void> importDataFrom(String dataStoreIdentifier) {
-        DataStore expected = config.getDataStore(dataStoreIdentifier);
+        final DataStore expected = config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Futures.immediateFailedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
 
-        // TODO: Actually suppress saves while running this -- maybe with a bulk setAll method?
-        return Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>, ListenableFuture<ImmutableOptionSubjectData>>() {
-            @Nullable
-            @Override
-            public ListenableFuture<ImmutableOptionSubjectData> apply(Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> input) {
-                return activeDataStore.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue());
-            }
-        })), new Function<List<ImmutableOptionSubjectData>, Void>() {
-            @Nullable
-            @Override
-            public Void apply(@Nullable List<ImmutableOptionSubjectData> input) {
-                return null;
-            }
-        });
+        try {
+            return activeDataStore.performBulkOperation(new Function<DataStore, ListenableFuture<Void>>() {
+                @Override
+                public ListenableFuture<Void> apply(@Nullable final DataStore store) {
+                    return Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>, ListenableFuture<ImmutableOptionSubjectData>>() {
+                        @Nullable
+                        @Override
+                        public ListenableFuture<ImmutableOptionSubjectData> apply(Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> input) {
+                            return store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue());
+                        }
+                    })), new Function<List<ImmutableOptionSubjectData>, Void>() {
+                        @Nullable
+                        @Override
+                        public Void apply(@Nullable List<ImmutableOptionSubjectData> input) {
+                            return null;
+                        }
+                    });
+                }
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            return Futures.immediateFailedFuture(e);
+        }
     }
 
     public boolean hasDebugMode() {

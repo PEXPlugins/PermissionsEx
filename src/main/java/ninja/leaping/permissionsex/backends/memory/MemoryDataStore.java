@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backends.AbstractDataStore;
+import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
@@ -105,5 +106,10 @@ public class MemoryDataStore extends AbstractDataStore {
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
         return Iterables.unmodifiableIterable(data.entrySet());
+    }
+
+    @Override
+    public <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function) {
+        return Futures.immediateFuture(function.apply(this));
     }
 }
