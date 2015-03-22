@@ -14,12 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.sponge;
+package ninja.leaping.permissionsex.data;
 
 import com.google.common.base.Preconditions;
-import org.spongepowered.api.service.permission.NodeTree;
-import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.context.Context;
+import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.List;
 import java.util.Map;
@@ -28,13 +26,13 @@ import java.util.Set;
 /**
  * Represents subject data that has had its hierarchy and contexts flattened
  */
-public class BakedSubjectData {
-    private final Set<Context> applicableContexts;
+class BakedSubjectData {
+    private final Set<Map.Entry<String, String>> applicableContexts;
     private final NodeTree permissions;
-    private final List<Subject> parents;
+    private final List<Map.Entry<String, String>> parents;
     private final Map<String, String> options;
 
-    public BakedSubjectData(Set<Context> applicableContexts, NodeTree permissions, List<Subject> parents, Map<String, String> options) {
+    public BakedSubjectData(Set<Map.Entry<String, String>> applicableContexts, NodeTree permissions, List<Map.Entry<String, String>> parents, Map<String, String> options) {
         Preconditions.checkNotNull(applicableContexts, "applicableContexts");
         Preconditions.checkNotNull(permissions, "permissions");
         Preconditions.checkNotNull(parents, "parents");
@@ -49,7 +47,7 @@ public class BakedSubjectData {
         return permissions;
     }
 
-    public List<Subject> getParents() {
+    public List<Map.Entry<String, String>> getParents() {
         return parents;
     }
 

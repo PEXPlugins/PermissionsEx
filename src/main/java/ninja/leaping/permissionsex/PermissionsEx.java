@@ -18,12 +18,17 @@ package ninja.leaping.permissionsex;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.backends.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -32,16 +37,25 @@ import org.slf4j.Logger;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 
 public class PermissionsEx implements ImplementationInterface {
+    private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("default", "global");
     private final PermissionsExConfiguration config;
     private final ImplementationInterface impl;
     private DataStore activeDataStore;
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
+    private final LoadingCache<Map.Entry<String, String>, CalculatedSubject> calculatedSubjects = CacheBuilder.newBuilder().maximumSize(512).build(new CacheLoader<Map.Entry<String, String>, CalculatedSubject>() {
+        @Override
+        public CalculatedSubject load(Map.Entry<String, String> key) throws Exception {
+            return new CalculatedSubject(key, PermissionsEx.this);
+        }
+    });
     private final MemoryDataStore transientData;
 
     public PermissionsEx(PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
@@ -78,6 +92,18 @@ public class PermissionsEx implements ImplementationInterface {
             }
         }
         return cache;
+    }
+
+    public void uncache(String type, String identifier) {
+        SubjectCache cache = subjectCaches.get(type);
+        if (cache != null) {
+            cache.invalidate(identifier);
+        }
+        cache = transientSubjectCaches.get(type);
+        if (cache != null) {
+            cache.invalidate(identifier);
+        }
+        calculatedSubjects.invalidate(Maps.immutableEntry(type, identifier));
     }
 
     /**
@@ -138,5 +164,26 @@ public class PermissionsEx implements ImplementationInterface {
 
     public PermissionsExConfiguration getConfig() {
         return this.config;
+    }
+
+    /**
+     * Get the identifier to access default subject data
+     *
+     * @return The identifier referring to default subject data
+     */
+    public Map.Entry<String, String> getDefaultIdentifier() {
+        return DEFAULT_IDENTIFIER;
+    }
+
+    public CalculatedSubject getCalculatedSubject(String type, String identifier) throws PermissionsLoadingException {
+        try {
+            return calculatedSubjects.get(Maps.immutableEntry(type, identifier));
+        } catch (ExecutionException e) {
+            throw new PermissionsLoadingException("While calculating subject data for " + type + ":" + identifier, e);
+        }
+    }
+
+    public Iterable<? extends CalculatedSubject> getActiveCalculatedSubjects() {
+        return Collections.unmodifiableCollection(calculatedSubjects.asMap().values());
     }
 }

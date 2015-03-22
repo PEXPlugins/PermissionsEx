@@ -75,8 +75,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
                 @Nullable
                 @Override
                 public Context apply(@Nullable Map.Entry<String, String> input) {
-                    final Object test = input;
-                    return test instanceof Context ? (Context) test: new Context(input.getKey(), input.getValue());
+                    return input instanceof Context ? (Context) input : new Context(input.getKey(), input.getValue());
                 }
             })), ent.getValue());
         }
@@ -201,7 +200,6 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
         return getParentsInternal(parSet(set));
     }
 
-
     public List<Subject> getParentsInternal(Set<Map.Entry<String, String>> set) {
         List<Subject> parents = parentsCache.get(set);
         if (parents == null) {
@@ -246,9 +244,5 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
 
     public ImmutableOptionSubjectData getCurrent() {
         return this.data;
-    }
-
-    public void addListener(Caching caching) {
-        cache.addListener(this.identifier, caching);
     }
 }

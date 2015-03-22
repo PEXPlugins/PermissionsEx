@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import ninja.leaping.permissionsex.util.Combinations;
 import org.junit.Test;
 
 import java.util.ArrayList;

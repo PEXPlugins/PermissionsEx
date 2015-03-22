@@ -10,7 +10,7 @@
   <url>https://github.com/PEXPlugins/PermissionsEx</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <version.configurate>1.0</version.configurate>
+    <version.configurate>1.0.1</version.configurate>
   </properties>
   <issueManagement>
     <system>GitHub</system>

@@ -41,13 +41,14 @@ import java.util.concurrent.ExecutionException;
 public class PEXSubjectCollection implements SubjectCollection {
     private final PermissionsExPlugin plugin;
     private final SubjectCache cache, transientCache;
-    private volatile Function<String, Optional<CommandSource>> commandSourceProvider;
 
     private final LoadingCache<String, PEXSubject> subjectCache = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubject>() {
         @Override
         public PEXSubject load(String identifier) throws Exception {
-            return new PEXSubject(identifier, new PEXOptionSubjectData(cache, identifier, plugin),
-                    new PEXOptionSubjectData(transientCache, identifier, plugin), PEXSubjectCollection.this);
+            return new PEXSubject(identifier, plugin.getManager().getCalculatedSubject(getIdentifier(), identifier),
+                    new PEXOptionSubjectData(cache, identifier, plugin),
+                    new PEXOptionSubjectData(transientCache, identifier, plugin),
+                    PEXSubjectCollection.this);
         }
     });
 
@@ -68,7 +69,6 @@ public class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public PEXSubject get(String identifier) {
-        System.out.println("Getting subject for " + identifier);
         try {
             return subjectCache.get(identifier);
         } catch (ExecutionException e) {
@@ -78,8 +78,7 @@ public class PEXSubjectCollection implements SubjectCollection {
 
     public void uncache(String identifier) {
         subjectCache.invalidate(identifier);
-        cache.invalidate(identifier);
-        transientCache.invalidate(identifier);
+        plugin.getManager().uncache(getIdentifier(), identifier);
     }
 
     @Override
@@ -118,7 +117,6 @@ public class PEXSubjectCollection implements SubjectCollection {
     public Optional<CommandSource> getCommandSource(String identifier) {
         final Function<String, Optional<CommandSource>> provider = plugin.getCommandSourceProvider(this);
         if (provider != null) {
-
             return provider.apply(identifier);
         } else {
             return Optional.absent();
