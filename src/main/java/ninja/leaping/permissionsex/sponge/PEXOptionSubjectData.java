@@ -44,16 +44,15 @@ import java.util.concurrent.ExecutionException;
  */
 public class PEXOptionSubjectData implements OptionSubjectData, Caching {
     private final PermissionsExPlugin plugin;
-    private final SubjectCache cache;
+    private volatile SubjectCache cache;
     private final String identifier;
     private volatile ImmutableOptionSubjectData data;
     private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
 
     public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
-        this.cache = cache;
         this.identifier = identifier;
-        clearCache(cache.getData(identifier, this));
+        updateCache(cache);
     }
 
     /**
@@ -99,6 +98,11 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
             this.data = newData;
             parentsCache.clear();
         }
+    }
+
+    void updateCache(SubjectCache newCache) throws ExecutionException {
+        this.cache = newCache;
+        clearCache(newCache.getData(identifier, this));
     }
 
     @Override

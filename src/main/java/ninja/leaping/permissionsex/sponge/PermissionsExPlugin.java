@@ -31,15 +31,12 @@ import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
-import ninja.leaping.permissionsex.config.DataStoreSerializer;
-import ninja.leaping.permissionsex.exception.PermissionsException;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -98,7 +95,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Inject private Game game;
 
     @Nullable
-    private PermissionsEx manager;
+    private volatile PermissionsEx manager;
     private PermissionsExConfiguration config;
     private ConfigurationNode rawConfig;
 
@@ -107,10 +104,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private final LoadingCache<String, PEXSubjectCollection> subjectCollections = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubjectCollection>() {
         @Override
         public PEXSubjectCollection load(String type) throws Exception {
-            if (manager == null) {
-                throw new PermissionsException("Manager is not currently loaded!");
-            }
-            return new PEXSubjectCollection(PermissionsExPlugin.this, manager.getSubjects(type), manager.getTransientSubjects(type));
+            return new PEXSubjectCollection(type, PermissionsExPlugin.this);
         }
     });
     private PEXSubject defaults;
@@ -138,15 +132,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
         }
-
-        // Registering the PEX service *must* occur after the plugin has been completely initialized
-        try {
-            services.setProvider(this, PermissionService.class, this);
-        } catch (ProviderExistsException e) {
-            manager.close();
-            throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
-        }
-
+        defaults = (PEXSubject) getSubjects("default").get().get("global");
         setCommandSourceProvider(getUserSubjects(), new Function<String, Optional<CommandSource>>() {
             @Override
             @SuppressWarnings("unchecked")
@@ -171,6 +157,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             }
         });
         registerContextCalculator(contextCalculator);
+
+        // Registering the PEX service *must* occur after the plugin has been completely initialized
+        try {
+            services.setProvider(this, PermissionService.class, this);
+        } catch (ProviderExistsException e) {
+            manager.close();
+            throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
+        }
 
         this.game.getCommandDispatcher().register(this, new CommandCallable() {
             @Override
@@ -279,12 +273,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             if (oldManager != null) {
                 oldManager.close();
             }
-            // TODO: Make subject collections persist past reloads
-            subjectCollections.invalidateAll();
-            defaults = (PEXSubject) getSubjects("default").get().get("global");
             contextCalculator.update(config);
+            for (PEXSubjectCollection collection : subjectCollections.asMap().values()) {
+                collection.updateCaches();
+            }
         } catch (IOException e) {
             throw new PEBKACException("Error while loading configuration: " + e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            throw new PermissionsLoadingException("Unable to reload!", e);
         }
     }
 

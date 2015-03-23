@@ -21,6 +21,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
+import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.sponge.option.OptionSubject;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
@@ -34,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.sponge.PEXOptionSubjectData.parSet;
 
@@ -44,15 +47,21 @@ public class PEXSubject implements OptionSubject {
     private final PEXSubjectCollection collection;
     private final PEXOptionSubjectData data;
     private final PEXOptionSubjectData transientData;
-    private final CalculatedSubject baked;
+    private volatile CalculatedSubject baked;
     private final String identifier;
 
-    public PEXSubject(String identifier, CalculatedSubject baked, PEXOptionSubjectData data, PEXOptionSubjectData transientData, PEXSubjectCollection collection) {
+    public PEXSubject(String identifier, PEXSubjectCollection collection) throws ExecutionException, PermissionsLoadingException {
         this.identifier = identifier;
-        this.data = data;
-        this.transientData = transientData;
-        this.baked = baked;
         this.collection = collection;
+        this.baked = collection.getCalculatedSubject(identifier);
+        this.data = new PEXOptionSubjectData(collection.getCache(), identifier, collection.getPlugin());
+        this.transientData = new PEXOptionSubjectData(collection.getTransientCache(), identifier, collection.getPlugin());
+    }
+
+    void update(CalculatedSubject subject, SubjectCache cache, SubjectCache transientCache) throws ExecutionException {
+        this.baked = subject;
+        this.data.updateCache(cache);
+        this.transientData.updateCache(transientCache);
     }
 
     @Override
