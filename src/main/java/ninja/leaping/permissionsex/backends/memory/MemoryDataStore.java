@@ -48,7 +48,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public void initialize(PermissionsEx core) throws PermissionsLoadingException {
+    protected void initializeInternal() {
 
     }
 
@@ -109,7 +109,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function) {
-        return Futures.immediateFuture(function.apply(this));
+    protected  <T> T performBulkOperationSync(Function<DataStore, T> function) {
+        return function.apply(this);
     }
 }

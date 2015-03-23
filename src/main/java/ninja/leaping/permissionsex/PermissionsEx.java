@@ -22,10 +22,16 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.sk89q.squirrelid.Profile;
+import com.sk89q.squirrelid.resolver.CacheForwardingService;
+import com.sk89q.squirrelid.resolver.HttpRepositoryService;
+import com.sk89q.squirrelid.resolver.ProfileService;
 import ninja.leaping.permissionsex.backends.DataStore;
 import ninja.leaping.permissionsex.backends.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
@@ -33,14 +39,19 @@ import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.util.PEXProfileCache;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -58,15 +69,104 @@ public class PermissionsEx implements ImplementationInterface {
         }
     });
     private final MemoryDataStore transientData;
+    private ProfileService uuidService;
 
-    public PermissionsEx(PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
+    public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.config = config;
         this.impl = impl;
+        this.uuidService = HttpRepositoryService.forMinecraft();
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
         getSubjects("group").cacheAll();
+        try {
+            InetAddress.getByName("api.mojang.com");
+            Futures.addCallback(this.activeDataStore.performBulkOperation(new Function<DataStore, Integer>() {
+                @Override
+                public Integer apply(final DataStore input) {
+                    Iterable<String> toConvert = Iterables.filter(input.getAllIdentifiers("user"), new Predicate<String>() {
+                        @Override
+                        public boolean apply(@Nullable String input) {
+                            if (input == null || input.length() != 36) {
+                                return true;
+                            }
+                            try {
+                                UUID.fromString(input);
+                                return false;
+                            } catch (IllegalArgumentException e) {
+                                return true;
+                            }
+                        }
+                    });
+                    if (toConvert.iterator().hasNext()) {
+                        getLogger().info("Trying to convert users stored by name to UUID");
+                    } else {
+                        return 0;
+                    }
+
+                    final ProfileService service = HttpRepositoryService.forMinecraft();
+                    try {
+                        final int[] converted = {0};
+                        service.findAllByName(toConvert, new Predicate<Profile>() {
+                            @Override
+                            public boolean apply(Profile profile) {
+                                final String newIdentifier = profile.getUniqueId().toString();
+                                if (input.isRegistered("user", newIdentifier)) {
+                                    getLogger().warn("Duplicate entry for {} found while converting to UUID", newIdentifier + "/" + profile.getName());
+                                    return false; // We already have a registered UUID, this is a duplicate.
+                                }
+
+                                String lookupName = profile.getName();
+                                if (!input.isRegistered("user", lookupName)) {
+                                    lookupName = lookupName.toLowerCase();
+                                }
+                                if (!input.isRegistered("user", lookupName)) {
+                                    return false;
+                                }
+                                converted[0]++;
+
+                                ImmutableOptionSubjectData oldData = input.getData("user", profile.getName(), null);
+                                final String finalLookupName = lookupName;
+                                Futures.addCallback(input.setData("user", newIdentifier, oldData.setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName())), new FutureCallback<ImmutableOptionSubjectData>() {
+                                    @Override
+                                    public void onSuccess(@Nullable ImmutableOptionSubjectData result) {
+                                        input.setData("user", finalLookupName, null);
+                                    }
+
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        t.printStackTrace();
+                                    }
+                                });
+                                return true;
+                            }
+                        });
+                        return converted[0];
+                    } catch (IOException | InterruptedException e) {
+                        getLogger().error("Error while fetching UUIDs for users", e);
+                        return 0;
+                    }
+                }
+            }), new FutureCallback<Integer>() {
+                @Override
+                public void onSuccess(@Nullable Integer result) {
+                    if (result != null && result > 0) {
+                        getLogger().info("{} users successfully converted from name to UUID!", result);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    getLogger().error("Error converting users to UUID", t);
+                }
+            });
+        } catch (UnknownHostException e) {
+            getLogger().warn("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).");
+        }
+
+        // Now that initialization is complete
+        uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects("user")));
     }
 
     public SubjectCache getSubjects(String type) {

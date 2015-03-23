@@ -77,7 +77,9 @@ public interface DataStore {
 
     /**
      * Perform a bulk operation on this data store. While this operation is in progress, all writes must be suppressed
-     * (meaning changes must be cached in memory until the operation is complete)
+     * (meaning changes must be cached in memory until the operation is complete).
+     *
+     * Bulk operations may be executed asynchronously.
      *
      * @param function The function to call containing the operation.
      */

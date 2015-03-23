@@ -23,9 +23,11 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
@@ -33,11 +35,13 @@ import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
  */
 public abstract class AbstractDataStore implements DataStore {
+    private PermissionsEx manager;
     private final Factory factory;
     private final CacheListenerHolder<Map.Entry<String, String>> listeners = new CacheListenerHolder<>();
 
@@ -47,6 +51,18 @@ public abstract class AbstractDataStore implements DataStore {
         }
         this.factory = factory;
     }
+
+    protected PermissionsEx getManager() {
+        return this.manager;
+    }
+
+    @Override
+    public final void initialize(PermissionsEx core) throws PermissionsLoadingException {
+        this.manager = core;
+        initializeInternal();
+    }
+
+    protected abstract void initializeInternal() throws PermissionsLoadingException;
 
     @Override
     public final ImmutableOptionSubjectData getData(String type, String identifier, Caching listener) {
@@ -74,12 +90,13 @@ public abstract class AbstractDataStore implements DataStore {
         Futures.addCallback(ret, new FutureCallback<ImmutableOptionSubjectData>() {
             @Override
             public void onSuccess(@Nullable ImmutableOptionSubjectData newData) {
-                listeners.call(lookupKey, newData);
+                if (newData != null) {
+                    listeners.call(lookupKey, newData);
+                }
             }
 
             @Override
             public void onFailure(Throwable throwable) {
-
             }
         });
         return ret;
@@ -100,6 +117,28 @@ public abstract class AbstractDataStore implements DataStore {
             }
         });
     }
+
+    @Override
+    public <T> ListenableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
+        final ListenableFutureTask<T> ret = ListenableFutureTask.create(new Callable<T>() {
+            @Override
+            public T call() throws Exception {
+                return performBulkOperationSync(function);
+            }
+        });
+        getManager().executeAsyncronously(ret);
+        return ret;
+    }
+
+    /**
+     * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.
+     *
+     * @param function The function to run
+     * @param <T> The
+     * @return
+     * @throws Exception
+     */
+    protected abstract <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception;
 
     @Override
     @SuppressWarnings("unchecked") // Corect types are verified in the constructor

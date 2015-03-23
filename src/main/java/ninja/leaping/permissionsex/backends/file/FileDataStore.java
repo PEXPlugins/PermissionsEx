@@ -21,7 +21,6 @@ import com.google.common.base.Functions;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
@@ -34,7 +33,6 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.transformation.TransformAction;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
-import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backends.AbstractDataStore;
 import ninja.leaping.permissionsex.backends.ConversionUtils;
 import ninja.leaping.permissionsex.backends.DataStore;
@@ -50,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
@@ -63,7 +60,6 @@ public class FileDataStore extends AbstractDataStore {
     private String file;
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
-    private PermissionsEx manager;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
 
     public FileDataStore() {
@@ -73,14 +69,13 @@ public class FileDataStore extends AbstractDataStore {
     private static ConfigurationTransformation.Builder tBuilder() {
         return ConfigurationTransformation.builder();
     }
-    public void initialize(final PermissionsEx permissionsEx) throws PermissionsLoadingException {
-        this.manager = permissionsEx;
-        File permissionsFile = new File(permissionsEx.getBaseDirectory(), file);
+    protected void initializeInternal() throws PermissionsLoadingException {
+        File permissionsFile = new File(getManager().getBaseDirectory(), file);
         if (file.endsWith(".yml")) {
             File legacyPermissionsFile = permissionsFile;
             ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder().setFile(permissionsFile).build();
             file = file.replace(".yml", ".conf");
-            permissionsFile = new File(permissionsEx.getBaseDirectory(), file);
+            permissionsFile = new File(getManager().getBaseDirectory(), file);
             permissionsFileLoader = HoconConfigurationLoader.builder().setFile(permissionsFile).build();
             try {
                 permissionsConfig = yamlLoader.load();
@@ -167,7 +162,7 @@ public class FileDataStore extends AbstractDataStore {
                                             }
                                             permission = ConversionUtils.convertLegacyPermission(permission);
                                             if (permission.contains("*")) {
-                                                permissionsEx.getLogger().warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
+                                                getManager().getLogger().warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
                                             }
                                             configurationNode.getNode(permission).setValue(value);
                                         }
@@ -230,7 +225,7 @@ public class FileDataStore extends AbstractDataStore {
         versionUpdater.apply(permissionsConfig);
         int endVersion = permissionsConfig.getNode("schema-version").getInt();
         if (endVersion > startVersion) {
-            permissionsEx.getLogger().info("{} schema version updated from {} to {}", permissionsFile, startVersion, endVersion);
+            getManager().getLogger().info("{} schema version updated from {} to {}", permissionsFile, startVersion, endVersion);
             try {
                 save().get();
             } catch (InterruptedException | ExecutionException e) {
@@ -248,14 +243,20 @@ public class FileDataStore extends AbstractDataStore {
             final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
-                    permissionsFileLoader.save(permissionsConfig);
+                    saveSync();
                     return null;
                 }
             });
-            manager.executeAsyncronously(ret);
+            getManager().executeAsyncronously(ret);
             return ret;
         } else {
             return Futures.immediateFuture(null);
+        }
+    }
+
+    private void saveSync() throws IOException {
+        if (saveSuppressed.get() <= 0) {
+            permissionsFileLoader.save(permissionsConfig);
         }
     }
 
@@ -330,7 +331,7 @@ public class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function) {
+    protected <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception {
         saveSuppressed.getAndIncrement();
         T ret;
         try {
@@ -338,6 +339,7 @@ public class FileDataStore extends AbstractDataStore {
         } finally {
             saveSuppressed.getAndDecrement();
         }
-        return Futures.transform(save(), Functions.constant(ret));
+        saveSync();
+        return ret;
     }
 }
