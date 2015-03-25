@@ -41,8 +41,8 @@ import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
-import org.spongepowered.api.event.entity.living.player.PlayerJoinEvent;
-import org.spongepowered.api.event.entity.living.player.PlayerQuitEvent;
+import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
+import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
@@ -57,6 +57,8 @@ import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
 import org.spongepowered.api.service.sql.SqlService;
+import org.spongepowered.api.text.Texts;
+import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
@@ -169,8 +171,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         this.game.getCommandDispatcher().register(this, new CommandCallable() {
             @Override
             public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
-                source.sendMessage("Your command ran!!");
-                source.sendMessage("Has permission: " + source.hasPermission("permissionsex.test.check"));
+                source.sendMessage(Texts.of("Your command ran!!"));
+                source.sendMessage(Texts.builder("Has permission: ").append(Texts.of(TextColors.GREEN, source.hasPermission("permissionsex.test.check"))).build());
                 return true;
             }
 
