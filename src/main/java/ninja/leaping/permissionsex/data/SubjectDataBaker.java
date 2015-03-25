@@ -25,6 +25,7 @@ import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,22 +60,28 @@ class SubjectDataBaker {
 
     public BakedSubjectData bake() throws ExecutionException {
         final Combinations<Entry<String, String>> combos = Combinations.of(activeContexts);
-        visitSubject(subject, combos);
-        visitSubject(pex.getDefaultIdentifier(), combos);
+        final Set<Map.Entry<String, String>> visitedSubjects = new HashSet<>();
+        visitSubject(subject, combos, visitedSubjects);
+        visitSubject(pex.getDefaultIdentifier(), combos, visitedSubjects);
 
         return new BakedSubjectData(activeContexts, NodeTree.of(combinedPermissions, defaultValue), ImmutableList.copyOf(parents), ImmutableMap.copyOf(options));
     }
 
-    private void visitSubject(Map.Entry<String, String> subject, Combinations<Entry<String, String>> contexts) throws ExecutionException {
+    private void visitSubject(Map.Entry<String, String> subject, Combinations<Entry<String, String>> contexts, Set<Map.Entry<String, String>> visitedSubjects) throws ExecutionException {
+        if (visitedSubjects.contains(subject)) {
+            pex.getLogger().warn("Potential circular inheritance found while traversing inheritance for " + this.subject + " when visiting " + subject);
+            return;
+        }
+        visitedSubjects.add(subject);
         ImmutableOptionSubjectData data = pex.getSubjects(subject.getKey()).getData(subject.getValue(), updateListener), transientData = pex.getTransientSubjects(subject.getKey()).getData(subject.getValue(), updateListener);
         for (Set<Entry<String, String>> combo : contexts) {
             visitSingle(transientData, combo);
             for (Entry<String, String> parent : transientData.getParents(combo)) {
-                visitSubject(parent, contexts);
+                visitSubject(parent, contexts, visitedSubjects);
             }
             visitSingle(data, combo);
             for (Entry<String, String> parent : data.getParents(combo)) {
-                visitSubject(parent, contexts);
+                visitSubject(parent, contexts, visitedSubjects);
             }
         }
     }
