@@ -170,6 +170,14 @@
                   <pattern>org.yaml</pattern>
                   <shadedPattern>ninja.leaping.permissionsex.libs.org.yaml</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.json</pattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.org.json</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.sk89q.squirrelid</pattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.com.sk89q.squirrelid</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
