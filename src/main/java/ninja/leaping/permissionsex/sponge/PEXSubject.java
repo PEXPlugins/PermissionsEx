@@ -170,7 +170,7 @@ public class PEXSubject implements OptionSubject {
             @Nullable
             @Override
             public Subject apply(Map.Entry<String, String> input) {
-                return collection.getPlugin().getSubjects(input.getKey()).get().get(input.getValue());
+                return collection.getPlugin().getSubjects(input.getKey()).get(input.getValue());
             }
         });
     }

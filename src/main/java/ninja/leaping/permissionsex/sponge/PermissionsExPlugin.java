@@ -23,6 +23,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
@@ -38,6 +39,7 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
@@ -57,8 +59,8 @@ import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
 import org.spongepowered.api.service.sql.SqlService;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
-import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
@@ -111,6 +113,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     });
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
+    private final SpongeMessageFormatter messageFactory = new SpongeMessageFormatter(this);
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
@@ -134,7 +137,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
         }
-        defaults = (PEXSubject) getSubjects("default").get().get("global");
+        defaults = getSubjects(PermissionService.SUBJECTS_SYSTEM).get("default");
+
         setCommandSourceProvider(getUserSubjects(), new Function<String, Optional<CommandSource>>() {
             @Override
             @SuppressWarnings("unchecked")
@@ -158,6 +162,21 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
             }
         });
+
+        setCommandSourceProvider(getSubjects(PermissionService.SUBJECTS_SYSTEM), new Function<String, Optional<CommandSource>>() {
+            @Nullable
+            @Override
+            public Optional<CommandSource> apply(@Nullable String input) {
+                switch (input) {
+                    case "Server":
+                        break;
+                    case "RCON":
+                        break;
+                }
+                return Optional.absent();
+            }
+        });
+
         registerContextCalculator(contextCalculator);
 
         // Registering the PEX service *must* occur after the plugin has been completely initialized
@@ -168,11 +187,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
         }
 
+        // Dummy command
         this.game.getCommandDispatcher().register(this, new CommandCallable() {
             @Override
             public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
+                source.sendMessage(messageFactory.combined("You are: ", messageFactory.subject(Maps.immutableEntry(source.getContainingCollection().getIdentifier(), source.getIdentifier()))));
                 source.sendMessage(Texts.of("Your command ran!!"));
-                source.sendMessage(Texts.builder("Has permission: ").append(Texts.of(TextColors.GREEN, source.hasPermission("permissionsex.test.check"))).build());
+                source.sendMessage(messageFactory.combined("Has permission: ", messageFactory.booleanVal(source.hasPermission("permissionsex.test.check"))));
                 return true;
             }
 
@@ -329,13 +350,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public Optional<SubjectCollection> getSubjects(String identifier) {
+    public PEXSubjectCollection getSubjects(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
         try {
-            return Optional.<SubjectCollection>fromNullable(subjectCollections.get(identifier));
+            return subjectCollections.get(identifier);
         } catch (ExecutionException e) {
             logger.error("Unable to get subject collection for type " + identifier, e);
-            return Optional.absent();
+            return null;
         }
     }
 
@@ -383,8 +404,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         scheduler.ref().get().runTask(PermissionsExPlugin.this, run);
     }
 
-    Function<String, Optional<CommandSource>> getCommandSourceProvider(PEXSubjectCollection subjectCollection) {
-        return commandSourceProviders.get(subjectCollection.getIdentifier());
+    Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {
+        return commandSourceProviders.get(subjectCollection);
     }
 
     public void setCommandSourceProvider(PEXSubjectCollection subjectCollection, Function<String, Optional<CommandSource>> provider) {
@@ -399,5 +420,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 return input.getActiveSubjects();
             }
         }));
+    }
+
+    MessageFormatter<Text> getMessageFormatter() {
+        return messageFactory;
     }
 }

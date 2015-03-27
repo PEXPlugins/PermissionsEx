@@ -198,7 +198,7 @@ public class FileDataStore extends AbstractDataStore {
                                         if (!defaultNode.isVirtual()) {
                                             if (defaultNode.getBoolean()) {
                                                 ConfigurationNode addToNode = null;
-                                                final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("defaults", "global");
+                                                final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
                                                 for (ConfigurationNode node : defaultsParent.getChildrenList()) {
                                                     if (Objects.equal(node.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue())) {
                                                         addToNode = node;

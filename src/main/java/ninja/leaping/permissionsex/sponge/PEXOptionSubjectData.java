@@ -214,7 +214,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
                 } else {
                     parents = new ArrayList<>(rawParents.size());
                     for (Map.Entry<String, String> ent : rawParents) {
-                        parents.add(plugin.getSubjects(ent.getKey()).get().get(ent.getValue()));
+                        parents.add(plugin.getSubjects(ent.getKey()).get(ent.getValue()));
                     }
                 }
                 List<Subject> existingParents = parentsCache.putIfAbsent(set, parents);

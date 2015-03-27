@@ -131,7 +131,7 @@ public class PEXSubjectCollection implements SubjectCollection {
     }
 
     public Optional<CommandSource> getCommandSource(String identifier) {
-        final Function<String, Optional<CommandSource>> provider = plugin.getCommandSourceProvider(this);
+        final Function<String, Optional<CommandSource>> provider = plugin.getCommandSourceProvider(getIdentifier());
         if (provider != null) {
             return provider.apply(identifier);
         } else {
