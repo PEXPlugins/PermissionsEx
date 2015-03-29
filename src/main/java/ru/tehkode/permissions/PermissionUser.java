@@ -18,6 +18,7 @@
  */
 package ru.tehkode.permissions;
 
+import com.google.common.collect.Maps;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
@@ -25,6 +26,7 @@ import ru.tehkode.permissions.exceptions.RankingException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 /**
  * @author code
@@ -575,6 +577,7 @@ public class PermissionUser extends PermissionEntity {
 
 	protected void updateTimedGroups() {
 		long nextExpiration = Long.MAX_VALUE;
+		final Set<Map.Entry<String, String>> removeGroups = new HashSet<>();
 		for (Map.Entry<String, Map<String, String>> world : getAllOptions().entrySet()) {
 			for (Map.Entry<String, String> entry : world.getValue().entrySet()) {
 				final String group = getTimedGroupName(entry.getKey());
@@ -582,13 +585,20 @@ public class PermissionUser extends PermissionEntity {
 					continue;
 				}
 				long groupLifetime = Long.parseLong(entry.getValue());
-				if (groupLifetime > 0 && groupLifetime < System.currentTimeMillis() / 1000) { // check for expiration
-					this.setOption("group-" + group + "-until", null, world.getKey()); // remove option
-					this.removeGroup(group, world.getKey()); // remove membership
-					// @TODO Make notification of player about expired memebership
+				if (groupLifetime > 0 && groupLifetime <= System.currentTimeMillis() / 1000) { // check for expiration
+					removeGroups.add(Maps.immutableEntry(group, world.getKey()));
 				} else {
 					nextExpiration = Math.min(nextExpiration, groupLifetime);
 				}
+			}
+		}
+
+		for (Map.Entry<String, String> ent : removeGroups) {
+			this.setOption("group-" + ent.getKey() + "-until", null, ent.getValue()); // remove option
+			this.removeGroup(ent.getKey(), ent.getValue()); // remove membership
+			if (isDebug()) {
+				manager.getLogger().log(Level.INFO, ent.getValue() != null ? "Timed group '{0}' in world '{1}' expired from user {2}/{3}"
+						: "Timed group {0} expired from user {2}/{3}", new Object[]{ent.getKey(), ent.getValue(), getIdentifier(), getName()});
 			}
 		}
 
@@ -602,9 +612,7 @@ public class PermissionUser extends PermissionEntity {
 		if (!option.startsWith("group-") && !option.endsWith("-until")) {
 			return null;
 		}
-		String groupName = option.substring("group-".length(), option.length() - "-until".length());
-		System.out.println(groupName);
-		return groupName;
+		return option.substring("group-".length(), option.length() - "-until".length());
 	}
 
 	// Compatibility methods
