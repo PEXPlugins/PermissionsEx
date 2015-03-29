@@ -1,6 +1,7 @@
 package ru.tehkode.permissions.bukkit.regexperms;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.bukkit.permissions.Permission;
@@ -125,6 +126,6 @@ public class PermissionList extends HashMap<String, Permission> {
 	}
 
 	public Collection<Map.Entry<String, Boolean>> getParents(String permission) {
-		return childParentMapping.get(permission.toLowerCase());
+		return ImmutableSet.copyOf(childParentMapping.get(permission.toLowerCase()));
 	}
 }
