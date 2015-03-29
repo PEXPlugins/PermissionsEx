@@ -217,8 +217,10 @@ public class ErrorReport {
 		Builder builder = builder(error);
 
 		PermissionsEx pexPlugin = (PermissionsEx) PermissionsEx.getPlugin();
-		builder.addHeading("Basic info").
-				addText("**Server version:** " + Bukkit.getBukkitVersion() + " *running on* " + Bukkit.getVersion());
+		builder.addHeading("Basic info")
+				.addText("**Server version:** " + Bukkit.getBukkitVersion() + " *running on* " + Bukkit.getVersion())
+				.addText("**Online mode:** " + Bukkit.getOnlineMode())
+				.addText("**Java version:** " + Runtime.class.getPackage().getImplementationVendor() + " - " + Runtime.class.getPackage().getImplementationTitle() + " - " + Runtime.class.getPackage().getImplementationVersion());
 
 		if (pexPlugin != null) {
 			Plugin[] plugins = pexPlugin.getServer().getPluginManager().getPlugins();

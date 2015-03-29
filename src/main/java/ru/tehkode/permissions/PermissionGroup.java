@@ -55,7 +55,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 
 	public int getWeight() {
 		if (this.dirtyWeight) {
-			this.weight = this.getOptionInteger("weight", null, 0);
+			this.weight = this.getOwnOptionInteger("weight", null, 0);
 			this.dirtyWeight = false;
 		}
 
@@ -108,7 +108,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @return Name of rank ladder as String
 	 */
 	public String getRankLadder() {
-		return this.getOption("rank-ladder", "", "default");
+		return this.getOwnOption("rank-ladder", "", "default");
 	}
 
 	/**
@@ -267,6 +267,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	}
 
 	protected void clearCache() {
+		this.dirtyWeight = true;
 		for (PermissionUser user : this.getActiveUsers()) {
 			user.clearCache();
 		}

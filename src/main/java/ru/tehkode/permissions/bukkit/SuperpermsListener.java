@@ -207,12 +207,18 @@ public class SuperpermsListener implements Listener {
 
 				case PERMISSIONS_CHANGED:
 				case TIMEDPERMISSION_EXPIRED:
+					if (user.isDebug()) {
+						plugin.getLogger().info("Updating superperms permissions for player " + p.getName());
+					}
 					updatePlayerPermission(getCreateWrapper(p, ""), user, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
 
 				case OPTIONS_CHANGED:
 				case INFO_CHANGED:
+					if (user.isDebug()) {
+						plugin.getLogger().info("Updating superperms metadata for player " + p.getName());
+					}
 					updatePlayerMetadata(getCreateWrapper(p, ".options"), user, p.getWorld().getName());
 					p.recalculatePermissions();
 					break;
