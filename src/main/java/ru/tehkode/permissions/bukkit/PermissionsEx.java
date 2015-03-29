@@ -20,7 +20,6 @@ package ru.tehkode.permissions.bukkit;
 
 import java.lang.reflect.Field;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -116,7 +115,7 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 
 		public boolean isDay() {
 			final Calendar cal = Calendar.getInstance();
-			return cal.get(GregorianCalendar.MONTH) == Calendar.APRIL && cal.get(GregorianCalendar.DAY_OF_MONTH) == 1;
+			return cal.get(Calendar.MONTH) == Calendar.APRIL && cal.get(Calendar.DAY_OF_MONTH) == 1;
 		}
 
 		@Override
