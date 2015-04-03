@@ -62,7 +62,9 @@ class SubjectDataBaker {
         final Combinations<Entry<String, String>> combos = Combinations.of(activeContexts);
         final Set<Map.Entry<String, String>> visitedSubjects = new HashSet<>();
         visitSubject(subject, combos, visitedSubjects);
-        visitSubject(pex.getDefaultIdentifier(), combos, visitedSubjects);
+        if (!subject.equals(pex.getDefaultIdentifier())) {
+            visitSubject(pex.getDefaultIdentifier(), combos, visitedSubjects);
+        }
 
         return new BakedSubjectData(activeContexts, NodeTree.of(combinedPermissions, defaultValue), ImmutableList.copyOf(parents), ImmutableMap.copyOf(options));
     }

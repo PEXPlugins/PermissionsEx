@@ -72,7 +72,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
         } else {
             valueColor = TextColors.GRAY;
         }
-        return Texts.builder(permission).color(valueColor).append(Texts.of("=" + value)).build();
+        return Texts.of(Texts.of(valueColor, permission), Texts.of("=" + value));
     }
 
     @Override

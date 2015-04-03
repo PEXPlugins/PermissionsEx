@@ -57,7 +57,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
 public class PermissionsEx implements ImplementationInterface {
-    private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("default", "global");
+    private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
     private final PermissionsExConfiguration config;
     private final ImplementationInterface impl;
     private DataStore activeDataStore;

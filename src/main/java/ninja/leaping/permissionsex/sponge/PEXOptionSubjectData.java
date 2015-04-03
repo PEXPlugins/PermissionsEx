@@ -132,7 +132,6 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
 
     @Override
     public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-
         return Maps.transformValues(tKeys(data.getAllPermissions()), new Function<Map<String, Integer>, Map<String, Boolean>>() {
             @Nullable
             @Override

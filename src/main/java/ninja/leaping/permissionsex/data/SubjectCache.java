@@ -24,12 +24,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backends.DataStore;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 public class SubjectCache {
     private final String type;
     private final DataStore dataStore;
     private final LoadingCache<String, ImmutableOptionSubjectData> cache;
+    private final Map<String, Caching> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String> listeners = new CacheListenerHolder<>();
 
     public SubjectCache(final String type, final DataStore dataStore) {
@@ -65,6 +67,8 @@ public class SubjectCache {
         Preconditions.checkNotNull(identifier, "identifier");
 
         cache.invalidate(identifier);
+        cacheHolders.remove(identifier);
+        listeners.removeAll(identifier);
     }
 
     public void cacheAll() {
@@ -87,13 +91,15 @@ public class SubjectCache {
     }
 
     private Caching clearListener(final String name) {
-        return new Caching() {
+        Caching ret = new Caching() {
             @Override
             public void clearCache(ImmutableOptionSubjectData newData) {
                 cache.put(name, newData);
                 listeners.call(name, newData);
             }
         };
+        cacheHolders.put(name, ret);
+        return ret;
     }
 
     public void addListener(String identifier, Caching listener) {

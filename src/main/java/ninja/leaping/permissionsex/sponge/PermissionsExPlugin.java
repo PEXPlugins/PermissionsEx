@@ -43,7 +43,6 @@ import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.Server;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
@@ -57,11 +56,13 @@ import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
+import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
+import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
@@ -79,6 +80,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -156,7 +158,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
         }
-        defaults = getSubjects(PermissionService.SUBJECTS_SYSTEM).get("default");
+        defaults = getSubjects(manager.getDefaultIdentifier().getKey()).get(manager.getDefaultIdentifier().getValue());
 
         setCommandSourceProvider(getUserSubjects(), new Function<String, Optional<CommandSource>>() {
             @Override
@@ -209,6 +211,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
                 source.sendMessage(messageFactory.combined("You are: ", messageFactory.subject(Maps.immutableEntry(source.getContainingCollection().getIdentifier(), source.getIdentifier()))));
                 source.sendMessage(Texts.of(translated("Your command ran!!")));
+                for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
+                    source.sendMessage(Texts.of(Texts.of(TextStyles.BOLD, "Default in contexts: "), entry.getKey().toString()));
+                    for (Map.Entry<String, Boolean> ent : entry.getValue().entrySet()) {
+                        source.sendMessage(messageFactory.permission(ent.getKey(), ent.getValue() ? 1 : -1));
+                    }
+
+                }
                 source.sendMessage(messageFactory.combined("Has permission: ", messageFactory.booleanVal(source.hasPermission("permissionsex.test.check"))));
                 return true;
             }

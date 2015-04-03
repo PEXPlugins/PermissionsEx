@@ -63,4 +63,8 @@ public class CacheListenerHolder<Key> {
 
         getListeners(key).remove(listener);
     }
+
+    public void removeAll(Key key) {
+        listeners.remove(key);
+    }
 }
