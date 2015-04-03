@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import gnu.gettext.GettextResource;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -75,7 +76,9 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -115,6 +118,22 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
     private final SpongeMessageFormatter messageFactory = new SpongeMessageFormatter(this);
 
+    private static final ResourceBundle.Control CLASS_CONTROL = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_CLASS);
+
+    private ResourceBundle getBundle(Locale locale) {
+        ResourceBundle ret = ResourceBundle.getBundle("ninja.leaping.permissionsex.locale.Messages", locale, CLASS_CONTROL);
+        System.out.println("Bundle locale: " + ret.getLocale());
+        return ret;
+    }
+
+    public String translated(String key) {
+        return GettextResource.gettext(getBundle(Locale.getDefault()), key);
+    }
+
+    public String ntranslated(String key, String keyPl, long count) {
+        return GettextResource.ngettext(getBundle(Locale.getDefault()), key, keyPl, count);
+    }
+
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
         logger.info("Pre-init of " + PomData.NAME + " v" + PomData.VERSION);
@@ -153,12 +172,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 } catch (IllegalArgumentException ex) {
                     return Optional.absent();
                 }
-                Optional<Server> server = game.getServer();
-                if (!server.isPresent()) {
-                    return Optional.absent();
-                }
+
                 // Yeah, java generics are stupid
-                return (Optional) server.get().getPlayer(uid);
+                return (Optional) game.getServer().getPlayer(uid);
 
             }
         });
@@ -192,7 +208,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             @Override
             public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
                 source.sendMessage(messageFactory.combined("You are: ", messageFactory.subject(Maps.immutableEntry(source.getContainingCollection().getIdentifier(), source.getIdentifier()))));
-                source.sendMessage(Texts.of("Your command ran!!"));
+                source.sendMessage(Texts.of(translated("Your command ran!!")));
                 source.sendMessage(messageFactory.combined("Has permission: ", messageFactory.booleanVal(source.hasPermission("permissionsex.test.check"))));
                 return true;
             }
@@ -203,17 +219,17 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             }
 
             @Override
-            public Optional<String> getShortDescription() {
-                return Optional.absent();
+            public String getShortDescription(CommandSource commandSource) {
+                return "Test command to do basic testing";
             }
 
             @Override
-            public Optional<String> getHelp() {
-                return Optional.absent();
+            public Text getHelp(CommandSource commandSource) {
+                return Texts.of();
             }
 
             @Override
-            public String getUsage() {
+            public String getUsage(CommandSource commandSource) {
                 return "Useless";
             }
 
