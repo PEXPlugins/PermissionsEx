@@ -16,7 +16,7 @@
  */
 package ninja.leaping.permissionsex;
 
-import ninja.leaping.permissionsex.util.command.Command;
+import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
@@ -58,5 +58,5 @@ public interface ImplementationInterface {
      *
      * @param command The command to execute
      */
-    public void registerCommand(Command command);
+    public void registerCommand(CommandSpec command);
 }

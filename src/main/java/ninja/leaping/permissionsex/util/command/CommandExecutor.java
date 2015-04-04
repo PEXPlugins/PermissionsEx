@@ -16,23 +16,17 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import ninja.leaping.permissionsex.util.Translatable;
-
-import java.util.Map;
-import java.util.Set;
-
 /**
- * Created by zml on 20.03.15.
+ * Interface containing the method directing how a certain command will be executed
  */
-public interface Commander<TextType> {
-    public String getName();
-    public boolean hasPermission(String permission);
-    public Set<Map.Entry<String, String>> getActiveContexts();
-    public MessageFormatter<TextType> fmt();
-    public void msg(Translatable text);
-    public void debug(Translatable text);
-    public void error(Translatable text);
-    public void msg(TextType text);
-    public void debug(TextType text);
-    public void error(TextType text);
+public interface CommandExecutor {
+    /**
+     * Callback for the execution of a command
+     *
+     * @param src The commander who is executing this command
+     * @param args The parsed command arguments for this command
+     * @param <TextType> The type of text this Commander wants
+     * @throws CommandException If a user-facing error occurs while executing this command
+     */
+    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException;
 }

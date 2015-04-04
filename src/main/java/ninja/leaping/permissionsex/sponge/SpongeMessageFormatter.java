@@ -96,8 +96,27 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
     }
 
     @Override
-    public Text translated(Translatable tr, Object... elements) {
-        return Texts.of(new FixedTranslation(tr.translate(locale)), elements);
+    public Text translated(Translatable tr) {
+        boolean unwrapArgs = false;
+        for (Object arg: tr.getArgs()) {
+            if (arg instanceof Translatable) {
+                unwrapArgs = true;
+                break;
+            }
+        }
+        Object[] args = tr.getArgs();
+        if (unwrapArgs) {
+            Object[] oldArgs = args;
+            args = new Object[oldArgs.length];
+            for (int i = 0; i < oldArgs.length; ++i) {
+                Object arg = oldArgs[i];
+                if (arg instanceof Translatable) {
+                    arg = translated(tr);
+                }
+                args[i] = arg;
+            }
+        }
+        return Texts.of(new FixedTranslation(tr.translate(locale)), args);
     }
 
     static class FixedTranslation implements Translation {

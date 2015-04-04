@@ -16,8 +16,51 @@
  */
 package ninja.leaping.permissionsex.util;
 
+import java.util.Arrays;
 import java.util.Locale;
 
-public interface Translatable {
-    public String translate(Locale locale);
+public abstract class Translatable {
+    private final Object[] args;
+
+    protected Translatable(Object... args) {
+        this.args = args;
+    }
+
+    public Object[] getArgs() {
+        return this.args;
+    }
+
+    public abstract String getUntranslated();
+
+    public abstract String translate(Locale locale);
+
+    // TODO: Does it make sense to have this?
+    private static boolean hasTranslatableArgs(Object... args) {
+        for (Object arg : args) {
+            if (arg instanceof Translatable) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String translateFormatted(Locale locale) {
+        Object[] translatedArgs = new Object[args.length];
+        for (int i = 0; i < this.args.length; ++i) {
+            Object arg = this.args[i];
+            if (arg instanceof Translatable) {
+                arg = ((Translatable) arg).translate(locale);
+            }
+            translatedArgs[i] = arg;
+        }
+        return String.format(locale, translate(locale), translatedArgs);
+    }
+
+    @Override
+    public String toString() {
+        return "Translatable{" +
+                "untranslated=" + getUntranslated() +
+                "args=" + Arrays.toString(args) +
+                '}';
+    }
 }

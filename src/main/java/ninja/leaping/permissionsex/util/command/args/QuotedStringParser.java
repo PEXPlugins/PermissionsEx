@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.util.command.args;
 
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.command.CommandSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,7 @@ import static ninja.leaping.permissionsex.util.Translations.tr;
  * ARGS := ((UNQUOTED_ARG | QUOTED_ARG) WHITESPACE+)+
  */
 public class QuotedStringParser {
+    private final boolean lenient;
     private final CommandSpec spec;
     private final String buffer;
     private int index = -1;
@@ -49,17 +51,18 @@ public class QuotedStringParser {
      * @return A list of argument strings parsed as specified in the pseudo-grammar in the class documentation
      * @throws ArgumentParseException
      */
-    public static CommandArgs parseFrom(String args, CommandSpec spec) throws ArgumentParseException {
-        return new QuotedStringParser(args, spec).parse();
+    public static CommandArgs parseFrom(String args, CommandSpec spec, boolean lenient) throws ArgumentParseException {
+        return new QuotedStringParser(args, spec, lenient).parse();
     }
 
     public static CommandArgs parseFrom(String args) throws ArgumentParseException {
-        return new QuotedStringParser(args, CommandSpec.builder().build()).parse();
+        return new QuotedStringParser(args, CommandSpec.builder().build(), false).parse();
     }
 
-    private QuotedStringParser(String args, CommandSpec spec) {
+    private QuotedStringParser(String args, CommandSpec spec, boolean lenient) {
         this.buffer = args;
         this.spec = spec;
+        this.lenient = lenient;
     }
 
     public CommandArgs parse() throws ArgumentParseException {
@@ -70,7 +73,7 @@ public class QuotedStringParser {
         List<CommandArgs.SingleArg> returnedArgs = new ArrayList<>(buffer.length() / 8);
         skipWhiteSpace();
         while (hasMore()) {
-            int startIdx = index;
+            int startIdx = index + 1;
             String arg = nextArg();
             returnedArgs.add(new CommandArgs.SingleArg(arg, startIdx, index));
             skipWhiteSpace();
@@ -97,8 +100,8 @@ public class QuotedStringParser {
         return buffer.codePointAt(++index);
     }
 
-    public ArgumentParseException createException(Translatable message, Object... formatArgs) {
-        return new ArgumentParseException(message, buffer, index, formatArgs);
+    public ArgumentParseException createException(Translatable message) {
+        return new ArgumentParseException(message, buffer, index);
     }
 
     // Parsing methods
@@ -128,13 +131,13 @@ public class QuotedStringParser {
         // Consume the start quotation character
         int nextCodePoint = next();
         if (nextCodePoint != startQuotation) {
-            throw createException(tr("Actual next character '%c' did not match expected quotation character '%c'"),
-                    nextCodePoint, startQuotation);
+            throw createException(tr("Actual next character '%c' did not match expected quotation character '%c'",
+                    nextCodePoint, startQuotation));
         }
 
         while (true) {
             if (!hasMore()) {
-                if (spec.parsesLeniently()) {
+                if (lenient) {
                     return;
                 } else {
                     throw createException(tr("Unterminated quoted string found")); //, new StringBuilder(1).appendCodePoint(nextCodePoint).toString());

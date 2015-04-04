@@ -16,22 +16,19 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import com.google.common.base.Function;
 import ninja.leaping.permissionsex.exception.PermissionsException;
 import ninja.leaping.permissionsex.util.Translatable;
 
-import java.util.Locale;
-
 /**
- * Created by zml on 03.04.15.
+ * Exception relating to the execution of a command
  */
 public class CommandException extends PermissionsException {
 
-    public CommandException(Translatable message, Object... args) {
-        super(message, args);
+    public CommandException(Translatable message) {
+        super(message);
     }
 
-    public CommandException(Translatable message, Throwable cause, Object... args) {
-        super(message, cause, args);
+    public CommandException(Translatable message, Throwable cause) {
+        super(message, cause);
     }
 }

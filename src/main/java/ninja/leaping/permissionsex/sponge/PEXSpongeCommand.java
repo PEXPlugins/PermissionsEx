@@ -16,7 +16,7 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import ninja.leaping.permissionsex.util.command.Command;
+import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
@@ -29,10 +29,10 @@ import java.util.List;
  * Wrapper class between PEX commands and the Sponge command class
  */
 public class PEXSpongeCommand implements CommandCallable {
-    private final Command command;
+    private final CommandSpec command;
     private final PermissionsExPlugin plugin;
 
-    public PEXSpongeCommand(Command command, PermissionsExPlugin plugin) {
+    public PEXSpongeCommand(CommandSpec command, PermissionsExPlugin plugin) {
         this.command = command;
         this.plugin = plugin;
     }
@@ -45,6 +45,11 @@ public class PEXSpongeCommand implements CommandCallable {
 
     @Override
     public boolean testPermission(CommandSource commandSource) {
+        try {
+            command.checkPermission(new SpongeCommander(plugin, commandSource));
+        } catch (ninja.leaping.permissionsex.util.command.CommandException e) {
+            return false;
+        }
         return true;
     }
 
@@ -55,7 +60,7 @@ public class PEXSpongeCommand implements CommandCallable {
 
     @Override
     public Text getHelp(CommandSource commandSource) {
-        return command.getSpec().getExtendedDescription(new SpongeCommander(plugin, commandSource));
+        return command.getExtendedDescription(new SpongeCommander(plugin, commandSource));
     }
 
     @Override
@@ -64,7 +69,10 @@ public class PEXSpongeCommand implements CommandCallable {
     }
 
     @Override
-    public List<String> getSuggestions(CommandSource commandSource, String s) throws CommandException {
-        return Collections.emptyList();
+    public List<String> getSuggestions(CommandSource commandSource, String commandLine) throws CommandException {
+        System.out.println("Requesting tab completions for " + command.getAliases() + " " + commandLine);
+        List<String> ret = command.tabComplete(new SpongeCommander(plugin, commandSource), commandLine);
+        System.out.println("Final tab completions were: " + ret);
+        return ret;
     }
 }

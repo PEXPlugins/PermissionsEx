@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.collect.ImmutableList;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
-import ninja.leaping.permissionsex.util.command.args.CommandSpec;
 import ninja.leaping.permissionsex.util.command.args.QuotedStringParser;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,13 +25,12 @@ import org.junit.rules.ExpectedException;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import static org.junit.Assert.*;
 
 public class QuotedStringParserTest {
     private static List<String> parseFrom(String args) throws ArgumentParseException {
-        return QuotedStringParser.parseFrom(args, CommandSpec.builder().build()).getAll(); // Fixed locale for tests
+        return QuotedStringParser.parseFrom(args, CommandSpec.builder().build(), false).getAll(); // Fixed locale for tests
     }
 
     @Rule

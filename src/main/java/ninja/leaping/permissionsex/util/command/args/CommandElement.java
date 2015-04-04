@@ -24,10 +24,29 @@ import java.util.List;
 /**
  * Represents a command argument element
  */
-public interface CommandElement {
-    public void parse(CommandArgs source, CommandContext context) throws ArgumentParseException;
+public abstract class CommandElement {
+    private final String key;
 
-    public List<String> tabComplete(CommandArgs source, CommandContext context);
+    protected CommandElement(String key) {
+        this.key = key;
+    }
 
-    public <TextType> TextType getUsage(Commander<TextType> context);
+    public String getKey() {
+        return this.key;
+    }
+
+    public void parse(CommandArgs args, CommandContext context)  throws ArgumentParseException {
+        Object val = parseValue(args);
+        if (this.key != null && val != null) {
+            context.putArg(this.key, val);
+        }
+    }
+
+    protected abstract Object parseValue(CommandArgs args) throws ArgumentParseException;
+
+    public abstract <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context);
+
+    public <TextType> TextType getUsage(Commander<TextType> src) {
+        return src.fmt().combined(getKey());
+    }
 }

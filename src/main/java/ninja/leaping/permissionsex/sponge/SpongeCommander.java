@@ -16,13 +16,11 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import ninja.leaping.permissionsex.util.command.Commander;
 import org.spongepowered.api.entity.player.Player;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.Texts;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.command.CommandSource;
 
@@ -67,27 +65,34 @@ public class SpongeCommander implements Commander<Text> {
     }
 
     @Override
-    public void msg(Translatable message, Object... args) {
-        commandSource.sendMessage(
-                Texts.builder(new SpongeMessageFormatter.FixedTranslation(message.translate(getLocale())), args)
-                .color(TextColors.DARK_AQUA)
-                .build());
+    public void msg(Translatable message) {
+        msg(fmt().translated(message));
     }
 
 
     @Override
-    public void debug(Translatable message, Object... args) {
-        commandSource.sendMessage(
-                Texts.builder(new SpongeMessageFormatter.FixedTranslation(message.translate(getLocale())), args)
-                        .color(TextColors.GRAY)
-                        .build());
+    public void debug(Translatable message) {
+        debug(fmt().translated(message));
     }
 
     @Override
-    public void error(Translatable message, Object... args) {
-        commandSource.sendMessage(
-                Texts.builder(new SpongeMessageFormatter.FixedTranslation(message.translate(getLocale())), args)
-                        .color(TextColors.RED)
-                        .build());
+    public void error(Translatable message) {
+        error(fmt().translated(message));
+    }
+
+    @Override
+    public void msg(Text text) {
+        commandSource.sendMessage(text.builder().color(TextColors.DARK_AQUA).build());
+
+    }
+
+    @Override
+    public void debug(Text text) {
+        commandSource.sendMessage(text.builder().color(TextColors.GRAY).build());
+    }
+
+    @Override
+    public void error(Text text) {
+        commandSource.sendMessage(text.builder().color(TextColors.RED).build());
     }
 }

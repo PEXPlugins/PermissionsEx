@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -30,21 +29,25 @@ public class ArgumentParseException extends CommandException {
     private final String source;
     private final int position;
 
-    public ArgumentParseException(Translatable message, String source, int position, Object... args) {
-        super(message, args);
+    public ArgumentParseException(Translatable message, String source, int position) {
+        super(message);
         this.source = source;
         this.position = position;
     }
 
-    public ArgumentParseException(Translatable message, Throwable cause, String source, int position, Object... args) {
-        super(message, cause, args);
+    public ArgumentParseException(Translatable message, Throwable cause, String source, int position) {
+        super(message, cause);
         this.source = source;
         this.position = position;
     }
 
     @Override
     public String getLocalizedMessage(Locale locale) {
-        return super.getLocalizedMessage(locale) + '\n' + getAnnotatedPosition();
+        if (this.source == null || this.source.isEmpty()) {
+            return super.getLocalizedMessage(locale);
+        } else {
+            return super.getLocalizedMessage(locale) + '\n' + getAnnotatedPosition();
+        }
     }
 
     public String getAnnotatedPosition() {
@@ -64,5 +67,13 @@ public class ArgumentParseException extends CommandException {
             }
         }
         return source + "\n" + Strings.repeat(" ", position) + "^";
+    }
+
+    public int getPosition() {
+        return this.position;
+    }
+
+    public String getSourceString() {
+        return this.source;
     }
 }

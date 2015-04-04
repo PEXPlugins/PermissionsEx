@@ -40,7 +40,7 @@ import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
-import ninja.leaping.permissionsex.util.command.Command;
+import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
@@ -275,7 +275,7 @@ public class PermissionsEx implements ImplementationInterface {
     }
 
     @Override
-    public void registerCommand(Command command) {
+    public void registerCommand(CommandSpec command) {
         impl.registerCommand(command);
     }
 
@@ -296,7 +296,7 @@ public class PermissionsEx implements ImplementationInterface {
         try {
             return calculatedSubjects.get(Maps.immutableEntry(type, identifier));
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(tr("While calculating subject data for %s:%s"), e, type, identifier);
+            throw new PermissionsLoadingException(tr("While calculating subject data for %s:%s", type, identifier), e);
         }
     }
 

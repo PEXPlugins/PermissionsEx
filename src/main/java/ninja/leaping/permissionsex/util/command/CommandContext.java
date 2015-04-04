@@ -16,11 +16,10 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import ninja.leaping.permissionsex.util.command.args.CommandSpec;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * Context that a command is executed in
@@ -28,12 +27,16 @@ import java.util.Map;
 public class CommandContext {
     private final CommandSpec spec;
     private final String rawInput;
-    private final Map<String, Object> parsedArgs;
+    private final Multimap<String, Object> parsedArgs;
 
     public CommandContext(CommandSpec spec, String rawInput) {
         this.spec = spec;
         this.rawInput = rawInput;
-        this.parsedArgs = new HashMap<>();
+        this.parsedArgs = HashMultimap.create();
+    }
+
+    public String getRawInput() {
+        return this.rawInput;
     }
 
     public CommandSpec getSpec() {
@@ -41,8 +44,18 @@ public class CommandContext {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getArg(String key) {
-        return (T) parsedArgs.get(key);
+    public <T> Collection<T> getAll(String key) {
+        return (Collection) parsedArgs.get(key);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getOne(String key) {
+        Collection<Object> values = parsedArgs.get(key);
+        if (values.size() != 1) {
+            return null;
+        } else {
+            return (T) values.iterator().next();
+        }
     }
 
     public void putArg(String key, Object value) {

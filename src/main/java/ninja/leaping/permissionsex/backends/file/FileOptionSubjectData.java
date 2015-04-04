@@ -56,6 +56,7 @@ public class FileOptionSubjectData extends MemoryOptionSubjectData {
         super(contexts);
     }
 
+    @Override
     protected MemoryOptionSubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
         return new FileOptionSubjectData(contexts);
     }

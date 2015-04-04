@@ -14,35 +14,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.util.command.args;
+package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.collect.ImmutableList;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
 import ninja.leaping.permissionsex.util.Translatable;
-import ninja.leaping.permissionsex.util.command.CommandContext;
-import ninja.leaping.permissionsex.util.command.Commander;
+import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
+import ninja.leaping.permissionsex.util.command.args.CommandArgs;
+import ninja.leaping.permissionsex.util.command.args.CommandElement;
+import ninja.leaping.permissionsex.util.command.args.QuotedStringParser;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+
+import static ninja.leaping.permissionsex.util.Translations.tr;
 
 /**
  * Specification for how command arguments should be parsed
  */
 public class CommandSpec {
     private final CommandElement args;
+    private final CommandExecutor executor;
     private final List<String> aliases;
     private final Translatable description;
     private final Translatable extendedDescription;
+    private final String permission;
     private final boolean rawArgs;
     private final boolean parseQuotedArgs;
     private final boolean parseLenient;
     private final OptionParser flags;
 
-    private CommandSpec(CommandElement args, List<String> aliases, Translatable description, Translatable extendedDescription, boolean rawArgs, boolean parseQuotedArgs, boolean parseLenient, OptionParser flags) {
+    private CommandSpec(CommandElement args, CommandExecutor executor, List<String> aliases, Translatable description,
+                        Translatable extendedDescription, String permission, boolean rawArgs, boolean parseQuotedArgs,
+                        boolean parseLenient, OptionParser flags) {
         this.args = args;
+        this.executor = executor;
+        this.permission = permission;
         this.aliases = aliases;
         this.description = description;
         this.extendedDescription = extendedDescription;
@@ -61,6 +69,7 @@ public class CommandSpec {
         private List<String> aliases;
         private Translatable description, extendedDescription;
         private String permission;
+        private CommandExecutor executor;
         private boolean parseQuotedArgs = true, parseLenient = false, rawArgs = false;
         private OptionParser parser = defaultParser();
 
@@ -85,12 +94,31 @@ public class CommandSpec {
         }
 
         /**
-         * Set the permission that will be checked before using this command
+         * Set the permission that will be checked before using this command. May be null.
+         *
          * @param permission The permission to check
          * @return this
          */
         public Builder setPermission(String permission) {
             this.permission = permission;
+            return this;
+        }
+
+        /**
+         * Set the callback that will handle this command's execution
+         *
+         * @param executor The executor that will be called with this command's parsed arguments
+         * @return this
+         */
+        public Builder setExecutor(CommandExecutor executor) {
+            this.executor = executor;
+            return this;
+        }
+
+        public Builder setChildren(CommandSpec... children) {
+            final CommandElement usage = ChildCommands.args(children);
+            setArguments(usage);
+            setExecutor(ChildCommands.executor(usage));
             return this;
         }
 
@@ -183,7 +211,7 @@ public class CommandSpec {
         }
 
         public CommandSpec build() {
-            return new CommandSpec(args, aliases, description, extendedDescription, rawArgs, parseQuotedArgs, parseLenient, parser);
+            return new CommandSpec(args, executor, aliases, description, extendedDescription, permission, rawArgs, parseQuotedArgs, parseLenient, parser);
         }
     }
 
@@ -195,17 +223,39 @@ public class CommandSpec {
         return parseQuotedArgs;
     }
 
-    public boolean parsesLeniently() {
-        return parseLenient;
+
+    public <TextType> void process(Commander<TextType> commander, String arguments) {
+        if (executor == null) {
+            return;
+        }
+
+        try {
+            checkPermission(commander);
+            CommandContext args = parse(arguments);
+            executor.execute(commander, args);
+        } catch (CommandException ex) {
+            commander.error(ex.getTranslatableMessage());
+            commander.error(tr("Usage: %s", getUsage(commander)));
+        } catch (Throwable t) {
+            commander.error(tr("Error occurred while executing command: %s", String.valueOf(t.getMessage())));
+            t.printStackTrace();
+        }
+    }
+
+    public <TextType> void checkPermission(Commander<TextType> commander) throws CommandException {
+        if (this.permission != null && !commander.hasPermission(permission)) {
+            throw new CommandException(tr("You do not have permission to use this command!"));
+        }
     }
 
     public CommandContext parse(String commandLine) throws ArgumentParseException {
-        CommandArgs args = argsFor(commandLine);
-        return parse(args);
+        CommandArgs args = argsFor(commandLine, parseLenient);
+        CommandContext context = new CommandContext(this, commandLine);
+        parse(args, context);
+        return context;
     }
 
-    public CommandContext parse(CommandArgs args) throws ArgumentParseException {
-        CommandContext context = new CommandContext(this, args.getRaw());
+    void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
         List<String> strArgs = args.getAll();
         OptionSet options = flags.parse(strArgs.toArray(new String[strArgs.size()]));
         List<?> deFlaggedArgs = options.nonOptionArguments();
@@ -216,16 +266,51 @@ public class CommandSpec {
         }*/
 
         this.args.parse(args, context);
-        return context;
+        if (args.hasNext()) {
+            args.next();
+            throw args.createError(tr("Too many arguments!"));
+        }
+    }
+
+    public <TextType> List<String> tabComplete(Commander<TextType> src, String commandLine) {
+        try {
+            checkPermission(src);
+        } catch (CommandException ex) {
+            System.out.println("Did not have permission: " + permission);
+            return Collections.emptyList();
+        }
+        try {
+            CommandArgs args = argsFor(commandLine, true);
+            CommandContext context = new CommandContext(this, commandLine);
+            System.out.println("Parser args & stuff");
+            return tabComplete(src, args, context);
+        } catch (ArgumentParseException e) {
+            src.debug(e.getTranslatableMessage());
+            return Collections.emptyList();
+        }
 
     }
 
-    private CommandArgs argsFor(String commandline) throws ArgumentParseException {
+    <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        System.out.println("Tabcompleting with args");
+        return this.args.tabComplete(src, args, context);
+    }
+
+    /**
+     * Get the active executor for this command. Generally not a good idea to call this directly,
+     * unless you are handling arg parsing specially
+     *
+     * @return The active executor for this command
+     */
+    public CommandExecutor getExecutor() {
+        return executor;
+    }
+
+    private CommandArgs argsFor(String commandline, boolean lenient) throws ArgumentParseException {
         if (isRawArgs()) {
-            return new CommandArgs(commandline, Collections.singletonList(new CommandArgs.SingleArg(commandline, 0, commandline.length() - 1)));
-            //return new CommandArgs(new OptionSet())
+            return CommandArgs.forRawArg(commandline);
         } else {
-            return QuotedStringParser.parseFrom(commandline, this);
+            return QuotedStringParser.parseFrom(commandline, this, lenient);
         }
     }
 
@@ -234,15 +319,26 @@ public class CommandSpec {
     }
 
     public <TextType> TextType getDescription(Commander<TextType> commander) {
-        return commander.fmt().translated(this.description);
+        return this.description == null ? null : commander.fmt().translated(this.description);
     }
 
     public <TextType> TextType getUsage(Commander<TextType> commander) {
         return commander.fmt().combined("/", getAliases().get(0), " ", args.getUsage(commander));
     }
 
-    public <TextType> TextType getExtendedDescription(Commander<TextType> commander) {
-        return commander.fmt().combined(getDescription(commander), '\n', getUsage(commander), '\n', commander.fmt().translated(this.extendedDescription));
+    public <TextType> TextType getExtendedDescription(Commander<TextType> src) {
+        TextType desc = getDescription(src);
+        if (desc == null) {
+            if (this.extendedDescription == null) {
+                return getUsage(src);
+            } else {
+                return src.fmt().combined(getUsage(src), '\n', src.fmt().translated(this.extendedDescription));
+            }
+        } else if (this.extendedDescription == null) {
+            return src.fmt().combined(desc, '\n', getUsage(src));
+        } else {
+            return src.fmt().combined(desc, '\n', getUsage(src), '\n', src.fmt().translated(this.extendedDescription));
+        }
     }
 }
 

@@ -54,6 +54,7 @@ public class Combinations<T> implements Iterable<Set<T>> {
             j = currentLength - 1;
         }
 
+        @Override
         protected Set<T> computeNext() {
             if (currentLength < 0) {
                 return endOfData();

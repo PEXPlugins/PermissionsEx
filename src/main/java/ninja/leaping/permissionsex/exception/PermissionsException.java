@@ -16,37 +16,20 @@
  */
 package ninja.leaping.permissionsex.exception;
 
-import com.google.common.base.Function;
 import ninja.leaping.permissionsex.util.Translatable;
 
-import javax.annotation.Nullable;
 import java.util.Locale;
 
 public class PermissionsException extends Exception {
     private final Translatable message;
-    private final Object[] args;
-    private final boolean translatableArgs;
 
-    private static boolean hasTranslatableArgs(Object... args) {
-        for (Object arg : args) {
-            if (arg instanceof Translatable) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public PermissionsException(Translatable message, Object... args) {
+    public PermissionsException(Translatable message) {
         this.message = message;
-        this.args = args;
-        translatableArgs = hasTranslatableArgs(args);
     }
 
-    public PermissionsException(Translatable message, Throwable cause, Object... args) {
+    public PermissionsException(Translatable message, Throwable cause) {
         super(cause);
         this.message = message;
-        this.args = args;
-        translatableArgs = hasTranslatableArgs(args);
     }
 
     @Override
@@ -60,27 +43,10 @@ public class PermissionsException extends Exception {
     }
 
     public Translatable getTranslatableMessage() {
-        return new Translatable() {
-            @Override
-            public String translate(Locale locale) {
-                return getLocalizedMessage(locale);
-            }
-        };
+        return message;
     }
 
     public String getLocalizedMessage(Locale locale) {
-        if (translatableArgs) {
-            Object[] translatedArgs = new Object[args.length];
-            for (int i = 0; i < this.args.length; ++i) {
-                Object arg = this.args[i];
-                if (arg instanceof Function) {
-                    arg = ((Translatable) arg).translate(locale);
-                }
-                translatedArgs[i] = arg;
-            }
-            return String.format(locale, message.translate(locale), translatedArgs);
-        } else {
-            return String.format(locale, message.translate(locale), args);
-        }
+        return message.translateFormatted(locale);
     }
 }

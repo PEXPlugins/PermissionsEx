@@ -149,7 +149,7 @@ public abstract class AbstractDataStore implements DataStore {
         try {
             ((ObjectMapper) factory.mapper).bind(this).serialize(node);
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(tr("Error while serializing backend %s"), e, node.getKey());
+            throw new PermissionsLoadingException(tr("Error while serializing backend %s", node.getKey()), e);
         }
         return factory.type;
     }
@@ -176,7 +176,7 @@ public abstract class AbstractDataStore implements DataStore {
             try {
                 return mapper.bindToNew().populate(config);
             } catch (ObjectMappingException e) {
-                throw new PermissionsLoadingException(tr("Error while deserializing backend %s"), e, identifier);
+                throw new PermissionsLoadingException(tr("Error while deserializing backend %s", identifier), e);
             }
         }
     }

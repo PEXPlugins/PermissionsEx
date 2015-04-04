@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -85,7 +86,7 @@ public class FileDataStore extends AbstractDataStore {
                 permissionsFileLoader.save(permissionsConfig);
                 legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".bukkit-backup"));
             } catch (IOException e) {
-                throw new PermissionsLoadingException(tr("While loading legacy YML permissions from %s"), e, permissionsFile);
+                throw new PermissionsLoadingException(tr("While loading legacy YML permissions from %s", permissionsFile), e);
             }
         } else {
             permissionsFileLoader = HoconConfigurationLoader.builder().setFile(permissionsFile).build();
@@ -94,7 +95,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             permissionsConfig = permissionsFileLoader.load(ConfigurationOptions.defaults());//.setMapFactory(MapFactories.unordered()));
         } catch (IOException e) {
-            throw new PermissionsLoadingException(tr("While loading permissions file from "), e, permissionsFile);
+            throw new PermissionsLoadingException(tr("While loading permissions file from %s", permissionsFile), e);
         }
 
         final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {
@@ -228,7 +229,7 @@ public class FileDataStore extends AbstractDataStore {
         versionUpdater.apply(permissionsConfig);
         int endVersion = permissionsConfig.getNode("schema-version").getInt();
         if (endVersion > startVersion) {
-            getManager().getLogger().info("{} schema version updated from {} to {}", permissionsFile, startVersion, endVersion);
+            getManager().getLogger().info(tr("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
             try {
                 save().get();
             } catch (InterruptedException | ExecutionException e) {
@@ -273,7 +274,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             return FileOptionSubjectData.fromNode(permissionsConfig.getNode(typeToSection(type), identifier));
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(tr("While deserializing subject data for %s:"), e, identifier);
+            throw new PermissionsLoadingException(tr("While deserializing subject data for %s:", identifier), e);
         }
     }
 

@@ -16,11 +16,8 @@
  */
 package ninja.leaping.permissionsex.util;
 
-import com.google.common.base.Function;
 import gnu.gettext.GettextResource;
 
-import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -62,15 +59,19 @@ public class Translations {
 
     private static ResourceBundle getBundle(Locale locale) {
         try {
-            ResourceBundle ret = ResourceBundle.getBundle("ninja.leaping.permissionsex.locale.Messages", locale, CLASS_CONTROL);
-            return ret;
+            return ResourceBundle.getBundle("ninja.leaping.permissionsex.locale.Messages", locale, CLASS_CONTROL);
         } catch (MissingResourceException ex) {
             return EMPTY_RESOURCE_BUNDLE;
         }
     }
 
-    public static Translatable tr(final String key) {
-        return new Translatable() {
+    public static Translatable tr(final String key, Object... args) {
+        return new Translatable(args) {
+            @Override
+            public String getUntranslated() {
+                return key;
+            }
+
             @Override
             public String translate(Locale input) {
                 return GettextResource.gettext(getBundle(input), key);
@@ -78,8 +79,13 @@ public class Translations {
         };
     }
 
-    public static Translatable ntr(final String key, final String keyPl, final long count) {
-        return new Translatable() {
+    public static Translatable ntr(final String key, final String keyPl, final long count, Object... args) {
+        return new Translatable(args) {
+            @Override
+            public String getUntranslated() {
+                return count != 1 ? keyPl : key;
+            }
+
             @Override
             public String translate(Locale input) {
                 return GettextResource.ngettext(getBundle(input), key, keyPl, count);

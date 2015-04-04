@@ -38,5 +38,5 @@ public interface MessageFormatter<TextType> {
      */
     public TextType combined(Object... elements);
 
-    public TextType translated(Translatable tr, Object... elements);
+    public TextType translated(Translatable tr);
 }

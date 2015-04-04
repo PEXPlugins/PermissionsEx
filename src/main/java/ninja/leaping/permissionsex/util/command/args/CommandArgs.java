@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 import static ninja.leaping.permissionsex.util.Translations.tr;
@@ -62,8 +63,8 @@ public class CommandArgs {
         return hasNext() ? Optional.of(args.get(++index).getValue()) : Optional.<String>absent();
     }
 
-    public ArgumentParseException createError(Translatable message, Object... formatArgs) {
-        return new ArgumentParseException(message, rawInput, index < 0 ? 0 : args.get(index).getStartIdx(), formatArgs);
+    public ArgumentParseException createError(Translatable message) {
+        return new ArgumentParseException(message, rawInput, index < 0 ? 0 : args.get(index).getStartIdx());
     }
 
     public List<String> getAll() {
@@ -95,6 +96,10 @@ public class CommandArgs {
 
     public String getRaw() {
         return rawInput;
+    }
+
+    public static CommandArgs forRawArg(String commandline) {
+        return new CommandArgs(commandline, Collections.singletonList(new CommandArgs.SingleArg(commandline, 0, commandline.length() - 1)));
     }
 
     static class SingleArg {

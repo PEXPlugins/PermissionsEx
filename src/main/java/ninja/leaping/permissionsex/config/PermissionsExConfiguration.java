@@ -78,7 +78,7 @@ public class PermissionsExConfiguration {
         }
 
         if (!backends.containsKey(defaultBackend)) {
-            throw new PEBKACException(tr("Default backend % is not an available backend! Choices are: %s"), defaultBackend, backends.keySet());
+            throw new PEBKACException(tr("Default backend % is not an available backend! Choices are: %s", defaultBackend, backends.keySet()));
         }
     }
 }
