@@ -49,7 +49,7 @@ public class SqlDataStore extends AbstractDataStore {
         try (Connection conn = sql.getConnection()) {
 
         } catch (SQLException e) {
-            //throw new PermissionsLoadingException(tr("Unable to get data for user %s:%s"), e, type, identifier);
+            //throw new PermissionsLoadingException(_("Unable to get data for user %s:%s"), e, type, identifier);
         }
         return null;
     }

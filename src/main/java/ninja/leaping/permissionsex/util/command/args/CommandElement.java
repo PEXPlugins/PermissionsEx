@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
+import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
@@ -25,20 +26,20 @@ import java.util.List;
  * Represents a command argument element
  */
 public abstract class CommandElement {
-    private final String key;
+    private final Translatable key;
 
-    protected CommandElement(String key) {
+    protected CommandElement(Translatable key) {
         this.key = key;
     }
 
-    public String getKey() {
+    public Translatable getKey() {
         return this.key;
     }
 
     public void parse(CommandArgs args, CommandContext context)  throws ArgumentParseException {
         Object val = parseValue(args);
         if (this.key != null && val != null) {
-            context.putArg(this.key, val);
+            context.putArg(this.key.getUntranslated(), val);
         }
     }
 
@@ -47,6 +48,6 @@ public abstract class CommandElement {
     public abstract <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context);
 
     public <TextType> TextType getUsage(Commander<TextType> src) {
-        return src.fmt().combined(getKey());
+        return src.fmt().translated(getKey());
     }
 }

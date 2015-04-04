@@ -52,7 +52,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
 
 
 public class FileDataStore extends AbstractDataStore {
@@ -86,7 +86,7 @@ public class FileDataStore extends AbstractDataStore {
                 permissionsFileLoader.save(permissionsConfig);
                 legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".bukkit-backup"));
             } catch (IOException e) {
-                throw new PermissionsLoadingException(tr("While loading legacy YML permissions from %s", permissionsFile), e);
+                throw new PermissionsLoadingException(_("While loading legacy YML permissions from %s", permissionsFile), e);
             }
         } else {
             permissionsFileLoader = HoconConfigurationLoader.builder().setFile(permissionsFile).build();
@@ -95,7 +95,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             permissionsConfig = permissionsFileLoader.load(ConfigurationOptions.defaults());//.setMapFactory(MapFactories.unordered()));
         } catch (IOException e) {
-            throw new PermissionsLoadingException(tr("While loading permissions file from %s", permissionsFile), e);
+            throw new PermissionsLoadingException(_("While loading permissions file from %s", permissionsFile), e);
         }
 
         final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {
@@ -229,11 +229,11 @@ public class FileDataStore extends AbstractDataStore {
         versionUpdater.apply(permissionsConfig);
         int endVersion = permissionsConfig.getNode("schema-version").getInt();
         if (endVersion > startVersion) {
-            getManager().getLogger().info(tr("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
+            getManager().getLogger().info(_("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
             try {
                 save().get();
             } catch (InterruptedException | ExecutionException e) {
-                throw new PermissionsLoadingException(tr("While performing version upgrade"), e);
+                throw new PermissionsLoadingException(_("While performing version upgrade"), e);
             }
         }
     }
@@ -274,7 +274,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             return FileOptionSubjectData.fromNode(permissionsConfig.getNode(typeToSection(type), identifier));
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(tr("While deserializing subject data for %s:", identifier), e);
+            throw new PermissionsLoadingException(_("While deserializing subject data for %s:", identifier), e);
         }
     }
 

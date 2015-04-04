@@ -261,7 +261,7 @@
         </executions>
         <configuration>
           <poDirectory>src/main/po</poDirectory>
-          <keywords>-ktr -kntr:1,2 -kdtr -ktranslated</keywords>
+          <keywords>-k_ -k_n:1,2 -kdtr -ktranslated</keywords>
           <targetBundle>ninja.leaping.permissionsex.locale.Messages</targetBundle>
         </configuration>
       </plugin>
@@ -322,7 +322,7 @@
     <dependency>
       <groupId>net.sf.jopt-simple</groupId>
       <artifactId>jopt-simple</artifactId>
-      <version>4.6</version>
+      <version>4.5</version>
     </dependency>
   </dependencies>
   <repositories>

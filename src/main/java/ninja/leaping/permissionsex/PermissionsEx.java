@@ -40,6 +40,7 @@ import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
+import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 
@@ -51,13 +52,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations.*;
 
 public class PermissionsEx implements ImplementationInterface {
     private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
@@ -73,6 +75,10 @@ public class PermissionsEx implements ImplementationInterface {
     });
     private final MemoryDataStore transientData;
     private ProfileService uuidService;
+
+    private static String fLog(Translatable trans) {
+        return trans.translateFormatted(Locale.getDefault());
+    }
 
     public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.config = config;
@@ -103,7 +109,7 @@ public class PermissionsEx implements ImplementationInterface {
                         }
                     });
                     if (toConvert.iterator().hasNext()) {
-                        getLogger().info("Trying to convert users stored by name to UUID");
+                        getLogger().info(fLog(_("Trying to convert users stored by name to UUID")));
                     } else {
                         return 0;
                     }
@@ -116,7 +122,7 @@ public class PermissionsEx implements ImplementationInterface {
                             public boolean apply(Profile profile) {
                                 final String newIdentifier = profile.getUniqueId().toString();
                                 if (input.isRegistered("user", newIdentifier)) {
-                                    getLogger().warn("Duplicate entry for {} found while converting to UUID", newIdentifier + "/" + profile.getName());
+                                    getLogger().warn(fLog(_("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName())));
                                     return false; // We already have a registered UUID, this is a duplicate.
                                 }
 
@@ -147,7 +153,7 @@ public class PermissionsEx implements ImplementationInterface {
                         });
                         return converted[0];
                     } catch (IOException | InterruptedException e) {
-                        getLogger().error("Error while fetching UUIDs for users", e);
+                        getLogger().error(fLog(_("Error while fetching UUIDs for users")), e);
                         return 0;
                     }
                 }
@@ -155,17 +161,19 @@ public class PermissionsEx implements ImplementationInterface {
                 @Override
                 public void onSuccess(@Nullable Integer result) {
                     if (result != null && result > 0) {
-                        getLogger().info("{} users successfully converted from name to UUID!", result);
+                        getLogger().info(fLog(_n("%s user successfully converted from name to UUID",
+                                                "%s users successfully converted from name to UUID!",
+                                                result, result)));
                     }
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    getLogger().error("Error converting users to UUID", t);
+                    getLogger().error(fLog(_("Error converting users to UUID")), t);
                 }
             });
         } catch (UnknownHostException e) {
-            getLogger().warn("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).");
+            getLogger().warn(fLog(_("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).")));
         }
 
         // Now that initialization is complete
@@ -296,7 +304,7 @@ public class PermissionsEx implements ImplementationInterface {
         try {
             return calculatedSubjects.get(Maps.immutableEntry(type, identifier));
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(tr("While calculating subject data for %s:%s", type, identifier), e);
+            throw new PermissionsLoadingException(_("While calculating subject data for %s:%s", type, identifier), e);
         }
     }
 

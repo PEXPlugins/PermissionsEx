@@ -32,7 +32,7 @@ import org.spongepowered.api.util.command.CommandSource;
 import java.util.Locale;
 import java.util.Map;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
 
 /**
  * Factory to create formatted elements of messages
@@ -59,12 +59,12 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         return Texts.builder().append(Texts.builder(subject.getKey()).style(TextStyles.BOLD).build(), Texts.of(" "),
-                nameText).onHover(TextActions.showText(translated(tr("Click to view more info")))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue())).build();
+                nameText).onHover(TextActions.showText(translated(_("Click to view more info")))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue())).build();
     }
 
     @Override
     public Text booleanVal(boolean val) {
-        return (val ? translated(tr("true")) : translated(tr("false"))).builder().color(val ? TextColors.GREEN : TextColors.RED).build();
+        return (val ? translated(_("true")) : translated(_("false"))).builder().color(val ? TextColors.GREEN : TextColors.RED).build();
     }
 
     @Override

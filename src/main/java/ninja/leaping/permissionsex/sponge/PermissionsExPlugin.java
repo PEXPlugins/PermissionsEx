@@ -27,6 +27,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
+import joptsimple.OptionParser;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -84,9 +85,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
-import static ninja.leaping.permissionsex.util.command.args.GameArguments.*;
 
 /**
  * PermissionsEx plugin
@@ -120,7 +120,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
 
     private static String dtr(String text, Object... args) {
-        return tr(text, args).translateFormatted(Locale.getDefault());
+        return _(text, args).translateFormatted(Locale.getDefault());
     }
 
     @Subscribe
@@ -189,7 +189,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             services.setProvider(this, PermissionService.class, this);
         } catch (ProviderExistsException e) {
             manager.close();
-            throw new PEBKACException(tr("Your appear to already be using a different permissions plugin: %s", e.getMessage()));
+            throw new PEBKACException(_("Your appear to already be using a different permissions plugin: %s", e.getMessage()));
         }
 
         /*
@@ -201,28 +201,30 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
          */
         this.registerCommand(
                 CommandSpec.builder()
-                .setAliases("pex", "pextest")
-                .setDescription(tr("A simple test command"))
-                .setArguments(seq(string("first"), optional(choices("second", ImmutableMap.of("first", true, "second", false)))))
-                .setExecutor(new CommandExecutor() {
-                    @Override
-                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        src.msg(tr("Source locale: %s", "unknown"));
-                        src.msg(tr("You are: %s", src.getName())); //cmd.fmt().subject(Maps.immutableEntry(cmd.getSubject().getIdentifier().getKey(), cmd.getSubject().getIdentifier().getValue())));
-                        src.msg(tr("Your command ran!!"));
-                        for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
-                            src.msg(tr("Default in contexts: %s", entry.getKey().toString()));
-                            for (Map.Entry<String, Boolean> ent : entry.getValue().entrySet()) {
-                                src.msg(src.fmt().permission(ent.getKey(), ent.getValue() ? 1 : -1));
-                            }
+                        .setAliases("pex", "pextest")
+                        .setDescription(_("A simple test command"))
+                        .setArguments(seq(string(_("first")), optional(choices(_("second"), ImmutableMap.of("first", true, "second", false)))))
+                        .setExecutor(new CommandExecutor() {
+                            @Override
+                            public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+                                src.msg(_("Source locale: %s", "unknown"));
+                                src.msg(_("You are: %s", src.getName())); //cmd.fmt().subject(Maps.immutableEntry(cmd.getSubject().getIdentifier().getKey(), cmd.getSubject().getIdentifier().getValue())));
+                                src.msg(_("Your command ran!!"));
+                                for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
+                                    src.msg(_("Default in contexts: %s", entry.getKey().toString()));
+                                    for (Map.Entry<String, Boolean> ent : entry.getValue().entrySet()) {
+                                        src.msg(src.fmt().permission(ent.getKey(), ent.getValue() ? 1 : -1));
+                                    }
 
-                        }
-                        src.msg(tr("First argument: %s", args.getAll("first")));
-                        src.msg(tr("Second (optional) argument: %s", String.valueOf(args.getAll("second"))));
-                        src.msg(tr("Has permission: %s", src.fmt().booleanVal(src.hasPermission("permissionsex.test.check"))));
-                    }
-                })
-                .build());
+                                }
+                                src.msg(_("Has flag %s: %s", "a", String.valueOf(args.getOne("a"))));
+                                src.msg(_("Has flag %s: %s", "-a", String.valueOf(args.getOne("-a"))));
+                                src.msg(_("First argument: %s", args.getAll("first")));
+                                src.msg(_("Second (optional) argument: %s", String.valueOf(args.getAll("second"))));
+                                src.msg(_("Has permission: %s", src.fmt().booleanVal(src.hasPermission("permissionsex.test.check"))));
+                            }
+                        })
+                        .build());
     }
 
     @Subscribe
@@ -302,9 +304,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 collection.updateCaches();
             }
         } catch (IOException e) {
-            throw new PEBKACException(tr("Error while loading configuration: %s", e.getLocalizedMessage()));
+            throw new PEBKACException(_("Error while loading configuration: %s", e.getLocalizedMessage()));
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(tr("Unable to reload!"), e);
+            throw new PermissionsLoadingException(_("Unable to reload!"), e);
         }
     }
 

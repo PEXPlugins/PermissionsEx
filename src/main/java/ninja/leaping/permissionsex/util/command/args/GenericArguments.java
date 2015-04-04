@@ -21,6 +21,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
@@ -32,7 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
 
 /**
  * Class containing factory methods to combine single-value command elements
@@ -109,13 +110,13 @@ public class GenericArguments {
     /**
      * Return an argument that allows selecting from a limited set of values.
      * If there are 5 or fewer choices available, the choices will be shown in the command usage. Otherwise, the usage
-     * will only display only the key. To override this behavior, see {@link #choices(String, Map, boolean)}.
+     * will only display only the key. To override this behavior, see {@link #choices(Translatable, Map, boolean)}.
      *
      * @param key The key to store the resulting value under
      * @param choices The choices users can choose from
      * @return the element to match the input
      */
-    public static CommandElement choices(String key, Map<String, ?> choices) {
+    public static CommandElement choices(Translatable key, Map<String, ?> choices) {
         return choices(key, choices, choices.size() <= 5);
     }
 
@@ -127,7 +128,7 @@ public class GenericArguments {
      * @param choices The choices users can choose from
      * @return the element to match the input
      */
-    public static CommandElement choices(String key, Map<String, ?> choices, boolean choicesInUsage) {
+    public static CommandElement choices(Translatable key, Map<String, ?> choices, boolean choicesInUsage) {
         return new ChoicesCommandElement(key, ImmutableMap.copyOf(choices), choicesInUsage);
     }
 
@@ -135,7 +136,7 @@ public class GenericArguments {
         private final Map<String, Object> choices;
         private final boolean choicesInUsage;
 
-        private ChoicesCommandElement(String key, Map<String, Object> choices, boolean choicesInUsage) {
+        private ChoicesCommandElement(Translatable key, Map<String, Object> choices, boolean choicesInUsage) {
             super(key);
             this.choices = choices;
             this.choicesInUsage = choicesInUsage;
@@ -145,7 +146,7 @@ public class GenericArguments {
         public Object parseValue(CommandArgs args) throws ArgumentParseException {
             Object value = choices.get(args.next());
             if (value == null) {
-                throw args.createError(tr("Argument was not a valid choice. Valid choices: %s", choices.keySet().toString()));
+                throw args.createError(_("Argument was not a valid choice. Valid choices: %s", choices.keySet().toString()));
             }
             return value;
         }
@@ -173,7 +174,7 @@ public class GenericArguments {
                 }
                 return commander.fmt().combined(args.toArray());
             } else {
-                return commander.fmt().combined(getKey());
+                return commander.fmt().translated(getKey());
             }
         }
     }
@@ -251,7 +252,7 @@ public class GenericArguments {
      * @return the element to match the input
      */
     public static CommandElement optional(CommandElement element) {
-        return new OptionalCommandElement(element, null, null, false);
+        return new OptionalCommandElement(element, null, false);
     }
 
     /**
@@ -264,51 +265,48 @@ public class GenericArguments {
      * @return the element to match the input
      */
     public static CommandElement optional(CommandElement element, boolean considerInvalidFormatEmpty) {
-        return new OptionalCommandElement(element, null, null, considerInvalidFormatEmpty);
+        return new OptionalCommandElement(element, null, considerInvalidFormatEmpty);
     }
 
     /**
      * Make the provided command element optional
      * This means the command element is not required. However, if the element is provided with invalid format and there
-     * are no more args specified, any errors will still be passed on. If {@code defaultedKey} and {@code value} are not
-     * null, if this element is not provided the default key will be set to the given value.
+     * are no more args specified, any errors will still be passed on. If the given element's key and {@code value} are not
+     * null and this element is not provided the element's key will be set to the given value.
      *
      * @param element The element to optionally require
-     * @param defaultedKey The key to store the default value under if parsing fails
      * @param value The default value to set
      * @return the element to match the input
      */
-    public static CommandElement optional(CommandElement element, String defaultedKey, Object value) {
-        return new OptionalCommandElement(element, defaultedKey, value, false);
+    public static CommandElement optional(CommandElement element, Object value) {
+        return new OptionalCommandElement(element, value, false);
     }
 
     /**
      * Make the provided command element optional
      * This means the command element is not required. However, if the element is provided with invalid format and there
+     * are no more args specified, any errors will still be passed on.
      * are no more args specified, errors will still be passed on. To suppress errors instead,
      * set {@code considerInvalidFormatEmpty} to true.
-     * If {@code defaultedKey} and {@code value} are not null, if this element is not provided the default key will be
-     * set to the given value.
+     * If the given element's key and {@code value} are not null and this element is not provided the element's key will
+     * be set to the given value.
      *
      * @param element The element to optionally require
-     * @param defaultedKey The key to store the default value under if parsing fails
      * @param value The default value to set
      * @return the element to match the input
      */
-    public static CommandElement optional(CommandElement element, String defaultedKey, Object value, boolean considerInvalidFormatEmpty) {
-        return new OptionalCommandElement(element, defaultedKey, value, considerInvalidFormatEmpty);
+    public static CommandElement optional(CommandElement element, Object value, boolean considerInvalidFormatEmpty) {
+        return new OptionalCommandElement(element, value, considerInvalidFormatEmpty);
     }
 
     private static class OptionalCommandElement extends CommandElement {
         private final CommandElement element;
-        private final String defaultedKey;
         private final Object value;
         private final boolean considerInvalidFormatEmpty;
 
-        private OptionalCommandElement(CommandElement element, String defaultedKey, Object value, boolean considerInvalidFormatEmpty) {
+        private OptionalCommandElement(CommandElement element, Object value, boolean considerInvalidFormatEmpty) {
             super(null);
             this.element = element;
-            this.defaultedKey = defaultedKey;
             this.value = value;
             this.considerInvalidFormatEmpty = considerInvalidFormatEmpty;
         }
@@ -316,8 +314,8 @@ public class GenericArguments {
         @Override
         public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             if (!args.hasNext()) {
-                if (this.defaultedKey != null) {
-                    context.putArg(defaultedKey, value);
+                if (this.element.getKey() != null) {
+                    context.putArg(this.element.getKey().getUntranslated(), value);
                 }
                 return;
             }
@@ -327,8 +325,8 @@ public class GenericArguments {
             } catch (ArgumentParseException ex) {
                 if (considerInvalidFormatEmpty || args.hasNext()) { // If there are more args, suppress. Otherwise, throw the error
                     args.setPosition(startPos);
-                    if (this.defaultedKey != null && this.value != null) {
-                        context.putArg(defaultedKey, value);
+                    if (this.element.getKey() != null) {
+                        context.putArg(this.element.getKey().getUntranslated(), value);
                     }
                 } else {
                     throw ex;
@@ -465,7 +463,7 @@ public class GenericArguments {
      * Parent class that specifies elemenents as having no tab completions. Useful for inputs with a very large domain, like strings and integers
      */
     private static abstract class KeyElement extends CommandElement {
-        private KeyElement(String key) {
+        private KeyElement(Translatable key) {
             super(key);
         }
 
@@ -481,13 +479,13 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement string(String key) {
+    public static CommandElement string(Translatable key) {
         return new StringElement(key);
     }
 
     private static class StringElement extends KeyElement {
 
-        private StringElement(String key) {
+        private StringElement(Translatable key) {
             super(key);
         }
 
@@ -504,13 +502,13 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement integer(String key) {
+    public static CommandElement integer(Translatable key) {
         return new IntegerElement(key);
     }
 
     private static class IntegerElement extends KeyElement {
 
-        private IntegerElement(String key) {
+        private IntegerElement(Translatable key) {
             super(key);
         }
 
@@ -520,7 +518,7 @@ public class GenericArguments {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException ex) {
-                throw args.createError(tr("Expected an integer, but input '%s' was not", input));
+                throw args.createError(_("Expected an integer, but input '%s' was not", input));
             }
         }
     }
@@ -560,7 +558,7 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement bool(String key) {
+    public static CommandElement bool(Translatable key) {
         return GenericArguments.choices(key, BOOLEAN_CHOICES);
     }
 
@@ -571,14 +569,14 @@ public class GenericArguments {
      * @param <T> The type of enum
      * @return the element to match the input
      */
-    public static <T extends Enum<T>> CommandElement enumValue(String key, Class<T> type) {
+    public static <T extends Enum<T>> CommandElement enumValue(Translatable key, Class<T> type) {
         return new EnumValueElement<>(key, type);
     }
 
     private static class EnumValueElement<T extends Enum<T>> extends CommandElement {
         private final Class<T> type;
 
-        private EnumValueElement(String key, Class<T> type) {
+        private EnumValueElement(Translatable key, Class<T> type) {
             super(key);
             this.type = type;
         }
@@ -589,7 +587,7 @@ public class GenericArguments {
             try {
                 return Enum.valueOf(type, value);
             } catch (IllegalArgumentException ex) {
-                throw args.createError(tr("Enum value %s not valid", value));
+                throw args.createError(_("Enum value %s not valid", value));
             }
         }
 
@@ -625,14 +623,14 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public CommandElement remainingJoinedStrings(String key) {
+    public CommandElement remainingJoinedStrings(Translatable key) {
         return new RemainingJoinedStringsCommandElement(key, false);
     }
 
     private static class RemainingJoinedStringsCommandElement extends KeyElement {
         private final boolean raw;
 
-        private RemainingJoinedStringsCommandElement(String key, boolean raw) {
+        private RemainingJoinedStringsCommandElement(Translatable key, boolean raw) {
             super(key);
             this.raw = raw;
         }

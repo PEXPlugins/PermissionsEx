@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.untr;
 
 /**
  * Utility methods for handling child commands
@@ -70,14 +71,14 @@ public class ChildCommands {
         private final Map<String, CommandSpec> children;
 
         private ChildCommandElement(Map<String, CommandSpec> children) {
-            super("child" + COUNTER.getAndIncrement());
+            super(untr("child" + COUNTER.getAndIncrement()));
             this.children = ImmutableMap.copyOf(children);
         }
 
         @Override
         public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             super.parse(args, context);
-            CommandSpec spec = context.getOne(getKey());
+            CommandSpec spec = context.getOne(getKey().getUntranslated());
             spec.parse(args, context);
         }
 
@@ -134,7 +135,7 @@ public class ChildCommands {
     }
 
     public static CommandExecutor executor(CommandElement arg) {
-        return new ChildCommandExecutor(arg.getKey());
+        return new ChildCommandExecutor(arg.getKey().getUntranslated());
     }
 
     private static class ChildCommandExecutor implements CommandExecutor {
@@ -148,7 +149,7 @@ public class ChildCommands {
         public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
             CommandSpec spec = args.getOne(key);
             if (spec == null) {
-                throw new CommandException(tr("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
+                throw new CommandException(_("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
             }
             spec.getExecutor().execute(src, args);
         }

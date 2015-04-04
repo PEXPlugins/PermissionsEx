@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
 
 /**
  * Parser for converting a quoted string into a list of arguments
@@ -88,14 +88,14 @@ public class QuotedStringParser {
 
     private int peek() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(tr("Buffer overrun while parsing args"));
+            throw createException(_("Buffer overrun while parsing args"));
         }
         return buffer.codePointAt(index + 1);
     }
 
     private int next() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(tr("Buffer overrun while parsing args"));
+            throw createException(_("Buffer overrun while parsing args"));
         }
         return buffer.codePointAt(++index);
     }
@@ -131,7 +131,7 @@ public class QuotedStringParser {
         // Consume the start quotation character
         int nextCodePoint = next();
         if (nextCodePoint != startQuotation) {
-            throw createException(tr("Actual next character '%c' did not match expected quotation character '%c'",
+            throw createException(_("Actual next character '%c' did not match expected quotation character '%c'",
                     nextCodePoint, startQuotation));
         }
 
@@ -140,7 +140,7 @@ public class QuotedStringParser {
                 if (lenient) {
                     return;
                 } else {
-                    throw createException(tr("Unterminated quoted string found")); //, new StringBuilder(1).appendCodePoint(nextCodePoint).toString());
+                    throw createException(_("Unterminated quoted string found")); //, new StringBuilder(1).appendCodePoint(nextCodePoint).toString());
                 }
             }
             nextCodePoint = next();

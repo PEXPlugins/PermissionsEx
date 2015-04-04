@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
+import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
@@ -36,13 +37,13 @@ public class GameArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement subject(String type, String key) {
-        return null;
+    private static CommandElement subject(Translatable key, String type) {
+        return new SubjectElement(key);
     }
 
     private static class SubjectElement extends CommandElement {
 
-        protected SubjectElement(String key) {
+        protected SubjectElement(Translatable key) {
             super(key);
         }
 

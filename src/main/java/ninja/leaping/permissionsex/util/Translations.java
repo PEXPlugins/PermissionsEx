@@ -65,7 +65,7 @@ public class Translations {
         }
     }
 
-    public static Translatable tr(final String key, Object... args) {
+    public static Translatable _(final String key, Object... args) {
         return new Translatable(args) {
             @Override
             public String getUntranslated() {
@@ -79,7 +79,7 @@ public class Translations {
         };
     }
 
-    public static Translatable ntr(final String key, final String keyPl, final long count, Object... args) {
+    public static Translatable _n(final String key, final String keyPl, final long count, Object... args) {
         return new Translatable(args) {
             @Override
             public String getUntranslated() {
@@ -89,6 +89,21 @@ public class Translations {
             @Override
             public String translate(Locale input) {
                 return GettextResource.ngettext(getBundle(input), key, keyPl, count);
+            }
+        };
+    }
+
+    public static Translatable untr(final String key) {
+        return new Translatable() {
+
+            @Override
+            public String getUntranslated() {
+                return key;
+            }
+
+            @Override
+            public String translate(Locale locale) {
+                return getUntranslated();
             }
         };
     }

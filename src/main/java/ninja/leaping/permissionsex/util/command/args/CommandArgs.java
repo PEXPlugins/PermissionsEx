@@ -18,22 +18,24 @@ package ninja.leaping.permissionsex.util.command.args;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.Translations._;
 
 /**
- * Created by zml on 25.03.15.
+ * Holder for command arguments
  */
 public class CommandArgs {
     private final String rawInput;
-    private final List<SingleArg> args;
+    private List<SingleArg> args;
     private int index = -1;
 
     public CommandArgs(String rawInput, List<SingleArg> args) {
@@ -47,14 +49,14 @@ public class CommandArgs {
 
     public String peek() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(tr("Not enough arguments"));
+            throw createError(_("Not enough arguments"));
         }
         return args.get(index + 1).getValue();
     }
 
     public String next() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(tr("Not enough arguments!"));
+            throw createError(_("Not enough arguments!"));
         }
         return args.get(++index).getValue();
     }
@@ -79,6 +81,19 @@ public class CommandArgs {
 
     List<SingleArg> getArgs() {
         return args;
+    }
+
+    public void filterArgs(Predicate<String> filter) {
+        SingleArg currentArg = index == -1 ? null : args.get(index);
+        List<SingleArg> newArgs = new ArrayList<>();
+        for (SingleArg arg : args) {
+            if (filter.apply(arg.getValue())) {
+                newArgs.add(arg);
+            }
+        }
+        index = currentArg == null ? -1 : newArgs.indexOf(currentArg);
+        this.args = newArgs;
+
     }
 
     /**
