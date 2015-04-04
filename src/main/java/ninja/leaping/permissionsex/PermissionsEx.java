@@ -40,6 +40,7 @@ import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
+import ninja.leaping.permissionsex.util.command.Command;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
@@ -55,6 +56,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+
+import static ninja.leaping.permissionsex.util.Translations.tr;
 
 public class PermissionsEx implements ImplementationInterface {
     private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
@@ -271,6 +274,11 @@ public class PermissionsEx implements ImplementationInterface {
         impl.executeAsyncronously(run);
     }
 
+    @Override
+    public void registerCommand(Command command) {
+        impl.registerCommand(command);
+    }
+
     public PermissionsExConfiguration getConfig() {
         return this.config;
     }
@@ -288,7 +296,7 @@ public class PermissionsEx implements ImplementationInterface {
         try {
             return calculatedSubjects.get(Maps.immutableEntry(type, identifier));
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException("While calculating subject data for " + type + ":" + identifier, e);
+            throw new PermissionsLoadingException(tr("While calculating subject data for %s:%s"), e, type, identifier);
         }
     }
 

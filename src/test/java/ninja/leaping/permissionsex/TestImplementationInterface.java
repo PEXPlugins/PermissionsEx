@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex;
 
+import ninja.leaping.permissionsex.util.command.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,5 +52,9 @@ public class TestImplementationInterface implements ImplementationInterface {
     @Override
     public void executeAsyncronously(Runnable run) {
         run.run();
+    }
+
+    @Override
+    public void registerCommand(Command command) {
     }
 }

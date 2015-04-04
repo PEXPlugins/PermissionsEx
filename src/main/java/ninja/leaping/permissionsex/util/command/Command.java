@@ -16,27 +16,36 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
+import ninja.leaping.permissionsex.util.command.args.CommandSpec;
+
+import static ninja.leaping.permissionsex.util.Translations.tr;
+
 /**
- * Created by zml on 20.03.15.
+ * Represents a simple command
  */
 public abstract class Command {
+    private final CommandSpec spec;
 
-    public <TextType> void process(Commander<TextType> commander, CommandArgs arguments) throws ArgumentParseException {
-        parseArguments(commander, arguments);
-        execute(commander, arguments);
+    protected Command(CommandSpec spec) {
+        this.spec = spec;
     }
 
-    public <TextType> String getTabCompletions(Commander<TextType> commander, CommandArgs arguments) {
+    public <TextType> void process(Commander<TextType> commander, String arguments) {
         try {
-            parseArguments(commander, arguments);
-        } catch (ArgumentParseException ex) {
-
+            CommandContext args = getSpec().parse(arguments);
+            execute(commander, args);
+        } catch (CommandException ex) {
+            commander.error(ex.getTranslatableMessage());
+            commander.error(tr("Usage: %s"), getSpec().getUsage(commander));
+        } catch (Throwable t) {
+            commander.error(tr("Error occurred while executing command: %s"), String.valueOf(t.getMessage()));
+            t.printStackTrace();
         }
-        return null;
-
     }
 
-    protected abstract <TextType> void parseArguments(Commander<TextType> commander, CommandArgs args) throws ArgumentParseException;
+    public CommandSpec getSpec() {
+        return this.spec;
+    }
 
-    protected abstract <TextType> void execute(Commander<TextType> commander, CommandArgs args);
+    protected abstract <TextType> void execute(Commander<TextType> commander, CommandContext args) throws CommandException;
 }

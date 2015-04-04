@@ -37,6 +37,8 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static ninja.leaping.permissionsex.util.Translations.tr;
+
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
  */
@@ -147,7 +149,7 @@ public abstract class AbstractDataStore implements DataStore {
         try {
             ((ObjectMapper) factory.mapper).bind(this).serialize(node);
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException("Error while serializing backend " + node.getKey(), e);
+            throw new PermissionsLoadingException(tr("Error while serializing backend %s"), e, node.getKey());
         }
         return factory.type;
     }
@@ -174,7 +176,7 @@ public abstract class AbstractDataStore implements DataStore {
             try {
                 return mapper.bindToNew().populate(config);
             } catch (ObjectMappingException e) {
-                throw new PermissionsLoadingException("Error while deserializing backend " + identifier, e);
+                throw new PermissionsLoadingException(tr("Error while deserializing backend %s"), e, identifier);
             }
         }
     }

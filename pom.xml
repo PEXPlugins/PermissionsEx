@@ -261,7 +261,7 @@
         </executions>
         <configuration>
           <poDirectory>src/main/po</poDirectory>
-          <keywords>-ktranslated:1 -kntranslated:1,2</keywords>
+          <keywords>-ktr -kntr:1,2 -kdtr -ktranslated</keywords>
           <targetBundle>ninja.leaping.permissionsex.locale.Messages</targetBundle>
         </configuration>
       </plugin>
@@ -318,6 +318,11 @@
       <groupId>org.gnu.gettext</groupId>
       <artifactId>libintl</artifactId>
       <version>0.18.2</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.jopt-simple</groupId>
+      <artifactId>jopt-simple</artifactId>
+      <version>4.9-beta-1</version>
     </dependency>
   </dependencies>
   <repositories>

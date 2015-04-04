@@ -27,7 +27,6 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
-import gnu.gettext.GettextResource;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -40,7 +39,10 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.permissionsex.util.command.MessageFormatter;
+import ninja.leaping.permissionsex.util.command.Command;
+import ninja.leaping.permissionsex.util.command.CommandContext;
+import ninja.leaping.permissionsex.util.command.Commander;
+import ninja.leaping.permissionsex.util.command.args.CommandSpec;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
@@ -62,7 +64,6 @@ import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
-import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
@@ -79,7 +80,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -87,6 +87,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+
+import static ninja.leaping.permissionsex.util.Translations.tr;
+import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
+import static ninja.leaping.permissionsex.util.command.args.GameArguments.*;
 
 /**
  * PermissionsEx plugin
@@ -118,22 +122,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     });
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
-    private final SpongeMessageFormatter messageFactory = new SpongeMessageFormatter(this);
 
-    private static final ResourceBundle.Control CLASS_CONTROL = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_CLASS);
-
-    private ResourceBundle getBundle(Locale locale) {
-        ResourceBundle ret = ResourceBundle.getBundle("ninja.leaping.permissionsex.locale.Messages", locale, CLASS_CONTROL);
-        System.out.println("Bundle locale: " + ret.getLocale());
-        return ret;
-    }
-
-    public String translated(String key) {
-        return GettextResource.gettext(getBundle(Locale.getDefault()), key);
-    }
-
-    public String ntranslated(String key, String keyPl, long count) {
-        return GettextResource.ngettext(getBundle(Locale.getDefault()), key, keyPl, count);
+    private String dtr(String text, Object... args) {
+        return String.format(Locale.getDefault(), tr(text).translate(Locale.getDefault()), args);
     }
 
     @Subscribe
@@ -202,51 +193,34 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             services.setProvider(this, PermissionService.class, this);
         } catch (ProviderExistsException e) {
             manager.close();
-            throw new PEBKACException("Your appear to already be using a different permissions plugin: " + e.getLocalizedMessage());
+            throw new PEBKACException(tr("Your appear to already be using a different permissions plugin: %s"), e.getMessage());
         }
 
-        // Dummy command
-        this.game.getCommandDispatcher().register(this, new CommandCallable() {
+        this.registerCommand(new Command(
+                CommandSpec.builder()
+                .setAliases("pex", "pextest")
+                .setDescription(tr("A simple test command"))
+                .setArguments(seq(string("first"), optional(string("second"))))
+                .build()
+        ) {
             @Override
-            public boolean call(CommandSource source, String arguments, List<String> parents) throws CommandException {
-                source.sendMessage(messageFactory.combined("You are: ", messageFactory.subject(Maps.immutableEntry(source.getContainingCollection().getIdentifier(), source.getIdentifier()))));
-                source.sendMessage(Texts.of(translated("Your command ran!!")));
+            protected <TextType> void execute(Commander<TextType> cmd, CommandContext args) throws ninja.leaping.permissionsex.util.command.CommandException {
+                cmd.msg(tr("Source locale: %s"), "unknown");
+                cmd.msg(tr("You are: %s"), cmd.getName()); //cmd.fmt().subject(Maps.immutableEntry(cmd.getSubject().getIdentifier().getKey(), cmd.getSubject().getIdentifier().getValue())));
+                cmd.msg(tr("Your command ran!!"));
                 for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
-                    source.sendMessage(Texts.of(Texts.of(TextStyles.BOLD, "Default in contexts: "), entry.getKey().toString()));
+                    cmd.msg(tr("Default in contexts: %s"), entry.getKey().toString());
                     for (Map.Entry<String, Boolean> ent : entry.getValue().entrySet()) {
-                        source.sendMessage(messageFactory.permission(ent.getKey(), ent.getValue() ? 1 : -1));
+                        //source.sendMessage(cmd.fmt().permission(ent.getKey(), ent.getValue() ? 1 : -1)); // TODO: How does this translate?
                     }
 
                 }
-                source.sendMessage(messageFactory.combined("Has permission: ", messageFactory.booleanVal(source.hasPermission("permissionsex.test.check"))));
-                return true;
-            }
+                cmd.msg(tr("First argument: %s"), args.getArg("first"));
+                cmd.msg(tr("Second (optional) argument: %s"), String.valueOf(args.getArg("second")));
+                cmd.msg(tr("Has permission: %s"), cmd.fmt().booleanVal(cmd.hasPermission("permissionsex.test.check")));
 
-            @Override
-            public boolean testPermission(CommandSource source) {
-                return source.hasPermission("permissionsex.test.run");
             }
-
-            @Override
-            public String getShortDescription(CommandSource commandSource) {
-                return "Test command to do basic testing";
-            }
-
-            @Override
-            public Text getHelp(CommandSource commandSource) {
-                return Texts.of();
-            }
-
-            @Override
-            public String getUsage(CommandSource commandSource) {
-                return "Useless";
-            }
-
-            @Override
-            public List<String> getSuggestions(CommandSource source, String arguments) throws CommandException {
-                return Collections.emptyList();
-            }
-        }, "pextest");
+        });
     }
 
     @Subscribe
@@ -326,9 +300,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 collection.updateCaches();
             }
         } catch (IOException e) {
-            throw new PEBKACException("Error while loading configuration: " + e.getLocalizedMessage());
+            throw new PEBKACException(tr("Error while loading configuration: %s"), e.getLocalizedMessage());
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException("Unable to reload!", e);
+            throw new PermissionsLoadingException(tr("Unable to reload!"), e);
         }
     }
 
@@ -419,7 +393,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return sql.ref().get().getDataSource(url);
         } catch (SQLException e) {
-            logger.error("Unable to get data source for jdbc url " + url, e);
+            logger.error(dtr("Unable to get data source for jdbc url %s", url), e);
             return null;
         }
     }
@@ -427,6 +401,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public void executeAsyncronously(Runnable run) {
         scheduler.ref().get().runTask(PermissionsExPlugin.this, run);
+    }
+
+    @Override
+    public void registerCommand(Command command) {
+        game.getCommandDispatcher().register(this, new PEXSpongeCommand(command, this), command.getSpec().getAliases());
     }
 
     Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {
@@ -445,9 +424,5 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 return input.getActiveSubjects();
             }
         }));
-    }
-
-    MessageFormatter<Text> getMessageFormatter() {
-        return messageFactory;
     }
 }

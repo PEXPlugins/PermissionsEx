@@ -27,6 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static ninja.leaping.permissionsex.util.Translations.tr;
+
 /**
  * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
  */
@@ -69,14 +71,14 @@ public class PermissionsExConfiguration {
 
     public void validate() throws PEBKACException {
         if (backends.isEmpty()) {
-            throw new PEBKACException("No backends defined!");
+            throw new PEBKACException(tr("No backends defined!"));
         }
         if (defaultBackend == null) {
-            throw new PEBKACException("Default backend is not set!");
+            throw new PEBKACException(tr("Default backend is not set!"));
         }
 
         if (!backends.containsKey(defaultBackend)) {
-            throw new PEBKACException("Default backend " + defaultBackend + " is not an available backend! Choices are: " + backends.keySet());
+            throw new PEBKACException(tr("Default backend % is not an available backend! Choices are: %s"), defaultBackend, backends.keySet());
         }
     }
 }

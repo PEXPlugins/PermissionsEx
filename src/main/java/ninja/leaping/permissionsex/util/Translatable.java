@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.util.command;
+package ninja.leaping.permissionsex.util;
 
-/**
- * Created by zml on 25.03.15.
- */
-public class CommandArgs {
+import java.util.Locale;
+
+public interface Translatable {
+    public String translate(Locale locale);
 }

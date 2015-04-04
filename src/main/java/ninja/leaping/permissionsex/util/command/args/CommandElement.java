@@ -14,12 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.localization;
+package ninja.leaping.permissionsex.util.command.args;
+
+import ninja.leaping.permissionsex.util.command.CommandContext;
+import ninja.leaping.permissionsex.util.command.Commander;
+
+import java.util.List;
 
 /**
- * Represents a localizable target for command output. This target localizes and formats messages in an implementation-specific way
+ * Represents a command argument element
  */
-public interface LocalizationTarget {
-	public void sendMessage(String localizationKey, Object... args);
-	public void sendError(String localizationKey, Object... args);
+public interface CommandElement {
+    public void parse(CommandArgs source, CommandContext context) throws ArgumentParseException;
+
+    public List<String> tabComplete(CommandArgs source, CommandContext context);
+
+    public <TextType> TextType getUsage(Commander<TextType> context);
 }

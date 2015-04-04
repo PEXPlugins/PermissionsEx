@@ -74,6 +74,10 @@ public class PEXSubject implements OptionSubject {
         return getIdentifier() + (source.isPresent() ? "/" + source.get().getName() : "");
     }
 
+    public CalculatedSubject getBaked() {
+        return this.baked;
+    }
+
     @Override
     public Optional<CommandSource> getCommandSource() {
         return getContainingCollection().getCommandSource(this.identifier);

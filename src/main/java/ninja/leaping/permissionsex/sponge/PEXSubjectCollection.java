@@ -23,6 +23,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -94,7 +95,10 @@ public class PEXSubjectCollection implements SubjectCollection {
 
     public void uncache(String identifier) {
         subjectCache.invalidate(identifier);
-        plugin.getManager().uncache(getIdentifier(), identifier);
+        PermissionsEx manager = plugin.getManager();
+        if (manager != null) {
+            manager.uncache(getIdentifier(), identifier);
+        }
     }
 
     @Override

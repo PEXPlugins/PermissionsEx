@@ -52,7 +52,7 @@ public class CalculatedSubject implements Caching {
         this.pex = pex;
     }
 
-    Map.Entry<String, String> getIdentifier() {
+    public Map.Entry<String, String> getIdentifier() {
         return identifier;
     }
 

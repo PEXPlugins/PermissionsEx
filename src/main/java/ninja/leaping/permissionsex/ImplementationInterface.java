@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex;
 
+import ninja.leaping.permissionsex.util.command.Command;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
@@ -51,4 +52,11 @@ public interface ImplementationInterface {
      * @param run The task to be run
      */
     public void executeAsyncronously(Runnable run);
+
+    /**
+     * Register the given command to be executed on the implementation's interface
+     *
+     * @param command The command to execute
+     */
+    public void registerCommand(Command command);
 }

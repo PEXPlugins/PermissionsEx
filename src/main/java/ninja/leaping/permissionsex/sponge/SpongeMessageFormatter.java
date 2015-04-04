@@ -18,27 +18,32 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
-import org.spongepowered.api.entity.player.Player;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.TextBuilder;
 import org.spongepowered.api.text.Texts;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
+import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.util.command.CommandSource;
 
+import java.util.Locale;
 import java.util.Map;
+
+import static ninja.leaping.permissionsex.util.Translations.tr;
 
 /**
  * Factory to create formatted elements of messages
  */
 public class SpongeMessageFormatter implements MessageFormatter<Text> {
+    private final Locale locale;
     private final PermissionsExPlugin pex;
 
-    SpongeMessageFormatter(PermissionsExPlugin pex) {
+    SpongeMessageFormatter(PermissionsExPlugin pex, Locale locale) {
         this.pex = pex;
+        this.locale = locale;
     }
 
     @Override
@@ -54,12 +59,12 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         return Texts.builder().append(Texts.builder(subject.getKey()).style(TextStyles.BOLD).build(), Texts.of(" "),
-                nameText).onHover(TextActions.showText(Texts.of("Click to view more info"))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue())).build();
+                nameText).onHover(TextActions.showText(translated(tr("Click to view more info")))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue())).build();
     }
 
     @Override
     public Text booleanVal(boolean val) {
-        return Texts.builder(String.valueOf(val)).color(val ? TextColors.GREEN : TextColors.RED).build();
+        return (val ? translated(tr("true")) : translated(tr("false"))).builder().color(val ? TextColors.GREEN : TextColors.RED).build();
     }
 
     @Override
@@ -81,7 +86,40 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
     }
 
     @Override
+    public Text highlighted(Translatable text) {
+        return Texts.builder(new FixedTranslation(text.translate(locale)), new Object[0]).color(TextColors.AQUA).build();
+    }
+
+    @Override
     public Text combined(Object... elements) {
         return Texts.of(elements);
+    }
+
+    @Override
+    public Text translated(Translatable tr, Object... elements) {
+        return Texts.of(new FixedTranslation(tr.translate(locale)), elements);
+    }
+
+    static class FixedTranslation implements Translation {
+        private final String fixed;
+
+        FixedTranslation(String fixed) {
+            this.fixed = fixed;
+        }
+
+        @Override
+        public String getId() {
+            return fixed;
+        }
+
+        @Override
+        public String get() {
+            return fixed;
+        }
+
+        @Override
+        public String get(Object... objects) {
+            return String.format(fixed, objects);
+        }
     }
 }

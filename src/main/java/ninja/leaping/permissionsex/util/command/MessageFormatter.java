@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
+import ninja.leaping.permissionsex.util.Translatable;
+
 import java.util.Map;
 
 /**
@@ -26,6 +28,7 @@ public interface MessageFormatter<TextType> {
     public TextType booleanVal(boolean val);
     public TextType permission(String permission, int value);
     public TextType option(String permission, String value);
+    public TextType highlighted(Translatable text);
 
     /**
      * Combines an array containing elements of type {@link TextType} and {@link java.lang.String} into a single message
@@ -35,4 +38,5 @@ public interface MessageFormatter<TextType> {
      */
     public TextType combined(Object... elements);
 
+    public TextType translated(Translatable tr, Object... elements);
 }

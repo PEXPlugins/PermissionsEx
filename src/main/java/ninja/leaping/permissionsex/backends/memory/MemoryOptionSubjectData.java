@@ -45,7 +45,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         try {
             MAPPER = ObjectMapper.forClass(DataEntry.class);
         } catch (ObjectMappingException e) {
-            throw new ExceptionInInitializerError(e); // This error indicates a programming issue
+            throw new ExceptionInInitializerError(e); // This debug indicates a programming issue
         }
     }
 
@@ -381,11 +381,13 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutParents());
     }
 
+    @Override
     public int getDefaultValue(Set<Entry<String, String>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
         return ent == null ? 0 : ent.defaultValue;
     }
 
+    @Override
     public ImmutableOptionSubjectData setDefaultValue(Set<Entry<String, String>> contexts, int defaultValue) {
         return newWithUpdated(contexts, getDataEntryOrNew(contexts).withDefaultValue(defaultValue));
     }

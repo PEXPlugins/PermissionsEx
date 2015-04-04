@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
+import static ninja.leaping.permissionsex.util.Translations.tr;
 
 
 public class FileDataStore extends AbstractDataStore {
@@ -69,6 +70,8 @@ public class FileDataStore extends AbstractDataStore {
     private static ConfigurationTransformation.Builder tBuilder() {
         return ConfigurationTransformation.builder();
     }
+
+    @Override
     protected void initializeInternal() throws PermissionsLoadingException {
         File permissionsFile = new File(getManager().getBaseDirectory(), file);
         if (file.endsWith(".yml")) {
@@ -82,7 +85,7 @@ public class FileDataStore extends AbstractDataStore {
                 permissionsFileLoader.save(permissionsConfig);
                 legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".bukkit-backup"));
             } catch (IOException e) {
-                throw new PermissionsLoadingException("While loading legacy YML permissions from " + permissionsFile, e);
+                throw new PermissionsLoadingException(tr("While loading legacy YML permissions from %s"), e, permissionsFile);
             }
         } else {
             permissionsFileLoader = HoconConfigurationLoader.builder().setFile(permissionsFile).build();
@@ -91,7 +94,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             permissionsConfig = permissionsFileLoader.load(ConfigurationOptions.defaults());//.setMapFactory(MapFactories.unordered()));
         } catch (IOException e) {
-            throw new PermissionsLoadingException("While loading permissions file from " + permissionsFile, e);
+            throw new PermissionsLoadingException(tr("While loading permissions file from "), e, permissionsFile);
         }
 
         final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {
@@ -229,11 +232,12 @@ public class FileDataStore extends AbstractDataStore {
             try {
                 save().get();
             } catch (InterruptedException | ExecutionException e) {
-                throw new PermissionsLoadingException("While performing version upgrade", e);
+                throw new PermissionsLoadingException(tr("While performing version upgrade"), e);
             }
         }
     }
 
+    @Override
     public void close() {
 
     }
@@ -269,7 +273,7 @@ public class FileDataStore extends AbstractDataStore {
         try {
             return FileOptionSubjectData.fromNode(permissionsConfig.getNode(typeToSection(type), identifier));
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException("While deserializing subject data for " + type + ":" + identifier, e);
+            throw new PermissionsLoadingException(tr("While deserializing subject data for %s:"), e, identifier);
         }
     }
 
