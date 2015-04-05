@@ -38,6 +38,7 @@ import static ninja.leaping.permissionsex.util.Translations._;
  * Factory to create formatted elements of messages
  */
 public class SpongeMessageFormatter implements MessageFormatter<Text> {
+    private static final Text EQUALS_SIGN = Texts.of(TextColors.GRAY, "=");
     private final Locale locale;
     private final PermissionsExPlugin pex;
 
@@ -59,12 +60,12 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         return Texts.builder().append(Texts.builder(subject.getKey()).style(TextStyles.BOLD).build(), Texts.of(" "),
-                nameText).onHover(TextActions.showText(translated(_("Click to view more info")))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue())).build();
+                nameText).onHover(TextActions.showText(tr(_("Click to view more info")))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info")).build();
     }
 
     @Override
     public Text booleanVal(boolean val) {
-        return (val ? translated(_("true")) : translated(_("false"))).builder().color(val ? TextColors.GREEN : TextColors.RED).build();
+        return (val ? tr(_("true")) : tr(_("false"))).builder().color(val ? TextColors.GREEN : TextColors.RED).build();
     }
 
     @Override
@@ -77,16 +78,21 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
         } else {
             valueColor = TextColors.GRAY;
         }
-        return Texts.of(Texts.of(valueColor, permission), Texts.of("=" + value));
+        return Texts.of(Texts.of(valueColor, permission), EQUALS_SIGN, value);
     }
 
     @Override
     public Text option(String permission, String value) {
-        return Texts.of(permission + "=" + value);
+        return Texts.of(permission, EQUALS_SIGN, value);
     }
 
     @Override
-    public Text highlighted(Text text) {
+    public Text header(Text text) {
+        return text.builder().style(TextStyles.BOLD).build();
+    }
+
+    @Override
+    public Text hl(Text text) {
         return text.builder().color(TextColors.AQUA).build();
     }
 
@@ -96,7 +102,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
     }
 
     @Override
-    public Text translated(Translatable tr) {
+    public Text tr(Translatable tr) {
         boolean unwrapArgs = false;
         for (Object arg: tr.getArgs()) {
             if (arg instanceof Translatable) {
@@ -111,7 +117,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
             for (int i = 0; i < oldArgs.length; ++i) {
                 Object arg = oldArgs[i];
                 if (arg instanceof Translatable) {
-                    arg = translated(tr);
+                    arg = tr(tr);
                 }
                 args[i] = arg;
             }

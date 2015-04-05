@@ -326,7 +326,14 @@ public class FileDataStore extends AbstractDataStore {
             public boolean apply(@Nullable ConfigurationNode input) {
                 return input != null && input.hasMapChildren();
             }
-        }).keySet(), Functions.toStringFunction());
+        }).keySet(), new Function<Object, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable Object input) {
+                final String typeStr = input.toString();
+                return typeStr.substring(0, typeStr.length() - 1); // trim trailing s
+            }
+        });
     }
 
     @Override
@@ -335,7 +342,9 @@ public class FileDataStore extends AbstractDataStore {
             @Nullable
             @Override
             public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> apply(@Nullable final Object type) {
-                return Iterables.transform(getAll(type.toString()), new Function<Map.Entry<String, ImmutableOptionSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>() {
+                final String typeStr = type.toString();
+
+                return Iterables.transform(getAll(typeStr.substring(0, typeStr.length() - 1)), new Function<Map.Entry<String, ImmutableOptionSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>() {
                     @Nullable
                     @Override
                     public Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> apply(Map.Entry<String, ImmutableOptionSubjectData> input2) {

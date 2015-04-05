@@ -42,6 +42,19 @@ import static ninja.leaping.permissionsex.util.Translations._;
 public class GenericArguments {
     private GenericArguments() {}
 
+    static class StartsWithPredicate implements Predicate<String> {
+        private final String test;
+
+        StartsWithPredicate(String test) {
+            this.test = test;
+        }
+
+        @Override
+        public boolean apply(@Nullable String input) {
+            return input != null && input.toLowerCase().startsWith(test.toLowerCase());
+        }
+    }
+
     /**
      * Expects no arguments
      *
@@ -133,16 +146,29 @@ public class GenericArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            for (CommandElement element : elements) {
+            for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
+                CommandElement element = it.next();
                 int startPos = args.getPosition();
                 try {
                     element.parse(args, context);
+                    int endPos = args.getPosition();
+                    args.setPosition(startPos);
+                    List<String> inputs = element.tabComplete(src, args, context);
+                    args.setPosition(args.getPosition() - 1);
+                    if (!inputs.contains(args.next())) {
+                        return inputs;
+                    }
+                    args.setPosition(endPos);
                 } catch (ArgumentParseException e) {
                     args.setPosition(startPos);
                     return element.tabComplete(src, args, context);
                 }
+
+                if (!it.hasNext()) {
+                    args.setPosition(startPos);
+                }
             }
-            return Collections.emptyList();
+            return elements.size() > 0 ? elements.get(elements.size() - 1).tabComplete(src, args, context) : Collections.<String>emptyList();
         }
 
         @Override
@@ -205,12 +231,7 @@ public class GenericArguments {
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
             final String prefix = args.nextIfPresent().or("");
-            return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new Predicate<String>() {
-                @Override
-                public boolean apply(String input) {
-                    return input.toLowerCase().startsWith(prefix.toLowerCase());
-                }
-            }));
+            return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new StartsWithPredicate(prefix)));
         }
 
         @Override
@@ -225,7 +246,7 @@ public class GenericArguments {
                 }
                 return commander.fmt().combined(args.toArray());
             } else {
-                return commander.fmt().translated(getKey());
+                return commander.fmt().tr(getKey());
             }
         }
     }

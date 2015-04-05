@@ -291,7 +291,7 @@ public class CommandSpec {
     }
 
     public <TextType> TextType getDescription(Commander<TextType> commander) {
-        return this.description == null ? null : commander.fmt().translated(this.description);
+        return this.description == null ? null : commander.fmt().tr(this.description);
     }
 
     public <TextType> TextType getUsage(Commander<TextType> commander) {
@@ -304,12 +304,12 @@ public class CommandSpec {
             if (this.extendedDescription == null) {
                 return getUsage(src);
             } else {
-                return src.fmt().combined(getUsage(src), '\n', src.fmt().translated(this.extendedDescription));
+                return src.fmt().combined(getUsage(src), '\n', src.fmt().tr(this.extendedDescription));
             }
         } else if (this.extendedDescription == null) {
             return src.fmt().combined(desc, '\n', getUsage(src));
         } else {
-            return src.fmt().combined(desc, '\n', getUsage(src), '\n', src.fmt().translated(this.extendedDescription));
+            return src.fmt().combined(desc, '\n', getUsage(src), '\n', src.fmt().tr(this.extendedDescription));
         }
     }
 }

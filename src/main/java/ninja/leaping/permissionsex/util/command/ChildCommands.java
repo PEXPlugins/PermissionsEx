@@ -98,14 +98,18 @@ public class ChildCommands {
                 if (commandComponent.isPresent()) {
                     if (args.hasNext()) {
                         CommandSpec child = children.get(commandComponent.get());
-                        return child.tabComplete(src, args, context);
-                    } else
-                    return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new Predicate<String>() {
-                        @Override
-                        public boolean apply(String input) {
-                            return input.startsWith(commandComponent.get());
+                        if (child == null) {
+                            return ImmutableList.of();
                         }
-                    }));
+                        return child.tabComplete(src, args, context);
+                    } else {
+                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new Predicate<String>() {
+                            @Override
+                            public boolean apply(String input) {
+                                return input.startsWith(commandComponent.get());
+                            }
+                        }));
+                    }
                 } else {
                     return ImmutableList.copyOf(children.keySet());
                 }
@@ -114,7 +118,14 @@ public class ChildCommands {
         @Override
         public <TextType> TextType getUsage(Commander<TextType> context) {
             List<Object> args = new ArrayList<>(Math.max(0, children.size() * 2 - 1));
-            for (Iterator<String> it = filterCommands(context).iterator(); it.hasNext();) {
+            Iterable<String> filteredCommands = Iterables.filter(filterCommands(context), new Predicate<String>() {
+                @Override
+                public boolean apply(String input) {
+                    return children.get(input).getAliases().get(0).equals(input); // Restrict to primary aliases in usage
+                }
+            });
+
+            for (Iterator<String> it = filteredCommands.iterator(); it.hasNext();) {
                 args.add(it.next());
                 if (it.hasNext()) {
                     args.add("|");

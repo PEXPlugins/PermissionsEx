@@ -24,11 +24,37 @@ import java.util.Map;
  * Interface specifying code to get specific elements of commands
  */
 public interface MessageFormatter<TextType> {
+    /**
+     * Print the subject in a user-friendly manner. May link to the subject info printout
+     *
+     * @param subject The subject to show
+     * @return the formatted value
+     */
     public TextType subject(Map.Entry<String, String> subject);
+
+    /**
+     * Print the given boolean in a user-friendly manner.
+     * Generally this means green if true, or red if false
+     * @param val The value to print
+     * @return the formatted value
+     */
     public TextType booleanVal(boolean val);
     public TextType permission(String permission, int value);
     public TextType option(String permission, String value);
-    public TextType highlighted(TextType text);
+
+    /**
+     * Format the given line of text to be used in a header
+     * @param text
+     * @return
+     */
+    public TextType header(TextType text);
+
+    /**
+     * Highlight the passed text
+     * @param text The text to highlight
+     * @return The highlighted text
+     */
+    public TextType hl(TextType text);
 
     /**
      * Combines an array containing elements of type {@link TextType} and {@link java.lang.String} into a single message
@@ -38,5 +64,11 @@ public interface MessageFormatter<TextType> {
      */
     public TextType combined(Object... elements);
 
-    public TextType translated(Translatable tr);
+    /**
+     * Return the internal representation of the given translatable text.
+     *
+     * @param tr The translatable text
+     * @return the formatted value
+     */
+    public TextType tr(Translatable tr);
 }

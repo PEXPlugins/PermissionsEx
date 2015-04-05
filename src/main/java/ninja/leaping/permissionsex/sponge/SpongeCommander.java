@@ -74,18 +74,18 @@ public class SpongeCommander implements Commander<Text> {
 
     @Override
     public void msg(Translatable message) {
-        msg(fmt().translated(message));
+        msg(fmt().tr(message));
     }
 
 
     @Override
     public void debug(Translatable message) {
-        debug(fmt().translated(message));
+        debug(fmt().tr(message));
     }
 
     @Override
     public void error(Translatable message) {
-        error(fmt().translated(message));
+        error(fmt().tr(message));
     }
 
     @Override

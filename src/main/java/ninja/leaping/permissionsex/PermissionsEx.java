@@ -264,6 +264,10 @@ public class PermissionsEx implements ImplementationInterface {
         }
     }
 
+    public Iterable<String> getRegisteredSubjectTypes() {
+        return this.activeDataStore.getRegisteredTypes();
+    }
+
     public void setDebugMode(boolean debug) {
         this.debug = debug;
     }

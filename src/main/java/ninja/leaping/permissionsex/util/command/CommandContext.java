@@ -21,6 +21,8 @@ import com.google.common.collect.Multimap;
 
 import java.util.Collection;
 
+import static ninja.leaping.permissionsex.util.Translations._;
+
 /**
  * Context that a command is executed in
  */
@@ -63,6 +65,12 @@ public class CommandContext {
             throw new NullPointerException("value");
         }
         parsedArgs.put(key, value);
+    }
+
+    public void checkPermission(Commander<?> commander, String permission) throws CommandException {
+        if (!commander.hasPermission(permission)) {
+            throw new CommandException(_("You do not have permission to use this command!"));
+        }
     }
 
     public boolean hasAny(String key) {

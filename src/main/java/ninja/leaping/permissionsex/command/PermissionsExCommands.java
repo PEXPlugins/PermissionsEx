@@ -45,7 +45,11 @@ public class PermissionsExCommands {
                 .build();
 
         final CommandElement children = ChildCommands.args(childrenList.toArray(new CommandSpec[childrenList.size()]));
-        final CommandElement subjectChildren = ChildCommands.args();
+        final CommandElement subjectChildren = ChildCommands.args(OptionCommands.getOptionCommand(pex),
+                                                                  PermissionsCommands.getPermissionCommand(pex),
+                                                                  PermissionsCommands.getPermissionDefaultCommand(pex),
+                                                                  InfoCommand.getInfoCommand(pex),
+                                                                  ParentCommands.getParentCommand(pex));
 
         return CommandSpec.builder()
                 .setAliases("pex", "permissionsex", "permissions")
@@ -54,7 +58,7 @@ public class PermissionsExCommands {
                         firstParsing(
                                 children,
                                 seq(subject(_("subject"), pex),
-                                        subjectChildren))
+                                        optional(subjectChildren)))
                 ))
                 .setExecutor(new CommandExecutor() {
                     @Override
@@ -67,7 +71,7 @@ public class PermissionsExCommands {
                             return;
                         }
 
-                        src.msg(src.fmt().combined("PermissionsEx ", src.fmt().highlighted(src.fmt().combined("v", pex.getVersion()))));
+                        src.msg(src.fmt().combined("PermissionsEx ", src.fmt().hl(src.fmt().combined("v", pex.getVersion()))));
                         src.msg(args.getSpec().getUsage(src));
                     }
                 })
@@ -89,4 +93,5 @@ public class PermissionsExCommands {
                 })
                 .build();
     }
+
 }

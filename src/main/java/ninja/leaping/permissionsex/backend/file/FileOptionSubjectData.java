@@ -69,7 +69,7 @@ public class FileOptionSubjectData extends MemoryOptionSubjectData {
                 @Nullable
                 @Override
                 public Entry<String, String> apply(Map.Entry<Object, ? extends ConfigurationNode> ent) {
-                    return Maps.immutableEntry(ent.getKey().toString(), ent.getValue().toString());
+                    return Maps.immutableEntry(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
                 }
             }));
         }

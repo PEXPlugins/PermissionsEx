@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.base.Joiner;
+import joptsimple.internal.Strings;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import java.util.Locale;
@@ -49,7 +50,12 @@ class TestMessageFormatter implements MessageFormatter<String> {
     }
 
     @Override
-    public String highlighted(String text) {
+    public String header(String text) {
+        return text + '\n' + Strings.repeat('=', text.length());
+    }
+
+    @Override
+    public String hl(String text) {
         return "*" + text + "*";
     }
 
@@ -59,7 +65,7 @@ class TestMessageFormatter implements MessageFormatter<String> {
     }
 
     @Override
-    public String translated(Translatable tr) {
+    public String tr(Translatable tr) {
         return tr.translateFormatted(Locale.ROOT);
     }
 }

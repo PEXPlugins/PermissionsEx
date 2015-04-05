@@ -48,6 +48,6 @@ public abstract class CommandElement {
     public abstract <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context);
 
     public <TextType> TextType getUsage(Commander<TextType> src) {
-        return src.fmt().translated(getKey());
+        return src.fmt().tr(getKey());
     }
 }
