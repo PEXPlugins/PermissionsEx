@@ -21,7 +21,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
-import ninja.leaping.permissionsex.backends.DataStore;
+import ninja.leaping.permissionsex.backend.DataStore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

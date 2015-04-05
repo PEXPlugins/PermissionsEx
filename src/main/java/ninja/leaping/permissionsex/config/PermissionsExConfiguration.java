@@ -20,7 +20,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
-import ninja.leaping.permissionsex.backends.DataStore;
+import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 
 import java.util.Collections;

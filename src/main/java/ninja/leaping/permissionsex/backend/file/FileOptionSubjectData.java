@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backends.file;
+package ninja.leaping.permissionsex.backend.file;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.permissionsex.backends.memory.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.backend.memory.MemoryOptionSubjectData;
 
 import javax.annotation.Nullable;
 import java.util.Collections;

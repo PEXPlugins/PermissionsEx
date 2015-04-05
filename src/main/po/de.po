@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-04 22:04-0700\n"
+"POT-Creation-Date: 2015-04-04 22:10-0700\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -17,36 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-#: ninja/leaping/permissionsex/backends/file/FileDataStore.java:90
-msgid "While loading legacy YML permissions from %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/backends/file/FileDataStore.java:99
-msgid "While loading permissions file from %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/backends/file/FileDataStore.java:233
-msgid "%s schema version updated from %s to %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/backends/file/FileDataStore.java:237
-msgid "While performing version upgrade"
-msgstr ""
-
-#: ninja/leaping/permissionsex/backends/file/FileDataStore.java:278
-msgid "While deserializing subject data for %s:"
-msgstr ""
-
-#: ninja/leaping/permissionsex/backends/AbstractDataStore.java:152
-#, fuzzy
-msgid "Error while serializing backend %s"
-msgstr "Fehler während das Laufen des Befehles: %s"
-
-#: ninja/leaping/permissionsex/backends/AbstractDataStore.java:179
-#, fuzzy
-msgid "Error while deserializing backend %s"
-msgstr "Fehler während das Laufen des Befehles: %s"
 
 #: ninja/leaping/permissionsex/config/PermissionsExConfiguration.java:74
 msgid "No backends defined!"
@@ -252,50 +222,80 @@ msgstr ""
 msgid "Unterminated quoted string found"
 msgstr "Unbefertigtes quoted Satz befunden"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:123
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:90
+msgid "While loading legacy YML permissions from %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:99
+msgid "While loading permissions file from %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:233
+msgid "%s schema version updated from %s to %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:237
+msgid "While performing version upgrade"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:278
+msgid "While deserializing subject data for %s:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:152
+#, fuzzy
+msgid "Error while serializing backend %s"
+msgstr "Fehler während das Laufen des Befehles: %s"
+
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:179
+#, fuzzy
+msgid "Error while deserializing backend %s"
+msgstr "Fehler während das Laufen des Befehles: %s"
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:52
+msgid "Commands for PermissionsEx"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:56
+msgid "subject"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:80
+msgid "Toggle debug mode"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:87
+msgid "Debug mode enabled: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:124
 msgid "Trying to convert users stored by name to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:136
+#: ninja/leaping/permissionsex/PermissionsEx.java:137
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:167
+#: ninja/leaping/permissionsex/PermissionsEx.java:168
 msgid "Error while fetching UUIDs for users"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:175
+#: ninja/leaping/permissionsex/PermissionsEx.java:176
 msgid "%s user successfully converted from name to UUID"
 msgid_plural "%s users successfully converted from name to UUID!"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:183
+#: ninja/leaping/permissionsex/PermissionsEx.java:184
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:187
+#: ninja/leaping/permissionsex/PermissionsEx.java:188
 msgid ""
 "Unable to resolve Mojang API for UUID conversion. Do you have an internet "
 "connection? UUID conversion will not proceed (but may not be necessary)."
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:331
+#: ninja/leaping/permissionsex/PermissionsEx.java:332
 msgid "While calculating subject data for %s:%s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:51
-msgid "Commands for PermissionsEx"
-msgstr ""
-
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:55
-msgid "subject"
-msgstr ""
-
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:79
-msgid "Toggle debug mode"
-msgstr ""
-
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:86
-msgid "Debug mode enabled: %s"
 msgstr ""

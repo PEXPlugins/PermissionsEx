@@ -22,9 +22,9 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.InvalidTypeException;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
-import ninja.leaping.permissionsex.backends.DataStore;
-import ninja.leaping.permissionsex.backends.DataStoreFactories;
-import ninja.leaping.permissionsex.backends.DataStoreFactory;
+import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.backend.DataStoreFactories;
+import ninja.leaping.permissionsex.backend.DataStoreFactory;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 public class DataStoreSerializer implements TypeSerializer {

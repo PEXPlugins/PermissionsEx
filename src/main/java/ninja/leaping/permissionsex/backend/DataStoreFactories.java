@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backends;
+package ninja.leaping.permissionsex.backend;
 
 import com.google.common.base.Optional;
-import ninja.leaping.permissionsex.backends.file.FileDataStore;
-import ninja.leaping.permissionsex.backends.memory.MemoryDataStore;
+import ninja.leaping.permissionsex.backend.file.FileDataStore;
+import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

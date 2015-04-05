@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backends.sql;
+package ninja.leaping.permissionsex.backend.sql;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.objectmapping.Setting;
-import ninja.leaping.permissionsex.backends.AbstractDataStore;
-import ninja.leaping.permissionsex.backends.DataStore;
+import ninja.leaping.permissionsex.backend.AbstractDataStore;
+import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 

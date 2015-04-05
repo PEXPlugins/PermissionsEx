@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex;
+package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;

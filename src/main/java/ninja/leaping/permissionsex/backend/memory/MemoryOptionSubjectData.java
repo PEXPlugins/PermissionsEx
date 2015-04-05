@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backends.memory;
+package ninja.leaping.permissionsex.backend.memory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;

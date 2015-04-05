@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backends.sql;
+package ninja.leaping.permissionsex.backend.sql;
 
-import ninja.leaping.permissionsex.backends.memory.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.backend.memory.MemoryOptionSubjectData;
 
 import java.sql.Connection;
 import java.sql.SQLException;
