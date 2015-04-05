@@ -38,7 +38,7 @@ public class GameArguments {
      * @param defaultType The type of subject to expect if none is given. May be null.
      * @return the element to match the input
      */
-    private static CommandElement subject(Translatable key, PermissionsEx pex, String defaultType) {
+    public static CommandElement subject(Translatable key, PermissionsEx pex) {
         return new SubjectElement(key);
     }
 

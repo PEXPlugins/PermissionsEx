@@ -23,7 +23,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
@@ -66,6 +69,7 @@ import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.api.util.command.CommandMapping;
 import org.spongepowered.api.util.command.CommandSource;
 import org.spongepowered.api.util.event.Subscribe;
 
@@ -195,7 +199,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
         /*
             Commands api todo items:
-            - hook up command flags
+            - write command flags
+            - handle rolling back CommandContexts -- use a custom immutable data structure for this
             - write PEX commands
             - implement into Sponge
          */
@@ -209,8 +214,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                             @Override
                             public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                                 src.msg(_("Source locale: %s", src.getLocale()));
-                                src.msg(_("You are: %s", src.getName()));
-                                src.fmt().subject(src.getSubjectIdentifier().get());
+                                src.msg(_("You are: %s", src.fmt().subject(src.getSubjectIdentifier().get())));
                                 src.msg(_("Your command ran!!"));
                                 for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
                                     src.msg(_("Default in contexts: %s", entry.getKey().toString()));
@@ -296,6 +300,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             config = PermissionsExConfiguration.MAPPER.bindToNew().populate(rawConfig);
             config.validate();
             PermissionsEx oldManager = manager;
+            Set<CommandMapping> mappings = game.getCommandDispatcher().getOwnedBy(game.getPluginManager().fromInstance(this).get());
+            for (CommandMapping mapping : mappings) { // Because the new PermissionsEx instance will register commands again, we have to unregister the old ones here
+                game.getCommandDispatcher().removeMapping(mapping);
+            }
             manager = new PermissionsEx(config, this);
             if (oldManager != null) {
                 oldManager.close();
@@ -312,13 +320,15 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     public ListenableFuture<Void> reload() {
-        return ListenableFutureTask.create(new Callable<Void>() {
+        ListenableFutureTask<Void> task = ListenableFutureTask.create(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
                 reloadSync();
                 return null;
             }
         });
+        executeAsyncronously(task);
+        return task;
     }
 
     PermissionsEx getManager() {
@@ -412,6 +422,40 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public void registerCommand(CommandSpec command) {
         game.getCommandDispatcher().register(this, new PEXSpongeCommand(command, this), command.getAliases());
+    }
+
+    @Override
+    public Set<CommandSpec> getImplementationCommands() {
+            return ImmutableSet.of(CommandSpec.builder()
+                .setAliases("reload", "rel")
+                .setDescription(_("Reload the PermissionsEx configuration"))
+                .setPermission("permissionsex.reload")
+                .setExecutor(new CommandExecutor() {
+                    @Override
+                    public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
+                        src.msg(_("Reloading PermissionsEx"));
+                        Futures.addCallback(reload(), new FutureCallback<Void>() {
+                            @Override
+                            public void onSuccess(@Nullable Void result) {
+                                src.msg(_("The reload was successful"));
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                src.error(_("An error occurred while reloading PEX: %s\n " +
+                                        "Please see the server console for details", t.getLocalizedMessage()));
+                                logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                        src.getName(), t.getLocalizedMessage())), t);
+                            }
+                        });
+                    }
+                })
+                .build());
+    }
+
+    @Override
+    public String getVersion() {
+        return PomData.VERSION;
     }
 
     Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {

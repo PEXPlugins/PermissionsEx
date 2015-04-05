@@ -86,8 +86,8 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
     }
 
     @Override
-    public Text highlighted(Translatable text) {
-        return Texts.builder(new FixedTranslation(text.translate(locale)), new Object[0]).color(TextColors.AQUA).build();
+    public Text highlighted(Text text) {
+        return text.builder().color(TextColors.AQUA).build();
     }
 
     @Override

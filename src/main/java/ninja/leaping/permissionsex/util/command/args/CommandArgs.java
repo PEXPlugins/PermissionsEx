@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -66,6 +67,8 @@ public class CommandArgs {
     }
 
     public ArgumentParseException createError(Translatable message) {
+        //System.out.println("Creating error: " + message.translateFormatted(Locale.getDefault()));
+        //Thread.dumpStack();
         return new ArgumentParseException(message, rawInput, index < 0 ? 0 : args.get(index).getStartIdx());
     }
 

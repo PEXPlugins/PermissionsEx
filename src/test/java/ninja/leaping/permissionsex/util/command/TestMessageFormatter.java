@@ -49,8 +49,8 @@ class TestMessageFormatter implements MessageFormatter<String> {
     }
 
     @Override
-    public String highlighted(Translatable text) {
-        return "*" + translated(text) + "*";
+    public String highlighted(String text) {
+        return "*" + text + "*";
     }
 
     @Override

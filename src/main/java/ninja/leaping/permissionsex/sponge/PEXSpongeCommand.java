@@ -22,7 +22,6 @@ import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
 import org.spongepowered.api.util.command.CommandSource;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,9 +69,6 @@ public class PEXSpongeCommand implements CommandCallable {
 
     @Override
     public List<String> getSuggestions(CommandSource commandSource, String commandLine) throws CommandException {
-        System.out.println("Requesting tab completions for " + command.getAliases() + " " + commandLine);
-        List<String> ret = command.tabComplete(new SpongeCommander(plugin, commandSource), commandLine);
-        System.out.println("Final tab completions were: " + ret);
-        return ret;
+        return command.tabComplete(new SpongeCommander(plugin, commandSource), commandLine);
     }
 }

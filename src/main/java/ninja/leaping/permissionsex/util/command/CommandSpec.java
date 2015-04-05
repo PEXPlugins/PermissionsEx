@@ -21,6 +21,7 @@ import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
 import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
+import ninja.leaping.permissionsex.util.command.args.GenericArguments;
 import ninja.leaping.permissionsex.util.command.args.QuotedStringParser;
 
 import java.util.Collections;
@@ -61,7 +62,7 @@ public class CommandSpec {
     }
 
     public static final class Builder {
-        private CommandElement args;
+        private CommandElement args = GenericArguments.none();
         private List<String> aliases;
         private Translatable description, extendedDescription;
         private String permission;
@@ -188,6 +189,12 @@ public class CommandSpec {
         }
 
         public CommandSpec build() {
+            if (this.executor == null) {
+                throw new IllegalArgumentException("An executor is required");
+            }
+            if (this.aliases == null || this.aliases.isEmpty()) {
+                throw new IllegalArgumentException("A command may not have no aliases");
+            }
             return new CommandSpec(args, executor, aliases, description, extendedDescription, permission, rawArgs, parseQuotedArgs, parseLenient);
         }
     }

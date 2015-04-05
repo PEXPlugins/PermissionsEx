@@ -28,7 +28,7 @@ public interface MessageFormatter<TextType> {
     public TextType booleanVal(boolean val);
     public TextType permission(String permission, int value);
     public TextType option(String permission, String value);
-    public TextType highlighted(Translatable text);
+    public TextType highlighted(TextType text);
 
     /**
      * Combines an array containing elements of type {@link TextType} and {@link java.lang.String} into a single message

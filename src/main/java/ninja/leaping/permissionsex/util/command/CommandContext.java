@@ -64,4 +64,8 @@ public class CommandContext {
         }
         parsedArgs.put(key, value);
     }
+
+    public boolean hasAny(String key) {
+        return parsedArgs.containsKey(key);
+    }
 }

@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -75,6 +76,7 @@ public class PermissionsEx implements ImplementationInterface {
     });
     private final MemoryDataStore transientData;
     private ProfileService uuidService;
+    private volatile boolean debug;
 
     private static String fLog(Translatable trans) {
         return trans.translateFormatted(Locale.getDefault());
@@ -83,12 +85,21 @@ public class PermissionsEx implements ImplementationInterface {
     public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.config = config;
         this.impl = impl;
+        this.debug = config.isDebugEnabled();
         this.uuidService = HttpRepositoryService.forMinecraft();
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
         getSubjects("group").cacheAll();
+        convertUuids();
+
+        // Now that initialization is complete
+        uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects("user")));
+        registerCommand(PermissionsExCommands.createRootCommand(this));
+    }
+
+    private void convertUuids() {
         try {
             InetAddress.getByName("api.mojang.com");
             Futures.addCallback(this.activeDataStore.performBulkOperation(new Function<DataStore, Integer>() {
@@ -162,8 +173,8 @@ public class PermissionsEx implements ImplementationInterface {
                 public void onSuccess(@Nullable Integer result) {
                     if (result != null && result > 0) {
                         getLogger().info(fLog(_n("%s user successfully converted from name to UUID",
-                                                "%s users successfully converted from name to UUID!",
-                                                result, result)));
+                                "%s users successfully converted from name to UUID!",
+                                result, result)));
                     }
                 }
 
@@ -176,8 +187,6 @@ public class PermissionsEx implements ImplementationInterface {
             getLogger().warn(fLog(_("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).")));
         }
 
-        // Now that initialization is complete
-        uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects("user")));
     }
 
     public SubjectCache getSubjects(String type) {
@@ -254,8 +263,12 @@ public class PermissionsEx implements ImplementationInterface {
         }
     }
 
+    public void setDebugMode(boolean debug) {
+        this.debug = debug;
+    }
+
     public boolean hasDebugMode() {
-        return config.isDebugEnabled();
+        return this.debug;
     }
 
     public void close() {
@@ -286,6 +299,17 @@ public class PermissionsEx implements ImplementationInterface {
     public void registerCommand(CommandSpec command) {
         impl.registerCommand(command);
     }
+
+    @Override
+    public Set<CommandSpec> getImplementationCommands() {
+        return impl.getImplementationCommands();
+    }
+
+    @Override
+    public String getVersion() {
+        return impl.getVersion();
+    }
+
 
     public PermissionsExConfiguration getConfig() {
         return this.config;

@@ -30,7 +30,10 @@ import static org.junit.Assert.*;
 
 public class QuotedStringParserTest {
     private static List<String> parseFrom(String args) throws ArgumentParseException {
-        return QuotedStringParser.parseFrom(args, CommandSpec.builder().build(), false).getAll(); // Fixed locale for tests
+        return QuotedStringParser.parseFrom(args, CommandSpec.builder()
+                .setAliases("test")
+                .setExecutor(GenericArgumentsTest.NULL_EXECUTOR)
+                .build(), false).getAll(); // Fixed locale for tests
     }
 
     @Rule

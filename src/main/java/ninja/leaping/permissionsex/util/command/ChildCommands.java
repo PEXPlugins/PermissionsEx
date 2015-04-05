@@ -84,7 +84,12 @@ public class ChildCommands {
 
         @Override
         protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return children.get(args.next());
+            final String key = args.next();
+            if (!children.containsKey(key.toLowerCase())) {
+                throw args.createError(_("Input command %s was not a valid subcommand!", key));
+            }
+
+            return children.get(key.toLowerCase());
         }
 
         @Override
@@ -108,7 +113,7 @@ public class ChildCommands {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> context) {
-            List<Object> args = new ArrayList<>(children.size() * 2 - 1);
+            List<Object> args = new ArrayList<>(Math.max(0, children.size() * 2 - 1));
             for (Iterator<String> it = filterCommands(context).iterator(); it.hasNext();) {
                 args.add(it.next());
                 if (it.hasNext()) {
@@ -135,21 +140,32 @@ public class ChildCommands {
     }
 
     public static CommandExecutor executor(CommandElement arg) {
-        return new ChildCommandExecutor(arg.getKey().getUntranslated());
+        return new ChildCommandExecutor(arg.getKey().getUntranslated(), null);
+    }
+
+    public static CommandExecutor optionalExecutor(CommandElement arg, CommandExecutor fallbackExecutor) {
+        return new ChildCommandExecutor(arg.getKey().getUntranslated(), fallbackExecutor);
     }
 
     private static class ChildCommandExecutor implements CommandExecutor {
         private final String key;
+        private final CommandExecutor fallbackExecutor;
 
-        private ChildCommandExecutor(String key) {
+        private ChildCommandExecutor(String key, CommandExecutor fallbackExecutor) {
             this.key = key;
+            this.fallbackExecutor = fallbackExecutor;
         }
 
         @Override
         public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
             CommandSpec spec = args.getOne(key);
             if (spec == null) {
-                throw new CommandException(_("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
+                if (fallbackExecutor != null) {
+                    fallbackExecutor.execute(src, args);
+                    return;
+                } else {
+                    throw new CommandException(_("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
+                }
             }
             spec.getExecutor().execute(src, args);
         }

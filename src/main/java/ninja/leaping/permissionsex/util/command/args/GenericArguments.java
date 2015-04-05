@@ -147,7 +147,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> commander) {
-            final List<Object> ret = new ArrayList<>(elements.size() * 2 - 1);
+            final List<Object> ret = new ArrayList<>(Math.max(0, elements.size() * 2 - 1));
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                 ret.add(it.next().getUsage(commander));
                 if (it.hasNext()) {
@@ -216,7 +216,7 @@ public class GenericArguments {
         @Override
         public <TextType> TextType getUsage(Commander<TextType> commander) {
             if (choicesInUsage) {
-                List<Object> args = new ArrayList<>(choices.size() * 2 - 1);
+                final List<Object> args = new ArrayList<>(Math.max(0, choices.size() * 2 - 1));
                 for (Iterator<String> it = choices.keySet().iterator(); it.hasNext();) {
                     args.add(it.next());
                     if (it.hasNext()) {
@@ -281,14 +281,17 @@ public class GenericArguments {
                 @Nullable
                 @Override
                 public Iterable<String> apply(CommandElement input) {
-                    return input.tabComplete(src, args, context);
+                    int startIndex = args.getPosition();
+                    List<String> ret = input.tabComplete(src, args, context);
+                    args.setPosition(startIndex);
+                    return ret;
                 }
             })));
         }
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> commander) {
-            final List<Object> ret = new ArrayList<>(elements.size() * 2 - 1);
+            final List<Object> ret = new ArrayList<>(Math.max(0, elements.size() * 2 - 1));
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                 ret.add(it.next().getUsage(commander));
                 if (it.hasNext()) {

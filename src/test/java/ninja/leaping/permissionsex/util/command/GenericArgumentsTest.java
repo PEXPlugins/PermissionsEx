@@ -34,12 +34,20 @@ import static org.junit.Assert.*;
  * Tests for all argument types contained in GenericArguments
  */
 public class GenericArgumentsTest {
+    static final CommandExecutor NULL_EXECUTOR = new CommandExecutor() {
+        @Override
+        public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+        }
+    };
 
     @Rule
     public ExpectedException expected = ExpectedException.none();
 
     private static CommandContext parseForInput(String input, CommandElement element) throws ArgumentParseException {
-        CommandSpec spec = CommandSpec.builder().build();
+        CommandSpec spec = CommandSpec.builder()
+                .setAliases("test")
+                .setExecutor(NULL_EXECUTOR)
+                .build();
         CommandArgs args = QuotedStringParser.parseFrom(input, spec, false);
         CommandContext context = new CommandContext(spec, args.getRaw());
         element.parse(args, context);
@@ -49,7 +57,7 @@ public class GenericArgumentsTest {
     @Test
     public void testNone() throws ArgumentParseException {
         CommandArgs args = CommandArgs.forRawArg("a");
-        CommandContext context = new CommandContext(CommandSpec.builder().build(), args.getRaw());
+        CommandContext context = new CommandContext(CommandSpec.builder().setAliases("test").setExecutor(NULL_EXECUTOR).build(), args.getRaw());
         none().parse(args, context);
         assertEquals("a", args.next());
     }

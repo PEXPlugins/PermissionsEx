@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.util.Set;
 
 /**
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
@@ -59,4 +60,18 @@ public interface ImplementationInterface {
      * @param command The command to execute
      */
     public void registerCommand(CommandSpec command);
+
+    /**
+     * Get commands that the implementation wants to register as a child of the {@code /pex} command
+     *
+     * @return The desired subcommands, or an empty set
+     */
+    public Set<CommandSpec> getImplementationCommands();
+
+    /**
+     * Return the version number attached to this implementation of PEX
+     *
+     * @return The currently running version
+     */
+    public String getVersion();
 }
