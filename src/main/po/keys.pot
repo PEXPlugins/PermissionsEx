@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-04 21:39-0700\n"
+"POT-Creation-Date: 2015-04-04 22:07-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,18 +56,6 @@ msgstr ""
 
 #: ninja/leaping/permissionsex/config/PermissionsExConfiguration.java:81
 msgid "Default backend % is not an available backend! Choices are: %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:62
-msgid "Click to view more info"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:67
-msgid "true"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:67
-msgid "false"
 msgstr ""
 
 #: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:133
@@ -185,38 +173,16 @@ msgstr ""
 msgid "An error occurred while reloading PEX (triggered by %s's command): %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:91
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:98
-msgid "Buffer overrun while parsing args"
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:62
+msgid "Click to view more info"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:134
-msgid ""
-"Actual next character '%c' did not match expected quotation character '%c'"
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:67
+msgid "true"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:143
-msgid "Unterminated quoted string found"
-msgstr ""
-
-#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:53
-msgid "Not enough arguments"
-msgstr ""
-
-#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:60
-msgid "Not enough arguments!"
-msgstr ""
-
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:200
-msgid "Argument was not a valid choice. Valid choices: %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:577
-msgid "Expected an integer, but input '%s' was not"
-msgstr ""
-
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:646
-msgid "Enum value %s not valid"
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:67
+msgid "false"
 msgstr ""
 
 #: ninja/leaping/permissionsex/util/command/ChildCommands.java:89
@@ -245,20 +211,38 @@ msgstr ""
 msgid "Too many arguments!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:51
-msgid "Commands for PermissionsEx"
+#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:53
+msgid "Not enough arguments"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:54
-msgid "subject"
+#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:60
+msgid "Not enough arguments!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:79
-msgid "Toggle debug mode"
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:200
+msgid "Argument was not a valid choice. Valid choices: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsExCommands.java:86
-msgid "Debug mode enabled: %s"
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:577
+msgid "Expected an integer, but input '%s' was not"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:646
+msgid "Enum value %s not valid"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:91
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:98
+msgid "Buffer overrun while parsing args"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:134
+msgid ""
+"Actual next character '%c' did not match expected quotation character '%c'"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:143
+msgid "Unterminated quoted string found"
 msgstr ""
 
 #: ninja/leaping/permissionsex/PermissionsEx.java:123
@@ -291,4 +275,20 @@ msgstr ""
 
 #: ninja/leaping/permissionsex/PermissionsEx.java:331
 msgid "While calculating subject data for %s:%s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsExCommands.java:51
+msgid "Commands for PermissionsEx"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsExCommands.java:55
+msgid "subject"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsExCommands.java:79
+msgid "Toggle debug mode"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsExCommands.java:86
+msgid "Debug mode enabled: %s"
 msgstr ""

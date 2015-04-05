@@ -33,6 +33,7 @@ import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A data store backed entirely in memory
@@ -42,7 +43,7 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Setting(comment = "Whether or not this data store will store subjects being set") private boolean track = true;
 
-    private final ConcurrentHashMap<Map.Entry<String, String>, ImmutableOptionSubjectData> data = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Map.Entry<String, String>, ImmutableOptionSubjectData> data = new ConcurrentHashMap<>();
 
     public MemoryDataStore() {
         super(FACTORY);
