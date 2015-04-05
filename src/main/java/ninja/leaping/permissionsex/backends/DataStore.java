@@ -60,6 +60,8 @@ public interface DataStore {
 
     Iterable<String> getAllIdentifiers(String type);
 
+    Iterable<String> getRegisteredTypes();
+
     /**
      * Serialize the configuration state of this data store to a configuration node
      *

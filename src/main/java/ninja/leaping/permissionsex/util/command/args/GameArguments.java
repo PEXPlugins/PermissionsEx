@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
@@ -32,12 +33,12 @@ public class GameArguments {
 
     /**
      * Expect the provided argument to specify a subject
-     * TODO: How do we pass global state? As a Game/PermissionsEx/whatever argument from the caller? that's a bt ugly...
-     * @param type The subject type? Is this necessary?
+     *
      * @param key The key to store the parsed argument under
+     * @param defaultType The type of subject to expect if none is given. May be null.
      * @return the element to match the input
      */
-    private static CommandElement subject(Translatable key, String type) {
+    private static CommandElement subject(Translatable key, PermissionsEx pex, String defaultType) {
         return new SubjectElement(key);
     }
 

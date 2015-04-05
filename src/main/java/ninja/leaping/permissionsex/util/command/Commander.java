@@ -16,8 +16,10 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
+import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.util.Translatable;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,6 +28,8 @@ import java.util.Set;
  */
 public interface Commander<TextType> {
     public String getName();
+    public Locale getLocale();
+    public Optional<Map.Entry<String, String>> getSubjectIdentifier();
     public boolean hasPermission(String permission);
     public Set<Map.Entry<String, String>> getActiveContexts();
     public MessageFormatter<TextType> fmt();

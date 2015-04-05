@@ -40,6 +40,7 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -119,13 +120,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
 
-    private static String dtr(String text, Object... args) {
-        return _(text, args).translateFormatted(Locale.getDefault());
+    private static String lf(Translatable trans) {
+        return trans.translateFormatted(Locale.getDefault());
     }
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
-        logger.info(dtr("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
+        logger.info(lf(_("Pre-init of %s v%s", PomData.NAME, PomData.VERSION)));
         sql = services.potentiallyProvide(SqlService.class);
         scheduler = services.potentiallyProvide(AsynchronousScheduler.class);
 
@@ -136,7 +137,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (PEBKACException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException(dtr("Error occurred while enabling %s", PomData.NAME), e);
+            throw new RuntimeException(lf(_("Error occurred while enabling %s", PomData.NAME)), e);
         }
 
         try {
@@ -194,28 +195,28 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
         /*
             Commands api todo items:
-            - find a way to pass global state to command elements
-            - hook up command flags (with jopt-simple -- v4.6 is what MC uses)
+            - hook up command flags
             - write PEX commands
             - implement into Sponge
          */
         this.registerCommand(
                 CommandSpec.builder()
-                        .setAliases("pex", "pextest")
+                        .setAliases("pextest")
                         .setDescription(_("A simple test command"))
-                        .setArguments(seq(string(_("first")), optional(choices(_("second"), ImmutableMap.of("first", true, "second", false)))))
+                        .setArguments(flags()
+                                .buildWith(seq(string(_("first")), optional(choices(_("second"), ImmutableMap.of("first", true, "second", false))))))
                         .setExecutor(new CommandExecutor() {
                             @Override
                             public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                                src.msg(_("Source locale: %s", "unknown"));
-                                src.msg(_("You are: %s", src.getName())); //cmd.fmt().subject(Maps.immutableEntry(cmd.getSubject().getIdentifier().getKey(), cmd.getSubject().getIdentifier().getValue())));
+                                src.msg(_("Source locale: %s", src.getLocale()));
+                                src.msg(_("You are: %s", src.getName()));
+                                src.fmt().subject(src.getSubjectIdentifier().get());
                                 src.msg(_("Your command ran!!"));
                                 for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
                                     src.msg(_("Default in contexts: %s", entry.getKey().toString()));
                                     for (Map.Entry<String, Boolean> ent : entry.getValue().entrySet()) {
                                         src.msg(src.fmt().permission(ent.getKey(), ent.getValue() ? 1 : -1));
                                     }
-
                                 }
                                 src.msg(_("Has flag %s: %s", "a", String.valueOf(args.getOne("a"))));
                                 src.msg(_("Has flag %s: %s", "-a", String.valueOf(args.getOne("-a"))));
@@ -229,7 +230,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Subscribe
     public void disable(ServerStoppingEvent event) {
-        logger.debug(dtr("Disabling %s", PomData.NAME));
+        logger.debug(lf(_("Disabling %s", PomData.NAME)));
         if (manager != null) {
             manager.close();
             manager = null;
@@ -255,7 +256,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     static ConfigurationNode loadDefaultConfiguration() throws IOException {
         final URL defaultConfig = PermissionsExPlugin.class.getResource("default.conf");
         if (defaultConfig == null) {
-            throw new Error(dtr("Default config file is not present in jar!"));
+            throw new Error(lf(_("Default config file is not present in jar!")));
         }
         HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder().setURL(defaultConfig).build();
         return fallbackLoader.load();
@@ -265,9 +266,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private void convertFromBukkit() throws IOException {
         File bukkitConfigDir = new File("plugins/PermissionsEx");
         if (bukkitConfigDir.isDirectory() && !configDir.isDirectory()) {
-            logger.info(dtr("Migrating configuration data from Bukkit"));
+            logger.info(lf(_("Migrating configuration data from Bukkit")));
             if (!bukkitConfigDir.renameTo(configDir)) {
-                throw new IOException(dtr("Unable to move Bukkit configuration directory to location for Sponge!"));
+                throw new IOException(lf(_("Unable to move Bukkit configuration directory to location for Sponge!")));
             }
         }
         File bukkitConfigFile = new File(configDir, "config.yml");
@@ -277,7 +278,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             ConfigTransformations.fromBukkit().apply(bukkitConfig);
             configLoader.save(bukkitConfig);
             if (!bukkitConfigFile.renameTo(new File(configDir, "config.yml.bukkit"))) {
-                logger.warn(dtr("Could not rename old Bukkit configuration file to old name"));
+                logger.warn(lf(_("Could not rename old Bukkit configuration file to old name")));
             }
         }
     }
@@ -358,13 +359,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return subjectCollections.get(identifier);
         } catch (ExecutionException e) {
-            logger.error(dtr("Unable to get subject collection for type %s", identifier), e);
+            logger.error(lf(_("Unable to get subject collection for type %s", identifier)), e);
             return null;
         }
     }
 
     @Override
     @SuppressWarnings("unchecked")
+    // TODO: Get values from DataStore.getRegisteredTypes()
     public Map<String, SubjectCollection> getKnownSubjects() {
         return (Map) subjectCollections.asMap();
     }
@@ -397,7 +399,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return sql.ref().get().getDataSource(url);
         } catch (SQLException e) {
-            logger.error(dtr("Unable to get data source for jdbc url %s", url), e);
+            logger.error(lf(_("Unable to get data source for jdbc url %s", url)), e);
             return null;
         }
     }

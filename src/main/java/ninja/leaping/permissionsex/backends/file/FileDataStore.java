@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.backends.file;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -316,6 +317,16 @@ public class FileDataStore extends AbstractDataStore {
     @SuppressWarnings("unchecked")
     public Iterable<String> getAllIdentifiers(String type) {
         return (Set) this.permissionsConfig.getNode(typeToSection(type)).getChildrenMap().keySet();
+    }
+
+    @Override
+    public Iterable<String> getRegisteredTypes() {
+        return Iterables.transform(Maps.filterValues(this.permissionsConfig.getChildrenMap(), new Predicate<ConfigurationNode>() {
+            @Override
+            public boolean apply(@Nullable ConfigurationNode input) {
+                return input != null && input.hasMapChildren();
+            }
+        }).keySet(), Functions.toStringFunction());
     }
 
     @Override

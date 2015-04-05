@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.backends.memory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -101,6 +102,17 @@ public class MemoryDataStore extends AbstractDataStore {
                 return input.getValue();
             }
         });
+    }
+
+    @Override
+    public Iterable<String> getRegisteredTypes() {
+        return ImmutableSet.copyOf(Iterables.transform(data.keySet(), new Function<Map.Entry<String, String>, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable Map.Entry<String, String> input) {
+                return input.getKey();
+            }
+        }));
     }
 
     @Override

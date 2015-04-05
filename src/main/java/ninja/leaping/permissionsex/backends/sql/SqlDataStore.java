@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.backends.sql;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backends.AbstractDataStore;
@@ -77,6 +78,11 @@ public class SqlDataStore extends AbstractDataStore {
 
     @Override
     public Iterable<String> getAllIdentifiers(String type) {
+        return null;
+    }
+
+    @Override
+    public Iterable<String> getRegisteredTypes() {
         return null;
     }
 

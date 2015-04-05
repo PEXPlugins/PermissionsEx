@@ -16,7 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import java.util.Collection;
@@ -32,7 +32,7 @@ public class CommandContext {
     public CommandContext(CommandSpec spec, String rawInput) {
         this.spec = spec;
         this.rawInput = rawInput;
-        this.parsedArgs = HashMultimap.create();
+        this.parsedArgs = ArrayListMultimap.create();
     }
 
     public String getRawInput() {

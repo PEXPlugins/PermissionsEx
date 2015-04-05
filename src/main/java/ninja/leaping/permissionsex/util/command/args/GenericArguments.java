@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,56 @@ public class GenericArguments {
      */
     public static CommandElement none() {
         return new SequenceCommandElement(ImmutableList.<CommandElement>of());
+    }
+
+    public static FlagCommandElementBuilder flags() {
+        return new FlagCommandElementBuilder();
+    }
+
+    public static class FlagCommandElementBuilder {
+        private final Map<String, CommandElement> shortFlags = new HashMap<>();
+        private final Map<String, CommandElement> longFlags = new HashMap<>();
+        private boolean acceptsArbitraryLongFlags = true;
+
+        public CommandElement buildWith(CommandElement wrapped) {
+            return new FlagCommandElement(wrapped, shortFlags, longFlags, acceptsArbitraryLongFlags);
+        }
+    }
+
+    private static class FlagCommandElement extends CommandElement {
+        private final CommandElement childElement;
+        private final Map<String, CommandElement> shortFlags;
+        private final Map<String, CommandElement> longFlags;
+        private final boolean acceptArbitraryLongFlags;
+
+        protected FlagCommandElement(CommandElement childElement, Map<String, CommandElement> shortFlags, Map<String, CommandElement> longFlags, boolean acceptArbitraryLongFlags) {
+            super(null);
+            this.childElement = childElement;
+            this.shortFlags = shortFlags;
+            this.longFlags = longFlags;
+            this.acceptArbitraryLongFlags = acceptArbitraryLongFlags;
+        }
+
+        @Override
+        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
+            super.parse(args, context);
+
+        }
+
+        @Override
+        public <TextType> TextType getUsage(Commander<TextType> src) {
+            return super.getUsage(src);
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            return null;
+        }
+
+        @Override
+        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+            return null;
+        }
     }
 
     /**
@@ -200,12 +251,13 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             ArgumentParseException firstException = null;
             for (CommandElement element : elements) {
                 int startIndex = args.getPosition();
                 try {
-                    return element.parseValue(args);
+                    element.parse(args, context);
+                    return;
                 } catch (ArgumentParseException ex) {
                     if (firstException == null) {
                         firstException = ex;
@@ -216,6 +268,10 @@ public class GenericArguments {
             if (firstException != null) {
                 throw firstException;
             }
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
             return null;
         }
 
@@ -257,15 +313,14 @@ public class GenericArguments {
 
     /**
      * Make the provided command element optional
-     * This means the command element is not required. However, if the element is provided with invalid format and there
-     * are no more args specified, errors will still be passed on. To suppress errors instead,
-     * set {@code considerInvalidFormatEmpty} to true.
+     * This means the command element is not required.
+     * If the argument is provided but of invalid format, it will be skipped.
      *
      * @param element The element to optionally require
      * @return the element to match the input
      */
-    public static CommandElement optional(CommandElement element, boolean considerInvalidFormatEmpty) {
-        return new OptionalCommandElement(element, null, considerInvalidFormatEmpty);
+    public static CommandElement optionalWeak(CommandElement element) {
+        return new OptionalCommandElement(element, null, true);
     }
 
     /**
@@ -284,10 +339,8 @@ public class GenericArguments {
 
     /**
      * Make the provided command element optional
-     * This means the command element is not required. However, if the element is provided with invalid format and there
-     * are no more args specified, any errors will still be passed on.
-     * are no more args specified, errors will still be passed on. To suppress errors instead,
-     * set {@code considerInvalidFormatEmpty} to true.
+     * This means the command element is not required.
+     * If the argument is provided but of invalid format, it will be skipped.
      * If the given element's key and {@code value} are not null and this element is not provided the element's key will
      * be set to the given value.
      *
@@ -295,8 +348,8 @@ public class GenericArguments {
      * @param value The default value to set
      * @return the element to match the input
      */
-    public static CommandElement optional(CommandElement element, Object value, boolean considerInvalidFormatEmpty) {
-        return new OptionalCommandElement(element, value, considerInvalidFormatEmpty);
+    public static CommandElement optionalWeak(CommandElement element, Object value) {
+        return new OptionalCommandElement(element, value, true);
     }
 
     private static class OptionalCommandElement extends CommandElement {
@@ -314,7 +367,7 @@ public class GenericArguments {
         @Override
         public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             if (!args.hasNext()) {
-                if (this.element.getKey() != null) {
+                if (this.element.getKey() != null && this.value != null) {
                     context.putArg(this.element.getKey().getUntranslated(), value);
                 }
                 return;
@@ -325,7 +378,7 @@ public class GenericArguments {
             } catch (ArgumentParseException ex) {
                 if (considerInvalidFormatEmpty || args.hasNext()) { // If there are more args, suppress. Otherwise, throw the error
                     args.setPosition(startPos);
-                    if (this.element.getKey() != null) {
+                    if (this.element.getKey() != null && this.value != null) {
                         context.putArg(this.element.getKey().getUntranslated(), value);
                     }
                 } else {
@@ -623,7 +676,7 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public CommandElement remainingJoinedStrings(Translatable key) {
+    public static CommandElement remainingJoinedStrings(Translatable key) {
         return new RemainingJoinedStringsCommandElement(key, false);
     }
 

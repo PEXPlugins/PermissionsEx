@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import ninja.leaping.permissionsex.util.command.Commander;
@@ -50,8 +52,14 @@ public class SpongeCommander implements Commander<Text> {
         return commandSource.hasPermission(permission);
     }
 
+    @Override
     public Locale getLocale() {
         return commandSource instanceof Player ? ((Player) commandSource).getLocale() : Locale.getDefault();
+    }
+
+    @Override
+    public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
+        return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
     }
 
     @Override
