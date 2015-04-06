@@ -16,11 +16,12 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
+
+import static org.junit.Assert.*;
 
 /**
  * Test for command flags
@@ -28,18 +29,22 @@ import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 public class CommandFlagsTest {
 
     @Test
-    @Ignore("Command flags are not yet implemented")
     public void testFlaggedCommand() {
         CommandSpec command = CommandSpec.builder()
                 .setAliases("pex")
-                .setArguments(seq(string(_("key"))))
+                .setArguments(flags()
+                        .flag("a").valueFlag(integer(_("quot")), "q").buildWith(string(_("key"))))
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        System.out.println(args.getAll("key"));
+                        assertEquals(true, args.getOne("a"));
+                        assertEquals(42, args.getOne("quot"));
+                        assertEquals("something", args.getOne("key"));
                     }
                 })
                 .build();
-        command.process(new TestCommander(), "-a -q something");
+        command.process(new TestCommander(), "-a -q 42 something");
+        command.process(new TestCommander(), "-aq 42 something");
+        command.process(new TestCommander(), "-a something -q 42");
     }
 }

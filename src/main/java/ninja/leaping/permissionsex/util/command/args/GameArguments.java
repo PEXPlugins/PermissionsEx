@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -25,7 +26,11 @@ import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
+import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
+
+import static ninja.leaping.permissionsex.util.Translations._;
 
 /**
  * Contains command elements for parts of the game
@@ -38,8 +43,8 @@ public class GameArguments {
     /**
      * Expect the provided argument to specify a subject. Subject is of one of the forms:
      * <ul>
-     *     <li>&lt;type>:&lt;identifier></li>
-     *     <li>&lt;type> &ltidentifier></li>
+     *     <li>&lt;type&gt;:&lt;identifier&gt;</li>
+     *     <li>&lt;type&gt; &lt;identifier&gt;</li>
      * </ul>
      * TODO: How do we accept pretty names for users?
      * @param key The key to store the parsed argument under
@@ -84,21 +89,61 @@ public class GameArguments {
                 return ImmutableList.copyOf(pex.getRegisteredSubjectTypes());
             }
 
-            final String type = typeSegment.get();
-            final Optional<String> identifierSegment = args.nextIfPresent();
+            String type = typeSegment.get();
+            Optional<String> identifierSegment = args.nextIfPresent();
             if (!identifierSegment.isPresent()) {
-                System.out.println("Identifier is not present, completing for subject types");
-                return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new GenericArguments.StartsWithPredicate(type)));
-            } else {
-                System.out.println("Getting completions for subject identifier type " + type);
-                List<String> ret = ImmutableList.copyOf(
-                        Iterables.filter(
-                                Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers()),
-                                new GenericArguments.StartsWithPredicate(identifierSegment.get())
-                        ));
-                System.out.println("Suggestions: " + ret);
-                return ret;
+                if (type.contains(":")) {
+                    final String[] argSplit = type.split(":", 2);
+                    type = argSplit[0];
+                    identifierSegment = Optional.of(argSplit[1]);
+                    final String finalType = type;
+                    return ImmutableList.copyOf(
+                            Iterables.transform(
+                            Iterables.filter(
+                                    Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers()),
+                                    new GenericArguments.StartsWithPredicate(identifierSegment.get())
+                            ), new Function<String, String>() {
+                                        @Override
+                                        public String apply(String input) {
+                                            return finalType + ":" + input;
+                                        }
+                                    }));
+                } else {
+                    return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new GenericArguments.StartsWithPredicate(type)));
+                }
+
             }
+            return ImmutableList.copyOf(
+                    Iterables.filter(
+                            Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers()),
+                            new GenericArguments.StartsWithPredicate(identifierSegment.get())
+                    ));
+        }
+    }
+
+    public static CommandElement context(Translatable key) {
+        return new ContextCommandElement(key);
+    }
+
+    private static class ContextCommandElement extends CommandElement {
+
+        protected ContextCommandElement(Translatable key) {
+            super(key);
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            final String context = args.next(); // TODO: Allow multi-word contexts (<key> <value>)
+            final String[] contextSplit = context.split("=", 2);
+            if (contextSplit.length != 2) {
+                throw args.createError(_("Context must be of the form <key>=<value>!"));
+            }
+            return Maps.immutableEntry(contextSplit[0], contextSplit[1]);
+        }
+
+        @Override
+        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+            return Collections.emptyList();
         }
     }
 

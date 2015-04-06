@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
+import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
 import org.spongepowered.api.text.action.TextActions;
@@ -51,9 +52,16 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
     public Text subject(Map.Entry<String, String> subject) {
         Function<String, Optional<CommandSource>> func = pex.getCommandSourceProvider(subject.getKey());
         Optional<CommandSource> source = func == null ? Optional.<CommandSource>absent() : func.apply(subject.getValue());
-        Text nameText;
+        String name;
         if (source.isPresent()) {
-            nameText = Texts.of(Texts.of(TextColors.GRAY, subject.getValue()), "/", source.get().getName());
+            name = source.get().getName();
+        } else {
+            name = pex.getSubjects(subject.getKey()).get(subject.getValue()).getData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
+        }
+
+        Text nameText;
+        if (name != null) {
+            nameText = Texts.of(Texts.of(TextColors.GRAY, subject.getValue()), "/", name);
         } else {
             nameText = Texts.of(subject.getValue());
         }

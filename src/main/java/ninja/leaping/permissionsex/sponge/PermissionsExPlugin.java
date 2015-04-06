@@ -30,7 +30,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
-import joptsimple.OptionParser;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -209,6 +208,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                         .setAliases("pextest")
                         .setDescription(_("A simple test command"))
                         .setArguments(flags()
+                                .flag("a")
                                 .buildWith(seq(string(_("first")), optional(choices(_("second"), ImmutableMap.of("first", true, "second", false))))))
                         .setExecutor(new CommandExecutor() {
                             @Override

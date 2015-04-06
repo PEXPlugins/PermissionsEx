@@ -57,6 +57,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         ret.put(newKey, newVal);
         return Collections.unmodifiableMap(ret);
     }
+
     @ConfigSerializable
     protected static class DataEntry {
         @Setting private Map<String, Integer> permissions;
@@ -190,13 +191,13 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
 
     @Override
     public Map<Set<Entry<String, String>>, Map<String, String>> getAllOptions() {
-        return Maps.transformValues(contexts, new Function<DataEntry, Map<String, String>>() {
+        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Map<String, String>>() {
             @Nullable
             @Override
             public Map<String, String> apply(@Nullable DataEntry dataEntry) {
                 return dataEntry.options;
             }
-        });
+        }), Predicates.notNull());
     }
 
     @Override

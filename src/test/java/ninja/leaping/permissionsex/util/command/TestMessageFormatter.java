@@ -17,7 +17,7 @@
 package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.base.Joiner;
-import joptsimple.internal.Strings;
+import com.google.common.base.Strings;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import java.util.Locale;
@@ -51,7 +51,7 @@ class TestMessageFormatter implements MessageFormatter<String> {
 
     @Override
     public String header(String text) {
-        return text + '\n' + Strings.repeat('=', text.length());
+        return text + '\n' + Strings.repeat("=", text.length());
     }
 
     @Override

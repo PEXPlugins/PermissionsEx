@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.command;
 
+import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
@@ -49,7 +50,7 @@ public class ParentCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         Map.Entry<String, String> subject = subjectOrSelf(src, args);
                         checkSubjectPermission(src, subject, "permissionsex.parent.add");
-                        Set<Map.Entry<String, String>> contexts = GLOBAL; // TODO: Handle context flags
+                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
                         ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
                         Map.Entry<String, String> parent = args.getOne("parent");
@@ -70,7 +71,7 @@ public class ParentCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         Map.Entry<String, String> subject = subjectOrSelf(src, args);
                         checkSubjectPermission(src, subject, "permissionsex.parent.remove");
-                        Set<Map.Entry<String, String>> contexts = GLOBAL; // TODO: Handle context flags
+                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
                         ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
                         Map.Entry<String, String> parent = args.getOne("parent");

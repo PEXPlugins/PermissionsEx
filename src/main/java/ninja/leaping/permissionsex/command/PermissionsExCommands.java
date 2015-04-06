@@ -54,11 +54,14 @@ public class PermissionsExCommands {
         return CommandSpec.builder()
                 .setAliases("pex", "permissionsex", "permissions")
                 .setDescription(_("Commands for PermissionsEx"))
-                .setArguments(optional(
+                .setArguments(flags()
+                        .flag("-transient")
+                        .valueFlag(context(_("context")), "-context", "-contexts", "c")
+                        .buildWith(optional(
                         firstParsing(
                                 children,
                                 seq(subject(_("subject"), pex),
-                                        optional(subjectChildren)))
+                                        optional(subjectChildren))))
                 ))
                 .setExecutor(new CommandExecutor() {
                     @Override

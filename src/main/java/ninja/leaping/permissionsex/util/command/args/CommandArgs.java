@@ -19,7 +19,6 @@ package ninja.leaping.permissionsex.util.command.args;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.util.Translatable;
 
@@ -27,7 +26,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -41,7 +39,7 @@ public class CommandArgs {
 
     public CommandArgs(String rawInput, List<SingleArg> args) {
         this.rawInput = rawInput;
-        this.args = ImmutableList.copyOf(args);
+        this.args = new ArrayList<>(args);
     }
 
     public boolean hasNext() {
@@ -118,6 +116,24 @@ public class CommandArgs {
 
     public static CommandArgs forRawArg(String commandline) {
         return new CommandArgs(commandline, Collections.singletonList(new CommandArgs.SingleArg(commandline, 0, commandline.length() - 1)));
+    }
+
+    public void insertArg(String value) {
+        int index = this.index < 0 ? 0 : args.get(this.index).getEndIdx();
+        this.args.add(index, new SingleArg(value, index, index));
+    }
+
+    public void removeArgs(int startIdx, int endIdx) {
+        if (index >= startIdx) {
+            if (index < endIdx) {
+                index = startIdx - 1;
+            } else {
+                index -= (endIdx - startIdx) + 1;
+            }
+        }
+        for (int i = startIdx; i <= endIdx; ++i) {
+            args.remove(startIdx);
+        }
     }
 
     static class SingleArg {
