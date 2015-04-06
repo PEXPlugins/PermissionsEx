@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-05 19:29-0700\n"
+"POT-Creation-Date: 2015-04-05 20:16-0700\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -60,23 +60,23 @@ msgstr "Fehler während das Laufen des Befehles: %s"
 msgid "Error while deserializing backend %s"
 msgstr "Fehler während das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:90
-msgid "While loading legacy YML permissions from %s"
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:106
+msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:99
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:125
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:233
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:259
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:237
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
 msgid "While performing version upgrade"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:278
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:304
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
@@ -409,14 +409,14 @@ msgstr ""
 msgid "Unknown short flag %s specified"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:406
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:409
 msgid "Argument was not a valid choice. Valid choices: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:778
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:781
 msgid "Expected an integer, but input '%s' was not"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:847
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:850
 msgid "Enum value %s not valid"
 msgstr ""

@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
@@ -28,6 +30,8 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import ninja.leaping.configurate.json.FieldValueSeparatorStyle;
+import ninja.leaping.configurate.json.JSONConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
@@ -59,8 +63,11 @@ import static ninja.leaping.permissionsex.util.Translations._;
 public class FileDataStore extends AbstractDataStore {
     public static final Factory FACTORY = new Factory("file", FileDataStore.class);
 
-    @Setting("file")
+    @Setting
     private String file;
+    @Setting
+    private boolean compat = false;
+
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
@@ -73,24 +80,43 @@ public class FileDataStore extends AbstractDataStore {
         return ConfigurationTransformation.builder();
     }
 
+    private ConfigurationLoader<? extends ConfigurationNode> createLoader(File file) {
+        JSONConfigurationLoader.Builder build = JSONConfigurationLoader.builder()
+                .setFile(file)
+                .setIndent(4)
+                .setFieldValueSeparatorStyle(FieldValueSeparatorStyle.SPACE_AFTER);
+
+        /*if (!compat) {
+            build.getFactory().disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
+            build.getFactory().enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
+        }*/
+        return build.build();
+    }
+
+    private File migrateLegacy(File permissionsFile, String extension, ConfigurationLoader<?> loader, String formatName) throws PermissionsLoadingException {
+        File legacyPermissionsFile = permissionsFile;
+        file = file.replace(extension, ".json");
+        permissionsFile = new File(getManager().getBaseDirectory(), file);
+        permissionsFileLoader = createLoader(permissionsFile);
+        try {
+            permissionsConfig = loader.load();
+            permissionsFileLoader.save(permissionsConfig);
+            legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".legacy-backup"));
+        } catch (IOException e) {
+            throw new PermissionsLoadingException(_("While loading legacy %s permissions from %s", formatName, permissionsFile), e);
+        }
+        return permissionsFile;
+    }
+
     @Override
     protected void initializeInternal() throws PermissionsLoadingException {
         File permissionsFile = new File(getManager().getBaseDirectory(), file);
         if (file.endsWith(".yml")) {
-            File legacyPermissionsFile = permissionsFile;
-            ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder().setFile(permissionsFile).build();
-            file = file.replace(".yml", ".conf");
-            permissionsFile = new File(getManager().getBaseDirectory(), file);
-            permissionsFileLoader = HoconConfigurationLoader.builder().setFile(permissionsFile).build();
-            try {
-                permissionsConfig = yamlLoader.load();
-                permissionsFileLoader.save(permissionsConfig);
-                legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".bukkit-backup"));
-            } catch (IOException e) {
-                throw new PermissionsLoadingException(_("While loading legacy YML permissions from %s", permissionsFile), e);
-            }
+            permissionsFile = migrateLegacy(permissionsFile, ".yml", YAMLConfigurationLoader.builder().setFile(permissionsFile).build(), "YML");
+        } else if (file.endsWith(".conf")) {
+            permissionsFile = migrateLegacy(permissionsFile, ".conf", HoconConfigurationLoader.builder().setFile(permissionsFile).build(), "HOCON");
         } else {
-            permissionsFileLoader = HoconConfigurationLoader.builder().setFile(permissionsFile).build();
+            permissionsFileLoader = createLoader(permissionsFile);
         }
 
         try {
