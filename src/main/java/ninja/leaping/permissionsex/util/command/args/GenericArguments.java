@@ -22,7 +22,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.sun.org.apache.xpath.internal.Arg;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Translations;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 import static ninja.leaping.permissionsex.util.Translations._;
-import static ninja.leaping.permissionsex.util.Translations.untr;
 
 /**
  * Class containing factory methods to combine single-value command elements
@@ -93,34 +91,61 @@ public class GenericArguments {
     }
 
     public static class FlagCommandElementBuilder {
+        private final Map<List<String>, CommandElement> usageFlags = new HashMap<>();
         private final Map<String, CommandElement> shortFlags = new HashMap<>();
         private final Map<String, CommandElement> longFlags = new HashMap<>();
         private boolean acceptsArbitraryLongFlags = true;
         private boolean anchorFlags = false;
 
         public FlagCommandElementBuilder flag(String... specs) {
+            final List<String> availableFlags = new ArrayList<>(specs.length);
+            CommandElement el = null;
             for (String spec : specs) {
                 if (spec.startsWith("-")) {
-                    longFlags.put(spec.substring(1).toLowerCase(), markTrue(spec.substring(1)));
+                    final String flagKey = spec.substring(1);
+                    if (el == null) {
+                        el = markTrue(flagKey);
+                    }
+                    availableFlags.add(flagKey);
+                    longFlags.put(flagKey.toLowerCase(), el);
                 } else {
                     for (int i = 0; i < spec.length(); ++i) {
-                        shortFlags.put(spec.substring(i, i + 1), markTrue(spec.substring(i, i + 1)));
+                        final String flagKey = spec.substring(i, i + 1);
+                        if (el == null) {
+                            el = markTrue(flagKey);
+                        }
+                        availableFlags.add(flagKey);
+                        shortFlags.put(flagKey, el);
                     }
                 }
             }
+            usageFlags.put(availableFlags, el);
             return this;
         }
 
         public FlagCommandElementBuilder valueFlag(CommandElement value, String... specs) {
+            final List<String> availableFlags = new ArrayList<>(specs.length);
+            String valueStore = null;
             for (String spec : specs) {
                 if (spec.startsWith("-")) {
-                    longFlags.put(spec.substring(1).toLowerCase(), value);
+                    availableFlags.add(spec);
+                    final String flagKey = spec.substring(1);
+                    if (valueStore == null) {
+                        valueStore = flagKey;
+                    }
+                    longFlags.put(flagKey.toLowerCase(), value);
                 } else {
                     for (int i = 0; i < spec.length(); ++i) {
-                        shortFlags.put(spec.substring(i, i + 1), value);
+                        final String flagKey = spec.substring(i, i + 1);
+                        if (valueStore == null) {
+                            valueStore = flagKey;
+                        }
+                        availableFlags.add(flagKey);
+                        shortFlags.put(flagKey, value);
                     }
                 }
             }
+            usageFlags.put(availableFlags, markTrue(valueStore));
             return this;
         }
 
@@ -147,19 +172,21 @@ public class GenericArguments {
         }
 
         public CommandElement buildWith(CommandElement wrapped) {
-            return new FlagCommandElement(wrapped, shortFlags, longFlags, acceptsArbitraryLongFlags, anchorFlags);
+            return new FlagCommandElement(wrapped, usageFlags, shortFlags, longFlags, acceptsArbitraryLongFlags, anchorFlags);
         }
     }
 
     private static class FlagCommandElement extends CommandElement {
         private final CommandElement childElement;
+        private final Map<List<String>, CommandElement> usageFlags;
         private final Map<String, CommandElement> shortFlags;
         private final Map<String, CommandElement> longFlags;
         private final boolean acceptArbitraryLongFlags, anchorFlags;
 
-        protected FlagCommandElement(CommandElement childElement, Map<String, CommandElement> shortFlags, Map<String, CommandElement> longFlags, boolean acceptArbitraryLongFlags, boolean anchorFlags) {
+        protected FlagCommandElement(CommandElement childElement, Map<List<String>, CommandElement> usageFlags, Map<String, CommandElement> shortFlags, Map<String, CommandElement> longFlags, boolean acceptArbitraryLongFlags, boolean anchorFlags) {
             super(null);
             this.childElement = childElement;
+            this.usageFlags = usageFlags;
             this.shortFlags = shortFlags;
             this.longFlags = longFlags;
             this.acceptArbitraryLongFlags = acceptArbitraryLongFlags;
@@ -235,28 +262,28 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
-            final StringBuilder usageBuilder = new StringBuilder();
-            if (!shortFlags.isEmpty()) {
-                usageBuilder.append("[-");
-                for (String shortFlag : shortFlags.keySet()) {
-                    usageBuilder.append(shortFlag);
+            final List<Object> builder = new ArrayList<>();
+            for (Map.Entry<List<String>, CommandElement> arg : usageFlags.entrySet()) {
+                builder.add("[");
+                for (Iterator<String> it = arg.getKey().iterator(); it.hasNext();) {
+                    builder.add("-");
+                    builder.add(it.next());
+                    if (it.hasNext()) {
+                        builder.add("|");
+                    }
                 }
-                usageBuilder.append("]");
-            }
-            for (String longFlag : longFlags.keySet()) {
-                if (usageBuilder.length() > 0) {
-                    usageBuilder.append(" ");
+                if (!(arg.getValue() instanceof MarkTrueCommandElement)) { // true flag
+                    builder.add(" ");
+                    builder.add(arg.getValue().getUsage(src));
                 }
-                usageBuilder.append("[--").append(longFlag).append("]");
+                builder.add("]");
+                builder.add(" ");
             }
-            if (usageBuilder.length() > 0) {
-                usageBuilder.append(" ");
-            }
+
             if (childElement != null) {
-                return src.fmt().combined(usageBuilder, childElement.getUsage(src));
-            } else {
-                return src.fmt().combined(usageBuilder);
+                builder.add(childElement.getUsage(src));
             }
+            return src.fmt().combined(builder.toArray());
         }
 
         @Override
@@ -266,30 +293,104 @@ public class GenericArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            while (args.hasNext()) {
-                if (!args.nextIfPresent().or("").startsWith("-")) {
-                    args.setPosition(args.getPosition() - 1);
-                    return childElement != null ? childElement.tabComplete(src, args, context) : Collections.<String>emptyList();
-                }
-            }
-            return Collections.emptyList();
-            /*
-            // TODO: This is completely wrong
             int startIdx = args.getPosition();
-            final Optional<String> ret = args.nextIfPresent();
-            if (!ret.isPresent() || !ret.get().startsWith("-")) {
-                args.setPosition(startIdx);
-                return childElement != null ? childElement.tabComplete(src, args, context) : Collections.<String>emptyList();
-            }
-            final String arg = ret.get();
-            if (arg.startsWith("--")) {
-                final String longArg = arg.substring(2).toLowerCase();
-                if (longFlags.containsKey(longArg)) { // TODO: Abstract out logic from sequence element to try to tab complete elements
-                    return longFlags.get(longArg).tabComplete(src, args, context);
+            Optional<String> arg;
+            while (args.hasNext()) {
+                arg = args.nextIfPresent();
+                if (arg.get().startsWith("-")) {
+                    int flagStartIdx = args.getPosition();
+                    if (arg.get().startsWith("--")) { // Long flag
+                        String longFlag = arg.get().substring(2);
+                        List<String> ret = tabCompleteLongFlag(longFlag, src, args, context);
+                        if (ret != null) {
+                            return ret;
+                        }
+                    } else {
+                        final String argStr = arg.get().substring(1);
+                        List<String> ret = tabCompleteShortFlags(argStr, src, args, context);
+                        if (ret != null) {
+                            return ret;
+                        }
+                    }
+                    args.removeArgs(flagStartIdx, args.getPosition());
+                } else if (this.anchorFlags) {
+                    break;
                 }
             }
-            // TODO: Complete short flag values
-            */
+
+            args.setPosition(startIdx);
+            if (childElement != null) {
+                return childElement.tabComplete(src, args, context);
+            } else {
+                return Collections.emptyList();
+            }
+        }
+
+        private <TextType> List<String> tabCompleteLongFlag(String longFlag, Commander<TextType> src, CommandArgs args, CommandContext context) {
+            if (longFlag.contains("=")) {
+                final String[] flagSplit = longFlag.split("=", 2);
+                longFlag = flagSplit[0];
+                String value = flagSplit[1];
+                CommandElement element = longFlags.get(longFlag.toLowerCase());
+                if (element == null) { // Whole flag is specified, we'll go to value
+                    context.putArg(longFlag, value);
+                } else {
+                    args.insertArg(value);
+                    final String finalLongFlag = longFlag;
+                    int position = args.getPosition();
+                    try {
+                        element.parse(args, context);
+                    } catch (ArgumentParseException ex) {
+                        args.setPosition(position);
+                        return ImmutableList.copyOf(Iterables.transform(element.tabComplete(src, args, context), new Function<String, String>() {
+                            @Nullable
+                            @Override
+                            public String apply(@Nullable String input) {
+                                return "--" + finalLongFlag + "=" + input;
+                            }
+                        }));
+                    }
+                }
+            } else {
+                CommandElement element = longFlags.get(longFlag.toLowerCase());
+                if (element == null) {
+                    return ImmutableList.copyOf(Iterables.filter(longFlags.keySet(), new StartsWithPredicate(longFlag.toLowerCase())));
+                } else {
+                    boolean complete = false;
+                    int position = args.getPosition();
+                    try {
+                        element.parse(args, context);
+                    } catch (ArgumentParseException ex) {
+                        complete = true;
+                    }
+                    if (!args.hasNext()) {
+                        complete = true;
+                    }
+                    if (complete) {
+                        args.setPosition(position);
+                        return element.tabComplete(src, args, context);
+                    }
+                }
+            }
+            return null;
+        }
+
+        private <TextType> List<String> tabCompleteShortFlags(String shortFlags, Commander<TextType> src, CommandArgs args, CommandContext context) {
+            for (int i = 0; i < shortFlags.length(); ++i) {
+                final String flagChar = shortFlags.substring(i, i + 1);
+                CommandElement element = this.shortFlags.get(flagChar);
+                if (element == null) {
+                    continue;
+                }
+                int start = args.getPosition();
+                try {
+                    element.parse(args, context);
+                } catch (ArgumentParseException ex) {
+                    args.setPosition(start);
+                    return element.tabComplete(src, args, context);
+                }
+            }
+            return null;
         }
     }
 
@@ -863,13 +964,8 @@ public class GenericArguments {
 
             if (args.hasNext()) {
                 try {
-                    final String prefix = args.next().toUpperCase();
-                    validValues = Iterables.filter(validValues, new Predicate<String>() {
-                        @Override
-                        public boolean apply(@Nullable String input) {
-                            return input.startsWith(prefix);
-                        }
-                    });
+                    final String prefix = args.next();
+                    validValues = Iterables.filter(validValues, new StartsWithPredicate(prefix));
                 } catch (ArgumentParseException ignore) {
                 }
             }

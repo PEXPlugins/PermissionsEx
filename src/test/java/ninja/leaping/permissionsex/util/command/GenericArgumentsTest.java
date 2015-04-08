@@ -157,8 +157,8 @@ public class GenericArgumentsTest {
         parseForInput("notabool", boolEl);
     }
 
-    private static enum TestEnum {
-        ONE, TWO, RED;
+    private enum TestEnum {
+        ONE, TWO, RED
     }
 
     @Test

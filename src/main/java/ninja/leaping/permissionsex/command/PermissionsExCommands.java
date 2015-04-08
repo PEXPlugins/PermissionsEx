@@ -60,8 +60,7 @@ public class PermissionsExCommands {
                         .buildWith(optional(
                         firstParsing(
                                 children,
-                                seq(subject(_("subject"), pex),
-                                        optional(subjectChildren))))
+                                seq(subject(_("subject"), pex), subjectChildren)))
                 ))
                 .setExecutor(new CommandExecutor() {
                     @Override
