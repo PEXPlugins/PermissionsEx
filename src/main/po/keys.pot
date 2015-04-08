@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-08 18:51-0700\n"
+"POT-Creation-Date: 2015-04-08 19:12-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,7 +55,7 @@ msgid ""
 " Please see the server console for details"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:510
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:516
 msgid "Argument was not a valid choice. Valid choices: %s"
 msgstr ""
 
@@ -112,7 +112,7 @@ msgstr ""
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:951
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:957
 msgid "Enum value %s not valid"
 msgstr ""
 
@@ -154,7 +154,7 @@ msgstr ""
 msgid "Error while serializing backend %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:882
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:888
 msgid "Expected an integer, but input '%s' was not"
 msgstr ""
 
@@ -356,9 +356,9 @@ msgstr ""
 msgid "You are: %s"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:76
 #: ninja/leaping/permissionsex/util/command/CommandContext.java:72
 #: ninja/leaping/permissionsex/util/command/CommandSpec.java:231
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:76
 msgid "You do not have permission to use this command!"
 msgstr ""
 
@@ -405,9 +405,6 @@ msgid "true"
 msgstr ""
 
 #: ninja/leaping/permissionsex/command/OptionCommands.java:39
-msgid "val"
-msgstr ""
-
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:75
 msgid "value"

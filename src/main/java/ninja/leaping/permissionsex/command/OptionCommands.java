@@ -36,7 +36,7 @@ public class OptionCommands {
     public static CommandSpec getOptionCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("options", "option", "opt", "o")
-                .setArguments(seq(string(_("key")), optional(string(_("val")))))
+                .setArguments(seq(string(_("key")), optional(string(_("value")))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {

@@ -354,7 +354,13 @@ public class GenericArguments {
             } else {
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
                 if (element == null) {
-                    return ImmutableList.copyOf(Iterables.filter(longFlags.keySet(), new StartsWithPredicate(longFlag.toLowerCase())));
+                    return ImmutableList.copyOf(Iterables.transform(Iterables.filter(longFlags.keySet(), new StartsWithPredicate(longFlag.toLowerCase())), new Function<String, String>() {
+                        @Nullable
+                        @Override
+                        public String apply(@Nullable String input) {
+                            return "--" + input;
+                        }
+                    }));
                 } else {
                     boolean complete = false;
                     int position = args.getPosition();

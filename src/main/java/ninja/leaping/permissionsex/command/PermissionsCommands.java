@@ -71,7 +71,7 @@ public class PermissionsCommands {
 
     public static CommandSpec getPermissionDefaultCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
-                .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd")
+                .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd", "default", "def")
                 .setArguments(permissionValue(_("value")))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
