@@ -50,6 +50,7 @@ import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
@@ -70,7 +71,6 @@ import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandMapping;
 import org.spongepowered.api.util.command.CommandSource;
-import org.spongepowered.api.util.event.Subscribe;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;

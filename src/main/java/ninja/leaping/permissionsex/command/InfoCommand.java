@@ -34,6 +34,7 @@ public class InfoCommand {
     public static CommandSpec getInfoCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("info", "i", "who")
+                .setDescription(_("Provide information about the user "))
                 .setExecutor(new SubjectInfoPrintingExecutor(pex))
                 .build();
     }
