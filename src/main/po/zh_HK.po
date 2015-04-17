@@ -1,0 +1,410 @@
+# Chinese translations for PermissionsEx package.
+# Copyright (C) 2015 THE PermissionsEx'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PermissionsEx package.
+#  <zml@aoeu.xyz>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PermissionsEx git\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-04-16 20:17-0700\n"
+"PO-Revision-Date: 2015-04-17 16:19-0700\n"
+"Last-Translator:  <zml@aoeu.xyz>\n"
+"Language-Team: Chinese (Hong Kong)\n"
+"Language: zh_HK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=BIG5-HKSCS\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:259
+msgid "%s schema version updated from %s to %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:176
+msgid "%s user successfully converted from name to UUID"
+msgid_plural "%s users successfully converted from name to UUID!"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:209
+msgid "A simple test command"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:66
+msgid "A subject must be provided for this command!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:126
+msgid ""
+"Actual next character '%c' did not match expected quotation character '%c'"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/ParentCommands.java:59
+msgid "Added parent %s for subject %s in %s context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:447
+msgid "An error occurred while reloading PEX (triggered by %s's command): %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:445
+msgid ""
+"An error occurred while reloading PEX: %s\n"
+" Please see the server console for details"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:516
+msgid "Argument was not a valid choice. Valid choices: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:83
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:90
+msgid "Buffer overrun while parsing args"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:71
+msgid "Click to view more info"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:56
+msgid "Commands for PermissionsEx"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:139
+msgid "Context must be of the form <key>=<value>!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:285
+msgid "Could not rename old Bukkit configuration file to old name"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:93
+msgid "Debug mode enabled: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/config/PermissionsExConfiguration.java:81
+msgid "Default backend % is not an available backend! Choices are: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/config/PermissionsExConfiguration.java:77
+msgid "Default backend is not set!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:263
+msgid "Default config file is not present in jar!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:220
+msgid "Default in contexts: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:98
+msgid "Default permission: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:237
+msgid "Disabling %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:137
+msgid "Duplicate entry for %s found while converting to UUID"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:957
+msgid "Enum value %s not valid"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:89
+msgid ""
+"Error (%s) occurred while performing command task! Please see console for "
+"details: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:184
+msgid "Error converting users to UUID"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:143
+msgid "Error occurred while enabling %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:90
+msgid "Error occurred while executing command for user %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:168
+msgid "Error occurred while executing command: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:179
+msgid "Error while deserializing backend %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:168
+msgid "Error while fetching UUIDs for users"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:316
+msgid "Error while loading configuration: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:152
+msgid "Error while serializing backend %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:888
+msgid "Expected an integer, but input '%s' was not"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:227
+msgid "First argument: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:57
+msgid "Global"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:225
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:226
+msgid "Has flag %s: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:229
+msgid "Has permission: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:61
+msgid "Information for %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/ChildCommands.java:89
+msgid "Input command %s was not a valid subcommand!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/ChildCommands.java:178
+msgid ""
+"Invalid subcommand state -- only one command spec must be provided for child "
+"arg %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:273
+msgid "Migrating configuration data from Bukkit"
+msgstr ""
+
+#: ninja/leaping/permissionsex/config/PermissionsExConfiguration.java:74
+msgid "No backends defined!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:51
+msgid "Not enough arguments"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:58
+msgid "Not enough arguments!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:72
+msgid "Options:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:81
+msgid "Parents:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:63
+msgid "Permissions:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:132
+msgid "Pre-init of %s v%s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:37
+msgid "Provide information about the user "
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:431
+msgid "Reload the PermissionsEx configuration"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:436
+msgid "Reloading PermissionsEx"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/ParentCommands.java:80
+msgid "Removed parent %s for subject %s in %s context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:228
+msgid "Second (optional) argument: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:93
+msgid "Set default permission to %s for subject %s in %s context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/OptionCommands.java:57
+msgid "Set option %s for subject %s in %s context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:66
+msgid "Set permission %s for subject %s in %s context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:216
+msgid "Source locale: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:440
+msgid "The reload was successful"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:86
+msgid "Toggle debug mode"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:190
+msgid "Too many arguments!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:76
+msgid "Transient options:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:85
+msgid "Transient parents:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/InfoCommand.java:67
+msgid "Transient permissions:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:124
+msgid "Trying to convert users stored by name to UUID"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:52
+msgid "Unable to get data for subject %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:412
+msgid "Unable to get data source for jdbc url %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:372
+msgid "Unable to get subject collection for type %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:275
+msgid "Unable to move Bukkit configuration directory to location for Sponge!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:318
+msgid "Unable to reload!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:188
+msgid ""
+"Unable to resolve Mojang API for UUID conversion. Do you have an internet "
+"connection? UUID conversion will not proceed (but may not be necessary)."
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:232
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:243
+msgid "Unknown long flag %s specified"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:257
+msgid "Unknown short flag %s specified"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/OptionCommands.java:53
+msgid "Unset option '%s' for subject %s in %s context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:135
+msgid "Unterminated quoted string found"
+msgstr ""
+
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:166
+msgid "Usage: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/PermissionsEx.java:336
+msgid "While calculating subject data for %s:%s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:304
+msgid "While deserializing subject data for %s:"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:106
+msgid "While loading legacy %s permissions from %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:125
+msgid "While loading permissions file from %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
+msgid "While performing version upgrade"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:217
+msgid "You are: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:76
+#: ninja/leaping/permissionsex/util/command/CommandContext.java:72
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:175
+msgid "You do not have permission to use this command!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:196
+msgid "Your appear to already be using a different permissions plugin: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:218
+msgid "Your command ran!!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:59
+msgid "context"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:76
+msgid "false"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:212
+msgid "first"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/OptionCommands.java:39
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
+msgid "key"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/ParentCommands.java:47
+#: ninja/leaping/permissionsex/command/ParentCommands.java:68
+msgid "parent"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:212
+msgid "second"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:63
+msgid "subject"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:76
+msgid "true"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/OptionCommands.java:39
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:75
+msgid "value"
+msgstr ""
