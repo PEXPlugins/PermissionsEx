@@ -19,6 +19,7 @@
 package ru.tehkode.permissions;
 
 import com.google.common.collect.Maps;
+import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
@@ -487,10 +488,15 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	protected void swapGroups(PermissionGroup src, PermissionGroup dst) {
-		List<PermissionGroup> groups = new ArrayList<>(this.getParents());
+		Validate.notNull(src);
+		Validate.notNull(dst);
 
-		groups.remove(src);
-		groups.add(dst);
+		List<PermissionGroup> groups = new ArrayList<>(this.getParents());
+		int indexOfSrcGroup = groups.indexOf(src);
+
+		Validate.isTrue(indexOfSrcGroup != -1);
+
+		groups.set(indexOfSrcGroup, dst);
 
 		this.setParents(groups);
 	}
