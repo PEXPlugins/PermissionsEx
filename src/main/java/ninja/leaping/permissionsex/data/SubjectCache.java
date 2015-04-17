@@ -72,8 +72,12 @@ public class SubjectCache {
     }
 
     public void cacheAll() {
-        for (Map.Entry<String, ImmutableOptionSubjectData> ident : dataStore.getAll(type)) {
-            cache.asMap().putIfAbsent(ident.getKey(), ident.getValue());
+        for (String ident : dataStore.getAllIdentifiers(type)) {
+            try {
+                cache.get(ident);
+            } catch (ExecutionException e) {
+                // oh noes, but we'll still squash it
+            }
         }
     }
 
