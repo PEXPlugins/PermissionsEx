@@ -108,7 +108,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @return Name of rank ladder as String
 	 */
 	public String getRankLadder() {
-		return this.getOwnOption("rank-ladder", "", "default");
+		return this.getOwnOption("rank-ladder", null, "default");
 	}
 
 	/**
