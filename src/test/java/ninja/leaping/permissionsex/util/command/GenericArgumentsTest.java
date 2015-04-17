@@ -48,7 +48,7 @@ public class GenericArgumentsTest {
                 .setAliases("test")
                 .setExecutor(NULL_EXECUTOR)
                 .build();
-        CommandArgs args = QuotedStringParser.parseFrom(input, spec, false);
+        CommandArgs args = QuotedStringParser.parseFrom(input, false);
         CommandContext context = new CommandContext(spec, args.getRaw());
         element.parse(args, context);
         return context;
@@ -56,7 +56,7 @@ public class GenericArgumentsTest {
 
     @Test
     public void testNone() throws ArgumentParseException {
-        CommandArgs args = CommandArgs.forRawArg("a");
+        CommandArgs args = QuotedStringParser.parseFrom("a", false);
         CommandContext context = new CommandContext(CommandSpec.builder().setAliases("test").setExecutor(NULL_EXECUTOR).build(), args.getRaw());
         none().parse(args, context);
         assertEquals("a", args.next());

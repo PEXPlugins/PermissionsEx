@@ -16,10 +16,12 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.command.CommandCallable;
 import org.spongepowered.api.util.command.CommandException;
+import org.spongepowered.api.util.command.CommandResult;
 import org.spongepowered.api.util.command.CommandSource;
 
 import java.util.List;
@@ -37,9 +39,9 @@ public class PEXSpongeCommand implements CommandCallable {
     }
 
     @Override
-    public boolean call(CommandSource commandSource, String arguments, List<String> parents) throws CommandException {
+    public Optional<CommandResult> process(CommandSource commandSource, String arguments) throws CommandException {
         command.process(new SpongeCommander(plugin, commandSource), arguments);
-        return true;
+        return Optional.of(CommandResult.empty());
     }
 
     @Override
@@ -53,18 +55,18 @@ public class PEXSpongeCommand implements CommandCallable {
     }
 
     @Override
-    public String getShortDescription(CommandSource commandSource) {
-        return null;
+    public Optional<Text> getShortDescription(CommandSource commandSource) {
+        return Optional.of(command.getDescription(new SpongeCommander(plugin, commandSource)));
     }
 
     @Override
-    public Text getHelp(CommandSource commandSource) {
-        return command.getExtendedDescription(new SpongeCommander(plugin, commandSource));
+    public Optional<Text> getHelp(CommandSource commandSource) {
+        return Optional.of(command.getExtendedDescription(new SpongeCommander(plugin, commandSource)));
     }
 
     @Override
-    public String getUsage(CommandSource commandSource) {
-        return null;
+    public Text getUsage(CommandSource commandSource) {
+        return command.getUsage(new SpongeCommander(plugin, commandSource));
     }
 
     @Override

@@ -39,22 +39,15 @@ public class CommandSpec {
     private final Translatable description;
     private final Translatable extendedDescription;
     private final String permission;
-    private final boolean rawArgs;
-    private final boolean parseQuotedArgs;
-    private final boolean parseLenient;
 
     private CommandSpec(CommandElement args, CommandExecutor executor, List<String> aliases, Translatable description,
-                        Translatable extendedDescription, String permission, boolean rawArgs, boolean parseQuotedArgs,
-                        boolean parseLenient) {
+                        Translatable extendedDescription, String permission) {
         this.args = args;
         this.executor = executor;
         this.permission = permission;
         this.aliases = aliases;
         this.description = description;
         this.extendedDescription = extendedDescription;
-        this.rawArgs = rawArgs;
-        this.parseQuotedArgs = parseQuotedArgs;
-        this.parseLenient = parseLenient;
     }
 
     public static Builder builder() {
@@ -67,7 +60,6 @@ public class CommandSpec {
         private Translatable description, extendedDescription;
         private String permission;
         private CommandExecutor executor;
-        private boolean parseQuotedArgs = true, parseLenient = false, rawArgs = false;
 
         private Builder() {}
 
@@ -149,45 +141,6 @@ public class CommandSpec {
             return this;
         }
 
-
-        /**
-         * Sets whether raw/unparsed arguments are used. If this is true, the parsed arguments object will contain a
-         * single string with the entire command input.
-         *
-         * @param rawArgs Whether raw args are used
-         * @return this
-         */
-        public Builder setUsesRawArgs(boolean rawArgs) {
-            this.rawArgs = false;
-            return this;
-        }
-
-        /**
-         * Sets whether the flags attempts to join quoted strings. If this is false, quotes will not be treated as special characters.
-         * The quotation characters are ' and "
-         *
-         * @param parsesQuotedArgs Whether quoted args are used
-         * @return this
-         */
-        public Builder setParsesQuotedArgs(boolean parsesQuotedArgs) {
-            this.parseQuotedArgs = parsesQuotedArgs;
-            return this;
-        }
-
-        /**
-         * Set whether the flags is in lenient mode. If lenient is true, the following apply:
-         *
-         * <ul>
-         *     <li>Unclosed quotations are treated as a single string from the opening quotation to the end of the arguments rather than throwing an debug </li>
-         * </ul>
-         * @param parsesLeniently Whether the flags is in lenient mode.
-         * @return this
-         */
-        public Builder setParsesLeniently(boolean parsesLeniently) {
-           this.parseLenient = parsesLeniently;
-            return this;
-        }
-
         public CommandSpec build() {
             if (this.executor == null) {
                 throw new IllegalArgumentException("An executor is required");
@@ -195,18 +148,9 @@ public class CommandSpec {
             if (this.aliases == null || this.aliases.isEmpty()) {
                 throw new IllegalArgumentException("A command may not have no aliases");
             }
-            return new CommandSpec(args, executor, aliases, description, extendedDescription, permission, rawArgs, parseQuotedArgs, parseLenient);
+            return new CommandSpec(args, executor, aliases, description, extendedDescription, permission);
         }
     }
-
-    public boolean isRawArgs() {
-        return rawArgs;
-    }
-
-    public boolean parsesQuotedArgs() {
-        return parseQuotedArgs;
-    }
-
 
     public <TextType> void process(Commander<TextType> commander, String arguments) {
         if (executor == null) {
@@ -233,7 +177,7 @@ public class CommandSpec {
     }
 
     public CommandContext parse(String commandLine) throws ArgumentParseException {
-        CommandArgs args = argsFor(commandLine, parseLenient);
+        CommandArgs args = argsFor(commandLine, false);
         CommandContext context = new CommandContext(this, commandLine);
         parse(args, context);
         return context;
@@ -279,11 +223,7 @@ public class CommandSpec {
     }
 
     private CommandArgs argsFor(String commandline, boolean lenient) throws ArgumentParseException {
-        if (isRawArgs()) {
-            return CommandArgs.forRawArg(commandline);
-        } else {
-            return QuotedStringParser.parseFrom(commandline, this, lenient);
-        }
+        return QuotedStringParser.parseFrom(commandline, lenient);
     }
 
     public List<String> getAliases() {

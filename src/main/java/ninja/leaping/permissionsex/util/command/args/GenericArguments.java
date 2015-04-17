@@ -1002,7 +1002,11 @@ public class GenericArguments {
             if (raw) {
                 args.next();
                 ArgumentParseException ex = args.createError(null);
-                return args.getRaw().substring(ex.getPosition());
+                String ret = args.getRaw().substring(ex.getPosition());
+                while (args.hasNext()) {
+                    args.next();
+                }
+                return ret;
             } else {
                 final StringBuilder ret = new StringBuilder(args.next());
                 while (args.hasNext()) {

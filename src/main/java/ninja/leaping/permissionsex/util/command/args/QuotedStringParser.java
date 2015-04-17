@@ -17,7 +17,6 @@
 package ninja.leaping.permissionsex.util.command.args;
 
 import ninja.leaping.permissionsex.util.Translatable;
-import ninja.leaping.permissionsex.util.command.CommandSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,28 +39,21 @@ import static ninja.leaping.permissionsex.util.Translations._;
  */
 public class QuotedStringParser {
     private final boolean lenient;
-    private final CommandSpec spec;
     private final String buffer;
     private int index = -1;
 
     /**
      * Parse from a string of args
      * @param args The raw string of arguments to parse
-     * @param spec The command specification containing praser options
      * @return A list of argument strings parsed as specified in the pseudo-grammar in the class documentation
-     * @throws ArgumentParseException
+     * @throws ArgumentParseException if args are presented with invalid syntax
      */
-    public static CommandArgs parseFrom(String args, CommandSpec spec, boolean lenient) throws ArgumentParseException {
-        return new QuotedStringParser(args, spec, lenient).parse();
+    public static CommandArgs parseFrom(String args, boolean lenient) throws ArgumentParseException {
+        return new QuotedStringParser(args, lenient).parse();
     }
 
-    public static CommandArgs parseFrom(String args) throws ArgumentParseException {
-        return new QuotedStringParser(args, CommandSpec.builder().build(), false).parse();
-    }
-
-    private QuotedStringParser(String args, CommandSpec spec, boolean lenient) {
+    private QuotedStringParser(String args, boolean lenient) {
         this.buffer = args;
-        this.spec = spec;
         this.lenient = lenient;
     }
 
@@ -118,7 +110,7 @@ public class QuotedStringParser {
     private String nextArg() throws ArgumentParseException {
         StringBuilder argBuilder = new StringBuilder();
         int codePoint = peek();
-        if (spec.parsesQuotedArgs() && (codePoint == '"' || codePoint == '\'')) {
+        if (codePoint == '"' || codePoint == '\'') {
             // quoted string
             parseQuotedString(codePoint, argBuilder);
         } else {

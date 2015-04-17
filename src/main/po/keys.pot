@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-08 19:12-0700\n"
+"POT-Creation-Date: 2015-04-16 19:45-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgstr ""
 msgid "A subject must be provided for this command!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:134
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:126
 msgid ""
 "Actual next character '%c' did not match expected quotation character '%c'"
 msgstr ""
@@ -59,8 +59,8 @@ msgstr ""
 msgid "Argument was not a valid choice. Valid choices: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:91
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:98
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:83
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:90
 msgid "Buffer overrun while parsing args"
 msgstr ""
 
@@ -134,7 +134,7 @@ msgstr ""
 msgid "Error occurred while executing command for user %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/CommandSpec.java:224
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:168
 msgid "Error occurred while executing command: %s"
 msgstr ""
 
@@ -265,7 +265,7 @@ msgstr ""
 msgid "Toggle debug mode"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/CommandSpec.java:246
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:190
 msgid "Too many arguments!"
 msgstr ""
 
@@ -324,11 +324,11 @@ msgstr ""
 msgid "Unset option '%s' for subject %s in %s context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:143
+#: ninja/leaping/permissionsex/util/command/args/QuotedStringParser.java:135
 msgid "Unterminated quoted string found"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/CommandSpec.java:222
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:166
 msgid "Usage: %s"
 msgstr ""
 
@@ -358,7 +358,7 @@ msgstr ""
 
 #: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:76
 #: ninja/leaping/permissionsex/util/command/CommandContext.java:72
-#: ninja/leaping/permissionsex/util/command/CommandSpec.java:231
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:175
 msgid "You do not have permission to use this command!"
 msgstr ""
 

@@ -114,10 +114,6 @@ public class CommandArgs {
         return rawInput;
     }
 
-    public static CommandArgs forRawArg(String commandline) {
-        return new CommandArgs(commandline, Collections.singletonList(new CommandArgs.SingleArg(commandline, 0, commandline.length() - 1)));
-    }
-
     public void insertArg(String value) {
         int index = this.index < 0 ? 0 : args.get(this.index).getEndIdx();
         this.args.add(index, new SingleArg(value, index, index));
