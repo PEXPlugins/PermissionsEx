@@ -125,142 +125,147 @@ public class FileDataStore extends AbstractDataStore {
             throw new PermissionsLoadingException(_("While loading permissions file from %s", permissionsFile), e);
         }
 
-        final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {
-            @Override
-            public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                final ConfigurationNode prefixNode = configurationNode.getNode("prefix");
-                if (!prefixNode.isVirtual()) {
-                    configurationNode.getNode("options", "prefix").setValue(prefixNode);
-                    prefixNode.setValue(null);
+        if (permissionsConfig.getChildrenMap().isEmpty()) { // New configuration, populate with default data
+            applyDefaultData();
+        } else {
+
+            final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {
+                @Override
+                public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
+                    final ConfigurationNode prefixNode = configurationNode.getNode("prefix");
+                    if (!prefixNode.isVirtual()) {
+                        configurationNode.getNode("options", "prefix").setValue(prefixNode);
+                        prefixNode.setValue(null);
+                    }
+
+                    final ConfigurationNode suffixNode = configurationNode.getNode("suffix");
+                    if (!suffixNode.isVirtual()) {
+                        configurationNode.getNode("options", "suffix").setValue(suffixNode);
+                        suffixNode.setValue(null);
+                    }
+
+                    final ConfigurationNode defaultNode = configurationNode.getNode("default");
+                    if (!defaultNode.isVirtual()) {
+                        configurationNode.getNode("options", "default").setValue(defaultNode);
+                        defaultNode.setValue(null);
+                    }
+                    return null;
                 }
+            };
 
-                final ConfigurationNode suffixNode = configurationNode.getNode("suffix");
-                if (!suffixNode.isVirtual()) {
-                    configurationNode.getNode("options", "suffix").setValue(suffixNode);
-                    suffixNode.setValue(null);
-                }
-
-                final ConfigurationNode defaultNode = configurationNode.getNode("default");
-                if (!defaultNode.isVirtual()) {
-                    configurationNode.getNode("options", "default").setValue(defaultNode);
-                    defaultNode.setValue(null);
-                }
-                return null;
-            }
-        };
-
-        ConfigurationTransformation versionUpdater = ConfigurationTransformation.versionedBuilder()
-                .setVersionKey("schema-version")
-                .addVersion(2, ConfigurationTransformation.chain(
-                        tBuilder()
-                                .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
-                                    @Override
-                                    public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                        Object value = configurationNode.getValue();
-                                        configurationNode.setValue(null);
-                                        configurationNode.getAppendedNode().setValue(value);
-                                        return null;
-                                    }
-                                })
-                                .build(),
-                        tBuilder()
-                                .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, 0, "worlds"}, new TransformAction() {
-                                    @Override
-                                    public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                        ConfigurationNode entityNode = configurationNode.getParent().getParent();
-                                        for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
-                                            entityNode.getAppendedNode().setValue(ent.getValue())
-                                                    .getNode(FileOptionSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
-
+            ConfigurationTransformation versionUpdater = ConfigurationTransformation.versionedBuilder()
+                    .setVersionKey("schema-version")
+                    .addVersion(2, ConfigurationTransformation.chain(
+                            tBuilder()
+                                    .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
+                                        @Override
+                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
+                                            Object value = configurationNode.getValue();
+                                            configurationNode.setValue(null);
+                                            configurationNode.getAppendedNode().setValue(value);
+                                            return null;
                                         }
-                                        configurationNode.setValue(null);
-                                        return null;
-                                    }
-                                }).build(),
-                        tBuilder()
-                                .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, WILDCARD_OBJECT, "permissions"}, new TransformAction() {
-                                    @Override
-                                    public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                        List<String> existing = configurationNode.getList(Functions.toStringFunction());
-                                        for (String permission : existing) {
-                                            int value = permission.startsWith("-") ? -1 : 1;
-                                            if (value < 0) {
-                                                permission = permission.substring(1);
+                                    })
+                                    .build(),
+                            tBuilder()
+                                    .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, 0, "worlds"}, new TransformAction() {
+                                        @Override
+                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
+                                            ConfigurationNode entityNode = configurationNode.getParent().getParent();
+                                            for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
+                                                entityNode.getAppendedNode().setValue(ent.getValue())
+                                                        .getNode(FileOptionSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
+
                                             }
-                                            if (permission.equals("*")) {
-                                                configurationNode.getParent().getNode("permissions-default").setValue(value);
-                                                continue;
+                                            configurationNode.setValue(null);
+                                            return null;
+                                        }
+                                    }).build(),
+                            tBuilder()
+                                    .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, WILDCARD_OBJECT, "permissions"}, new TransformAction() {
+                                        @Override
+                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
+                                            List<String> existing = configurationNode.getList(Functions.toStringFunction());
+                                            for (String permission : existing) {
+                                                int value = permission.startsWith("-") ? -1 : 1;
+                                                if (value < 0) {
+                                                    permission = permission.substring(1);
+                                                }
+                                                if (permission.equals("*")) {
+                                                    configurationNode.getParent().getNode("permissions-default").setValue(value);
+                                                    continue;
+                                                }
+                                                permission = ConversionUtils.convertLegacyPermission(permission);
+                                                if (permission.contains("*")) {
+                                                    getManager().getLogger().warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
+                                                }
+                                                configurationNode.getNode(permission).setValue(value);
                                             }
-                                            permission = ConversionUtils.convertLegacyPermission(permission);
-                                            if (permission.contains("*")) {
-                                                getManager().getLogger().warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
+                                            return null;
+                                        }
+                                    })
+                                    .addAction(new Object[]{"users", WILDCARD_OBJECT, WILDCARD_OBJECT, "group"}, new TransformAction() {
+                                        @Override
+                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
+                                            Object[] retPath = nodePath.getArray();
+                                            retPath[retPath.length - 1] = "parents";
+                                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
+                                                child.setValue("group:" + child.getValue());
                                             }
-                                            configurationNode.getNode(permission).setValue(value);
+                                            return retPath;
                                         }
-                                        return null;
-                                    }
-                                })
-                                .addAction(new Object[]{"users", WILDCARD_OBJECT, WILDCARD_OBJECT, "group"}, new TransformAction() {
-                                    @Override
-                                    public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                        Object[] retPath = nodePath.getArray();
-                                        retPath[retPath.length - 1] = "parents";
-                                        for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                            child.setValue("group:" + child.getValue());
+                                    })
+                                    .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT, "inheritance"}, new TransformAction() {
+                                        @Override
+                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
+                                            Object[] retPath = nodePath.getArray();
+                                            retPath[retPath.length - 1] = "parents";
+                                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
+                                                child.setValue("group:" + child.getValue());
+                                            }
+                                            return retPath;
                                         }
-                                        return retPath;
-                                    }
-                                })
-                                .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT, "inheritance"}, new TransformAction() {
-                                    @Override
-                                    public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                        Object[] retPath = nodePath.getArray();
-                                        retPath[retPath.length - 1] = "parents";
-                                        for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                            child.setValue("group:" + child.getValue());
-                                        }
-                                        return retPath;
-                                    }
-                                })
-                                .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
-                                    @Override
-                                    public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-                                        ConfigurationNode defaultNode = valueAtPath.getNode("options", "default");
-                                        if (!defaultNode.isVirtual()) {
-                                            if (defaultNode.getBoolean()) {
-                                                ConfigurationNode addToNode = null;
-                                                final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
-                                                for (ConfigurationNode node : defaultsParent.getChildrenList()) {
-                                                    if (Objects.equal(node.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue())) {
-                                                        addToNode = node;
-                                                        break;
+                                    })
+                                    .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
+                                        @Override
+                                        public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
+                                            ConfigurationNode defaultNode = valueAtPath.getNode("options", "default");
+                                            if (!defaultNode.isVirtual()) {
+                                                if (defaultNode.getBoolean()) {
+                                                    ConfigurationNode addToNode = null;
+                                                    final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
+                                                    for (ConfigurationNode node : defaultsParent.getChildrenList()) {
+                                                        if (Objects.equal(node.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue())) {
+                                                            addToNode = node;
+                                                            break;
+                                                        }
                                                     }
+                                                    if (addToNode == null) {
+                                                        addToNode = defaultsParent.getAppendedNode();
+                                                    }
+                                                    addToNode.getNode("parents").getAppendedNode().setValue("group:" + valueAtPath.getParent().getKey());
                                                 }
-                                                if (addToNode == null) {
-                                                    addToNode = defaultsParent.getAppendedNode();
-                                                }
-                                                addToNode.getNode("parents").getAppendedNode().setValue("group:" + valueAtPath.getParent().getKey());
+                                                defaultNode.setValue(null);
                                             }
-                                            defaultNode.setValue(null);
+                                            return null;
                                         }
-                                        return null;
-                                    }
-                                }).build()
-                ))
-                .addVersion(1, ConfigurationTransformation.builder()
-                        .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
-                        .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, "worlds", WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
-                        .build())
-                .build();
-        int startVersion = permissionsConfig.getNode("schema-version").getInt(-1);
-        versionUpdater.apply(permissionsConfig);
-        int endVersion = permissionsConfig.getNode("schema-version").getInt();
-        if (endVersion > startVersion) {
-            getManager().getLogger().info(_("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
-            try {
-                save().get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new PermissionsLoadingException(_("While performing version upgrade"), e);
+                                    }).build()
+                    ))
+                    .addVersion(1, ConfigurationTransformation.builder()
+                            .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
+                            .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, "worlds", WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
+                            .build())
+                    .build();
+            int startVersion = permissionsConfig.getNode("schema-version").getInt(-1);
+            versionUpdater.apply(permissionsConfig);
+            int endVersion = permissionsConfig.getNode("schema-version").getInt();
+            if (endVersion > startVersion) {
+                getManager().getLogger().info(_("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
+                try {
+                    save().get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new PermissionsLoadingException(_("While performing version upgrade"), e);
+                }
             }
         }
     }

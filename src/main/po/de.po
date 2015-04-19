@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-12 16:07-0700\n"
+"POT-Creation-Date: 2015-04-18 20:26-0700\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:259
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -144,7 +144,7 @@ msgstr "Fehler während das Laufen des Befehles: %s"
 msgid "Error occurred while executing command: %s"
 msgstr "Fehler während das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:179
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:194
 #, fuzzy
 msgid "Error while deserializing backend %s"
 msgstr "Fehler während das Laufen des Befehles: %s"
@@ -158,7 +158,7 @@ msgstr ""
 msgid "Error while loading configuration: %s"
 msgstr "Fehler während das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:152
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:167
 #, fuzzy
 msgid "Error while serializing backend %s"
 msgstr "Fehler während das Laufen des Befehles: %s"
@@ -348,7 +348,7 @@ msgstr "Nutzung: %s"
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:304
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:309
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
@@ -360,7 +360,7 @@ msgstr ""
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:267
 msgid "While performing version upgrade"
 msgstr ""
 

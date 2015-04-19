@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-16 20:17-0700\n"
+"POT-Creation-Date: 2015-04-18 20:26-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:259
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -138,7 +138,7 @@ msgstr ""
 msgid "Error occurred while executing command: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:179
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:194
 msgid "Error while deserializing backend %s"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 msgid "Error while loading configuration: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:152
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:167
 msgid "Error while serializing backend %s"
 msgstr ""
 
@@ -336,7 +336,7 @@ msgstr ""
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:304
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:309
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
@@ -348,7 +348,7 @@ msgstr ""
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:267
 msgid "While performing version upgrade"
 msgstr ""
 

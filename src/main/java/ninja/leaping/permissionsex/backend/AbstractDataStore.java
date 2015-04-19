@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.backend;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
@@ -102,6 +103,20 @@ public abstract class AbstractDataStore implements DataStore {
             }
         });
         return ret;
+    }
+
+    /**
+     * Apply default data when creating a new file.
+     *
+     * This consists of
+     * <ul>
+     *     <li>Modifying default data to give all permissions to a user connecting locally</li>
+     * </ul>
+     */
+    protected final void applyDefaultData() {
+        final Map.Entry<String, String> defKey = this.manager.getDefaultIdentifier();
+        setData(defKey.getKey(), defKey.getValue(), getData(defKey.getKey(), defKey.getValue(), null)
+                .setDefaultValue(ImmutableSet.of(Maps.immutableEntry("srcip", "127.0.0.1")), 1));
     }
 
     protected abstract ImmutableOptionSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException;
