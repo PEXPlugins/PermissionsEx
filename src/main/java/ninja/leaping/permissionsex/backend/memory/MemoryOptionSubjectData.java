@@ -80,7 +80,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withoutOption(String key) {
-            if (!options.containsKey(key)) {
+            if (options == null || !options.containsKey(key)) {
                 return this;
             }
 
@@ -91,7 +91,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withOptions(Map<String, String> values) {
-            return new DataEntry(permissions, ImmutableMap.copyOf(values), parents, defaultValue);
+            return new DataEntry(permissions, values == null ? null : ImmutableMap.copyOf(values), parents, defaultValue);
         }
 
         public DataEntry withoutOptions() {
@@ -104,7 +104,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withoutPermission(String permission) {
-            if (!permissions.containsKey(permission)) {
+            if (permissions == null || !permissions.containsKey(permission)) {
                 return this;
             }
 
@@ -126,17 +126,26 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         public DataEntry withAddedParent(String parent) {
-                return new DataEntry(permissions, options, ImmutableList.<String>builder().add(parent).addAll(parents).build(), defaultValue);
+            ImmutableList.Builder<String> parents = ImmutableList.builder();
+            parents.add(parent);
+            if (this.parents != null) {
+                parents.addAll(this.parents);
+            }
+            return new DataEntry(permissions, options, parents.build(), defaultValue);
         }
 
         public DataEntry withRemovedParent(String parent) {
+            if (this.parents == null || this.parents.isEmpty()) {
+                return this;
+            }
+
             final List<String> newParents = new ArrayList<>(parents);
             newParents.remove(parent);
             return new DataEntry(permissions, options, newParents, defaultValue);
         }
 
         public DataEntry withParents(List<String> transform) {
-            return new DataEntry(permissions, options, ImmutableList.copyOf(transform), defaultValue);
+            return new DataEntry(permissions, options, transform == null ? null : ImmutableList.copyOf(transform), defaultValue);
         }
 
         public DataEntry withoutParents() {
