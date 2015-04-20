@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * DataSource for SQL data
  */
-public class SqlDataStore extends AbstractDataStore {
+public final class SqlDataStore extends AbstractDataStore {
     public static final Factory FACTORY = new Factory("sql", SqlDataStore.class);
 
     protected SqlDataStore() {

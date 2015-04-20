@@ -60,7 +60,7 @@ import static ninja.leaping.configurate.transformation.ConfigurationTransformati
 import static ninja.leaping.permissionsex.util.Translations._;
 
 
-public class FileDataStore extends AbstractDataStore {
+public final class FileDataStore extends AbstractDataStore {
     public static final Factory FACTORY = new Factory("file", FileDataStore.class);
 
     @Setting
@@ -126,7 +126,21 @@ public class FileDataStore extends AbstractDataStore {
         }
 
         if (permissionsConfig.getChildrenMap().isEmpty()) { // New configuration, populate with default data
-            applyDefaultData();
+            try {
+                performBulkOperationSync(new Function<DataStore, Void>() {
+                    @Nullable
+                    @Override
+                    public Void apply(@Nullable DataStore input) {
+                        applyDefaultData();
+                        permissionsConfig.getNode("schema-version").setValue(2);
+                        return null;
+                    }
+                });
+            } catch (PermissionsLoadingException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PermissionsLoadingException(_("Error creating initial data for file backend"), e);
+            }
         } else {
 
             final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {

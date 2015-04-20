@@ -22,8 +22,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.objectmapping.InvalidTypeException;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.backend.memory.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -32,14 +34,18 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Map.Entry;
+import static ninja.leaping.permissionsex.util.Translations._;
 
-public class FileOptionSubjectData extends MemoryOptionSubjectData {
+public final class FileOptionSubjectData extends MemoryOptionSubjectData {
     static final String KEY_CONTEXTS = "contexts";
 
-    static FileOptionSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException {
+    static FileOptionSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
         ImmutableMap.Builder<Set<Entry<String, String>>, DataEntry> map = ImmutableMap.builder();
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
+                if (!child.hasMapChildren()) {
+                    throw new PermissionsLoadingException(_("Each context section must be of map type! Check that no duplicate nesting has occurred."));
+                }
                 Set<Entry<String, String>> contexts = contextsFrom(child);
                 DataEntry value = MAPPER.bindToNew().populate(child);
                 map.put(contexts, value);

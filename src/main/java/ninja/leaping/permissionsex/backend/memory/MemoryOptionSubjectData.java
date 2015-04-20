@@ -63,9 +63,9 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         @Setting private Map<String, Integer> permissions;
         @Setting private Map<String, String> options;
         @Setting private List<String> parents;
-        @Setting("permissions-default") private int defaultValue;
+        @Setting("permissions-default") private Integer defaultValue;
 
-        private DataEntry(Map<String, Integer> permissions, Map<String, String> options, List<String> parents, int defaultValue) {
+        private DataEntry(Map<String, Integer> permissions, Map<String, String> options, List<String> parents, Integer defaultValue) {
             this.permissions = permissions;
             this.options = options;
             this.parents = parents;
@@ -121,7 +121,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             return new DataEntry(null, options, parents, defaultValue);
         }
 
-        public DataEntry withDefaultValue(int defaultValue) {
+        public DataEntry withDefaultValue(Integer defaultValue) {
             return new DataEntry(permissions, options, parents, defaultValue);
         }
 
@@ -394,7 +394,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     @Override
     public int getDefaultValue(Set<Entry<String, String>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
-        return ent == null ? 0 : ent.defaultValue;
+        return ent == null || ent.defaultValue == null ? 0 : ent.defaultValue;
     }
 
     @Override

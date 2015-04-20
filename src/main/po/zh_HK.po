@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-18 20:26-0700\n"
+"POT-Creation-Date: 2015-04-19 19:07-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:263
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:277
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -111,6 +111,12 @@ msgstr ""
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
+#: ninja/leaping/permissionsex/backend/file/FileOptionSubjectData.java:47
+msgid ""
+"Each context section must be of map type! Check that no duplicate nesting "
+"has occurred."
+msgstr ""
+
 #: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:957
 msgid "Enum value %s not valid"
 msgstr ""
@@ -123,6 +129,10 @@ msgstr ""
 
 #: ninja/leaping/permissionsex/PermissionsEx.java:184
 msgid "Error converting users to UUID"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:142
+msgid "Error creating initial data for file backend"
 msgstr ""
 
 #: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:143
@@ -335,7 +345,7 @@ msgstr ""
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:309
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:323
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
@@ -347,7 +357,7 @@ msgstr ""
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:267
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:281
 msgid "While performing version upgrade"
 msgstr ""
 
