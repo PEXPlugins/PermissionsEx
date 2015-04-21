@@ -84,7 +84,7 @@ public class SubjectCache {
     public boolean isRegistered(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        return cache.getIfPresent(identifier) != null || dataStore.isRegistered(type, identifier);
+        return dataStore.isRegistered(type, identifier);
     }
 
     public ListenableFuture<ImmutableOptionSubjectData> update(String identifier, ImmutableOptionSubjectData newData) {
