@@ -130,29 +130,29 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
                 args[i] = arg;
             }
         }
-        return Texts.of(new FixedTranslation(tr.translate(locale)), args);
+        return Texts.of(new PEXTranslation(tr), args);
     }
 
-    static class FixedTranslation implements Translation {
-        private final String fixed;
+    static class PEXTranslation implements Translation {
+        private final Translatable translation;
 
-        FixedTranslation(String fixed) {
-            this.fixed = fixed;
+        PEXTranslation(Translatable translation) {
+            this.translation = translation;
         }
 
         @Override
         public String getId() {
-            return fixed;
+            return translation.getUntranslated();
         }
 
         @Override
-        public String get() {
-            return fixed;
+        public String get(Locale locale) {
+            return translation.translate(locale);
         }
 
         @Override
-        public String get(Object... objects) {
-            return String.format(fixed, objects);
+        public String get(Locale locale, Object... objects) {
+            return translation.translateFormatted(locale);
         }
     }
 }
