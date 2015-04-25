@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -50,6 +51,7 @@ import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.entity.player.Player;
 import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
@@ -122,6 +124,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     });
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
+    private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
 
     private static String lf(Translatable trans) {
         return trans.translateFormatted(Locale.getDefault());
@@ -187,6 +190,23 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         });
 
         registerContextCalculator(contextCalculator);
+        nameTransformerMap.put(PermissionService.SUBJECTS_USER, new Function<String, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable String input) {
+                try {
+                    UUID.fromString(input);
+                    return input;
+                } catch (IllegalArgumentException ex) {
+                    Optional<Player> player = game.getServer().getPlayer(input);
+                    if (player.isPresent()) {
+                        return player.get().getUniqueId().toString();
+                    } else {
+                        return input; // TODO: Support offline players
+                    }
+                }
+            }
+        });
 
         // Registering the PEX service *must* occur after the plugin has been completely initialized
         try {
@@ -456,6 +476,15 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public String getVersion() {
         return PomData.VERSION;
+    }
+
+    @Override
+    public Function<String, String> getNameTransformer(String type) {
+        Function<String, String> xform = nameTransformerMap.get(type);
+        if (xform == null) {
+            xform = Functions.identity();
+        }
+        return xform;
     }
 
     Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {

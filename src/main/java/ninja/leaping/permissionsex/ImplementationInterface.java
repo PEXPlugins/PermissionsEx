@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex;
 
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 
@@ -74,4 +76,13 @@ public interface ImplementationInterface {
      * @return The currently running version
      */
     public String getVersion();
+
+    /**
+     * Returns a function that can be applied to a friendly name to convert it into a valid subject identifier.
+     * If no function is explicitly registered, an identity function ({@link Functions#identity()}) should be used.
+     *
+     * @param type The type of subject
+     * @return The transformation function
+     */
+    Function<String, String> getNameTransformer(String type);
 }

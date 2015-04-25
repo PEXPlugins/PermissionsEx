@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex;
 
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
@@ -68,5 +70,10 @@ public class TestImplementationInterface implements ImplementationInterface {
     @Override
     public String getVersion() {
         return "test";
+    }
+
+    @Override
+    public Function<String, String> getNameTransformer(String type) {
+        return Functions.identity();
     }
 }

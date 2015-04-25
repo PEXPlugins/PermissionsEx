@@ -315,6 +315,11 @@ public class PermissionsEx implements ImplementationInterface {
         return impl.getVersion();
     }
 
+    @Override
+    public Function<String, String> getNameTransformer(String type) {
+        return impl.getNameTransformer(type);
+    }
+
 
     public PermissionsExConfiguration getConfig() {
         return this.config;
