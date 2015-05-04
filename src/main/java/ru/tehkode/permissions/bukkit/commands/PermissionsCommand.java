@@ -83,6 +83,10 @@ public abstract class PermissionsCommand implements CommandListener {
 	}
 
 	private String nameToUUID(String name) {
+		if (name.length() > 16) { // No point in trying to fetch UUID if it is not a valid username.
+			return name;
+		}
+
 		OfflinePlayer player = Bukkit.getServer().getOfflinePlayer(name);
 		if (player != null) {
 			UUID uid = player.getUniqueId();
@@ -100,6 +104,10 @@ public abstract class PermissionsCommand implements CommandListener {
 
 		if (playerName.startsWith("#")) {
 			return nameToUUID(playerName.substring(1));
+		}
+
+		if (playerName.length() > 16) { // No point in trying to auto-complete an invalid username or a UUID.
+			return playerName;
 		}
 
 		List<String> players = new LinkedList<>();
