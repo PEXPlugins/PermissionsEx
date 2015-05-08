@@ -23,10 +23,10 @@ import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.permissionsex.sponge.option.OptionSubject;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
+import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.command.CommandSource;
 

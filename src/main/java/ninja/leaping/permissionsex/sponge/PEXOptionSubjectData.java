@@ -25,9 +25,9 @@ import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
-import ninja.leaping.permissionsex.sponge.option.OptionSubjectData;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
+import org.spongepowered.api.service.permission.option.OptionSubjectData;
 import org.spongepowered.api.util.Tristate;
 
 import javax.annotation.Nullable;
