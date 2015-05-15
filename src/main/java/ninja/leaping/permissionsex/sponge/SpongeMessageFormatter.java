@@ -28,8 +28,10 @@ import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.format.TextStyles;
 import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandSource;
 
+import javax.annotation.Nonnull;
 import java.util.Locale;
 import java.util.Map;
 
@@ -40,12 +42,10 @@ import static ninja.leaping.permissionsex.util.Translations._;
  */
 public class SpongeMessageFormatter implements MessageFormatter<Text> {
     private static final Text EQUALS_SIGN = Texts.of(TextColors.GRAY, "=");
-    private final Locale locale;
     private final PermissionsExPlugin pex;
 
-    SpongeMessageFormatter(PermissionsExPlugin pex, Locale locale) {
+    SpongeMessageFormatter(PermissionsExPlugin pex) {
         this.pex = pex;
-        this.locale = locale;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
         if (source.isPresent()) {
             name = source.get().getName();
         } else {
-            name = pex.getSubjects(subject.getKey()).get(subject.getValue()).getData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
+            name = pex.getSubjects(subject.getKey()).get(subject.getValue()).getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
         }
 
         Text nameText;
@@ -133,6 +133,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
         return Texts.of(new PEXTranslation(tr), args);
     }
 
+    @NonnullByDefault
     static class PEXTranslation implements Translation {
         private final Translatable translation;
 

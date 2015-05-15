@@ -39,7 +39,7 @@ public class SpongeCommander implements Commander<Text> {
 
     public SpongeCommander(PermissionsExPlugin pex, CommandSource commandSource) {
         this.commandSource = commandSource;
-        this.formatter = new SpongeMessageFormatter(pex, getLocale());
+        this.formatter = new SpongeMessageFormatter(pex);
     }
 
     @Override

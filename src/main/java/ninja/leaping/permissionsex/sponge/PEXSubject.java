@@ -28,6 +28,7 @@ import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.util.Tristate;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandSource;
 
 import javax.annotation.Nullable;
@@ -43,6 +44,7 @@ import static ninja.leaping.permissionsex.sponge.PEXOptionSubjectData.parSet;
 /**
  * Permissions subject implementation
  */
+@NonnullByDefault
 public class PEXSubject implements OptionSubject {
     private final PEXSubjectCollection collection;
     private final PEXOptionSubjectData data;
@@ -89,12 +91,12 @@ public class PEXSubject implements OptionSubject {
     }
 
     @Override
-    public PEXOptionSubjectData getData() {
+    public PEXOptionSubjectData getSubjectData() {
         return data;
     }
 
     @Override
-    public PEXOptionSubjectData getTransientData() {
+    public PEXOptionSubjectData getTransientSubjectData() {
         return transientData;
     }
 
@@ -173,7 +175,7 @@ public class PEXSubject implements OptionSubject {
         return Lists.transform(parents, new Function<Map.Entry<String, String>, Subject>() {
             @Nullable
             @Override
-            public Subject apply(Map.Entry<String, String> input) {
+            public Subject apply(@Nullable Map.Entry<String, String> input) {
                 return collection.getPlugin().getSubjects(input.getKey()).get(input.getValue());
             }
         });

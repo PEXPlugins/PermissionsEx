@@ -267,7 +267,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         final PEXSubject subject = getUserSubjects().get(identifier);
         if (getUserSubjects().hasRegistered(identifier)) {
             if (!event.getEntity().getName().equals(subject.getOption(SubjectData.GLOBAL_CONTEXT, "name").orNull())) {
-                subject.getData().setOption(SubjectData.GLOBAL_CONTEXT, "name", event.getEntity().getName());
+                subject.getSubjectData().setOption(SubjectData.GLOBAL_CONTEXT, "name", event.getEntity().getName());
             }
         }
     }
@@ -376,7 +376,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public PEXOptionSubjectData getDefaultData() {
-        return defaults.getTransientData();
+        return defaults.getTransientSubjectData();
     }
 
     public PEXSubject getDefaultSubject() {
