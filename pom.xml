@@ -287,12 +287,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>ninja.leaping.configurate</groupId>
       <artifactId>configurate-yaml</artifactId>
       <version>${version.configurate}</version>
@@ -315,18 +309,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.10</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>(1.10,2.0]</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>squirrelid</artifactId>
       <version>0.1.0</version>
@@ -340,6 +322,30 @@
       <groupId>org.gnu.gettext</groupId>
       <artifactId>libintl</artifactId>
       <version>0.18.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.j256.ormlite</groupId>
+      <artifactId>ormlite-jdbc</artifactId>
+      <version>4.48</version>
+    </dependency>
+    <!-- Test deps -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>1.7.10</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>(1.10,2.0]</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <pluginRepositories>

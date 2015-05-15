@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-22 19:29-0700\n"
+"POT-Creation-Date: 2015-05-03 19:39-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -133,6 +133,10 @@ msgstr ""
 
 #: ninja/leaping/permissionsex/backend/file/FileDataStore.java:142
 msgid "Error creating initial data for file backend"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:82
+msgid "Error creating subject DAO"
 msgstr ""
 
 #: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:146

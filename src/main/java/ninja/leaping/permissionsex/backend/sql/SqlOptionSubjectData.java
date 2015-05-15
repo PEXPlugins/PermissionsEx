@@ -39,8 +39,4 @@ public class SqlOptionSubjectData extends MemoryOptionSubjectData {
     SqlOptionSubjectData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
         super(contexts);
     }
-
-    public static SqlOptionSubjectData forIdentifier(SubjectRef ref, Connection conn) throws SQLException {
-        return null;
-    }
 }

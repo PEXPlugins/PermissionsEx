@@ -147,6 +147,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
 
         @Override
         public String get(Locale locale) {
+            System.out.println("Getting for locale:" + locale);
             return translation.translate(locale);
         }
 

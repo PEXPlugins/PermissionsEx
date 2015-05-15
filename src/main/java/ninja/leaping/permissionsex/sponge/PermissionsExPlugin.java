@@ -263,18 +263,18 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Subscribe
     public void onPlayerJoin(PlayerJoinEvent event) {
-        final String identifier = event.getPlayer().getIdentifier();
+        final String identifier = event.getEntity().getIdentifier();
         final PEXSubject subject = getUserSubjects().get(identifier);
         if (getUserSubjects().hasRegistered(identifier)) {
-            if (!event.getPlayer().getName().equals(subject.getOption(SubjectData.GLOBAL_CONTEXT, "name").orNull())) {
-                subject.getData().setOption(SubjectData.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
+            if (!event.getEntity().getName().equals(subject.getOption(SubjectData.GLOBAL_CONTEXT, "name").orNull())) {
+                subject.getData().setOption(SubjectData.GLOBAL_CONTEXT, "name", event.getEntity().getName());
             }
         }
     }
 
     @Subscribe
     public void onPlayerQuit(PlayerQuitEvent event) {
-        getUserSubjects().uncache(event.getPlayer().getIdentifier());
+        getUserSubjects().uncache(event.getEntity().getIdentifier());
     }
 
     static ConfigurationNode loadDefaultConfiguration() throws IOException {
