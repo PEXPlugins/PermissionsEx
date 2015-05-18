@@ -34,8 +34,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author code
@@ -45,7 +43,7 @@ public class FileBackend extends PermissionBackend {
 	public FileConfig permissions;
 	public File permissionsFile;
 	private final Map<String, List<String>> worldInheritanceCache = new ConcurrentHashMap<>();
-	private final ReadWriteLock lock = new ReentrantReadWriteLock();
+	private final Object lock = new Object();
 
 	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
 		super(manager, config);
@@ -125,23 +123,17 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public int getSchemaVersion() {
-		lock.readLock().lock();
-		try {
+		synchronized (lock) {
 			return this.permissions.getInt("schema-version", -1);
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 
 	@Override
 	protected void setSchemaVersion(int version) {
-		lock.writeLock().lock();
-		try {
+		synchronized (lock) {
 			this.permissions.set("schema-version", version);
-		} finally {
-			lock.writeLock().unlock();
+			save();
 		}
-		save();
 	}
 
 	@Override
@@ -200,77 +192,34 @@ public class FileBackend extends PermissionBackend {
 		});
 	}
 
-	private ConfigurationSection getNode(String basePath, String entityName) {
-		if (permissions.isLowerCased(basePath)) {
-			entityName = entityName.toLowerCase();
-		}
-		String nodePath = FileBackend.buildPath(basePath, entityName);
-		lock.readLock().lock();
-		try {
-
-
-			ConfigurationSection entityNode = this.permissions.getConfigurationSection(nodePath);
-
-			if (entityNode != null) {
-				return entityNode;
-			}
-
-			if (!permissions.isLowerCased(basePath)) {
-				ConfigurationSection users = this.permissions.getConfigurationSection(basePath);
-
-				if (users != null) {
-					for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
-						if (entry.getKey().equalsIgnoreCase(entityName)
-								&& entry.getValue() instanceof ConfigurationSection) {
-							return (ConfigurationSection) entry.getValue();
-						}
-					}
-				}
-			}
-		} finally {
-			lock.readLock().unlock();
-		}
-
-		lock.writeLock().lock();
-		try {
-			ConfigurationSection section = this.permissions.createSection(nodePath);
-			this.permissions.set(nodePath, null);
-			return section;
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
-
 	@Override
 	public PermissionsUserData getUserData(String userName) {
-		ConfigurationSection section = getNode("users", userName);
-		final CachingUserData data = new CachingUserData(new FileData(section, "group"), getExecutor(), lock);
-		data.load();
-		return data;
+		synchronized (lock) {
+			final CachingUserData data = new CachingUserData(new FileData("users", userName, this.permissions, "group"), getExecutor(), lock);
+			data.load();
+			return data;
+		}
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
-		ConfigurationSection section = getNode("groups", groupName);
-		final CachingGroupData data = new CachingGroupData(new FileData(section, "inheritance"), getExecutor(), lock);
-		data.load();
-		return data;
+		synchronized (lock) {
+			final CachingGroupData data = new CachingGroupData(new FileData("groups", groupName, this.permissions, "inheritance"), getExecutor(), lock);
+			data.load();
+			return data;
+		}
 	}
 
 	@Override
 	public boolean hasUser(String userName) {
-		lock.readLock().lock();
-		try {
+		synchronized (lock) {
 			return this.permissions.isConfigurationSection(buildPath("users", userName.toLowerCase()));
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 
 	@Override
 	public boolean hasGroup(String group) {
-		lock.readLock().lock();
-		try {
+		synchronized (lock) {
 			if (this.permissions.isConfigurationSection(buildPath("groups", group))) {
 				return true;
 			}
@@ -285,26 +234,20 @@ public class FileBackend extends PermissionBackend {
 
 			}
 			return false;
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 
 	@Override
 	public Collection<String> getUserIdentifiers() {
-		lock.readLock().lock();
-		try {
+		synchronized (lock) {
 			ConfigurationSection users = this.permissions.getConfigurationSection("users");
 			return users != null ? users.getKeys(false) : Collections.<String>emptyList();
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 
 	@Override
 	public Collection<String> getUserNames() {
-		lock.readLock().lock();
-		try {
+		synchronized (lock) {
 			ConfigurationSection users = this.permissions.getConfigurationSection("users");
 
 			if (users == null) {
@@ -324,19 +267,14 @@ public class FileBackend extends PermissionBackend {
 				}
 			}
 			return Collections.unmodifiableSet(userNames);
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 
 	@Override
 	public Collection<String> getGroupNames() {
-		lock.readLock().lock();
-		try {
+		synchronized (lock) {
 			ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
 			return groups != null ? groups.getKeys(false) : Collections.<String>emptySet();
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 
@@ -437,13 +375,10 @@ public class FileBackend extends PermissionBackend {
 	}
 
 	public void save() {
-		lock.readLock().lock();
 		try {
 			this.permissions.save();
 		} catch (IOException e) {
 			getManager().getLogger().severe("Error while saving permissions file: " + e.getMessage());
-		} finally {
-			lock.readLock().unlock();
 		}
 	}
 }
