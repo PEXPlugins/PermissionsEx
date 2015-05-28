@@ -22,6 +22,7 @@ import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.TextBuilder;
 import org.spongepowered.api.text.Texts;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColor;
@@ -31,7 +32,6 @@ import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandSource;
 
-import javax.annotation.Nonnull;
 import java.util.Locale;
 import java.util.Map;
 
@@ -40,7 +40,7 @@ import static ninja.leaping.permissionsex.util.Translations._;
 /**
  * Factory to create formatted elements of messages
  */
-public class SpongeMessageFormatter implements MessageFormatter<Text> {
+public class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
     private static final Text EQUALS_SIGN = Texts.of(TextColors.GRAY, "=");
     private final PermissionsExPlugin pex;
 
@@ -49,7 +49,7 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
     }
 
     @Override
-    public Text subject(Map.Entry<String, String> subject) {
+    public TextBuilder subject(Map.Entry<String, String> subject) {
         Function<String, Optional<CommandSource>> func = pex.getCommandSourceProvider(subject.getKey());
         Optional<CommandSource> source = func == null ? Optional.<CommandSource>absent() : func.apply(subject.getValue());
         String name;
@@ -68,16 +68,16 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         return Texts.builder().append(Texts.builder(subject.getKey()).style(TextStyles.BOLD).build(), Texts.of(" "),
-                nameText).onHover(TextActions.showText(tr(_("Click to view more info")))).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info")).build();
+                nameText).onHover(TextActions.showText(tr(_("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
     }
 
     @Override
-    public Text booleanVal(boolean val) {
-        return (val ? tr(_("true")) : tr(_("false"))).builder().color(val ? TextColors.GREEN : TextColors.RED).build();
+    public TextBuilder booleanVal(boolean val) {
+        return (val ? tr(_("true")) : tr(_("false"))).color(val ? TextColors.GREEN : TextColors.RED);
     }
 
     @Override
-    public Text permission(String permission, int value) {
+    public TextBuilder permission(String permission, int value) {
         TextColor valueColor;
         if (value > 0) {
             valueColor = TextColors.GREEN;
@@ -86,34 +86,42 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
         } else {
             valueColor = TextColors.GRAY;
         }
-        return Texts.of(Texts.of(valueColor, permission), EQUALS_SIGN, value);
+        return Texts.builder().append(Texts.of(valueColor, permission), EQUALS_SIGN, Texts.of(value));
     }
 
     @Override
-    public Text option(String permission, String value) {
-        return Texts.of(permission, EQUALS_SIGN, value);
+    public TextBuilder option(String permission, String value) {
+        return Texts.builder(permission).append(EQUALS_SIGN, Texts.of(value));
     }
 
     @Override
-    public Text header(Text text) {
-        return text.builder().style(TextStyles.BOLD).build();
+    public TextBuilder header(TextBuilder text) {
+        return text.style(TextStyles.BOLD);
     }
 
     @Override
-    public Text hl(Text text) {
-        return text.builder().color(TextColors.AQUA).build();
+    public TextBuilder hl(TextBuilder text) {
+        return text.color(TextColors.AQUA);
     }
 
     @Override
-    public Text combined(Object... elements) {
-        return Texts.of(elements);
+    public TextBuilder combined(Object... elements) {
+        TextBuilder build = Texts.builder();
+        for (Object el : elements) {
+            if (el instanceof TextBuilder) {
+                build.append(((TextBuilder) el).build());
+            } else {
+                build.append(Texts.of(el));
+            }
+        }
+        return build;
     }
 
     @Override
-    public Text tr(Translatable tr) {
+    public TextBuilder tr(Translatable tr) {
         boolean unwrapArgs = false;
         for (Object arg: tr.getArgs()) {
-            if (arg instanceof Translatable) {
+            if (arg instanceof Translatable || arg instanceof TextBuilder) {
                 unwrapArgs = true;
                 break;
             }
@@ -125,12 +133,14 @@ public class SpongeMessageFormatter implements MessageFormatter<Text> {
             for (int i = 0; i < oldArgs.length; ++i) {
                 Object arg = oldArgs[i];
                 if (arg instanceof Translatable) {
-                    arg = tr(tr);
+                    arg = tr(tr).build();
+                } else if (arg instanceof TextBuilder) {
+                    arg = ((TextBuilder) arg).build();
                 }
                 args[i] = arg;
             }
         }
-        return Texts.of(new PEXTranslation(tr), args);
+        return Texts.builder(new PEXTranslation(tr), args);
     }
 
     @NonnullByDefault

@@ -23,12 +23,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.util.StartsWithPredicate;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -40,13 +42,41 @@ public class GameArguments {
 
     }
 
+    public static CommandElement subjectType(Translatable key, PermissionsEx pex) {
+        return new SubjectTypeElement(key, pex);
+    }
+
+    private static class SubjectTypeElement extends CommandElement {
+        private final PermissionsEx pex;
+
+        protected SubjectTypeElement(Translatable key, PermissionsEx pex) {
+            super(key);
+            this.pex = pex;
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            final String next = args.next();
+            Set<String> subjectTypes = pex.getRegisteredSubjectTypes();
+            if (!subjectTypes.contains(next)) {
+                throw args.createError(_("Subject type %s was not valid!", next));
+            }
+            return next;
+        }
+
+        @Override
+        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+            String nextOpt = args.nextIfPresent().or("");
+            return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new StartsWithPredicate(nextOpt)));
+        }
+    }
+
     /**
      * Expect the provided argument to specify a subject. Subject is of one of the forms:
      * <ul>
      *     <li>&lt;type&gt;:&lt;identifier&gt;</li>
      *     <li>&lt;type&gt; &lt;identifier&gt;</li>
      * </ul>
-     * TODO: How do we accept pretty names for users?
      * @param key The key to store the parsed argument under
      * @param pex The PermissionsEx instance to fetch known subjects from
      * @return the element to match the input
@@ -105,7 +135,7 @@ public class GameArguments {
                     final String finalType = type;
                     final Iterable<String> allIdents = Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers());
                     final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, pex.getNameTransformer(type)), Predicates.notNull())),
-                            new GenericArguments.StartsWithPredicate(identifierSegment.get())
+                            new StartsWithPredicate(identifierSegment.get())
                     );
 
                     return ImmutableList.copyOf(
@@ -116,13 +146,13 @@ public class GameArguments {
                                         }
                                     }));
                 } else {
-                    return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new GenericArguments.StartsWithPredicate(type)));
+                    return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new StartsWithPredicate(type)));
                 }
 
             }
             final Iterable<String> allIdents = Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers());
             final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, pex.getNameTransformer(type)), Predicates.notNull())),
-                    new GenericArguments.StartsWithPredicate(identifierSegment.get())
+                    new StartsWithPredicate(identifierSegment.get())
             );
 
             return ImmutableList.copyOf(ret);

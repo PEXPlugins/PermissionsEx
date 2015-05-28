@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import java.util.Collections;
@@ -87,5 +88,16 @@ class TestCommander implements Commander<String> {
     @Override
     public void error(String text) {
         System.err.println("error: " + text);
+    }
+
+    @Override
+    public void msgPaginated(Translatable title, Translatable header, Iterable<String> text) {
+        final String titleStr = title.translateFormatted(Locale.ROOT);
+        System.out.println(titleStr);
+        System.out.println(header.translateFormatted(Locale.ROOT));
+        System.out.println(Strings.repeat("=", titleStr.length()));
+        for (String line : text) {
+            System.out.println(line);
+        }
     }
 }

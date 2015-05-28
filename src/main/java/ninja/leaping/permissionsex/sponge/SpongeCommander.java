@@ -16,16 +16,21 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import ninja.leaping.permissionsex.util.command.Commander;
 import org.spongepowered.api.entity.player.Player;
+import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.TextBuilder;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.command.CommandSource;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -33,11 +38,13 @@ import java.util.Set;
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
-public class SpongeCommander implements Commander<Text> {
+public class SpongeCommander implements Commander<TextBuilder> {
+    private final PermissionsExPlugin pex;
     private final CommandSource commandSource;
     private final SpongeMessageFormatter formatter;
 
     public SpongeCommander(PermissionsExPlugin pex, CommandSource commandSource) {
+        this.pex = pex;
         this.commandSource = commandSource;
         this.formatter = new SpongeMessageFormatter(pex);
     }
@@ -68,7 +75,7 @@ public class SpongeCommander implements Commander<Text> {
     }
 
     @Override
-    public MessageFormatter<Text> fmt() {
+    public MessageFormatter<TextBuilder> fmt() {
         return formatter;
     }
 
@@ -89,18 +96,32 @@ public class SpongeCommander implements Commander<Text> {
     }
 
     @Override
-    public void msg(Text text) {
-        commandSource.sendMessage(text.builder().color(TextColors.DARK_AQUA).build());
-
+    public void msg(TextBuilder text) {
+        commandSource.sendMessage(text.color(TextColors.DARK_AQUA).build());
     }
 
     @Override
-    public void debug(Text text) {
-        commandSource.sendMessage(text.builder().color(TextColors.GRAY).build());
+    public void debug(TextBuilder text) {
+        commandSource.sendMessage(text.color(TextColors.GRAY).build());
     }
 
     @Override
-    public void error(Text text) {
-        commandSource.sendMessage(text.builder().color(TextColors.RED).build());
+    public void error(TextBuilder text) {
+        commandSource.sendMessage(text.color(TextColors.RED).build());
+    }
+
+    @Override
+    public void msgPaginated(Translatable title, Translatable header, final Iterable<TextBuilder> text) {
+        pex.getGame().getServiceManager().provide(PaginationService.class).get().builder()
+                .title(fmt().hl(fmt().header(fmt().tr(title))).build())
+                .header(fmt().tr(header).color(TextColors.GRAY).build())
+                .contents(Iterables.transform(text, new Function<TextBuilder, Text>() {
+                    @Nullable
+                    @Override
+                    public Text apply(TextBuilder input) {
+                        return input.color(TextColors.DARK_AQUA).build();
+                    }
+                }))
+                .sendTo(commandSource);
     }
 }

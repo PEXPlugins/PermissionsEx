@@ -24,19 +24,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by zml on 20.03.15.
+ * Interface implemented by objects that can execute commands and receive command output
  */
 public interface Commander<TextType> {
-    public String getName();
-    public Locale getLocale();
-    public Optional<Map.Entry<String, String>> getSubjectIdentifier();
-    public boolean hasPermission(String permission);
-    public Set<Map.Entry<String, String>> getActiveContexts();
-    public MessageFormatter<TextType> fmt();
-    public void msg(Translatable text);
-    public void debug(Translatable text);
-    public void error(Translatable text);
-    public void msg(TextType text);
-    public void debug(TextType text);
-    public void error(TextType text);
+    String getName();
+    Locale getLocale();
+    Optional<Map.Entry<String, String>> getSubjectIdentifier();
+    boolean hasPermission(String permission);
+    Set<Map.Entry<String, String>> getActiveContexts();
+    MessageFormatter<TextType> fmt();
+    void msg(Translatable text);
+    void debug(Translatable text);
+    void error(Translatable text);
+    void msg(TextType text);
+    void debug(TextType text);
+    void error(TextType text);
+    void msgPaginated(Translatable title, Translatable header, Iterable<TextType> text);
 }

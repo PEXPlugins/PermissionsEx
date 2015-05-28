@@ -16,8 +16,13 @@
  */
 package ninja.leaping.permissionsex.command;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.util.StartsWithPredicate;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
@@ -28,6 +33,8 @@ import ninja.leaping.permissionsex.util.command.args.CommandElement;
 import java.util.Set;
 
 import ninja.leaping.permissionsex.util.command.ChildCommands;
+
+import javax.annotation.Nullable;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
@@ -58,23 +65,40 @@ public class PermissionsExCommands {
                         .flag("-transient")
                         .valueFlag(context(_("context")), "-context", "-contexts", "c")
                         .buildWith(optional(
-                        firstParsing(
-                                children,
-                                seq(subject(_("subject"), pex), subjectChildren)))
-                ))
+                                        firstParsing(
+                                                children,
+                                                seq(subject(_("subject"), pex), subjectChildren),
+                                                seq(subjectType(_("subject-type"), pex), literal(_("list"), "list"), optional(string(_("filter"))))
+                                        )
+                                )
+                        ))
                 .setExecutor(new CommandExecutor() {
                     @Override
-                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        if (args.hasAny(subjectChildren.getKey().getUntranslated())) {
+                    public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
+                        if (args.hasAny("list")) {
+                            final String subjectType = args.getOne("subject-type");
+                            args.checkPermission(src, "permissionsex.command.list." + subjectType);
+                            SubjectCache cache = args.hasAny("transient") ? pex.getTransientSubjects(subjectType) : pex.getSubjects(subjectType);
+                            Iterable<String> iter = cache.getAllIdentifiers();
+                            if (args.hasAny("filter")) {
+                                iter = Iterables.filter(iter, new StartsWithPredicate(args.<String>getOne("filter")));
+                            }
+
+                            src.msgPaginated(_("%s subjects", subjectType), _("All subjects of type %s", subjectType), Iterables.transform(iter, new Function<String, TextType>() {
+                                @Nullable
+                                @Override
+                                public TextType apply(String input) {
+                                    return src.fmt().subject(Maps.immutableEntry(subjectType, input));
+                                }
+                            }));
+                        } else if (args.hasAny(subjectChildren.getKey().getUntranslated())) {
                             ChildCommands.executor(subjectChildren).execute(src, args);
-                            return;
                         } else if (args.hasAny(children.getKey().getUntranslated())) {
                             ChildCommands.executor(children).execute(src, args);
-                            return;
+                        } else {
+                            src.msg(src.fmt().combined("PermissionsEx ", src.fmt().hl(src.fmt().combined("v", pex.getVersion()))));
+                            src.msg(args.getSpec().getUsage(src));
                         }
-
-                        src.msg(src.fmt().combined("PermissionsEx ", src.fmt().hl(src.fmt().combined("v", pex.getVersion()))));
-                        src.msg(args.getSpec().getUsage(src));
                     }
                 })
                 .build();

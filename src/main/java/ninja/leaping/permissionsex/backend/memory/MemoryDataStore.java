@@ -30,6 +30,7 @@ import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -104,7 +105,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<String> getRegisteredTypes() {
+    public Set<String> getRegisteredTypes() {
         return ImmutableSet.copyOf(Iterables.transform(data.keySet(), new Function<Map.Entry<String, String>, String>() {
             @Nullable
             @Override

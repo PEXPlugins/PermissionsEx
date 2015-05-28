@@ -16,12 +16,11 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -365,8 +364,8 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<String> getRegisteredTypes() {
-        return Iterables.transform(Maps.filterValues(this.permissionsConfig.getChildrenMap(), new Predicate<ConfigurationNode>() {
+    public Set<String> getRegisteredTypes() {
+        return ImmutableSet.copyOf(Iterables.transform(Maps.filterValues(this.permissionsConfig.getChildrenMap(), new Predicate<ConfigurationNode>() {
             @Override
             public boolean apply(@Nullable ConfigurationNode input) {
                 return input != null && input.hasMapChildren();
@@ -378,7 +377,7 @@ public final class FileDataStore extends AbstractDataStore {
                 final String typeStr = input.toString();
                 return typeStr.substring(0, typeStr.length() - 1); // trim trailing s
             }
-        });
+        }));
     }
 
     @Override

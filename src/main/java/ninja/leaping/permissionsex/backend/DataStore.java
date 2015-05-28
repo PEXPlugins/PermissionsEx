@@ -25,6 +25,7 @@ import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Data type abstraction for permissions data
@@ -59,7 +60,7 @@ public interface DataStore {
 
     Iterable<String> getAllIdentifiers(String type);
 
-    Iterable<String> getRegisteredTypes();
+    Set<String> getRegisteredTypes();
 
     /**
      * Serialize the configuration state of this data store to a configuration node

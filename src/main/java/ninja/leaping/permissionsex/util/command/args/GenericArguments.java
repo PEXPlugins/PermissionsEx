@@ -17,11 +17,12 @@
 package ninja.leaping.permissionsex.util.command.args;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import ninja.leaping.permissionsex.util.StartsWithPredicate;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Translations;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -43,19 +44,6 @@ import static ninja.leaping.permissionsex.util.Translations._;
  */
 public class GenericArguments {
     private GenericArguments() {}
-
-    static class StartsWithPredicate implements Predicate<String> {
-        private final String test;
-
-        StartsWithPredicate(String test) {
-            this.test = test;
-        }
-
-        @Override
-        public boolean apply(@Nullable String input) {
-            return input != null && input.toLowerCase().startsWith(test.toLowerCase());
-        }
-    }
 
     /**
      * Expects no arguments
@@ -1019,6 +1007,78 @@ public class GenericArguments {
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
             return src.fmt().combined(super.getUsage(src), "...");
+        }
+    }
+
+    /**
+     * Expect a literal sequence of arguments. This element matches the input against a predefined array of arguments expected to be present,
+     * case-insensitively.
+     *
+     * @param key The key to add to the context. Will be set to a value of true if this element matches
+     * @param expectedArgs The sequence of arguments expected
+     * @return the appropriate command element
+     */
+    public static CommandElement literal(Translatable key, String... expectedArgs) {
+        return new LiteralCommandElement(key, ImmutableList.copyOf(expectedArgs), true);
+    }
+
+    /**
+     * Expect a literal sequence of arguments. This element matches the input against a predefined array of arguments expected to be present,
+     * case-insensitively.
+     *
+     * @param key The key to store this argument as
+     * @param putValue The value to put at key if this argument matches. May be null
+     * @param expectedArgs The sequence of arguments expected
+     * @return the appropriate command element
+     */
+    public static CommandElement literal(Translatable key, Object putValue, String... expectedArgs) {
+        return new LiteralCommandElement(key, ImmutableList.copyOf(expectedArgs), putValue);
+    }
+
+    private static class LiteralCommandElement extends CommandElement {
+        private final List<String> expectedArgs;
+        private final Object putValue;
+
+        protected LiteralCommandElement(@Nullable Translatable key, List<String> expectedArgs, Object putValue) {
+            super(key);
+            this.expectedArgs = ImmutableList.copyOf(expectedArgs);
+            this.putValue = putValue;
+        }
+
+        @Nullable
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            for (String arg : this.expectedArgs) {
+                String current;
+                if (!(current = args.next()).equalsIgnoreCase(arg)) {
+                    throw args.createError(_("Argument %s did not match expected next argument %s", current, arg));
+                }
+            }
+            return this.putValue;
+        }
+
+        @Override
+        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext ctx) {
+            for (String arg : this.expectedArgs) {
+                final Optional<String> next = args.nextIfPresent();
+                if (!next.isPresent()) {
+                    break;
+                } else if (args.hasNext()) {
+                    if (!next.get().equalsIgnoreCase(arg)) {
+                        break;
+                    }
+                } else {
+                    if (arg.toLowerCase().startsWith(next.get().toLowerCase())) { // Case-insensitive compare
+                        return ImmutableList.of(arg); // TODO: Possibly complete all remaining args? Does that even work
+                    }
+                }
+            }
+            return ImmutableList.of();
+        }
+
+        @Override
+        public <TextType> TextType getUsage(Commander<TextType> src) {
+            return src.fmt().combined(Joiner.on(' ').join(this.expectedArgs));
         }
     }
 
