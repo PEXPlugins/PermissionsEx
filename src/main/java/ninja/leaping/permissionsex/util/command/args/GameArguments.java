@@ -85,6 +85,10 @@ public class GameArguments {
         return new SubjectElement(key, pex, null);
     }
 
+    public static CommandElement subject(Translatable key, PermissionsEx pex, String group) {
+        return new SubjectElement(key, pex, group);
+    }
+
     private static class SubjectElement extends CommandElement {
         private final PermissionsEx pex;
         private final String defaultType;
