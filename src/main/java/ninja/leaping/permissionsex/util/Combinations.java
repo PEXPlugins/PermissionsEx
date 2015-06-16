@@ -32,6 +32,7 @@ import java.util.Set;
 public class Combinations<T> implements Iterable<Set<T>> {
     private final T[] items;
 
+    @SuppressWarnings("unchecked")
     private Combinations(Set<T> items) {
         this.items = (T[]) items.toArray();
     }

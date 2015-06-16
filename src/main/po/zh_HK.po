@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-27 21:22-0700\n"
+"POT-Creation-Date: 2015-06-16 15:42-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -83,7 +83,7 @@ msgstr ""
 msgid "Commands for PermissionsEx"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:177
+#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:181
 msgid "Context must be of the form <key>=<value>!"
 msgstr ""
 
@@ -415,8 +415,8 @@ msgstr ""
 msgid "first"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/OptionCommands.java:39
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
+#: ninja/leaping/permissionsex/command/OptionCommands.java:39
 msgid "key"
 msgstr ""
 
@@ -445,8 +445,8 @@ msgstr ""
 msgid "true"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/OptionCommands.java:39
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:75
+#: ninja/leaping/permissionsex/command/OptionCommands.java:39
 msgid "value"
 msgstr ""

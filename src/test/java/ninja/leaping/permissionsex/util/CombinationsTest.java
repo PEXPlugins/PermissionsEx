@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex;
+package ninja.leaping.permissionsex.util;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
-import ninja.leaping.permissionsex.util.Combinations;
 import org.junit.Test;
 
 import java.util.ArrayList;
