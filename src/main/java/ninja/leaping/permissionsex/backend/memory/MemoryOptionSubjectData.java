@@ -338,7 +338,11 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     @Override
     public ImmutableOptionSubjectData addParent(Set<Entry<String, String>> contexts, String type, String ident) {
         DataEntry entry = getDataEntryOrNew(contexts);
-        return newWithUpdated(contexts, entry.withAddedParent(type + ":" + ident));
+        final String parentIdent = type + ":" + ident;
+        if (entry.parents.contains(parentIdent)) {
+            return this;
+        }
+        return newWithUpdated(contexts, entry.withAddedParent(parentIdent));
     }
 
     @Override
