@@ -14,9 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data;
+package ninja.leaping.permissionsex.sponge.rank;
 
+import ninja.leaping.permissionsex.rank.RankLadder;
 
-public interface Caching<T> {
-    void clearCache(T newData);
+public interface RankingService {
+    /**
+     * Get a ladder by name. This will create a new ladder if none exists yet.
+     *
+     * @param ladder The name of the ladder to get. Case-insensitive.
+     * @return the ladder
+     */
+    RankLadder getLadder(String ladder);
+
+    /**
+     * Return whether or not this ladder is present
+     *
+     * @param ladder The ladder to check. Case-insensitive
+     * @return Whether this ladder is present
+     */
+    boolean hasLadder(String ladder);
 }

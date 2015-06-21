@@ -21,9 +21,10 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.util.Translatable;
-import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import ninja.leaping.permissionsex.util.command.Commander;
+import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.entity.player.Player;
+import org.spongepowered.api.service.pagination.PaginationBuilder;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextBuilder;
@@ -111,17 +112,20 @@ public class SpongeCommander implements Commander<TextBuilder> {
     }
 
     @Override
-    public void msgPaginated(Translatable title, Translatable header, final Iterable<TextBuilder> text) {
-        pex.getGame().getServiceManager().provide(PaginationService.class).get().builder()
-                .title(fmt().hl(fmt().header(fmt().tr(title))).build())
-                .header(fmt().tr(header).color(TextColors.GRAY).build())
-                .contents(Iterables.transform(text, new Function<TextBuilder, Text>() {
-                    @Nullable
-                    @Override
-                    public Text apply(TextBuilder input) {
-                        return input.color(TextColors.DARK_AQUA).build();
-                    }
-                }))
+    public void msgPaginated(Translatable title, @Nullable Translatable header, final Iterable<TextBuilder> text) {
+        PaginationBuilder build = pex.getGame().getServiceManager().provide(PaginationService.class).get().builder();
+
+        build.title(fmt().hl(fmt().header(fmt().tr(title))).build());
+        if (header != null) {
+            build.header(fmt().tr(header).color(TextColors.GRAY).build());
+        }
+        build.contents(Iterables.transform(text, new Function<TextBuilder, Text>() {
+            @Nullable
+            @Override
+            public Text apply(TextBuilder input) {
+                return input.color(TextColors.DARK_AQUA).build();
+            }
+        }))
                 .sendTo(commandSource);
     }
 }

@@ -78,11 +78,32 @@ public class GenericArguments {
         return new FlagCommandElementBuilder();
     }
 
+    public enum UnknownFlagBehavior {
+        /**
+         * Throw an {@link ArgumentParseException} when an unknown flag is encountered
+         */
+        ERROR,
+        /**
+         * Mark the flag as a non-value flag
+         */
+        ACCEPT_NONVALUE,
+        /**
+         * Accept the flag with a string-typed value
+         */
+        ACCEPT_VALUE,
+        /**
+         * Act as if the unknown flag is an ordinary argument
+         */
+        IGNORE
+
+    }
+
     public static class FlagCommandElementBuilder {
         private final Map<List<String>, CommandElement> usageFlags = new HashMap<>();
         private final Map<String, CommandElement> shortFlags = new HashMap<>();
         private final Map<String, CommandElement> longFlags = new HashMap<>();
-        private boolean acceptsArbitraryLongFlags = true;
+        private UnknownFlagBehavior unknownLongFlagBehavior = UnknownFlagBehavior.ERROR;
+        private UnknownFlagBehavior unknownShortFlagBehavior = UnknownFlagBehavior.ERROR;
         private boolean anchorFlags = false;
 
         public FlagCommandElementBuilder flag(String... specs) {
@@ -140,11 +161,16 @@ public class GenericArguments {
         /**
          * If this is true, any long flag (--) will be accepted and added as a flag
          *
-         * @param acceptsArbitraryLongFlags Whether any long flag is accepted
+         * @param behavior The behavior upon encountering an unknown long flag
          * @return this
          */
-        public FlagCommandElementBuilder setAcceptsArbitraryLongFlags(boolean acceptsArbitraryLongFlags) {
-            this.acceptsArbitraryLongFlags = acceptsArbitraryLongFlags;
+        public FlagCommandElementBuilder setUnknownLongFlagBehavior(UnknownFlagBehavior behavior) {
+            this.unknownLongFlagBehavior = behavior;
+            return this;
+        }
+
+        public FlagCommandElementBuilder setUnknownShortFlagBehavior(UnknownFlagBehavior behavior) {
+            this.unknownShortFlagBehavior = behavior;
             return this;
         }
 
@@ -160,7 +186,7 @@ public class GenericArguments {
         }
 
         public CommandElement buildWith(CommandElement wrapped) {
-            return new FlagCommandElement(wrapped, usageFlags, shortFlags, longFlags, acceptsArbitraryLongFlags, anchorFlags);
+            return new FlagCommandElement(wrapped, usageFlags, shortFlags, longFlags, unknownShortFlagBehavior, unknownLongFlagBehavior, anchorFlags);
         }
     }
 
@@ -169,15 +195,18 @@ public class GenericArguments {
         private final Map<List<String>, CommandElement> usageFlags;
         private final Map<String, CommandElement> shortFlags;
         private final Map<String, CommandElement> longFlags;
-        private final boolean acceptArbitraryLongFlags, anchorFlags;
+        private final UnknownFlagBehavior unknownShortFlagBehavior;
+        private final UnknownFlagBehavior unknownLongFlagBehavior;
+        private final boolean anchorFlags;
 
-        protected FlagCommandElement(CommandElement childElement, Map<List<String>, CommandElement> usageFlags, Map<String, CommandElement> shortFlags, Map<String, CommandElement> longFlags, boolean acceptArbitraryLongFlags, boolean anchorFlags) {
+        protected FlagCommandElement(CommandElement childElement, Map<List<String>, CommandElement> usageFlags, Map<String, CommandElement> shortFlags, Map<String, CommandElement> longFlags, UnknownFlagBehavior unknownShortFlagBehavior, UnknownFlagBehavior unknownLongFlagBehavior, boolean anchorFlags) {
             super(null);
             this.childElement = childElement;
             this.usageFlags = usageFlags;
             this.shortFlags = shortFlags;
             this.longFlags = longFlags;
-            this.acceptArbitraryLongFlags = acceptArbitraryLongFlags;
+            this.unknownShortFlagBehavior = unknownShortFlagBehavior;
+            this.unknownLongFlagBehavior = unknownLongFlagBehavior;
             this.anchorFlags = anchorFlags;
         }
 
@@ -189,14 +218,17 @@ public class GenericArguments {
                 arg = args.next();
                 if (arg.startsWith("-")) {
                     int flagStartIdx = args.getPosition();
+                    boolean ignored;
                     if (arg.startsWith("--")) { // Long flag
                         String longFlag = arg.substring(2);
-                        parseLongFlag(longFlag, args, context);
+                        ignored = !parseLongFlag(longFlag, args, context);
                     } else {
                         arg = arg.substring(1);
-                        parseShortFlags(arg, args, context);
+                        ignored = !parseShortFlags(arg, args, context);
                     }
-                    args.removeArgs(flagStartIdx, args.getPosition());
+                    if (!ignored) {
+                        args.removeArgs(flagStartIdx, args.getPosition());
+                    }
                 } else if (this.anchorFlags) {
                     break;
                 }
@@ -209,17 +241,22 @@ public class GenericArguments {
 
         }
 
-        private void parseLongFlag(String longFlag, CommandArgs args, CommandContext context) throws ArgumentParseException {
+        private boolean parseLongFlag(String longFlag, CommandArgs args, CommandContext context) throws ArgumentParseException {
             if (longFlag.contains("=")) {
                 final String[] flagSplit = longFlag.split("=", 2);
                 longFlag = flagSplit[0];
                 String value = flagSplit[1];
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
                 if (element == null) {
-                    if (!this.acceptArbitraryLongFlags) {
-                        throw args.createError(_("Unknown long flag %s specified", args));
+                    switch (unknownLongFlagBehavior) {
+                        case ERROR:
+                            throw args.createError(_("Unknown long flag %s specified", args));
+                        case ACCEPT_NONVALUE:
+                            context.putArg(longFlag, value);
+                            break;
+                        case IGNORE:
+                            return false;
                     }
-                    context.putArg(longFlag, value);
                 } else {
                     args.insertArg(value);
                     element.parse(args, context);
@@ -227,25 +264,43 @@ public class GenericArguments {
             } else {
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
                 if (element == null) {
-                    if (!this.acceptArbitraryLongFlags) {
-                        throw args.createError(_("Unknown long flag %s specified", args));
+                    switch (unknownLongFlagBehavior) {
+                        case ERROR:
+                            throw args.createError(_("Unknown long flag %s specified", args));
+                        case ACCEPT_NONVALUE:
+                            context.putArg(longFlag, true);
+                            break;
+                        case IGNORE:
+                            return false;
                     }
                     context.putArg(longFlag, true);
                 } else {
                     element.parse(args, context);
                 }
             }
+            return true;
         }
 
-        private void parseShortFlags(String shortFlags, CommandArgs args, CommandContext context) throws ArgumentParseException {
+        private boolean parseShortFlags(String shortFlags, CommandArgs args, CommandContext context) throws ArgumentParseException {
             for (int i = 0; i < shortFlags.length(); ++i) {
                 final String flagChar = shortFlags.substring(i, i + 1);
                 CommandElement element = this.shortFlags.get(flagChar);
                 if (element == null) {
-                    throw args.createError(_("Unknown short flag %s specified", flagChar));
+                    switch (unknownShortFlagBehavior) {
+                        case IGNORE:
+                            if (i == 0) {
+                                return false;
+                            } // fall-through
+                        case ERROR:
+                            throw args.createError(_("Unknown short flag %s specified", flagChar));
+                        case ACCEPT_NONVALUE:
+                            context.putArg(flagChar, true);
+                    }
+                } else {
+                    element.parse(args, context);
                 }
-                element.parse(args, context);
             }
+            return true;
         }
 
         @Override
@@ -320,8 +375,12 @@ public class GenericArguments {
                 longFlag = flagSplit[0];
                 String value = flagSplit[1];
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
-                if (element == null) { // Whole flag is specified, we'll go to value
-                    context.putArg(longFlag, value);
+                if (element == null) { // Whole flag is specified, we'll go to value (even though flag is unknown
+                    if (unknownLongFlagBehavior == UnknownFlagBehavior.IGNORE) {
+
+                    } else {
+                        context.putArg(longFlag, value);
+                    }
                 } else {
                     args.insertArg(value);
                     final String finalLongFlag = longFlag;

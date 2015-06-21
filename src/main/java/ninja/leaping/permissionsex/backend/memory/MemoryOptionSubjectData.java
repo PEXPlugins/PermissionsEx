@@ -28,6 +28,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.util.Util;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -60,12 +61,12 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
 
     @ConfigSerializable
     protected static class DataEntry {
-        @Setting private Map<String, Integer> permissions;
-        @Setting private Map<String, String> options;
-        @Setting private List<String> parents;
-        @Setting("permissions-default") private Integer defaultValue;
+        @Nullable @Setting private Map<String, Integer> permissions;
+        @Nullable @Setting private Map<String, String> options;
+        @Nullable @Setting private List<String> parents;
+        @Nullable @Setting("permissions-default") private Integer defaultValue;
 
-        private DataEntry(Map<String, Integer> permissions, Map<String, String> options, List<String> parents, Integer defaultValue) {
+        private DataEntry(@Nullable Map<String, Integer> permissions, @Nullable Map<String, String> options, @Nullable List<String> parents, @Nullable Integer defaultValue) {
             this.permissions = permissions;
             this.options = options;
             this.parents = parents;
@@ -164,10 +165,6 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
 
     }
 
-    protected static DataEntry newEntry() {
-        return new DataEntry();
-    }
-
     protected final MemoryOptionSubjectData newWithUpdated(Set<Entry<String, String>> key, DataEntry val) {
         return newData(updateImmutable(contexts, immutSet(key), val));
     }
@@ -204,7 +201,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public Map<String, String> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.options;
+                return dataEntry == null ? null : dataEntry.options;
             }
         }), Predicates.notNull());
     }
@@ -247,7 +244,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public DataEntry apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.withoutOptions();
+                return dataEntry == null ? null : dataEntry.withoutOptions();
             }
         });
         return newData(newValue);
@@ -259,7 +256,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public Map<String, Integer> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.permissions;
+                return dataEntry == null ? null : dataEntry.permissions;
             }
         }), Predicates.notNull());
     }
@@ -294,7 +291,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public DataEntry apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.withoutPermissions();
+                return dataEntry == null ? null : dataEntry.withoutPermissions();
             }
         });
         return newData(newValue);
@@ -313,8 +310,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
                     @Nullable
                     @Override
                     public Map.Entry<String, String> apply(String input) {
-                        String[] split = input.split(":", 2);
-                        return Maps.immutableEntry(split.length > 1 ? split[0] : "group", split.length > 1 ? split[1]: split[0]);
+                        return Util.subjectFromString(input);
                     }
                 };
 
@@ -324,7 +320,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public List<Map.Entry<String, String>> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.parents == null ? null : Lists.transform(dataEntry.parents, PARENT_TRANSFORM_FUNC);
+                return dataEntry == null ? null : dataEntry.parents == null ? null : Lists.transform(dataEntry.parents, PARENT_TRANSFORM_FUNC);
             }
         }), Predicates.notNull());
     }
@@ -339,7 +335,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
     public ImmutableOptionSubjectData addParent(Set<Entry<String, String>> contexts, String type, String ident) {
         DataEntry entry = getDataEntryOrNew(contexts);
         final String parentIdent = type + ":" + ident;
-        if (entry.parents.contains(parentIdent)) {
+        if (entry.parents != null && entry.parents.contains(parentIdent)) {
             return this;
         }
         return newWithUpdated(contexts, entry.withAddedParent(parentIdent));
@@ -353,7 +349,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
         }
 
         final String combined = type + ":" + identifier;
-        if (!ent.parents.contains(combined)) {
+        if (ent.parents == null || !ent.parents.contains(combined)) {
             return this;
         }
         return newWithUpdated(contexts, ent.withRemovedParent(combined));
@@ -366,7 +362,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public String apply(@Nullable Entry<String, String> input) {
-                return input.getKey() + ":" + input.getValue();
+                return Util.subjectToString(input);
             }
         })));
     }
@@ -381,7 +377,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public DataEntry apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.withoutParents();
+                return dataEntry == null ? null : dataEntry.withoutParents();
             }
         });
         return newData(newValue);
@@ -417,7 +413,7 @@ public class MemoryOptionSubjectData implements ImmutableOptionSubjectData {
             @Nullable
             @Override
             public Integer apply(@Nullable DataEntry dataEntry) {
-                return dataEntry.defaultValue;
+                return dataEntry == null ? null : dataEntry.defaultValue;
             }
         }), Predicates.notNull());
     }

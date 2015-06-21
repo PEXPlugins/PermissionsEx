@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * This is a holder that maintains the current subject data state
  */
-public class CalculatedSubject implements Caching {
+public class CalculatedSubject implements Caching<ImmutableOptionSubjectData> {
     private final Map.Entry<String, String> identifier;
     private final PermissionsEx pex;
 

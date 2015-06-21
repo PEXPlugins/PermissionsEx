@@ -50,11 +50,11 @@ public class OptionCommands {
                         if (value == null) {
                             messageSubjectOnFuture(
                                     dataCache.update(subject.getValue(), data.setOption(contexts, key, null)), src,
-                                    _("Unset option '%s' for subject %s in %s context", key, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                    _("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                         } else {
                             messageSubjectOnFuture(
                                     dataCache.update(subject.getValue(), data.setOption(contexts, key, value)), src,
-                                    _("Set option %s for subject %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                    _("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                         }
                     }
                 })

@@ -189,4 +189,27 @@ public class GameArguments {
         }
     }
 
+    public static CommandElement rankLadder(Translatable key, PermissionsEx pex) {
+        return new RankLadderCommandElement(key, pex);
+    }
+
+    private static class RankLadderCommandElement extends CommandElement {
+        private final PermissionsEx pex;
+
+        protected RankLadderCommandElement(Translatable key, PermissionsEx pex) {
+            super(key);
+            this.pex = pex;
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            return pex.getLadders().get(args.next(), null);
+        }
+
+        @Override
+        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+            return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new StartsWithPredicate(args.nextIfPresent().or(""))));
+        }
+    }
+
 }

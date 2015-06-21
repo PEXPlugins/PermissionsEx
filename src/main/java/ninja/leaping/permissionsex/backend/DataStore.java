@@ -23,7 +23,9 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.rank.RankLadder;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,24 +44,54 @@ public interface DataStore {
      */
     void close();
 
-
-    ImmutableOptionSubjectData getData(String type, String identifier, Caching listener);
+    /**
+     * Loads the data at the specified type and identifier. Implementations of this method do not need to perform any caching.
+     *
+     * @param type The type of subject to get
+     * @param identifier The subject's identifier
+     * @param listener The update listener for this subject
+     * @return The relevant subject data
+     */
+    ImmutableOptionSubjectData getData(String type, String identifier, @Nullable Caching<ImmutableOptionSubjectData> listener);
 
     /**
-     * Sets the data
+     * Sets the data at the specified type and identifier.
+     *
      * @param type The type of subject data is being fetched for
      * @param identifier The identifier of the subject data is being fetched for
-     * @param data The data to commit to this backend
+     * @param data The data to commit to this backend. This being null deletes any data for the given identifier
      * @return A future that can be used to listen for completion of writing the changed data
      */
-    ListenableFuture<ImmutableOptionSubjectData> setData(String type, String identifier, ImmutableOptionSubjectData data);
+    ListenableFuture<ImmutableOptionSubjectData> setData(String type, String identifier, @Nullable ImmutableOptionSubjectData data);
 
+    /**
+     * Return if the given subject has any data stored in this backend.
+     *
+     * @param type The subject's type
+     * @param identifier The subject's identifier
+     * @return whether any data is stored
+     */
     boolean isRegistered(String type, String identifier);
 
+    /**
+     * Get all data for subjects of the specified type. This {@link Iterable} may be filled asynchronously
+     * @param type The type to get all data for
+     * @return An iterable providing data
+     */
     Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(String type);
 
+    /**
+     *
+     * @param type
+     * @return
+     */
     Iterable<String> getAllIdentifiers(String type);
 
+    /**
+     * Return all subject types that contain data
+     *
+     * @return The registered subject types
+     */
     Set<String> getRegisteredTypes();
 
     /**
@@ -86,4 +118,37 @@ public interface DataStore {
      * @param function The function to call containing the operation.
      */
     <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function);
+
+    /**
+     * Get all rank ladders.
+     *
+     * @return The names of all rank ladders
+     */
+    Iterable<String> getAllRankLadders();
+
+    /**
+     * Get a specific rank ladder, with a possible update listener.
+     *
+     * @param ladder The ladder to get. Case-insensitive
+     * @param listener The listener to track possible updates
+     * @return the ladder
+     */
+    RankLadder getRankLadder(String ladder, @Nullable Caching<RankLadder> listener);
+
+    /**
+     * Whether a rank ladder by the given name is present.
+     *
+     * @param ladder The ladder to check. Case-insensitive
+     * @return Whether a ladder by the provided name exists
+     */
+    boolean hasRankLadder(String ladder);
+
+    /**
+     * Set the rank ladder at the given identifier.
+     *
+     * @param identifier The name of the ladder. Case-insensitive for overwriting existing ladders
+     * @param ladder The ladder to update
+     * @return a future tracking the status of this operation
+     */
+    ListenableFuture<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
 }

@@ -23,16 +23,16 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-public class CacheListenerHolder<Key> {
-    private final ConcurrentMap<Key, Set<Caching>> listeners = new MapMaker().concurrencyLevel(10).makeMap();
+public class CacheListenerHolder<Key, CacheType> {
+    private final ConcurrentMap<Key, Set<Caching<CacheType>>> listeners = new MapMaker().concurrencyLevel(10).makeMap();
 
-    private Set<Caching> getListeners(Key key) {
+    private Set<Caching<CacheType>> getListeners(Key key) {
         Preconditions.checkNotNull(key, "key");
 
-        Set<Caching> set = listeners.get(key);
+        Set<Caching<CacheType>> set = listeners.get(key);
         if (set == null) {
-            set = Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).<Caching, Boolean>makeMap());
-            Set<Caching> potentialNewSet = listeners.putIfAbsent(key, set);
+            set = Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).<Caching<CacheType>, Boolean>makeMap());
+            Set<Caching<CacheType>> potentialNewSet = listeners.putIfAbsent(key, set);
             if (potentialNewSet != null) {
                 set = potentialNewSet;
             }
@@ -40,24 +40,24 @@ public class CacheListenerHolder<Key> {
         return set;
     }
 
-    public void call(Key key, ImmutableOptionSubjectData newData) {
+    public void call(Key key, CacheType newData) {
         Preconditions.checkNotNull(key, "key");
         Preconditions.checkNotNull(newData, "newData");
 
-        for (Caching listener : getListeners(key)) {
+        for (Caching<CacheType> listener : getListeners(key)) {
             listener.clearCache(newData);
         }
 
     }
 
-    public void addListener(Key key, Caching listener) {
+    public void addListener(Key key, Caching<CacheType> listener) {
         Preconditions.checkNotNull(key, "key");
         Preconditions.checkNotNull(listener, "listener");
 
         getListeners(key).add(listener);
     }
 
-    public void removeListener(Key key, Caching listener) {
+    public void removeListener(Key key, Caching<CacheType> listener) {
         Preconditions.checkNotNull(key, "key");
         Preconditions.checkNotNull(listener, "listener");
 

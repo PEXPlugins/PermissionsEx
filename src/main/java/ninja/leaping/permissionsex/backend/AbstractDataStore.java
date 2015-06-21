@@ -33,6 +33,7 @@ import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.rank.RankLadder;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -46,7 +47,8 @@ import static ninja.leaping.permissionsex.util.Translations._;
 public abstract class AbstractDataStore implements DataStore {
     private PermissionsEx manager;
     private final Factory factory;
-    private final CacheListenerHolder<Map.Entry<String, String>> listeners = new CacheListenerHolder<>();
+    private final CacheListenerHolder<Map.Entry<String, String>, ImmutableOptionSubjectData> listeners = new CacheListenerHolder<>();
+    private final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
 
     protected AbstractDataStore(Factory factory) {
         if (!factory.expectedClazz.equals(getClass())) {
@@ -68,7 +70,7 @@ public abstract class AbstractDataStore implements DataStore {
     protected abstract void initializeInternal() throws PermissionsLoadingException;
 
     @Override
-    public final ImmutableOptionSubjectData getData(String type, String identifier, Caching listener) {
+    public final ImmutableOptionSubjectData getData(String type, String identifier, Caching<ImmutableOptionSubjectData> listener) {
         Preconditions.checkNotNull(type, "type");
         Preconditions.checkNotNull(identifier, "identifier");
 
@@ -147,6 +149,38 @@ public abstract class AbstractDataStore implements DataStore {
         return ret;
     }
 
+    @Override
+    public RankLadder getRankLadder(String ladderName, Caching<RankLadder> listener) {
+        Preconditions.checkNotNull(ladderName, "ladderName");
+        RankLadder ladder = getRankLadderInternal(ladderName);
+        if (listener != null) {
+            rankLadderListeners.addListener(ladderName.toLowerCase(), listener);
+        }
+        return ladder;
+    }
+
+    @Override
+    public ListenableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
+        ListenableFuture<RankLadder> ret = setRankLadderInternal(identifier, ladder);
+        Futures.addCallback(ret, new FutureCallback<RankLadder>() {
+            @Override
+            public void onSuccess(@Nullable RankLadder newData) {
+                if (newData != null) {
+                    rankLadderListeners.call(identifier, newData);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+            }
+        });
+        return ret;
+    }
+
+
+    protected abstract RankLadder getRankLadderInternal(String ladder);
+    protected abstract ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
+
     /**
      * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.
      *
@@ -158,7 +192,7 @@ public abstract class AbstractDataStore implements DataStore {
     protected abstract <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception;
 
     @Override
-    @SuppressWarnings("unchecked") // Corect types are verified in the constructor
+    @SuppressWarnings("unchecked") // Correct types are verified in the constructor
     public String serialize(ConfigurationNode node) throws PermissionsLoadingException {
         Preconditions.checkNotNull(node, "node");
         try {

@@ -40,14 +40,14 @@ class SubjectDataBaker {
     private final Entry<String, String> subject;
     private final PermissionsEx pex;
     private final Set<Entry<String, String>> activeContexts;
-    private final Caching updateListener;
+    private final Caching<ImmutableOptionSubjectData> updateListener;
 
     private final Map<String, Integer> combinedPermissions = new HashMap<>();
     private final List<Entry<String, String>> parents = new ArrayList<>();
     private final Map<String, String> options = new HashMap<>();
     private int defaultValue;
 
-    private SubjectDataBaker(Caching updateListener, Map.Entry<String, String> subject, PermissionsEx pex, Set<Entry<String, String>> activeContexts) {
+    private SubjectDataBaker(Caching<ImmutableOptionSubjectData> updateListener, Map.Entry<String, String> subject, PermissionsEx pex, Set<Entry<String, String>> activeContexts) {
         this.updateListener = updateListener;
         this.subject = subject;
         this.pex = pex;

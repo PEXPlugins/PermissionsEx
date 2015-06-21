@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data;
+@NonnullByDefault
+package ninja.leaping.permissionsex.sponge;
 
-
-public interface Caching<T> {
-    void clearCache(T newData);
-}
+import org.spongepowered.api.util.annotation.NonnullByDefault;

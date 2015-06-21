@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.util.command;
 import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.util.Translatable;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -39,5 +40,5 @@ public interface Commander<TextType> {
     void msg(TextType text);
     void debug(TextType text);
     void error(TextType text);
-    void msgPaginated(Translatable title, Translatable header, Iterable<TextType> text);
+    void msgPaginated(Translatable title, @Nullable Translatable header, Iterable<TextType> text);
 }

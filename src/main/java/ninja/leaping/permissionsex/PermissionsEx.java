@@ -35,11 +35,15 @@ import com.sk89q.squirrelid.resolver.ProfileService;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.command.PermissionsExCommands;
+import ninja.leaping.permissionsex.command.RankingCommands;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -69,6 +73,7 @@ public class PermissionsEx implements ImplementationInterface {
     private final ImplementationInterface impl;
     private DataStore activeDataStore;
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
+    private final RankLadderCache rankLadderCache;
     private final LoadingCache<Map.Entry<String, String>, CalculatedSubject> calculatedSubjects = CacheBuilder.newBuilder().maximumSize(512).build(new CacheLoader<Map.Entry<String, String>, CalculatedSubject>() {
         @Override
         public CalculatedSubject load(Map.Entry<String, String> key) throws Exception {
@@ -93,11 +98,14 @@ public class PermissionsEx implements ImplementationInterface {
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
         getSubjects("group").cacheAll();
+        this.rankLadderCache = new RankLadderCache(this.activeDataStore);
         convertUuids();
 
         // Now that initialization is complete
         uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects("user")));
         registerCommand(PermissionsExCommands.createRootCommand(this));
+        registerCommand(RankingCommands.getPromoteCommand(this));
+        registerCommand(RankingCommands.getDemoteCommand(this));
     }
 
     private void convertUuids() {
@@ -226,6 +234,15 @@ public class PermissionsEx implements ImplementationInterface {
             cache.invalidate(identifier);
         }
         calculatedSubjects.invalidate(Maps.immutableEntry(type, identifier));
+    }
+
+    /**
+     * Access rank ladders through a cached interface
+     *
+     * @return Access to rank ladders
+     */
+    public RankLadderCache getLadders() {
+        return this.rankLadderCache;
     }
 
     /**

@@ -33,6 +33,7 @@ import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.sql.tables.SqlSubject;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.rank.RankLadder;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -72,6 +73,16 @@ public final class SqlDataStore extends AbstractDataStore {
 
     @Override
     protected ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, ImmutableOptionSubjectData data) {
+        return null;
+    }
+
+    @Override
+    protected RankLadder getRankLadderInternal(String ladder) {
+        return null;
+    }
+
+    @Override
+    protected ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
         return null;
     }
 
@@ -129,6 +140,16 @@ public final class SqlDataStore extends AbstractDataStore {
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
         return ImmutableList.of();
+    }
+
+    @Override
+    public Iterable<String> getAllRankLadders() {
+        return null;
+    }
+
+    @Override
+    public boolean hasRankLadder(String ladder) {
+        return false;
     }
 
     @Override

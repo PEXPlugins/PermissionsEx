@@ -14,9 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data;
+package ninja.leaping.permissionsex.util.command;
 
-
-public interface Caching<T> {
-    void clearCache(T newData);
+public enum  ButtonType {
+    /**
+     * A button for a positive action, like adding or setting to true
+     */
+    POSITIVE,
+    /**
+     * A button for a negative or cautionary action, like removing or setting to false
+     */
+    NEGATIVE,
+    /**
+     * A button for a neutral action, like moving or renaming
+     */
+    NEUTRAL;
 }

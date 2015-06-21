@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.backend.memory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -27,6 +28,8 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.rank.FixedRankLadder;
+import ninja.leaping.permissionsex.rank.RankLadder;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -43,6 +46,7 @@ public class MemoryDataStore extends AbstractDataStore {
     @Setting(comment = "Whether or not this data store will store subjects being set") private boolean track = true;
 
     private final ConcurrentMap<Map.Entry<String, String>, ImmutableOptionSubjectData> data = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
 
     public MemoryDataStore() {
         super(FACTORY);
@@ -84,6 +88,21 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
+    protected RankLadder getRankLadderInternal(String name) {
+        RankLadder ladder = rankLadders.get(name.toLowerCase());
+        if (ladder == null) {
+            ladder = new FixedRankLadder(name, ImmutableList.<Map.Entry<String, String>>of());
+        }
+        return ladder;
+    }
+
+    @Override
+    protected ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
+        this.rankLadders.put(ladder, newLadder);
+        return Futures.immediateFuture(newLadder);
+    }
+
+    @Override
     public boolean isRegistered(String type, String identifier) {
         return data.containsKey(Maps.immutableEntry(type, identifier));
     }
@@ -118,6 +137,16 @@ public class MemoryDataStore extends AbstractDataStore {
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
         return Iterables.unmodifiableIterable(data.entrySet());
+    }
+
+    @Override
+    public Iterable<String> getAllRankLadders() {
+        return ImmutableSet.copyOf(rankLadders.keySet());
+    }
+
+    @Override
+    public boolean hasRankLadder(String ladder) {
+        return rankLadders.containsKey(ladder.toLowerCase());
     }
 
     @Override

@@ -1,0 +1,24 @@
+{
+  "subjects": {
+    "group": {
+      "default": [ {
+        "permissions": {
+          "some.perm": 1
+        }
+      } ],
+      "resident": [ { } ],
+      "elder": [ { } ],
+      "mayor": [ { } ],
+      "mod": [ { } ],
+      "head-mod": [ { } ],
+      "admin": [ { } ],
+      "owner": [ {
+        "permissions-default": 1
+      } ]
+    }
+  },
+  "rank-ladders": {
+    "default": [ "group:default", "group:resident", "group:elder", "group:mayor" ],
+    "moderation": [ "group:mod", "group:head-mod", "group:admin" ]
+  }
+}

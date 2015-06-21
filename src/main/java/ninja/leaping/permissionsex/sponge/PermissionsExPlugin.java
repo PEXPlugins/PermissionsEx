@@ -227,38 +227,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             manager.close();
             throw new PEBKACException(_("Your appear to already be using a different permissions plugin: %s", e.getMessage()));
         }
-
-        /*
-            Commands api todo items:
-            - handle rolling back CommandContexts -- use a custom immutable data structure for this
-         */
-        this.registerCommand(
-                CommandSpec.builder()
-                        .setAliases("pextest")
-                        .setDescription(_("A simple test command"))
-                        .setArguments(flags()
-                                .flag("a")
-                                .buildWith(seq(string(_("first")), optional(choices(_("second"), ImmutableMap.of("first", true, "second", false))))))
-                        .setExecutor(new CommandExecutor() {
-                            @Override
-                            public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                                src.msg(_("Source locale: %s", src.getLocale()));
-                                src.msg(_("You are: %s", src.fmt().subject(src.getSubjectIdentifier().get())));
-                                src.msg(_("Your command ran!!"));
-                                for (Map.Entry<Set<Context>, Map<String, Boolean>> entry : getDefaultData().getAllPermissions().entrySet()) {
-                                    src.msg(_("Default in contexts: %s", entry.getKey().toString()));
-                                    for (Map.Entry<String, Boolean> ent : entry.getValue().entrySet()) {
-                                        src.msg(src.fmt().permission(ent.getKey(), ent.getValue() ? 1 : -1));
-                                    }
-                                }
-                                src.msg(_("Has flag %s: %s", "a", String.valueOf(args.getOne("a"))));
-                                src.msg(_("Has flag %s: %s", "-a", String.valueOf(args.getOne("-a"))));
-                                src.msg(_("First argument: %s", args.getAll("first")));
-                                src.msg(_("Second (optional) argument: %s", String.valueOf(args.getAll("second"))));
-                                src.msg(_("Has permission: %s", src.fmt().booleanVal(src.hasPermission("permissionsex.test.check"))));
-                            }
-                        })
-                        .build());
     }
 
     @Subscribe

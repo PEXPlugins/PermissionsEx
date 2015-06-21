@@ -20,8 +20,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -42,24 +44,33 @@ import ninja.leaping.permissionsex.backend.ConversionUtils;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.rank.FixedRankLadder;
+import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.util.Util;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 import static ninja.leaping.permissionsex.util.Translations._;
 
 
 public final class FileDataStore extends AbstractDataStore {
+    public static final String KEY_RANK_LADDERS = "rank-ladders";
     public static final Factory FACTORY = new Factory("file", FileDataStore.class);
 
     @Setting
@@ -75,9 +86,6 @@ public final class FileDataStore extends AbstractDataStore {
         super(FACTORY);
     }
 
-    private static ConfigurationTransformation.Builder tBuilder() {
-        return ConfigurationTransformation.builder();
-    }
 
     private ConfigurationLoader<? extends ConfigurationNode> createLoader(File file) {
         JSONConfigurationLoader.Builder build = JSONConfigurationLoader.builder()
@@ -142,133 +150,7 @@ public final class FileDataStore extends AbstractDataStore {
             }
         } else {
 
-            final TransformAction movePrefixSuffixDefaultAction = new TransformAction() {
-                @Override
-                public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                    final ConfigurationNode prefixNode = configurationNode.getNode("prefix");
-                    if (!prefixNode.isVirtual()) {
-                        configurationNode.getNode("options", "prefix").setValue(prefixNode);
-                        prefixNode.setValue(null);
-                    }
-
-                    final ConfigurationNode suffixNode = configurationNode.getNode("suffix");
-                    if (!suffixNode.isVirtual()) {
-                        configurationNode.getNode("options", "suffix").setValue(suffixNode);
-                        suffixNode.setValue(null);
-                    }
-
-                    final ConfigurationNode defaultNode = configurationNode.getNode("default");
-                    if (!defaultNode.isVirtual()) {
-                        configurationNode.getNode("options", "default").setValue(defaultNode);
-                        defaultNode.setValue(null);
-                    }
-                    return null;
-                }
-            };
-
-            ConfigurationTransformation versionUpdater = ConfigurationTransformation.versionedBuilder()
-                    .setVersionKey("schema-version")
-                    .addVersion(2, ConfigurationTransformation.chain(
-                            tBuilder()
-                                    .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
-                                        @Override
-                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                            Object value = configurationNode.getValue();
-                                            configurationNode.setValue(null);
-                                            configurationNode.getAppendedNode().setValue(value);
-                                            return null;
-                                        }
-                                    })
-                                    .build(),
-                            tBuilder()
-                                    .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, 0, "worlds"}, new TransformAction() {
-                                        @Override
-                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                            ConfigurationNode entityNode = configurationNode.getParent().getParent();
-                                            for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
-                                                entityNode.getAppendedNode().setValue(ent.getValue())
-                                                        .getNode(FileOptionSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
-
-                                            }
-                                            configurationNode.setValue(null);
-                                            return null;
-                                        }
-                                    }).build(),
-                            tBuilder()
-                                    .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, WILDCARD_OBJECT, "permissions"}, new TransformAction() {
-                                        @Override
-                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                            List<String> existing = configurationNode.getList(Functions.toStringFunction());
-                                            for (String permission : existing) {
-                                                int value = permission.startsWith("-") ? -1 : 1;
-                                                if (value < 0) {
-                                                    permission = permission.substring(1);
-                                                }
-                                                if (permission.equals("*")) {
-                                                    configurationNode.getParent().getNode("permissions-default").setValue(value);
-                                                    continue;
-                                                }
-                                                permission = ConversionUtils.convertLegacyPermission(permission);
-                                                if (permission.contains("*")) {
-                                                    getManager().getLogger().warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
-                                                }
-                                                configurationNode.getNode(permission).setValue(value);
-                                            }
-                                            return null;
-                                        }
-                                    })
-                                    .addAction(new Object[]{"users", WILDCARD_OBJECT, WILDCARD_OBJECT, "group"}, new TransformAction() {
-                                        @Override
-                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                            Object[] retPath = nodePath.getArray();
-                                            retPath[retPath.length - 1] = "parents";
-                                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                                child.setValue("group:" + child.getValue());
-                                            }
-                                            return retPath;
-                                        }
-                                    })
-                                    .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT, "inheritance"}, new TransformAction() {
-                                        @Override
-                                        public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
-                                            Object[] retPath = nodePath.getArray();
-                                            retPath[retPath.length - 1] = "parents";
-                                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                                child.setValue("group:" + child.getValue());
-                                            }
-                                            return retPath;
-                                        }
-                                    })
-                                    .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT}, new TransformAction() {
-                                        @Override
-                                        public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-                                            ConfigurationNode defaultNode = valueAtPath.getNode("options", "default");
-                                            if (!defaultNode.isVirtual()) {
-                                                if (defaultNode.getBoolean()) {
-                                                    ConfigurationNode addToNode = null;
-                                                    final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
-                                                    for (ConfigurationNode node : defaultsParent.getChildrenList()) {
-                                                        if (Objects.equal(node.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue())) {
-                                                            addToNode = node;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if (addToNode == null) {
-                                                        addToNode = defaultsParent.getAppendedNode();
-                                                    }
-                                                    addToNode.getNode("parents").getAppendedNode().setValue("group:" + valueAtPath.getParent().getKey());
-                                                }
-                                                defaultNode.setValue(null);
-                                            }
-                                            return null;
-                                        }
-                                    }).build()
-                    ))
-                    .addVersion(1, ConfigurationTransformation.builder()
-                            .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
-                            .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, "worlds", WILDCARD_OBJECT}, movePrefixSuffixDefaultAction)
-                            .build())
-                    .build();
+            ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
             int startVersion = permissionsConfig.getNode("schema-version").getInt(-1);
             versionUpdater.apply(permissionsConfig);
             int endVersion = permissionsConfig.getNode("schema-version").getInt();
@@ -286,6 +168,10 @@ public final class FileDataStore extends AbstractDataStore {
     @Override
     public void close() {
 
+    }
+
+    private ConfigurationNode getSubjectsNode() {
+        return this.permissionsConfig.getNode("subjects");
     }
 
     private ListenableFuture<Void> save() {
@@ -310,14 +196,10 @@ public final class FileDataStore extends AbstractDataStore {
         }
     }
 
-    private String typeToSection(String type) {
-        return type + "s";
-    }
-
     @Override
     public ImmutableOptionSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
         try {
-            return FileOptionSubjectData.fromNode(permissionsConfig.getNode(typeToSection(type), identifier));
+            return FileOptionSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
         } catch (ObjectMappingException e) {
             throw new PermissionsLoadingException(_("While deserializing subject data for %s:", identifier), e);
         }
@@ -327,7 +209,7 @@ public final class FileDataStore extends AbstractDataStore {
     protected ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, final ImmutableOptionSubjectData data) {
         try {
             if (data == null) {
-                permissionsConfig.getNode(typeToSection(type), identifier).setValue(null);
+                getSubjectsNode().getNode(type, identifier).setValue(null);
                 return Futures.transform(save(), Functions.<ImmutableOptionSubjectData>constant(null));
             }
 
@@ -339,7 +221,7 @@ public final class FileDataStore extends AbstractDataStore {
                 fileData = new FileOptionSubjectData();
                 ConversionUtils.transfer(data, fileData);
             }
-            fileData.serialize(permissionsConfig.getNode(typeToSection(type), identifier));
+            fileData.serialize(getSubjectsNode().getNode(type, identifier));
             return Futures.transform(save(), new Function<Void, ImmutableOptionSubjectData>() {
                 @Nullable
                 @Override
@@ -354,41 +236,38 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public boolean isRegistered(String type, String identifier) {
-        return !permissionsConfig.getNode(typeToSection(type), identifier).isVirtual();
+        return !getSubjectsNode().getNode(type, identifier).isVirtual();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Iterable<String> getAllIdentifiers(String type) {
-        return (Set) this.permissionsConfig.getNode(typeToSection(type)).getChildrenMap().keySet();
+        return (Set) getSubjectsNode().getNode(type).getChildrenMap().keySet();
     }
 
     @Override
     public Set<String> getRegisteredTypes() {
-        return ImmutableSet.copyOf(Iterables.transform(Maps.filterValues(this.permissionsConfig.getChildrenMap(), new Predicate<ConfigurationNode>() {
+        return ImmutableSet.copyOf(Iterables.transform(Maps.filterValues(getSubjectsNode().getChildrenMap(), new Predicate<ConfigurationNode>() {
             @Override
             public boolean apply(@Nullable ConfigurationNode input) {
                 return input != null && input.hasMapChildren();
             }
-        }).keySet(), new Function<Object, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable Object input) {
-                final String typeStr = input.toString();
-                return typeStr.substring(0, typeStr.length() - 1); // trim trailing s
-            }
-        }));
+        }).keySet(), Functions.toStringFunction()));
     }
 
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
-        return Iterables.concat(Iterables.transform(permissionsConfig.getChildrenMap().keySet(), new Function<Object, Iterable<Map.Entry<Map.Entry<String,String>,ImmutableOptionSubjectData>>>() {
+        return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), new Function<Object, Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>>() {
             @Nullable
             @Override
             public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> apply(@Nullable final Object type) {
+                if (type == null) {
+                    return null;
+                }
+
                 final String typeStr = type.toString();
 
-                return Iterables.transform(getAll(typeStr.substring(0, typeStr.length() - 1)), new Function<Map.Entry<String, ImmutableOptionSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>() {
+                return Iterables.transform(getAll(typeStr), new Function<Map.Entry<String, ImmutableOptionSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>() {
                     @Nullable
                     @Override
                     public Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> apply(Map.Entry<String, ImmutableOptionSubjectData> input2) {
@@ -397,6 +276,42 @@ public final class FileDataStore extends AbstractDataStore {
                 });
             }
         }));
+    }
+
+    private ConfigurationNode getRankLaddersNode() {
+        return this.permissionsConfig.getNode(KEY_RANK_LADDERS);
+    }
+
+    @Override
+    public Iterable<String> getAllRankLadders() {
+        return Iterables.unmodifiableIterable(Iterables.transform(getRankLaddersNode().getChildrenMap().keySet(),Functions.toStringFunction()));
+    }
+
+    @Override
+    public RankLadder getRankLadderInternal(String ladder) {
+        return new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), new Function<ConfigurationNode, Map.Entry<String, String>>() {
+            @Nullable
+            @Override
+            public Map.Entry<String, String> apply(ConfigurationNode input) {
+                return Util.subjectFromString(input.getString());
+            }
+        })));
+    }
+
+    @Override
+    public boolean hasRankLadder(String ladder) {
+        return !getRankLaddersNode().getNode(ladder.toLowerCase()).isVirtual();
+    }
+
+    @Override
+    public ListenableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
+        ConfigurationNode childNode = getRankLaddersNode().getNode(identifier.toLowerCase());
+        childNode.setValue(null);
+        for (Map.Entry<String, String> rank : ladder.getRanks()) {
+            childNode.getAppendedNode().setValue(Util.subjectToString(rank));
+
+        }
+        return Futures.transform(save(), Functions.constant(ladder));
     }
 
     @Override

@@ -1,0 +1,63 @@
+groups:
+  default:
+    permissions:
+    - modifyworld.*
+    - '#worldedit.wand'
+    options:
+      default: true
+  another:
+    permissions:
+    - bukkit.command.time
+    - essentials.gamemode
+    worlds:
+      world_nether:
+        options:
+          prefix: nether another
+          suffix: nether suffix
+    options:
+      prefix: global another
+      suffix: another the suffix
+      default: false
+  test:
+    permissions:
+    - -worldedit.navigation.jumpto.command
+    - worldedit.navigation.jumpto*
+    - -worldedit.navigation.jumpto.tool
+    inheritance:
+    - default
+    options:
+      default: false
+  test2:
+    permissions:
+    - worldedit.selection.pos
+    - worldedit.navigation.jumpto.(command|tool)
+    inheritance:
+    - test
+    options:
+      default: false
+  admin:
+    permissions:
+    - '*'
+
+users:
+  2f224fdf-ca9a-4043-8166-0d673ba4c0b8:
+    permissions:
+    - test.permission
+    - test.perm
+    - permissionsex.*
+    - essentials.me
+    - bukkit.command.me
+    group:
+    - another
+    - test2
+    options:
+      name: zml2008
+      suffix: ''
+    worlds:
+      world:
+        permissions:
+        - worldedit.navigation.jumpto.command
+worlds:
+  world_nether:
+    inheritance:
+    - world

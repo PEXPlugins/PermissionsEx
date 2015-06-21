@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.InvalidTypeException;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.backend.memory.MemoryOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;

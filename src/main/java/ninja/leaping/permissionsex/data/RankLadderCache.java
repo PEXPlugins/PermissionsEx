@@ -22,45 +22,52 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.rank.RankLadder;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
-public class SubjectCache {
-    private final String type;
+public class RankLadderCache {
     private final DataStore dataStore;
-    private final LoadingCache<String, ImmutableOptionSubjectData> cache;
-    private final Map<String, Caching<ImmutableOptionSubjectData>> cacheHolders = new ConcurrentHashMap<>();
-    private final CacheListenerHolder<String, ImmutableOptionSubjectData> listeners = new CacheListenerHolder<>();
+    private final LoadingCache<String, RankLadder> cache;
+    private final Map<String, Caching<RankLadder>> cacheHolders = new ConcurrentHashMap<>();
+    private final CacheListenerHolder<String, RankLadder> listeners = new CacheListenerHolder<>();
 
-    public SubjectCache(final String type, final DataStore dataStore) {
-        this.type = type;
+    public RankLadderCache(final DataStore dataStore) {
         this.dataStore = dataStore;
         cache = CacheBuilder.newBuilder()
                 .maximumSize(512)
-                .build(new CacheLoader<String, ImmutableOptionSubjectData>() {
+                .build(new CacheLoader<String, RankLadder>() {
                     @Override
-                    public ImmutableOptionSubjectData load(String identifier) throws Exception {
-                        return dataStore.getData(type, identifier, clearListener(identifier));
+                    public RankLadder load(String identifier) throws Exception {
+                        return dataStore.getRankLadder(identifier, clearListener(identifier));
                     }
                 });
     }
 
-    public ImmutableOptionSubjectData getData(String identifier, Caching<ImmutableOptionSubjectData> listener) throws ExecutionException {
+    public RankLadder get(String identifier, Caching<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        ImmutableOptionSubjectData ret = cache.get(identifier);
+        RankLadder ret;
+        try {
+            ret = cache.get(identifier);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e); // This shouldn't happen? -- we throw now checked exceptions
+        }
         if (listener != null) {
             listeners.addListener(identifier, listener);
         }
         return ret;
     }
 
-    public void load(String identifier) throws ExecutionException {
+    public void load(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        cache.get(identifier);
+        try {
+            cache.get(identifier);
+        } catch (ExecutionException e) {
+        }
     }
 
     public void invalidate(String identifier) {
@@ -71,33 +78,23 @@ public class SubjectCache {
         listeners.removeAll(identifier);
     }
 
-    public void cacheAll() {
-        for (String ident : dataStore.getAllIdentifiers(type)) {
-            try {
-                cache.get(ident);
-            } catch (ExecutionException e) {
-                // oh noes, but we'll still squash it
-            }
-        }
-    }
-
-    public boolean isRegistered(String identifier) {
+    public boolean has(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        return dataStore.isRegistered(type, identifier);
+        return dataStore.hasRankLadder(identifier);
     }
 
-    public ListenableFuture<ImmutableOptionSubjectData> update(String identifier, ImmutableOptionSubjectData newData) {
+    public ListenableFuture<RankLadder> update(String identifier, RankLadder newData) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(newData, "newData");
 
-        return dataStore.setData(type, identifier, newData);
+        return dataStore.setRankLadder(identifier, newData);
     }
 
-    private Caching<ImmutableOptionSubjectData> clearListener(final String name) {
-        Caching<ImmutableOptionSubjectData> ret = new Caching<ImmutableOptionSubjectData>() {
+    private Caching<RankLadder> clearListener(final String name) {
+        Caching<RankLadder> ret = new Caching<RankLadder>() {
             @Override
-            public void clearCache(ImmutableOptionSubjectData newData) {
+            public void clearCache(RankLadder newData) {
                 cache.put(name, newData);
                 listeners.call(name, newData);
             }
@@ -106,19 +103,19 @@ public class SubjectCache {
         return ret;
     }
 
-    public void addListener(String identifier, Caching<ImmutableOptionSubjectData> listener) {
+    public void addListener(String identifier, Caching<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(listener, "listener");
 
+        try {
+            cache.get(identifier);
+        } catch (ExecutionException e) {
+        }
         listeners.addListener(identifier, listener);
 
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public Iterable<String> getAllIdentifiers() {
-        return dataStore.getAllIdentifiers(type);
+    public Iterable<String> getAll() {
+        return dataStore.getAllRankLadders();
     }
 }

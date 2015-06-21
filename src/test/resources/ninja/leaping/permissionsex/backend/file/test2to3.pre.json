@@ -1,0 +1,51 @@
+{
+        "groups": {
+                "default": [ {
+                        "permissions": {
+                                "some.perm": 1
+                        },
+                        "options": {
+                                "rank": 1000
+                        }
+                } ],
+                "resident": [ {
+                        "options": {
+                                "rank": 900
+                        }
+                } ],
+                "elder": [ {
+                        "options": {
+                                "rank": 800
+                        }
+
+                } ],
+                "mayor": [ {
+                        "options": {
+                                "rank": 700
+                        }
+                } ],
+                "mod": [ {
+                        "options": {
+                                "rank": 1000,
+                                "rank-ladder": "moderation"
+                        }
+
+                } ],
+                "head-mod": [ {
+                        "options": {
+                                "rank": 900,
+                                "rank-ladder": "moderation"
+                        }
+
+                } ],
+                "admin": [ {
+                        "options": {
+                                "rank": 800,
+                                "rank-ladder": "moderation"
+                        }
+                } ],
+                "owner": [ {
+                        "permissions-default": 1
+                } ]
+        }
+}

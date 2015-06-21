@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-public class PEXOptionSubjectData implements OptionSubjectData, Caching {
+public class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableOptionSubjectData> {
     private final PermissionsExPlugin plugin;
     private volatile SubjectCache cache;
     private final String identifier;
@@ -74,6 +74,10 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
                 @Nullable
                 @Override
                 public Context apply(@Nullable Map.Entry<String, String> input) {
+                    if (input == null) {
+                        return null;
+                    }
+
                     return input instanceof Context ? (Context) input : new Context(input.getKey(), input.getValue());
                 }
             })), ent.getValue());
@@ -81,7 +85,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
         return ret.build();
     }
 
-    private boolean updateIfChanged(ImmutableOptionSubjectData old, ImmutableOptionSubjectData newData) {
+    private boolean updateIfChanged(ImmutableOptionSubjectData old, @Nullable ImmutableOptionSubjectData newData) {
         if (newData == null) {
             return false; // Change unsuccessful
         } else if (old == newData) {
@@ -135,7 +139,11 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching {
         return Maps.transformValues(tKeys(data.getAllPermissions()), new Function<Map<String, Integer>, Map<String, Boolean>>() {
             @Nullable
             @Override
-            public Map<String, Boolean> apply(Map<String, Integer> stringIntegerMap) {
+            public Map<String, Boolean> apply(@Nullable Map<String, Integer> stringIntegerMap) {
+                if (stringIntegerMap == null) {
+                    return ImmutableMap.of();
+                }
+
                 return Maps.transformValues(stringIntegerMap, new Function<Integer, Boolean>() {
                     @Nullable
                     @Override

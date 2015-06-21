@@ -23,6 +23,8 @@ import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.util.StartsWithPredicate;
+import ninja.leaping.permissionsex.util.Util;
+import ninja.leaping.permissionsex.util.command.ChildCommands;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
@@ -30,15 +32,12 @@ import ninja.leaping.permissionsex.util.command.CommandSpec;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
 
+import javax.annotation.Nullable;
 import java.util.Set;
 
-import ninja.leaping.permissionsex.util.command.ChildCommands;
-
-import javax.annotation.Nullable;
-
 import static ninja.leaping.permissionsex.util.Translations._;
-import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 import static ninja.leaping.permissionsex.util.command.args.GameArguments.*;
+import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
 /**
  * Commands used by PermissionsEx
@@ -49,6 +48,7 @@ public class PermissionsExCommands {
         final Set<CommandSpec> childrenList = ImmutableSet.<CommandSpec>builder()
                 .addAll(pex.getImplementationCommands())
                 .add(getDebugToggleCommand(pex))
+                .add(RankingCommands.getRankingCommand(pex))
                 .build();
 
         final CommandElement children = ChildCommands.args(childrenList.toArray(new CommandSpec[childrenList.size()]));
@@ -61,17 +61,17 @@ public class PermissionsExCommands {
         return CommandSpec.builder()
                 .setAliases("pex", "permissionsex", "permissions")
                 .setDescription(_("Commands for PermissionsEx"))
-                .setArguments(flags()
-                        .flag("-transient")
-                        .valueFlag(context(_("context")), "-context", "-contexts", "c")
-                        .buildWith(optional(
-                                        firstParsing(
-                                                children,
-                                                seq(subject(_("subject"), pex), subjectChildren),
-                                                seq(subjectType(_("subject-type"), pex), literal(_("list"), "list"), optional(string(_("filter"))))
-                                        )
+                .setArguments(optional(
+                                firstParsing(
+                                        children,
+                                        Util.contextTransientFlags()
+                                                .buildWith(seq(subject(_("subject"), pex), subjectChildren)),
+                                        flags()
+                                                .flag("-transient")
+                                                .buildWith(seq(subjectType(_("subject-type"), pex), literal(_("list"), "list"), optional(string(_("filter")))))
                                 )
-                        ))
+                        )
+                )
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {

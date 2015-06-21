@@ -63,7 +63,7 @@ public class PermissionsCommands {
 
                         messageSubjectOnFuture(
                                 dataCache.update(subject.getValue(), data.setPermission(contexts, key, intVal)), src,
-                                _("Set permission %s for subject %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                _("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
@@ -90,8 +90,7 @@ public class PermissionsCommands {
 
                         messageSubjectOnFuture(
                                 dataCache.update(subject.getValue(), data.setDefaultValue(contexts, intVal)), src,
-                                _("Set default permission to %s for subject %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
-
+                                _("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();

@@ -18,8 +18,10 @@ package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,8 +37,18 @@ class TestMessageFormatter implements MessageFormatter<String> {
     }
 
     @Override
+    public String ladder(RankLadder ladder) {
+        return ladder.getName();
+    }
+
+    @Override
     public String booleanVal(boolean val) {
         return String.valueOf(val);
+    }
+
+    @Override
+    public String button(ButtonType type, Translatable label, @Nullable Translatable tooltip, String command, boolean execute) {
+        return tr(label);
     }
 
     @Override

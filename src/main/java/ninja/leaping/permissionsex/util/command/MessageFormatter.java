@@ -16,8 +16,10 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
+import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -30,7 +32,15 @@ public interface MessageFormatter<TextType> {
      * @param subject The subject to show
      * @return the formatted value
      */
-    public TextType subject(Map.Entry<String, String> subject);
+    TextType subject(Map.Entry<String, String> subject);
+
+    /**
+     * Print the rank ladder in a user-friendly manner. May link to the subject info printout
+     *
+     * @param ladder The ladder to show
+     * @return the formatted value
+     */
+    TextType ladder(RankLadder ladder);
 
     /**
      * Print the given boolean in a user-friendly manner.
@@ -38,23 +48,34 @@ public interface MessageFormatter<TextType> {
      * @param val The value to print
      * @return the formatted value
      */
-    public TextType booleanVal(boolean val);
-    public TextType permission(String permission, int value);
-    public TextType option(String permission, String value);
+    TextType booleanVal(boolean val);
+
+    /**
+     * Create a clickable button that will execute a command or
+     * @param type The style of button to present
+     * @param label The label for the button
+     * @param tooltip A tooltip to optionally show when hovering over a button
+     * @param command The command to execute
+     * @param execute Whether the command provided will be executed or only added to the user's input
+     * @return the formatted text
+     */
+    TextType button(ButtonType type, Translatable label, @Nullable Translatable tooltip, String command, boolean execute);
+    TextType permission(String permission, int value);
+    TextType option(String permission, String value);
 
     /**
      * Format the given line of text to be used in a header
      * @param text
      * @return
      */
-    public TextType header(TextType text);
+    TextType header(TextType text);
 
     /**
      * Highlight the passed text
      * @param text The text to highlight
      * @return The highlighted text
      */
-    public TextType hl(TextType text);
+    TextType hl(TextType text);
 
     /**
      * Combines an array containing elements of type {@link TextType} and {@link java.lang.String} into a single message
@@ -62,7 +83,7 @@ public interface MessageFormatter<TextType> {
      * @param elements The elements to combine
      * @return A combined, formatted element
      */
-    public TextType combined(Object... elements);
+    TextType combined(Object... elements);
 
     /**
      * Return the internal representation of the given translatable text.
@@ -70,5 +91,5 @@ public interface MessageFormatter<TextType> {
      * @param tr The translatable text
      * @return the formatted value
      */
-    public TextType tr(Translatable tr);
+    TextType tr(Translatable tr);
 }

@@ -1,0 +1,32 @@
+groups:
+    test-noopts:
+        default: true
+        prefix: that one
+        suffix: who sucks
+        permissions:
+        - some-permission
+        worlds:
+            world_nether:
+                prefix: nether user
+    test-existingopts:
+        default: true
+        prefix: someone else
+        suffix: who is ok I guess
+        options:
+            hello: world
+users:
+    test-noopts:
+        default: true
+        prefix: that one
+        suffix: who sucks
+        permissions:
+        - some-permission
+        worlds:
+            world_nether:
+                prefix: nether user
+    test-existingopts:
+        default: true
+        prefix: someone else
+        suffix: who is ok I guess
+        options:
+            hello: world

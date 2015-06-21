@@ -38,7 +38,6 @@ public class ParentCommands {
                 .setAliases("parents", "parent", "par", "p")
                 .setChildren(getAddParentCommand(pex), getRemoveParentCommand(pex))
                 .build();
-
     }
 
     private static CommandSpec getAddParentCommand(final PermissionsEx pex) {
@@ -56,12 +55,12 @@ public class ParentCommands {
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 dataCache.update(subject.getValue(), data.addParent(contexts, parent.getKey(), parent.getValue())), src,
-                                _("Added parent %s for subject %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                _("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
-
     }
+
     private static CommandSpec getRemoveParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("remove", "rem", "delete", "de", "-")
@@ -77,10 +76,9 @@ public class ParentCommands {
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 dataCache.update(subject.getValue(), data.removeParent(contexts, parent.getKey(), parent.getValue())), src,
-                                _("Removed parent %s for subject %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                _("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
-
     }
 }

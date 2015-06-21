@@ -18,7 +18,9 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.command.ButtonType;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.text.Text;
@@ -32,6 +34,7 @@ import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandSource;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
@@ -72,8 +75,45 @@ public class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
     }
 
     @Override
+    public TextBuilder ladder(RankLadder ladder) {
+        return Texts.builder(ladder.getName())
+                .style(TextStyles.BOLD)
+                .onHover(TextActions.showText(tr(_("Click here to view more info")).build()))
+                .onClick(TextActions.runCommand("/pex rank " + ladder.getName()));
+    }
+
+    @Override
     public TextBuilder booleanVal(boolean val) {
         return (val ? tr(_("true")) : tr(_("false"))).color(val ? TextColors.GREEN : TextColors.RED);
+    }
+
+    @Override
+    public TextBuilder button(ButtonType type, Translatable label, @Nullable Translatable tooltip, String command, boolean execute) {
+        TextBuilder builder = tr(label);
+        TextColor textColor;
+        switch (type) {
+            case POSITIVE:
+                textColor = TextColors.GREEN;
+                break;
+            case NEGATIVE:
+                textColor = TextColors.RED;
+                break;
+            case NEUTRAL:
+                textColor = TextColors.AQUA;
+                break;
+            default:
+                throw new IllegalArgumentException("Provided with unknown ButtonType " + type);
+        }
+        builder.color(textColor);
+        if (tooltip != null) {
+            builder.onHover(TextActions.showText(tr(tooltip).build()));
+        }
+        if (execute) {
+            builder.onClick(TextActions.runCommand(command));
+        } else {
+            builder.onClick(TextActions.suggestCommand(command));
+        }
+        return builder;
     }
 
     @Override
@@ -158,7 +198,6 @@ public class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
 
         @Override
         public String get(Locale locale) {
-            System.out.println("Getting for locale:" + locale);
             return translation.translate(locale);
         }
 

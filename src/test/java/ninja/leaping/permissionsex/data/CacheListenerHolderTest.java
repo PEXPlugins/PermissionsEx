@@ -17,41 +17,40 @@
 package ninja.leaping.permissionsex.data;
 
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
 public class CacheListenerHolderTest {
-    private final ImmutableOptionSubjectData testData = Mockito.mock(ImmutableOptionSubjectData.class);
+    private final Object testObj = new Object();
 
     @Test
     public void testRegisterEvent() {
-        final CacheListenerHolder<String> holder = new CacheListenerHolder<>();
+        final CacheListenerHolder<String, Object> holder = new CacheListenerHolder<>();
         final CountingListener listener = new CountingListener();
         holder.addListener("test", listener);
-        holder.call("test", testData);
+        holder.call("test", testObj);
 
         assertEquals(1, listener.getCount());
     }
 
     @Test
     public void testUnregisterEvent() {
-        final CacheListenerHolder<String> holder = new CacheListenerHolder<>();
+        final CacheListenerHolder<String, Object> holder = new CacheListenerHolder<>();
         final CountingListener listener = new CountingListener();
         holder.addListener("test", listener);
         holder.removeListener("test", listener);
-        holder.call("test", testData);
+        holder.call("test", testObj);
 
         assertEquals(0, listener.getCount());
     }
 
-    private static class CountingListener implements Caching {
+    private static class CountingListener implements Caching<Object> {
         private final AtomicInteger count = new AtomicInteger();
 
         @Override
-        public void clearCache(ImmutableOptionSubjectData newData) {
+        public void clearCache(Object newData) {
             count.getAndIncrement();
         }
 
