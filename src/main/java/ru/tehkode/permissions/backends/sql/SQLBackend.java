@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author code
@@ -261,14 +260,14 @@ public class SQLBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String name) {
-		CachingUserData data = new CachingUserData(new SQLData(name, SQLData.Type.USER, this), getExecutor(), new ReentrantReadWriteLock());
+		CachingUserData data = new CachingUserData(new SQLData(name, SQLData.Type.USER, this), getExecutor(), new Object());
 		updateNameCache(userNamesCache, data);
 		return data;
 	}
 
 	@Override
 	public PermissionsGroupData getGroupData(String name) {
-		CachingGroupData data = new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), getExecutor(), new ReentrantReadWriteLock());
+		CachingGroupData data = new CachingGroupData(new SQLData(name, SQLData.Type.GROUP, this), getExecutor(), new Object());
 		updateNameCache(groupNamesCache, data);
 		return data;
 	}
