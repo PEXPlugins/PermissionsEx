@@ -16,12 +16,19 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import com.google.common.collect.ImmutableSet;
+
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface ImmutableOptionSubjectData {
+    /**
+     * Provide this set to indicate global contexts
+     */
+    Set<Map.Entry<String, String>> GLOBAL_CTX = ImmutableSet.of();
+
     Map<Set<Map.Entry<String, String>>, Map<String, String>> getAllOptions();
 
     Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts);
