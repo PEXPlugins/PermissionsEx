@@ -71,7 +71,7 @@ import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.profile.GameProfileResolver;
-import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
+import org.spongepowered.api.service.scheduler.SchedulerService;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.service.user.UserStorage;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
@@ -106,7 +106,7 @@ import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
 
     private ServiceReference<SqlService> sql;
-    private ServiceReference<AsynchronousScheduler> scheduler;
+    private ServiceReference<SchedulerService> scheduler;
     @Inject private ServiceManager services;
     @Inject private Logger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
@@ -138,7 +138,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
         logger.info(lf(_("Pre-init of %s v%s", PomData.NAME, PomData.VERSION)));
         sql = services.potentiallyProvide(SqlService.class);
-        scheduler = services.potentiallyProvide(AsynchronousScheduler.class);
+        scheduler = services.potentiallyProvide(SchedulerService.class);
 
         try {
             convertFromBukkit();
@@ -413,7 +413,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public void executeAsyncronously(Runnable run) {
-        scheduler.ref().get().runTask(PermissionsExPlugin.this, run);
+        scheduler.ref().get()
+                .getTaskBuilder()
+                .async()
+                .execute(run)
+        .submit(PermissionsExPlugin.this);
     }
 
     @Override
