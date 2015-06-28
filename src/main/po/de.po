@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-21 15:22-0700\n"
+"POT-Creation-Date: 2015-06-27 17:22-0700\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -22,7 +22,7 @@ msgstr ""
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:87
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:89
 msgid "%s subjects"
 msgstr ""
 
@@ -65,16 +65,16 @@ msgstr ""
 msgid "Added parent %s for %s in %s context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:87
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:89
 msgid "All subjects of type %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:444
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:448
 #, fuzzy
 msgid "An error occurred while reloading PEX (triggered by %s's command): %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:442
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:446
 msgid ""
 "An error occurred while reloading PEX: %s\n"
 " Please see the server console for details"
@@ -106,7 +106,7 @@ msgstr "Hier klicken, um mehr Information zu sehen"
 msgid "Click to view more info"
 msgstr "Hier klicken, um mehr Information zu sehen"
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:63
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:65
 msgid "Commands for PermissionsEx"
 msgstr ""
 
@@ -122,7 +122,7 @@ msgstr ""
 msgid "Could not rename old Bukkit configuration file to old name"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:117
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:119
 msgid "Debug mode enabled: %s"
 msgstr ""
 
@@ -230,6 +230,10 @@ msgstr ""
 msgid "Global"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:128
+msgid "Import data into the current backend from another"
+msgstr ""
+
 #: ninja/leaping/permissionsex/command/InfoCommand.java:61
 msgid "Information for %s"
 msgstr ""
@@ -313,11 +317,11 @@ msgstr ""
 msgid "Ranks are sorted from highest to lowest"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:428
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:432
 msgid "Reload the PermissionsEx configuration"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:433
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:437
 msgid "Reloading PermissionsEx"
 msgstr ""
 
@@ -341,6 +345,10 @@ msgstr ""
 msgid "Set permission %s for %s in %s context"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/DeleteCommand.java:44
+msgid "Subject %s does not exist!"
+msgstr ""
+
 #: ninja/leaping/permissionsex/util/command/args/GameArguments.java:62
 msgid "Subject type %s was not valid!"
 msgstr ""
@@ -353,15 +361,23 @@ msgstr ""
 msgid "Successfully added %s to ladder %s at position %s"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/DeleteCommand.java:46
+msgid "Successfully deleted data for subject %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:133
+msgid "Successfully imported data from backend %s into current backend"
+msgstr ""
+
 #: ninja/leaping/permissionsex/command/RankingCommands.java:199
 msgid "Successfully removed %s from ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:437
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:441
 msgid "The reload was successful"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:110
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:112
 msgid "Toggle debug mode"
 msgstr ""
 
@@ -464,6 +480,10 @@ msgstr ""
 msgid "Your appear to already be using a different permissions plugin: %s"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:129
+msgid "backend"
+msgstr ""
+
 #: ninja/leaping/permissionsex/util/Util.java:46
 msgid "context"
 msgstr ""
@@ -476,7 +496,7 @@ msgstr ""
 msgid "false"
 msgstr "Falsch"
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:73
 msgid "filter"
 msgstr ""
 
@@ -491,7 +511,7 @@ msgstr ""
 msgid "ladder"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:73
 msgid "list"
 msgstr ""
 
@@ -504,15 +524,15 @@ msgstr ""
 msgid "position"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:68
 #: ninja/leaping/permissionsex/command/RankingCommands.java:51
 #: ninja/leaping/permissionsex/command/RankingCommands.java:75
 #: ninja/leaping/permissionsex/command/RankingCommands.java:157
 #: ninja/leaping/permissionsex/command/RankingCommands.java:188
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:70
 msgid "subject"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:73
 msgid "subject-type"
 msgstr ""
 

@@ -63,7 +63,7 @@ public class ParentCommands {
 
     private static CommandSpec getRemoveParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
-                .setAliases("remove", "rem", "delete", "de", "-")
+                .setAliases("remove", "rem", "delete", "del", "-")
                 .setArguments(subject(_("parent"), pex))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override

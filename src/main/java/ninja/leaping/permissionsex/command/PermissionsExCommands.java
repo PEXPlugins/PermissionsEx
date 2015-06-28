@@ -49,6 +49,7 @@ public class PermissionsExCommands {
                 .addAll(pex.getImplementationCommands())
                 .add(getDebugToggleCommand(pex))
                 .add(RankingCommands.getRankingCommand(pex))
+                .add(getImportCommand(pex))
                 .build();
 
         final CommandElement children = ChildCommands.args(childrenList.toArray(new CommandSpec[childrenList.size()]));
@@ -56,7 +57,8 @@ public class PermissionsExCommands {
                                                                   PermissionsCommands.getPermissionCommand(pex),
                                                                   PermissionsCommands.getPermissionDefaultCommand(pex),
                                                                   InfoCommand.getInfoCommand(pex),
-                                                                  ParentCommands.getParentCommand(pex));
+                                                                  ParentCommands.getParentCommand(pex),
+                                                                  DeleteCommand.getDeleteCommand(pex));
 
         return CommandSpec.builder()
                 .setAliases("pex", "permissionsex", "permissions")
@@ -115,6 +117,21 @@ public class PermissionsExCommands {
                        boolean debugEnabled = !pex.hasDebugMode();
                         pex.setDebugMode(debugEnabled);
                         src.msg(_("Debug mode enabled: %s", src.fmt().booleanVal(debugEnabled)));
+                    }
+                })
+                .build();
+    }
+
+    private static CommandSpec getImportCommand(final PermissionsEx pex) {
+        return CommandSpec.builder()
+                .setAliases("import")
+                .setDescription(_("Import data into the current backend from another"))
+                .setArguments(string(_("backend")))
+                .setPermission("permissionsex.import")
+                .setExecutor(new PermissionsExExecutor(pex) {
+                    @Override
+                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+                        messageSubjectOnFuture(pex.importDataFrom(args.<String>getOne("backend")), src, _("Successfully imported data from backend %s into current backend", args.getOne("backend")));
                     }
                 })
                 .build();
