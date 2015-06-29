@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
 import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
+import org.spongepowered.api.util.command.CommandPermissionException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,10 +99,14 @@ public class ChildCommands {
                 if (commandComponent.isPresent()) {
                     if (args.hasNext()) {
                         CommandSpec child = children.get(commandComponent.get());
-                        if (child == null) {
-                            return ImmutableList.of();
+                        if (child != null) {
+                            try {
+                                child.checkPermission(src);
+                                return child.tabComplete(src, args, context); // todo make this more correct
+                            } catch (CommandException e) {
+                            }
                         }
-                        return child.tabComplete(src, args, context);
+                        return ImmutableList.of();
                     } else {
                         return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new Predicate<String>() {
                             @Override
@@ -178,6 +183,7 @@ public class ChildCommands {
                     throw new CommandException(_("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
                 }
             }
+            spec.checkPermission(src);
             spec.getExecutor().execute(src, args);
         }
     }
