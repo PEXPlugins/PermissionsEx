@@ -2,15 +2,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>ninja.leaping</groupId>
-  <artifactId>permissionsex</artifactId>
+  <groupId>ninja.leaping.permissionsex</groupId>
+  <artifactId>permissionsex-parent</artifactId>
   <version>2.0-SNAPSHOT</version>
   <name>PermissionsEx</name>
   <description>A powerful permissions plugin for Bukkit</description>
   <url>https://github.com/PEXPlugins/PermissionsEx</url>
+  <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <version.configurate>1.2.2</version.configurate>
   </properties>
   <issueManagement>
     <system>GitHub</system>
@@ -41,32 +41,17 @@
   <prerequisites>
     <maven>3.0.3</maven>
   </prerequisites>
+  <modules>
+    <module>permissionsex-core</module>
+    <module>permissionsex-sponge</module>
+    <module>permissionsex-bukkit</module>
+  </modules>
+
   <profiles>
     <profile>
       <id>release</id>
-      <properties>
-        <github.global.server>github</github.global.server>
-      </properties>
       <build>
         <plugins>
-          <plugin>
-            <groupId>com.github.github</groupId>
-            <artifactId>site-maven-plugin</artifactId>
-            <version>0.12</version>
-            <configuration>
-              <message>Updating site for ${project.version}</message>
-              <path>${project.version}</path>
-              <merge>true</merge>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>site</goal>
-                </goals>
-                <phase>site</phase>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
@@ -113,31 +98,14 @@
   </profiles>
 
   <build>
-    <resources>
-      <resource>
-        <directory>${project.basedir}/src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.3</version>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-          <compilerArgs>
-            <arg>-Xlint:all</arg>
-          </compilerArgs>
-        </configuration>
-      </plugin>
+    <pluginManagement>
+      <plugins>
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <version>2.11</version>
         <configuration>
-          <header>LICENSE_HEADER</header>
+          <header>../LICENSE_HEADER</header>
           <includes>
             <include>src/main/java/**</include>
             <include>src/test/java/**</include>
@@ -153,76 +121,48 @@
           </execution>
         </executions>
       </plugin>
+        <plugin>
+          <groupId>org.jboss.seven2six</groupId>
+          <artifactId>seven2six</artifactId>
+          <version>1.1.Final</version>
+          <executions>
+            <!-- run after "compile", lets your artifact work on 1.6 -->
+            <execution>
+              <inherited>true</inherited>
+              <id>weave</id>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>transform</goal>
+              </goals>
+            </execution>
+            <!-- run after "test-compile", lets you run your tests on 1.6 -->
+            <!--<execution>
+              <id>weave-tests</id>
+              <phase>process-test-classes</phase>
+              <goals>
+                <goal>transform</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+              </configuration>
+            </execution>-->
+          </executions>
+        </plugin>
+      </plugins>
+
+    </pluginManagement>
+    <plugins>
       <plugin>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <phase>package</phase>
-            <configuration>
-              <createDependencyReducedPom>false</createDependencyReducedPom>
-              <relocations>
-                <relocation>
-                  <pattern>ninja.leaping.configurate.yaml</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.configurate-yaml</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>ninja.leaping.configurate.json</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.configurate-json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.yaml</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org.yaml</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.fasterxml</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com.fasterxml</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.json</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org.json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.sk89q.squirrelid</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com.sk89q.squirrelid</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org.gnu.gettext</shadedPattern>
-                </relocation>
-              </relocations>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.jboss.seven2six</groupId>
-        <artifactId>seven2six</artifactId>
-        <version>1.1.Final</version>
-        <executions>
-          <!-- run after "compile", lets your artifact work on 1.6 -->
-          <execution>
-            <id>weave</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>transform</goal>
-            </goals>
-          </execution>
-          <!-- run after "test-compile", lets you run your tests on 1.6 -->
-          <execution>
-            <id>weave-tests</id>
-            <phase>process-test-classes</phase>
-            <goals>
-              <goal>transform</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.3</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+          </compilerArgs>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -247,110 +187,8 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>templating-maven-plugin</artifactId>
-        <version>1.0-alpha-3</version>
-        <executions>
-          <execution>
-            <id>filter-src</id>
-            <goals>
-              <goal>filter-sources</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>ninja.leaping</groupId>
-        <artifactId>gettext-maven-plugin</artifactId>
-        <version>1.2.5-SNAPSHOT</version>
-        <executions>
-          <execution>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>gettext</goal>
-              <goal>merge</goal>
-              <goal>dist</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <keywords>-k_ -k_n:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ninja.leaping.permissionsex.locale.Messages</targetBundle>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
-  <dependencies>
-    <dependency>
-      <groupId>org.spongepowered</groupId>
-      <artifactId>spongeapi</artifactId>
-      <version>2.1-SNAPSHOT</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>ninja.leaping.configurate</groupId>
-      <artifactId>configurate-yaml</artifactId>
-      <version>${version.configurate}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>ninja.leaping.configurate</groupId>
-          <artifactId>configurate-core</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>ninja.leaping.configurate</groupId>
-      <artifactId>configurate-json</artifactId>
-      <version>${version.configurate}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>ninja.leaping.configurate</groupId>
-          <artifactId>configurate-core</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.sk89q</groupId>
-      <artifactId>squirrelid</artifactId>
-      <version>0.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.googlecode.json-simple</groupId>
-      <artifactId>json-simple</artifactId>
-      <version>1.1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.gnu.gettext</groupId>
-      <artifactId>libintl</artifactId>
-      <version>0.18.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.j256.ormlite</groupId>
-      <artifactId>ormlite-jdbc</artifactId>
-      <version>4.48</version>
-    </dependency>
-    <!-- Test deps -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>[2.0,3.0)</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
   <pluginRepositories>
     <pluginRepository>
       <id>sonatype-snapshots</id>
@@ -366,12 +204,15 @@
       <url>http://pex-repo.aoeu.xyz</url>
     </repository>
     <repository>
-      <id>sponge-repo</id>
-      <url>https://repo.spongepowered.org/maven</url>
-    </repository>
-    <repository>
       <id>sk89q-repo</id>
       <url>http://maven.sk89q.com/repo/</url>
+    </repository>
+    <repository>
+      <id>oss-sonatype</id>
+      <url>http://oss.sonatype.org/content/groups/public/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
   </repositories>
   <reporting>
@@ -380,15 +221,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.10.3</version>
-      </plugin>
-      <plugin>
-        <groupId>ninja.leaping</groupId>
-        <artifactId>gettext-maven-plugin</artifactId>
-        <version>1.2.5-SNAPSHOT</version>
-        <configuration>
-          <keywords>-k_ -k_n:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ninja.leaping.permissionsex.locale.Messages</targetBundle>
-        </configuration>
       </plugin>
     </plugins>
   </reporting>

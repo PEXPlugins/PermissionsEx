@@ -2,6 +2,7 @@
 /.classpath
 /.settings
 /target
+permissionsex-*/target
 /build.xml
 /build
 /bin

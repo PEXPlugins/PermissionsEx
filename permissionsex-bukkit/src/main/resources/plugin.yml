@@ -1,0 +1,13 @@
+name: "${project.parent.name}"
+version: "${project.version}"
+main: ninja.leaping.permissionsex.bukkit.PermissionsExPlugin
+commands:
+    permissionsex:
+        aliases: ["pex"]
+        description: Command for PermissionsEx
+    promote:
+        aliases: ["prom", "rankup"]
+        description: Promote a user
+    demote:
+        aliases: ["dem", "rankdown"]
+        description: Demote a user
