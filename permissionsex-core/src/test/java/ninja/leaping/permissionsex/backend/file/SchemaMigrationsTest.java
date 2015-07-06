@@ -19,9 +19,7 @@ package ninja.leaping.permissionsex.backend.file;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
-import ninja.leaping.configurate.json.JSONConfigurationLoader;
+import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import org.junit.Rule;
@@ -43,7 +41,7 @@ public class SchemaMigrationsTest {
     @Test
     public void testTwoToThree() throws IOException {
         final File testFile = tempFolder.newFile();
-        ConfigurationLoader<ConfigurationNode> jsonLoader = JSONConfigurationLoader.builder()
+        ConfigurationLoader<ConfigurationNode> jsonLoader = GsonConfigurationLoader.builder()
                 .setSource(Resources.asCharSource(getClass().getResource("test2to3.pre.json"), StandardCharsets.UTF_8))
                 .setSink(Files.asCharSink(testFile, StandardCharsets.UTF_8))
                 .build();
@@ -60,7 +58,7 @@ public class SchemaMigrationsTest {
         ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder()
                 .setSource(Resources.asCharSource(getClass().getResource("test1to2.pre.yml"), StandardCharsets.UTF_8))
                 .build();
-        ConfigurationLoader<ConfigurationNode> jsonSaver = JSONConfigurationLoader.builder()
+        ConfigurationLoader<ConfigurationNode> jsonSaver = GsonConfigurationLoader.builder()
                 .setFile(testFile)
                 .build();
         ConfigurationNode node = yamlLoader.load();

@@ -1,24 +1,49 @@
 {
   "subjects": {
     "group": {
-      "default": [ {
-        "permissions": {
-          "some.perm": 1
+      "default": [
+        {
+          "permissions": {
+            "some.perm": 1.0
+          }
         }
-      } ],
-      "resident": [ { } ],
-      "elder": [ { } ],
-      "mayor": [ { } ],
-      "mod": [ { } ],
-      "head-mod": [ { } ],
-      "admin": [ { } ],
-      "owner": [ {
-        "permissions-default": 1
-      } ]
+      ],
+      "resident": [
+        {}
+      ],
+      "elder": [
+        {}
+      ],
+      "mayor": [
+        {}
+      ],
+      "mod": [
+        {}
+      ],
+      "head-mod": [
+        {}
+      ],
+      "admin": [
+        {}
+      ],
+      "owner": [
+        {
+          "permissions-default": 1.0
+        }
+      ]
     }
   },
   "rank-ladders": {
-    "default": [ "group:default", "group:resident", "group:elder", "group:mayor" ],
-    "moderation": [ "group:mod", "group:head-mod", "group:admin" ]
+    "default": [
+      "group:default",
+      "group:resident",
+      "group:elder",
+      "group:mayor"
+    ],
+    "moderation": [
+      "group:mod",
+      "group:head-mod",
+      "group:admin"
+    ]
   }
 }

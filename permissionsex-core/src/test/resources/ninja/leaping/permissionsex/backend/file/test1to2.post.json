@@ -1,79 +1,108 @@
 {
   "groups": {
-    "default": [ {
-      "permissions": {
-        "modifyworld": 1,
-        "#worldedit.wand": 1
+    "default": [
+      {
+        "permissions": {
+          "modifyworld": 1,
+          "#worldedit.wand": 1
+        }
       }
-    } ],
-    "another": [ {
-      "permissions": {
-        "bukkit.command.time": 1,
-        "essentials.gamemode": 1
+    ],
+    "another": [
+      {
+        "permissions": {
+          "bukkit.command.time": 1,
+          "essentials.gamemode": 1
+        },
+        "options": {
+          "prefix": "global another",
+          "suffix": "another the suffix"
+        }
       },
-      "options": {
-        "prefix": "global another",
-        "suffix": "another the suffix"
+      {
+        "options": {
+          "prefix": "nether another",
+          "suffix": "nether suffix"
+        },
+        "contexts": {
+          "world": "world_nether"
+        }
       }
-    }, {
-      "options": {
-        "prefix": "nether another",
-        "suffix": "nether suffix"
-      },
-      "contexts": {
-        "world": "world_nether"
+    ],
+    "test": [
+      {
+        "permissions": {
+          "worldedit.navigation.jumpto.command": -1,
+          "worldedit.navigation.jumpto*": 1,
+          "worldedit.navigation.jumpto.tool": -1
+        },
+        "parents": [
+          "group:default"
+        ]
       }
-    } ],
-    "test": [ {
-      "permissions": {
-        "worldedit.navigation.jumpto.command": -1,
-        "worldedit.navigation.jumpto*": 1,
-        "worldedit.navigation.jumpto.tool": -1
-      },
-      "parents": [ "group:default" ]
-    } ],
-    "test2": [ {
-      "permissions": {
-        "worldedit.selection.pos": 1,
-        "worldedit.navigation.jumpto.{command,tool}": 1
-      },
-      "parents": [ "group:test" ]
-    } ],
-    "admin": [ {
-      "permissions-default": 1
-    } ]
+    ],
+    "test2": [
+      {
+        "permissions": {
+          "worldedit.selection.pos": 1,
+          "worldedit.navigation.jumpto.{command,tool}": 1
+        },
+        "parents": [
+          "group:test"
+        ]
+      }
+    ],
+    "admin": [
+      {
+        "permissions-default": 1
+      }
+    ]
   },
   "users": {
-    "2f224fdf-ca9a-4043-8166-0d673ba4c0b8": [ {
-      "permissions": {
-        "test.permission": 1,
-        "test.perm": 1,
-        "permissionsex": 1,
-        "essentials.me": 1,
-        "bukkit.command.me": 1
+    "2f224fdf-ca9a-4043-8166-0d673ba4c0b8": [
+      {
+        "permissions": {
+          "test.permission": 1,
+          "test.perm": 1,
+          "permissionsex": 1,
+          "essentials.me": 1,
+          "bukkit.command.me": 1
+        },
+        "options": {
+          "name": "zml2008",
+          "suffix": ""
+        },
+        "parents": [
+          "group:another",
+          "group:test2"
+        ]
       },
-      "options": {
-        "name": "zml2008",
-        "suffix": ""
-      },
-      "parents": [ "group:another", "group:test2" ]
-    }, {
-      "permissions": {
-        "worldedit.navigation.jumpto.command": 1
-      },
-      "contexts": {
-        "world": "world"
+      {
+        "permissions": {
+          "worldedit.navigation.jumpto.command": 1
+        },
+        "contexts": {
+          "world": "world"
+        }
       }
-    } ]
+    ]
   },
   "worlds": {
-    "world_nether": [ {
-      "inheritance": [ "world" ]
-    } ]
+    "world_nether": [
+      {
+        "inheritance": [
+          "world"
+        ]
+      }
+    ]
   },
   "systems": {
-    "default": [ {
-      "parents": [ "group:default" ]
-    } ]
+    "default": [
+      {
+        "parents": [
+          "group:default"
+        ]
+      }
+    ]
   }
 }

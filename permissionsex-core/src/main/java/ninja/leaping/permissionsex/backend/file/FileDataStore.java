@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.backend.file;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -30,14 +29,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
+import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
-import ninja.leaping.configurate.json.FieldValueSeparatorStyle;
-import ninja.leaping.configurate.json.JSONConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
-import ninja.leaping.configurate.transformation.TransformAction;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
@@ -51,17 +48,9 @@ import ninja.leaping.permissionsex.util.Util;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,16 +77,16 @@ public final class FileDataStore extends AbstractDataStore {
 
 
     private ConfigurationLoader<? extends ConfigurationNode> createLoader(File file) {
-        JSONConfigurationLoader.Builder build = JSONConfigurationLoader.builder()
+        return GsonConfigurationLoader.builder()
                 .setFile(file)
                 .setIndent(4)
-                .setFieldValueSeparatorStyle(FieldValueSeparatorStyle.SPACE_AFTER);
+                .setLenient(true)
+                .build();
 
-        /*if (!compat) {
+        /*if (!compat) { // old jackson stuff
             build.getFactory().disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
             build.getFactory().enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
         }*/
-        return build.build();
     }
 
     private File migrateLegacy(File permissionsFile, String extension, ConfigurationLoader<?> loader, String formatName) throws PermissionsLoadingException {

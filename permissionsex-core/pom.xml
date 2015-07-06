@@ -56,7 +56,7 @@
     </dependency>
     <dependency>
       <groupId>ninja.leaping.configurate</groupId>
-      <artifactId>configurate-json</artifactId>
+      <artifactId>configurate-gson</artifactId>
       <version>${version.configurate}</version>
     </dependency>
     <dependency>

@@ -63,14 +63,6 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <relocations>
                 <relocation>
-                  <pattern>ninja.leaping.configurate.json</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.configurate.json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.fasterxml</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com.fasterxml</shadedPattern>
-                </relocation>
-                <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
                   <shadedPattern>ninja.leaping.permissionsex.libs.com.sk89q.squirrelid</shadedPattern>
                 </relocation>
@@ -102,6 +94,10 @@
         <exclusion>
           <groupId>ninja.leaping.configurate</groupId>
           <artifactId>configurate-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>ninja.leaping.configurate</groupId>
+          <artifactId>configurate-gson</artifactId>
         </exclusion>
         <exclusion>
           <groupId>com.google.guava</groupId>

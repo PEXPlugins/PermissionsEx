@@ -46,15 +46,12 @@
             </goals>
             <phase>package</phase>
             <configuration>
+              <!-- Configure relocations to place shaded deps in packages that are not valid to javac, to prevent external use (these must not be exposed)-->
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <relocations>
                 <relocation>
                   <pattern>ninja.leaping.configurate</pattern>
                   <shadedPattern>ninja.leaping.permissionsex.libs.configurate</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.fasterxml</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com.fasterxml</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
@@ -96,6 +93,10 @@
         <exclusion>
           <groupId>com.googlecode.json-simple</groupId>
           <artifactId>json-simple</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
