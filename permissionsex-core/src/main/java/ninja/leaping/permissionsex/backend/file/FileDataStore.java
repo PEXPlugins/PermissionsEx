@@ -128,7 +128,7 @@ public final class FileDataStore extends AbstractDataStore {
                     @Override
                     public Void apply(@Nullable DataStore input) {
                         applyDefaultData();
-                        permissionsConfig.getNode("schema-version").setValue(2);
+                        permissionsConfig.getNode("schema-version").setValue(SchemaMigrations.LATEST_VERSION);
                         return null;
                     }
                 });
@@ -138,7 +138,6 @@ public final class FileDataStore extends AbstractDataStore {
                 throw new PermissionsLoadingException(_("Error creating initial data for file backend"), e);
             }
         } else {
-
             ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
             int startVersion = permissionsConfig.getNode("schema-version").getInt(-1);
             versionUpdater.apply(permissionsConfig);
