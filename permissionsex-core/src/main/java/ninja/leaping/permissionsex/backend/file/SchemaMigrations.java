@@ -37,6 +37,7 @@ import java.util.Map;
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
 public class SchemaMigrations {
+    public static final int LATEST_VERSION = 3;
     private SchemaMigrations() {
     }
 
@@ -48,7 +49,7 @@ public class SchemaMigrations {
     static ConfigurationTransformation versionedMigration(final Logger logger) {
         return ConfigurationTransformation.versionedBuilder()
                 .setVersionKey("schema-version")
-                .addVersion(3, twoTo3())
+                .addVersion(LATEST_VERSION, twoTo3())
                 .addVersion(2, oneTo2(logger))
                 .addVersion(1, initialTo1())
                 .build();
