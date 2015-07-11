@@ -120,7 +120,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         }
 
         try {
-            PermissionsExConfiguration.MAPPER.bind(config).serialize(rawConfig);
+            rawConfig.setValue(PermissionsExConfiguration.TYPE, config);
             configLoader.save(rawConfig);
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
@@ -215,7 +215,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
                 throw new Error("PEX's default configuration could not be loaded!", e);
             }
             rawConfig.mergeValuesFrom(fallbackConfig);
-            config = PermissionsExConfiguration.MAPPER.bindToNew().populate(rawConfig);
+            config = rawConfig.getValue(PermissionsExConfiguration.TYPE);
             config.validate();
             PermissionsEx oldManager = manager;
             manager = new PermissionsEx(config, new BukkitImplementationInterface());

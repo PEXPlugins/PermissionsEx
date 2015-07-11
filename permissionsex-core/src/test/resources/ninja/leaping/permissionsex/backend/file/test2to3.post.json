@@ -4,7 +4,7 @@
       "default": [
         {
           "permissions": {
-            "some.perm": 1.0
+            "some.perm": 1
           }
         }
       ],
@@ -28,7 +28,7 @@
       ],
       "owner": [
         {
-          "permissions-default": 1.0
+          "permissions-default": 1
         }
       ]
     }

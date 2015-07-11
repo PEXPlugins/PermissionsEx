@@ -16,11 +16,13 @@
  */
 package ninja.leaping.permissionsex.config;
 
+import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
+import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.exception.PEBKACException;
@@ -37,18 +39,11 @@ import static ninja.leaping.permissionsex.util.Translations._;
 /**
  * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
  */
+@ConfigSerializable
 public class PermissionsExConfiguration {
-    public static final ObjectMapper<PermissionsExConfiguration> MAPPER;
-
+    public static final TypeToken<PermissionsExConfiguration> TYPE = TypeToken.of(PermissionsExConfiguration.class);
     static {
-        try {
-            MAPPER = ObjectMapper.forClass(PermissionsExConfiguration.class);
-        } catch (ObjectMappingException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-    static {
-        TypeSerializers.registerSerializer(new DataStoreSerializer());
+        TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(DataStore.class), new DataStoreSerializer());
     }
 
     @Setting private Map<String, DataStore> backends;

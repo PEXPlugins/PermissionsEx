@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
@@ -52,7 +51,6 @@ import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.GameProfile;
 import org.spongepowered.api.entity.player.Player;
-import org.spongepowered.api.entity.player.User;
 import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
@@ -67,12 +65,10 @@ import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
-import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.profile.GameProfileResolver;
 import org.spongepowered.api.service.scheduler.SchedulerService;
 import org.spongepowered.api.service.sql.SqlService;
-import org.spongepowered.api.service.user.UserStorage;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.util.command.CommandMapping;
 import org.spongepowered.api.util.command.CommandSource;
@@ -149,7 +145,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
 
         try {
-            PermissionsExConfiguration.MAPPER.bind(config).serialize(rawConfig);
+            rawConfig.setValue(PermissionsExConfiguration.TYPE, config);
             configLoader.save(rawConfig);
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
@@ -212,7 +208,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                                 }
                             }
                         }
-                        return input; // TODO: Support offline players
+                        return input;
                     }
                 }
             }
@@ -283,7 +279,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             }
             ConfigTransformations.versions().apply(rawConfig);
             rawConfig.mergeValuesFrom(fallbackConfig);
-            config = PermissionsExConfiguration.MAPPER.bindToNew().populate(rawConfig);
+            config = rawConfig.getValue(PermissionsExConfiguration.TYPE);
             config.validate();
             PermissionsEx oldManager = manager;
             Set<CommandMapping> mappings = game.getCommandDispatcher().getOwnedBy(game.getPluginManager().fromInstance(this).get());

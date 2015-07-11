@@ -40,7 +40,7 @@ public abstract class PermissionsExTest {
     public void setUp() throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
         final ConfigurationNode node = SimpleConfigurationNode.root();
         populate(node);
-        final PermissionsExConfiguration config = PermissionsExConfiguration.MAPPER.bindToNew().populate(node);
+        final PermissionsExConfiguration config = node.getValue(PermissionsExConfiguration.TYPE);
         config.validate();
 
         manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder.newFolder()));

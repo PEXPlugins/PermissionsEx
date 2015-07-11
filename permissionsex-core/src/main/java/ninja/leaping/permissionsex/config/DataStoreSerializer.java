@@ -19,7 +19,6 @@ package ninja.leaping.permissionsex.config;
 import com.google.common.base.Optional;
 import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.InvalidTypeException;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
 import ninja.leaping.permissionsex.backend.DataStore;
@@ -27,19 +26,9 @@ import ninja.leaping.permissionsex.backend.DataStoreFactories;
 import ninja.leaping.permissionsex.backend.DataStoreFactory;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
-public class DataStoreSerializer implements TypeSerializer {
-    private static final TypeToken<DataStore> DATA_STORE_TYPE = TypeToken.of(DataStore.class);
-
+public class DataStoreSerializer implements TypeSerializer<DataStore> {
     @Override
-    public boolean isApplicable(TypeToken<?> type) {
-        return DATA_STORE_TYPE.isAssignableFrom(type);
-    }
-
-    @Override
-    public Object deserialize(TypeToken<?> type, ConfigurationNode value) throws ObjectMappingException {
-        if (!isApplicable(type)) {
-            throw new InvalidTypeException(type);
-        }
+    public DataStore deserialize(TypeToken<?> type, ConfigurationNode value) throws ObjectMappingException {
         String dataStoreType = value.getNode("type").getString(value.getKey().toString());
         Optional<DataStoreFactory> factory = DataStoreFactories.get(dataStoreType);
         if (!factory.isPresent()) {
@@ -53,15 +42,9 @@ public class DataStoreSerializer implements TypeSerializer {
     }
 
     @Override
-    public void serialize(TypeToken<?> type, Object obj, ConfigurationNode value) throws ObjectMappingException {
-        if (!isApplicable(type)) {
-            throw new InvalidTypeException(type);
-        }
-        if (!(obj instanceof DataStore)) {
-            throw new ObjectMappingException("Object provided to serializer was a " + (obj == null ? null : obj.getClass()) + "; expected a DataStore");
-        }
+    public void serialize(TypeToken<?> type, DataStore obj, ConfigurationNode value) throws ObjectMappingException {
         try {
-            value.getNode("type").setValue(((DataStore) obj).serialize(value));
+            value.getNode("type").setValue(obj.serialize(value));
         } catch (PermissionsLoadingException e) {
             throw new ObjectMappingException(e);
         }

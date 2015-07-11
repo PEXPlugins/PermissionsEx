@@ -8,7 +8,6 @@
     <version>2.0-SNAPSHOT</version>
   </parent>
   <artifactId>permissionsex-bukkit</artifactId>
-  <name>PermissionsEx</name>
   <build>
     <resources>
       <resource>

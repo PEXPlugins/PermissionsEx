@@ -9,7 +9,7 @@
   </parent>
   <artifactId>permissionsex-core</artifactId>
   <properties>
-    <version.configurate>1.2.2</version.configurate>
+    <version.configurate>2.0</version.configurate>
   </properties>
   <build>
     <resources>

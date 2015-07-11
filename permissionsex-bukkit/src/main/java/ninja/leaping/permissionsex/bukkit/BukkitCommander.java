@@ -128,6 +128,6 @@ public class BukkitCommander implements Commander<BaseComponent> {
         for (BaseComponent component : text) {
             msg(component);
         }
-        msg(fmt().combined("==========="));
+        msg(fmt().combined("#################################"));
     }
 }
