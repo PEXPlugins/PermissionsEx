@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.untr;
 
 /**
  * Class containing factory methods to combine single-value command elements
@@ -64,12 +65,12 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return true;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             return Collections.emptyList();
         }
     }
@@ -211,37 +212,40 @@ public class GenericArguments {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
-            int startIdx = args.getPosition();
-            String arg;
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
+            /*String arg;
+            ElementResult startHolder = args;
+
             while (args.hasNext()) {
+                ElementResult child = args;
                 arg = args.next();
                 if (arg.startsWith("-")) {
-                    int flagStartIdx = args.getPosition();
-                    boolean ignored;
                     if (arg.startsWith("--")) { // Long flag
                         String longFlag = arg.substring(2);
-                        ignored = !parseLongFlag(longFlag, args, context);
+                        child = parseLongFlag(longFlag, child);
                     } else {
                         arg = arg.substring(1);
-                        ignored = !parseShortFlags(arg, args, context);
+                        child = parseShortFlags(arg, child);
                     }
-                    if (!ignored) {
-                        args.removeArgs(flagStartIdx, args.getPosition());
+
+                    if (child != null) {
+                        child.removeArgs(args.getHolder());
+                        args = child;
                     }
                 } else if (this.anchorFlags) {
                     break;
                 }
             }
 
-            args.setPosition(startIdx);
+            args.setPosition(startHolder);*/
             if (childElement != null) {
-                childElement.parse(args, context);
+                args = childElement.parse(args.openChild(childElement));
             }
+            return args;
 
         }
 
-        private boolean parseLongFlag(String longFlag, CommandArgs args, CommandContext context) throws ArgumentParseException {
+        private ElementResult parseLongFlag(String longFlag, ElementResult args) throws ArgumentParseException {
             if (longFlag.contains("=")) {
                 final String[] flagSplit = longFlag.split("=", 2);
                 longFlag = flagSplit[0];
@@ -251,15 +255,18 @@ public class GenericArguments {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
                             throw args.createError(_("Unknown long flag %s specified", args));
+                        case ACCEPT_VALUE:
                         case ACCEPT_NONVALUE:
-                            context.putArg(longFlag, value);
-                            break;
+                            CommandElement el = string(untr(longFlag));
+                            return args.openChild(el).addValue(value);
                         case IGNORE:
-                            return false;
+                            return null;
+                        default:
+                            throw new Error("Unsupported UnknownFlagBehavior "+ unknownLongFlagBehavior + " specified without case claues");
                     }
                 } else {
                     args.insertArg(value);
-                    element.parse(args, context);
+                    return element.parse(args.openChild(element));
                 }
             } else {
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
@@ -268,20 +275,23 @@ public class GenericArguments {
                         case ERROR:
                             throw args.createError(_("Unknown long flag %s specified", args));
                         case ACCEPT_NONVALUE:
-                            context.putArg(longFlag, true);
-                            break;
+                            CommandElement markTrue = markTrue(longFlag);
+                            return markTrue.parse(args.openChild(markTrue));
+                        case ACCEPT_VALUE:
+                            CommandElement el = string(untr(longFlag));
+                            return el.parse(args.openChild(el));
                         case IGNORE:
-                            return false;
+                            return null;
+                        default:
+                            throw new Error("Unsupported UnknownFlagBehavior "+ unknownLongFlagBehavior + " specified without case claues");
                     }
-                    context.putArg(longFlag, true);
                 } else {
-                    element.parse(args, context);
+                   return element.parse(args.openChild(element));
                 }
             }
-            return true;
         }
 
-        private boolean parseShortFlags(String shortFlags, CommandArgs args, CommandContext context) throws ArgumentParseException {
+        private ElementResult parseShortFlags(String shortFlags, ElementResult args) throws ArgumentParseException {
             for (int i = 0; i < shortFlags.length(); ++i) {
                 final String flagChar = shortFlags.substring(i, i + 1);
                 CommandElement element = this.shortFlags.get(flagChar);
@@ -289,18 +299,23 @@ public class GenericArguments {
                     switch (unknownShortFlagBehavior) {
                         case IGNORE:
                             if (i == 0) {
-                                return false;
+                                return null;
                             } // fall-through
                         case ERROR:
                             throw args.createError(_("Unknown short flag %s specified", flagChar));
                         case ACCEPT_NONVALUE:
-                            context.putArg(flagChar, true);
+                            CommandElement markTrue = markTrue(flagChar);
+                            args = markTrue.parse(args.openChild(markTrue));
+                            break;
+                        case ACCEPT_VALUE:
+                            CommandElement el = string(untr(flagChar));
+                            return el.parse(args.openChild(el));
                     }
                 } else {
-                    element.parse(args, context);
+                    args = element.parse(args.openChild(element));
                 }
             }
-            return true;
+            return args;
         }
 
         @Override
@@ -330,56 +345,53 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return null;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            int startIdx = args.getPosition();
-            Optional<String> arg;
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
+            /*Optional<String> arg;
             while (args.hasNext()) {
                 arg = args.nextIfPresent();
                 if (arg.get().startsWith("-")) {
-                    int flagStartIdx = args.getPosition();
                     if (arg.get().startsWith("--")) { // Long flag
                         String longFlag = arg.get().substring(2);
-                        List<String> ret = tabCompleteLongFlag(longFlag, src, args, context);
+                        List<String> ret = tabCompleteLongFlag(longFlag, src, args);
                         if (ret != null) {
                             return ret;
                         }
                     } else {
                         final String argStr = arg.get().substring(1);
-                        List<String> ret = tabCompleteShortFlags(argStr, src, args, context);
+                        List<String> ret = tabCompleteShortFlags(argStr, src, args);
                         if (ret != null) {
                             return ret;
                         }
                     }
-                    args.removeArgs(flagStartIdx, args.getPosition());
+                    args.removeArgs(args.getHolder());
                 } else if (this.anchorFlags) {
                     break;
                 }
             }
 
-            args.setPosition(startIdx);
+            args.setPosition(startIdx);*/
             if (childElement != null) {
-                return childElement.tabComplete(src, args, context);
+                return childElement.tabComplete(src, args.openChild(childElement));
             } else {
                 return Collections.emptyList();
             }
         }
 
-        private <TextType> List<String> tabCompleteLongFlag(String longFlag, Commander<TextType> src, CommandArgs args, CommandContext context) {
+        private <TextType> List<String> tabCompleteLongFlag(String longFlag, Commander<TextType> src, ElementResult args) {
+            /*
             if (longFlag.contains("=")) {
                 final String[] flagSplit = longFlag.split("=", 2);
                 longFlag = flagSplit[0];
                 String value = flagSplit[1];
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
                 if (element == null) { // Whole flag is specified, we'll go to value (even though flag is unknown
-                    if (unknownLongFlagBehavior == UnknownFlagBehavior.IGNORE) {
-
-                    } else {
-                        context.putArg(longFlag, value);
+                    if (unknownLongFlagBehavior != UnknownFlagBehavior.IGNORE) {
+                        args = args.openChild(string(untr(longFlag))).addValue(value);
                     }
                 } else {
                     args.insertArg(value);
@@ -424,15 +436,19 @@ public class GenericArguments {
                         return element.tabComplete(src, args, context);
                     }
                 }
-            }
+            }*/
             return null;
         }
 
-        private <TextType> List<String> tabCompleteShortFlags(String shortFlags, Commander<TextType> src, CommandArgs args, CommandContext context) {
-            for (int i = 0; i < shortFlags.length(); ++i) {
+        private <TextType> List<String> tabCompleteShortFlags(String shortFlags, Commander<TextType> src, ElementResult args) {
+            /*for (int i = 0; i < shortFlags.length(); ++i) {
                 final String flagChar = shortFlags.substring(i, i + 1);
                 CommandElement element = this.shortFlags.get(flagChar);
                 if (element == null) {
+                    if (i == 0 && this.unknownShortFlagBehavior == UnknownFlagBehavior.ACCEPT_VALUE) {
+                        args.nextIfPresent();
+                        return null;
+                    }
                     continue;
                 }
                 int start = args.getPosition();
@@ -442,7 +458,7 @@ public class GenericArguments {
                     args.setPosition(start);
                     return element.tabComplete(src, args, context);
                 }
-            }
+            }*/
             return null;
         }
     }
@@ -466,44 +482,41 @@ public class GenericArguments {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
             for (CommandElement element : elements) {
-                element.parse(args, context);
+                args = element.parse(args.openChild(element));
             }
+            return args;
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return null;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext(); ) {
                 CommandElement element = it.next();
-                int startPos = args.getPosition();
                 try {
-                    element.parse(args, context);
-                    int endPos = args.getPosition();
+                    args = element.parse(args);
                     if (!args.hasNext()) {
-                        args.setPosition(startPos);
-                        List<String> inputs = element.tabComplete(src, args, context);
-                        args.setPosition(args.getPosition() - 1);
-                        if (!inputs.contains(args.next())) { // Tabcomplete returns results to complete the last word in an argument.
+                        args = args.getHolder();
+                        List<String> inputs = element.tabComplete(src, args);
+                        if (!inputs.contains(args.current())) { // Tabcomplete returns results to complete the last word in an argument.
                             // If the last word is one of the completions, the command is most likely complete
                             return inputs;
                         }
 
-                        args.setPosition(endPos);
+                        //args.setPosition(endPos);
                     }
                 } catch (ArgumentParseException e) {
-                    args.setPosition(startPos);
-                    return element.tabComplete(src, args, context);
+                    return element.tabComplete(src, args);
                 }
 
-                if (!it.hasNext()) {
+                /*if (!it.hasNext()) { // what does this even do?
                     args.setPosition(startPos);
-                }
+                }*/
             }
             return Collections.emptyList();
         }
@@ -557,7 +570,7 @@ public class GenericArguments {
         }
 
         @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
+        public Object parseValue(ElementResult args) throws ArgumentParseException {
             Object value = choices.get(args.next());
             if (value == null) {
                 throw args.createError(_("Argument was not a valid choice. Valid choices: %s", choices.keySet().toString()));
@@ -566,7 +579,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             final String prefix = args.nextIfPresent().or("");
             return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new StartsWithPredicate(prefix)));
         }
@@ -609,39 +622,37 @@ public class GenericArguments {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
-            ArgumentParseException firstException = null;
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
+            ArgumentParseException lastException = null;
+            int lastDepth = -1;
             for (CommandElement element : elements) {
-                int startIndex = args.getPosition();
                 try {
-                    element.parse(args, context);
-                    return;
+                    return element.parse(args.openChild(element));
                 } catch (ArgumentParseException ex) {
-                    if (firstException == null) {
-                        firstException = ex;
+                    System.out.println(ex.getMessage());
+                    if (lastException == null || lastDepth < ex.getState().distanceFromParent(args)) {
+                        lastException = ex;
                     }
-                    args.setPosition(startIndex); // TODO: roll back commandcontext too when parsing fails
                 }
             }
-            if (firstException != null) {
-                throw firstException;
+            if (lastException != null) {
+                throw lastException;
             }
+            throw new IllegalArgumentException("No child elements specified!");
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return null;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(final Commander<TextType> src, final CommandArgs args, final CommandContext context) {
+        public <TextType> List<String> tabComplete(final Commander<TextType> src, final ElementResult args) {
             return ImmutableList.copyOf(Iterables.concat(Iterables.transform(elements, new Function<CommandElement, Iterable<String>>() {
                 @Nullable
                 @Override
                 public Iterable<String> apply(CommandElement input) {
-                    int startIndex = args.getPosition();
-                    List<String> ret = input.tabComplete(src, args, context);
-                    args.setPosition(startIndex);
+                    List<String> ret = input.tabComplete(src, args.openChild(input));
                     return ret;
                 }
             })));
@@ -726,22 +737,19 @@ public class GenericArguments {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
             if (!args.hasNext()) {
                 if (this.element.getKey() != null && this.value != null) {
-                    context.putArg(this.element.getKey().getUntranslated(), value);
+                    return args.openChild(element).addValue(value);
+                } else {
+                    return args;
                 }
-                return;
             }
-            int startPos = args.getPosition();
             try {
-                element.parse(args, context);
+                return element.parse(args.openChild(element));
             } catch (ArgumentParseException ex) {
-                if (considerInvalidFormatEmpty || args.hasNext()) { // If there are more args, suppress. Otherwise, throw the error
-                    args.setPosition(startPos);
-                    if (this.element.getKey() != null && this.value != null) {
-                        context.putArg(this.element.getKey().getUntranslated(), value);
-                    }
+                if (considerInvalidFormatEmpty || ex.getState().hasNext()) { // If there are more args, suppress. Otherwise, throw the error
+                    return args.openChild(this.element).addValue(value);
                 } else {
                     throw ex;
                 }
@@ -749,13 +757,13 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return args.hasNext() ? null : element.parseValue(args);
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            return element.tabComplete(src, args, context);
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
+            return element.tabComplete(src, args.openChild(element));
         }
 
         @Override
@@ -788,26 +796,25 @@ public class GenericArguments {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
             for (int i = 0; i < times; ++i) {
-                element.parse(args, context);
+                args = element.parse(args.openChild(element));
             }
+            return args;
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return null;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             for (int i = 0; i < times; ++i) {
-                int startPos = args.getPosition();
                 try {
-                    element.parse(args, context);
+                    args = element.parse(args.openChild(element));
                 } catch (ArgumentParseException e) {
-                    args.setPosition(startPos);
-                    return element.tabComplete(src, args, context);
+                    return element.tabComplete(src, args.openChild(element));
                 }
             }
             return Collections.emptyList();
@@ -840,26 +847,25 @@ public class GenericArguments {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
             while (args.hasNext()) {
-                element.parse(args, context);
+                args = element.parse(args.openChild(element));
             }
+            return args;
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return null;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             while (args.hasNext()) {
-                int startPos = args.getPosition();
                 try {
-                    element.parse(args, context);
+                    args = element.parse(args.openChild(element));
                 } catch (ArgumentParseException e) {
-                    args.setPosition(startPos);
-                    return element.tabComplete(src, args, context);
+                    return element.tabComplete(src, args.openChild(element));
                 }
             }
             return Collections.emptyList();
@@ -874,7 +880,7 @@ public class GenericArguments {
     // -- Argument types for basic java types
 
     /**
-     * Parent class that specifies elemenents as having no tab completions. Useful for inputs with a very large domain, like strings and integers
+     * Parent class that specifies elements as having no tab completions. Useful for inputs with a very large domain, like strings and integers
      */
     private static abstract class KeyElement extends CommandElement {
         private KeyElement(Translatable key) {
@@ -882,7 +888,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             return Collections.emptyList();
         }
     }
@@ -904,7 +910,7 @@ public class GenericArguments {
         }
 
         @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
+        public Object parseValue(ElementResult args) throws ArgumentParseException {
             return args.next();
         }
     }
@@ -927,7 +933,7 @@ public class GenericArguments {
         }
 
         @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
+        public Object parseValue(ElementResult args) throws ArgumentParseException {
             final String input = args.next();
             try {
                 return Integer.parseInt(input);
@@ -996,7 +1002,7 @@ public class GenericArguments {
         }
 
         @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
+        public Object parseValue(ElementResult args) throws ArgumentParseException {
             final String value = args.next().toUpperCase();
             try {
                 return Enum.valueOf(type, value);
@@ -1006,7 +1012,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             Iterable<String> validValues = Iterables.transform(Arrays.asList(type.getEnumConstants()), new Function<T, String>() {
                 @Nullable
                 @Override
@@ -1045,7 +1051,7 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             if (raw) {
                 args.next();
                 ArgumentParseException ex = args.createError(null);
@@ -1106,7 +1112,7 @@ public class GenericArguments {
 
         @Nullable
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             for (String arg : this.expectedArgs) {
                 String current;
                 if (!(current = args.next()).equalsIgnoreCase(arg)) {
@@ -1117,7 +1123,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext ctx) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             for (String arg : this.expectedArgs) {
                 final Optional<String> next = args.nextIfPresent();
                 if (!next.isPresent()) {

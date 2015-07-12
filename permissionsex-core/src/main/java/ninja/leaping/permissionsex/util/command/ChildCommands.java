@@ -22,8 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
-import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
+import ninja.leaping.permissionsex.util.command.args.ElementResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,14 +76,14 @@ public class ChildCommands {
         }
 
         @Override
-        public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
-            super.parse(args, context);
-            CommandSpec spec = context.getOne(getKey().getUntranslated());
-            spec.parse(args, context);
+        public ElementResult parse(ElementResult args) throws ArgumentParseException {
+            args = super.parse(args);
+            CommandSpec spec = (CommandSpec) args.getValues().get(0);
+            return spec.parse(args);
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             final String key = args.next();
             if (!children.containsKey(key.toLowerCase())) {
                 throw args.createError(_("Input command %s was not a valid subcommand!", key));
@@ -93,7 +93,7 @@ public class ChildCommands {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(final Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(final Commander<TextType> src, ElementResult args) {
             final Optional<String> commandComponent = args.nextIfPresent();
                 if (commandComponent.isPresent()) {
                     if (args.hasNext()) {
@@ -101,7 +101,7 @@ public class ChildCommands {
                         if (child != null) {
                             try {
                                 child.checkPermission(src);
-                                return child.tabComplete(src, args, context); // todo make this more correct
+                                return child.tabComplete(src, args); // todo make this more correct
                             } catch (CommandException e) {
                             }
                         }

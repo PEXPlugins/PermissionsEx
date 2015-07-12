@@ -19,8 +19,8 @@ package ninja.leaping.permissionsex.util.command;
 import com.google.common.collect.ImmutableList;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
-import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
+import ninja.leaping.permissionsex.util.command.args.ElementResult;
 import ninja.leaping.permissionsex.util.command.args.GenericArguments;
 import ninja.leaping.permissionsex.util.command.args.QuotedStringParser;
 
@@ -177,18 +177,17 @@ public class CommandSpec {
     }
 
     public CommandContext parse(String commandLine) throws ArgumentParseException {
-        CommandArgs args = argsFor(commandLine, false);
-        CommandContext context = new CommandContext(this, commandLine);
-        parse(args, context);
-        return context;
+        ElementResult args = argsFor(commandLine, false);
+        return new CommandContext(this, parse(args));
     }
 
-    void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
-        this.args.parse(args, context);
+    ElementResult parse(ElementResult args) throws ArgumentParseException {
+        args = this.args.parse(args.openChild(this.args));
         if (args.hasNext()) {
             args.next();
             throw args.createError(_("Too many arguments!"));
         }
+        return args;
     }
 
     public <TextType> List<String> tabComplete(Commander<TextType> src, String commandLine) {
@@ -198,9 +197,8 @@ public class CommandSpec {
             return Collections.emptyList();
         }
         try {
-            CommandArgs args = argsFor(commandLine, true);
-            CommandContext context = new CommandContext(this, commandLine);
-            return tabComplete(src, args, context);
+            ElementResult args = argsFor(commandLine, true);
+            return tabComplete(src, args);
         } catch (ArgumentParseException e) {
             src.debug(e.getTranslatableMessage());
             return Collections.emptyList();
@@ -208,8 +206,8 @@ public class CommandSpec {
 
     }
 
-    <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-        return this.args.tabComplete(src, args, context);
+    <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
+        return this.args.tabComplete(src, args);
     }
 
     /**
@@ -222,7 +220,7 @@ public class CommandSpec {
         return executor;
     }
 
-    private CommandArgs argsFor(String commandline, boolean lenient) throws ArgumentParseException {
+    private ElementResult argsFor(String commandline, boolean lenient) throws ArgumentParseException {
         return QuotedStringParser.parseFrom(commandline, lenient);
     }
 

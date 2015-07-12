@@ -59,7 +59,7 @@ public class Translations {
 
     private static ResourceBundle getBundle(Locale locale) {
         try {
-            return ResourceBundle.getBundle("ninja.leaping.permissionsex.locale.Messages", locale, CLASS_CONTROL);
+            return ResourceBundle.getBundle(BASE_NAME, locale, CLASS_CONTROL);
         } catch (MissingResourceException ex) {
             return EMPTY_RESOURCE_BUNDLE;
         }

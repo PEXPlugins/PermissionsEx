@@ -17,9 +17,12 @@
 package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
+import ninja.leaping.permissionsex.util.command.args.ElementResult;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -28,17 +31,19 @@ import static ninja.leaping.permissionsex.util.Translations._;
  */
 public class CommandContext {
     private final CommandSpec spec;
-    private final String rawInput;
-    private final Multimap<String, Object> parsedArgs;
+    private final ListMultimap<String, Object> parsedArgs;
 
-    public CommandContext(CommandSpec spec, String rawInput) {
+    public CommandContext(CommandSpec spec, ElementResult tail) {
         this.spec = spec;
-        this.rawInput = rawInput;
         this.parsedArgs = ArrayListMultimap.create();
-    }
-
-    public String getRawInput() {
-        return this.rawInput;
+        do {
+            if (tail.getKey() != null && tail.getKey().getKey() != null) {
+                this.parsedArgs.putAll(tail.getKey().getKey().getUntranslated(), tail.getValues());
+            }
+        } while ((tail = tail.getHolder()) != null);
+        for (String key : parsedArgs.keySet()) {
+            Collections.reverse(parsedArgs.get(key));
+        }
     }
 
     public CommandSpec getSpec() {
@@ -58,13 +63,6 @@ public class CommandContext {
         } else {
             return (T) values.iterator().next();
         }
-    }
-
-    public void putArg(String key, Object value) {
-        if (value == null) {
-            throw new NullPointerException("value");
-        }
-        parsedArgs.put(key, value);
     }
 
     public void checkPermission(Commander<?> commander, String permission) throws CommandException {

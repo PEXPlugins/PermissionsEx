@@ -48,7 +48,7 @@ public class QuotedStringParser {
      * @return A list of argument strings parsed as specified in the pseudo-grammar in the class documentation
      * @throws ArgumentParseException if args are presented with invalid syntax
      */
-    public static CommandArgs parseFrom(String args, boolean lenient) throws ArgumentParseException {
+    public static ElementResult parseFrom(String args, boolean lenient) throws ArgumentParseException {
         return new QuotedStringParser(args, lenient).parse();
     }
 
@@ -57,20 +57,20 @@ public class QuotedStringParser {
         this.lenient = lenient;
     }
 
-    public CommandArgs parse() throws ArgumentParseException {
+    public ElementResult parse() throws ArgumentParseException {
         if (buffer.length() == 0) { // Fast track for argless commands
-            return new CommandArgs(buffer, Collections.<CommandArgs.SingleArg>emptyList());
+            return ElementResult.root(buffer, Collections.<ElementResult.SingleArg>emptyList());
         }
 
-        List<CommandArgs.SingleArg> returnedArgs = new ArrayList<>(buffer.length() / 8);
+        List<ElementResult.SingleArg> returnedArgs = new ArrayList<>(buffer.length() / 8);
         skipWhiteSpace();
         while (hasMore()) {
             int startIdx = index + 1;
             String arg = nextArg();
-            returnedArgs.add(new CommandArgs.SingleArg(arg, startIdx, index));
+            returnedArgs.add(new ElementResult.SingleArg(arg, startIdx, index));
             skipWhiteSpace();
         }
-        return new CommandArgs(buffer, returnedArgs);
+        return ElementResult.root(buffer, returnedArgs);
     }
 
     // Utility methods
@@ -93,7 +93,7 @@ public class QuotedStringParser {
     }
 
     public ArgumentParseException createException(Translatable message) {
-        return new ArgumentParseException(message, buffer, index);
+        return new ArgumentParseException(message, buffer, index, null);
     }
 
     // Parsing methods

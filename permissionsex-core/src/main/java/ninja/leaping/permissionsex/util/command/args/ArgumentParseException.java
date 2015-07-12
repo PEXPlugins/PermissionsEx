@@ -26,19 +26,22 @@ import java.util.Locale;
  * Exception thrown when arguments are parsed
  */
 public class ArgumentParseException extends CommandException {
+    private final ElementResult state;
     private final String source;
     private final int position;
 
-    public ArgumentParseException(Translatable message, String source, int position) {
+    public ArgumentParseException(Translatable message, String source, int position, ElementResult state) {
         super(message);
         this.source = source;
         this.position = position;
+        this.state = state;
     }
 
-    public ArgumentParseException(Translatable message, Throwable cause, String source, int position) {
+    public ArgumentParseException(Translatable message, Throwable cause, String source, int position, ElementResult state) {
         super(message, cause);
         this.source = source;
         this.position = position;
+        this.state = state;
     }
 
     @Override
@@ -75,5 +78,9 @@ public class ArgumentParseException extends CommandException {
 
     public String getSourceString() {
         return this.source;
+    }
+
+    public ElementResult getState() {
+        return this.state;
     }
 }

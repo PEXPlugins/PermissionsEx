@@ -125,7 +125,7 @@ public class SpongeCommander implements Commander<TextBuilder> {
             public Text apply(TextBuilder input) {
                 return input.color(TextColors.DARK_AQUA).build();
             }
-        }))
-                .sendTo(commandSource);
+        }));
+        build.sendTo(commandSource);
     }
 }

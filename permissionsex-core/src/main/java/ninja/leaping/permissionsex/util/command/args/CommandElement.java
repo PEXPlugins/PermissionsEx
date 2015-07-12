@@ -17,13 +17,12 @@
 package ninja.leaping.permissionsex.util.command.args;
 
 import ninja.leaping.permissionsex.util.Translatable;
-import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
 import java.util.List;
 
 /**
- * Represents a command argument element
+ * Represents a command argument element.
  */
 public abstract class CommandElement {
     private final Translatable key;
@@ -36,16 +35,24 @@ public abstract class CommandElement {
         return this.key;
     }
 
-    public void parse(CommandArgs args, CommandContext context)  throws ArgumentParseException {
-        Object val = parseValue(args);
+    /**
+     * Parse from an element into children as necessary, or into the provided object.
+     *
+     * @param res The input parse state
+     * @return the output parse state, either the input or any added children
+     * @throws ArgumentParseException when a parse error occurs
+     */
+    public ElementResult parse(ElementResult res)  throws ArgumentParseException {
+        Object val = parseValue(res);
         if (this.key != null && val != null) {
-            context.putArg(this.key.getUntranslated(), val);
+            res.addValue(val);
         }
+        return res;
     }
 
-    protected abstract Object parseValue(CommandArgs args) throws ArgumentParseException;
+    protected abstract Object parseValue(ElementResult args) throws ArgumentParseException;
 
-    public abstract <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context);
+    public abstract <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult res);
 
     public <TextType> TextType getUsage(Commander<TextType> src) {
         return src.fmt().tr(getKey());

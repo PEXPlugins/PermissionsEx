@@ -25,7 +25,6 @@ import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.StartsWithPredicate;
 import ninja.leaping.permissionsex.util.Translatable;
-import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 
 import java.util.Collections;
@@ -55,7 +54,7 @@ public class GameArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             final String next = args.next();
             Set<String> subjectTypes = pex.getRegisteredSubjectTypes();
             if (!subjectTypes.contains(next)) {
@@ -65,7 +64,7 @@ public class GameArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             String nextOpt = args.nextIfPresent().or("");
             return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new StartsWithPredicate(nextOpt)));
         }
@@ -100,7 +99,7 @@ public class GameArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             String type = args.next();
             String identifier;
             if (type.contains(":")) {
@@ -123,7 +122,7 @@ public class GameArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             final Optional<String> typeSegment = args.nextIfPresent();
             if (!typeSegment.isPresent()) {
                 return ImmutableList.copyOf(pex.getRegisteredSubjectTypes());
@@ -174,7 +173,7 @@ public class GameArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             final String context = args.next(); // TODO: Allow multi-word contexts (<key> <value>)
             final String[] contextSplit = context.split("=", 2);
             if (contextSplit.length != 2) {
@@ -184,7 +183,7 @@ public class GameArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             return Collections.emptyList();
         }
     }
@@ -202,12 +201,12 @@ public class GameArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+        protected Object parseValue(ElementResult args) throws ArgumentParseException {
             return pex.getLadders().get(args.next(), null);
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public <TextType> List<String> tabComplete(Commander<TextType> src, ElementResult args) {
             return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new StartsWithPredicate(args.nextIfPresent().or(""))));
         }
     }

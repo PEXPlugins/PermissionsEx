@@ -19,8 +19,8 @@ package ninja.leaping.permissionsex.util.command;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
-import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
+import ninja.leaping.permissionsex.util.command.args.ElementResult;
 import ninja.leaping.permissionsex.util.command.args.QuotedStringParser;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -48,24 +48,15 @@ public class GenericArgumentsTest {
                 .setAliases("test")
                 .setExecutor(NULL_EXECUTOR)
                 .build();
-        CommandArgs args = QuotedStringParser.parseFrom(input, false);
-        CommandContext context = new CommandContext(spec, args.getRaw());
-        element.parse(args, context);
-        return context;
+        ElementResult args = QuotedStringParser.parseFrom(input, false);
+        return new CommandContext(spec, element.parse(args.openChild(element)));
     }
 
     @Test
     public void testNone() throws ArgumentParseException {
-        CommandArgs args = QuotedStringParser.parseFrom("a", false);
-        CommandContext context = new CommandContext(CommandSpec.builder().setAliases("test").setExecutor(NULL_EXECUTOR).build(), args.getRaw());
-        none().parse(args, context);
+        ElementResult args = QuotedStringParser.parseFrom("a", false);
+        args = none().parse(args);
         assertEquals("a", args.next());
-    }
-
-    @Test
-    @Ignore
-    public void testFlags() {
-        throw new UnsupportedOperationException();
     }
 
     @Test

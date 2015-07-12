@@ -41,13 +41,16 @@ import ninja.leaping.permissionsex.util.command.CommandExecutor;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
+import org.bukkit.DyeColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
@@ -64,6 +67,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations._;
@@ -177,6 +181,15 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             permsList.uninject();
         }
         uninjectAllPermissibles();
+    }
+
+    @EventHandler
+    public void onAsyncPlayerLogin(final AsyncPlayerPreLoginEvent event) {
+        try {
+            getManager().getCalculatedSubject("user", event.getUniqueId().toString()).getPermissions(GLOBAL_CONTEXT);
+        } catch (PermissionsLoadingException e) {
+            e.printStackTrace();
+        }
     }
 
     @EventHandler
