@@ -37,6 +37,8 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
@@ -55,13 +57,16 @@ import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
+import org.spongepowered.api.event.state.ServerStoppedEvent;
 import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.ProviderExistsException;
 import org.spongepowered.api.service.ServiceManager;
 import org.spongepowered.api.service.ServiceReference;
 import org.spongepowered.api.service.config.ConfigDir;
 import org.spongepowered.api.service.config.DefaultConfig;
+import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
@@ -77,8 +82,8 @@ import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -123,6 +128,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
     private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
+    private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
 
     private static String lf(Translatable trans) {
         return trans.translateFormatted(Locale.getDefault());
@@ -224,7 +230,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Subscribe
-    public void disable(ServerStoppingEvent event) {
+    public void disable(ServerStoppedEvent event) {
         logger.debug(lf(_("Disabling %s", PomData.NAME)));
         if (manager != null) {
             manager.close();
@@ -366,6 +372,35 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public void registerContextCalculator(ContextCalculator calculator) {
         contextCalculators.add(calculator);
+    }
+
+    @Override
+    public Optional<PermissionDescription.Builder> newDescriptionBuilder(PluginContainer pluginContainer) {
+        return Optional.<PermissionDescription.Builder>of(new PEXPermissionDescription.Builder(pluginContainer, this));
+    }
+
+    void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
+        this.descriptions.put(description.getId(), description);
+        final SubjectCache coll = getManager().getTransientSubjects(SUBJECTS_ROLE_TEMPLATE);
+        for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
+            Futures.getUnchecked(coll.doUpdate(rank.getKey(), new Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData>() {
+                @Nullable
+                @Override
+                public ImmutableOptionSubjectData apply(@Nullable ImmutableOptionSubjectData input) {
+                    return Preconditions.checkNotNull(input).setPermission(ImmutableSet.<Map.Entry<String, String>>of(), description.getId(), rank.getValue());
+                }
+            }));
+        }
+    }
+
+    @Override
+    public Optional<PermissionDescription> getDescription(String s) {
+        return Optional.<PermissionDescription>fromNullable(this.descriptions.get(s));
+    }
+
+    @Override
+    public Collection<PermissionDescription> getDescriptions() {
+        return ImmutableSet.<PermissionDescription>copyOf(this.descriptions.values());
     }
 
     public List<ContextCalculator> getContextCalculators() {

@@ -39,9 +39,9 @@ public class PEXSpongeCommand implements CommandCallable {
     }
 
     @Override
-    public Optional<CommandResult> process(CommandSource commandSource, String arguments) throws CommandException {
+    public CommandResult process(CommandSource commandSource, String arguments) throws CommandException {
         command.process(new SpongeCommander(plugin, commandSource), arguments);
-        return Optional.of(CommandResult.empty());
+        return CommandResult.success();
     }
 
     @Override
