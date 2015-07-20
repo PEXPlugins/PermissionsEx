@@ -38,6 +38,20 @@ public class SchemaMigrationsTest {
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
+
+    @Test
+    public void testThreeToFour() throws IOException {
+        final File testFile = tempFolder.newFile();
+        ConfigurationLoader<ConfigurationNode> jsonLoader = GsonConfigurationLoader.builder()
+                .setSource(Resources.asCharSource(getClass().getResource("test3to4.pre.json"), StandardCharsets.UTF_8))
+                .setSink(Files.asCharSink(testFile, StandardCharsets.UTF_8))
+                .build();
+        ConfigurationNode node = jsonLoader.load();
+        SchemaMigrations.threeToFour().apply(node);
+        jsonLoader.save(node);
+        assertEquals(Resources.toString(getClass().getResource("test3to4.post.json"), StandardCharsets.UTF_8), Files.toString(testFile, StandardCharsets.UTF_8));
+    }
+
     @Test
     public void testTwoToThree() throws IOException {
         final File testFile = tempFolder.newFile();

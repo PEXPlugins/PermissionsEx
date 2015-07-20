@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -151,4 +152,9 @@ public interface DataStore {
      * @return a future tracking the status of this operation
      */
     ListenableFuture<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
+
+    ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance);
+
+    ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
 }
+

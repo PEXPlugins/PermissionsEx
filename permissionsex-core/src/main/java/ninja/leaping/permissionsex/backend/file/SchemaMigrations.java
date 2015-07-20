@@ -16,16 +16,21 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
+import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.transformation.TransformAction;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +42,7 @@ import java.util.Map;
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
 public class SchemaMigrations {
-    public static final int LATEST_VERSION = 3;
+    public static final int LATEST_VERSION = 4;
     private SchemaMigrations() {
     }
 
@@ -49,10 +54,42 @@ public class SchemaMigrations {
     static ConfigurationTransformation versionedMigration(final Logger logger) {
         return ConfigurationTransformation.versionedBuilder()
                 .setVersionKey("schema-version")
-                .addVersion(LATEST_VERSION, twoTo3())
+                .addVersion(LATEST_VERSION, threeToFour())
+                .addVersion(3, twoTo3())
                 .addVersion(2, oneTo2(logger))
                 .addVersion(1, initialTo1())
                 .build();
+    }
+
+    static ConfigurationTransformation threeToFour() {
+        return ConfigurationTransformation.chain(
+                tBuilder()
+                        .addAction(new Object[]{"worlds", WILDCARD_OBJECT, "inheritance"}, new TransformAction() {
+                            @Override
+                            public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
+                                try {
+                                    valueAtPath.setValue(Lists.transform(valueAtPath.getList(TypeToken.of(String.class)), new Function<String, String>() {
+                                        @Nullable
+                                        @Override
+                                        public String apply(String input) {
+                                            return "world:" + input;
+                                        }
+                                    }));
+                                } catch (ObjectMappingException e) {
+                                    throw new RuntimeException(e);
+                                }
+
+                                return new Object[]{"context-inheritance", "world:" + inputPath.get(1)};
+                            }
+                        }).build(),
+                tBuilder()
+                        .addAction(new Object[]{"worlds"}, new TransformAction() {
+                            @Override
+                            public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
+                                valueAtPath.setValue(null);
+                                return null;
+                            }
+                        }).build());
     }
 
     static ConfigurationTransformation twoTo3() {

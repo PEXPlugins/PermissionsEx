@@ -1,0 +1,38 @@
+{
+  "subjects": {
+    "group": {
+      "default": [
+        {
+          "permissions": {
+            "some.perm": 1
+          }
+        }
+      ],
+      "owner": [
+        {
+          "permissions-default": 1
+        }
+      ]
+    }
+  },
+  "worlds": {
+    "world_nether": {
+      "inheritance": [
+        "world"
+      ]
+    }
+  },
+  "rank-ladders": {
+    "default": [
+      "group:default",
+      "group:resident",
+      "group:elder",
+      "group:mayor"
+    ],
+    "moderation": [
+      "group:mod",
+      "group:head-mod",
+      "group:admin"
+    ]
+  }
+}

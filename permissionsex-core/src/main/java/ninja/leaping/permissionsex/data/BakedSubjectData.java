@@ -21,23 +21,19 @@ import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents subject data that has had its hierarchy and contexts flattened
  */
 class BakedSubjectData {
-    private final Set<Map.Entry<String, String>> applicableContexts;
     private final NodeTree permissions;
     private final List<Map.Entry<String, String>> parents;
     private final Map<String, String> options;
 
-    public BakedSubjectData(Set<Map.Entry<String, String>> applicableContexts, NodeTree permissions, List<Map.Entry<String, String>> parents, Map<String, String> options) {
-        Preconditions.checkNotNull(applicableContexts, "applicableContexts");
+    public BakedSubjectData(NodeTree permissions, List<Map.Entry<String, String>> parents, Map<String, String> options) {
         Preconditions.checkNotNull(permissions, "permissions");
         Preconditions.checkNotNull(parents, "parents");
         Preconditions.checkNotNull(options, "options");
-        this.applicableContexts = applicableContexts;
         this.permissions = permissions;
         this.parents = parents;
         this.options = options;
@@ -62,7 +58,6 @@ class BakedSubjectData {
 
         BakedSubjectData that = (BakedSubjectData) o;
 
-        if (!applicableContexts.equals(that.applicableContexts)) return false;
         if (!options.equals(that.options)) return false;
         if (!parents.equals(that.parents)) return false;
         if (!permissions.equals(that.permissions)) return false;
@@ -72,8 +67,7 @@ class BakedSubjectData {
 
     @Override
     public int hashCode() {
-        int result = applicableContexts.hashCode();
-        result = 31 * result + permissions.hashCode();
+        int result = permissions.hashCode();
         result = 31 * result + parents.hashCode();
         result = 31 * result + options.hashCode();
         return result;
@@ -82,8 +76,7 @@ class BakedSubjectData {
     @Override
     public String toString() {
         return "BakedSubjectData{" +
-                "applicableContexts=" + applicableContexts +
-                ", permissions=" + permissions +
+                "permissions=" + permissions +
                 ", parents=" + parents +
                 ", options=" + options +
                 '}';

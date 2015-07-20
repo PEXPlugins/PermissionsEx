@@ -31,6 +31,8 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.sql.tables.SqlSubject;
+import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -150,6 +152,16 @@ public final class SqlDataStore extends AbstractDataStore {
     @Override
     public boolean hasRankLadder(String ladder) {
         return false;
+    }
+
+    @Override
+    public ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance) {
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance) {
+        return null;
     }
 
     @Override

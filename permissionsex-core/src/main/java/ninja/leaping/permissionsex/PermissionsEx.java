@@ -37,13 +37,14 @@ import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.command.PermissionsExCommands;
 import ninja.leaping.permissionsex.command.RankingCommands;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
+import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -67,7 +68,7 @@ import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.util.Translations.*;
 
-public class PermissionsEx implements ImplementationInterface {
+public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
     private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
     private final PermissionsExConfiguration config;
     private final ImplementationInterface impl;
@@ -80,6 +81,8 @@ public class PermissionsEx implements ImplementationInterface {
             return new CalculatedSubject(key, PermissionsEx.this);
         }
     });
+    private volatile ContextInheritance cachedInheritance;
+    private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
     private final MemoryDataStore transientData;
     private ProfileService uuidService;
     private volatile boolean debug;
@@ -361,5 +364,26 @@ public class PermissionsEx implements ImplementationInterface {
 
     public Iterable<? extends CalculatedSubject> getActiveCalculatedSubjects() {
         return Collections.unmodifiableCollection(calculatedSubjects.asMap().values());
+    }
+
+    public ContextInheritance getContextInheritance(Caching<ContextInheritance> listener) {
+        if (this.cachedInheritance == null) {
+            this.cachedInheritance = this.activeDataStore.getContextInheritance(this);
+        }
+        if (listener != null) {
+            this.cachedInheritanceListeners.addListener(true, listener);
+        }
+        return this.cachedInheritance;
+
+    }
+
+    public ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance newInheritance) {
+        return this.activeDataStore.setContextInheritance(newInheritance);
+    }
+
+    @Override
+    public void clearCache(ContextInheritance newData) {
+        this.cachedInheritance = newData;
+        this.cachedInheritanceListeners.call(true, newData);
     }
 }

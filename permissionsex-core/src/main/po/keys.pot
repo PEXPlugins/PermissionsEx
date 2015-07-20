@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-11 14:04-0700\n"
+"POT-Creation-Date: 2015-07-20 15:47-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:146
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:149
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -26,7 +26,7 @@ msgstr ""
 msgid "%s subjects"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:184
+#: ninja/leaping/permissionsex/PermissionsEx.java:187
 msgid "%s user successfully converted from name to UUID"
 msgid_plural "%s users successfully converted from name to UUID!"
 msgstr[0] ""
@@ -126,7 +126,7 @@ msgstr ""
 msgid "Demoted %s on ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:145
+#: ninja/leaping/permissionsex/PermissionsEx.java:148
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
@@ -146,15 +146,15 @@ msgid ""
 "details: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:192
+#: ninja/leaping/permissionsex/PermissionsEx.java:195
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:138
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:141
 msgid "Error creating initial data for file backend"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:95
+#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:97
 msgid "Error creating subject DAO"
 msgstr ""
 
@@ -170,7 +170,7 @@ msgstr ""
 msgid "Error while deserializing backend %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:176
+#: ninja/leaping/permissionsex/PermissionsEx.java:179
 msgid "Error while fetching UUIDs for users"
 msgstr ""
 
@@ -332,7 +332,7 @@ msgstr ""
 msgid "Transient permissions:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:132
+#: ninja/leaping/permissionsex/PermissionsEx.java:135
 msgid "Trying to convert users stored by name to UUID"
 msgstr ""
 
@@ -340,7 +340,7 @@ msgstr ""
 msgid "Unable to get data for subject %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:196
+#: ninja/leaping/permissionsex/PermissionsEx.java:199
 msgid ""
 "Unable to resolve Mojang API for UUID conversion. Do you have an internet "
 "connection? UUID conversion will not proceed (but may not be necessary)."
@@ -367,23 +367,23 @@ msgstr ""
 msgid "Usage: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:358
+#: ninja/leaping/permissionsex/PermissionsEx.java:361
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:192
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:195
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:102
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:105
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:121
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:124
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:150
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:153
 msgid "While performing version upgrade"
 msgstr ""
 
@@ -401,7 +401,7 @@ msgstr ""
 msgid "context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/SchemaMigrations.java:88
+#: ninja/leaping/permissionsex/backend/file/SchemaMigrations.java:125
 msgid "default"
 msgstr ""
 

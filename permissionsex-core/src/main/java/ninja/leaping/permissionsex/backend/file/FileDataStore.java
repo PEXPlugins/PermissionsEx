@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
@@ -39,6 +40,9 @@ import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
 import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.backend.memory.MemoryContextInheritance;
+import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
@@ -56,7 +60,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static ninja.leaping.permissionsex.util.Translations._;
-
 
 public final class FileDataStore extends AbstractDataStore {
     public static final String KEY_RANK_LADDERS = "rank-ladders";
@@ -289,6 +292,34 @@ public final class FileDataStore extends AbstractDataStore {
     @Override
     public boolean hasRankLadder(String ladder) {
         return !getRankLaddersNode().getNode(ladder.toLowerCase()).isVirtual();
+    }
+
+    @Override
+    public ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance) {
+        try {
+            return this.permissionsConfig.getValue(TypeToken.of(MemoryContextInheritance.class));
+        } catch (ObjectMappingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public ListenableFuture<ContextInheritance> setContextInheritance(final ContextInheritance inheritance) {
+        if (!(inheritance instanceof MemoryContextInheritance)) {
+            throw new RuntimeException("Invalid inheritance provided, was a " + inheritance.getClass() + "but must be a MemoryContextInheritance");
+        }
+        try {
+            this.permissionsConfig.setValue(TypeToken.of(MemoryContextInheritance.class), (MemoryContextInheritance) inheritance);
+        } catch (ObjectMappingException e) {
+            throw new RuntimeException(e);
+        }
+        return Futures.transform(save(), new Function<Void, ContextInheritance>() {
+            @Nullable
+            @Override
+            public ContextInheritance apply(@Nullable Void input) {
+                return inheritance;
+            }
+        });
     }
 
     @Override
