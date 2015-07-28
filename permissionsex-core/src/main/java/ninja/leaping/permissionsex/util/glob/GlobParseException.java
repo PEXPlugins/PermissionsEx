@@ -14,25 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.util;
+package ninja.leaping.permissionsex.util.glob;
 
-import com.google.common.collect.ImmutableList;
-
-import java.util.List;
-
-public class ShellGlobParser {
-    private final String input;
-
-    private ShellGlobParser(String input) {
-        this.input = input;
+/**
+ * This error is thrown when invalid glob syntax is presented
+ */
+public class GlobParseException extends Exception {
+    GlobParseException(String s) {
+        super(s);
     }
 
-    public static List<String> parseFrom(String input) {
-        return ImmutableList.copyOf(new ShellGlobParser(input).parse());
+    GlobParseException(String s, Throwable throwable) {
+        super(s, throwable);
     }
 
-    public Iterable<String> parse() {
-        // TODO: Implement for these {cool,awesome} things
-        return ImmutableList.of();
+    GlobParseException(Throwable throwable) {
+        super(throwable);
     }
 }

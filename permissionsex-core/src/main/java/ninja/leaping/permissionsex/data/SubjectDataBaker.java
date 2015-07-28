@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.Combinations;
 import ninja.leaping.permissionsex.util.NodeTree;
+import ninja.leaping.permissionsex.util.glob.GlobParseException;
+import ninja.leaping.permissionsex.util.glob.Globs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,6 +104,13 @@ class SubjectDataBaker {
         }
     }
 
+    private void putPermIfNecessary(String perm, int val) {
+        Integer existing = combinedPermissions.get(perm);
+        if (existing == null || Math.abs(val) > Math.abs(existing)) {
+            combinedPermissions.put(perm, val);
+        }
+    }
+
     private void visitSingle(ImmutableOptionSubjectData data, Set<Entry<String, String>> specificCombination, int inheritanceLevel) {
         for (Map.Entry<String, Integer> ent : data.getPermissions(specificCombination).entrySet()) {
             String perm = ent.getKey();
@@ -112,11 +121,15 @@ class SubjectDataBaker {
                 perm = perm.substring(1);
             }
 
-            Integer existing = combinedPermissions.get(ent.getKey());
-            if (existing == null || Math.abs(ent.getValue()) > Math.abs(existing)) {
-                combinedPermissions.put(perm, ent.getValue());
+            try {
+                for (String matched : Globs.parse(perm)) {
+                    putPermIfNecessary(matched, ent.getValue());
+                }
+            } catch (GlobParseException e) { // If the permission is not a valid glob, assume it's a literal
+                putPermIfNecessary(perm, ent.getValue());
             }
         }
+
         parents.addAll(data.getParents(specificCombination));
         for (Map.Entry<String, String> ent : data.getOptions(specificCombination).entrySet()) {
             if (!options.containsKey(ent.getKey())) {
