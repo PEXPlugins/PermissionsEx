@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-20 15:47-0700\n"
+"POT-Creation-Date: 2015-07-27 19:46-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,11 +39,11 @@ msgstr ""
 msgid "Could not rename old Bukkit configuration file to old name"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:233
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:234
 msgid "Disabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:149
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:150
 msgid "Error occurred while enabling %s"
 msgstr ""
 
@@ -55,7 +55,7 @@ msgstr ""
 msgid "Migrating configuration data from Bukkit"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:138
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:139
 msgid "Pre-init of %s v%s"
 msgstr ""
 
@@ -87,7 +87,7 @@ msgstr ""
 msgid "Unable to reload!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:227
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:228
 msgid "Your appear to already be using a different permissions plugin: %s"
 msgstr ""
 

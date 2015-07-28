@@ -234,7 +234,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         logger.debug(lf(_("Disabling %s", PomData.NAME)));
         if (manager != null) {
             manager.close();
-            manager = null;
         }
     }
 
