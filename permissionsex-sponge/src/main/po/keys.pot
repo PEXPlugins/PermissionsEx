@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-27 19:46-0700\n"
+"POT-Creation-Date: 2015-07-29 03:22-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:467
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:471
 msgid "An error occurred while reloading PEX (triggered by %s's command): %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:465
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:469
 msgid ""
 "An error occurred while reloading PEX: %s\n"
 " Please see the server console for details"
@@ -59,19 +59,19 @@ msgstr ""
 msgid "Pre-init of %s v%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:451
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:455
 msgid "Reload the PermissionsEx configuration"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:456
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:460
 msgid "Reloading PermissionsEx"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:460
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:464
 msgid "The reload was successful"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:428
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:432
 msgid "Unable to get data source for jdbc url %s"
 msgstr ""
 

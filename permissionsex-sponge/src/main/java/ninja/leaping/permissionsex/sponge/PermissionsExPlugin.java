@@ -374,8 +374,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public Optional<PermissionDescription.Builder> newDescriptionBuilder(PluginContainer pluginContainer) {
-        return Optional.<PermissionDescription.Builder>of(new PEXPermissionDescription.Builder(pluginContainer, this));
+    public Optional<PermissionDescription.Builder> newDescriptionBuilder(Object instance) {
+        Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
+        if (!container.isPresent()) {
+            throw new IllegalArgumentException("Provided plugin did not have an associated plugin instance. Are you sure it's your plugin instance?");
+        }
+        return Optional.<PermissionDescription.Builder>of(new PEXPermissionDescription.Builder(container.get(), this));
     }
 
     void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
