@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-20 12:25-0700\n"
+"POT-Creation-Date: 2015-07-29 03:18-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:149
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:148
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -149,7 +149,7 @@ msgstr ""
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:141
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:140
 msgid "Error creating initial data for file backend"
 msgstr ""
 
@@ -165,7 +165,7 @@ msgstr ""
 msgid "Error occurred while executing command: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:228
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:261
 msgid "Error while deserializing backend %s"
 msgstr ""
 
@@ -173,7 +173,7 @@ msgstr ""
 msgid "Error while fetching UUIDs for users"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:201
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:234
 msgid "Error while serializing backend %s"
 msgstr ""
 
@@ -370,19 +370,19 @@ msgstr ""
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:195
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:194
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:105
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:104
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:124
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:123
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:153
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:152
 msgid "While performing version upgrade"
 msgstr ""
 

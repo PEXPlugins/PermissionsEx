@@ -27,8 +27,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
-import ninja.leaping.permissionsex.data.CacheListenerHolder;
-import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
@@ -51,7 +49,6 @@ public class MemoryDataStore extends AbstractDataStore {
     private final ConcurrentMap<Map.Entry<String, String>, ImmutableOptionSubjectData> data = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
-    private final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceCache = new CacheListenerHolder<>();
 
     public MemoryDataStore() {
         super(FACTORY);
@@ -59,12 +56,10 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Override
     protected void initializeInternal() {
-
     }
 
     @Override
     public void close() {
-
     }
 
     @Override
@@ -155,17 +150,13 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance) {
-        if (inheritance != null) {
-            this.contextInheritanceCache.addListener(true, inheritance);
-        }
+    public ContextInheritance getContextInheritanceInternal() {
         return this.inheritance;
     }
 
     @Override
-    public ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance) {
+    public ListenableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
         this.inheritance = inheritance;
-        this.contextInheritanceCache.call(true, inheritance);
         return Futures.immediateFuture(this.inheritance);
     }
 

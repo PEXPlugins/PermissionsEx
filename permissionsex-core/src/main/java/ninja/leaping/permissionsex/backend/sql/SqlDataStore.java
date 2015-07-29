@@ -155,12 +155,12 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance) {
+    public ContextInheritance getContextInheritanceInternal() {
         return null;
     }
 
     @Override
-    public ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance) {
+    public ListenableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
         return null;
     }
 

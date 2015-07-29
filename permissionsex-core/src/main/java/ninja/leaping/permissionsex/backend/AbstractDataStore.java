@@ -31,6 +31,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -49,6 +50,7 @@ public abstract class AbstractDataStore implements DataStore {
     private final Factory factory;
     private final CacheListenerHolder<Map.Entry<String, String>, ImmutableOptionSubjectData> listeners = new CacheListenerHolder<>();
     private final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
+    private final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
 
     protected AbstractDataStore(Factory factory) {
         if (!factory.expectedClazz.equals(getClass())) {
@@ -126,7 +128,7 @@ public abstract class AbstractDataStore implements DataStore {
     protected abstract ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, ImmutableOptionSubjectData data);
 
     @Override
-    public Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(final String type) {
+    public final Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(final String type) {
         Preconditions.checkNotNull(type, "type");
         return Iterables.transform(getAllIdentifiers(type), new Function<String, Map.Entry<String, ImmutableOptionSubjectData>>() {
             @Nullable
@@ -138,7 +140,7 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public <T> ListenableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
+    public final <T> ListenableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
         final ListenableFutureTask<T> ret = ListenableFutureTask.create(new Callable<T>() {
             @Override
             public T call() throws Exception {
@@ -150,7 +152,7 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public RankLadder getRankLadder(String ladderName, Caching<RankLadder> listener) {
+    public final RankLadder getRankLadder(String ladderName, Caching<RankLadder> listener) {
         Preconditions.checkNotNull(ladderName, "ladderName");
         RankLadder ladder = getRankLadderInternal(ladderName);
         if (listener != null) {
@@ -160,7 +162,7 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public ListenableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
+    public final ListenableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
         ListenableFuture<RankLadder> ret = setRankLadderInternal(identifier, ladder);
         Futures.addCallback(ret, new FutureCallback<RankLadder>() {
             @Override
@@ -180,6 +182,37 @@ public abstract class AbstractDataStore implements DataStore {
 
     protected abstract RankLadder getRankLadderInternal(String ladder);
     protected abstract ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
+
+    @Override
+    public final ContextInheritance getContextInheritance(Caching<ContextInheritance> listener) {
+        ContextInheritance inheritance = getContextInheritanceInternal();
+        if (listener != null) {
+            contextInheritanceListeners.addListener(true, listener);
+        }
+        return inheritance;
+    }
+
+
+    @Override
+    public final ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance contextInheritance) {
+        ListenableFuture<ContextInheritance> ret = setContextInheritanceInternal(contextInheritance);
+        Futures.addCallback(ret, new FutureCallback<ContextInheritance>() {
+            @Override
+            public void onSuccess(@Nullable ContextInheritance newData) {
+                if (newData != null) {
+                    contextInheritanceListeners.call(true, newData);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+            }
+        });
+        return ret;
+    }
+
+    protected abstract ContextInheritance getContextInheritanceInternal();
+    protected abstract ListenableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
 
     /**
      * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.
