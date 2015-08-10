@@ -437,7 +437,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public void executeAsyncronously(Runnable run) {
         scheduler.ref().get()
-                .getTaskBuilder()
+                .createTaskBuilder()
                 .async()
                 .execute(run)
         .submit(PermissionsExPlugin.this);
