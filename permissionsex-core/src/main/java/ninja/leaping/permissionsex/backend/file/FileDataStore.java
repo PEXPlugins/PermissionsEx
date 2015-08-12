@@ -208,8 +208,7 @@ public final class FileDataStore extends AbstractDataStore {
             if (data instanceof FileOptionSubjectData) {
                 fileData = (FileOptionSubjectData) data;
             } else {
-                fileData = new FileOptionSubjectData();
-                ConversionUtils.transfer(data, fileData);
+                fileData = ConversionUtils.transfer(data, new FileOptionSubjectData());
             }
             fileData.serialize(getSubjectsNode().getNode(type, identifier));
             return Futures.transform(save(), new Function<Void, ImmutableOptionSubjectData>() {
@@ -304,11 +303,9 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public ListenableFuture<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
-        if (!(inheritance instanceof MemoryContextInheritance)) {
-            throw new RuntimeException("Invalid inheritance provided, was a " + inheritance.getClass() + "but must be a MemoryContextInheritance");
-        }
+        final MemoryContextInheritance realInheritance = MemoryContextInheritance.fromExistingContextInheritance(inheritance);
         try {
-            this.permissionsConfig.setValue(TypeToken.of(MemoryContextInheritance.class), (MemoryContextInheritance) inheritance);
+            this.permissionsConfig.setValue(TypeToken.of(MemoryContextInheritance.class), realInheritance);
         } catch (ObjectMappingException e) {
             throw new RuntimeException(e);
         }
@@ -316,7 +313,7 @@ public final class FileDataStore extends AbstractDataStore {
             @Nullable
             @Override
             public ContextInheritance apply(@Nullable Void input) {
-                return inheritance;
+                return realInheritance;
             }
         });
     }

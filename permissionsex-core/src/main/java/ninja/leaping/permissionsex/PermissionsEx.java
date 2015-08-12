@@ -25,6 +25,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,6 +46,7 @@ import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
 import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -259,29 +261,45 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         if (expected == null) {
             return Futures.immediateFailedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
-
         try {
-            return activeDataStore.performBulkOperation(new Function<DataStore, ListenableFuture<Void>>() {
-                @Override
-                public ListenableFuture<Void> apply(@Nullable final DataStore store) {
-                    return Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>, ListenableFuture<ImmutableOptionSubjectData>>() {
+            expected.initialize(this);
+        } catch (PermissionsLoadingException e) {
+            return Futures.immediateFailedFuture(e);
+        }
+
+        return Futures.transform(activeDataStore.performBulkOperation(new Function<DataStore, ListenableFuture<Void>>() {
+            @Override
+            public ListenableFuture<Void> apply(@Nullable final DataStore store) {
+                System.out.println("Performing bulk operation");
+                try {
+                    return Futures.immediateFuture(Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>, ListenableFuture<ImmutableOptionSubjectData>>() {
                         @Nullable
                         @Override
                         public ListenableFuture<ImmutableOptionSubjectData> apply(Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> input) {
+                            System.out.println("Setting data for " + input.getKey());
                             return store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue());
                         }
                     })), new Function<List<ImmutableOptionSubjectData>, Void>() {
                         @Nullable
                         @Override
                         public Void apply(@Nullable List<ImmutableOptionSubjectData> input) {
+                            Futures.getUnchecked(store.setContextInheritance(expected.getContextInheritance(null)));
+                            for (String ladder : store.getAllRankLadders()) {
+                                Futures.getUnchecked(store.setRankLadder(ladder, expected.getRankLadder(ladder, null)));
+                            }
                             return null;
                         }
-                    });
+                    }).get());
+                } catch (InterruptedException | ExecutionException e) {
+                    return Futures.immediateFailedFuture(e);
                 }
-            }).get();
-        } catch (InterruptedException | ExecutionException e) {
-            return Futures.immediateFailedFuture(e);
-        }
+            }
+        }), new AsyncFunction<ListenableFuture<Void>, Void>() {
+            @Override
+            public ListenableFuture<Void> apply(ListenableFuture<Void> input) throws Exception {
+                return input;
+            }
+        });
     }
 
     public Set<String> getRegisteredSubjectTypes() {

@@ -25,4 +25,5 @@ import java.util.Map;
 public interface ContextInheritance {
     List<Map.Entry<String, String>> getParents(Map.Entry<String, String> context);
     ContextInheritance setParents(Map.Entry<String, String> context, List<Map.Entry<String, String>> parents);
+    Map<Map.Entry<String, String>, List<Map.Entry<String, String>>> getAllParents();
 }

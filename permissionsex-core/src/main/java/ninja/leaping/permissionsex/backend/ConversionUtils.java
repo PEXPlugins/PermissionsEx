@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 public class ConversionUtils {
     private static final Pattern MATCHER_GROUP_PATTERN = Pattern.compile("\\((.*?)\\)");
+
     public static String convertLegacyPermission(String permission) {
         final StringBuffer ret = new StringBuffer();
         Matcher matcher = MATCHER_GROUP_PATTERN.matcher(permission); // Convert regex multimatches to shell globs
@@ -39,19 +40,21 @@ public class ConversionUtils {
         return ret.toString();
     }
 
-    public static ImmutableOptionSubjectData transfer(ImmutableOptionSubjectData old, ImmutableOptionSubjectData newData) {
+    @SuppressWarnings("unchecked")
+    public static <T extends ImmutableOptionSubjectData> T transfer(ImmutableOptionSubjectData old, T newData) {
+        ImmutableOptionSubjectData tempRet = newData;
         for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, Integer>> ent : old.getAllPermissions().entrySet()) {
-            newData = newData.setPermissions(ent.getKey(), ent.getValue());
+            tempRet = tempRet.setPermissions(ent.getKey(), ent.getValue());
         }
         for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, String>> ent : old.getAllOptions().entrySet()) {
-            newData = newData.setOptions(ent.getKey(), ent.getValue());
+            tempRet = tempRet.setOptions(ent.getKey(), ent.getValue());
         }
         for (Map.Entry<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> ent : old.getAllParents().entrySet()) {
-            newData = newData.setParents(ent.getKey(), ent.getValue());
+            tempRet = tempRet.setParents(ent.getKey(), ent.getValue());
         }
         for (Map.Entry<Set<Map.Entry<String, String>>, Integer> ent : old.getAllDefaultValues().entrySet()) {
-            newData = newData.setDefaultValue(ent.getKey(), ent.getValue());
+            tempRet = tempRet.setDefaultValue(ent.getKey(), ent.getValue());
         }
-        return newData;
+        return (T) tempRet;
     }
 }
