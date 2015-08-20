@@ -45,6 +45,7 @@
     <module>permissionsex-core</module>
     <module>permissionsex-sponge</module>
     <module>permissionsex-bukkit</module>
+    <module>permissionsex-bungee</module>
   </modules>
 
   <profiles>
