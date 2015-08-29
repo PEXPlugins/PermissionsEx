@@ -112,13 +112,13 @@ public class PermissiblePEX extends PermissibleBase {
 
 	public boolean isDebug() {
 		boolean debug = plugin.isDebug();
-		try {
+		/*try {
 			PermissionUser user = plugin.getPermissionsManager().getUser(this.player);
 			if (user != null) {
 				debug |= user.isDebug();
 			}
 		} catch (Throwable ignore) {
-		}
+		}*/
 		return debug;
 	}
 
