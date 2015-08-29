@@ -16,7 +16,7 @@
  */
 package ninja.leaping.permissionsex.rank;
 
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public interface RankLadder {
      * @param input The subject data to promote
      * @return The promoted data
      */
-    ImmutableOptionSubjectData promote(Set<Map.Entry<String, String>> contexts, ImmutableOptionSubjectData input);
+    ImmutableSubjectData promote(Set<Map.Entry<String, String>> contexts, ImmutableSubjectData input);
 
     /**
      * Demote the given subject data on this rank ladder in the given context.
@@ -57,7 +57,7 @@ public interface RankLadder {
      * @param input The subject data to promote
      * @return the demoted data
      */
-    ImmutableOptionSubjectData demote(Set<Map.Entry<String, String>> contexts, ImmutableOptionSubjectData input);
+    ImmutableSubjectData demote(Set<Map.Entry<String, String>> contexts, ImmutableSubjectData input);
 
     /**
      * Return if this subject is a member of any subjects that are part of this rank ladder within the given contexts.
@@ -66,7 +66,7 @@ public interface RankLadder {
      * @param subject The subject
      * @return Whether this ladder contains any of the direct parents of the subject in the given contexts
      */
-    boolean isOnLadder(Set<Map.Entry<String, String>> contexts, ImmutableOptionSubjectData subject);
+    boolean isOnLadder(Set<Map.Entry<String, String>> contexts, ImmutableSubjectData subject);
 
     /**
      * Return a new rank ladder with the specified rank added at the highest point in the rank ladder.

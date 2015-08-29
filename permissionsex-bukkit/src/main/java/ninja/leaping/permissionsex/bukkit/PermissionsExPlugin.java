@@ -29,7 +29,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
@@ -183,10 +183,10 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         if (getUserSubjects().isRegistered(identifier)) {
-            getUserSubjects().doUpdate(identifier, new Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData>() {
+            getUserSubjects().doUpdate(identifier, new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
-                public ImmutableOptionSubjectData apply(@Nullable ImmutableOptionSubjectData input) {
+                public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
                     if (!event.getPlayer().getName().equals(input.getOptions(GLOBAL_CONTEXT).get("name"))) {
                         return input.setOption(GLOBAL_CONTEXT, "name", event.getPlayer().getName());
                     } else {

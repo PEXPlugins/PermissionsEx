@@ -18,7 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
@@ -57,8 +57,8 @@ public class RankingCommands {
                         checkSubjectPermission(src, subject, "permissionsex.promote." + ladder);
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
-                        ImmutableOptionSubjectData newData = ladder.promote(contexts, data);
+                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData newData = ladder.promote(contexts, data);
                         if (newData == data) {
                             throw new CommandException(_("%s was already at the top of ladder %s", src.fmt().subject(subject), src.fmt().ladder(ladder)));
                         }
@@ -81,8 +81,8 @@ public class RankingCommands {
                         checkSubjectPermission(src, subject, "permissionsex.demote." + ladder);
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
-                        ImmutableOptionSubjectData newData = ladder.demote(contexts, data);
+                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData newData = ladder.demote(contexts, data);
                         if (newData == data) {
                             throw new CommandException(_("%s was not on ladder %s", src.fmt().subject(subject), src.fmt().ladder(ladder)));
                         }

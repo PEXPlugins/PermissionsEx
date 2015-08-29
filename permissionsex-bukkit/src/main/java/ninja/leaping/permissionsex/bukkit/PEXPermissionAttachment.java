@@ -19,7 +19,7 @@ package ninja.leaping.permissionsex.bukkit;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.Caching;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
@@ -34,10 +34,10 @@ import java.util.concurrent.ExecutionException;
 /**
  * Permissions attachment that integrates with the PEX backend
  */
-public class PEXPermissionAttachment extends PermissionAttachment implements Caching<ImmutableOptionSubjectData> {
+public class PEXPermissionAttachment extends PermissionAttachment implements Caching<ImmutableSubjectData> {
     public static final String ATTACHMENT_TYPE = "attachment";
     private final String identifier = UUID.randomUUID().toString();
-    private ImmutableOptionSubjectData subjectData;
+    private ImmutableSubjectData subjectData;
     private final PEXPermissible perm;
     private final SubjectCache cache;
     public PEXPermissionAttachment(Plugin plugin, Player parent, PEXPermissible perm) {
@@ -52,7 +52,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
         }
     }
 
-    private void updateData(ImmutableOptionSubjectData newData) {
+    private void updateData(ImmutableSubjectData newData) {
         if (newData != this.subjectData) {
             this.cache.update(getIdentifier(), newData);
         }
@@ -63,7 +63,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
     }
 
     @Override
-    public void clearCache(ImmutableOptionSubjectData newData) {
+    public void clearCache(ImmutableSubjectData newData) {
         this.subjectData = newData;
     }
 

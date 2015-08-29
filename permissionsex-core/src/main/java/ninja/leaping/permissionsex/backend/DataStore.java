@@ -22,7 +22,7 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
@@ -53,7 +53,7 @@ public interface DataStore {
      * @param listener The update listener for this subject
      * @return The relevant subject data
      */
-    ImmutableOptionSubjectData getData(String type, String identifier, @Nullable Caching<ImmutableOptionSubjectData> listener);
+    ImmutableSubjectData getData(String type, String identifier, @Nullable Caching<ImmutableSubjectData> listener);
 
     /**
      * Sets the data at the specified type and identifier.
@@ -63,7 +63,7 @@ public interface DataStore {
      * @param data The data to commit to this backend. This being null deletes any data for the given identifier
      * @return A future that can be used to listen for completion of writing the changed data
      */
-    ListenableFuture<ImmutableOptionSubjectData> setData(String type, String identifier, @Nullable ImmutableOptionSubjectData data);
+    ListenableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
 
     /**
      * Return if the given subject has any data stored in this backend.
@@ -79,7 +79,7 @@ public interface DataStore {
      * @param type The type to get all data for
      * @return An iterable providing data
      */
-    Iterable<Map.Entry<String, ImmutableOptionSubjectData>> getAll(String type);
+    Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(String type);
 
     /**
      *
@@ -108,7 +108,7 @@ public interface DataStore {
      *
      * @return An iterable containing all subjects
      */
-    Iterable<Map.Entry<Map.Entry<String,String>,ImmutableOptionSubjectData>> getAll();
+    Iterable<Map.Entry<Map.Entry<String,String>,ImmutableSubjectData>> getAll();
 
     /**
      * Perform a bulk operation on this data store. While this operation is in progress, all writes must be suppressed

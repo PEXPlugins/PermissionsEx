@@ -18,7 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -44,7 +44,7 @@ public class OptionCommands {
                         checkSubjectPermission(src, subject, "permissionsex.option.set");
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
                         final String key = args.getOne("key");
                         final String value = args.getOne("value");
                         if (value == null) {

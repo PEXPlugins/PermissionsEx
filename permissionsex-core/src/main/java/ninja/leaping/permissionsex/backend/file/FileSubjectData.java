@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.permissionsex.backend.memory.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import javax.annotation.Nullable;
@@ -35,10 +35,10 @@ import java.util.Set;
 import static java.util.Map.Entry;
 import static ninja.leaping.permissionsex.util.Translations._;
 
-public final class FileOptionSubjectData extends MemoryOptionSubjectData {
+public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
 
-    static FileOptionSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
+    static FileSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
         ImmutableMap.Builder<Set<Entry<String, String>>, DataEntry> map = ImmutableMap.builder();
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
@@ -50,20 +50,20 @@ public final class FileOptionSubjectData extends MemoryOptionSubjectData {
                 map.put(contexts, value);
             }
         }
-        return new FileOptionSubjectData(map.build());
+        return new FileSubjectData(map.build());
     }
 
-    protected FileOptionSubjectData() {
+    protected FileSubjectData() {
         super();
     }
 
-    protected FileOptionSubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected FileSubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
         super(contexts);
     }
 
     @Override
-    protected MemoryOptionSubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
-        return new FileOptionSubjectData(contexts);
+    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+        return new FileSubjectData(contexts);
     }
 
     private static Set<Entry<String, String>> contextsFrom(ConfigurationNode node) {

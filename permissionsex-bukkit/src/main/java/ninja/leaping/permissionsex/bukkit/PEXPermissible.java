@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.NodeTree;
@@ -144,15 +144,15 @@ public class PEXPermissible extends PermissibleBase {
     @Override
     public PermissionAttachment addAttachment(Plugin plugin) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
-        Futures.addCallback(this.cache.doUpdate(player.getUniqueId().toString(), new Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData>() {
+        Futures.addCallback(this.cache.doUpdate(player.getUniqueId().toString(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
-            public ImmutableOptionSubjectData apply(@Nullable ImmutableOptionSubjectData input) {
+            public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
                 return input.addParent(PermissionsExPlugin.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
             }
-        }), new FutureCallback<ImmutableOptionSubjectData>() {
+        }), new FutureCallback<ImmutableSubjectData>() {
             @Override
-            public void onSuccess(@Nullable ImmutableOptionSubjectData result) {
+            public void onSuccess(@Nullable ImmutableSubjectData result) {
                 PEXPermissible.this.attachments.add(attach);
             }
 
@@ -165,15 +165,15 @@ public class PEXPermissible extends PermissibleBase {
     }
 
     public boolean removeAttachmentInternal(final PEXPermissionAttachment attach) {
-        Futures.addCallback(this.cache.doUpdate(player.getUniqueId().toString(), new Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData>() {
+        Futures.addCallback(this.cache.doUpdate(player.getUniqueId().toString(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
-            public ImmutableOptionSubjectData apply(@Nullable ImmutableOptionSubjectData input) {
+            public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
                 return input.removeParent(PermissionsExPlugin.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
             }
-        }), new FutureCallback<ImmutableOptionSubjectData>() {
+        }), new FutureCallback<ImmutableSubjectData>() {
             @Override
-            public void onSuccess(@Nullable ImmutableOptionSubjectData result) {
+            public void onSuccess(@Nullable ImmutableSubjectData result) {
                 PermissionRemovedExecutor exec = attach.getRemovalCallback();
                 if (exec != null) {
                     exec.attachmentRemoved(attach);

@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.Caching;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
@@ -42,11 +42,11 @@ import java.util.concurrent.ExecutionException;
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-public class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableOptionSubjectData> {
+public class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjectData> {
     private final PermissionsExPlugin plugin;
     private volatile SubjectCache cache;
     private final String identifier;
-    private volatile ImmutableOptionSubjectData data;
+    private volatile ImmutableSubjectData data;
     private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
 
     public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
@@ -85,7 +85,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
         return ret.build();
     }
 
-    private boolean updateIfChanged(ImmutableOptionSubjectData old, @Nullable ImmutableOptionSubjectData newData) {
+    private boolean updateIfChanged(ImmutableSubjectData old, @Nullable ImmutableSubjectData newData) {
         if (newData == null) {
             return false; // Change unsuccessful
         } else if (old == newData) {
@@ -97,7 +97,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
     }
 
     @Override
-    public void clearCache(ImmutableOptionSubjectData newData) {
+    public void clearCache(ImmutableSubjectData newData) {
         synchronized (parentsCache) {
             this.data = newData;
             parentsCache.clear();
@@ -253,7 +253,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
         return updateIfChanged(data, data.clearParents(parSet(set)));
     }
 
-    public ImmutableOptionSubjectData getCurrent() {
+    public ImmutableSubjectData getCurrent() {
         return this.data;
     }
 }

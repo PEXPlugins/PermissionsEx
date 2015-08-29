@@ -37,7 +37,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
@@ -58,7 +58,6 @@ import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppedEvent;
-import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.ProviderExistsException;
@@ -386,10 +385,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         this.descriptions.put(description.getId(), description);
         final SubjectCache coll = getManager().getTransientSubjects(SUBJECTS_ROLE_TEMPLATE);
         for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
-            Futures.getUnchecked(coll.doUpdate(rank.getKey(), new Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData>() {
+            Futures.getUnchecked(coll.doUpdate(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
-                public ImmutableOptionSubjectData apply(@Nullable ImmutableOptionSubjectData input) {
+                public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
                     return Preconditions.checkNotNull(input).setPermission(ImmutableSet.<Map.Entry<String, String>>of(), description.getId(), rank.getValue());
                 }
             }));

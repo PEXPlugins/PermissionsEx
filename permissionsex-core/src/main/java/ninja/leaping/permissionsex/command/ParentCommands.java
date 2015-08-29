@@ -18,7 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -51,7 +51,7 @@ public class ParentCommands {
                         checkSubjectPermission(src, subject, "permissionsex.parent.add");
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 dataCache.update(subject.getValue(), data.addParent(contexts, parent.getKey(), parent.getValue())), src,
@@ -72,7 +72,7 @@ public class ParentCommands {
                         checkSubjectPermission(src, subject, "permissionsex.parent.remove");
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
                         SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableOptionSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 dataCache.update(subject.getValue(), data.removeParent(contexts, parent.getKey(), parent.getValue())), src,

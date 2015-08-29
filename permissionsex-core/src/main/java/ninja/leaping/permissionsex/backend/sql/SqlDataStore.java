@@ -29,9 +29,8 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.sql.tables.SqlSubject;
-import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
@@ -62,7 +61,7 @@ public final class SqlDataStore extends AbstractDataStore {
     private Dao<SqlSubject, String> subjectDao;
 
     @Override
-    protected ImmutableOptionSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
+    protected ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
         try (Connection conn = sql.getConnection()) {
             SqlSubject subject = subjectDao.queryBuilder().where().eq("type", type).eq("identifier", identifier).queryForFirst();
         } catch (SQLException e) {
@@ -72,7 +71,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, ImmutableOptionSubjectData data) {
+    protected ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
         return null;
     }
 
@@ -138,7 +137,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
+    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
         return ImmutableList.of();
     }
 

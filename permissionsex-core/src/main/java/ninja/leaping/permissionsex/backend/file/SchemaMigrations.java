@@ -115,7 +115,7 @@ public class SchemaMigrations {
                             @Override
                             public Object[] visitPath(ConfigurationTransformation.NodePath nodePath, ConfigurationNode configurationNode) {
                                 for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                    if (child.getNode(FileOptionSubjectData.KEY_CONTEXTS).isVirtual() || child.getNode(FileOptionSubjectData.KEY_CONTEXTS).getChildrenMap().isEmpty()) {
+                                    if (child.getNode(FileSubjectData.KEY_CONTEXTS).isVirtual() || child.getNode(FileSubjectData.KEY_CONTEXTS).getChildrenMap().isEmpty()) {
                                         ConfigurationNode optionsNode = child.getNode("options");
                                         if (optionsNode.isVirtual()) {
                                             return null;
@@ -181,7 +181,7 @@ public class SchemaMigrations {
                                 ConfigurationNode entityNode = configurationNode.getParent().getParent();
                                 for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
                                     entityNode.getAppendedNode().setValue(ent.getValue())
-                                            .getNode(FileOptionSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
+                                            .getNode(FileSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
 
                                 }
                                 configurationNode.setValue(null);
@@ -248,7 +248,7 @@ public class SchemaMigrations {
                                         ConfigurationNode addToNode = null;
                                         final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
                                         for (ConfigurationNode node : defaultsParent.getChildrenList()) {
-                                            if (Objects.equal(node.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileOptionSubjectData.KEY_CONTEXTS).getValue())) {
+                                            if (Objects.equal(node.getNode(FileSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS).getValue())) {
                                                 addToNode = node;
                                                 break;
                                             }

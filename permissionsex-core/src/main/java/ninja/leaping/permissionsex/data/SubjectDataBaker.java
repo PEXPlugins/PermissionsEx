@@ -44,14 +44,14 @@ class SubjectDataBaker {
     private final Entry<String, String> subject;
     private final PermissionsEx pex;
     private final Set<Set<Entry<String, String>>> activeContexts;
-    private final Caching<ImmutableOptionSubjectData> updateListener;
+    private final Caching<ImmutableSubjectData> updateListener;
 
     private final Map<String, Integer> combinedPermissions = new HashMap<>();
     private final List<Entry<String, String>> parents = new ArrayList<>();
     private final Map<String, String> options = new HashMap<>();
     private int defaultValue;
 
-    private SubjectDataBaker(Caching<ImmutableOptionSubjectData> updateListener, Map.Entry<String, String> subject, PermissionsEx pex, Set<Entry<String, String>> activeContexts) {
+    private SubjectDataBaker(Caching<ImmutableSubjectData> updateListener, Map.Entry<String, String> subject, PermissionsEx pex, Set<Entry<String, String>> activeContexts) {
         this.updateListener = updateListener;
         this.subject = subject;
         this.pex = pex;
@@ -91,7 +91,7 @@ class SubjectDataBaker {
             return;
         }
         visitedSubjects.add(subject);
-        ImmutableOptionSubjectData data = pex.getSubjects(subject.getKey()).getData(subject.getValue(), updateListener), transientData = pex.getTransientSubjects(subject.getKey()).getData(subject.getValue(), updateListener);
+        ImmutableSubjectData data = pex.getSubjects(subject.getKey()).getData(subject.getValue(), updateListener), transientData = pex.getTransientSubjects(subject.getKey()).getData(subject.getValue(), updateListener);
         for (Set<Entry<String, String>> combo : activeContexts) {
             visitSingle(transientData, combo, inheritanceLevel);
             for (Entry<String, String> parent : transientData.getParents(combo)) {
@@ -111,7 +111,7 @@ class SubjectDataBaker {
         }
     }
 
-    private void visitSingle(ImmutableOptionSubjectData data, Set<Entry<String, String>> specificCombination, int inheritanceLevel) {
+    private void visitSingle(ImmutableSubjectData data, Set<Entry<String, String>> specificCombination, int inheritanceLevel) {
         for (Map.Entry<String, Integer> ent : data.getPermissions(specificCombination).entrySet()) {
             String perm = ent.getKey();
             if (ent.getKey().startsWith("#")) { // Prefix to exclude from inheritance

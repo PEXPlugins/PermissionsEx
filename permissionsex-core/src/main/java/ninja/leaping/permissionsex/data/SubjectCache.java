@@ -32,42 +32,42 @@ import java.util.concurrent.ExecutionException;
 public class SubjectCache {
     private final String type;
     private final DataStore dataStore;
-    private final LoadingCache<String, ImmutableOptionSubjectData> cache;
-    private final Map<String, Caching<ImmutableOptionSubjectData>> cacheHolders = new ConcurrentHashMap<>();
-    private final CacheListenerHolder<String, ImmutableOptionSubjectData> listeners = new CacheListenerHolder<>();
+    private final LoadingCache<String, ImmutableSubjectData> cache;
+    private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
+    private final CacheListenerHolder<String, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
 
     public SubjectCache(final String type, final DataStore dataStore) {
         this.type = type;
         this.dataStore = dataStore;
         cache = CacheBuilder.newBuilder()
                 .maximumSize(512)
-                .build(new CacheLoader<String, ImmutableOptionSubjectData>() {
+                .build(new CacheLoader<String, ImmutableSubjectData>() {
                     @Override
-                    public ImmutableOptionSubjectData load(String identifier) throws Exception {
+                    public ImmutableSubjectData load(String identifier) throws Exception {
                         return dataStore.getData(type, identifier, clearListener(identifier));
                     }
                 });
     }
 
-    public ImmutableOptionSubjectData getData(String identifier, Caching<ImmutableOptionSubjectData> listener) throws ExecutionException {
+    public ImmutableSubjectData getData(String identifier, Caching<ImmutableSubjectData> listener) throws ExecutionException {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        ImmutableOptionSubjectData ret = cache.get(identifier);
+        ImmutableSubjectData ret = cache.get(identifier);
         if (listener != null) {
             listeners.addListener(identifier, listener);
         }
         return ret;
     }
 
-    public ListenableFuture<ImmutableOptionSubjectData> doUpdate(String identifier, Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData> action) {
-        ImmutableOptionSubjectData data;
+    public ListenableFuture<ImmutableSubjectData> doUpdate(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
+        ImmutableSubjectData data;
         try {
             data = getData(identifier, null);
         } catch (ExecutionException e) {
             return Futures.immediateFailedFuture(e);
         }
 
-        ImmutableOptionSubjectData newData = action.apply(data);
+        ImmutableSubjectData newData = action.apply(data);
         if (newData != data) {
             return update(identifier, newData);
         } else {
@@ -105,17 +105,17 @@ public class SubjectCache {
         return dataStore.isRegistered(type, identifier);
     }
 
-    public ListenableFuture<ImmutableOptionSubjectData> update(String identifier, ImmutableOptionSubjectData newData) {
+    public ListenableFuture<ImmutableSubjectData> update(String identifier, ImmutableSubjectData newData) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(newData, "newData");
 
         return dataStore.setData(type, identifier, newData);
     }
 
-    private Caching<ImmutableOptionSubjectData> clearListener(final String name) {
-        Caching<ImmutableOptionSubjectData> ret = new Caching<ImmutableOptionSubjectData>() {
+    private Caching<ImmutableSubjectData> clearListener(final String name) {
+        Caching<ImmutableSubjectData> ret = new Caching<ImmutableSubjectData>() {
             @Override
-            public void clearCache(ImmutableOptionSubjectData newData) {
+            public void clearCache(ImmutableSubjectData newData) {
                 cache.put(name, newData);
                 listeners.call(name, newData);
             }
@@ -124,7 +124,7 @@ public class SubjectCache {
         return ret;
     }
 
-    public void addListener(String identifier, Caching<ImmutableOptionSubjectData> listener) {
+    public void addListener(String identifier, Caching<ImmutableSubjectData> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(listener, "listener");
 

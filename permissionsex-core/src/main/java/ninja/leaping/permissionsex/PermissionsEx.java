@@ -42,11 +42,10 @@ import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -160,11 +159,11 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                                 }
                                 converted[0]++;
 
-                                ImmutableOptionSubjectData oldData = input.getData("user", profile.getName(), null);
+                                ImmutableSubjectData oldData = input.getData("user", profile.getName(), null);
                                 final String finalLookupName = lookupName;
-                                Futures.addCallback(input.setData("user", newIdentifier, oldData.setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName())), new FutureCallback<ImmutableOptionSubjectData>() {
+                                Futures.addCallback(input.setData("user", newIdentifier, oldData.setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName())), new FutureCallback<ImmutableSubjectData>() {
                                     @Override
-                                    public void onSuccess(@Nullable ImmutableOptionSubjectData result) {
+                                    public void onSuccess(@Nullable ImmutableSubjectData result) {
                                         input.setData("user", finalLookupName, null);
                                     }
 
@@ -272,17 +271,17 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
             public ListenableFuture<Void> apply(@Nullable final DataStore store) {
                 System.out.println("Performing bulk operation");
                 try {
-                    return Futures.immediateFuture(Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>, ListenableFuture<ImmutableOptionSubjectData>>() {
+                    return Futures.immediateFuture(Futures.transform(Futures.allAsList(Iterables.transform(expected.getAll(), new Function<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>, ListenableFuture<ImmutableSubjectData>>() {
                         @Nullable
                         @Override
-                        public ListenableFuture<ImmutableOptionSubjectData> apply(Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> input) {
+                        public ListenableFuture<ImmutableSubjectData> apply(Map.Entry<Map.Entry<String, String>, ImmutableSubjectData> input) {
                             System.out.println("Setting data for " + input.getKey());
                             return store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue());
                         }
-                    })), new Function<List<ImmutableOptionSubjectData>, Void>() {
+                    })), new Function<List<ImmutableSubjectData>, Void>() {
                         @Nullable
                         @Override
-                        public Void apply(@Nullable List<ImmutableOptionSubjectData> input) {
+                        public Void apply(@Nullable List<ImmutableSubjectData> input) {
                             Futures.getUnchecked(store.setContextInheritance(expected.getContextInheritance(null)));
                             for (String ladder : store.getAllRankLadders()) {
                                 Futures.getUnchecked(store.setRankLadder(ladder, expected.getRankLadder(ladder, null)));

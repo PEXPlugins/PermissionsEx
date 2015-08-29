@@ -28,7 +28,7 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.data.ContextInheritance;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
@@ -46,7 +46,7 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Setting(comment = "Whether or not this data store will store subjects being set") private boolean track = true;
 
-    private final ConcurrentMap<Map.Entry<String, String>, ImmutableOptionSubjectData> data = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Map.Entry<String, String>, ImmutableSubjectData> data = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
@@ -63,13 +63,13 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ImmutableOptionSubjectData getDataInternal(String type, String identifier) {
+    public ImmutableSubjectData getDataInternal(String type, String identifier) {
         final Map.Entry<String, String> key = Maps.immutableEntry(type, identifier);
-        ImmutableOptionSubjectData ret = data.get(key);
+        ImmutableSubjectData ret = data.get(key);
         if (ret == null) {
-            ret = new MemoryOptionSubjectData();
+            ret = new MemorySubjectData();
             if (track) {
-                final ImmutableOptionSubjectData existingData = data.putIfAbsent(key, ret);
+                final ImmutableSubjectData existingData = data.putIfAbsent(key, ret);
                 if (existingData != null) {
                     ret = existingData;
                 }
@@ -79,7 +79,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, ImmutableOptionSubjectData data) {
+    public ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
         if (track) {
             this.data.put(Maps.immutableEntry(type, identifier), data);
         }
@@ -135,7 +135,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
+    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
         return Iterables.unmodifiableIterable(data.entrySet());
     }
 

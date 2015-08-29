@@ -21,7 +21,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
@@ -136,10 +136,10 @@ public class PermissionList extends HashMap<String, Permission> {
         FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
         repl.set(v, new NotifyingChildrenMap(v));
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
-            plugin.getManager().getTransientSubjects("system").doUpdate("default", new Function<ImmutableOptionSubjectData, ImmutableOptionSubjectData>() {
+            plugin.getManager().getTransientSubjects("system").doUpdate("default", new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
-                public ImmutableOptionSubjectData apply(ImmutableOptionSubjectData input) {
+                public ImmutableSubjectData apply(ImmutableSubjectData input) {
                     return input.setPermission(PermissionsExPlugin.GLOBAL_CONTEXT, v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1);
                 }
             });

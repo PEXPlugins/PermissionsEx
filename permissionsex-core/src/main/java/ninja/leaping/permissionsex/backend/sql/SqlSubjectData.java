@@ -16,27 +16,25 @@
  */
 package ninja.leaping.permissionsex.backend.sql;
 
-import ninja.leaping.permissionsex.backend.memory.MemoryOptionSubjectData;
+import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by zml on 21.03.15.
  */
-public class SqlOptionSubjectData extends MemoryOptionSubjectData {
+public class SqlSubjectData extends MemorySubjectData {
     @Override
-    protected MemoryOptionSubjectData newData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
-        return new SqlOptionSubjectData(contexts);
+    protected MemorySubjectData newData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
+        return new SqlSubjectData(contexts);
     }
 
-    SqlOptionSubjectData() {
+    SqlSubjectData() {
         super();
     }
 
-    SqlOptionSubjectData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
+    SqlSubjectData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
         super(contexts);
     }
 }

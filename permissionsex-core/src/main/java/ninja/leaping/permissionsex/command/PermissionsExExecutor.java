@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -45,7 +45,7 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         this.pex = pex;
     }
 
-    protected ImmutableOptionSubjectData getSubjectData(SubjectCache cache, String identifier) throws CommandException {
+    protected ImmutableSubjectData getSubjectData(SubjectCache cache, String identifier) throws CommandException {
         try {
             return cache.getData(identifier, null);
         } catch (ExecutionException e) {

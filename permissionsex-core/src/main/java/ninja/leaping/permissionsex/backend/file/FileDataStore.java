@@ -42,7 +42,7 @@ import ninja.leaping.permissionsex.backend.ConversionUtils;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryContextInheritance;
 import ninja.leaping.permissionsex.data.ContextInheritance;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -187,34 +187,34 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ImmutableOptionSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
+    public ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
         try {
-            return FileOptionSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
+            return FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
         } catch (ObjectMappingException e) {
             throw new PermissionsLoadingException(_("While deserializing subject data for %s:", identifier), e);
         }
     }
 
     @Override
-    protected ListenableFuture<ImmutableOptionSubjectData> setDataInternal(String type, String identifier, final ImmutableOptionSubjectData data) {
+    protected ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, final ImmutableSubjectData data) {
         try {
             if (data == null) {
                 getSubjectsNode().getNode(type, identifier).setValue(null);
-                return Futures.transform(save(), Functions.<ImmutableOptionSubjectData>constant(null));
+                return Futures.transform(save(), Functions.<ImmutableSubjectData>constant(null));
             }
 
-            final FileOptionSubjectData fileData;
+            final FileSubjectData fileData;
 
-            if (data instanceof FileOptionSubjectData) {
-                fileData = (FileOptionSubjectData) data;
+            if (data instanceof FileSubjectData) {
+                fileData = (FileSubjectData) data;
             } else {
-                fileData = ConversionUtils.transfer(data, new FileOptionSubjectData());
+                fileData = ConversionUtils.transfer(data, new FileSubjectData());
             }
             fileData.serialize(getSubjectsNode().getNode(type, identifier));
-            return Futures.transform(save(), new Function<Void, ImmutableOptionSubjectData>() {
+            return Futures.transform(save(), new Function<Void, ImmutableSubjectData>() {
                 @Nullable
                 @Override
-                public ImmutableOptionSubjectData apply(Void input) {
+                public ImmutableSubjectData apply(Void input) {
                     return fileData;
                 }
             });
@@ -245,21 +245,21 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> getAll() {
-        return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), new Function<Object, Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>>() {
+    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
+        return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), new Function<Object, Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>>>() {
             @Nullable
             @Override
-            public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>> apply(@Nullable final Object type) {
+            public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> apply(@Nullable final Object type) {
                 if (type == null) {
                     return null;
                 }
 
                 final String typeStr = type.toString();
 
-                return Iterables.transform(getAll(typeStr), new Function<Map.Entry<String, ImmutableOptionSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData>>() {
+                return Iterables.transform(getAll(typeStr), new Function<Map.Entry<String, ImmutableSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>>() {
                     @Nullable
                     @Override
-                    public Map.Entry<Map.Entry<String, String>, ImmutableOptionSubjectData> apply(Map.Entry<String, ImmutableOptionSubjectData> input2) {
+                    public Map.Entry<Map.Entry<String, String>, ImmutableSubjectData> apply(Map.Entry<String, ImmutableSubjectData> input2) {
                         return Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue());
                     }
                 });

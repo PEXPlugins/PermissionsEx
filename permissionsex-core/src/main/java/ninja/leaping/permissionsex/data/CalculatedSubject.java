@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * This is a holder that maintains the current subject data state
  */
-public class CalculatedSubject implements Caching<ImmutableOptionSubjectData> {
+public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final Map.Entry<String, String> identifier;
     private final PermissionsEx pex;
 
@@ -92,7 +92,7 @@ public class CalculatedSubject implements Caching<ImmutableOptionSubjectData> {
     }
 
     @Override
-    public void clearCache(ImmutableOptionSubjectData newData) {
+    public void clearCache(ImmutableSubjectData newData) {
         data.invalidateAll();
         for (CalculatedSubject subject : pex.getActiveCalculatedSubjects()) {
             for (Set<Map.Entry<String, String>> ent : subject.getActiveContexts()) {

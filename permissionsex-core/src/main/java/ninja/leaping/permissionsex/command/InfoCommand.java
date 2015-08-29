@@ -17,7 +17,7 @@
 package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableOptionSubjectData;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -55,8 +55,8 @@ public class InfoCommand {
         public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
             Map.Entry<String, String> subject = subjectOrSelf(src, args);
             checkSubjectPermission(src, subject, "permissionsex.info");
-            final ImmutableOptionSubjectData transientData = getSubjectData(pex.getTransientSubjects(subject.getKey()), subject.getValue());
-            final ImmutableOptionSubjectData data = getSubjectData(pex.getSubjects(subject.getKey()), subject.getValue());
+            final ImmutableSubjectData transientData = getSubjectData(pex.getTransientSubjects(subject.getKey()), subject.getValue());
+            final ImmutableSubjectData data = getSubjectData(pex.getSubjects(subject.getKey()), subject.getValue());
 
             src.msg(src.fmt().header(src.fmt().tr(_("Information for %s", src.fmt().subject(subject)))));
             if (!data.getAllPermissions().isEmpty()) {
@@ -88,7 +88,7 @@ public class InfoCommand {
 
         }
 
-        private <TextType> void printPermissions(Commander<TextType> src, ImmutableOptionSubjectData data) {
+        private <TextType> void printPermissions(Commander<TextType> src, ImmutableSubjectData data) {
             Set<Set<Map.Entry<String, String>>> targetContexts = new HashSet<>();
             targetContexts.addAll(data.getAllPermissions().keySet());
             targetContexts.addAll(data.getAllDefaultValues().keySet());
@@ -102,7 +102,7 @@ public class InfoCommand {
             }
         }
 
-        private <TextType> void printOptions(Commander<TextType> src, ImmutableOptionSubjectData data) {
+        private <TextType> void printOptions(Commander<TextType> src, ImmutableSubjectData data) {
             for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, String>> ent : data.getAllOptions().entrySet()) {
                 src.msg(src.fmt().combined(INDENT, formatContexts(src, ent.getKey()), ":"));
                 for (Map.Entry<String, String> option : ent.getValue().entrySet()) {
@@ -111,7 +111,7 @@ public class InfoCommand {
             }
         }
 
-        private <TextType> void printParents(Commander<TextType> src, ImmutableOptionSubjectData data) {
+        private <TextType> void printParents(Commander<TextType> src, ImmutableSubjectData data) {
             for (Map.Entry<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> ent : data.getAllParents().entrySet()) {
 
                 src.msg(src.fmt().combined(INDENT, formatContexts(src, ent.getKey()), ":"));

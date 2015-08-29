@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.data;
 
-import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsExTest;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -24,7 +23,7 @@ import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
 
-import static ninja.leaping.permissionsex.data.ImmutableOptionSubjectData.GLOBAL_CTX;
+import static ninja.leaping.permissionsex.data.ImmutableSubjectData.GLOBAL_CTX;
 import static org.junit.Assert.assertEquals;
 
 public class SubjectDataBakerTest extends PermissionsExTest {
@@ -45,14 +44,14 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException {
         SubjectCache groupCache = getManager().getSubjects("group");
-        ImmutableOptionSubjectData parentData = groupCache.getData("parent", null);
+        ImmutableSubjectData parentData = groupCache.getData("parent", null);
         parentData = parentData.setPermission(GLOBAL_CTX, "#test.permission.parent", 1);
         groupCache.update("parent", parentData);
-        ImmutableOptionSubjectData childData = groupCache.getData("child", null);
+        ImmutableSubjectData childData = groupCache.getData("child", null);
         childData = childData.addParent(GLOBAL_CTX, groupCache.getType(), "parent")
                              .setPermission(GLOBAL_CTX, "#test.permission.child", 1);
         groupCache.update("child", childData);
-        ImmutableOptionSubjectData subjectData = groupCache.getData("subject", null);
+        ImmutableSubjectData subjectData = groupCache.getData("subject", null);
         subjectData = subjectData.addParent(GLOBAL_CTX, groupCache.getType(), "child");
         groupCache.update("subject", subjectData);
 
