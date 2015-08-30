@@ -43,6 +43,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_USER;
+
 /**
  * Implementation of Permissible using PEX for data
  */
@@ -72,8 +74,8 @@ public class PEXPermissible extends PermissibleBase {
 
     public void update(PermissionsEx newManager) throws PermissionsLoadingException {
         this.pex = newManager;
-        this.cache = newManager.getTransientSubjects("user");
-        this.subj = pex.getCalculatedSubject("user", player.getUniqueId().toString());
+        this.cache = newManager.getTransientSubjects(SUBJECTS_USER);
+        this.subj = pex.getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString());
     }
 
     @Override
@@ -95,7 +97,9 @@ public class PEXPermissible extends PermissibleBase {
 
     private int getPermissionValue(Set<Map.Entry<String, String>> contexts, String permission) {
         int ret = getPermissionValue0(subj.getPermissions(contexts), permission);
-        pex.getLogger().info("Checked permission {} for player {} in contexts {}: {}", permission, player.getName(), contexts, ret);
+        if (pex.hasDebugMode()) {
+            pex.getLogger().info("Checked permission {} for player {} in contexts {}: {}", permission, player.getName(), contexts, ret);
+        }
         return ret;
     }
 
@@ -148,7 +152,7 @@ public class PEXPermissible extends PermissibleBase {
             @Nullable
             @Override
             public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                return input.addParent(PermissionsExPlugin.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
+                return input.addParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
             }
         }), new FutureCallback<ImmutableSubjectData>() {
             @Override
@@ -169,7 +173,7 @@ public class PEXPermissible extends PermissibleBase {
             @Nullable
             @Override
             public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                return input.removeParent(PermissionsExPlugin.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
+                return input.removeParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
             }
         }), new FutureCallback<ImmutableSubjectData>() {
             @Override

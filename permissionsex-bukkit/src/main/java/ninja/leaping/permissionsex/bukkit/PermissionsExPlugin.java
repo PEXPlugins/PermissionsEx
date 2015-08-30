@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
+import net.milkbowl.vault.chat.Chat;
+import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -46,9 +48,11 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permissible;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.DumperOptions;
@@ -63,6 +67,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
@@ -78,7 +83,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             new PermissibleInjector.ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer"),
             new PermissibleInjector.ClassPresencePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true),
     };
-    public static final ImmutableSet<Map.Entry<String, String>> GLOBAL_CONTEXT = ImmutableSet.of();
     public static final String SERVER_TAG_CONTEXT = "server-tag";
 
     @Nullable
@@ -103,7 +107,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         logger = org.slf4j.LoggerFactory.getLogger("PermissionsEx");
-        logger.info(lf(_("Pre-init of %s v%s", getDescription().getName(), getDescription().getVersion())));
         configLoader = YAMLConfigurationLoader.builder()
                 .setFile(new File(getDataFolder(), "config.yml"))
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
@@ -126,7 +129,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             throw new RuntimeException(e);
         }
 
-        nameTransformerMap.put("user", new Function<String, String>() {
+        nameTransformerMap.put(PermissionsEx.SUBJECTS_USER, new Function<String, String>() {
             @Nullable
             @Override
             public String apply(@Nullable String input) {
@@ -159,12 +162,17 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         subscriptionHandler = PEXPermissionSubscriptionMap.inject(this, this.getServer().getPluginManager());
         permsList = PermissionList.inject(this);
         injectAllPermissibles();
+        if (getServer().getPluginManager().isPluginEnabled("Vault")) {
+            final PEXVault vault = new PEXVault(this);
+            getServer().getServicesManager().register(Permission.class, vault, this, ServicePriority.High); // Hook into vault
+            getServer().getServicesManager().register(Chat.class, new PEXVaultChat(vault), this, ServicePriority.High);
+            getLogger().info(lf(_("Hooked into Vault for Permission and Chat interfaces")));
+        }
         enabled = true;
     }
 
     @Override
     public void onDisable() {
-        logger.debug(lf(_("Disabling %s", getDescription().getName())));
         if (manager != null) {
             manager.close();
             manager = null;
@@ -180,6 +188,15 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    public void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
+        try {
+            getUserSubjects().load(event.getUniqueId().toString());
+        } catch (ExecutionException e) {
+            logger.warn(lf(_("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage())), e);
+        }
+    }
+
+    @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         if (getUserSubjects().isRegistered(identifier)) {
@@ -187,8 +204,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
                 @Nullable
                 @Override
                 public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                    if (!event.getPlayer().getName().equals(input.getOptions(GLOBAL_CONTEXT).get("name"))) {
-                        return input.setOption(GLOBAL_CONTEXT, "name", event.getPlayer().getName());
+                    if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
                     } else {
                         return input;
                     }
@@ -201,7 +218,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
-        getManager().uncache("user", event.getPlayer().getUniqueId().toString());
+        getManager().uncache(PermissionsEx.SUBJECTS_USER, event.getPlayer().getUniqueId().toString());
     }
 
     private void reloadSync() throws PEBKACException, ObjectMappingException, PermissionsLoadingException {
@@ -248,11 +265,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     public SubjectCache getUserSubjects() {
-        return getManager().getSubjects("user");
+        return getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
     }
 
     public SubjectCache getGroupSubjects() {
-        return getManager().getSubjects("group");
+        return getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
     }
 
     public void injectPermissible(Player player) {

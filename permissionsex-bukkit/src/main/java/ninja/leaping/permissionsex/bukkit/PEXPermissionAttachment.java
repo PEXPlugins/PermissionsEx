@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.bukkit;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
@@ -69,7 +70,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
 
     @Override
     public Map<String, Boolean> getPermissions() {
-        return Maps.transformValues(subjectData.getPermissions(PermissionsExPlugin.GLOBAL_CONTEXT), new Function<Integer, Boolean>() {
+        return Maps.transformValues(subjectData.getPermissions(PermissionsEx.GLOBAL_CONTEXT), new Function<Integer, Boolean>() {
             @Nullable
             @Override
             public Boolean apply(Integer input) {
@@ -80,7 +81,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
 
     @Override
     public void setPermission(String name, boolean value) {
-        updateData(subjectData.setPermission(PermissionsExPlugin.GLOBAL_CONTEXT, name, value ? 1 : -1));
+        updateData(subjectData.setPermission(PermissionsEx.GLOBAL_CONTEXT, name, value ? 1 : -1));
     }
 
     @Override
@@ -90,7 +91,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
 
     @Override
     public void unsetPermission(String name) {
-        updateData(subjectData.setPermission(PermissionsExPlugin.GLOBAL_CONTEXT, name, 0));
+        updateData(subjectData.setPermission(PermissionsEx.GLOBAL_CONTEXT, name, 0));
     }
 
     @Override

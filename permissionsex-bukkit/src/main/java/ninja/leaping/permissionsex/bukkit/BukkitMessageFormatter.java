@@ -22,6 +22,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.ButtonType;
@@ -57,7 +58,7 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
     public BaseComponent subject(Map.Entry<String, String> subject) {
         String name;
         try {
-            name = pex.getManager().getSubjects(subject.getKey()).getData(subject.getValue(), null).getOptions(PermissionsExPlugin.GLOBAL_CONTEXT).get("name");
+            name = pex.getManager().getSubjects(subject.getKey()).getData(subject.getValue(), null).getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
