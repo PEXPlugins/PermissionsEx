@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.util;
 
 import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.command.args.GenericArguments;
 
 import java.util.Map;
@@ -29,7 +30,7 @@ public class Util {
     public static Map.Entry<String, String> subjectFromString(String input) {
         String[] entries = input.split(":", 2);
         if (entries.length == 1) {
-            return Maps.immutableEntry("group", entries[0]);
+            return Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, entries[0]);
         } else {
             return Maps.immutableEntry(entries[0], entries[1]);
         }

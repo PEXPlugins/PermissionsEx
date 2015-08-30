@@ -71,6 +71,10 @@ import java.util.concurrent.ExecutionException;
 import static ninja.leaping.permissionsex.util.Translations.*;
 
 public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
+    public static final String SUBJECTS_USER = "user";
+    public static final String SUBJECTS_GROUP = "group";
+    public static final ImmutableSet<Map.Entry<String, String>> GLOBAL_CONTEXT = ImmutableSet.of();
+
     private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
     private final PermissionsExConfiguration config;
     private final ImplementationInterface impl;
@@ -107,7 +111,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         convertUuids();
 
         // Now that initialization is complete
-        uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects("user")));
+        uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects(SUBJECTS_USER)));
         registerCommand(PermissionsExCommands.createRootCommand(this));
         registerCommand(RankingCommands.getPromoteCommand(this));
         registerCommand(RankingCommands.getDemoteCommand(this));
@@ -119,7 +123,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
             Futures.addCallback(this.activeDataStore.performBulkOperation(new Function<DataStore, Integer>() {
                 @Override
                 public Integer apply(final DataStore input) {
-                    Iterable<String> toConvert = Iterables.filter(input.getAllIdentifiers("user"), new Predicate<String>() {
+                    Iterable<String> toConvert = Iterables.filter(input.getAllIdentifiers(SUBJECTS_USER), new Predicate<String>() {
                         @Override
                         public boolean apply(@Nullable String input) {
                             if (input == null || input.length() != 36) {
@@ -146,26 +150,26 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                             @Override
                             public boolean apply(Profile profile) {
                                 final String newIdentifier = profile.getUniqueId().toString();
-                                if (input.isRegistered("user", newIdentifier)) {
+                                if (input.isRegistered(SUBJECTS_USER, newIdentifier)) {
                                     getLogger().warn(fLog(_("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName())));
                                     return false; // We already have a registered UUID, this is a duplicate.
                                 }
 
                                 String lookupName = profile.getName();
-                                if (!input.isRegistered("user", lookupName)) {
+                                if (!input.isRegistered(SUBJECTS_USER, lookupName)) {
                                     lookupName = lookupName.toLowerCase();
                                 }
-                                if (!input.isRegistered("user", lookupName)) {
+                                if (!input.isRegistered(SUBJECTS_USER, lookupName)) {
                                     return false;
                                 }
                                 converted[0]++;
 
-                                ImmutableSubjectData oldData = input.getData("user", profile.getName(), null);
+                                ImmutableSubjectData oldData = input.getData(SUBJECTS_USER, profile.getName(), null);
                                 final String finalLookupName = lookupName;
-                                Futures.addCallback(input.setData("user", newIdentifier, oldData.setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName())), new FutureCallback<ImmutableSubjectData>() {
+                                Futures.addCallback(input.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName())), new FutureCallback<ImmutableSubjectData>() {
                                     @Override
                                     public void onSuccess(@Nullable ImmutableSubjectData result) {
-                                        input.setData("user", finalLookupName, null);
+                                        input.setData(SUBJECTS_USER, finalLookupName, null);
                                     }
 
                                     @Override

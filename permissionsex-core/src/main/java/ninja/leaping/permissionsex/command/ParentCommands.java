@@ -43,7 +43,7 @@ public class ParentCommands {
     private static CommandSpec getAddParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("add", "a", "+")
-                .setArguments(subject(_("parent"), pex, "group"))
+                .setArguments(subject(_("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -64,7 +64,7 @@ public class ParentCommands {
     private static CommandSpec getRemoveParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("remove", "rem", "delete", "del", "-")
-                .setArguments(subject(_("parent"), pex))
+                .setArguments(subject(_("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {

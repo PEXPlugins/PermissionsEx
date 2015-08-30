@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.data;
 
 import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.PermissionsExTest;
 import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -44,7 +45,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException {
-        SubjectCache groupCache = getManager().getSubjects("group");
+        SubjectCache groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
         ImmutableSubjectData parentData = groupCache.getData("parent", null);
         parentData = parentData.setPermission(GLOBAL_CTX, "#test.permission.parent", 1);
         groupCache.update("parent", parentData);

@@ -154,7 +154,7 @@ public class RankingCommands {
                 .setArguments(flags()
                         .flag("r", "-relative")
                         .setUnknownShortFlagBehavior(UnknownFlagBehavior.IGNORE)
-                        .buildWith(seq(optional(integer(_("position"))), subject(_("subject"), pex, "group"))))
+                        .buildWith(seq(optional(integer(_("position"))), subject(_("subject"), pex, PermissionsEx.SUBJECTS_GROUP))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -185,7 +185,7 @@ public class RankingCommands {
     private static CommandSpec getRankRemoveCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("remove", "rem", "-")
-                .setArguments(subject(_("subject"), pex, "group"))
+                .setArguments(subject(_("subject"), pex, PermissionsEx.SUBJECTS_GROUP))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {

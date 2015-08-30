@@ -16,12 +16,15 @@
  */
 package ninja.leaping.permissionsex.data.calculated;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
@@ -32,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
+import static java.util.Map.Entry;
 
 /**
  * This is a holder that maintains the current subject data state
@@ -92,6 +97,22 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
 
     public Set<Set<Map.Entry<String, String>>> getActiveContexts() {
         return data.asMap().keySet();
+    }
+
+    public int getPermission(Set<Entry<String, String>> contexts, String permission) {
+        return getPermissions(contexts).get(permission);
+    }
+
+    public Optional<String> getOption(Set<Entry<String, String>> contexts, String option) {
+        return Optional.fromNullable(getOptions(contexts).get(option));
+    }
+
+    public ListenableFuture<ImmutableSubjectData> update(Function<ImmutableSubjectData, ImmutableSubjectData> func) {
+        return this.pex.getSubjects(this.identifier.getKey()).doUpdate(this.identifier.getValue(), func);
+    }
+
+    public ListenableFuture<ImmutableSubjectData> updateTransient(Function<ImmutableSubjectData, ImmutableSubjectData> func) {
+        return this.pex.getSubjects(this.identifier.getKey()).doUpdate(this.identifier.getValue(), func);
     }
 
     @Override
