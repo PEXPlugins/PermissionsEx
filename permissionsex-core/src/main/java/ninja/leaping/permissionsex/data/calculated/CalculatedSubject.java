@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data;
+package ninja.leaping.permissionsex.data.calculated;
 
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -23,6 +23,8 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.Collections;
@@ -35,6 +37,7 @@ import java.util.concurrent.ExecutionException;
  * This is a holder that maintains the current subject data state
  */
 public class CalculatedSubject implements Caching<ImmutableSubjectData> {
+    private final SubjectDataBaker baker;
     private final Map.Entry<String, String> identifier;
     private final PermissionsEx pex;
 
@@ -42,14 +45,14 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
             .build(new CacheLoader<Set<Map.Entry<String, String>>, BakedSubjectData>() {
         @Override
         public BakedSubjectData load(Set<Map.Entry<String, String>> contexts) throws Exception {
-            return SubjectDataBaker.bake(CalculatedSubject.this, contexts);
+            return baker.bake(CalculatedSubject.this, contexts);
         }
     });
 
-    public CalculatedSubject(Map.Entry<String, String> identifier, PermissionsEx pex) {
-        Preconditions.checkNotNull(identifier, pex);
-        this.identifier = identifier;
-        this.pex = pex;
+    public CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, PermissionsEx pex) {
+        this.baker = Preconditions.checkNotNull(baker, "baker");
+        this.identifier = Preconditions.checkNotNull(identifier, "identifier");
+        this.pex = Preconditions.checkNotNull(pex, "pex");
     }
 
     public Map.Entry<String, String> getIdentifier() {

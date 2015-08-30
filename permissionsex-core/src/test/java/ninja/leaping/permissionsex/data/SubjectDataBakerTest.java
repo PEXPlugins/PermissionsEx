@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.data;
 
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsExTest;
+import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.junit.Test;
 

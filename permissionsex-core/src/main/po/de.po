@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-11 21:24-0700\n"
+"POT-Creation-Date: 2015-08-29 18:46-0700\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -131,7 +131,7 @@ msgstr ""
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileOptionSubjectData.java:46
+#: ninja/leaping/permissionsex/backend/file/FileSubjectData.java:46
 msgid ""
 "Each context section must be of map type! Check that no duplicate nesting "
 "has occurred."
@@ -156,7 +156,7 @@ msgstr ""
 msgid "Error creating initial data for file backend"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:95
+#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:94
 msgid "Error creating subject DAO"
 msgstr ""
 

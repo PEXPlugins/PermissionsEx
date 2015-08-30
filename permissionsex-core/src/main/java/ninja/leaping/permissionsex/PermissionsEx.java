@@ -40,11 +40,12 @@ import ninja.leaping.permissionsex.command.RankingCommands;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
-import ninja.leaping.permissionsex.data.CalculatedSubject;
+import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.calculated.SubjectDataBakers;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.PEXProfileCache;
 import ninja.leaping.permissionsex.util.Translatable;
@@ -79,7 +80,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private final LoadingCache<Map.Entry<String, String>, CalculatedSubject> calculatedSubjects = CacheBuilder.newBuilder().maximumSize(512).build(new CacheLoader<Map.Entry<String, String>, CalculatedSubject>() {
         @Override
         public CalculatedSubject load(Map.Entry<String, String> key) throws Exception {
-            return new CalculatedSubject(key, PermissionsEx.this);
+            return new CalculatedSubject(SubjectDataBakers.inheritance(), key, PermissionsEx.this);
         }
     });
     private volatile ContextInheritance cachedInheritance;

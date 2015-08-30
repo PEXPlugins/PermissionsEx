@@ -20,7 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import ninja.leaping.permissionsex.data.CalculatedSubject;
+import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.service.permission.Subject;

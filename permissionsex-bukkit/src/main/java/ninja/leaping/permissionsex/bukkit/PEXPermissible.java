@@ -24,7 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.CalculatedSubject;
+import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;

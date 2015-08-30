@@ -24,7 +24,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.CalculatedSubject;
+import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.service.permission.Subject;
