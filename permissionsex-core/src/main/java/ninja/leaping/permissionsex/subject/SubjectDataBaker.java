@@ -14,10 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data.calculated;
+package ninja.leaping.permissionsex.subject;
 
-public class SubjectDataBakers {
-    public static SubjectDataBaker inheritance() {
-        return InheritanceSubjectDataBaker.INSTANCE;
-    }
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+public interface SubjectDataBaker {
+    BakedSubjectData bake(CalculatedSubject data, Set<Map.Entry<String, String>> activeContexts) throws ExecutionException;
 }

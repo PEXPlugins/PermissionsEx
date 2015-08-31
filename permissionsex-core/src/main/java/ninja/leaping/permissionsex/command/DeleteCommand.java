@@ -43,7 +43,7 @@ public class DeleteCommand {
                         if (!cache.isRegistered(subject.getValue())) {
                             throw new CommandException(_("Subject %s does not exist!", src.fmt().subject(subject)));
                         }
-                        messageSubjectOnFuture(cache.update(subject.getValue(), null), src, _("Successfully deleted data for subject %s", src.fmt().subject(subject)));
+                        messageSubjectOnFuture(cache.set(subject.getValue(), null), src, _("Successfully deleted data for subject %s", src.fmt().subject(subject)));
                     }
                 })
                 .build();

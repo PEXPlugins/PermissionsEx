@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Wrapper class between PEX commands and the Sponge command class
  */
-public class PEXSpongeCommand implements CommandCallable {
+class PEXSpongeCommand implements CommandCallable {
     private final CommandSpec command;
     private final PermissionsExPlugin plugin;
 

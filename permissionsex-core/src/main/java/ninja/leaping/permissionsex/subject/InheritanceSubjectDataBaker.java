@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data.calculated;
+package ninja.leaping.permissionsex.subject;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -44,7 +44,6 @@ import static java.util.Map.Entry;
  */
 class InheritanceSubjectDataBaker implements SubjectDataBaker {
     static final SubjectDataBaker INSTANCE = new InheritanceSubjectDataBaker();
-
 
     private InheritanceSubjectDataBaker() {
     }

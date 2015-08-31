@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data.calculated;
+package ninja.leaping.permissionsex.subject;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -24,10 +23,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.Collections;
@@ -45,6 +44,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final SubjectDataBaker baker;
     private final Map.Entry<String, String> identifier;
     private final PermissionsEx pex;
+    private final SubjectDataReference ref, transientRef;
 
     private final LoadingCache<Set<Map.Entry<String, String>>, BakedSubjectData> data = CacheBuilder.newBuilder().maximumSize(5)
             .build(new CacheLoader<Set<Map.Entry<String, String>>, BakedSubjectData>() {
@@ -54,14 +54,20 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         }
     });
 
-    public CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, PermissionsEx pex) {
+    public CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, PermissionsEx pex) throws ExecutionException {
         this.baker = Preconditions.checkNotNull(baker, "baker");
         this.identifier = Preconditions.checkNotNull(identifier, "identifier");
         this.pex = Preconditions.checkNotNull(pex, "pex");
+        this.ref = SubjectDataReference.forSubject(identifier.getValue(), pex.getSubjects(identifier.getKey()));
+        this.transientRef = SubjectDataReference.forSubject(identifier.getValue(), pex.getTransientSubjects(identifier.getKey()));
     }
 
     public Map.Entry<String, String> getIdentifier() {
         return identifier;
+    }
+
+    private String stringIdentifier() {
+        return this.identifier.getKey() + " " + this.identifier.getValue();
     }
 
     PermissionsEx getManager() {
@@ -89,7 +95,11 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     public List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts) {
         Preconditions.checkNotNull(contexts, "contexts");
         try {
-            return data.get(contexts).getParents();
+            List<Map.Entry<String, String>> parents = data.get(contexts).getParents();
+            if (pex.hasDebugMode()) {
+                pex.getLogger().info("Parents checked in " + contexts + " for " +  stringIdentifier() + ": " + parents);
+            }
+            return parents;
         } catch (ExecutionException e) {
             return ImmutableList.of();
         }
@@ -100,19 +110,27 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     }
 
     public int getPermission(Set<Entry<String, String>> contexts, String permission) {
-        return getPermissions(contexts).get(permission);
+        int ret = getPermissions(contexts).get(Preconditions.checkNotNull(permission, "permission"));
+        if (pex.hasDebugMode()) {
+            pex.getLogger().info("Permission " + permission + " checked in " + contexts + " for " + stringIdentifier() + ": " + ret);
+        }
+        return ret;
     }
 
     public Optional<String> getOption(Set<Entry<String, String>> contexts, String option) {
-        return Optional.fromNullable(getOptions(contexts).get(option));
+        String val = getOptions(contexts).get(Preconditions.checkNotNull(option, "option"));
+        if (pex.hasDebugMode()) {
+            pex.getLogger().info("Option " + option + " checked in " + contexts + " for " + stringIdentifier() + ": " + val);
+        }
+        return Optional.fromNullable(val);
     }
 
-    public ListenableFuture<ImmutableSubjectData> update(Function<ImmutableSubjectData, ImmutableSubjectData> func) {
-        return this.pex.getSubjects(this.identifier.getKey()).doUpdate(this.identifier.getValue(), func);
+    public SubjectDataReference data() {
+        return this.ref;
     }
 
-    public ListenableFuture<ImmutableSubjectData> updateTransient(Function<ImmutableSubjectData, ImmutableSubjectData> func) {
-        return this.pex.getSubjects(this.identifier.getKey()).doUpdate(this.identifier.getValue(), func);
+    public SubjectDataReference transientData() {
+        return this.transientRef;
     }
 
     @Override

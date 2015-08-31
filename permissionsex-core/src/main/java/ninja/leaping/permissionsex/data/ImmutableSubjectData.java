@@ -23,11 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 public interface ImmutableSubjectData {
-    /**
-     * Provide this set to indicate global contexts
-     */
-    Set<Map.Entry<String, String>> GLOBAL_CTX = ImmutableSet.of();
-
     Map<Set<Map.Entry<String, String>>, Map<String, String>> getAllOptions();
 
     Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts);

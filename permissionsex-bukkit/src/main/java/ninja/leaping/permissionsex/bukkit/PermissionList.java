@@ -138,7 +138,7 @@ public class PermissionList extends HashMap<String, Permission> {
         repl.set(v, new NotifyingChildrenMap(v));
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
             final Entry<String, String> def = plugin.getManager().getDefaultIdentifier();
-            plugin.getManager().getTransientSubjects(def.getKey()).doUpdate(def.getValue(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+            plugin.getManager().getTransientSubjects(def.getKey()).update(def.getValue(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
                 public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -157,7 +157,7 @@ public class PermissionList extends HashMap<String, Permission> {
             getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
                 final Entry<String, String> def = plugin.getManager().getDefaultIdentifier();
-                plugin.getManager().getTransientSubjects(def.getKey()).doUpdate(def.getValue(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+                plugin.getManager().getTransientSubjects(def.getKey()).update(def.getValue(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                     @Nullable
                     @Override
                     public ImmutableSubjectData apply(ImmutableSubjectData input) {

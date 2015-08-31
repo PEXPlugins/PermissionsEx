@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
-public class SpongeCommander implements Commander<TextBuilder> {
+class SpongeCommander implements Commander<TextBuilder> {
     private final PermissionsExPlugin pex;
     private final CommandSource commandSource;
     private final SpongeMessageFormatter formatter;

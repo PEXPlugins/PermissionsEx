@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.data.calculated;
+package ninja.leaping.permissionsex.subject;
 
 import com.google.common.base.Preconditions;
 import ninja.leaping.permissionsex.util.NodeTree;

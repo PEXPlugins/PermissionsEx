@@ -59,7 +59,7 @@ public class SubjectCache {
         return ret;
     }
 
-    public ListenableFuture<ImmutableSubjectData> doUpdate(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
+    public ListenableFuture<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
         ImmutableSubjectData data;
         try {
             data = getData(identifier, null);
@@ -69,7 +69,7 @@ public class SubjectCache {
 
         ImmutableSubjectData newData = action.apply(data);
         if (newData != data) {
-            return update(identifier, newData);
+            return set(identifier, newData);
         } else {
             return Futures.immediateFuture(data);
         }
@@ -105,7 +105,7 @@ public class SubjectCache {
         return dataStore.isRegistered(type, identifier);
     }
 
-    public ListenableFuture<ImmutableSubjectData> update(String identifier, ImmutableSubjectData newData) {
+    public ListenableFuture<ImmutableSubjectData> set(String identifier, ImmutableSubjectData newData) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(newData, "newData");
 
@@ -129,7 +129,6 @@ public class SubjectCache {
         Preconditions.checkNotNull(listener, "listener");
 
         listeners.addListener(identifier, listener);
-
     }
 
     public String getType() {

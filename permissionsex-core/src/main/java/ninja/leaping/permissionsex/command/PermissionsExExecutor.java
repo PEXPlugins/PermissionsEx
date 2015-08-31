@@ -39,7 +39,6 @@ import static ninja.leaping.permissionsex.util.Translations._;
 
 public abstract class PermissionsExExecutor implements CommandExecutor {
     protected final PermissionsEx pex;
-    static final Set<Map.Entry<String, String>> GLOBAL = ImmutableSet.of();
 
     protected PermissionsExExecutor(PermissionsEx pex) {
         this.pex = pex;

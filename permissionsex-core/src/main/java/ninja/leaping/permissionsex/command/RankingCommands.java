@@ -62,7 +62,7 @@ public class RankingCommands {
                         if (newData == data) {
                             throw new CommandException(_("%s was already at the top of ladder %s", src.fmt().subject(subject), src.fmt().ladder(ladder)));
                         }
-                        messageSubjectOnFuture(dataCache.update(subject.getValue(), newData), src, _("Promoted %s on ladder %s", src.fmt().subject(subject), src.fmt().hl(src.fmt().combined(ladder.getName()))));
+                        messageSubjectOnFuture(dataCache.set(subject.getValue(), newData), src, _("Promoted %s on ladder %s", src.fmt().subject(subject), src.fmt().hl(src.fmt().combined(ladder.getName()))));
                     }
                 })
                 .build();
@@ -86,7 +86,7 @@ public class RankingCommands {
                         if (newData == data) {
                             throw new CommandException(_("%s was not on ladder %s", src.fmt().subject(subject), src.fmt().ladder(ladder)));
                         }
-                        messageSubjectOnFuture(dataCache.update(subject.getValue(), newData), src, _("Demoted %s on ladder %s", src.fmt().subject(subject), src.fmt().hl(src.fmt().combined(ladder.getName()))));
+                        messageSubjectOnFuture(dataCache.set(subject.getValue(), newData), src, _("Demoted %s on ladder %s", src.fmt().subject(subject), src.fmt().hl(src.fmt().combined(ladder.getName()))));
                     }
                 })
                 .build();

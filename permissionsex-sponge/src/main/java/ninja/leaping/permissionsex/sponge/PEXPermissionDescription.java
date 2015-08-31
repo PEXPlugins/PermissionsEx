@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Implementation of a permission description
  */
-public class PEXPermissionDescription implements PermissionDescription {
+class PEXPermissionDescription implements PermissionDescription {
     private final PermissionsExPlugin plugin;
     private final String permId;
     private final Text description;

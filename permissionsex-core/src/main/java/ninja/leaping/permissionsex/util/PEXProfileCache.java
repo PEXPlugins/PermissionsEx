@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.sk89q.squirrelid.Profile;
 import com.sk89q.squirrelid.cache.ProfileCache;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 
@@ -44,7 +45,7 @@ public class PEXProfileCache implements ProfileCache  {
     public void put(Profile profile) {
         final String identifier = profile.getUniqueId().toString();
         try {
-            this.subjects.update(identifier, this.subjects.getData(identifier, null).setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName()));
+            this.subjects.set(identifier, this.subjects.getData(identifier, null).setOption(PermissionsEx.GLOBAL_CONTEXT, "name", profile.getName()));
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -62,7 +63,7 @@ public class PEXProfileCache implements ProfileCache  {
     public Profile getIfPresent(UUID uuid) {
         try {
             final ImmutableSubjectData data = subjects.getData(uuid.toString(), null);
-            final String name = data.getOptions(ImmutableSet.<Map.Entry<String, String>>of()).get("name");
+            final String name = data.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
             if (name == null) {
                 return null;
             }

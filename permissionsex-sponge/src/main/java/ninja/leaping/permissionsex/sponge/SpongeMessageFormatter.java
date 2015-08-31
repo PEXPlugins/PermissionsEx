@@ -43,7 +43,7 @@ import static ninja.leaping.permissionsex.sponge.SpongeTranslations._;
 /**
  * Factory to create formatted elements of messages
  */
-public class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
+class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
     private static final Text EQUALS_SIGN = Texts.of(TextColors.GRAY, "=");
     private final PermissionsExPlugin pex;
 

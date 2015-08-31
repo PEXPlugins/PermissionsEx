@@ -56,6 +56,7 @@ import org.spongepowered.api.entity.player.Player;
 import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
+import org.spongepowered.api.event.network.GameClientAuthEvent;
 import org.spongepowered.api.event.state.PreInitializationEvent;
 import org.spongepowered.api.event.state.ServerStoppedEvent;
 import org.spongepowered.api.plugin.Plugin;
@@ -68,7 +69,6 @@ import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
-import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.profile.GameProfileResolver;
 import org.spongepowered.api.service.scheduler.SchedulerService;
@@ -155,6 +155,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (IOException | ObjectMappingException e) {
             throw new RuntimeException(e);
         }
+
         defaults = getSubjects(manager.getDefaultIdentifier().getKey()).get(manager.getDefaultIdentifier().getValue());
 
         setCommandSourceProvider(getUserSubjects(), new Function<String, Optional<CommandSource>>() {
@@ -229,6 +230,15 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Subscribe
+    public void cacheUserAsync(GameClientAuthEvent event) {
+        try {
+            getManager().getCalculatedSubject(PermissionsEx.SUBJECTS_USER, event.getProfile().getUniqueId().toString());
+        } catch (PermissionsLoadingException e) {
+            logger.warn(lf(_("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage())), e);
+        }
+    }
+
+    @Subscribe
     public void disable(ServerStoppedEvent event) {
         logger.debug(lf(_("Disabling %s", PomData.NAME)));
         if (manager != null) {
@@ -237,13 +247,21 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Subscribe
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getEntity().getIdentifier();
-        final PEXSubject subject = getUserSubjects().get(identifier);
-        if (getUserSubjects().hasRegistered(identifier)) {
-            if (!event.getEntity().getName().equals(subject.getOption(SubjectData.GLOBAL_CONTEXT, "name").orNull())) {
-                subject.getSubjectData().setOption(SubjectData.GLOBAL_CONTEXT, "name", event.getEntity().getName());
-            }
+        final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
+        if (cache.isRegistered(identifier)) {
+            cache.update(identifier, new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+                @Nullable
+                @Override
+                public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
+                    if (event.getEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                        return input;
+                    } else {
+                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getEntity().getName());
+                    }
+                }
+            });
         }
     }
 
@@ -385,11 +403,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         this.descriptions.put(description.getId(), description);
         final SubjectCache coll = getManager().getTransientSubjects(SUBJECTS_ROLE_TEMPLATE);
         for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
-            Futures.getUnchecked(coll.doUpdate(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+            Futures.getUnchecked(coll.update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
                 public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                    return Preconditions.checkNotNull(input).setPermission(ImmutableSet.<Map.Entry<String, String>>of(), description.getId(), rank.getValue());
+                    return Preconditions.checkNotNull(input).setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue());
                 }
             }));
         }

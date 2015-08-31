@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-30 13:41-0700\n"
+"POT-Creation-Date: 2015-08-30 20:54-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -47,7 +47,7 @@ msgstr ""
 msgid "-"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:66
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:65
 msgid "A subject must be provided for this command!"
 msgstr ""
 
@@ -139,7 +139,7 @@ msgstr ""
 msgid "Enum value %s not valid"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:89
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:88
 msgid ""
 "Error (%s) occurred while performing command task! Please see console for "
 "details: %s"
@@ -157,7 +157,7 @@ msgstr ""
 msgid "Error creating subject DAO"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:90
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:89
 msgid "Error occurred while executing command for user %s"
 msgstr ""
 
@@ -185,7 +185,7 @@ msgstr ""
 msgid "Expected an integer, but input '%s' was not"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:57
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:56
 msgid "Global"
 msgstr ""
 
@@ -339,7 +339,7 @@ msgstr ""
 msgid "Trying to convert users stored by name to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:52
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:51
 msgid "Unable to get data for subject %s"
 msgstr ""
 
@@ -390,7 +390,7 @@ msgstr ""
 msgid "While performing version upgrade"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:76
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:75
 #: ninja/leaping/permissionsex/util/command/CommandContext.java:72
 #: ninja/leaping/permissionsex/util/command/CommandSpec.java:175
 msgid "You do not have permission to use this command!"

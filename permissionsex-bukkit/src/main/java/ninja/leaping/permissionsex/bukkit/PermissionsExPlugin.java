@@ -200,7 +200,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         if (getUserSubjects().isRegistered(identifier)) {
-            getUserSubjects().doUpdate(identifier, new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+            getUserSubjects().update(identifier, new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
                 public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {

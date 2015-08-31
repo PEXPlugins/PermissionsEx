@@ -54,7 +54,7 @@ public class ParentCommands {
                         ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
-                                dataCache.update(subject.getValue(), data.addParent(contexts, parent.getKey(), parent.getValue())), src,
+                                dataCache.set(subject.getValue(), data.addParent(contexts, parent.getKey(), parent.getValue())), src,
                                 _("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
@@ -75,7 +75,7 @@ public class ParentCommands {
                         ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
-                                dataCache.update(subject.getValue(), data.removeParent(contexts, parent.getKey(), parent.getValue())), src,
+                                dataCache.set(subject.getValue(), data.removeParent(contexts, parent.getKey(), parent.getValue())), src,
                                 _("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })

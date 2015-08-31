@@ -24,7 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -52,7 +52,6 @@ public class PEXPermissible extends PermissibleBase {
     private final Player player;
     private final PermissionsExPlugin plugin;
     private PermissionsEx pex;
-    private SubjectCache cache;
     private CalculatedSubject subj;
     private Permissible previousPermissible;
     private final Set<PEXPermissionAttachment> attachments = new HashSet<>();
@@ -74,7 +73,6 @@ public class PEXPermissible extends PermissibleBase {
 
     public void update(PermissionsEx newManager) throws PermissionsLoadingException {
         this.pex = newManager;
-        this.cache = newManager.getTransientSubjects(SUBJECTS_USER);
         this.subj = pex.getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString());
     }
 
@@ -148,7 +146,7 @@ public class PEXPermissible extends PermissibleBase {
     @Override
     public PermissionAttachment addAttachment(Plugin plugin) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
-        Futures.addCallback(this.cache.doUpdate(player.getUniqueId().toString(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        Futures.addCallback(this.subj.transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
@@ -169,7 +167,7 @@ public class PEXPermissible extends PermissibleBase {
     }
 
     public boolean removeAttachmentInternal(final PEXPermissionAttachment attach) {
-        Futures.addCallback(this.cache.doUpdate(player.getUniqueId().toString(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        Futures.addCallback(this.subj.transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
@@ -227,6 +225,17 @@ public class PEXPermissible extends PermissibleBase {
         return addAttachment(plugin); // TODO: Implement timed permissions
     }
 
+    /**
+     * TODO: Inject custom permissions here:
+     * | Permission                 | Usage
+       |----------------------------|------
+       | `group.<group>`            | Added for each group a user is in
+       | `groups.<group>`           | same as above
+       | `options.<option>.<value>` | Each option the user has
+       | `prefix.<prefix>`          | User's prefix
+       | `suffix.<suffix>`          | User's suffix
+      * @return
+     */
     @Override
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
         return ImmutableSet.copyOf(Iterables.transform(subj.getPermissions(getActiveContexts()).asMap().entrySet(), new Function<Map.Entry<String, Integer>, PermissionAttachmentInfo>() {

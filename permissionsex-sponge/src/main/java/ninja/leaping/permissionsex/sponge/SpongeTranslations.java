@@ -27,7 +27,7 @@ import java.util.ResourceBundle;
 /**
  * Utility class to handle translations to a given locale
  */
-public class SpongeTranslations {
+class SpongeTranslations {
 
     private SpongeTranslations() {}
 

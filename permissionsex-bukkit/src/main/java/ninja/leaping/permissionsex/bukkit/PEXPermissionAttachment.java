@@ -55,7 +55,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
 
     private void updateData(ImmutableSubjectData newData) {
         if (newData != this.subjectData) {
-            this.cache.update(getIdentifier(), newData);
+            this.cache.set(getIdentifier(), newData);
         }
     }
 

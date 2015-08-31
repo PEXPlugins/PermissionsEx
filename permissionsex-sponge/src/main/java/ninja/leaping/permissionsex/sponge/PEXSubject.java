@@ -20,7 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.service.permission.Subject;
@@ -45,7 +45,7 @@ import static ninja.leaping.permissionsex.sponge.PEXOptionSubjectData.parSet;
  * Permissions subject implementation
  */
 @NonnullByDefault
-public class PEXSubject implements OptionSubject {
+class PEXSubject implements OptionSubject {
     private final PEXSubjectCollection collection;
     private final PEXOptionSubjectData data;
     private final PEXOptionSubjectData transientData;
@@ -104,11 +104,7 @@ public class PEXSubject implements OptionSubject {
     public Optional<String> getOption(Set<Context> contexts, String key) {
         Preconditions.checkNotNull(contexts, "contexts");
         Preconditions.checkNotNull(key, "key");
-        final String val = baked.getOptions(parSet(contexts)).get(key);
-        if (collection.getPlugin().getManager().hasDebugMode()) {
-            collection.getPlugin().getLogger().info("Option " + key + " checked in " + contexts + " for user " + identifyUser() + ": " + val);
-        }
-        return Optional.fromNullable(val);
+        return baked.getOption(parSet(contexts), key);
     }
 
     @Override
@@ -130,11 +126,7 @@ public class PEXSubject implements OptionSubject {
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
         Preconditions.checkNotNull(contexts, "contexts");
         Preconditions.checkNotNull(permission, "permission");
-
-        int ret = baked.getPermissions(parSet(contexts)).get(permission);
-        if (collection.getPlugin().getManager().hasDebugMode()) {
-            collection.getPlugin().getLogger().info("Permission " + permission + " checked in " + contexts + " for user " + identifyUser() + ": " + ret);
-        }
+        int ret = baked.getPermission(parSet(contexts), permission);
         return ret == 0 ? Tristate.UNDEFINED : ret > 0 ? Tristate.TRUE : Tristate.FALSE;
     }
 
@@ -168,11 +160,7 @@ public class PEXSubject implements OptionSubject {
     @Override
     public List<Subject> getParents(final Set<Context> contexts) {
         Preconditions.checkNotNull(contexts, "contexts");
-        final List<Map.Entry<String, String>> parents = baked.getParents(parSet(contexts));
-        if (collection.getPlugin().getManager().hasDebugMode()) {
-            collection.getPlugin().getLogger().info("Parents checked in " + contexts + " for user " + identifyUser() + ": " + parents);
-        }
-        return Lists.transform(parents, new Function<Map.Entry<String, String>, Subject>() {
+        return Lists.transform(baked.getParents(parSet(contexts)), new Function<Map.Entry<String, String>, Subject>() {
             @Nullable
             @Override
             public Subject apply(@Nullable Map.Entry<String, String> input) {

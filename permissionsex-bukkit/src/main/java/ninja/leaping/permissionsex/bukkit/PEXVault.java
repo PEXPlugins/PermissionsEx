@@ -24,8 +24,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.calculated.CalculatedSubject;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -86,7 +87,7 @@ public class PEXVault extends Permission {
     }
 
     private Set<Map.Entry<String, String>> contextsFrom(@Nullable String world) {
-        return world == null ? ImmutableSet.<Map.Entry<String, String>>of() : ImmutableSet.of(Maps.immutableEntry("world", world));
+        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(Maps.immutableEntry("world", world));
     }
 
 
@@ -97,7 +98,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean groupAdd(final String world, String name, final String permission) {
-        return !getGroup(name).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getGroup(name).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -108,7 +109,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean groupRemove(final String world, String name, final String permission) {
-        return !getGroup(name).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getGroup(name).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -125,7 +126,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerAdd(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -146,7 +147,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerAddTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).updateTransient(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getSubject(player).transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -157,7 +158,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerRemoveTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).updateTransient(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getSubject(player).transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -168,7 +169,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerRemove(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -194,7 +195,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerAddGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -205,7 +206,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerRemoveGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
             @Nullable
             @Override
             public ImmutableSubjectData apply(ImmutableSubjectData input) {

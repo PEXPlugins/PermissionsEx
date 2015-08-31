@@ -22,9 +22,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.util.NonNullFunction;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.option.OptionSubjectData;
@@ -42,11 +45,10 @@ import java.util.concurrent.ExecutionException;
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-public class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjectData> {
+class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjectData> {
     private final PermissionsExPlugin plugin;
-    private volatile SubjectCache cache;
     private final String identifier;
-    private volatile ImmutableSubjectData data;
+    private SubjectDataReference data;
     private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
 
     public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
@@ -64,7 +66,6 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
     @SuppressWarnings("unchecked")
     static Set<Map.Entry<String, String>> parSet(Set<Context> input) {
         return (Set) input;
-
     }
 
     private static <T> Map<Set<Context>, T> tKeys(Map<Set<Map.Entry<String, String>>, T> input) {
@@ -85,58 +86,74 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
         return ret.build();
     }
 
-    private boolean updateIfChanged(ImmutableSubjectData old, @Nullable ImmutableSubjectData newData) {
-        if (newData == null) {
-            return false; // Change unsuccessful
-        } else if (old == newData) {
-            return false; // Nothing to do?
+    private boolean wasSuccess(ListenableFuture<ImmutableSubjectData> future) {
+        if (future.isDone()) {
+            try {
+                future.get();
+                return true;
+            } catch (InterruptedException | ExecutionException e) {
+                return false;
+            }
+        } else {
+            return true;
         }
-
-        cache.update(identifier, newData);
-        return true;
     }
 
     @Override
     public void clearCache(ImmutableSubjectData newData) {
         synchronized (parentsCache) {
-            this.data = newData;
             parentsCache.clear();
         }
     }
 
     void updateCache(SubjectCache newCache) throws ExecutionException {
-        this.cache = newCache;
-        clearCache(newCache.getData(identifier, this));
+        this.data = SubjectDataReference.forSubject(identifier, newCache, this);
+        clearCache(this.data.get());
     }
 
     @Override
     public Map<Set<Context>, Map<String, String>> getAllOptions() {
-        return tKeys(this.data.getAllOptions());
+        return tKeys(this.data.get().getAllOptions());
     }
 
     @Override
     public Map<String, String> getOptions(Set<Context> contexts) {
-        return this.data.getOptions(parSet(contexts));
+        return this.data.get().getOptions(parSet(contexts));
     }
 
     @Override
-    public boolean setOption(Set<Context> contexts, String key, String value) {
-        return updateIfChanged(data, data.setOption(parSet(contexts), key, value));
+    public boolean setOption(final Set<Context> contexts, final String key, final String value) {
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.setOption(parSet(contexts), key, value);
+            }
+        }));
     }
 
     @Override
-    public boolean clearOptions(Set<Context> contexts) {
-        return updateIfChanged(data, data.clearOptions(parSet(contexts)));
+    public boolean clearOptions(final Set<Context> contexts) {
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.clearOptions(parSet(contexts));
+            }
+        }));
     }
 
     @Override
     public boolean clearOptions() {
-        return updateIfChanged(data, data.clearOptions());
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.clearOptions();
+            }
+        }));
     }
 
     @Override
     public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-        return Maps.transformValues(tKeys(data.getAllPermissions()), new Function<Map<String, Integer>, Map<String, Boolean>>() {
+        return Maps.transformValues(tKeys(data.get().getAllPermissions()), new Function<Map<String, Integer>, Map<String, Boolean>>() {
             @Nullable
             @Override
             public Map<String, Boolean> apply(@Nullable Map<String, Integer> stringIntegerMap) {
@@ -157,7 +174,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
 
     @Override
     public Map<String, Boolean> getPermissions(Set<Context> set) {
-        return Maps.transformValues(data.getPermissions(parSet(set)), new Function<Integer, Boolean>() {
+        return Maps.transformValues(data.get().getPermissions(parSet(set)), new Function<Integer, Boolean>() {
             @Nullable
             @Override
             public Boolean apply(@Nullable Integer integer) {
@@ -167,8 +184,8 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
     }
 
     @Override
-    public boolean setPermission(Set<Context> set, String s, Tristate tristate) {
-        int val;
+    public boolean setPermission(final Set<Context> set, final String s, Tristate tristate) {
+        final int val;
         switch (tristate) {
             case TRUE:
                 val = 1;
@@ -183,23 +200,38 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
                 throw new IllegalStateException("Unknown tristate provided " + tristate);
         }
 
-        return updateIfChanged(data, data.setPermission(parSet(set), s, val));
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.setPermission(parSet(set), s, val);
+            }
+        }));
     }
 
     @Override
     public boolean clearPermissions() {
-        return updateIfChanged(data, data.clearPermissions());
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.clearPermissions();
+            }
+        }));
     }
 
     @Override
-    public boolean clearPermissions(Set<Context> set) {
-        return updateIfChanged(data, data.clearPermissions(parSet(set)));
+    public boolean clearPermissions(final Set<Context> set) {
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.clearPermissions(parSet(set));
+            }
+        }));
     }
 
     @Override
     public Map<Set<Context>, List<Subject>> getAllParents() {
         synchronized (parentsCache) {
-            for (Set<Map.Entry<String, String>> set : data.getActiveContexts()) {
+            for (Set<Map.Entry<String, String>> set : data.get().getActiveContexts()) {
                 getParentsInternal(set);
             }
             return tKeys(parentsCache);
@@ -215,7 +247,7 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
         List<Subject> parents = parentsCache.get(set);
         if (parents == null) {
             synchronized (parentsCache) {
-                List<Map.Entry<String, String>> rawParents = data.getParents(set);
+                List<Map.Entry<String, String>> rawParents = data.get().getParents(set);
                 if (rawParents == null) {
                     parents = ImmutableList.of();
                 } else {
@@ -234,26 +266,42 @@ public class PEXOptionSubjectData implements OptionSubjectData, Caching<Immutabl
     }
 
     @Override
-    public boolean addParent(Set<Context> set, Subject subject) {
-        return updateIfChanged(data, data.addParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier()));
+    public boolean addParent(final Set<Context> set, final Subject subject) {
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.addParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier());
+            }
+        }));
     }
 
     @Override
-    public boolean removeParent(Set<Context> set, Subject subject) {
-        return updateIfChanged(data, data.removeParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier()));
+    public boolean removeParent(final Set<Context> set, final Subject subject) {
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.removeParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier());
+            }
+        }));
     }
 
     @Override
     public boolean clearParents() {
-        return updateIfChanged(data, data.clearParents());
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.clearParents();
+            }
+        }));
     }
 
     @Override
-    public boolean clearParents(Set<Context> set) {
-        return updateIfChanged(data, data.clearParents(parSet(set)));
-    }
-
-    public ImmutableSubjectData getCurrent() {
-        return this.data;
+    public boolean clearParents(final Set<Context> set) {
+        return wasSuccess(data.update(new NonNullFunction<ImmutableSubjectData, ImmutableSubjectData>() {
+            @Override
+            public ImmutableSubjectData applyNonNull(ImmutableSubjectData input) {
+                return input.clearParents(parSet(set));
+            }
+        }));
     }
 }

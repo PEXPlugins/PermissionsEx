@@ -21,6 +21,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.chat.Chat;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.bukkit.OfflinePlayer;
@@ -50,7 +51,7 @@ public class PEXVaultChat extends Chat {
     }
 
     private Set<Map.Entry<String, String>> contextsFrom(@Nullable String world) {
-        return world == null ? ImmutableSet.<Map.Entry<String, String>>of() : ImmutableSet.of(Maps.immutableEntry("world", world));
+        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(Maps.immutableEntry("world", world));
     }
 
     private <T> T optOrDef(Optional<T> opt, @Nullable T def) {
@@ -69,7 +70,7 @@ public class PEXVaultChat extends Chat {
     @Override
     public void setGroupInfoString(final String world, String name, final String key, final String value) {
         try {
-            plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+            plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
                 public ImmutableSubjectData apply(ImmutableSubjectData input) {
@@ -94,7 +95,7 @@ public class PEXVaultChat extends Chat {
     @Override
     public void setPlayerInfoString(final String world, OfflinePlayer player, final String node, final String value) {
         try {
-            plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+            plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                 @Nullable
                 @Override
                 public ImmutableSubjectData apply(ImmutableSubjectData input) {
