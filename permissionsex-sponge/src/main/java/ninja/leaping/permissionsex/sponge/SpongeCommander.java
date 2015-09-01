@@ -21,7 +21,7 @@ import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
-import org.spongepowered.api.entity.player.Player;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.pagination.PaginationBuilder;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.TextBuilder;

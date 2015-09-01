@@ -47,13 +47,13 @@ import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.GameProfile;
-import org.spongepowered.api.entity.player.Player;
-import org.spongepowered.api.event.Subscribe;
-import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
-import org.spongepowered.api.event.entity.player.PlayerQuitEvent;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.entity.living.player.PlayerJoinEvent;
+import org.spongepowered.api.event.entity.living.player.PlayerQuitEvent;
+import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.event.network.GameClientAuthEvent;
-import org.spongepowered.api.event.state.PreInitializationEvent;
-import org.spongepowered.api.event.state.ServerStoppedEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.ProviderExistsException;
@@ -138,8 +138,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         return trans.translateFormatted(Locale.getDefault());
     }
 
-    @Subscribe
-    public void onPreInit(PreInitializationEvent event) throws PEBKACException {
+    @Listener
+    public void onPreInit(GamePreInitializationEvent event) throws PEBKACException {
         logger.info(lf(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION)));
         sql = services.potentiallyProvide(SqlService.class);
         scheduler = services.potentiallyProvide(SchedulerService.class);
@@ -218,7 +218,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
-    @Subscribe
+    @Listener
     public void cacheUserAsync(GameClientAuthEvent event) {
         try {
             getManager().getCalculatedSubject(PermissionsEx.SUBJECTS_USER, event.getProfile().getUniqueId().toString());
@@ -227,8 +227,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
-    @Subscribe
-    public void disable(ServerStoppedEvent event) {
+    @Listener
+    public void disable(GameStoppedServerEvent event) {
         logger.debug(lf(t("Disabling %s", PomData.NAME)));
         PermissionsEx manager = this.manager;
         if (manager != null) {
@@ -236,24 +236,24 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
-    @Subscribe
+    @Listener
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        final String identifier = event.getEntity().getIdentifier();
+        final String identifier = event.getSourceEntity().getIdentifier();
         final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
         if (cache.isRegistered(identifier)) {
             cache.update(identifier, input -> {
-                    if (event.getEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                    if (event.getSourceEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                         return input;
                     } else {
-                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getEntity().getName());
+                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getSourceEntity().getName());
                     }
             });
         }
     }
 
-    @Subscribe
+    @Listener
     public void onPlayerQuit(PlayerQuitEvent event) {
-        getUserSubjects().uncache(event.getEntity().getIdentifier());
+        getUserSubjects().uncache(event.getSourceEntity().getIdentifier());
     }
 
 
