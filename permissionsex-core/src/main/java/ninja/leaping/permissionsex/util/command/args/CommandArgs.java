@@ -16,9 +16,6 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.util.Translatable;
 
@@ -26,6 +23,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -61,7 +60,7 @@ public class CommandArgs {
     }
 
     public Optional<String> nextIfPresent() {
-        return hasNext() ? Optional.of(args.get(++index).getValue()) : Optional.<String>absent();
+        return hasNext() ? Optional.of(args.get(++index).getValue()) : Optional.empty();
     }
 
     public ArgumentParseException createError(Translatable message) {
@@ -71,13 +70,7 @@ public class CommandArgs {
     }
 
     public List<String> getAll() {
-        return Lists.transform(args, new Function<SingleArg, String>() {
-            @Nullable
-            @Override
-            public String apply(SingleArg input) {
-                return input.getValue();
-            }
-        });
+        return Lists.transform(args, SingleArg::getValue);
     }
 
     List<SingleArg> getArgs() {
@@ -88,7 +81,7 @@ public class CommandArgs {
         SingleArg currentArg = index == -1 ? null : args.get(index);
         List<SingleArg> newArgs = new ArrayList<>();
         for (SingleArg arg : args) {
-            if (filter.apply(arg.getValue())) {
+            if (filter.test(arg.getValue())) {
                 newArgs.add(arg);
             }
         }

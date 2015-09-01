@@ -16,15 +16,9 @@
  */
 package ninja.leaping.permissionsex.backend;
 
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -35,10 +29,12 @@ import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.util.Util;
 
-import javax.annotation.Nullable;
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -73,8 +69,8 @@ public abstract class AbstractDataStore implements DataStore {
 
     @Override
     public final ImmutableSubjectData getData(String type, String identifier, Caching<ImmutableSubjectData> listener) {
-        Preconditions.checkNotNull(type, "type");
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(identifier, "identifier");
 
         try {
             ImmutableSubjectData ret = getDataInternal(type, identifier);
@@ -88,25 +84,18 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public final ListenableFuture<ImmutableSubjectData> setData(String type, String identifier, ImmutableSubjectData data) {
-        Preconditions.checkNotNull(type, "type");
-        Preconditions.checkNotNull(identifier, "identifier");
+    public final CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, ImmutableSubjectData data) {
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(identifier, "identifier");
 
         final Map.Entry<String, String> lookupKey = Maps.immutableEntry(type, identifier);
-        ListenableFuture<ImmutableSubjectData> ret = setDataInternal(type, identifier, data);
-        Futures.addCallback(ret, new FutureCallback<ImmutableSubjectData>() {
-            @Override
-            public void onSuccess(@Nullable ImmutableSubjectData newData) {
-                if (newData != null) {
-                    listeners.call(lookupKey, newData);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-            }
-        });
-        return ret;
+        return setDataInternal(type, identifier, data)
+                .thenApply(newData -> {
+                    if (newData != null) {
+                        listeners.call(lookupKey, newData);
+                    }
+                    return newData;
+                });
     }
 
     /**
@@ -125,35 +114,23 @@ public abstract class AbstractDataStore implements DataStore {
 
     protected abstract ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException;
 
-    protected abstract ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data);
+    protected abstract CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data);
 
     @Override
     public final Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(final String type) {
-        Preconditions.checkNotNull(type, "type");
-        return Iterables.transform(getAllIdentifiers(type), new Function<String, Map.Entry<String, ImmutableSubjectData>>() {
-            @Nullable
-            @Override
-            public Map.Entry<String, ImmutableSubjectData> apply(String input) {
-                return Maps.immutableEntry(input, getData(type, input, null));
-            }
-        });
+        Objects.requireNonNull(type, "type");
+        return Iterables.transform(getAllIdentifiers(type),
+                input -> Maps.immutableEntry(input, getData(type, input, null)));
     }
 
     @Override
-    public final <T> ListenableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
-        final ListenableFutureTask<T> ret = ListenableFutureTask.create(new Callable<T>() {
-            @Override
-            public T call() throws Exception {
-                return performBulkOperationSync(function);
-            }
-        });
-        getManager().executeAsyncronously(ret);
-        return ret;
+    public final <T> CompletableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
+        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().getAsyncExecutor());
     }
 
     @Override
     public final RankLadder getRankLadder(String ladderName, Caching<RankLadder> listener) {
-        Preconditions.checkNotNull(ladderName, "ladderName");
+        Objects.requireNonNull(ladderName, "ladderName");
         RankLadder ladder = getRankLadderInternal(ladderName);
         if (listener != null) {
             rankLadderListeners.addListener(ladderName.toLowerCase(), listener);
@@ -162,26 +139,19 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public final ListenableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
-        ListenableFuture<RankLadder> ret = setRankLadderInternal(identifier, ladder);
-        Futures.addCallback(ret, new FutureCallback<RankLadder>() {
-            @Override
-            public void onSuccess(@Nullable RankLadder newData) {
-                if (newData != null) {
-                    rankLadderListeners.call(identifier, newData);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-            }
-        });
-        return ret;
+    public final CompletableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
+        return setRankLadderInternal(identifier, ladder)
+                .thenApply(newData -> {
+                    if (newData != null) {
+                        rankLadderListeners.call(identifier, newData);
+                    }
+                    return newData;
+                });
     }
 
 
     protected abstract RankLadder getRankLadderInternal(String ladder);
-    protected abstract ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
+    protected abstract CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
 
     @Override
     public final ContextInheritance getContextInheritance(Caching<ContextInheritance> listener) {
@@ -194,25 +164,18 @@ public abstract class AbstractDataStore implements DataStore {
 
 
     @Override
-    public final ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance contextInheritance) {
-        ListenableFuture<ContextInheritance> ret = setContextInheritanceInternal(contextInheritance);
-        Futures.addCallback(ret, new FutureCallback<ContextInheritance>() {
-            @Override
-            public void onSuccess(@Nullable ContextInheritance newData) {
-                if (newData != null) {
-                    contextInheritanceListeners.call(true, newData);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-            }
-        });
-        return ret;
+    public final CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance contextInheritance) {
+        return setContextInheritanceInternal(contextInheritance)
+                .thenApply(newData -> {
+                    if (newData != null) {
+                        contextInheritanceListeners.call(true, newData);
+                    }
+                    return newData;
+                });
     }
 
     protected abstract ContextInheritance getContextInheritanceInternal();
-    protected abstract ListenableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
+    protected abstract CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
 
     /**
      * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.
@@ -227,7 +190,7 @@ public abstract class AbstractDataStore implements DataStore {
     @Override
     @SuppressWarnings("unchecked") // Correct types are verified in the constructor
     public String serialize(ConfigurationNode node) throws PermissionsLoadingException {
-        Preconditions.checkNotNull(node, "node");
+        Objects.requireNonNull(node, "node");
         try {
             ((ObjectMapper) factory.mapper).bind(this).serialize(node);
         } catch (ObjectMappingException e) {
@@ -242,8 +205,8 @@ public abstract class AbstractDataStore implements DataStore {
         private final ObjectMapper<? extends AbstractDataStore> mapper;
 
         public Factory(final String type, Class<? extends AbstractDataStore> clazz) {
-            Preconditions.checkNotNull(type, "type");
-            Preconditions.checkNotNull(clazz, "clazz");
+            Objects.requireNonNull(type, "type");
+            Objects.requireNonNull(clazz, "clazz");
             this.type = type;
             this.expectedClazz = clazz;
             try {

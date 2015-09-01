@@ -82,7 +82,7 @@ class PEXSubject implements OptionSubject {
 
     @Override
     public Optional<CommandSource> getCommandSource() {
-        return getContainingCollection().getCommandSource(this.identifier);
+        return Optional.fromNullable(getContainingCollection().getCommandSource(this.identifier).orElse(null));
     }
 
     @Override
@@ -104,7 +104,7 @@ class PEXSubject implements OptionSubject {
     public Optional<String> getOption(Set<Context> contexts, String key) {
         Preconditions.checkNotNull(contexts, "contexts");
         Preconditions.checkNotNull(key, "key");
-        return baked.getOption(parSet(contexts), key);
+        return Optional.fromNullable(baked.getOption(parSet(contexts), key).orElse(null));
     }
 
     @Override

@@ -16,11 +16,9 @@
  */
 package ninja.leaping.permissionsex.backend.sql;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.db.DatabaseTypeUtils;
@@ -40,7 +38,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -71,7 +70,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
+    protected CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
         return null;
     }
 
@@ -81,7 +80,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
+    protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
         return null;
     }
 
@@ -109,13 +108,7 @@ public final class SqlDataStore extends AbstractDataStore {
     @Override
     public Iterable<String> getAllIdentifiers(String type) {
         try {
-            return Iterables.transform(subjectDao.queryBuilder().selectColumns("identifier").where().eq("type", type).queryRaw(), new Function<String[], String>() {
-                @Nullable
-                @Override
-                public String apply(String[] input) {
-                    return input[0];
-                }
-            });
+            return Iterables.transform(subjectDao.queryBuilder().selectColumns("identifier").where().eq("type", type).queryRaw(), input -> input[0]);
         } catch (SQLException e) {
             return ImmutableList.of();
         }
@@ -124,13 +117,7 @@ public final class SqlDataStore extends AbstractDataStore {
     @Override
     public Set<String> getRegisteredTypes() {
         try {
-            return ImmutableSet.copyOf(Iterables.transform(subjectDao.queryBuilder().selectColumns("type").distinct().queryRaw(), new Function<String[], String>() {
-                @Nullable
-                @Override
-                public String apply(@Nullable String[] input) {
-                    return input[0];
-                }
-            }));
+            return ImmutableSet.copyOf(Iterables.transform(subjectDao.queryBuilder().selectColumns("type").distinct().queryRaw(), input -> input[0]));
         } catch (SQLException e) {
             return ImmutableSet.of();
         }
@@ -157,18 +144,13 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ListenableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
+    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
         return null;
     }
 
     @Override
     protected <T> T performBulkOperationSync(final Function<DataStore, T> function) throws Exception {
-        return subjectDao.callBatchTasks(new Callable<T>() {
-            @Override
-            public T call() throws Exception {
-                return function.apply(SqlDataStore.this);
-            }
-        });
+        return subjectDao.callBatchTasks(() -> function.apply(SqlDataStore.this));
     }
 
 }

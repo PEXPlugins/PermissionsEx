@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -33,10 +31,11 @@ import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.command.CommandSource;
 
-import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 /**
  * Subject collection
@@ -108,13 +107,7 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public Iterable<Subject> getAllSubjects() {
-        return Iterables.transform(cache.getAllIdentifiers(), new Function<String, Subject>() {
-            @Nullable
-            @Override
-            public Subject apply(String s) {
-                return get(s);
-            }
-        });
+        return Iterables.transform(cache.getAllIdentifiers(), this::get);
     }
 
     @Override
@@ -139,7 +132,7 @@ class PEXSubjectCollection implements SubjectCollection {
         if (provider != null) {
             return provider.apply(identifier);
         } else {
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

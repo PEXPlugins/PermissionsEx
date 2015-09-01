@@ -16,18 +16,18 @@
  */
 package ninja.leaping.permissionsex.data;
 
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.util.Util;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 public class SubjectCache {
     private final String type;
@@ -41,16 +41,11 @@ public class SubjectCache {
         this.dataStore = dataStore;
         cache = CacheBuilder.newBuilder()
                 .maximumSize(512)
-                .build(new CacheLoader<String, ImmutableSubjectData>() {
-                    @Override
-                    public ImmutableSubjectData load(String identifier) throws Exception {
-                        return dataStore.getData(type, identifier, clearListener(identifier));
-                    }
-                });
+                .build(CacheLoader.from(identifier -> dataStore.getData(type, identifier, clearListener(identifier))));
     }
 
     public ImmutableSubjectData getData(String identifier, Caching<ImmutableSubjectData> listener) throws ExecutionException {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         ImmutableSubjectData ret = cache.get(identifier);
         if (listener != null) {
@@ -59,30 +54,30 @@ public class SubjectCache {
         return ret;
     }
 
-    public ListenableFuture<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
+    public CompletableFuture<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
         ImmutableSubjectData data;
         try {
             data = getData(identifier, null);
         } catch (ExecutionException e) {
-            return Futures.immediateFailedFuture(e);
+            return Util.failedFuture(e);
         }
 
         ImmutableSubjectData newData = action.apply(data);
         if (newData != data) {
             return set(identifier, newData);
         } else {
-            return Futures.immediateFuture(data);
+            return CompletableFuture.completedFuture(data);
         }
     }
 
     public void load(String identifier) throws ExecutionException {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         cache.get(identifier);
     }
 
     public void invalidate(String identifier) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         cache.invalidate(identifier);
         cacheHolders.remove(identifier);
@@ -100,33 +95,30 @@ public class SubjectCache {
     }
 
     public boolean isRegistered(String identifier) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.isRegistered(type, identifier);
     }
 
-    public ListenableFuture<ImmutableSubjectData> set(String identifier, ImmutableSubjectData newData) {
-        Preconditions.checkNotNull(identifier, "identifier");
-        Preconditions.checkNotNull(newData, "newData");
+    public CompletableFuture<ImmutableSubjectData> set(String identifier, ImmutableSubjectData newData) {
+        Objects.requireNonNull(identifier, "identifier");
+        Objects.requireNonNull(newData, "newData");
 
         return dataStore.setData(type, identifier, newData);
     }
 
     private Caching<ImmutableSubjectData> clearListener(final String name) {
-        Caching<ImmutableSubjectData> ret = new Caching<ImmutableSubjectData>() {
-            @Override
-            public void clearCache(ImmutableSubjectData newData) {
-                cache.put(name, newData);
-                listeners.call(name, newData);
-            }
+        Caching<ImmutableSubjectData> ret = newData -> {
+            cache.put(name, newData);
+            listeners.call(name, newData);
         };
         cacheHolders.put(name, ret);
         return ret;
     }
 
     public void addListener(String identifier, Caching<ImmutableSubjectData> listener) {
-        Preconditions.checkNotNull(identifier, "identifier");
-        Preconditions.checkNotNull(listener, "listener");
+        Objects.requireNonNull(identifier, "identifier");
+        Objects.requireNonNull(listener, "listener");
 
         listeners.addListener(identifier, listener);
     }

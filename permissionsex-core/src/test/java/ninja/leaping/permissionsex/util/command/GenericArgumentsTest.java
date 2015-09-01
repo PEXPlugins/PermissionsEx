@@ -97,7 +97,7 @@ public class GenericArgumentsTest {
         assertEquals("word", context.getOne("val"));
 
         context = parseForInput("42", el);
-        assertEquals(42, context.getOne("val"));
+        assertEquals((Integer) 42, context.getOne("val"));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class GenericArgumentsTest {
     @Test
     public void testInteger() throws ArgumentParseException {
         CommandContext context = parseForInput("52", integer(untr("a value")));
-        assertEquals(52, context.getOne("a value"));
+        assertEquals((Integer) 52, context.getOne("a value"));
 
         expected.expect(ArgumentParseException.class);
         parseForInput("notanumber", integer(untr("a value")));

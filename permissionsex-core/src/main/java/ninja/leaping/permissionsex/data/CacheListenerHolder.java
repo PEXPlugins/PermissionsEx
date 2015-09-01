@@ -29,15 +29,7 @@ public class CacheListenerHolder<Key, CacheType> {
     private Set<Caching<CacheType>> getListeners(Key key) {
         Preconditions.checkNotNull(key, "key");
 
-        Set<Caching<CacheType>> set = listeners.get(key);
-        if (set == null) {
-            set = Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).<Caching<CacheType>, Boolean>makeMap());
-            Set<Caching<CacheType>> potentialNewSet = listeners.putIfAbsent(key, set);
-            if (potentialNewSet != null) {
-                set = potentialNewSet;
-            }
-        }
-        return set;
+        return listeners.computeIfAbsent(key, k -> Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).makeMap()));
     }
 
     public void call(Key key, CacheType newData) {
@@ -47,7 +39,6 @@ public class CacheListenerHolder<Key, CacheType> {
         for (Caching<CacheType> listener : getListeners(key)) {
             listener.clearCache(newData);
         }
-
     }
 
     public void addListener(Key key, Caching<CacheType> listener) {

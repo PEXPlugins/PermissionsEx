@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import net.md_5.bungee.api.ChatColor;
@@ -31,6 +30,7 @@ import org.bukkit.entity.Player;
 import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -62,7 +62,7 @@ public class BukkitCommander implements Commander<BaseComponent> {
 
     @Override
     public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
-        return Optional.absent();
+        return Optional.empty();
         //return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
     }
 
@@ -78,21 +78,6 @@ public class BukkitCommander implements Commander<BaseComponent> {
     @Override
     public MessageFormatter<BaseComponent> fmt() {
         return formatter;
-    }
-
-    @Override
-    public void msg(Translatable message) {
-        msg(fmt().tr(message));
-    }
-
-    @Override
-    public void debug(Translatable message) {
-        debug(fmt().tr(message));
-    }
-
-    @Override
-    public void error(Translatable message) {
-        error(fmt().tr(message));
     }
 
     private void sendMessageInternal(BaseComponent formatted) {

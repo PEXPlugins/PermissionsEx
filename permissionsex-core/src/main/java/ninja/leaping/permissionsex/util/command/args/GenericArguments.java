@@ -16,9 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -36,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -389,25 +388,13 @@ public class GenericArguments {
                         element.parse(args, context);
                     } catch (ArgumentParseException ex) {
                         args.setPosition(position);
-                        return ImmutableList.copyOf(Iterables.transform(element.tabComplete(src, args, context), new Function<String, String>() {
-                            @Nullable
-                            @Override
-                            public String apply(@Nullable String input) {
-                                return "--" + finalLongFlag + "=" + input;
-                            }
-                        }));
+                        return ImmutableList.copyOf(Iterables.transform(element.tabComplete(src, args, context), input -> "--" + finalLongFlag + "=" + input));
                     }
                 }
             } else {
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
                 if (element == null) {
-                    return ImmutableList.copyOf(Iterables.transform(Iterables.filter(longFlags.keySet(), new StartsWithPredicate(longFlag.toLowerCase())), new Function<String, String>() {
-                        @Nullable
-                        @Override
-                        public String apply(@Nullable String input) {
-                            return "--" + input;
-                        }
-                    }));
+                    return ImmutableList.copyOf(Iterables.transform(Iterables.filter(longFlags.keySet(), new StartsWithPredicate(longFlag.toLowerCase())), input -> "--" + input));
                 } else {
                     boolean complete = false;
                     int position = args.getPosition();
@@ -567,7 +554,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            final String prefix = args.nextIfPresent().or("");
+            final String prefix = args.nextIfPresent().orElse("");
             return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new StartsWithPredicate(prefix)));
         }
 
@@ -635,15 +622,11 @@ public class GenericArguments {
 
         @Override
         public <TextType> List<String> tabComplete(final Commander<TextType> src, final CommandArgs args, final CommandContext context) {
-            return ImmutableList.copyOf(Iterables.concat(Iterables.transform(elements, new Function<CommandElement, Iterable<String>>() {
-                @Nullable
-                @Override
-                public Iterable<String> apply(CommandElement input) {
+            return ImmutableList.copyOf(Iterables.concat(Iterables.transform(elements, input -> {
                     int startIndex = args.getPosition();
                     List<String> ret = input.tabComplete(src, args, context);
                     args.setPosition(startIndex);
                     return ret;
-                }
             })));
         }
 
@@ -1007,13 +990,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            Iterable<String> validValues = Iterables.transform(Arrays.asList(type.getEnumConstants()), new Function<T, String>() {
-                @Nullable
-                @Override
-                public String apply(T input) {
-                    return input.name();
-                }
-            });
+            Iterable<String> validValues = Iterables.transform(Arrays.asList(type.getEnumConstants()), Enum::name);
 
             if (args.hasNext()) {
                 try {

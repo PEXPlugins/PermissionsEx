@@ -14,16 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.subject;
+package ninja.leaping.permissionsex.util;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
-public interface SubjectDataBaker {
-    BakedSubjectData bake(CalculatedSubject data, Set<Map.Entry<String, String>> activeContexts) throws ExecutionException;
-
-    static SubjectDataBaker inheritance() {
-        return InheritanceSubjectDataBaker.INSTANCE;
-    }
+@FunctionalInterface
+public interface ThrowingSupplier<V> {
+    V supply() throws Exception;
 }

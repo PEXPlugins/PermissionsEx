@@ -16,19 +16,13 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.inject.Inject;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -44,6 +38,7 @@ import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -86,13 +81,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.sponge.SpongeTranslations._;
 
@@ -128,6 +126,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
     private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
     private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
+    private Executor spongeExecutor = runnable -> {
+        scheduler.ref().get()
+                .createTaskBuilder()
+                .async()
+                .execute(runnable)
+                .submit(PermissionsExPlugin.this);
+    };
 
     private static String lf(Translatable trans) {
         return trans.translateFormatted(Locale.getDefault());
@@ -158,64 +163,48 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
         defaults = getSubjects(manager.getDefaultIdentifier().getKey()).get(manager.getDefaultIdentifier().getValue());
 
-        setCommandSourceProvider(getUserSubjects(), new Function<String, Optional<CommandSource>>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public Optional<CommandSource> apply(@Nullable String s) {
-                if (s == null) {
-                    return Optional.absent();
-                }
-
-                UUID uid;
-                try {
-                    uid = UUID.fromString(s);
-                } catch (IllegalArgumentException ex) {
-                    return Optional.absent();
-                }
-
-                // Yeah, java generics are stupid
-                return (Optional) game.getServer().getPlayer(uid);
-
+        setCommandSourceProvider(getUserSubjects(), name -> {
+            UUID uid;
+            try {
+                uid = UUID.fromString(name);
+            } catch (IllegalArgumentException ex) {
+                return Optional.empty();
             }
+
+            // Yeah, java generics are stupid
+            return Optional.ofNullable(game.getServer().getPlayer(uid).orNull());
+
         });
 
-        setCommandSourceProvider(getSubjects(PermissionService.SUBJECTS_SYSTEM), new Function<String, Optional<CommandSource>>() {
-            @Nullable
-            @Override
-            public Optional<CommandSource> apply(@Nullable String input) {
-                switch (input) {
-                    case "Server":
-                        return Optional.<CommandSource>of(game.getServer().getConsole());
-                    case "RCON":
-                        break;
-                }
-                return Optional.absent();
+        setCommandSourceProvider(getSubjects(PermissionService.SUBJECTS_SYSTEM), input -> {
+            switch (input) {
+                case "Server":
+                    return Optional.of(game.getServer().getConsole());
+                case "RCON":
+                    break;
             }
+            return Optional.empty();
         });
 
         registerContextCalculator(contextCalculator);
-        nameTransformerMap.put(PermissionService.SUBJECTS_USER, new Function<String, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable String input) {
-                try {
-                    UUID.fromString(input);
-                    return input;
-                } catch (IllegalArgumentException ex) {
-                    Optional<Player> player = game.getServer().getPlayer(input);
-                    if (player.isPresent()) {
-                        return player.get().getUniqueId().toString();
-                    } else {
-                        Optional<GameProfileResolver> res = game.getServiceManager().provide(GameProfileResolver.class);
-                        if (res.isPresent()) {
-                            for (GameProfile profile : res.get().match(input)) {
-                                if (profile.getName().equalsIgnoreCase(input)) {
-                                    return profile.getUniqueId().toString();
-                                }
+        nameTransformerMap.put(PermissionService.SUBJECTS_USER, input -> {
+            try {
+                UUID.fromString(input);
+                return input;
+            } catch (IllegalArgumentException ex) {
+                com.google.common.base.Optional<Player> player = game.getServer().getPlayer(input);
+                if (player.isPresent()) {
+                    return player.get().getUniqueId().toString();
+                } else {
+                    com.google.common.base.Optional<GameProfileResolver> res = game.getServiceManager().provide(GameProfileResolver.class);
+                    if (res.isPresent()) {
+                        for (GameProfile profile : res.get().match(input)) {
+                            if (profile.getName().equalsIgnoreCase(input)) {
+                                return profile.getUniqueId().toString();
                             }
                         }
-                        return input;
                     }
+                    return input;
                 }
             }
         });
@@ -241,6 +230,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Subscribe
     public void disable(ServerStoppedEvent event) {
         logger.debug(lf(_("Disabling %s", PomData.NAME)));
+        PermissionsEx manager = this.manager;
         if (manager != null) {
             manager.close();
         }
@@ -251,16 +241,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         final String identifier = event.getEntity().getIdentifier();
         final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
         if (cache.isRegistered(identifier)) {
-            cache.update(identifier, new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
+            cache.update(identifier, input -> {
                     if (event.getEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                         return input;
                     } else {
                         return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getEntity().getName());
                     }
-                }
             });
         }
     }
@@ -323,22 +309,16 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
-    public ListenableFuture<Void> reload() {
-        ListenableFutureTask<Void> task = ListenableFutureTask.create(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                reloadSync();
-                return null;
-            }
-        });
-        executeAsyncronously(task);
-        return task;
+    public CompletableFuture<Void> reload() {
+        return Util.asyncFailableFuture(() -> {
+            reloadSync();
+            return null;
+        }, getAsyncExecutor());
     }
 
     PermissionsEx getManager() {
         return this.manager;
     }
-
 
     @Override
     public PEXSubjectCollection getUserSubjects() {
@@ -391,31 +371,35 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public Optional<PermissionDescription.Builder> newDescriptionBuilder(Object instance) {
-        Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
+    public com.google.common.base.Optional<PermissionDescription.Builder> newDescriptionBuilder(Object instance) {
+        com.google.common.base.Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
         if (!container.isPresent()) {
             throw new IllegalArgumentException("Provided plugin did not have an associated plugin instance. Are you sure it's your plugin instance?");
         }
-        return Optional.<PermissionDescription.Builder>of(new PEXPermissionDescription.Builder(container.get(), this));
+        return com.google.common.base.Optional.of(new PEXPermissionDescription.Builder(container.get(), this));
     }
 
     void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
         this.descriptions.put(description.getId(), description);
         final SubjectCache coll = getManager().getTransientSubjects(SUBJECTS_ROLE_TEMPLATE);
         for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
-            Futures.getUnchecked(coll.update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                    return Preconditions.checkNotNull(input).setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue());
-                }
-            }));
+            try {
+                coll.update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+                    @Nullable
+                    @Override
+                    public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
+                        return Preconditions.checkNotNull(input).setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue());
+                    }
+                }).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw Throwables.propagate(e);
+            }
         }
     }
 
     @Override
-    public Optional<PermissionDescription> getDescription(String s) {
-        return Optional.<PermissionDescription>fromNullable(this.descriptions.get(s));
+    public com.google.common.base.Optional<PermissionDescription> getDescription(String s) {
+        return com.google.common.base.Optional.fromNullable(this.descriptions.get(s));
     }
 
     @Override
@@ -451,13 +435,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
+    /**
+     * Get an executor to run tasks asynchronously on.
+     *
+     * @return The async executor
+     */
     @Override
-    public void executeAsyncronously(Runnable run) {
-        scheduler.ref().get()
-                .createTaskBuilder()
-                .async()
-                .execute(run)
-        .submit(PermissionsExPlugin.this);
+    public Executor getAsyncExecutor() {
+        return this.spongeExecutor;
     }
 
     @Override
@@ -475,19 +460,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                     @Override
                     public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
                         src.msg(_("Reloading PermissionsEx"));
-                        Futures.addCallback(reload(), new FutureCallback<Void>() {
-                            @Override
-                            public void onSuccess(@Nullable Void result) {
-                                src.msg(_("The reload was successful"));
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                src.error(_("An error occurred while reloading PEX: %s\n " +
-                                        "Please see the server console for details", t.getLocalizedMessage()));
-                                logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                        src.getName(), t.getLocalizedMessage())), t);
-                            }
+                        reload().thenRun(() -> {
+                            src.msg(_("The reload was successful"));
+                        }).exceptionally(t -> {
+                            src.error(_("An error occurred while reloading PEX: %s\n " +
+                                    "Please see the server console for details", t.getLocalizedMessage()));
+                            logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                    src.getName(), t.getLocalizedMessage())), t);
+                            return null;
                         });
                     }
                 })
@@ -503,7 +483,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public Function<String, String> getNameTransformer(String type) {
         Function<String, String> xform = nameTransformerMap.get(type);
         if (xform == null) {
-            xform = Functions.identity();
+            xform = Function.identity();
         }
         return xform;
     }
@@ -517,13 +497,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     public Iterable<PEXSubject> getAllActiveSubjects() {
-        return Iterables.concat(Iterables.transform(subjectCollections.asMap().values(), new Function<PEXSubjectCollection, Iterable<PEXSubject>>() {
-            @Nullable
-            @Override
-            public Iterable<PEXSubject> apply(@Nullable PEXSubjectCollection input) {
-                return input.getActiveSubjects();
-            }
-        }));
+        return Iterables.concat(Iterables.transform(subjectCollections.asMap().values(), PEXSubjectCollection::getActiveSubjects));
     }
 
     public Game getGame() {

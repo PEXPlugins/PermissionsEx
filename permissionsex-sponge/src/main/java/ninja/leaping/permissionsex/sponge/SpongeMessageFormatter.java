@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.ButtonType;
@@ -37,6 +35,8 @@ import org.spongepowered.api.util.command.CommandSource;
 import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.sponge.SpongeTranslations._;
 
@@ -54,7 +54,7 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
     @Override
     public TextBuilder subject(Map.Entry<String, String> subject) {
         Function<String, Optional<CommandSource>> func = pex.getCommandSourceProvider(subject.getKey());
-        Optional<CommandSource> source = func == null ? Optional.<CommandSource>absent() : func.apply(subject.getValue());
+        Optional<CommandSource> source = func == null ? Optional.empty() : func.apply(subject.getValue());
         String name;
         if (source.isPresent()) {
             name = source.get().getName();

@@ -16,12 +16,10 @@
  */
 package ninja.leaping.permissionsex.data;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     private final String identifier;
@@ -48,18 +46,18 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
         return this.data.get();
     }
 
-    public ListenableFuture<ImmutableSubjectData> set(ImmutableSubjectData newData) {
+    public CompletableFuture<ImmutableSubjectData> set(ImmutableSubjectData newData) {
         return cache.set(this.identifier, newData);
     }
 
-    public ListenableFuture<ImmutableSubjectData> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
+    public CompletableFuture<ImmutableSubjectData> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
         ImmutableSubjectData data, newData;
         do {
             data = get();
 
             newData = modifierFunc.apply(data);
             if (newData == data) {
-                return Futures.immediateFuture(data);
+                return CompletableFuture.completedFuture(data);
             }
         } while (!this.data.compareAndSet(data, newData));
         return set(newData);

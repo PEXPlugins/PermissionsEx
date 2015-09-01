@@ -16,13 +16,7 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -31,13 +25,13 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -65,9 +59,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
@@ -200,15 +196,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         if (getUserSubjects().isRegistered(identifier)) {
-            getUserSubjects().update(identifier, new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                    if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
-                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
-                    } else {
-                        return input;
-                    }
+            getUserSubjects().update(identifier, input -> {
+                if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                    return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
+                } else {
+                    return input;
                 }
             });
         }
@@ -244,16 +236,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    public ListenableFuture<Void> reload() {
-        ListenableFutureTask<Void> task = ListenableFutureTask.create(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                reloadSync();
-                return null;
-            }
-        });
-        manager.executeAsyncronously(task);
-        return task;
+    public CompletableFuture<Void> reload() {
+        return Util.asyncFailableFuture(() -> {
+            reloadSync();
+            return null;
+        }, manager.getAsyncExecutor());
     }
 
     public PermissionList getPermissionList() {
@@ -340,12 +327,18 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     private void uninjectAllPermissibles() {
-        for (Player player : getServer().getOnlinePlayers()) {
-            uninjectPermissible(player);
-        }
+        getServer().getOnlinePlayers().forEach(this::uninjectPermissible);
     }
 
     private class BukkitImplementationInterface implements ImplementationInterface {
+        private final Executor bukkitExecutor = runnable -> {
+            if (enabled) {
+                getServer().getScheduler()
+                        .runTaskAsynchronously(PermissionsExPlugin.this, runnable);
+            } else {
+                runnable.run();
+            }
+        };
 
         @Override
         public File getBaseDirectory() {
@@ -362,15 +355,14 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             return null;
         }
 
+        /**
+         * Get an executor to run tasks asynchronously on.
+         *
+         * @return The async executor
+         */
         @Override
-        public void executeAsyncronously(Runnable run) {
-            if (enabled) {
-                getServer().getScheduler()
-                        .runTaskAsynchronously(PermissionsExPlugin.this, run);
-            } else {
-                run.run();
-            }
-
+        public Executor getAsyncExecutor() {
+            return bukkitExecutor;
         }
 
         @Override
@@ -393,19 +385,14 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
                         @Override
                         public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
                             src.msg(_("Reloading PermissionsEx"));
-                            Futures.addCallback(reload(), new FutureCallback<Void>() {
-                                @Override
-                                public void onSuccess(@Nullable Void result) {
-                                    src.msg(_("The reload was successful"));
-                                }
-
-                                @Override
-                                public void onFailure(Throwable t) {
-                                    src.error(_("An error occurred while reloading PEX: %s\n " +
-                                            "Please see the server console for details", t.getLocalizedMessage()));
-                                    logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                            src.getName(), t.getLocalizedMessage())), t);
-                                }
+                            reload()
+                                    .thenRun(() -> src.msg(_("The reload was successful")))
+                                    .exceptionally(t -> {
+                                src.error(_("An error occurred while reloading PEX: %s\n " +
+                                        "Please see the server console for details", t.getLocalizedMessage()));
+                                logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                        src.getName(), t.getLocalizedMessage())), t);
+                                return null;
                             });
                         }
                     })
@@ -421,7 +408,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         public Function<String, String> getNameTransformer(String type) {
             Function<String, String> xform = nameTransformerMap.get(type);
             if (xform == null) {
-                xform = Functions.identity();
+                xform = Function.identity();
             }
             return xform;
         }

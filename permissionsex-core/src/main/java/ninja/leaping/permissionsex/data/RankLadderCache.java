@@ -20,11 +20,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -84,7 +84,7 @@ public class RankLadderCache {
         return dataStore.hasRankLadder(identifier);
     }
 
-    public ListenableFuture<RankLadder> update(String identifier, RankLadder newData) {
+    public CompletableFuture<RankLadder> update(String identifier, RankLadder newData) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(newData, "newData");
 
@@ -92,12 +92,9 @@ public class RankLadderCache {
     }
 
     private Caching<RankLadder> clearListener(final String name) {
-        Caching<RankLadder> ret = new Caching<RankLadder>() {
-            @Override
-            public void clearCache(RankLadder newData) {
-                cache.put(name, newData);
-                listeners.call(name, newData);
-            }
+        Caching<RankLadder> ret = newData -> {
+            cache.put(name, newData);
+            listeners.call(name, newData);
         };
         cacheHolders.put(name, ret);
         return ret;

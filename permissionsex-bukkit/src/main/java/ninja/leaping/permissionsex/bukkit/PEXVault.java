@@ -16,16 +16,12 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.bukkit.OfflinePlayer;
@@ -98,24 +94,12 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean groupAdd(final String world, String name, final String permission) {
-        return !getGroup(name).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.setPermission(contextsFrom(world), permission, 1);
-            }
-        }).isCancelled();
+        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).isCancelled();
     }
 
     @Override
     public boolean groupRemove(final String world, String name, final String permission) {
-        return !getGroup(name).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.setPermission(contextsFrom(world), permission, 0);
-            }
-        }).isCancelled();
+        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).isCancelled();
 
     }
 
@@ -126,13 +110,7 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerAdd(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.setPermission(contextsFrom(world), permission, 1);
-            }
-        }).isCancelled();
+        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).isCancelled();
     }
 
     @Override
@@ -147,35 +125,17 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerAddTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.setPermission(contextsFrom(worldName), permission, 1);
-            }
-        }).isCancelled();
+        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 1)).isCancelled();
     }
 
     @Override
     public boolean playerRemoveTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.setPermission(contextsFrom(worldName), permission, 0);
-            }
-        }).isCancelled();
+        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 0)).isCancelled();
     }
 
     @Override
     public boolean playerRemove(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.setPermission(contextsFrom(world), permission, 0);
-            }
-        }).isCancelled();
+        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).isCancelled();
     }
 
     @Override
@@ -195,40 +155,20 @@ public class PEXVault extends Permission {
 
     @Override
     public boolean playerAddGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.addParent(contextsFrom(world), SUBJECTS_GROUP, group);
-            }
-        }).isCancelled();
+        return !getSubject(player).data().update(input -> input.addParent(contextsFrom(world), SUBJECTS_GROUP, group)).isCancelled();
     }
 
     @Override
     public boolean playerRemoveGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                return input.removeParent(contextsFrom(world), SUBJECTS_GROUP, group);
-            }
-        }).isCancelled();
+        return !getSubject(player).data().update(input -> input.removeParent(contextsFrom(world), SUBJECTS_GROUP, group)).isCancelled();
     }
 
     @Override
     public String[] getPlayerGroups(String world, OfflinePlayer player) {
-        return FluentIterable.from(getSubject(player).getParents(contextsFrom(world))).filter(new Predicate<Map.Entry<String, String>>() {
-            @Override
-            public boolean apply(@Nullable Map.Entry<String, String> input) {
-                return input.getKey().equals(SUBJECTS_GROUP);
-            }
-        }).transform(new Function<Map.Entry<String,String>, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable Map.Entry<String, String> input) {
-                return input.getValue();
-            }
-        }).toArray(String.class);
+        return getSubject(player).getParents(contextsFrom(world)).stream()
+                .filter(parent -> parent.getKey().equals(SUBJECTS_GROUP))
+                .map(Map.Entry::getValue)
+                .toArray(String[]::new);
     }
 
     @Override

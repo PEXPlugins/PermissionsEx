@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -26,7 +25,6 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,12 +68,8 @@ public final class FileSubjectData extends MemorySubjectData {
         Set<Entry<String, String>> contexts = Collections.emptySet();
         ConfigurationNode contextsNode = node.getNode(KEY_CONTEXTS);
         if (contextsNode.hasMapChildren()) {
-            contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.getChildrenMap().entrySet(), new Function<Map.Entry<Object, ? extends ConfigurationNode>, Entry<String, String>>() {
-                @Nullable
-                @Override
-                public Entry<String, String> apply(Map.Entry<Object, ? extends ConfigurationNode> ent) {
+            contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.getChildrenMap().entrySet(), ent -> {
                     return Maps.immutableEntry(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
-                }
             }));
         }
         return contexts;

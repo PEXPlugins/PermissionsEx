@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.config;
 
-import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.transformation.MoveStrategy;
 import ninja.leaping.configurate.transformation.TransformAction;
@@ -24,12 +23,9 @@ import ninja.leaping.configurate.transformation.TransformAction;
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.builder;
 
 public class ConfigTransformations {
-    private static final TransformAction DELETE_ITEM = new TransformAction() {
-        @Override
-        public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-            valueAtPath.setValue(null);
-            return null;
-        }
+    private static final TransformAction DELETE_ITEM = (inputPath, valueAtPath) -> {
+        valueAtPath.setValue(null);
+        return null;
     };
 
     /**
@@ -39,28 +35,15 @@ public class ConfigTransformations {
     private static ConfigurationTransformation initialToZero() {
         return builder()
                         .setMoveStrategy(MoveStrategy.MERGE)
-                        .addAction(p("permissions"), new TransformAction() {
-                            @Override
-                            public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-                                return new Object[0];
-                            }
-                        })
-                        .addAction(p("permissions", "backend"), new TransformAction() {
-                            @Override
-                            public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-                                return p("default-backend");
-                            }
-                        })
+                        .addAction(p("permissions"), (inputPath, valueAtPath) -> new Object[0])
+                        .addAction(p("permissions", "backend"), (inputPath, valueAtPath) -> p("default-backend"))
                         .addAction(p("permissions", "allowOps"), DELETE_ITEM)
                         .addAction(p("permissions", "basedir"), DELETE_ITEM)
-                        .addAction(p("updater"), new TransformAction() {
-                            @Override
-                            public Object[] visitPath(ConfigurationTransformation.NodePath inputPath, ConfigurationNode valueAtPath) {
-                                valueAtPath.getNode("enabled").setValue(valueAtPath.getValue());
-                                valueAtPath.getNode("always-update").setValue(valueAtPath.getParent().getNode("alwaysUpdate"));
-                                valueAtPath.getParent().getNode("alwaysUpdate").setValue(null);
-                                return null;
-                            }
+                        .addAction(p("updater"), (inputPath, valueAtPath) -> {
+                            valueAtPath.getNode("enabled").setValue(valueAtPath.getValue());
+                            valueAtPath.getNode("always-update").setValue(valueAtPath.getParent().getNode("alwaysUpdate"));
+                            valueAtPath.getParent().getNode("alwaysUpdate").setValue(null);
+                            return null;
                         })
                         .build();
     }

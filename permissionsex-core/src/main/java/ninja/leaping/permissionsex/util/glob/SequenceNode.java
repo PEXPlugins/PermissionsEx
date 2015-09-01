@@ -17,20 +17,19 @@
 package ninja.leaping.permissionsex.util.glob;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 class SequenceNode extends GlobNode {
     private static final Joiner JOIN = Joiner.on("");
     private final List<GlobNode> children;
 
     public SequenceNode(List<GlobNode> children) {
-        Preconditions.checkNotNull(children, "children");
+        Objects.requireNonNull(children, "children");
         this.children = ImmutableList.copyOf(children);
     }
 
@@ -95,7 +94,7 @@ class SequenceNode extends GlobNode {
         if (this == o) return true;
         if (!(o instanceof SequenceNode)) return false;
         SequenceNode strings = (SequenceNode) o;
-        return Objects.equal(children, strings.children);
+        return Objects.equals(children, strings.children);
     }
 
     @Override

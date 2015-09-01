@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.backend.memory;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -197,13 +195,8 @@ public class MemorySubjectData implements ImmutableSubjectData {
 
     @Override
     public Map<Set<Entry<String, String>>, Map<String, String>> getAllOptions() {
-        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Map<String, String>>() {
-            @Nullable
-            @Override
-            public Map<String, String> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.options;
-            }
-        }), Predicates.notNull());
+        return Maps.filterValues(Maps.transformValues(contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.options), el -> el != null);
     }
 
     @Override
@@ -240,25 +233,15 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
-            @Nullable
-            @Override
-            public DataEntry apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.withoutOptions();
-            }
-        });
+        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.withoutOptions());
         return newData(newValue);
     }
 
     @Override
     public Map<Set<Entry<String, String>>, Map<String, Integer>> getAllPermissions() {
-        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Map<String, Integer>>() {
-            @Nullable
-            @Override
-            public Map<String, Integer> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.permissions;
-            }
-        }), Predicates.notNull());
+        return Maps.filterValues(Maps.transformValues(contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.permissions), o -> o != null);
     }
 
     @Override
@@ -287,13 +270,8 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
-            @Nullable
-            @Override
-            public DataEntry apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.withoutPermissions();
-            }
-        });
+        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.withoutPermissions());
         return newData(newValue);
     }
 
@@ -306,29 +284,16 @@ public class MemorySubjectData implements ImmutableSubjectData {
 
     }
 
-    private static final Function<String, Map.Entry<String, String>> PARENT_TRANSFORM_FUNC = new Function<String, Map.Entry<String, String>>() {
-                    @Nullable
-                    @Override
-                    public Map.Entry<String, String> apply(String input) {
-                        return Util.subjectFromString(input);
-                    }
-                };
-
     @Override
     public Map<Set<Entry<String, String>>, List<Entry<String, String>>> getAllParents() {
-        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, List<Map.Entry<String, String>>>() {
-            @Nullable
-            @Override
-            public List<Map.Entry<String, String>> apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.parents == null ? null : Lists.transform(dataEntry.parents, PARENT_TRANSFORM_FUNC);
-            }
-        }), Predicates.notNull());
+        return Maps.filterValues(Maps.transformValues(contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.parents == null ? null : Lists.transform(dataEntry.parents, Util::subjectFromString)), v -> v != null);
     }
 
     @Override
     public List<Map.Entry<String, String>> getParents(Set<Entry<String, String>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
-        return ent == null || ent.parents == null ? Collections.<Map.Entry<String, String>>emptyList() : Lists.transform(ent.parents, PARENT_TRANSFORM_FUNC);
+        return ent == null || ent.parents == null ? Collections.<Map.Entry<String, String>>emptyList() : Lists.transform(ent.parents, Util::subjectFromString);
     }
 
     @Override
@@ -358,13 +323,7 @@ public class MemorySubjectData implements ImmutableSubjectData {
     @Override
     public ImmutableSubjectData setParents(Set<Entry<String, String>> contexts, List<Entry<String, String>> parents) {
         DataEntry entry = getDataEntryOrNew(contexts);
-        return newWithUpdated(contexts, entry.withParents(Lists.transform(parents, new Function<Entry<String,String>, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable Entry<String, String> input) {
-                return Util.subjectToString(input);
-            }
-        })));
+        return newWithUpdated(contexts, entry.withParents(Lists.transform(parents, Util::subjectToString)));
     }
 
     @Override
@@ -373,13 +332,8 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts, new Function<DataEntry, DataEntry>() {
-            @Nullable
-            @Override
-            public DataEntry apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.withoutParents();
-            }
-        });
+        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.withoutParents());
         return newData(newValue);
     }
 
@@ -409,13 +363,8 @@ public class MemorySubjectData implements ImmutableSubjectData {
 
     @Override
     public Map<Set<Entry<String, String>>, Integer> getAllDefaultValues() {
-        return Maps.filterValues(Maps.transformValues(contexts, new Function<DataEntry, Integer>() {
-            @Nullable
-            @Override
-            public Integer apply(@Nullable DataEntry dataEntry) {
-                return dataEntry == null ? null : dataEntry.defaultValue;
-            }
-        }), Predicates.notNull());
+        return Maps.filterValues(Maps.transformValues(contexts,
+                dataEntry -> dataEntry == null ? null : dataEntry.defaultValue), v -> v != null);
     }
 
     @Override

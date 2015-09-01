@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.util.command;
 /**
  * Interface containing the method directing how a certain command will be executed
  */
+@FunctionalInterface
 public interface CommandExecutor {
     /**
      * Callback for the execution of a command
@@ -28,5 +29,5 @@ public interface CommandExecutor {
      * @param <TextType> The type of text this Commander wants
      * @throws CommandException If a user-facing error occurs while executing this command
      */
-    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException;
+    <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException;
 }

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * PermissibleMap for the permissions subscriptions data in Bukkit's {@link PluginManager} so we can put in our own data too.
@@ -98,7 +99,7 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 
         Map<Permissible, Boolean> result = super.get(key);
         if (result == null) {
-            result = new PEXSubscriptionValueMap((String) key, new WeakHashMap<Permissible, Boolean>());
+            result = new PEXSubscriptionValueMap((String) key, new WeakHashMap<>());
             super.put((String) key, result);
         } else if (!(result instanceof PEXSubscriptionValueMap)) {
             result = new PEXSubscriptionValueMap((String) key, result);
@@ -178,12 +179,10 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
         @Override
         public Set<Permissible> keySet() {
             Collection<? extends Player> players = plugin.getServer().getOnlinePlayers();
-            Set<Permissible> pexMatches = new HashSet<Permissible>(players.size());
-            for (Player player : players) {
-                if (player.hasPermission(permission)) {
-                    pexMatches.add(player);
-                }
-            }
+            Set<Permissible> pexMatches = new HashSet<>(players.size());
+            players.stream()
+                    .filter(player -> player.hasPermission(permission))
+                    .collect(Collectors.toCollection(() -> pexMatches));
             return Sets.union(pexMatches, backing.keySet());
         }
 

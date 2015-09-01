@@ -14,10 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.subject;
+package ninja.leaping.permissionsex.util;
 
-public class SubjectDataBakers {
-    public static SubjectDataBaker inheritance() {
-        return InheritanceSubjectDataBaker.INSTANCE;
-    }
+/**
+ * An interface defining a function that may throw an exception
+ * @param <I>
+ * @param <O>
+ */
+@FunctionalInterface
+public interface ThrowingFunction<I, O> {
+    O apply(I input) throws Exception;
 }

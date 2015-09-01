@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex;
 
-import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
@@ -24,23 +23,24 @@ import org.slf4j.Logger;
 import javax.sql.DataSource;
 import java.io.File;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 /**
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
  */
 public interface ImplementationInterface {
-
     /**
      * Return the base directory to store any additional configuration files in.
      *
      * @return The base directory
      */
-    public File getBaseDirectory();
+    File getBaseDirectory();
     /**
      * Gets the appropriate logger
      * @return
      */
-    public Logger getLogger();
+    Logger getLogger();
 
     /**
      * Returns an appropriate data source for the implementation-dependent specificer {@code url}.
@@ -48,34 +48,35 @@ public interface ImplementationInterface {
      * @param url The specifier to get a data source for
      * @return The appropriate data source, or null if not supported
      */
-    public DataSource getDataSourceForURL(String url);
+    DataSource getDataSourceForURL(String url);
 
     /**
-     * Schedules a task to be executed asynchronously through an appropriate method
-     * @param run The task to be run
+     * Get an executor to run tasks asynchronously on.
+     *
+     * @return The async executor
      */
-    public void executeAsyncronously(Runnable run);
+    Executor getAsyncExecutor();
 
     /**
      * Register the given command to be executed on the implementation's interface
      *
      * @param command The command to execute
      */
-    public void registerCommand(CommandSpec command);
+    void registerCommand(CommandSpec command);
 
     /**
      * Get commands that the implementation wants to register as a child of the {@code /pex} command
      *
      * @return The desired subcommands, or an empty set
      */
-    public Set<CommandSpec> getImplementationCommands();
+    Set<CommandSpec> getImplementationCommands();
 
     /**
      * Return the version number attached to this implementation of PEX
      *
      * @return The currently running version
      */
-    public String getVersion();
+    String getVersion();
 
     /**
      * Returns a function that can be applied to a friendly name to convert it into a valid subject identifier.

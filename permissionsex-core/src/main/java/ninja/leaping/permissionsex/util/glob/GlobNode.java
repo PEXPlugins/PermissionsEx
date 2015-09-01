@@ -16,10 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.glob;
 
-import com.google.common.base.Preconditions;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 /**
  * A compiled version of a glob expression.
@@ -42,7 +39,7 @@ public abstract class GlobNode implements Iterable<String> {
      * @return
      */
     public boolean matches(String input) {
-        Preconditions.checkNotNull(input, "input");
+        Objects.requireNonNull(input, "input");
         for (String value : this) {
             if (input.equals(value)) {
                 return true;
@@ -52,7 +49,7 @@ public abstract class GlobNode implements Iterable<String> {
     }
 
     public boolean matchesIgnoreCase(String input) {
-        Preconditions.checkNotNull(input, "input");
+        Objects.requireNonNull(input, "input");
         for (String value : this) {
             if (input.equalsIgnoreCase(value)) {
                 return true;

@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.backend;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
@@ -29,6 +27,8 @@ import ninja.leaping.permissionsex.rank.RankLadder;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 /**
  * Data type abstraction for permissions data
@@ -63,7 +63,7 @@ public interface DataStore {
      * @param data The data to commit to this backend. This being null deletes any data for the given identifier
      * @return A future that can be used to listen for completion of writing the changed data
      */
-    ListenableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
+    CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
 
     /**
      * Return if the given subject has any data stored in this backend.
@@ -118,7 +118,7 @@ public interface DataStore {
      *
      * @param function The function to call containing the operation.
      */
-    <T> ListenableFuture<T> performBulkOperation(Function<DataStore, T> function);
+    <T> CompletableFuture<T> performBulkOperation(Function<DataStore, T> function);
 
     /**
      * Get all rank ladders.
@@ -151,10 +151,10 @@ public interface DataStore {
      * @param ladder The ladder to update
      * @return a future tracking the status of this operation
      */
-    ListenableFuture<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
+    CompletableFuture<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
 
     ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance);
 
-    ListenableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
+    CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
 }
 

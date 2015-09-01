@@ -16,11 +16,10 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import ninja.leaping.permissionsex.util.StartsWithPredicate;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
 import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
@@ -30,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static ninja.leaping.permissionsex.util.Translations._;
@@ -107,12 +107,7 @@ public class ChildCommands {
                         }
                         return ImmutableList.of();
                     } else {
-                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new Predicate<String>() {
-                            @Override
-                            public boolean apply(String input) {
-                                return input.startsWith(commandComponent.get());
-                            }
-                        }));
+                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new StartsWithPredicate(commandComponent.get())));
                     }
                 } else {
                     return ImmutableList.copyOf(children.keySet());
@@ -122,11 +117,8 @@ public class ChildCommands {
         @Override
         public <TextType> TextType getUsage(Commander<TextType> context) {
             List<Object> args = new ArrayList<>(Math.max(0, children.size() * 2 - 1));
-            Iterable<String> filteredCommands = Iterables.filter(filterCommands(context), new Predicate<String>() {
-                @Override
-                public boolean apply(String input) {
-                    return children.get(input).getAliases().get(0).equals(input); // Restrict to primary aliases in usage
-                }
+            Iterable<String> filteredCommands = Iterables.filter(filterCommands(context), input -> {
+                return children.get(input).getAliases().get(0).equals(input); // Restrict to primary aliases in usage
             });
 
             for (Iterator<String> it = filteredCommands.iterator(); it.hasNext();) {
@@ -139,16 +131,13 @@ public class ChildCommands {
         }
 
         private Iterable<String> filterCommands(final Commander<?> src) {
-            return Iterables.filter(children.keySet(), new Predicate<String>() {
-                @Override
-                public boolean apply(String input) {
-                    CommandSpec child = children.get(input);
-                    try {
-                        child.checkPermission(src);
-                        return true;
-                    } catch (CommandException ex) {
-                        return false;
-                    }
+            return Iterables.filter(children.keySet(), input -> {
+                CommandSpec child = children.get(input);
+                try {
+                    child.checkPermission(src);
+                    return true;
+                } catch (CommandException ex) {
+                    return false;
                 }
             });
         }

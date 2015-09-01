@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
@@ -27,7 +26,6 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -70,13 +68,7 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
 
     @Override
     public Map<String, Boolean> getPermissions() {
-        return Maps.transformValues(subjectData.getPermissions(PermissionsEx.GLOBAL_CONTEXT), new Function<Integer, Boolean>() {
-            @Nullable
-            @Override
-            public Boolean apply(Integer input) {
-                return input > 0;
-            }
-        });
+        return Maps.transformValues(subjectData.getPermissions(PermissionsEx.GLOBAL_CONTEXT), val -> val > 0);
     }
 
     @Override

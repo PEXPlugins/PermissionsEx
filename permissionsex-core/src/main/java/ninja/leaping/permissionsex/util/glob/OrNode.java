@@ -16,13 +16,11 @@
  */
 package ninja.leaping.permissionsex.util.glob;
 
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
-import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 class OrNode extends GlobNode {
     private final List<GlobNode> children;
@@ -33,13 +31,7 @@ class OrNode extends GlobNode {
 
     @Override
     public Iterator<String> iterator() {
-        return Iterators.concat(Iterators.transform(children.iterator(), new Function<GlobNode, Iterator<String>>() {
-            @Nullable
-            @Override
-            public Iterator<String> apply(GlobNode input) {
-                return input.iterator();
-            }
-        }));
+        return Iterators.concat(Iterators.transform(children.iterator(), GlobNode::iterator));
     }
 
     @Override
@@ -52,7 +44,7 @@ class OrNode extends GlobNode {
         if (this == o) return true;
         if (!(o instanceof OrNode)) return false;
         OrNode strings = (OrNode) o;
-        return Objects.equal(children, strings.children);
+        return Objects.equals(children, strings.children);
     }
 
     @Override

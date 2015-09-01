@@ -16,11 +16,6 @@
  */
 package ninja.leaping.permissionsex.command;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
@@ -32,7 +27,9 @@ import ninja.leaping.permissionsex.util.command.Commander;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.util.Translations._;
@@ -71,24 +68,16 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
 
     protected void checkSubjectPermission(final Commander<?> src, Map.Entry<String, String> subject, String basePermission) throws CommandException {
         if (!src.hasPermission(basePermission + '.' + subject.getKey() + '.' + subject.getValue())
-                && (!subject.equals(src.getSubjectIdentifier().orNull()) || !src.hasPermission(basePermission + ".own"))) {
+                && (!subject.equals(src.getSubjectIdentifier().orElse(null)) || !src.hasPermission(basePermission + ".own"))) {
             throw new CommandException(_("You do not have permission to use this command!"));
         }
     }
 
-    protected <TextType> void messageSubjectOnFuture(ListenableFuture<?> future, final Commander<TextType> src, final Translatable message) {
-        Futures.addCallback(future, new FutureCallback<Object>() {
-            @Override
-            public void onSuccess(Object result) {
-                src.msg(message);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                src.msg(_("Error (%s) occurred while performing command task! Please see console for details: %s", t.getClass().getSimpleName(), t.getMessage()));
-                pex.getLogger().error(_("Error occurred while executing command for user %s", src.getName()).translateFormatted(Locale.getDefault()), t);
-            }
+    protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Translatable message) {
+        future.thenRun(() -> src.msg(message)).exceptionally(err -> {
+            src.error(_("Error (%s) occurred while performing command task! Please see console for details: %s", err.getClass().getSimpleName(), err.getMessage()));
+            pex.getLogger().error(_("Error occurred while executing command for user %s", src.getName()).translateFormatted(Locale.getDefault()), err);
+            return null;
         });
-
     }
 }

@@ -16,12 +16,10 @@
  */
 package ninja.leaping.permissionsex.util.glob;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
@@ -30,7 +28,7 @@ class UnitNode extends GlobNode {
     private final String value;
 
     public UnitNode(String value) {
-        Preconditions.checkNotNull(value, "value");
+        Objects.requireNonNull(value, "value");
         this.value = value;
     }
 
@@ -54,13 +52,11 @@ class UnitNode extends GlobNode {
     }
 
     @Override
-    @IgnoreJRERequirement
     public void forEach(Consumer<? super String> consumer) {
         consumer.accept(value);
     }
 
     @Override
-    @IgnoreJRERequirement
     public Spliterator<String> spliterator() {
         return Spliterators.spliterator(new Object[] {value}, 1);
     }
@@ -75,7 +71,7 @@ class UnitNode extends GlobNode {
         if (this == o) return true;
         if (!(o instanceof UnitNode)) return false;
         UnitNode strings = (UnitNode) o;
-        return Objects.equal(value, strings.value);
+        return Objects.equals(value, strings.value);
     }
 
     @Override

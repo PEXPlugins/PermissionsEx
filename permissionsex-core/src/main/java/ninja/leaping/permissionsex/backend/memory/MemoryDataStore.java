@@ -16,14 +16,10 @@
  */
 package ninja.leaping.permissionsex.backend.memory;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
@@ -32,11 +28,12 @@ import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 /**
  * A data store backed entirely in memory
@@ -79,12 +76,12 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
+    public CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
         if (track) {
             this.data.put(Maps.immutableEntry(type, identifier), data);
         }
 
-        return Futures.immediateFuture(data);
+        return CompletableFuture.completedFuture(data);
     }
 
     @Override
@@ -97,9 +94,9 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected ListenableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
+    protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
         this.rankLadders.put(ladder, newLadder);
-        return Futures.immediateFuture(newLadder);
+        return CompletableFuture.completedFuture(newLadder);
     }
 
     @Override
@@ -109,29 +106,14 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Override
     public Iterable<String> getAllIdentifiers(final String type) {
-        return Iterables.transform(Maps.filterKeys(data, new Predicate<Map.Entry<String, String>>() {
-            @Override
-            public boolean apply(@Nullable Map.Entry<String, String> input) {
+        return Iterables.transform(Maps.filterKeys(data, input -> {
                 return input.getKey().equals(type);
-            }
-        }).keySet(), new Function<Map.Entry<String, String>, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable Map.Entry<String, String> input) {
-                return input.getValue();
-            }
-        });
+        }).keySet(), Map.Entry::getValue);
     }
 
     @Override
     public Set<String> getRegisteredTypes() {
-        return ImmutableSet.copyOf(Iterables.transform(data.keySet(), new Function<Map.Entry<String, String>, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable Map.Entry<String, String> input) {
-                return input.getKey();
-            }
-        }));
+        return ImmutableSet.copyOf(Iterables.transform(data.keySet(), Map.Entry::getKey));
     }
 
     @Override
@@ -155,9 +137,9 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ListenableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
+    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
         this.inheritance = inheritance;
-        return Futures.immediateFuture(this.inheritance);
+        return CompletableFuture.completedFuture(this.inheritance);
     }
 
     @Override

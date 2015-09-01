@@ -16,13 +16,13 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -42,7 +42,7 @@ class TestCommander implements Commander<String> {
 
     @Override
     public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
-        return Optional.absent();
+        return Optional.empty();
     }
 
     @Override
@@ -58,21 +58,6 @@ class TestCommander implements Commander<String> {
     @Override
     public MessageFormatter<String> fmt() {
         return TestMessageFormatter.INSTANCE;
-    }
-
-    @Override
-    public void msg(Translatable text) {
-        msg(text.translateFormatted(Locale.ROOT));
-    }
-
-    @Override
-    public void debug(Translatable text) {
-        debug(text.translateFormatted(Locale.ROOT));
-    }
-
-    @Override
-    public void error(Translatable text) {
-        error(text.translateFormatted(Locale.ROOT));
     }
 
     @Override

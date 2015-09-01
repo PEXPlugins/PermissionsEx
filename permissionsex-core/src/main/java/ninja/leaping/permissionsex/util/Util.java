@@ -21,6 +21,8 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.command.args.GenericArguments;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 import static ninja.leaping.permissionsex.util.command.args.GameArguments.context;
@@ -45,5 +47,32 @@ public class Util {
         return flags()
                 .flag("-transient")
                 .valueFlag(context(_("context")), "-context", "-contexts", "c");
+    }
+
+    public static <T> CompletableFuture<T> failedFuture(Throwable error) {
+        CompletableFuture<T> ret = new CompletableFuture<>();
+        ret.completeExceptionally(error);
+        return ret;
+    }
+
+    public static <I, T> CompletableFuture<T> failableFuture(I value, ThrowingFunction<I, T> func) {
+        return failableFuture(() -> func.apply(value));
+    }
+    public static <T> CompletableFuture<T> failableFuture(ThrowingSupplier<T> func) {
+        CompletableFuture<T> ret = new CompletableFuture<>();
+        return ret;
+    }
+
+    public static <T> CompletableFuture<T> asyncFailableFuture(ThrowingSupplier<T> supplier, Executor exec) {
+        CompletableFuture<T> ret = new CompletableFuture<>();
+        exec.execute((Runnable & CompletableFuture.AsynchronousCompletionTask) () -> {
+            try {
+                ret.complete(supplier.supply());
+            } catch (Exception e) {
+                ret.completeExceptionally(e);
+            }
+
+        });
+        return ret;
     }
 }

@@ -121,33 +121,6 @@
           </execution>
         </executions>
       </plugin>
-        <plugin>
-          <groupId>org.jboss.seven2six</groupId>
-          <artifactId>seven2six</artifactId>
-          <version>1.1.Final</version>
-          <executions>
-            <!-- run after "compile", lets your artifact work on 1.6 -->
-            <execution>
-              <inherited>true</inherited>
-              <id>weave</id>
-              <phase>process-classes</phase>
-              <goals>
-                <goal>transform</goal>
-              </goals>
-            </execution>
-            <!-- run after "test-compile", lets you run your tests on 1.6 -->
-            <!--<execution>
-              <id>weave-tests</id>
-              <phase>process-test-classes</phase>
-              <goals>
-                <goal>transform</goal>
-              </goals>
-              <configuration>
-                <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-              </configuration>
-            </execution>-->
-          </executions>
-        </plugin>
       </plugins>
 
     </pluginManagement>
@@ -157,35 +130,12 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
           <compilerArgs>
             <arg>-Xlint:all</arg>
           </compilerArgs>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.14</version>
-        <configuration>
-          <ignores>
-            <ignore>java.lang.Throwable</ignore>
-          </ignores>
-          <signature>
-            <groupId>org.codehaus.mojo.signature</groupId>
-            <artifactId>java16</artifactId>
-            <version>1.0</version>
-          </signature>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>test</phase>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

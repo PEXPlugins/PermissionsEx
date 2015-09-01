@@ -16,18 +16,15 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -138,13 +135,8 @@ public class PermissionList extends HashMap<String, Permission> {
         repl.set(v, new NotifyingChildrenMap(v));
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
             final Entry<String, String> def = plugin.getManager().getDefaultIdentifier();
-            plugin.getManager().getTransientSubjects(def.getKey()).update(def.getValue(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                    return input.setPermission(PermissionsEx.GLOBAL_CONTEXT, v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1);
-                }
-            });
+            plugin.getManager().getTransientSubjects(def.getKey())
+                    .update(def.getValue(), input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1));
         }
         return super.put(k, v);
     }
@@ -157,13 +149,8 @@ public class PermissionList extends HashMap<String, Permission> {
             getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
                 final Entry<String, String> def = plugin.getManager().getDefaultIdentifier();
-                plugin.getManager().getTransientSubjects(def.getKey()).update(def.getValue(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                    @Nullable
-                    @Override
-                    public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                        return input.setPermission(PermissionsEx.GLOBAL_CONTEXT, ret.getName(), 0);
-                    }
-                });
+                plugin.getManager().getTransientSubjects(def.getKey())
+                        .update(def.getValue(), input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, ret.getName(), 0));
             }
         }
         return ret;

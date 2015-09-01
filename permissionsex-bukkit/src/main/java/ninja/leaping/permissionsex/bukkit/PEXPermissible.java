@@ -16,17 +16,12 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.util.NodeTree;
 import org.bukkit.entity.Player;
@@ -38,7 +33,6 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
 
-import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -146,47 +140,19 @@ public class PEXPermissible extends PermissibleBase {
     @Override
     public PermissionAttachment addAttachment(Plugin plugin) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
-        Futures.addCallback(this.subj.transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                return input.addParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
-            }
-        }), new FutureCallback<ImmutableSubjectData>() {
-            @Override
-            public void onSuccess(@Nullable ImmutableSubjectData result) {
-                PEXPermissible.this.attachments.add(attach);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-
-            }
-        });
+        this.subj.transientData().update(input -> input.addParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
+                .thenRun(() -> this.attachments.add(attach));
         return attach;
     }
 
     public boolean removeAttachmentInternal(final PEXPermissionAttachment attach) {
-        Futures.addCallback(this.subj.transientData().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-            @Nullable
-            @Override
-            public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                return input.removeParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier());
-            }
-        }), new FutureCallback<ImmutableSubjectData>() {
-            @Override
-            public void onSuccess(@Nullable ImmutableSubjectData result) {
-                PermissionRemovedExecutor exec = attach.getRemovalCallback();
-                if (exec != null) {
-                    exec.attachmentRemoved(attach);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-
-            }
-        });
+        this.subj.transientData().update(input -> input.removeParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
+                .thenRun(() -> {
+                    PermissionRemovedExecutor exec = attach.getRemovalCallback();
+                    if (exec != null) {
+                        exec.attachmentRemoved(attach);
+                    }
+                });
         return true;
     }
 
@@ -238,13 +204,7 @@ public class PEXPermissible extends PermissibleBase {
      */
     @Override
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-        return ImmutableSet.copyOf(Iterables.transform(subj.getPermissions(getActiveContexts()).asMap().entrySet(), new Function<Map.Entry<String, Integer>, PermissionAttachmentInfo>() {
-            @Nullable
-            @Override
-            public PermissionAttachmentInfo apply(Map.Entry<String, Integer> input) {
-                return new PermissionAttachmentInfo(player, input.getKey(), null, input.getValue() > 0);
-            }
-        }));
+        return ImmutableSet.copyOf(Iterables.transform(subj.getPermissions(getActiveContexts()).asMap().entrySet(), input -> new PermissionAttachmentInfo(player, input.getKey(), null, input.getValue() > 0)));
     }
 
     public Set<Map.Entry<String, String>> getActiveContexts() {

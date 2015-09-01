@@ -16,9 +16,6 @@
  */
 package ninja.leaping.permissionsex.util.command.args;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -30,6 +27,7 @@ import ninja.leaping.permissionsex.util.command.Commander;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static ninja.leaping.permissionsex.util.Translations._;
@@ -66,7 +64,7 @@ public class GameArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            String nextOpt = args.nextIfPresent().or("");
+            String nextOpt = args.nextIfPresent().orElse("");
             return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new StartsWithPredicate(nextOpt)));
         }
     }
@@ -138,24 +136,19 @@ public class GameArguments {
                     identifierSegment = Optional.of(argSplit[1]);
                     final String finalType = type;
                     final Iterable<String> allIdents = Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers());
-                    final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, pex.getNameTransformer(type)), Predicates.notNull())),
+                    final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, k -> pex.getNameTransformer(finalType).apply(k)), v -> v != null)),
                             new StartsWithPredicate(identifierSegment.get())
                     );
 
-                    return ImmutableList.copyOf(
-                            Iterables.transform(ret, new Function<String, String>() {
-                                        @Override
-                                        public String apply(String input) {
-                                            return finalType + ":" + input;
-                                        }
-                                    }));
+                    return ImmutableList.copyOf(Iterables.transform(ret, input -> finalType + ":" + input));
                 } else {
                     return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new StartsWithPredicate(type)));
                 }
 
             }
             final Iterable<String> allIdents = Iterables.concat(pex.getSubjects(type).getAllIdentifiers(), pex.getTransientSubjects(type).getAllIdentifiers());
-            final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, pex.getNameTransformer(type)), Predicates.notNull())),
+            final String finalType = type;
+            final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, k -> pex.getNameTransformer(finalType).apply(k)), v -> v != null)),
                     new StartsWithPredicate(identifierSegment.get())
             );
 
@@ -208,7 +201,7 @@ public class GameArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new StartsWithPredicate(args.nextIfPresent().or(""))));
+            return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new StartsWithPredicate(args.nextIfPresent().orElse(""))));
         }
     }
 

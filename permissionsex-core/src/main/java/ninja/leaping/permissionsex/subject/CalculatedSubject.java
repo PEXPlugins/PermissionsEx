@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.subject;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -32,6 +31,7 @@ import ninja.leaping.permissionsex.util.NodeTree;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -122,7 +122,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         if (pex.hasDebugMode()) {
             pex.getLogger().info("Option " + option + " checked in " + contexts + " for " + stringIdentifier() + ": " + val);
         }
-        return Optional.fromNullable(val);
+        return Optional.ofNullable(val);
     }
 
     public SubjectDataReference data() {

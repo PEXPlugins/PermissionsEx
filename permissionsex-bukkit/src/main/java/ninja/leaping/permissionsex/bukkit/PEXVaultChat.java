@@ -16,13 +16,10 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.chat.Chat;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.bukkit.OfflinePlayer;
 
@@ -54,14 +51,10 @@ public class PEXVaultChat extends Chat {
         return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(Maps.immutableEntry("world", world));
     }
 
-    private <T> T optOrDef(Optional<T> opt, @Nullable T def) {
-        return def == null ? opt.orNull() : opt.or(def);
-    }
-
     @Override
     public String getGroupInfoString(final String world, String name, final String key, String defaultValue) {
         try {
-            return optOrDef(plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).getOption(contextsFrom(world), key), defaultValue);
+            return plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).getOption(contextsFrom(world), key).orElse(defaultValue);
         } catch (PermissionsLoadingException e) {
             return defaultValue;
         }
@@ -70,13 +63,7 @@ public class PEXVaultChat extends Chat {
     @Override
     public void setGroupInfoString(final String world, String name, final String key, final String value) {
         try {
-            plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                    return input.setOption(contextsFrom(world), key, value);
-                }
-            });
+            plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).data().update(input -> input.setOption(contextsFrom(world), key, value));
         } catch (PermissionsLoadingException e) {
             return; // TODO: Log exception?
         }
@@ -86,7 +73,7 @@ public class PEXVaultChat extends Chat {
     @Override
     public String getPlayerInfoString(String world, OfflinePlayer player, String node, String defaultValue) {
         try {
-            return optOrDef(plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).getOption(contextsFrom(world), node), defaultValue);
+            return plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).getOption(contextsFrom(world), node).orElse(defaultValue);
         } catch (PermissionsLoadingException e) {
             return defaultValue;
         }
@@ -95,13 +82,7 @@ public class PEXVaultChat extends Chat {
     @Override
     public void setPlayerInfoString(final String world, OfflinePlayer player, final String node, final String value) {
         try {
-            plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).data().update(new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(ImmutableSubjectData input) {
-                    return input.setOption(contextsFrom(world), node, value);
-                }
-            });
+            plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).data().update(input -> input.setOption(contextsFrom(world), node, value));
         } catch (PermissionsLoadingException e) {
             return; // TODO: Log exception?
         }

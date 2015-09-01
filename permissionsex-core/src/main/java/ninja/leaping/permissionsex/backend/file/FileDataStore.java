@@ -16,18 +16,12 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
@@ -48,15 +42,16 @@ import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.util.Translations._;
 
@@ -125,14 +120,10 @@ public final class FileDataStore extends AbstractDataStore {
 
         if (permissionsConfig.getChildrenMap().isEmpty()) { // New configuration, populate with default data
             try {
-                performBulkOperationSync(new Function<DataStore, Void>() {
-                    @Nullable
-                    @Override
-                    public Void apply(@Nullable DataStore input) {
+                performBulkOperationSync(input -> {
                         applyDefaultData();
                         permissionsConfig.getNode("schema-version").setValue(SchemaMigrations.LATEST_VERSION);
                         return null;
-                    }
                 });
             } catch (PermissionsLoadingException e) {
                 throw e;
@@ -164,19 +155,14 @@ public final class FileDataStore extends AbstractDataStore {
         return this.permissionsConfig.getNode("subjects");
     }
 
-    private ListenableFuture<Void> save() {
+    private CompletableFuture<Void> save() {
         if (saveSuppressed.get() <= 0) {
-            final ListenableFutureTask<Void> ret = ListenableFutureTask.create(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    saveSync();
-                    return null;
-                }
-            });
-            getManager().executeAsyncronously(ret);
-            return ret;
+            return Util.asyncFailableFuture(() -> {
+                saveSync();
+                return null;
+            }, getManager().getAsyncExecutor());
         } else {
-            return Futures.immediateFuture(null);
+            return CompletableFuture.completedFuture(null);
         }
     }
 
@@ -196,11 +182,11 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected ListenableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, final ImmutableSubjectData data) {
+    protected CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, final ImmutableSubjectData data) {
         try {
             if (data == null) {
                 getSubjectsNode().getNode(type, identifier).setValue(null);
-                return Futures.transform(save(), Functions.<ImmutableSubjectData>constant(null));
+                return save().thenApply(input -> null);
             }
 
             final FileSubjectData fileData;
@@ -211,15 +197,9 @@ public final class FileDataStore extends AbstractDataStore {
                 fileData = ConversionUtils.transfer(data, new FileSubjectData());
             }
             fileData.serialize(getSubjectsNode().getNode(type, identifier));
-            return Futures.transform(save(), new Function<Void, ImmutableSubjectData>() {
-                @Nullable
-                @Override
-                public ImmutableSubjectData apply(Void input) {
-                    return fileData;
-                }
-            });
+            return save().thenApply(none -> fileData);
         } catch (ObjectMappingException e) {
-            return Futures.immediateFailedFuture(e);
+            return Util.failedFuture(e);
         }
     }
 
@@ -236,34 +216,20 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public Set<String> getRegisteredTypes() {
-        return ImmutableSet.copyOf(Iterables.transform(Maps.filterValues(getSubjectsNode().getChildrenMap(), new Predicate<ConfigurationNode>() {
-            @Override
-            public boolean apply(@Nullable ConfigurationNode input) {
-                return input != null && input.hasMapChildren();
-            }
-        }).keySet(), Functions.toStringFunction()));
+        return ImmutableSet.copyOf(Iterables.transform(Maps.filterValues(getSubjectsNode().getChildrenMap(),
+                input -> input != null && input.hasMapChildren()).keySet(), Object::toString));
     }
 
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
-        return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), new Function<Object, Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>>>() {
-            @Nullable
-            @Override
-            public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> apply(@Nullable final Object type) {
+        return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), type -> {
                 if (type == null) {
                     return null;
                 }
 
                 final String typeStr = type.toString();
 
-                return Iterables.transform(getAll(typeStr), new Function<Map.Entry<String, ImmutableSubjectData>, Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>>() {
-                    @Nullable
-                    @Override
-                    public Map.Entry<Map.Entry<String, String>, ImmutableSubjectData> apply(Map.Entry<String, ImmutableSubjectData> input2) {
-                        return Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue());
-                    }
-                });
-            }
+                return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
         }));
     }
 
@@ -273,18 +239,12 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public Iterable<String> getAllRankLadders() {
-        return Iterables.unmodifiableIterable(Iterables.transform(getRankLaddersNode().getChildrenMap().keySet(),Functions.toStringFunction()));
+        return Iterables.unmodifiableIterable(Iterables.transform(getRankLaddersNode().getChildrenMap().keySet(), Object::toString));
     }
 
     @Override
     public RankLadder getRankLadderInternal(String ladder) {
-        return new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), new Function<ConfigurationNode, Map.Entry<String, String>>() {
-            @Nullable
-            @Override
-            public Map.Entry<String, String> apply(ConfigurationNode input) {
-                return Util.subjectFromString(input.getString());
-            }
-        })));
+        return new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), input -> Util.subjectFromString(input.getString()))));
     }
 
     @Override
@@ -302,31 +262,25 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ListenableFuture<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
+    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
         final MemoryContextInheritance realInheritance = MemoryContextInheritance.fromExistingContextInheritance(inheritance);
         try {
             this.permissionsConfig.setValue(TypeToken.of(MemoryContextInheritance.class), realInheritance);
         } catch (ObjectMappingException e) {
             throw new RuntimeException(e);
         }
-        return Futures.transform(save(), new Function<Void, ContextInheritance>() {
-            @Nullable
-            @Override
-            public ContextInheritance apply(@Nullable Void input) {
-                return realInheritance;
-            }
-        });
+        return save().thenApply(none -> realInheritance);
     }
 
     @Override
-    public ListenableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
+    public CompletableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
         ConfigurationNode childNode = getRankLaddersNode().getNode(identifier.toLowerCase());
         childNode.setValue(null);
         for (Map.Entry<String, String> rank : ladder.getRanks()) {
             childNode.getAppendedNode().setValue(Util.subjectToString(rank));
 
         }
-        return Futures.transform(save(), Functions.constant(ladder));
+        return save().thenApply(none -> ladder);
     }
 
     @Override

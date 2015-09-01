@@ -38,7 +38,7 @@ public class CommandFlagsTest {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         assertEquals(true, args.getOne("a"));
-                        assertEquals(42, args.getOne("quot"));
+                        assertEquals((Integer) 42, args.getOne("quot"));
                         assertEquals("something", args.getOne("key"));
                     }
                 })

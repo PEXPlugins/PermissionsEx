@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.util.Translatable;
@@ -26,7 +24,6 @@ import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.entity.player.Player;
 import org.spongepowered.api.service.pagination.PaginationBuilder;
 import org.spongepowered.api.service.pagination.PaginationService;
-import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextBuilder;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.command.CommandSource;
@@ -34,6 +31,7 @@ import org.spongepowered.api.util.command.CommandSource;
 import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -81,22 +79,6 @@ class SpongeCommander implements Commander<TextBuilder> {
     }
 
     @Override
-    public void msg(Translatable message) {
-        msg(fmt().tr(message));
-    }
-
-
-    @Override
-    public void debug(Translatable message) {
-        debug(fmt().tr(message));
-    }
-
-    @Override
-    public void error(Translatable message) {
-        error(fmt().tr(message));
-    }
-
-    @Override
     public void msg(TextBuilder text) {
         commandSource.sendMessage(text.color(TextColors.DARK_AQUA).build());
     }
@@ -119,13 +101,7 @@ class SpongeCommander implements Commander<TextBuilder> {
         if (header != null) {
             build.header(fmt().tr(header).color(TextColors.GRAY).build());
         }
-        build.contents(Iterables.transform(text, new Function<TextBuilder, Text>() {
-            @Nullable
-            @Override
-            public Text apply(TextBuilder input) {
-                return input.color(TextColors.DARK_AQUA).build();
-            }
-        }))
+        build.contents(Iterables.transform(text, input -> input.color(TextColors.DARK_AQUA).build()))
                 .sendTo(commandSource);
     }
 }

@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
@@ -26,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.File;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 /**
  */
@@ -52,9 +52,14 @@ public class TestImplementationInterface implements ImplementationInterface {
         return null;
     }
 
+    /**
+     * Get an executor to run tasks asynchronously on.
+     *
+     * @return The async executor
+     */
     @Override
-    public void executeAsyncronously(Runnable run) {
-        run.run();
+    public Executor getAsyncExecutor() {
+        return Runnable::run;
     }
 
     @Override
@@ -73,6 +78,6 @@ public class TestImplementationInterface implements ImplementationInterface {
 
     @Override
     public Function<String, String> getNameTransformer(String type) {
-        return Functions.identity();
+        return Function.identity();
     }
 }
