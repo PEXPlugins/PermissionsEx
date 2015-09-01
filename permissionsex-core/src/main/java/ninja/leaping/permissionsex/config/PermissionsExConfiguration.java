@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
@@ -70,21 +70,21 @@ public class PermissionsExConfiguration {
 
     public void validate() throws PEBKACException {
         if (backends.isEmpty()) {
-            throw new PEBKACException(_("No backends defined!"));
+            throw new PEBKACException(t("No backends defined!"));
         }
         if (defaultBackend == null) {
-            throw new PEBKACException(_("Default backend is not set!"));
+            throw new PEBKACException(t("Default backend is not set!"));
         }
 
         if (!backends.containsKey(defaultBackend)) {
-            throw new PEBKACException(_("Default backend % is not an available backend! Choices are: %s", defaultBackend, backends.keySet()));
+            throw new PEBKACException(t("Default backend % is not an available backend! Choices are: %s", defaultBackend, backends.keySet()));
         }
     }
 
     public static ConfigurationNode loadDefaultConfiguration() throws IOException {
         final URL defaultConfig = PermissionsExConfiguration.class.getResource("default.conf");
         if (defaultConfig == null) {
-            throw new Error(_("Default config file is not present in jar!").translate(Locale.getDefault()));
+            throw new Error(t("Default config file is not present in jar!").translate(Locale.getDefault()));
         }
         HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder().setURL(defaultConfig).build();
         return fallbackLoader.load();

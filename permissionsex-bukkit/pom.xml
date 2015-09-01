@@ -31,7 +31,7 @@
           </execution>
         </executions>
         <configuration>
-          <keywords>-k_ -k_n:1,2 -kdtr -ktranslated</keywords>
+          <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
           <targetBundle>ninja.leaping.permissionsex.bukkit.Messages</targetBundle>
         </configuration>
       </plugin>
@@ -148,7 +148,7 @@
         <artifactId>gettext-maven-plugin</artifactId>
         <version>1.2.5-SNAPSHOT</version>
         <configuration>
-          <keywords>-k_ -k_n:1,2 -kdtr -ktranslated</keywords>
+          <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
           <targetBundle>ninja.leaping.permissionsex.bukkit.Messages</targetBundle>
         </configuration>
       </plugin>

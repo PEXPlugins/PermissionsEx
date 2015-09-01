@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Contains command elements for parts of the game
@@ -57,7 +57,7 @@ public class GameArguments {
             final String next = args.next();
             Set<String> subjectTypes = pex.getRegisteredSubjectTypes();
             if (!subjectTypes.contains(next)) {
-                throw args.createError(_("Subject type %s was not valid!", next));
+                throw args.createError(t("Subject type %s was not valid!", next));
             }
             return next;
         }
@@ -171,7 +171,7 @@ public class GameArguments {
             final String context = args.next(); // TODO: Allow multi-word contexts (<key> <value>)
             final String[] contextSplit = context.split("=", 2);
             if (contextSplit.length != 2) {
-                throw args.createError(_("Context must be of the form <key>=<value>!"));
+                throw args.createError(t("Context must be of the form <key>=<value>!"));
             }
             return Maps.immutableEntry(contextSplit[0], contextSplit[1]);
         }

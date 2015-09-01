@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-31 19:35-0700\n"
+"POT-Creation-Date: 2015-08-31 20:19-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:139
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:138
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -149,11 +149,11 @@ msgstr ""
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:131
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:130
 msgid "Error creating initial data for file backend"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:93
+#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:92
 msgid "Error creating subject DAO"
 msgstr ""
 
@@ -223,11 +223,11 @@ msgstr ""
 msgid "No ranks in ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:50
+#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:48
 msgid "Not enough arguments"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:57
+#: ninja/leaping/permissionsex/util/command/args/CommandArgs.java:55
 msgid "Not enough arguments!"
 msgstr ""
 
@@ -374,25 +374,25 @@ msgstr ""
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:180
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:179
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:99
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:98
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:118
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:117
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:143
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:142
 msgid "While performing version upgrade"
 msgstr ""
 
 #: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:72
-#: ninja/leaping/permissionsex/util/command/CommandContext.java:72
 #: ninja/leaping/permissionsex/util/command/CommandSpec.java:175
+#: ninja/leaping/permissionsex/util/command/CommandContext.java:72
 msgid "You do not have permission to use this command!"
 msgstr ""
 
@@ -436,11 +436,11 @@ msgstr ""
 msgid "position"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:70
 #: ninja/leaping/permissionsex/command/RankingCommands.java:51
 #: ninja/leaping/permissionsex/command/RankingCommands.java:75
 #: ninja/leaping/permissionsex/command/RankingCommands.java:157
 #: ninja/leaping/permissionsex/command/RankingCommands.java:188
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:70
 msgid "subject"
 msgstr ""
 

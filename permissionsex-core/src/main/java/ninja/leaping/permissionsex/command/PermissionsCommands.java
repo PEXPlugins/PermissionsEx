@@ -31,7 +31,7 @@ import ninja.leaping.permissionsex.util.command.args.CommandElement;
 import java.util.Map;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
 public class PermissionsCommands {
@@ -44,7 +44,7 @@ public class PermissionsCommands {
     public static CommandSpec getPermissionCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("permission", "permissions", "perm", "perms", "p")
-                .setArguments(seq(string(_("key")), permissionValue(_("value"))))
+                .setArguments(seq(string(t("key")), permissionValue(t("value"))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -63,7 +63,7 @@ public class PermissionsCommands {
 
                         messageSubjectOnFuture(
                                 dataCache.set(subject.getValue(), data.setPermission(contexts, key, intVal)), src,
-                                _("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                t("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
@@ -72,7 +72,7 @@ public class PermissionsCommands {
     public static CommandSpec getPermissionDefaultCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd", "default", "def")
-                .setArguments(permissionValue(_("value")))
+                .setArguments(permissionValue(t("value")))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -90,7 +90,7 @@ public class PermissionsCommands {
 
                         messageSubjectOnFuture(
                                 dataCache.set(subject.getValue(), data.setDefaultValue(contexts, intVal)), src,
-                                _("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                t("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();

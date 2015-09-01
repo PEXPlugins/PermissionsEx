@@ -67,7 +67,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
-import static ninja.leaping.permissionsex.bukkit.BukkitTranslations._;
+import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
 
 /**
  * PermissionsEx plugin
@@ -115,7 +115,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             logger.warn(lf(e.getTranslatableMessage()));
 
         } catch (Exception e) {
-            throw new RuntimeException(lf(_("Error occurred while enabling %s", getDescription().getName())), e);
+            throw new RuntimeException(lf(t("Error occurred while enabling %s", getDescription().getName())), e);
         }
 
         try {
@@ -162,7 +162,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             final PEXVault vault = new PEXVault(this);
             getServer().getServicesManager().register(Permission.class, vault, this, ServicePriority.High); // Hook into vault
             getServer().getServicesManager().register(Chat.class, new PEXVaultChat(vault), this, ServicePriority.High);
-            getLogger().info(lf(_("Hooked into Vault for Permission and Chat interfaces")));
+            getLogger().info(lf(t("Hooked into Vault for Permission and Chat interfaces")));
         }
         enabled = true;
     }
@@ -188,7 +188,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         try {
             getUserSubjects().load(event.getUniqueId().toString());
         } catch (ExecutionException e) {
-            logger.warn(lf(_("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage())), e);
+            logger.warn(lf(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage())), e);
         }
     }
 
@@ -232,7 +232,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
                 oldManager.close();
             }
         } catch (IOException e) {
-            throw new PEBKACException(_("Error while loading configuration: %s", e.getLocalizedMessage()));
+            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
         }
     }
 
@@ -277,18 +277,18 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!found) {
-                getLogger().warning(lf(_("No Permissible injector found for your server implementation!")));
+                getLogger().warning(lf(t("No Permissible injector found for your server implementation!")));
             } else if (!success) {
-                getLogger().warning(lf(_("Unable to inject PEX's permissible for %s", player.getName())));
+                getLogger().warning(lf(t("Unable to inject PEX's permissible for %s", player.getName())));
             }
 
             permissible.recalculatePermissions();
 
             if (success && getManager().hasDebugMode()) {
-                getLogger().info(lf(_("Permissions handler for %s successfully injected", player.getName())));
+                getLogger().info(lf(t("Permissions handler for %s successfully injected", player.getName())));
             }
         } catch (Throwable e) {
-            getLogger().log(Level.SEVERE, lf(_("Unable to inject permissible for %s", player.getName())), e);
+            getLogger().log(Level.SEVERE, lf(t("Unable to inject permissible for %s", player.getName())), e);
         }
     }
 
@@ -317,9 +317,9 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!success) {
-                getLogger().warning(lf(_("No Permissible injector found for your server implementation (while uninjecting for %s)!", player.getName())));
+                getLogger().warning(lf(t("No Permissible injector found for your server implementation (while uninjecting for %s)!", player.getName())));
             } else if (getManager() != null && getManager().hasDebugMode()) {
-                getLogger().info(lf(_("Permissions handler for %s successfully uninjected", player.getName())));
+                getLogger().info(lf(t("Permissions handler for %s successfully uninjected", player.getName())));
             }
         } catch (Throwable e) {
             e.printStackTrace();
@@ -379,21 +379,21 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         public Set<CommandSpec> getImplementationCommands() {
             return ImmutableSet.of(CommandSpec.builder()
                     .setAliases("reload", "rel")
-                    .setDescription(_("Reload the PermissionsEx configuration"))
+                    .setDescription(t("Reload the PermissionsEx configuration"))
                     .setPermission("permissionsex.reload")
                     .setExecutor(new CommandExecutor() {
                         @Override
                         public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
-                            src.msg(_("Reloading PermissionsEx"));
+                            src.msg(t("Reloading PermissionsEx"));
                             reload()
-                                    .thenRun(() -> src.msg(_("The reload was successful")))
+                                    .thenRun(() -> src.msg(t("The reload was successful")))
                                     .exceptionally(t -> {
-                                src.error(_("An error occurred while reloading PEX: %s\n " +
-                                        "Please see the server console for details", t.getLocalizedMessage()));
-                                logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                        src.getName(), t.getLocalizedMessage())), t);
-                                return null;
-                            });
+                                        src.error(t("An error occurred while reloading PEX: %s\n " +
+                                                "Please see the server console for details", t.getLocalizedMessage()));
+                                        logger.error(lf(t("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                                src.getName(), t.getLocalizedMessage())), t);
+                                        return null;
+                                    });
                         }
                     })
                     .build());

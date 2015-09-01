@@ -36,7 +36,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
@@ -194,7 +194,7 @@ public abstract class AbstractDataStore implements DataStore {
         try {
             ((ObjectMapper) factory.mapper).bind(this).serialize(node);
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(_("Error while serializing backend %s", node.getKey()), e);
+            throw new PermissionsLoadingException(t("Error while serializing backend %s", node.getKey()), e);
         }
         return factory.type;
     }
@@ -221,7 +221,7 @@ public abstract class AbstractDataStore implements DataStore {
             try {
                 return mapper.bindToNew().populate(config);
             } catch (ObjectMappingException e) {
-                throw new PermissionsLoadingException(_("Error while deserializing backend %s", identifier), e);
+                throw new PermissionsLoadingException(t("Error while deserializing backend %s", identifier), e);
             }
         }
     }

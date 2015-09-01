@@ -27,7 +27,7 @@ import ninja.leaping.permissionsex.util.command.args.QuotedStringParser;
 import java.util.Collections;
 import java.util.List;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Specification for how command arguments should be parsed
@@ -163,16 +163,16 @@ public class CommandSpec {
             executor.execute(commander, args);
         } catch (CommandException ex) {
             commander.error(ex.getTranslatableMessage());
-            commander.error(_("Usage: %s", getUsage(commander)));
+            commander.error(t("Usage: %s", getUsage(commander)));
         } catch (Throwable t) {
-            commander.error(_("Error occurred while executing command: %s", String.valueOf(t.getMessage())));
+            commander.error(t("Error occurred while executing command: %s", String.valueOf(t.getMessage())));
             t.printStackTrace();
         }
     }
 
     public <TextType> void checkPermission(Commander<TextType> commander) throws CommandException {
         if (this.permission != null && !commander.hasPermission(permission)) {
-            throw new CommandException(_("You do not have permission to use this command!"));
+            throw new CommandException(t("You do not have permission to use this command!"));
         }
     }
 
@@ -187,7 +187,7 @@ public class CommandSpec {
         this.args.parse(args, context);
         if (args.hasNext()) {
             args.next();
-            throw args.createError(_("Too many arguments!"));
+            throw args.createError(t("Too many arguments!"));
         }
     }
 

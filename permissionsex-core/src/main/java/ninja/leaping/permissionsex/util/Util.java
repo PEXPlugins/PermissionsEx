@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GameArguments.context;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.flags;
 
@@ -46,7 +46,7 @@ public class Util {
     public static GenericArguments.FlagCommandElementBuilder contextTransientFlags() {
         return flags()
                 .flag("-transient")
-                .valueFlag(context(_("context")), "-context", "-contexts", "c");
+                .valueFlag(context(t("context")), "-context", "-contexts", "c");
     }
 
     public static <T> CompletableFuture<T> failedFuture(Throwable error) {

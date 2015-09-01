@@ -39,7 +39,7 @@ class SpongeTranslations {
         }
     }
 
-    public static Translatable _(final String key, Object... args) {
+    public static Translatable t(final String key, Object... args) {
         return new Translatable(args) {
             @Override
             public String getUntranslated() {
@@ -53,7 +53,7 @@ class SpongeTranslations {
         };
     }
 
-    public static Translatable _n(final String key, final String keyPl, final long count, Object... args) {
+    public static Translatable tn(final String key, final String keyPl, final long count, Object... args) {
         return new Translatable(args) {
             @Override
             public String getUntranslated() {

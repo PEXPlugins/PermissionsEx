@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.sponge.SpongeTranslations._;
+import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 
 /**
  * Factory to create formatted elements of messages
@@ -71,20 +71,20 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         return Texts.builder().append(Texts.builder(subject.getKey()).style(TextStyles.BOLD).build(), Texts.of(" "),
-                nameText).onHover(TextActions.showText(tr(_("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
+                nameText).onHover(TextActions.showText(tr(t("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
     }
 
     @Override
     public TextBuilder ladder(RankLadder ladder) {
         return Texts.builder(ladder.getName())
                 .style(TextStyles.BOLD)
-                .onHover(TextActions.showText(tr(_("Click here to view more info")).build()))
+                .onHover(TextActions.showText(tr(t("Click here to view more info")).build()))
                 .onClick(TextActions.runCommand("/pex rank " + ladder.getName()));
     }
 
     @Override
     public TextBuilder booleanVal(boolean val) {
-        return (val ? tr(_("true")) : tr(_("false"))).color(val ? TextColors.GREEN : TextColors.RED);
+        return (val ? tr(t("true")) : tr(t("false"))).color(val ? TextColors.GREEN : TextColors.RED);
     }
 
     @Override

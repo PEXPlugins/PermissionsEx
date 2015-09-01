@@ -47,13 +47,12 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 public final class FileDataStore extends AbstractDataStore {
     public static final String KEY_RANK_LADDERS = "rank-ladders";
@@ -96,7 +95,7 @@ public final class FileDataStore extends AbstractDataStore {
             permissionsFileLoader.save(permissionsConfig);
             legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".legacy-backup"));
         } catch (IOException e) {
-            throw new PermissionsLoadingException(_("While loading legacy %s permissions from %s", formatName, permissionsFile), e);
+            throw new PermissionsLoadingException(t("While loading legacy %s permissions from %s", formatName, permissionsFile), e);
         }
         return permissionsFile;
     }
@@ -115,7 +114,7 @@ public final class FileDataStore extends AbstractDataStore {
         try {
             permissionsConfig = permissionsFileLoader.load(ConfigurationOptions.defaults());//.setMapFactory(MapFactories.unordered()));
         } catch (IOException e) {
-            throw new PermissionsLoadingException(_("While loading permissions file from %s", permissionsFile), e);
+            throw new PermissionsLoadingException(t("While loading permissions file from %s", permissionsFile), e);
         }
 
         if (permissionsConfig.getChildrenMap().isEmpty()) { // New configuration, populate with default data
@@ -128,7 +127,7 @@ public final class FileDataStore extends AbstractDataStore {
             } catch (PermissionsLoadingException e) {
                 throw e;
             } catch (Exception e) {
-                throw new PermissionsLoadingException(_("Error creating initial data for file backend"), e);
+                throw new PermissionsLoadingException(t("Error creating initial data for file backend"), e);
             }
         } else {
             ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
@@ -136,11 +135,11 @@ public final class FileDataStore extends AbstractDataStore {
             versionUpdater.apply(permissionsConfig);
             int endVersion = permissionsConfig.getNode("schema-version").getInt();
             if (endVersion > startVersion) {
-                getManager().getLogger().info(_("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
+                getManager().getLogger().info(t("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
                 try {
                     save().get();
                 } catch (InterruptedException | ExecutionException e) {
-                    throw new PermissionsLoadingException(_("While performing version upgrade"), e);
+                    throw new PermissionsLoadingException(t("While performing version upgrade"), e);
                 }
             }
         }
@@ -177,7 +176,7 @@ public final class FileDataStore extends AbstractDataStore {
         try {
             return FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(_("While deserializing subject data for %s:", identifier), e);
+            throw new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e);
         }
     }
 

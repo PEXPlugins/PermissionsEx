@@ -35,7 +35,7 @@ import ninja.leaping.permissionsex.util.command.args.CommandElement;
 import javax.annotation.Nullable;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GameArguments.*;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
@@ -62,15 +62,15 @@ public class PermissionsExCommands {
 
         return CommandSpec.builder()
                 .setAliases("pex", "permissionsex", "permissions")
-                .setDescription(_("Commands for PermissionsEx"))
+                .setDescription(t("Commands for PermissionsEx"))
                 .setArguments(optional(
                                 firstParsing(
                                         children,
                                         Util.contextTransientFlags()
-                                                .buildWith(seq(subject(_("subject"), pex), subjectChildren)),
+                                                .buildWith(seq(subject(t("subject"), pex), subjectChildren)),
                                         flags()
                                                 .flag("-transient")
-                                                .buildWith(seq(subjectType(_("subject-type"), pex), literal(_("list"), "list"), optional(string(_("filter")))))
+                                                .buildWith(seq(subjectType(t("subject-type"), pex), literal(t("list"), "list"), optional(string(t("filter")))))
                                 )
                         )
                 )
@@ -86,7 +86,7 @@ public class PermissionsExCommands {
                                 iter = Iterables.filter(iter, new StartsWithPredicate(args.<String>getOne("filter")));
                             }
 
-                            src.msgPaginated(_("%s subjects", subjectType), _("All subjects of type %s", subjectType), Iterables.transform(iter, new Function<String, TextType>() {
+                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), Iterables.transform(iter, new Function<String, TextType>() {
                                 @Nullable
                                 @Override
                                 public TextType apply(String input) {
@@ -109,14 +109,14 @@ public class PermissionsExCommands {
     private static CommandSpec getDebugToggleCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("debug", "d")
-                .setDescription(_("Toggle debug mode"))
+                .setDescription(t("Toggle debug mode"))
                 .setPermission("permissionsex.debug")
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                        boolean debugEnabled = !pex.hasDebugMode();
                         pex.setDebugMode(debugEnabled);
-                        src.msg(_("Debug mode enabled: %s", src.fmt().booleanVal(debugEnabled)));
+                        src.msg(t("Debug mode enabled: %s", src.fmt().booleanVal(debugEnabled)));
                     }
                 })
                 .build();
@@ -125,13 +125,13 @@ public class PermissionsExCommands {
     private static CommandSpec getImportCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("import")
-                .setDescription(_("Import data into the current backend from another"))
-                .setArguments(string(_("backend")))
+                .setDescription(t("Import data into the current backend from another"))
+                .setArguments(string(t("backend")))
                 .setPermission("permissionsex.import")
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        messageSubjectOnFuture(pex.importDataFrom(args.<String>getOne("backend")), src, _("Successfully imported data from backend %s into current backend", args.getOne("backend")));
+                        messageSubjectOnFuture(pex.importDataFrom(args.<String>getOne("backend")), src, t("Successfully imported data from backend %s into current backend", args.getOne("backend")));
                     }
                 })
                 .build();

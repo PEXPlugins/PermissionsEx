@@ -20,10 +20,8 @@ import gnu.gettext.GettextResource;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Translations;
 
-import java.util.Enumeration;
 import java.util.Locale;
 import java.util.MissingResourceException;
-import java.util.NoSuchElementException;
 import java.util.ResourceBundle;
 
 /**
@@ -41,7 +39,7 @@ public class BukkitTranslations {
         }
     }
 
-    public static Translatable _(final String key, Object... args) {
+    public static Translatable t(final String key, Object... args) {
         return new Translatable(args) {
             @Override
             public String getUntranslated() {
@@ -55,7 +53,7 @@ public class BukkitTranslations {
         };
     }
 
-    public static Translatable _n(final String key, final String keyPl, final long count, Object... args) {
+    public static Translatable tn(final String key, final String keyPl, final long count, Object... args) {
         return new Translatable(args) {
             @Override
             public String getUntranslated() {

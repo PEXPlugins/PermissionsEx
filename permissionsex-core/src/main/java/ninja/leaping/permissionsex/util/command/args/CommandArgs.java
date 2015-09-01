@@ -19,14 +19,12 @@ package ninja.leaping.permissionsex.util.command.args;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.util.Translatable;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Holder for command arguments
@@ -47,14 +45,14 @@ public class CommandArgs {
 
     public String peek() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(_("Not enough arguments"));
+            throw createError(t("Not enough arguments"));
         }
         return args.get(index + 1).getValue();
     }
 
     public String next() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(_("Not enough arguments!"));
+            throw createError(t("Not enough arguments!"));
         }
         return args.get(++index).getValue();
     }

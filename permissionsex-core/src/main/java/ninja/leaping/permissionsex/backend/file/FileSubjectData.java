@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Map.Entry;
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
@@ -41,7 +41,7 @@ public final class FileSubjectData extends MemorySubjectData {
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
                 if (!child.hasMapChildren()) {
-                    throw new PermissionsLoadingException(_("Each context section must be of map type! Check that no duplicate nesting has occurred."));
+                    throw new PermissionsLoadingException(t("Each context section must be of map type! Check that no duplicate nesting has occurred."));
                 }
                 Set<Entry<String, String>> contexts = contextsFrom(child);
                 DataEntry value = MAPPER.bindToNew().populate(child);

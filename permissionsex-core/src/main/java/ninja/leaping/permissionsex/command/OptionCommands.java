@@ -28,7 +28,7 @@ import ninja.leaping.permissionsex.util.command.Commander;
 import java.util.Map;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
 public class OptionCommands {
@@ -36,7 +36,7 @@ public class OptionCommands {
     public static CommandSpec getOptionCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("options", "option", "opt", "o")
-                .setArguments(seq(string(_("key")), optional(string(_("value")))))
+                .setArguments(seq(string(t("key")), optional(string(t("value")))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -50,11 +50,11 @@ public class OptionCommands {
                         if (value == null) {
                             messageSubjectOnFuture(
                                     dataCache.set(subject.getValue(), data.setOption(contexts, key, null)), src,
-                                    _("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                    t("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                         } else {
                             messageSubjectOnFuture(
                                     dataCache.set(subject.getValue(), data.setOption(contexts, key, value)), src,
-                                    _("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                    t("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                         }
                     }
                 })

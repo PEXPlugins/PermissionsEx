@@ -25,7 +25,7 @@ import ninja.leaping.permissionsex.util.command.Commander;
 
 import java.util.Map;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Command that deletes all data for a subject
@@ -41,9 +41,9 @@ public class DeleteCommand {
                         checkSubjectPermission(src, subject, "permissionsex.delete");
                         SubjectCache cache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
                         if (!cache.isRegistered(subject.getValue())) {
-                            throw new CommandException(_("Subject %s does not exist!", src.fmt().subject(subject)));
+                            throw new CommandException(t("Subject %s does not exist!", src.fmt().subject(subject)));
                         }
-                        messageSubjectOnFuture(cache.set(subject.getValue(), null), src, _("Successfully deleted data for subject %s", src.fmt().subject(subject)));
+                        messageSubjectOnFuture(cache.set(subject.getValue(), null), src, t("Successfully deleted data for subject %s", src.fmt().subject(subject)));
                     }
                 })
                 .build();

@@ -21,7 +21,7 @@ import com.google.common.collect.Multimap;
 
 import java.util.Collection;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Context that a command is executed in
@@ -69,7 +69,7 @@ public class CommandContext {
 
     public void checkPermission(Commander<?> commander, String permission) throws CommandException {
         if (!commander.hasPermission(permission)) {
-            throw new CommandException(_("You do not have permission to use this command!"));
+            throw new CommandException(t("You do not have permission to use this command!"));
         }
     }
 

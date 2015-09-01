@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.Translations.untr;
 
 /**
@@ -86,7 +86,7 @@ public class ChildCommands {
         protected Object parseValue(CommandArgs args) throws ArgumentParseException {
             final String key = args.next();
             if (!children.containsKey(key.toLowerCase())) {
-                throw args.createError(_("Input command %s was not a valid subcommand!", key));
+                throw args.createError(t("Input command %s was not a valid subcommand!", key));
             }
 
             return children.get(key.toLowerCase());
@@ -168,7 +168,7 @@ public class ChildCommands {
                     fallbackExecutor.execute(src, args);
                     return;
                 } else {
-                    throw new CommandException(_("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
+                    throw new CommandException(t("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
                 }
             }
             spec.checkPermission(src);

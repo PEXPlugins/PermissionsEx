@@ -18,7 +18,7 @@ package ninja.leaping.permissionsex.exception;
 
 import ninja.leaping.permissionsex.util.Translatable;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 public class PermissionsLoadingException extends PermissionsException {
     public PermissionsLoadingException(Translatable message) {
@@ -30,6 +30,6 @@ public class PermissionsLoadingException extends PermissionsException {
     }
 
     public PermissionsLoadingException(Throwable cause) {
-        super(_("Error while loading permissions"), cause);
+        super(t("Error while loading permissions"), cause);
     }
 }

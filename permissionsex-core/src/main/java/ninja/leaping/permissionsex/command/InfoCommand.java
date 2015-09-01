@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 public class InfoCommand {
     public static CommandSpec getInfoCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("info", "i", "who")
-                .setDescription(_("Provide information about a subject"))
+                .setDescription(t("Provide information about a subject"))
                 .setExecutor(new SubjectInfoPrintingExecutor(pex))
                 .build();
     }
@@ -58,31 +58,31 @@ public class InfoCommand {
             final ImmutableSubjectData transientData = getSubjectData(pex.getTransientSubjects(subject.getKey()), subject.getValue());
             final ImmutableSubjectData data = getSubjectData(pex.getSubjects(subject.getKey()), subject.getValue());
 
-            src.msg(src.fmt().header(src.fmt().tr(_("Information for %s", src.fmt().subject(subject)))));
+            src.msg(src.fmt().header(src.fmt().tr(t("Information for %s", src.fmt().subject(subject)))));
             if (!data.getAllPermissions().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(_("Permissions:"))));
+                src.msg(src.fmt().hl(src.fmt().tr(t("Permissions:"))));
                 printPermissions(src, data);
             }
             if (!transientData.getAllPermissions().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(_("Transient permissions:"))));
+                src.msg(src.fmt().hl(src.fmt().tr(t("Transient permissions:"))));
                 printPermissions(src, transientData);
             }
 
             if (!data.getAllOptions().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(_("Options:"))));
+                src.msg(src.fmt().hl(src.fmt().tr(t("Options:"))));
                 printOptions(src, data);
             }
             if (!transientData.getAllOptions().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(_("Transient options:"))));
+                src.msg(src.fmt().hl(src.fmt().tr(t("Transient options:"))));
                 printOptions(src, transientData);
             }
 
             if (!data.getAllParents().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(_("Parents:"))));
+                src.msg(src.fmt().hl(src.fmt().tr(t("Parents:"))));
                 printParents(src, data);
             }
             if (!transientData.getAllParents().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(_("Transient parents:"))));
+                src.msg(src.fmt().hl(src.fmt().tr(t("Transient parents:"))));
                 printParents(src, transientData);
             }
 
@@ -95,7 +95,7 @@ public class InfoCommand {
 
             for (Set<Map.Entry<String, String>> entry : targetContexts) {
                 src.msg(src.fmt().combined(INDENT, formatContexts(src, entry), ":"));
-                src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().hl(src.fmt().tr(_("Default permission: %s", data.getDefaultValue(entry))))));
+                src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().hl(src.fmt().tr(t("Default permission: %s", data.getDefaultValue(entry))))));
                 for (Map.Entry<String, Integer> ent : data.getPermissions(entry).entrySet()) {
                     src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().permission(ent.getKey(), ent.getValue())));
                 }

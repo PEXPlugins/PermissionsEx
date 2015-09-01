@@ -128,7 +128,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     }
                 });
                 if (toConvert.iterator().hasNext()) {
-                    getLogger().info(fLog(_("Trying to convert users stored by name to UUID")));
+                    getLogger().info(fLog(t("Trying to convert users stored by name to UUID")));
                 } else {
                     return 0;
                 }
@@ -139,7 +139,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     service.findAllByName(toConvert, profile -> {
                         final String newIdentifier = profile.getUniqueId().toString();
                         if (input.isRegistered(SUBJECTS_USER, newIdentifier)) {
-                            getLogger().warn(fLog(_("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName())));
+                            getLogger().warn(fLog(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName())));
                             return false; // We already have a registered UUID, this is a duplicate.
                         }
 
@@ -164,21 +164,21 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     });
                     return converted[0];
                 } catch (IOException | InterruptedException e) {
-                    getLogger().error(fLog(_("Error while fetching UUIDs for users")), e);
+                    getLogger().error(fLog(t("Error while fetching UUIDs for users")), e);
                     return 0;
                 }
             }).thenAccept(result -> {
                     if (result != null && result > 0) {
-                        getLogger().info(fLog(_n("%s user successfully converted from name to UUID",
+                        getLogger().info(fLog(tn("%s user successfully converted from name to UUID",
                                 "%s users successfully converted from name to UUID!",
                                 result, result)));
                     }
                 }).exceptionally(t -> {
-                getLogger().error(fLog(_("Error converting users to UUID")), t);
+                getLogger().error(fLog(t("Error converting users to UUID")), t);
                 return null;
                 });
         } catch (UnknownHostException e) {
-            getLogger().warn(fLog(_("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).")));
+            getLogger().warn(fLog(t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).")));
         }
 
     }
@@ -337,7 +337,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         try {
             return calculatedSubjects.get(Maps.immutableEntry(type, identifier));
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(_("While calculating subject data for %s:%s", type, identifier), e);
+            throw new PermissionsLoadingException(t("While calculating subject data for %s:%s", type, identifier), e);
         }
     }
 

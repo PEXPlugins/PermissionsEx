@@ -18,7 +18,7 @@ package ninja.leaping.permissionsex.util.command;
 
 import org.junit.Test;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
 import static org.junit.Assert.*;
@@ -33,7 +33,7 @@ public class CommandFlagsTest {
         CommandSpec command = CommandSpec.builder()
                 .setAliases("pex")
                 .setArguments(flags()
-                        .flag("a").valueFlag(integer(_("quot")), "q").buildWith(string(_("key"))))
+                        .flag("a").valueFlag(integer(t("quot")), "q").buildWith(string(t("key"))))
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {

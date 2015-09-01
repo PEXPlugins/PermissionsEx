@@ -36,7 +36,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import static ninja.leaping.permissionsex.bukkit.BukkitTranslations._;
+import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
 
 /**
  * Factory to create formatted elements of messages
@@ -82,7 +82,7 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
         ret.addExtra(typeComponent);
         ret.addExtra(" ");
         ret.addExtra(nameText);
-        ret.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{tr(_("Click to view more info"))}));
+        ret.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{tr(t("Click to view more info"))}));
         ret.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex " + subject.getKey() + " " + subject.getValue() + " info"));
         return ret;
     }
@@ -91,14 +91,14 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
     public BaseComponent ladder(RankLadder ladder) {
         BaseComponent ret = new TextComponent(ladder.getName());
         ret.setBold(true);
-        ret.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{tr(_("click here to view more info"))}));
+        ret.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{tr(t("click here to view more info"))}));
         ret.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex rank " + ladder.getName()));
         return ret;
     }
 
     @Override
     public BaseComponent booleanVal(boolean val) {
-        BaseComponent ret = (val ? tr(_("true")) : tr(_("false")));
+        BaseComponent ret = (val ? tr(t("true")) : tr(t("false")));
         ret.setColor(val ? ChatColor.GREEN : ChatColor.RED);
         return ret;
     }

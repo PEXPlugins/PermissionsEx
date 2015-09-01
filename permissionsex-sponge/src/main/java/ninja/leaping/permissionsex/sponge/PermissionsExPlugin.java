@@ -92,7 +92,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.sponge.SpongeTranslations._;
+import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 
 /**
  * PermissionsEx plugin
@@ -140,7 +140,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Subscribe
     public void onPreInit(PreInitializationEvent event) throws PEBKACException {
-        logger.info(lf(_("Pre-init of %s v%s", PomData.NAME, PomData.VERSION)));
+        logger.info(lf(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION)));
         sql = services.potentiallyProvide(SqlService.class);
         scheduler = services.potentiallyProvide(SchedulerService.class);
 
@@ -151,7 +151,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (PEBKACException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException(lf(_("Error occurred while enabling %s", PomData.NAME)), e);
+            throw new RuntimeException(lf(t("Error occurred while enabling %s", PomData.NAME)), e);
         }
 
         try {
@@ -214,7 +214,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             services.setProvider(this, PermissionService.class, this);
         } catch (ProviderExistsException e) {
             manager.close();
-            throw new PEBKACException(_("Your appear to already be using a different permissions plugin: %s", e.getMessage()));
+            throw new PEBKACException(t("Your appear to already be using a different permissions plugin: %s", e.getMessage()));
         }
     }
 
@@ -223,13 +223,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             getManager().getCalculatedSubject(PermissionsEx.SUBJECTS_USER, event.getProfile().getUniqueId().toString());
         } catch (PermissionsLoadingException e) {
-            logger.warn(lf(_("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage())), e);
+            logger.warn(lf(t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage())), e);
         }
     }
 
     @Subscribe
     public void disable(ServerStoppedEvent event) {
-        logger.debug(lf(_("Disabling %s", PomData.NAME)));
+        logger.debug(lf(t("Disabling %s", PomData.NAME)));
         PermissionsEx manager = this.manager;
         if (manager != null) {
             manager.close();
@@ -260,9 +260,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private void convertFromBukkit() throws IOException {
         File bukkitConfigDir = new File("plugins/PermissionsEx");
         if (bukkitConfigDir.isDirectory() && !configDir.isDirectory()) {
-            logger.info(lf(_("Migrating configuration data from Bukkit")));
+            logger.info(lf(t("Migrating configuration data from Bukkit")));
             if (!bukkitConfigDir.renameTo(configDir)) {
-                throw new IOException(lf(_("Unable to move Bukkit configuration directory to location for Sponge!")));
+                throw new IOException(lf(t("Unable to move Bukkit configuration directory to location for Sponge!")));
             }
         }
         File bukkitConfigFile = new File(configDir, "config.yml");
@@ -271,7 +271,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             ConfigurationNode bukkitConfig = yamlReader.load();
             configLoader.save(bukkitConfig);
             if (!bukkitConfigFile.renameTo(new File(configDir, "config.yml.bukkit"))) {
-                logger.warn(lf(_("Could not rename old Bukkit configuration file to old name")));
+                logger.warn(lf(t("Could not rename old Bukkit configuration file to old name")));
             }
         }
     }
@@ -303,9 +303,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 collection.updateCaches();
             }
         } catch (IOException e) {
-            throw new PEBKACException(_("Error while loading configuration: %s", e.getLocalizedMessage()));
+            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
         } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(_("Unable to reload!"), e);
+            throw new PermissionsLoadingException(t("Unable to reload!"), e);
         }
     }
 
@@ -353,7 +353,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return subjectCollections.get(identifier);
         } catch (ExecutionException e) {
-            logger.error(lf(_("Unable to get subject collection for type %s", identifier)), e);
+            logger.error(lf(t("Unable to get subject collection for type %s", identifier)), e);
             return null;
         }
     }
@@ -430,7 +430,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return sql.ref().get().getDataSource(url);
         } catch (SQLException e) {
-            logger.error(lf(_("Unable to get data source for jdbc url %s", url)), e);
+            logger.error(lf(t("Unable to get data source for jdbc url %s", url)), e);
             return null;
         }
     }
@@ -454,18 +454,18 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public Set<CommandSpec> getImplementationCommands() {
             return ImmutableSet.of(CommandSpec.builder()
                 .setAliases("reload", "rel")
-                .setDescription(_("Reload the PermissionsEx configuration"))
+                .setDescription(t("Reload the PermissionsEx configuration"))
                 .setPermission("permissionsex.reload")
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
-                        src.msg(_("Reloading PermissionsEx"));
+                        src.msg(t("Reloading PermissionsEx"));
                         reload().thenRun(() -> {
-                            src.msg(_("The reload was successful"));
+                            src.msg(t("The reload was successful"));
                         }).exceptionally(t -> {
-                            src.error(_("An error occurred while reloading PEX: %s\n " +
+                            src.error(t("An error occurred while reloading PEX: %s\n " +
                                     "Please see the server console for details", t.getLocalizedMessage()));
-                            logger.error(lf(_("An error occurred while reloading PEX (triggered by %s's command): %s",
+                            logger.error(lf(t("An error occurred while reloading PEX (triggered by %s's command): %s",
                                     src.getName(), t.getLocalizedMessage())), t);
                             return null;
                         });

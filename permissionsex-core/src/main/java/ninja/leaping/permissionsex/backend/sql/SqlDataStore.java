@@ -32,7 +32,6 @@ import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -41,7 +40,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * DataSource for SQL data
@@ -90,7 +89,7 @@ public final class SqlDataStore extends AbstractDataStore {
         try {
             subjectDao = DaoManager.createDao(new DataSourceConnectionSource(sql, DatabaseTypeUtils.createDatabaseType(connectionUrl)), SqlSubject.class);
         } catch (SQLException e) {
-            throw new PermissionsLoadingException(_("Error creating subject DAO"), e);
+            throw new PermissionsLoadingException(t("Error creating subject DAO"), e);
         }
 
     }

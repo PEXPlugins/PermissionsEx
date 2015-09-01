@@ -28,7 +28,7 @@ import ninja.leaping.permissionsex.util.command.Commander;
 import java.util.Map;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.util.Translations._;
+import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GameArguments.subject;
 
 public class ParentCommands {
@@ -43,7 +43,7 @@ public class ParentCommands {
     private static CommandSpec getAddParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("add", "a", "+")
-                .setArguments(subject(_("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
+                .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -55,7 +55,7 @@ public class ParentCommands {
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 dataCache.set(subject.getValue(), data.addParent(contexts, parent.getKey(), parent.getValue())), src,
-                                _("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                t("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
@@ -64,7 +64,7 @@ public class ParentCommands {
     private static CommandSpec getRemoveParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("remove", "rem", "delete", "del", "-")
-                .setArguments(subject(_("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
+                .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
@@ -76,7 +76,7 @@ public class ParentCommands {
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 dataCache.set(subject.getValue(), data.removeParent(contexts, parent.getKey(), parent.getValue())), src,
-                                _("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                t("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
