@@ -171,9 +171,9 @@ public class RankingCommands {
                                 }
                                 addPosition = currentIndex + addPosition > 1 ? addPosition + 1 : addPosition; // If we are adding to later, we need to add after the next rank (otherwise we end up staying in the same place)
                             }
-                            messageSubjectOnFuture(pex.getLadders().update(ladder.getName(), ladder.addRankAt(toAdd, addPosition)), src, t("Successfully added %s to ladder %s at position %s", src.fmt().subject(toAdd), src.fmt().ladder(ladder), addPosition));
+                            messageSubjectOnFuture(pex.getLadders().set(ladder.getName(), ladder.addRankAt(toAdd, addPosition)), src, t("Successfully added %s to ladder %s at position %s", src.fmt().subject(toAdd), src.fmt().ladder(ladder), addPosition));
                         } else {
-                            messageSubjectOnFuture(pex.getLadders().update(ladder.getName(), ladder.addRank(toAdd)), src, t("Successfully added %s to ladder %s", src.fmt().subject(toAdd), src.fmt().ladder(ladder)));
+                            messageSubjectOnFuture(pex.getLadders().set(ladder.getName(), ladder.addRank(toAdd)), src, t("Successfully added %s to ladder %s", src.fmt().subject(toAdd), src.fmt().ladder(ladder)));
 
                         }
                     }
@@ -196,7 +196,7 @@ public class RankingCommands {
                         if (newLadder == ladder) {
                             throw new CommandException(t("Rank %s was not in ladder %s", src.fmt().subject(toRemove), src.fmt().ladder(ladder)));
                         } else {
-                            messageSubjectOnFuture(pex.getLadders().update(ladder.getName(), newLadder), src, t("Successfully removed %s from ladder %s", src.fmt().subject(toRemove), src.fmt().ladder(ladder)));
+                            messageSubjectOnFuture(pex.getLadders().set(ladder.getName(), newLadder), src, t("Successfully removed %s from ladder %s", src.fmt().subject(toRemove), src.fmt().ladder(ladder)));
                         }
                     }
                 })

@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex;
 
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.SimpleConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PEBKACException;
@@ -38,9 +36,7 @@ public abstract class PermissionsExTest {
     private PermissionsEx manager;
     @Before
     public void setUp() throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
-        final ConfigurationNode node = SimpleConfigurationNode.root();
-        populate(node);
-        final PermissionsExConfiguration config = node.getValue(PermissionsExConfiguration.TYPE);
+        PermissionsExConfiguration config = populate();
         config.validate();
 
         manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder.newFolder()));
@@ -58,5 +54,5 @@ public abstract class PermissionsExTest {
         return manager;
     }
 
-    protected abstract void populate(ConfigurationNode node);
+    protected abstract PermissionsExConfiguration populate();
 }

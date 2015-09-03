@@ -133,12 +133,13 @@ public class PEXPermissible extends PermissibleBase {
     private Permissible previousPermissible;
     private final Set<PEXPermissionAttachment> attachments = new HashSet<>();
 
-    public PEXPermissible(Player player, PermissionsExPlugin pex) {
+    public PEXPermissible(Player player, PermissionsExPlugin plugin) {
         super(player);
         this.player = player;
-        this.plugin = pex;
+        this.plugin = plugin;
         try {
-            update(pex.getManager());
+            this.pex = plugin.getManager();
+            this.subj = pex.getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString());
         } catch (PermissionsLoadingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -147,11 +148,6 @@ public class PEXPermissible extends PermissibleBase {
 
     public PermissionsEx getManager() {
         return this.pex;
-    }
-
-    public void update(PermissionsEx newManager) throws PermissionsLoadingException {
-        this.pex = newManager;
-        this.subj = pex.getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString());
     }
 
     @Override

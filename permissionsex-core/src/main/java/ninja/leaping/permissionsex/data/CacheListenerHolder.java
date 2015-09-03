@@ -55,6 +55,10 @@ public class CacheListenerHolder<Key, CacheType> {
         getListeners(key).remove(listener);
     }
 
+    public Iterable<Key> getAllKeys() {
+        return Collections.unmodifiableSet(listeners.keySet());
+    }
+
     public void removeAll(Key key) {
         listeners.remove(key);
     }

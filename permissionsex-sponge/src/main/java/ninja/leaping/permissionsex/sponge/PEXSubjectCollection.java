@@ -55,7 +55,8 @@ class PEXSubjectCollection implements SubjectCollection {
     public PEXSubjectCollection(final String identifier, final PermissionsExPlugin plugin) throws ExecutionException, PermissionsLoadingException {
         this.identifier = identifier;
         this.plugin = plugin;
-        updateCaches();
+        this.cache = plugin.getManager().getSubjects(identifier);
+        this.transientCache = plugin.getManager().getTransientSubjects(identifier);
     }
 
     SubjectCache getCache() {
@@ -64,14 +65,6 @@ class PEXSubjectCollection implements SubjectCollection {
 
     SubjectCache getTransientCache() {
         return transientCache;
-    }
-
-    void updateCaches() throws PermissionsLoadingException, ExecutionException {
-        this.cache = plugin.getManager().getSubjects(identifier);
-        this.transientCache = plugin.getManager().getTransientSubjects(identifier);
-        for (Map.Entry<String, PEXSubject> subject : subjectCache.asMap().entrySet()) {
-            subject.getValue().update(getCalculatedSubject(subject.getKey()), getCache(), getTransientCache());
-        }
     }
 
     @Override

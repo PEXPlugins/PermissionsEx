@@ -25,7 +25,6 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
 
 public class TestImplementationInterface implements ImplementationInterface {
     private final File baseDirectory;
@@ -72,10 +71,5 @@ public class TestImplementationInterface implements ImplementationInterface {
     @Override
     public String getVersion() {
         return "test";
-    }
-
-    @Override
-    public Function<String, String> getNameTransformer(String type) {
-        return Function.identity();
     }
 }

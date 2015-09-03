@@ -16,24 +16,27 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import com.google.common.collect.ImmutableList;
 import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.SimpleConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.PermissionsExTest;
+import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
+import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.PermissionsEx.GLOBAL_CONTEXT;
 import static org.junit.Assert.assertEquals;
 
 public class SubjectDataBakerTest extends PermissionsExTest {
-    @Override
-    protected void populate(ConfigurationNode node) {
-        node.getNode("backends", "test", "type").setValue("memory");
-        node.getNode("default-backend").setValue("test");
-    }
 
     /**
      * Arrangement:
@@ -66,5 +69,40 @@ public class SubjectDataBakerTest extends PermissionsExTest {
         assertEquals(1, calculatedChild.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
         assertEquals(0, calculatedSubject.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
         assertEquals(1, calculatedSubject.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
+    }
+
+    @Override
+    protected PermissionsExConfiguration populate() {
+        return new PermissionsExConfiguration() {
+            @Override
+            public DataStore getDataStore(String name) {
+                return null;
+            }
+
+            @Override
+            public DataStore getDefaultDataStore() {
+                return new MemoryDataStore();
+            }
+
+            @Override
+            public boolean isDebugEnabled() {
+                return false;
+            }
+
+            @Override
+            public List<String> getServerTags() {
+                return ImmutableList.of();
+            }
+
+            @Override
+            public void validate() throws PEBKACException {
+
+            }
+
+            @Override
+            public PermissionsExConfiguration reload() throws IOException {
+                return this;
+            }
+        };
     }
 }

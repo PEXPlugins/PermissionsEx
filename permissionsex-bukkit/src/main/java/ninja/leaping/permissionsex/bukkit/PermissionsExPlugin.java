@@ -21,21 +21,12 @@ import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.SubjectCache;
-import ninja.leaping.permissionsex.exception.PEBKACException;
-import ninja.leaping.permissionsex.config.ConfigTransformations;
-import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
-import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
-import ninja.leaping.permissionsex.util.Util;
-import ninja.leaping.permissionsex.util.command.CommandException;
-import ninja.leaping.permissionsex.util.command.CommandExecutor;
-import ninja.leaping.permissionsex.util.command.CommandContext;
-import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.PluginCommand;
@@ -52,20 +43,14 @@ import org.slf4j.Logger;
 import org.slf4j.impl.JDK14LoggerAdapter;
 import org.yaml.snakeyaml.DumperOptions;
 
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
@@ -82,13 +67,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     };
     public static final String SERVER_TAG_CONTEXT = "server-tag";
 
-    @Nullable
-    private volatile PermissionsEx manager;
-    private PermissionsExConfiguration config;
-    private ConfigurationNode rawConfig;
+    private PermissionsEx manager;
 
-    private ConfigurationLoader<ConfigurationNode> configLoader;
-    private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
     private TranslatableLogger logger;
 
     // Injections into superperms
@@ -115,31 +95,25 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         logger = createLogger();
-        configLoader = YAMLConfigurationLoader.builder()
+        ConfigurationLoader<ConfigurationNode> configLoader = YAMLConfigurationLoader.builder()
                 .setFile(new File(getDataFolder(), "config.yml"))
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
                 .build();
 
         try {
             getDataFolder().mkdirs();
-            reloadSync();
-        } catch (PEBKACException e) {
+            this.manager = new PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), new BukkitImplementationInterface());
+        /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
-
+            getServer().getPluginManager().disablePlugin(this);
+            return;*/
         } catch (Exception e) {
             logger.error(t("Error occurred while enabling %s", getDescription().getName()), e);
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
-        try {
-            rawConfig.setValue(PermissionsExConfiguration.TYPE, config);
-            configLoader.save(rawConfig);
-        } catch (IOException | ObjectMappingException e) {
-            throw new RuntimeException(e);
-        }
-
-        nameTransformerMap.put(PermissionsEx.SUBJECTS_USER, input -> {
+        manager.registerNameTransformer(PermissionsEx.SUBJECTS_USER, input -> {
             try {
                 UUID.fromString(input);
                 return input;
@@ -213,36 +187,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
         getManager().uncache(PermissionsEx.SUBJECTS_USER, event.getPlayer().getUniqueId().toString());
-    }
-
-    private void reloadSync() throws PEBKACException, ObjectMappingException, PermissionsLoadingException {
-        try {
-            rawConfig = configLoader.load();
-            ConfigTransformations.versions().apply(rawConfig);
-            ConfigurationNode fallbackConfig;
-            try {
-                fallbackConfig = PermissionsExConfiguration.loadDefaultConfiguration();
-            } catch (IOException e) {
-                throw new Error("PEX's default configuration could not be loaded!", e);
-            }
-            rawConfig.mergeValuesFrom(fallbackConfig);
-            config = rawConfig.getValue(PermissionsExConfiguration.TYPE);
-            config.validate();
-            PermissionsEx oldManager = manager;
-            manager = new PermissionsEx(config, new BukkitImplementationInterface());
-            if (oldManager != null) {
-                oldManager.close();
-            }
-        } catch (IOException e) {
-            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
-        }
-    }
-
-    public CompletableFuture<Void> reload() {
-        return Util.asyncFailableFuture(() -> {
-            reloadSync();
-            return null;
-        }, manager.getAsyncExecutor());
     }
 
     public PermissionList getPermissionList() {
@@ -377,40 +321,12 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
         @Override
         public Set<CommandSpec> getImplementationCommands() {
-            return ImmutableSet.of(CommandSpec.builder()
-                    .setAliases("reload", "rel")
-                    .setDescription(t("Reload the PermissionsEx configuration"))
-                    .setPermission("permissionsex.reload")
-                    .setExecutor(new CommandExecutor() {
-                        @Override
-                        public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
-                            src.msg(t("Reloading PermissionsEx"));
-                            reload()
-                                    .thenRun(() -> src.msg(t("The reload was successful")))
-                                    .exceptionally(t -> {
-                                        src.error(t("An error occurred while reloading PEX: %s\n " +
-                                                "Please see the server console for details", t.getLocalizedMessage()));
-                                        logger.error(t("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                                src.getName(), t.getLocalizedMessage()), t);
-                                        return null;
-                                    });
-                        }
-                    })
-                    .build());
+            return ImmutableSet.of();
         }
 
         @Override
         public String getVersion() {
             return getDescription().getVersion();
-        }
-
-        @Override
-        public Function<String, String> getNameTransformer(String type) {
-            Function<String, String> xform = nameTransformerMap.get(type);
-            if (xform == null) {
-                xform = Function.identity();
-            }
-            return xform;
         }
     }
 }

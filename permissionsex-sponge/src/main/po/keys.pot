@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-02 16:46-0700\n"
+"POT-Creation-Date: 2015-09-03 12:40-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,16 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:470
-msgid "An error occurred while reloading PEX (triggered by %s's command): %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:468
-msgid ""
-"An error occurred while reloading PEX: %s\n"
-" Please see the server console for details"
-msgstr ""
 
 #: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:81
 msgid "Click here to view more info"
@@ -35,63 +25,43 @@ msgstr ""
 msgid "Click to view more info"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:276
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:249
 msgid "Could not rename old Bukkit configuration file to old name"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:234
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:207
 msgid "Disabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:156
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:137
 msgid "Error occurred while enabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:308
-msgid "Error while loading configuration: %s"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:228
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:201
 msgid "Error while loading data for user %s/%s during prelogin: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:265
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:238
 msgid "Migrating configuration data from Bukkit"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:145
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:128
 msgid "Pre-init of %s v%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:459
-msgid "Reload the PermissionsEx configuration"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:464
-msgid "Reloading PermissionsEx"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:466
-msgid "The reload was successful"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:435
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:369
 msgid "Unable to get data source for jdbc url %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:358
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:292
 msgid "Unable to get subject collection for type %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:267
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:240
 msgid "Unable to move Bukkit configuration directory to location for Sponge!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:310
-msgid "Unable to reload!"
-msgstr ""
-
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:219
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:192
 msgid "Your appear to already be using a different permissions plugin: %s"
 msgstr ""
 

@@ -75,9 +75,4 @@ public class TestImplementationInterface implements ImplementationInterface {
     public String getVersion() {
         return "test";
     }
-
-    @Override
-    public Function<String, String> getNameTransformer(String type) {
-        return Function.identity();
-    }
 }

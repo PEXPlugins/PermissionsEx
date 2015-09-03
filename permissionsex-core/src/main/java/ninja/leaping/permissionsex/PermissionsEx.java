@@ -16,14 +16,12 @@
  */
 package ninja.leaping.permissionsex;
 
-import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.sk89q.squirrelid.resolver.CacheForwardingService;
 import com.sk89q.squirrelid.resolver.HttpRepositoryService;
 import com.sk89q.squirrelid.resolver.ProfileService;
 import ninja.leaping.permissionsex.backend.DataStore;
@@ -33,6 +31,7 @@ import ninja.leaping.permissionsex.command.RankingCommands;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
@@ -41,8 +40,6 @@ import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.subject.SubjectDataBaker;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.permissionsex.util.PEXProfileCache;
-import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 
@@ -52,7 +49,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -61,22 +57,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static ninja.leaping.permissionsex.util.Translations.*;
 
 public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final ImmutableSet<Map.Entry<String, String>> GLOBAL_CONTEXT = ImmutableSet.of();
-
     private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
-    private final PermissionsExConfiguration config;
+
+    private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
     private final TranslatableLogger logger;
     private final ImplementationInterface impl;
-    private DataStore activeDataStore;
+    private final MemoryDataStore transientData;
+    private volatile boolean debug;
+
+    private final AtomicReference<State> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
-    private final RankLadderCache rankLadderCache;
+    private RankLadderCache rankLadderCache;
     private final LoadingCache<Map.Entry<String, String>, CalculatedSubject> calculatedSubjects = CacheBuilder.newBuilder().maximumSize(512).build(new CacheLoader<Map.Entry<String, String>, CalculatedSubject>() {
         @Override
         public CalculatedSubject load(Map.Entry<String, String> key) throws Exception {
@@ -85,35 +86,43 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     });
     private volatile ContextInheritance cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
-    private final MemoryDataStore transientData;
-    private ProfileService uuidService;
-    private volatile boolean debug;
+
+    private static class State {
+        private final PermissionsExConfiguration config;
+        private final DataStore activeDataStore;
+
+        private State(PermissionsExConfiguration config, DataStore activeDataStore) {
+            this.config = config;
+            this.activeDataStore = activeDataStore;
+        }
+    }
 
     public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
-        this.config = config;
         this.impl = impl;
         this.logger = TranslatableLogger.forLogger(impl.getLogger());
-        this.debug = config.isDebugEnabled();
-        this.uuidService = HttpRepositoryService.forMinecraft();
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
-        this.activeDataStore = config.getDefaultDataStore();
-        this.activeDataStore.initialize(this);
-        getSubjects(SUBJECTS_GROUP).cacheAll();
-        this.rankLadderCache = new RankLadderCache(this.activeDataStore);
+        this.debug = config.isDebugEnabled();
+        initialize(config);
         convertUuids();
 
-        // Now that initialization is complete
-        uuidService = new CacheForwardingService(uuidService, new PEXProfileCache(getSubjects(SUBJECTS_USER)));
         registerCommand(PermissionsExCommands.createRootCommand(this));
         registerCommand(RankingCommands.getPromoteCommand(this));
         registerCommand(RankingCommands.getDemoteCommand(this));
     }
 
+    private State getState() throws IllegalStateException {
+        State ret = this.state.get();
+        if (ret == null) {
+            throw new IllegalStateException("Manager has already been closed!");
+        }
+        return ret;
+    }
+
     private void convertUuids() {
         try {
             InetAddress.getByName("api.mojang.com");
-            this.activeDataStore.performBulkOperation(input -> {
+            getState().activeDataStore.performBulkOperation(input -> {
                 Iterable<String> toConvert = Iterables.filter(input.getAllIdentifiers(SUBJECTS_USER), input1 -> {
                     if (input1 == null || input1.length() != 36) {
                         return true;
@@ -152,7 +161,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
                         ImmutableSubjectData oldData = input.getData(SUBJECTS_USER, profile.getName(), null);
                         final String finalLookupName = lookupName;
-                        input.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(ImmutableSet.<Map.Entry<String, String>>of(), "name", profile.getName()))
+                        input.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
                                 .thenAccept(result -> input.setData(SUBJECTS_USER, finalLookupName, null)
                                         .exceptionally(t -> {
                                             t.printStackTrace();
@@ -182,10 +191,10 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     public SubjectCache getSubjects(String type) {
-        Preconditions.checkNotNull(type, "type");
+        checkNotNull(type, "type");
         SubjectCache cache = subjectCaches.get(type);
         if (cache == null) {
-            cache = new SubjectCache(type, activeDataStore);
+            cache = new SubjectCache(type, getState().activeDataStore);
             SubjectCache newCache = subjectCaches.putIfAbsent(type, cache);
             if (newCache != null) {
                 cache = newCache;
@@ -195,7 +204,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     public SubjectCache getTransientSubjects(String type) {
-        Preconditions.checkNotNull(type, "type");
+        checkNotNull(type, "type");
         SubjectCache cache = transientSubjectCaches.get(type);
         if (cache == null) {
             cache = new SubjectCache(type, transientData);
@@ -235,7 +244,8 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
      * @return A future that completes once the import operation is complete
      */
     public CompletableFuture<Void> importDataFrom(String dataStoreIdentifier) {
-        final DataStore expected = config.getDataStore(dataStoreIdentifier);
+        final State state = getState();
+        final DataStore expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
@@ -245,19 +255,19 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
             return Util.failedFuture(e);
         }
 
-        return activeDataStore.performBulkOperation(store -> {
-                CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(), input -> {
-                    return store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue());
-                }), CompletableFuture.class)).thenCombine(store.setContextInheritance(expected.getContextInheritance(null)), (v, a) -> null);
-                for (String ladder : store.getAllRankLadders()) {
-                    ret = ret.thenCombine(store.setRankLadder(ladder, expected.getRankLadder(ladder, null)), (v, a) -> null);
-                }
+        return state.activeDataStore.performBulkOperation(store -> {
+            CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(),
+                    input -> store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue())), CompletableFuture.class))
+                    .thenCombine(store.setContextInheritance(expected.getContextInheritance(null)), (v, a) -> null);
+            for (String ladder : store.getAllRankLadders()) {
+                ret = ret.thenCombine(store.setRankLadder(ladder, expected.getRankLadder(ladder, null)), (v, a) -> null);
+            }
             return ret;
         }).thenCompose(val -> Util.failableFuture(val::get));
     }
 
     public Set<String> getRegisteredSubjectTypes() {
-        return this.activeDataStore.getRegisteredTypes();
+        return getState().activeDataStore.getRegisteredTypes();
     }
 
     public void setDebugMode(boolean debug) {
@@ -268,8 +278,47 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return this.debug;
     }
 
+    private void reloadSync() throws PEBKACException, PermissionsLoadingException {
+        try {
+            PermissionsExConfiguration config = getState().config.reload();
+            config.validate();
+            initialize(config);
+            getSubjects(SUBJECTS_GROUP).cacheAll();
+        } catch (IOException e) {
+            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
+        }
+    }
+
+    private void initialize(PermissionsExConfiguration config) throws PermissionsLoadingException {
+        State newState = new State(config, config.getDefaultDataStore());
+        newState.activeDataStore.initialize(this);
+        State oldState = this.state.getAndSet(newState);
+        if (oldState != null) {
+            try {
+                oldState.activeDataStore.close();
+            } catch (Exception e) {} // TODO maybe warn?
+        }
+
+        getSubjects(SUBJECTS_GROUP).cacheAll();
+        this.rankLadderCache = new RankLadderCache(this.rankLadderCache, newState.activeDataStore);
+        this.subjectCaches.replaceAll((key, existing) -> new SubjectCache(existing, newState.activeDataStore));
+        if (this.cachedInheritance != null) {
+            this.cachedInheritance = null;
+            this.cachedInheritanceListeners.call(true, getContextInheritance(null));
+        }
+
+    }
+
+    public CompletableFuture<Void> reload() {
+        return Util.asyncFailableFuture(() -> {
+            reloadSync();
+            return null;
+        }, getAsyncExecutor());
+    }
+
     public void close() {
-        this.activeDataStore.close();
+        State state = this.state.getAndSet(null);
+        state.activeDataStore.close();
     }
 
     @Override
@@ -312,14 +361,34 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return impl.getVersion();
     }
 
-    @Override
+    /**
+     * Returns a function that can be applied to a friendly name to convert it into a valid subject identifier.
+     * If no function is explicitly registered, an identity function ({@link Function#identity()}) should be used.
+     *
+     * @param type The type of subject
+     * @return The transformation function
+     */
     public Function<String, String> getNameTransformer(String type) {
-        return impl.getNameTransformer(type);
+        Function<String, String> xform = nameTransformerMap.get(type);
+        if (xform == null) {
+            xform = Function.identity();
+        }
+        return xform;
+    }
+
+    /**
+     * Register a name transformer for a subject type if none is present
+     * @param type The subject type to register a name transformer for
+     * @param func The transformer function
+     * @return true if the transformer was successfully registered
+     */
+    public boolean registerNameTransformer(String type, Function<String, String> func) {
+        return this.nameTransformerMap.putIfAbsent(checkNotNull(type, "type"), checkNotNull(func, "func")) == null;
     }
 
 
     public PermissionsExConfiguration getConfig() {
-        return this.config;
+        return getState().config;
     }
 
     /**
@@ -345,7 +414,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     public ContextInheritance getContextInheritance(Caching<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
-            this.cachedInheritance = this.activeDataStore.getContextInheritance(this);
+            this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
         }
         if (listener != null) {
             this.cachedInheritanceListeners.addListener(true, listener);
@@ -355,7 +424,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     public CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance newInheritance) {
-        return this.activeDataStore.setContextInheritance(newInheritance);
+        return getState().activeDataStore.setContextInheritance(newInheritance);
     }
 
     @Override

@@ -32,9 +32,13 @@ public class RankLadderCache {
     private final DataStore dataStore;
     private final LoadingCache<String, RankLadder> cache;
     private final Map<String, Caching<RankLadder>> cacheHolders = new ConcurrentHashMap<>();
-    private final CacheListenerHolder<String, RankLadder> listeners = new CacheListenerHolder<>();
+    private final CacheListenerHolder<String, RankLadder> listeners;
 
     public RankLadderCache(final DataStore dataStore) {
+        this(null, dataStore);
+    }
+
+    public RankLadderCache(final RankLadderCache existing, final DataStore dataStore) {
         this.dataStore = dataStore;
         cache = CacheBuilder.newBuilder()
                 .maximumSize(512)
@@ -44,7 +48,14 @@ public class RankLadderCache {
                         return dataStore.getRankLadder(identifier, clearListener(identifier));
                     }
                 });
+        if (existing != null) {
+            listeners = existing.listeners;
+            existing.cache.asMap().forEach((k, old) -> listeners.call(k, get(k, null)));
+        } else {
+            listeners = new CacheListenerHolder<>();
+        }
     }
+
 
     public RankLadder get(String identifier, Caching<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
@@ -84,7 +95,7 @@ public class RankLadderCache {
         return dataStore.hasRankLadder(identifier);
     }
 
-    public CompletableFuture<RankLadder> update(String identifier, RankLadder newData) {
+    public CompletableFuture<RankLadder> set(String identifier, RankLadder newData) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(newData, "newData");
 
@@ -109,7 +120,6 @@ public class RankLadderCache {
         } catch (ExecutionException e) {
         }
         listeners.addListener(identifier, listener);
-
     }
 
     public Iterable<String> getAll() {

@@ -16,13 +16,21 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsExTest;
+import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
+import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.exception.PEBKACException;
 import org.junit.Test;
+import org.spongepowered.api.data.manipulator.immutable.block.ImmutableLayeredData;
 import org.spongepowered.api.service.permission.context.Context;
 
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -31,15 +39,6 @@ import static org.junit.Assert.*;
  * Tests for the concept calculator
  */
 public class PEXContextCalculatorTest extends PermissionsExTest {
-    @Override
-    protected void populate(ConfigurationNode node) {
-        node.getNode("backends", "test", "type").setValue("memory");
-        node.getNode("backends", "test", "something").setValue("nada");
-        node.getNode("default-backend").setValue("test");
-        ConfigurationNode serverTagsNode = node.getNode("server-tags");
-        serverTagsNode.getAppendedNode().setValue("one");
-        serverTagsNode.getAppendedNode().setValue("two");
-    }
 
     @Test
     public void testContextCalculator() {
@@ -53,5 +52,39 @@ public class PEXContextCalculatorTest extends PermissionsExTest {
         assertTrue(calc.matches(new Context(PEXContextCalculator.SERVER_TAG_KEY, "one"), null));
     }
 
+    @Override
+    protected PermissionsExConfiguration populate() {
+        return new PermissionsExConfiguration() {
+            @Override
+            public DataStore getDataStore(String name) {
+                return null;
+            }
+
+            @Override
+            public DataStore getDefaultDataStore() {
+                return new MemoryDataStore();
+            }
+
+            @Override
+            public boolean isDebugEnabled() {
+                return false;
+            }
+
+            @Override
+            public List<String> getServerTags() {
+                return ImmutableList.of("one", "two");
+            }
+
+            @Override
+            public void validate() throws PEBKACException {
+
+            }
+
+            @Override
+            public PermissionsExConfiguration reload() throws IOException {
+                return this;
+            }
+        };
+    }
 }
 

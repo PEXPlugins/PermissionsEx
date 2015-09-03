@@ -51,7 +51,7 @@ class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjec
     public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
         this.identifier = identifier;
-        updateCache(cache);
+        this.data = SubjectDataReference.forSubject(this.identifier, cache, this);
     }
 
     /**
@@ -93,11 +93,6 @@ class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjec
         synchronized (parentsCache) {
             parentsCache.clear();
         }
-    }
-
-    void updateCache(SubjectCache newCache) throws ExecutionException {
-        this.data = SubjectDataReference.forSubject(identifier, newCache, this);
-        clearCache(this.data.get());
     }
 
     @Override

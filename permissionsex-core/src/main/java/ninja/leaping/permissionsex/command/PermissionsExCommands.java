@@ -50,6 +50,7 @@ public class PermissionsExCommands {
                 .add(getDebugToggleCommand(pex))
                 .add(RankingCommands.getRankingCommand(pex))
                 .add(getImportCommand(pex))
+                .add(getReloadCommand(pex))
                 .build();
 
         final CommandElement children = ChildCommands.args(childrenList.toArray(new CommandSpec[childrenList.size()]));
@@ -132,6 +133,29 @@ public class PermissionsExCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         messageSubjectOnFuture(pex.importDataFrom(args.<String>getOne("backend")), src, t("Successfully imported data from backend %s into current backend", args.getOne("backend")));
+                    }
+                })
+                .build();
+    }
+
+    private static CommandSpec getReloadCommand(final PermissionsEx pex) {
+        return CommandSpec.builder()
+                .setAliases("reload", "rel")
+                .setDescription(t("Reload the PermissionsEx configuration"))
+                .setPermission("permissionsex.reload")
+                .setExecutor(new CommandExecutor() {
+                    @Override
+                    public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
+                        src.msg(t("Reloading PermissionsEx"));
+                        pex.reload().thenRun(() -> {
+                            src.msg(t("The reload was successful"));
+                        }).exceptionally(t -> {
+                            src.error(t("An error occurred while reloading PEX: %s\n " +
+                                    "Please see the server console for details", t.getLocalizedMessage()));
+                            pex.getLogger().error(t("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                    src.getName(), t.getLocalizedMessage()), t);
+                            return null;
+                        });
                     }
                 })
                 .build();

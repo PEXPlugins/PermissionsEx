@@ -60,12 +60,6 @@ class PEXSubject implements OptionSubject {
         this.transientData = new PEXOptionSubjectData(collection.getTransientCache(), identifier, collection.getPlugin());
     }
 
-    void update(CalculatedSubject subject, SubjectCache cache, SubjectCache transientCache) throws ExecutionException {
-        this.baked = subject;
-        this.data.updateCache(cache);
-        this.transientData.updateCache(transientCache);
-    }
-
     @Override
     public String getIdentifier() {
         return identifier;

@@ -27,23 +27,15 @@ import com.google.inject.Inject;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
-import ninja.leaping.permissionsex.config.ConfigTransformations;
-import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
-import ninja.leaping.permissionsex.util.Translatable;
-import ninja.leaping.permissionsex.util.Util;
-import ninja.leaping.permissionsex.util.command.CommandException;
-import ninja.leaping.permissionsex.util.command.CommandExecutor;
-import ninja.leaping.permissionsex.util.command.CommandContext;
-import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
@@ -70,7 +62,6 @@ import org.spongepowered.api.service.profile.GameProfileResolver;
 import org.spongepowered.api.service.scheduler.SchedulerService;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.util.command.CommandMapping;
 import org.spongepowered.api.util.command.CommandSource;
 
 import javax.annotation.Nullable;
@@ -80,12 +71,10 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -110,10 +99,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
 
-    @Nullable
-    private volatile PermissionsEx manager;
-    private PermissionsExConfiguration config;
-    private ConfigurationNode rawConfig;
+    private PermissionsEx manager;
 
     private final List<ContextCalculator> contextCalculators = new CopyOnWriteArrayList<>();
     private final ConcurrentMap<String, Function<String, Optional<CommandSource>>> commandSourceProviders = new ConcurrentHashMap<>();
@@ -125,15 +111,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     });
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
-    private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
     private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
-    private Executor spongeExecutor = runnable -> {
-        scheduler.ref().get()
-                .createTaskBuilder()
-                .async()
-                .execute(runnable)
-                .submit(PermissionsExPlugin.this);
-    };
+    private Executor spongeExecutor = runnable -> scheduler.ref().get()
+            .createTaskBuilder()
+            .async()
+            .execute(runnable)
+            .submit(PermissionsExPlugin.this);
 
     @Inject
     PermissionsExPlugin(Logger logger) {
@@ -149,20 +132,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             convertFromBukkit();
             configDir.mkdirs();
-            reloadSync();
-        } catch (PEBKACException e) {
-            throw e;
+            this.manager = new PermissionsEx(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
             throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
-
-        try {
-            rawConfig.setValue(PermissionsExConfiguration.TYPE, config);
-            configLoader.save(rawConfig);
-        } catch (IOException | ObjectMappingException e) {
-            throw new RuntimeException(e);
-        }
-
         defaults = getSubjects(manager.getDefaultIdentifier().getKey()).get(manager.getDefaultIdentifier().getValue());
 
         setCommandSourceProvider(getUserSubjects(), name -> {
@@ -189,7 +162,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         });
 
         registerContextCalculator(contextCalculator);
-        nameTransformerMap.put(PermissionService.SUBJECTS_USER, input -> {
+        manager.registerNameTransformer(PermissionService.SUBJECTS_USER, input -> {
             try {
                 UUID.fromString(input);
                 return input;
@@ -244,11 +217,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
         if (cache.isRegistered(identifier)) {
             cache.update(identifier, input -> {
-                    if (event.getSourceEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
-                        return input;
-                    } else {
-                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getSourceEntity().getName());
-                    }
+                if (event.getSourceEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                    return input;
+                } else {
+                    return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getSourceEntity().getName());
+                }
             });
         }
     }
@@ -278,45 +251,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
-    private void reloadSync() throws PEBKACException, ObjectMappingException, PermissionsLoadingException {
-        try {
-            rawConfig = configLoader.load();
-            ConfigurationNode fallbackConfig;
-            try {
-                fallbackConfig = PermissionsExConfiguration.loadDefaultConfiguration();
-            } catch (IOException e) {
-                throw new Error("PEX's default configuration could not be loaded!", e);
-            }
-            ConfigTransformations.versions().apply(rawConfig);
-            rawConfig.mergeValuesFrom(fallbackConfig);
-            config = rawConfig.getValue(PermissionsExConfiguration.TYPE);
-            config.validate();
-            PermissionsEx oldManager = manager;
-            Set<CommandMapping> mappings = game.getCommandDispatcher().getOwnedBy(game.getPluginManager().fromInstance(this).get());
-            for (CommandMapping mapping : mappings) { // Because the new PermissionsEx instance will register commands again, we have to unregister the old ones here
-                game.getCommandDispatcher().removeMapping(mapping);
-            }
-            manager = new PermissionsEx(config, this);
-            if (oldManager != null) {
-                oldManager.close();
-            }
-            contextCalculator.update(config);
-            for (PEXSubjectCollection collection : subjectCollections.asMap().values()) {
-                collection.updateCaches();
-            }
-        } catch (IOException e) {
-            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
-        } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(t("Unable to reload!"), e);
-        }
-    }
-
-    public CompletableFuture<Void> reload() {
-        return Util.asyncFailableFuture(() -> {
-            reloadSync();
-            return null;
-        }, getAsyncExecutor());
-    }
 
     PermissionsEx getManager() {
         return this.manager;
@@ -454,40 +388,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public Set<CommandSpec> getImplementationCommands() {
-            return ImmutableSet.of(CommandSpec.builder()
-                .setAliases("reload", "rel")
-                .setDescription(t("Reload the PermissionsEx configuration"))
-                .setPermission("permissionsex.reload")
-                .setExecutor(new CommandExecutor() {
-                    @Override
-                    public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
-                        src.msg(t("Reloading PermissionsEx"));
-                        reload().thenRun(() -> {
-                            src.msg(t("The reload was successful"));
-                        }).exceptionally(t -> {
-                            src.error(t("An error occurred while reloading PEX: %s\n " +
-                                    "Please see the server console for details", t.getLocalizedMessage()));
-                            logger.error(t("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                    src.getName(), t.getLocalizedMessage()), t);
-                            return null;
-                        });
-                    }
-                })
-                .build());
+        return ImmutableSet.of();
     }
 
     @Override
     public String getVersion() {
         return PomData.VERSION;
-    }
-
-    @Override
-    public Function<String, String> getNameTransformer(String type) {
-        Function<String, String> xform = nameTransformerMap.get(type);
-        if (xform == null) {
-            xform = Function.identity();
-        }
-        return xform;
     }
 
     Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {

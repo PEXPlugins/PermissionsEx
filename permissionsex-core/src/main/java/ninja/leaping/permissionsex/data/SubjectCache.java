@@ -34,14 +34,34 @@ public class SubjectCache {
     private final DataStore dataStore;
     private final LoadingCache<String, ImmutableSubjectData> cache;
     private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
-    private final CacheListenerHolder<String, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
+    private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
 
     public SubjectCache(final String type, final DataStore dataStore) {
+        this(type, null, dataStore);
+    }
+
+    public SubjectCache(final SubjectCache existing, final DataStore dataStore) {
+        this(existing.getType(), existing, dataStore);
+    }
+
+    private SubjectCache(final String type, final SubjectCache existing, final DataStore dataStore) {
         this.type = type;
         this.dataStore = dataStore;
         cache = CacheBuilder.newBuilder()
                 .maximumSize(512)
                 .build(CacheLoader.from(identifier -> dataStore.getData(type, identifier, clearListener(identifier))));
+        if (existing != null) {
+            this.listeners = existing.listeners;
+            existing.cache.asMap().forEach((k, v) -> {
+                try {
+                    listeners.call(k, getData(k, null));
+                } catch (ExecutionException e) {
+                    // TODO: Not ignore this somehow? Add a listener in to the backend?
+                }
+            });
+        } else {
+            this.listeners = new CacheListenerHolder<>();
+        }
     }
 
     public ImmutableSubjectData getData(String identifier, Caching<ImmutableSubjectData> listener) throws ExecutionException {

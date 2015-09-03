@@ -26,6 +26,6 @@ public class DefaultConfigTest {
      */
     @Test
     public void testDefaultConfigLoading() throws IOException {
-        PermissionsExConfiguration.loadDefaultConfiguration();
+        FilePermissionsExConfiguration.loadDefaultConfiguration();
     }
 }
