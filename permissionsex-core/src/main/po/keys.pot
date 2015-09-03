@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-02 16:46-0700\n"
+"POT-Creation-Date: 2015-09-02 17:10-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:137
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:139
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:129
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:131
 msgid "Error creating initial data for file backend"
 msgstr ""
 
@@ -379,19 +379,19 @@ msgstr ""
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:178
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:182
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:97
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:99
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:116
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:118
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:141
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:143
 msgid "While performing version upgrade"
 msgstr ""
 

@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -65,6 +66,7 @@ public final class FileDataStore extends AbstractDataStore {
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
+    private final AtomicBoolean dirty = new AtomicBoolean();
 
     public FileDataStore() {
         super(FACTORY);
@@ -166,7 +168,9 @@ public final class FileDataStore extends AbstractDataStore {
 
     private void saveSync() throws IOException {
         if (saveSuppressed.get() <= 0) {
-            permissionsFileLoader.save(permissionsConfig);
+            if (dirty.compareAndSet(true, false)) {
+                permissionsFileLoader.save(permissionsConfig);
+            }
         }
     }
 
@@ -184,6 +188,7 @@ public final class FileDataStore extends AbstractDataStore {
         try {
             if (data == null) {
                 getSubjectsNode().getNode(type, identifier).setValue(null);
+                dirty.set(true);
                 return save().thenApply(input -> null);
             }
 
@@ -195,6 +200,7 @@ public final class FileDataStore extends AbstractDataStore {
                 fileData = ConversionUtils.transfer(data, new FileSubjectData());
             }
             fileData.serialize(getSubjectsNode().getNode(type, identifier));
+            dirty.set(true);
             return save().thenApply(none -> fileData);
         } catch (ObjectMappingException e) {
             return Util.failedFuture(e);
@@ -267,6 +273,7 @@ public final class FileDataStore extends AbstractDataStore {
         } catch (ObjectMappingException e) {
             throw new RuntimeException(e);
         }
+        dirty.set(true);
         return save().thenApply(none -> realInheritance);
     }
 
@@ -278,6 +285,7 @@ public final class FileDataStore extends AbstractDataStore {
             childNode.getAppendedNode().setValue(Util.subjectToString(rank));
 
         }
+        dirty.set(true);
         return save().thenApply(none -> ladder);
     }
 
