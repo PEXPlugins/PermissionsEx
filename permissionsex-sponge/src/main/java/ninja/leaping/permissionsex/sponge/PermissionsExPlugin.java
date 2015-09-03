@@ -37,6 +37,7 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -53,7 +54,7 @@ import org.spongepowered.api.event.entity.living.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.living.player.PlayerQuitEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
-import org.spongepowered.api.event.network.GameClientAuthEvent;
+import org.spongepowered.api.event.network.GameClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.ProviderExistsException;
@@ -104,7 +105,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private ServiceReference<SqlService> sql;
     private ServiceReference<SchedulerService> scheduler;
     @Inject private ServiceManager services;
-    @Inject private Logger logger;
+    private final TranslatableLogger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
@@ -134,13 +135,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 .submit(PermissionsExPlugin.this);
     };
 
-    private static String lf(Translatable trans) {
-        return trans.translateFormatted(Locale.getDefault());
+    @Inject
+    PermissionsExPlugin(Logger logger) {
+        this.logger = TranslatableLogger.forLogger(logger);
     }
 
     @Listener
     public void onPreInit(GamePreInitializationEvent event) throws PEBKACException {
-        logger.info(lf(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION)));
+        logger.info(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
         sql = services.potentiallyProvide(SqlService.class);
         scheduler = services.potentiallyProvide(SchedulerService.class);
 
@@ -151,7 +153,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (PEBKACException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException(lf(t("Error occurred while enabling %s", PomData.NAME)), e);
+            throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
 
         try {
@@ -219,17 +221,17 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void cacheUserAsync(GameClientAuthEvent event) {
+    public void cacheUserAsync(GameClientConnectionEvent.Authenticate event) {
         try {
             getManager().getCalculatedSubject(PermissionsEx.SUBJECTS_USER, event.getProfile().getUniqueId().toString());
         } catch (PermissionsLoadingException e) {
-            logger.warn(lf(t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage())), e);
+            logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage()), e);
         }
     }
 
     @Listener
     public void disable(GameStoppedServerEvent event) {
-        logger.debug(lf(t("Disabling %s", PomData.NAME)));
+        logger.debug(t("Disabling %s", PomData.NAME));
         PermissionsEx manager = this.manager;
         if (manager != null) {
             manager.close();
@@ -260,9 +262,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private void convertFromBukkit() throws IOException {
         File bukkitConfigDir = new File("plugins/PermissionsEx");
         if (bukkitConfigDir.isDirectory() && !configDir.isDirectory()) {
-            logger.info(lf(t("Migrating configuration data from Bukkit")));
+            logger.info(t("Migrating configuration data from Bukkit"));
             if (!bukkitConfigDir.renameTo(configDir)) {
-                throw new IOException(lf(t("Unable to move Bukkit configuration directory to location for Sponge!")));
+                throw new IOException(t("Unable to move Bukkit configuration directory to location for Sponge!").translateFormatted(logger.getLogLocale()));
             }
         }
         File bukkitConfigFile = new File(configDir, "config.yml");
@@ -271,7 +273,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             ConfigurationNode bukkitConfig = yamlReader.load();
             configLoader.save(bukkitConfig);
             if (!bukkitConfigFile.renameTo(new File(configDir, "config.yml.bukkit"))) {
-                logger.warn(lf(t("Could not rename old Bukkit configuration file to old name")));
+                logger.warn(t("Could not rename old Bukkit configuration file to old name"));
             }
         }
     }
@@ -353,7 +355,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return subjectCollections.get(identifier);
         } catch (ExecutionException e) {
-            logger.error(lf(t("Unable to get subject collection for type %s", identifier)), e);
+            logger.error(t("Unable to get subject collection for type %s", identifier), e);
             return null;
         }
     }
@@ -430,7 +432,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return sql.ref().get().getDataSource(url);
         } catch (SQLException e) {
-            logger.error(lf(t("Unable to get data source for jdbc url %s", url)), e);
+            logger.error(t("Unable to get data source for jdbc url %s", url), e);
             return null;
         }
     }
@@ -465,8 +467,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                         }).exceptionally(t -> {
                             src.error(t("An error occurred while reloading PEX: %s\n " +
                                     "Please see the server console for details", t.getLocalizedMessage()));
-                            logger.error(lf(t("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                    src.getName(), t.getLocalizedMessage())), t);
+                            logger.error(t("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                    src.getName(), t.getLocalizedMessage()), t);
                             return null;
                         });
                     }

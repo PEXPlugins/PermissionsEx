@@ -26,7 +26,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.transformation.TransformAction;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
-import org.slf4j.Logger;
+import ninja.leaping.permissionsex.logging.TranslatableLogger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 public class SchemaMigrations {
     public static final int LATEST_VERSION = 4;
@@ -47,7 +48,7 @@ public class SchemaMigrations {
     }
 
 
-    static ConfigurationTransformation versionedMigration(final Logger logger) {
+    static ConfigurationTransformation versionedMigration(final TranslatableLogger logger) {
         return ConfigurationTransformation.versionedBuilder()
                 .setVersionKey("schema-version")
                 .addVersion(LATEST_VERSION, threeToFour())
@@ -131,7 +132,7 @@ public class SchemaMigrations {
                 }).build());
     }
 
-    static ConfigurationTransformation oneTo2(final Logger logger) {
+    static ConfigurationTransformation oneTo2(final TranslatableLogger logger) {
         return ConfigurationTransformation.chain(
                 tBuilder()
                         .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
@@ -169,7 +170,7 @@ public class SchemaMigrations {
                                 }
                                 permission = ConversionUtils.convertLegacyPermission(permission);
                                 if (permission.contains("*")) {
-                                    logger.warn("The permission at {} contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath()));
+                                    logger.warn(t("The permission at %s contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath())));
                                 }
                                 configurationNode.getNode(permission).setValue(value);
                             }

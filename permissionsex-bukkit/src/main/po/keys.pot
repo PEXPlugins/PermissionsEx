@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-31 20:19-0700\n"
+"POT-Creation-Date: 2015-09-02 16:46-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,71 +17,75 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:393
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:389
 msgid "An error occurred while reloading PEX (triggered by %s's command): %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:391
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:387
 msgid ""
 "An error occurred while reloading PEX: %s\n"
 " Please see the server console for details"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PEXPermissible.java:94
+msgid "Checked permission %s for player %s in contexts %s: %s"
 msgstr ""
 
 #: ninja/leaping/permissionsex/bukkit/BukkitMessageFormatter.java:85
 msgid "Click to view more info"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:118
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:126
 msgid "Error occurred while enabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:235
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:233
 msgid "Error while loading configuration: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:191
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:189
 msgid "Error while loading data for user %s/%s during prelogin: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:165
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:163
 msgid "Hooked into Vault for Permission and Chat interfaces"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:320
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:316
 msgid ""
 "No Permissible injector found for your server implementation (while "
 "uninjecting for %s)!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:280
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:278
 msgid "No Permissible injector found for your server implementation!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:288
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:286
 msgid "Permissions handler for %s successfully injected"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:322
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:318
 msgid "Permissions handler for %s successfully uninjected"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:382
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:378
 msgid "Reload the PermissionsEx configuration"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:387
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:383
 msgid "Reloading PermissionsEx"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:389
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:385
 msgid "The reload was successful"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:282
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:280
 msgid "Unable to inject PEX's permissible for %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:291
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:289
 msgid "Unable to inject permissible for %s"
 msgstr ""
 

@@ -22,6 +22,7 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -76,7 +77,7 @@ public class SchemaMigrationsTest {
                 .setFile(testFile)
                 .build();
         ConfigurationNode node = yamlLoader.load();
-        SchemaMigrations.oneTo2(LoggerFactory.getLogger(getClass())).apply(node);
+        SchemaMigrations.oneTo2(TranslatableLogger.forLogger(LoggerFactory.getLogger(getClass()))).apply(node);
         jsonSaver.save(node);
         assertEquals(Resources.toString(getClass().getResource("test1to2.post.json"), StandardCharsets.UTF_8), Files.toString(testFile, StandardCharsets.UTF_8));
 

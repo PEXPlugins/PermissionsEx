@@ -43,19 +43,13 @@ public class PEXProfileCache implements ProfileCache  {
 
     @Override
     public void put(Profile profile) {
-        final String identifier = profile.getUniqueId().toString();
-        try {
-            this.subjects.set(identifier, this.subjects.getData(identifier, null).setOption(PermissionsEx.GLOBAL_CONTEXT, "name", profile.getName()));
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        this.subjects.update(profile.getUniqueId().toString(),
+                input -> input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", profile.getName()));
     }
 
     @Override
     public void putAll(Iterable<Profile> iterable) {
-        for (Profile prof : iterable) {
-            put(prof);
-        }
+        iterable.forEach(this::put);
     }
 
     @Nullable
@@ -75,12 +69,6 @@ public class PEXProfileCache implements ProfileCache  {
 
     @Override
     public ImmutableMap<UUID, Profile> getAllPresent(Iterable<UUID> iterable) {
-        return Maps.toMap(iterable, new Function<UUID, Profile>() {
-            @Nullable
-            @Override
-            public Profile apply(@Nullable UUID input) {
-                return getIfPresent(input);
-            }
-        });
+        return Maps.toMap(iterable, this::getIfPresent);
     }
 }

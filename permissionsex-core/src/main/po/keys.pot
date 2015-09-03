@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-31 20:19-0700\n"
+"POT-Creation-Date: 2015-09-02 16:46-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:138
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:137
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -26,7 +26,7 @@ msgstr ""
 msgid "%s subjects"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:172
+#: ninja/leaping/permissionsex/PermissionsEx.java:170
 msgid "%s user successfully converted from name to UUID"
 msgid_plural "%s users successfully converted from name to UUID!"
 msgstr[0] ""
@@ -48,7 +48,7 @@ msgstr ""
 msgid "-"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:62
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:61
 msgid "A subject must be provided for this command!"
 msgstr ""
 
@@ -126,7 +126,7 @@ msgstr ""
 msgid "Demoted %s on ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:142
+#: ninja/leaping/permissionsex/PermissionsEx.java:140
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
@@ -140,17 +140,17 @@ msgstr ""
 msgid "Enum value %s not valid"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:78
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:77
 msgid ""
 "Error (%s) occurred while performing command task! Please see console for "
 "details: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:177
+#: ninja/leaping/permissionsex/PermissionsEx.java:175
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:130
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:129
 msgid "Error creating initial data for file backend"
 msgstr ""
 
@@ -158,7 +158,7 @@ msgstr ""
 msgid "Error creating subject DAO"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:79
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:78
 msgid "Error occurred while executing command for user %s"
 msgstr ""
 
@@ -170,7 +170,7 @@ msgstr ""
 msgid "Error while deserializing backend %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:167
+#: ninja/leaping/permissionsex/PermissionsEx.java:165
 msgid "Error while fetching UUIDs for users"
 msgstr ""
 
@@ -186,7 +186,7 @@ msgstr ""
 msgid "Expected an integer, but input '%s' was not"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:53
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:52
 msgid "Global"
 msgstr ""
 
@@ -316,6 +316,10 @@ msgstr ""
 msgid "Successfully removed %s from ladder %s"
 msgstr ""
 
+#: ninja/leaping/permissionsex/backend/file/SchemaMigrations.java:173
+msgid "The permission at %s contains a now-illegal character '*'"
+msgstr ""
+
 #: ninja/leaping/permissionsex/command/PermissionsExCommands.java:112
 msgid "Toggle debug mode"
 msgstr ""
@@ -336,15 +340,15 @@ msgstr ""
 msgid "Transient permissions:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:131
+#: ninja/leaping/permissionsex/PermissionsEx.java:129
 msgid "Trying to convert users stored by name to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:48
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:47
 msgid "Unable to get data for subject %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:181
+#: ninja/leaping/permissionsex/PermissionsEx.java:179
 msgid ""
 "Unable to resolve Mojang API for UUID conversion. Do you have an internet "
 "connection? UUID conversion will not proceed (but may not be necessary)."
@@ -371,29 +375,29 @@ msgstr ""
 msgid "Usage: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:340
+#: ninja/leaping/permissionsex/PermissionsEx.java:338
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:179
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:178
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:98
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:97
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:117
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:116
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:142
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:141
 msgid "While performing version upgrade"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:72
-#: ninja/leaping/permissionsex/util/command/CommandSpec.java:175
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:71
 #: ninja/leaping/permissionsex/util/command/CommandContext.java:72
+#: ninja/leaping/permissionsex/util/command/CommandSpec.java:175
 msgid "You do not have permission to use this command!"
 msgstr ""
 
@@ -405,7 +409,7 @@ msgstr ""
 msgid "context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/SchemaMigrations.java:104
+#: ninja/leaping/permissionsex/backend/file/SchemaMigrations.java:105
 msgid "default"
 msgstr ""
 

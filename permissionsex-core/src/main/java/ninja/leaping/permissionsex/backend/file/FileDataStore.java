@@ -44,7 +44,6 @@ import ninja.leaping.permissionsex.util.Util;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -135,7 +134,7 @@ public final class FileDataStore extends AbstractDataStore {
             versionUpdater.apply(permissionsConfig);
             int endVersion = permissionsConfig.getNode("schema-version").getInt();
             if (endVersion > startVersion) {
-                getManager().getLogger().info(t("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion).translateFormatted(Locale.getDefault()));
+                getManager().getLogger().info(t("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion));
                 try {
                     save().get();
                 } catch (InterruptedException | ExecutionException e) {

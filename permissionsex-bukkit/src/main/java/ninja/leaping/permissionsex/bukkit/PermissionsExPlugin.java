@@ -30,7 +30,7 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.config.ConfigTransformations;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
@@ -49,13 +49,15 @@ import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
+import org.slf4j.impl.JDK14LoggerAdapter;
 import org.yaml.snakeyaml.DumperOptions;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +66,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
-import java.util.logging.Level;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
@@ -73,7 +74,7 @@ import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
  * PermissionsEx plugin
  */
 public class PermissionsExPlugin extends JavaPlugin implements Listener {
-    private static final PermissibleInjector[] injectors = new PermissibleInjector[] {
+    private static final PermissibleInjector[] INJECTORS = new PermissibleInjector[] {
             new PermissibleInjector.ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
             new PermissibleInjector.ClassPresencePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true),
             new PermissibleInjector.ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer"),
@@ -88,21 +89,32 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     private ConfigurationLoader<ConfigurationNode> configLoader;
     private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
-    private Logger logger;
+    private TranslatableLogger logger;
 
-    // Injections into superperm
+    // Injections into superperms
     private PermissionList permsList;
     // Permissions subscriptions handling
     private PEXPermissionSubscriptionMap subscriptionHandler;
     private volatile boolean enabled;
 
-    private static String lf(Translatable trans) {
-        return trans.translateFormatted(Locale.getDefault());
+    /**
+     * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
+     * @return
+     */
+    private TranslatableLogger createLogger() {
+        try {
+            Constructor<JDK14LoggerAdapter> adapter = JDK14LoggerAdapter.class.getDeclaredConstructor(java.util.logging.Logger.class);
+            adapter.setAccessible(true);
+            return TranslatableLogger.forLogger(adapter.newInstance(getLogger()));
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+            throw new ExceptionInInitializerError(e);
+        }
     }
 
     @Override
     public void onEnable() {
-        logger = org.slf4j.LoggerFactory.getLogger("PermissionsEx");
+        logger = createLogger();
         configLoader = YAMLConfigurationLoader.builder()
                 .setFile(new File(getDataFolder(), "config.yml"))
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
@@ -112,10 +124,12 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             getDataFolder().mkdirs();
             reloadSync();
         } catch (PEBKACException e) {
-            logger.warn(lf(e.getTranslatableMessage()));
+            logger.warn(e.getTranslatableMessage());
 
         } catch (Exception e) {
-            throw new RuntimeException(lf(t("Error occurred while enabling %s", getDescription().getName())), e);
+            logger.error(t("Error occurred while enabling %s", getDescription().getName()), e);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
         }
 
         try {
@@ -125,32 +139,20 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             throw new RuntimeException(e);
         }
 
-        nameTransformerMap.put(PermissionsEx.SUBJECTS_USER, new Function<String, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable String input) {
-                try {
-                    UUID.fromString(input);
-                    return input;
-                } catch (IllegalArgumentException ex) {
-                    Player player = getServer().getPlayer(input);
-                    if (player != null) {
-                        return player.getUniqueId().toString();
-                    } else {
-                        OfflinePlayer offline = getServer().getOfflinePlayer(input);
-                        if (offline != null && offline.getUniqueId() != null) {
-                            return offline.getUniqueId().toString();
-                        }
-                        /*Optional<GameProfileResolver> res = game.getServiceManager().provide(GameProfileResolver.class);
-                        if (res.isPresent()) {
-                            for (GameProfile profile : res.get().match(input)) {
-                                if (profile.getName().equalsIgnoreCase(input)) {
-                                    return profile.getUniqueId().toString();
-                                }
-                            }
-                        }*/
-                        return input; // TODO: Support offline players
+        nameTransformerMap.put(PermissionsEx.SUBJECTS_USER, input -> {
+            try {
+                UUID.fromString(input);
+                return input;
+            } catch (IllegalArgumentException ex) {
+                Player player = getServer().getPlayer(input);
+                if (player != null) {
+                    return player.getUniqueId().toString();
+                } else {
+                    OfflinePlayer offline = getServer().getOfflinePlayer(input);
+                    if (offline != null && offline.getUniqueId() != null) {
+                        return offline.getUniqueId().toString();
                     }
+                    return input;
                 }
             }
         });
@@ -162,7 +164,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             final PEXVault vault = new PEXVault(this);
             getServer().getServicesManager().register(Permission.class, vault, this, ServicePriority.High); // Hook into vault
             getServer().getServicesManager().register(Chat.class, new PEXVaultChat(vault), this, ServicePriority.High);
-            getLogger().info(lf(t("Hooked into Vault for Permission and Chat interfaces")));
+            logger.info(t("Hooked into Vault for Permission and Chat interfaces"));
         }
         enabled = true;
     }
@@ -188,7 +190,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         try {
             getUserSubjects().load(event.getUniqueId().toString());
         } catch (ExecutionException e) {
-            logger.warn(lf(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage())), e);
+            logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
         }
     }
 
@@ -264,7 +266,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             PEXPermissible permissible = new PEXPermissible(player, this);
 
             boolean success = false, found = false;
-            for (PermissibleInjector injector : injectors) {
+            for (PermissibleInjector injector : INJECTORS) {
                 if (injector.isApplicable(player)) {
                     found = true;
                     Permissible oldPerm = injector.inject(player, permissible);
@@ -277,31 +279,29 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!found) {
-                getLogger().warning(lf(t("No Permissible injector found for your server implementation!")));
+                logger.warn(t("No Permissible injector found for your server implementation!"));
             } else if (!success) {
-                getLogger().warning(lf(t("Unable to inject PEX's permissible for %s", player.getName())));
+                logger.warn(t("Unable to inject PEX's permissible for %s", player.getName()));
             }
 
             permissible.recalculatePermissions();
 
             if (success && getManager().hasDebugMode()) {
-                getLogger().info(lf(t("Permissions handler for %s successfully injected", player.getName())));
+                logger.info(t("Permissions handler for %s successfully injected", player.getName()));
             }
         } catch (Throwable e) {
-            getLogger().log(Level.SEVERE, lf(t("Unable to inject permissible for %s", player.getName())), e);
+            logger.error(t("Unable to inject permissible for %s", player.getName()), e);
         }
     }
 
     private void injectAllPermissibles() {
-        for (Player player : getServer().getOnlinePlayers()) {
-            injectPermissible(player);
-        }
+        getServer().getOnlinePlayers().forEach(this::injectPermissible);
     }
 
     private void uninjectPermissible(Player player) {
         try {
             boolean success = false;
-            for (PermissibleInjector injector : injectors) {
+            for (PermissibleInjector injector : INJECTORS) {
                 if (injector.isApplicable(player)) {
                     Permissible pexPerm = injector.getPermissible(player);
                     if (pexPerm instanceof PEXPermissible) {
@@ -317,9 +317,9 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!success) {
-                getLogger().warning(lf(t("No Permissible injector found for your server implementation (while uninjecting for %s)!", player.getName())));
+                logger.warn(t("No Permissible injector found for your server implementation (while uninjecting for %s)!", player.getName()));
             } else if (getManager() != null && getManager().hasDebugMode()) {
-                getLogger().info(lf(t("Permissions handler for %s successfully uninjected", player.getName())));
+                logger.info(t("Permissions handler for %s successfully uninjected", player.getName()));
             }
         } catch (Throwable e) {
             e.printStackTrace();
@@ -390,8 +390,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
                                     .exceptionally(t -> {
                                         src.error(t("An error occurred while reloading PEX: %s\n " +
                                                 "Please see the server console for details", t.getLocalizedMessage()));
-                                        logger.error(lf(t("An error occurred while reloading PEX (triggered by %s's command): %s",
-                                                src.getName(), t.getLocalizedMessage())), t);
+                                        logger.error(t("An error occurred while reloading PEX (triggered by %s's command): %s",
+                                                src.getName(), t.getLocalizedMessage()), t);
                                         return null;
                                     });
                         }

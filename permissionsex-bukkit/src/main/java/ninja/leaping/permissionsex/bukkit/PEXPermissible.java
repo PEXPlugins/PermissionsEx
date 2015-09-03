@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_USER;
+import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
 
 /**
  * Implementation of Permissible using PEX for data
@@ -90,7 +91,7 @@ public class PEXPermissible extends PermissibleBase {
     private int getPermissionValue(Set<Map.Entry<String, String>> contexts, String permission) {
         int ret = getPermissionValue0(subj.getPermissions(contexts), permission);
         if (pex.hasDebugMode()) {
-            pex.getLogger().info("Checked permission {} for player {} in contexts {}: {}", permission, player.getName(), contexts, ret);
+            pex.getLogger().info(t("Checked permission %s for player %s in contexts %s: %s", permission, player.getName(), contexts, ret));
         }
         return ret;
     }

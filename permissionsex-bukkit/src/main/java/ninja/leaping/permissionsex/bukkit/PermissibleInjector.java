@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 /**
  * This class handles injection of {@link Permissible}s into {@link Player}s for various server implementations.
  */
-public abstract class PermissibleInjector {
+abstract class PermissibleInjector {
     protected final String clazzName, fieldName;
     protected final boolean copyValues;
 
@@ -100,7 +100,7 @@ public abstract class PermissibleInjector {
 
     public abstract boolean isApplicable(Player player);
 
-    public static class ServerNamePermissibleInjector extends PermissibleInjector {
+    static class ServerNamePermissibleInjector extends PermissibleInjector {
         protected final String serverName;
 
         public ServerNamePermissibleInjector(String clazz, String field, boolean copyValues, String serverName) {
@@ -114,7 +114,7 @@ public abstract class PermissibleInjector {
         }
     }
 
-    public static class ClassPresencePermissibleInjector extends PermissibleInjector {
+    static class ClassPresencePermissibleInjector extends PermissibleInjector {
 
         public ClassPresencePermissibleInjector(String clazzName, String fieldName, boolean copyValues) {
             super(clazzName, fieldName, copyValues);
@@ -130,7 +130,7 @@ public abstract class PermissibleInjector {
         }
     }
 
-    public static class ClassNameRegexPermissibleInjector extends PermissibleInjector {
+    static class ClassNameRegexPermissibleInjector extends PermissibleInjector {
         private final String regex;
 
         public ClassNameRegexPermissibleInjector(String clazz, String field, boolean copyValues, String regex) {

@@ -33,6 +33,7 @@ import ninja.leaping.permissionsex.command.RankingCommands;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
+import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
@@ -44,7 +45,6 @@ import ninja.leaping.permissionsex.util.PEXProfileCache;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
-import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -72,6 +72,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
     private final PermissionsExConfiguration config;
+    private final TranslatableLogger logger;
     private final ImplementationInterface impl;
     private DataStore activeDataStore;
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
@@ -88,20 +89,17 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private ProfileService uuidService;
     private volatile boolean debug;
 
-    private static String fLog(Translatable trans) {
-        return trans.translateFormatted(Locale.getDefault());
-    }
-
     public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.config = config;
         this.impl = impl;
+        this.logger = TranslatableLogger.forLogger(impl.getLogger());
         this.debug = config.isDebugEnabled();
         this.uuidService = HttpRepositoryService.forMinecraft();
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
         this.activeDataStore = config.getDefaultDataStore();
         this.activeDataStore.initialize(this);
-        getSubjects("group").cacheAll();
+        getSubjects(SUBJECTS_GROUP).cacheAll();
         this.rankLadderCache = new RankLadderCache(this.activeDataStore);
         convertUuids();
 
@@ -128,7 +126,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     }
                 });
                 if (toConvert.iterator().hasNext()) {
-                    getLogger().info(fLog(t("Trying to convert users stored by name to UUID")));
+                    getLogger().info(t("Trying to convert users stored by name to UUID"));
                 } else {
                     return 0;
                 }
@@ -139,7 +137,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     service.findAllByName(toConvert, profile -> {
                         final String newIdentifier = profile.getUniqueId().toString();
                         if (input.isRegistered(SUBJECTS_USER, newIdentifier)) {
-                            getLogger().warn(fLog(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName())));
+                            getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
                             return false; // We already have a registered UUID, this is a duplicate.
                         }
 
@@ -164,21 +162,21 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     });
                     return converted[0];
                 } catch (IOException | InterruptedException e) {
-                    getLogger().error(fLog(t("Error while fetching UUIDs for users")), e);
+                    getLogger().error(t("Error while fetching UUIDs for users"), e);
                     return 0;
                 }
             }).thenAccept(result -> {
                     if (result != null && result > 0) {
-                        getLogger().info(fLog(tn("%s user successfully converted from name to UUID",
+                        getLogger().info(tn("%s user successfully converted from name to UUID",
                                 "%s users successfully converted from name to UUID!",
-                                result, result)));
+                                result, result));
                     }
                 }).exceptionally(t -> {
-                getLogger().error(fLog(t("Error converting users to UUID")), t);
+                getLogger().error(t("Error converting users to UUID"), t);
                 return null;
                 });
         } catch (UnknownHostException e) {
-            getLogger().warn(fLog(t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary).")));
+            getLogger().warn(t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary)."));
         }
 
     }
@@ -280,8 +278,8 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     @Override
-    public Logger getLogger() {
-        return impl.getLogger();
+    public TranslatableLogger getLogger() {
+        return this.logger;
     }
 
     @Override
