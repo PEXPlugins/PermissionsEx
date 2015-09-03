@@ -19,10 +19,11 @@ package ninja.leaping.permissionsex.bukkit;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.NodeTree;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
@@ -34,9 +35,16 @@ import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
+import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_GROUP;
 import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_USER;
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
 
@@ -44,6 +52,80 @@ import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
  * Implementation of Permissible using PEX for data
  */
 public class PEXPermissible extends PermissibleBase {
+
+    private static Metapermission[] METAPERMISSIONS = new Metapermission[] {
+            /**
+             * | Permission                 | Usage
+             |----------------------------|------
+             | `group.<group>`            | Added for each group a user is in
+             | `groups.<group>`           | same as above
+             | `options.<option>.<value>` | Each option the user has
+             | `prefix.<prefix>`          | User's prefix
+             | `suffix.<suffix>`          | User's suffix
+             */
+            new Metapermission(Pattern.compile("groups?\\.(?<name>.+)")) {
+                @Override
+                public boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                    return subj.getParents(contexts).contains(Maps.immutableEntry(SUBJECTS_GROUP, result.group("name")));
+                }
+
+                @Override
+                public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                    return subj.getParents(contexts).stream()
+                            .filter(ent -> ent.getKey().equals(SUBJECTS_GROUP))
+                            .flatMap(ent -> StreamSupport.<String>stream(Spliterators.spliterator(new String[]{"group." + ent.getValue(), "groups." + ent.getValue()}, Spliterator.IMMUTABLE | Spliterator.DISTINCT), false))
+                            .iterator();
+                }
+            },
+            new Metapermission(Pattern.compile("options\\.(?<key>.*)\\.(?<value>.*)")) {
+                @Override
+                public boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                    return subj.getOption(contexts, result.group("key")).map(val -> val.equals(result.group("value"))).orElse(false);
+                }
+
+                @Override
+                public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                    return Iterables.transform(subj.getOptions(contexts).entrySet(),
+                            ent -> "options." + ent.getKey() + "." + ent.getValue())
+                            .iterator();
+                }
+            },
+            new SpecificOptionMetapermission("prefix"),
+            new SpecificOptionMetapermission("suffix")
+    };
+    private abstract static class Metapermission {
+        /**
+         * Pattern to match against
+         */
+        private final Pattern matchAgainst;
+
+        protected Metapermission(Pattern matchAgainst) {
+            this.matchAgainst = matchAgainst;
+        }
+
+        public abstract boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts);
+
+        public abstract Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts);
+    }
+
+    private static class SpecificOptionMetapermission extends Metapermission {
+        private final String option;
+        public SpecificOptionMetapermission(String option) {
+            super(Pattern.compile(Pattern.quote(option) + "\\.(?<value>.+)"));
+            this.option = option;
+        }
+
+        @Override
+        public boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+            return subj.getOption(contexts, option).map(val -> val.equals(result.group("value"))).orElse(false);
+        }
+
+        @Override
+        public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+            String ret = subj.getOptions(contexts).get(option);
+            return ret == null ? Iterators.emptyIterator() : Iterators.singletonIterator(this.option + "." + ret);
+        }
+    }
     private final Player player;
     private final PermissionsExPlugin plugin;
     private PermissionsEx pex;
@@ -61,6 +143,7 @@ public class PEXPermissible extends PermissibleBase {
             throw new ExceptionInInitializerError(e);
         }
     }
+
 
     public PermissionsEx getManager() {
         return this.pex;
@@ -90,6 +173,16 @@ public class PEXPermissible extends PermissibleBase {
 
     private int getPermissionValue(Set<Map.Entry<String, String>> contexts, String permission) {
         int ret = getPermissionValue0(subj.getPermissions(contexts), permission);
+
+        if (ret == 0) {
+            for (Metapermission mPerm : METAPERMISSIONS) {
+                Matcher match = mPerm.matchAgainst.matcher(permission);
+                if (match.matches() && mPerm.isMatch(match, subj, contexts)) {
+                    ret = 1;
+                }
+            }
+        }
+
         if (pex.hasDebugMode()) {
             pex.getLogger().info(t("Checked permission %s for player %s in contexts %s: %s", permission, player.getName(), contexts, ret));
         }
@@ -111,6 +204,7 @@ public class PEXPermissible extends PermissibleBase {
                 return val;
             }
         }
+
         return 0;
     }
 
@@ -192,20 +286,16 @@ public class PEXPermissible extends PermissibleBase {
         return addAttachment(plugin); // TODO: Implement timed permissions
     }
 
-    /**
-     * TODO: Inject custom permissions here:
-     * | Permission                 | Usage
-       |----------------------------|------
-       | `group.<group>`            | Added for each group a user is in
-       | `groups.<group>`           | same as above
-       | `options.<option>.<value>` | Each option the user has
-       | `prefix.<prefix>`          | User's prefix
-       | `suffix.<suffix>`          | User's suffix
-      * @return
-     */
     @Override
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-        return ImmutableSet.copyOf(Iterables.transform(subj.getPermissions(getActiveContexts()).asMap().entrySet(), input -> new PermissionAttachmentInfo(player, input.getKey(), null, input.getValue() > 0)));
+        ImmutableSet.Builder<PermissionAttachmentInfo> ret = ImmutableSet.builder();
+        final Set<Map.Entry<String, String>> activeContexts = getActiveContexts();
+        ret.addAll(Iterables.transform(subj.getPermissions(activeContexts).asMap().entrySet(),
+                input -> new PermissionAttachmentInfo(player, input.getKey(), null, input.getValue() > 0)));
+        for (Metapermission mPerm : METAPERMISSIONS) {
+            ret.addAll(Iterators.transform(mPerm.getValues(this.subj, activeContexts), input -> new PermissionAttachmentInfo(player, input, null, true)));
+        }
+        return ret.build();
     }
 
     public Set<Map.Entry<String, String>> getActiveContexts() {
