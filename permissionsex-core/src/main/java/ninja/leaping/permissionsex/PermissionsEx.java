@@ -66,8 +66,8 @@ import static ninja.leaping.permissionsex.util.Translations.*;
 public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
+    public static final String SUBJECTS_DEFAULTS = "default";
     public static final ImmutableSet<Map.Entry<String, String>> GLOBAL_CONTEXT = ImmutableSet.of();
-    private static final Map.Entry<String, String> DEFAULT_IDENTIFIER = Maps.immutableEntry("system", "default");
 
     private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
     private final TranslatableLogger logger;
@@ -307,6 +307,10 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
             this.cachedInheritanceListeners.call(true, getContextInheritance(null));
         }
 
+        // Migrate over legacy subject data
+        newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
+            getLogger().info(t("Successfully migrated old-style default data to new location"));
+        });
     }
 
     public CompletableFuture<Void> reload() {
@@ -389,15 +393,6 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     public PermissionsExConfiguration getConfig() {
         return getState().config;
-    }
-
-    /**
-     * Get the identifier to access default subject data
-     *
-     * @return The identifier referring to default subject data
-     */
-    public Map.Entry<String, String> getDefaultIdentifier() {
-        return DEFAULT_IDENTIFIER;
     }
 
     public CalculatedSubject getCalculatedSubject(String type, String identifier) throws PermissionsLoadingException {

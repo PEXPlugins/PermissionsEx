@@ -19,6 +19,8 @@ package ninja.leaping.permissionsex.data;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.util.Util;
 
@@ -35,6 +37,7 @@ public class SubjectCache {
     private final LoadingCache<String, ImmutableSubjectData> cache;
     private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
+    private final Map.Entry<String, String> defaultIdentifier;
 
     public SubjectCache(final String type, final DataStore dataStore) {
         this(type, null, dataStore);
@@ -47,6 +50,7 @@ public class SubjectCache {
     private SubjectCache(final String type, final SubjectCache existing, final DataStore dataStore) {
         this.type = type;
         this.dataStore = dataStore;
+        this.defaultIdentifier = Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, type);
         cache = CacheBuilder.newBuilder()
                 .maximumSize(512)
                 .build(CacheLoader.from(identifier -> dataStore.getData(type, identifier, clearListener(identifier))));
@@ -149,5 +153,13 @@ public class SubjectCache {
 
     public Iterable<String> getAllIdentifiers() {
         return dataStore.getAllIdentifiers(type);
+    }
+
+    /**
+     * Get the identifier for the subject holding default data for subjects of this type
+     * @return
+     */
+    public Map.Entry<String, String> getDefaultIdentifier() {
+        return defaultIdentifier;
     }
 }

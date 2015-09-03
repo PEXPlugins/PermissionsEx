@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.subject;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
@@ -87,8 +88,10 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
         final Set<Map.Entry<String, String>> visitedSubjects = new HashSet<>();
         visitSubject(state, subject, visitedSubjects, 0);
-        if (!subject.equals(data.getManager().getDefaultIdentifier())) {
-            visitSubject(state, data.getManager().getDefaultIdentifier(), visitedSubjects, 1);
+        Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
+        if (!subject.equals(defIdentifier)) {
+            visitSubject(state, defIdentifier, visitedSubjects, 1);
+            visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2); // Force in global defaults
         }
 
         return new BakedSubjectData(NodeTree.of(state.combinedPermissions, state.defaultValue), ImmutableList.copyOf(state.parents), ImmutableMap.copyOf(state.options));

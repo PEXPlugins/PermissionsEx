@@ -107,8 +107,7 @@ public abstract class AbstractDataStore implements DataStore {
      * </ul>
      */
     protected final void applyDefaultData() {
-        final Map.Entry<String, String> defKey = this.manager.getDefaultIdentifier();
-        setData(defKey.getKey(), defKey.getValue(), getData(defKey.getKey(), defKey.getValue(), null)
+        setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, getData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, null)
                 .setDefaultValue(ImmutableSet.of(Maps.immutableEntry("srcip", "127.0.0.1")), 1));
     }
 

@@ -21,14 +21,18 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.exception.PermissionsException;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.util.Util;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Data type abstraction for permissions data
@@ -64,6 +68,15 @@ public interface DataStore {
      * @return A future that can be used to listen for completion of writing the changed data
      */
     CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
+
+    default CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {
+        if (isRegistered(oldType, oldIdentifier) && !isRegistered(newType, newIdentifier)) {
+            return setData(newType, newIdentifier, getData(oldType, oldIdentifier, null))
+                    .thenRun(() -> setData(oldType, oldIdentifier, null));
+        } else {
+            return Util.failedFuture(new PermissionsException(t("Destination subject already existed or target subject did not!")));
+        }
+    }
 
     /**
      * Return if the given subject has any data stored in this backend.

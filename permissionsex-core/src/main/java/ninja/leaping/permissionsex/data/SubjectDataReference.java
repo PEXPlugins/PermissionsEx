@@ -72,4 +72,8 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
             }
         }
     }
+
+    public SubjectCache getCache() {
+        return cache;
+    }
 }

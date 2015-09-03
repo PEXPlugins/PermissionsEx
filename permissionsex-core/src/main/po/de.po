@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-03 12:40-0700\n"
+"POT-Creation-Date: 2015-09-03 14:05-0700\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -139,6 +139,10 @@ msgstr ""
 msgid "Demoted %s on ladder %s"
 msgstr ""
 
+#: ninja/leaping/permissionsex/backend/DataStore.java:77
+msgid "Destination subject already existed or target subject did not!"
+msgstr ""
+
 #: ninja/leaping/permissionsex/PermissionsEx.java:149
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
@@ -182,7 +186,7 @@ msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 msgid "Error occurred while executing command: %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:224
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:223
 #, fuzzy
 msgid "Error while deserializing backend %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
@@ -201,7 +205,7 @@ msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 msgid "Error while loading permissions"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:197
+#: ninja/leaping/permissionsex/backend/AbstractDataStore.java:196
 #, fuzzy
 msgid "Error while serializing backend %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
@@ -415,7 +419,7 @@ msgstr "Unbefertigtes quoted Satz befunden"
 msgid "Usage: %s"
 msgstr "Nutzung: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:407
+#: ninja/leaping/permissionsex/PermissionsEx.java:400
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 

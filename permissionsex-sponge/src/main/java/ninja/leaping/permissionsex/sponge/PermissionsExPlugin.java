@@ -136,7 +136,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         } catch (Exception e) {
             throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
-        defaults = getSubjects(manager.getDefaultIdentifier().getKey()).get(manager.getDefaultIdentifier().getValue());
+        defaults = getSubjects(PermissionsEx.SUBJECTS_DEFAULTS).get(PermissionsEx.SUBJECTS_DEFAULTS);
 
         setCommandSourceProvider(getUserSubjects(), name -> {
             UUID uid;
