@@ -42,8 +42,7 @@ import org.spongepowered.api.Game;
 import org.spongepowered.api.GameProfile;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.entity.living.player.PlayerJoinEvent;
-import org.spongepowered.api.event.entity.living.player.PlayerQuitEvent;
+import org.spongepowered.api.event.entity.living.player.DisconnectPlayerEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.event.network.GameClientConnectionEvent;
@@ -212,23 +211,23 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void onPlayerJoin(final PlayerJoinEvent event) {
-        final String identifier = event.getSourceEntity().getIdentifier();
+    public void onPlayerJoin(final GameClientConnectionEvent.Join event) {
+        final String identifier = event.getTargetEntity().getIdentifier();
         final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
         if (cache.isRegistered(identifier)) {
             cache.update(identifier, input -> {
-                if (event.getSourceEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                if (event.getTargetEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                     return input;
                 } else {
-                    return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getSourceEntity().getName());
+                    return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getTargetEntity().getName());
                 }
             });
         }
     }
 
     @Listener
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        getUserSubjects().uncache(event.getSourceEntity().getIdentifier());
+    public void onPlayerQuit(DisconnectPlayerEvent event) {
+        getUserSubjects().uncache(event.getTargetEntity().getIdentifier());
     }
 
 
