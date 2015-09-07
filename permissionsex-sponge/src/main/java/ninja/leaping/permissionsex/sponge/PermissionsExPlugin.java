@@ -42,10 +42,11 @@ import org.spongepowered.api.Game;
 import org.spongepowered.api.GameProfile;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.entity.living.player.DisconnectPlayerEvent;
+
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
-import org.spongepowered.api.event.network.GameClientConnectionEvent;
+import org.spongepowered.api.event.network.ClientConnectionEvent;
+import org.spongepowered.api.event.network.rcon.RconConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.ProviderExistsException;
@@ -193,7 +194,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void cacheUserAsync(GameClientConnectionEvent.Authenticate event) {
+    public void cacheUserAsync(ClientConnectionEvent.Auth event) {
         try {
             getManager().getCalculatedSubject(PermissionsEx.SUBJECTS_USER, event.getProfile().getUniqueId().toString());
         } catch (PermissionsLoadingException e) {
@@ -211,7 +212,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void onPlayerJoin(final GameClientConnectionEvent.Join event) {
+    public void onPlayerJoin(final ClientConnectionEvent.Join event) {
         final String identifier = event.getTargetEntity().getIdentifier();
         final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
         if (cache.isRegistered(identifier)) {
@@ -226,8 +227,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void onPlayerQuit(DisconnectPlayerEvent event) {
-        getUserSubjects().uncache(event.getTargetEntity().getIdentifier());
+    public void onPlayerQuit(RconConnectionEvent.Disconnect event) {
+        getUserSubjects().uncache(event.getSource().getIdentifier());
     }
 
 
