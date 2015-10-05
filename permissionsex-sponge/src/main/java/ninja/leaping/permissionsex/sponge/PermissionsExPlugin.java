@@ -145,7 +145,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             }
 
             // Yeah, java generics are stupid
-            return Optional.ofNullable(game.getServer().getPlayer(uid).orNull());
+            return (Optional) game.getServer().getPlayer(uid);
 
         });
 
@@ -165,11 +165,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 UUID.fromString(input);
                 return input;
             } catch (IllegalArgumentException ex) {
-                com.google.common.base.Optional<Player> player = game.getServer().getPlayer(input);
+                Optional<Player> player = game.getServer().getPlayer(input);
                 if (player.isPresent()) {
                     return player.get().getUniqueId().toString();
                 } else {
-                    com.google.common.base.Optional<GameProfileResolver> res = game.getServiceManager().provide(GameProfileResolver.class);
+                    Optional<GameProfileResolver> res = game.getServiceManager().provide(GameProfileResolver.class);
                     if (res.isPresent()) {
                         for (GameProfile profile : res.get().match(input)) {
                             if (profile.getName().equalsIgnoreCase(input)) {
@@ -305,12 +305,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public com.google.common.base.Optional<PermissionDescription.Builder> newDescriptionBuilder(Object instance) {
-        com.google.common.base.Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
+    public Optional<PermissionDescription.Builder> newDescriptionBuilder(Object instance) {
+        Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
         if (!container.isPresent()) {
             throw new IllegalArgumentException("Provided plugin did not have an associated plugin instance. Are you sure it's your plugin instance?");
         }
-        return com.google.common.base.Optional.of(new PEXPermissionDescription.Builder(container.get(), this));
+        return Optional.of(new PEXPermissionDescription.Builder(container.get(), this));
     }
 
     void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
@@ -332,8 +332,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public com.google.common.base.Optional<PermissionDescription> getDescription(String s) {
-        return com.google.common.base.Optional.fromNullable(this.descriptions.get(s));
+    public Optional<PermissionDescription> getDescription(String s) {
+        return Optional.ofNullable(this.descriptions.get(s));
     }
 
     @Override

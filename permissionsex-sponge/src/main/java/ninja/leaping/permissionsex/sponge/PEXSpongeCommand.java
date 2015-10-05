@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
-import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.command.CommandCallable;
@@ -25,6 +24,7 @@ import org.spongepowered.api.util.command.CommandResult;
 import org.spongepowered.api.util.command.CommandSource;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Wrapper class between PEX commands and the Sponge command class
