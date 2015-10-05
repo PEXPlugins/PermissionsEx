@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
@@ -42,7 +41,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjectData> {
+class PEXOptionSubjectData implements OptionSubjectData {
     private final PermissionsExPlugin plugin;
     private final String identifier;
     private SubjectDataReference data;
@@ -51,7 +50,8 @@ class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjec
     public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
         this.identifier = identifier;
-        this.data = SubjectDataReference.forSubject(this.identifier, cache, this);
+        this.data = SubjectDataReference.forSubject(this.identifier, cache);
+        this.data.onUpdate(this::clearCache);
     }
 
     /**
@@ -88,8 +88,7 @@ class PEXOptionSubjectData implements OptionSubjectData, Caching<ImmutableSubjec
         }
     }
 
-    @Override
-    public void clearCache(ImmutableSubjectData newData) {
+    private void clearCache(ImmutableSubjectData newData) {
         synchronized (parentsCache) {
             parentsCache.clear();
         }

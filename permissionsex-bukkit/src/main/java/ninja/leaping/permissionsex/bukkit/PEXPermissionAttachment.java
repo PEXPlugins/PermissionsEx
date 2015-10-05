@@ -18,9 +18,8 @@ package ninja.leaping.permissionsex.bukkit;
 
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
@@ -30,30 +29,24 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Permissions attachment that integrates with the PEX backend
  */
-public class PEXPermissionAttachment extends PermissionAttachment implements Caching<ImmutableSubjectData> {
+public class PEXPermissionAttachment extends PermissionAttachment {
     public static final String ATTACHMENT_TYPE = "attachment";
     private final String identifier = UUID.randomUUID().toString();
-    private ImmutableSubjectData subjectData;
+    private final SubjectDataReference subjectData;
     private final PEXPermissible perm;
-    private final SubjectCache cache;
     public PEXPermissionAttachment(Plugin plugin, Player parent, PEXPermissible perm) {
         super(plugin, parent);
         this.perm = perm;
-        this.cache = perm.getManager().getTransientSubjects(ATTACHMENT_TYPE);
 
         try {
-            this.cache.getData(this.identifier, this);
+            this.subjectData = SubjectDataReference.forSubject(this.identifier, perm.getManager().getTransientSubjects(ATTACHMENT_TYPE));
         } catch (ExecutionException e) {
             throw new ExceptionInInitializerError(e);
-        }
-    }
-
-    private void updateData(ImmutableSubjectData newData) {
-        if (newData != this.subjectData) {
-            this.cache.set(getIdentifier(), newData);
         }
     }
 
@@ -62,33 +55,28 @@ public class PEXPermissionAttachment extends PermissionAttachment implements Cac
     }
 
     @Override
-    public void clearCache(ImmutableSubjectData newData) {
-        this.subjectData = newData;
-    }
-
-    @Override
     public Map<String, Boolean> getPermissions() {
-        return Maps.transformValues(subjectData.getPermissions(PermissionsEx.GLOBAL_CONTEXT), val -> val > 0);
+        return Maps.transformValues(subjectData.get().getPermissions(PermissionsEx.GLOBAL_CONTEXT), val -> val > 0);
     }
 
     @Override
     public void setPermission(String name, boolean value) {
-        updateData(subjectData.setPermission(PermissionsEx.GLOBAL_CONTEXT, name, value ? 1 : -1));
+        subjectData.update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, checkNotNull(name, "name"), value ? 1 : -1));
     }
 
     @Override
     public void setPermission(Permission perm, boolean value) {
-        setPermission(perm.getName(), value);
+        setPermission(checkNotNull(perm, "perm").getName(), value);
     }
 
     @Override
     public void unsetPermission(String name) {
-        updateData(subjectData.setPermission(PermissionsEx.GLOBAL_CONTEXT, name, 0));
+        subjectData.update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, checkNotNull(name, "name"), 0));
     }
 
     @Override
     public void unsetPermission(Permission perm) {
-        unsetPermission(perm.getName());
+        unsetPermission(checkNotNull(perm, "perm").getName());
     }
 
     @Override

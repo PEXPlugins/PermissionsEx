@@ -105,7 +105,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         }
     }
 
-    public Set<Set<Map.Entry<String, String>>> getActiveContexts() {
+    private Set<Set<Map.Entry<String, String>>> getActiveContexts() {
         return data.asMap().keySet();
     }
 

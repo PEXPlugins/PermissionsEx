@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-03 14:05-0700\n"
+"POT-Creation-Date: 2015-09-03 17:09-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -337,6 +337,10 @@ msgstr ""
 msgid "Successfully imported data from backend %s into current backend"
 msgstr ""
 
+#: ninja/leaping/permissionsex/PermissionsEx.java:312
+msgid "Successfully migrated old-style default data to new location"
+msgstr ""
+
 #: ninja/leaping/permissionsex/command/RankingCommands.java:199
 msgid "Successfully removed %s from ladder %s"
 msgstr ""
@@ -404,7 +408,7 @@ msgstr ""
 msgid "Usage: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:400
+#: ninja/leaping/permissionsex/PermissionsEx.java:402
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 

@@ -58,8 +58,14 @@ public class Util {
     public static <I, T> CompletableFuture<T> failableFuture(I value, ThrowingFunction<I, T> func) {
         return failableFuture(() -> func.apply(value));
     }
+
     public static <T> CompletableFuture<T> failableFuture(ThrowingSupplier<T> func) {
         CompletableFuture<T> ret = new CompletableFuture<>();
+        try {
+            ret.complete(func.supply());
+        } catch (Exception e) {
+            ret.completeExceptionally(e);
+        }
         return ret;
     }
 

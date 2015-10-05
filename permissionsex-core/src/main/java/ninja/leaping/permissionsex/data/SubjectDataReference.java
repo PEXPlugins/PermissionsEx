@@ -16,30 +16,50 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import com.google.common.collect.MapMaker;
+
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     private final String identifier;
     private final SubjectCache cache;
-    private final Caching<ImmutableSubjectData> childListener;
+    private final Set<Consumer<ImmutableSubjectData>> updateListeners;
     private final AtomicReference<ImmutableSubjectData> data = new AtomicReference<>();
+    private final boolean strongListeners;
 
     public static SubjectDataReference forSubject(String identifier, SubjectCache holder) throws ExecutionException {
-        return forSubject(identifier, holder, null);
+        return forSubject(identifier, holder, true);
     }
-    public static SubjectDataReference forSubject(String identifier, SubjectCache holder, Caching<ImmutableSubjectData> listener) throws ExecutionException {
-        final SubjectDataReference ref = new SubjectDataReference(identifier, holder, listener);
+    public static SubjectDataReference forSubject(String identifier, SubjectCache holder, boolean strongListeners) throws ExecutionException {
+        final SubjectDataReference ref = new SubjectDataReference(identifier, holder, strongListeners);
         ref.data.set(holder.getData(identifier, ref));
         return ref;
     }
 
-    private SubjectDataReference(String identifier, SubjectCache cache, Caching<ImmutableSubjectData> childListener) {
+    /**
+     * Create a new reference to subject data
+     *
+     * @param identifier The subject's identifier
+     * @param cache The cache to get data from and listen for changes from
+     * @param strongListeners Whether or not to hold strong references to listeners registered
+     */
+    private SubjectDataReference(String identifier, SubjectCache cache, boolean strongListeners) {
         this.identifier = identifier;
         this.cache = cache;
-        this.childListener = childListener;
+        this.strongListeners = strongListeners;
+        if (strongListeners) {
+            updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        } else {
+            updateListeners = Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).makeMap());
+        }
     }
 
     public ImmutableSubjectData get() {
@@ -67,10 +87,27 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     public void clearCache(ImmutableSubjectData newData) {
         synchronized (data) {
             this.data.set(newData);
-            if (this.childListener != null) {
-                this.childListener.clearCache(newData);
-            }
+            this.updateListeners.forEach(cb -> cb.accept(newData));
         }
+    }
+
+    /**
+     * Get whether or not this reference will hold strong references to stored listeners.
+     * If the return value  is false, registering a listener object with this reference will
+     * not prevent it from being garbage collected, so the listener must be held somewhere
+     * else for it to continue being called.
+     * @return Whether or not listeners are held strongly.
+     */
+    public boolean holdsListenersStrongly() {
+        return this.strongListeners;
+    }
+
+    /**
+     * Register a listener to be called when an update is performed
+     * @param listener The listener to register
+     */
+    public void onUpdate(Consumer<ImmutableSubjectData> listener) {
+        updateListeners.add(listener);
     }
 
     public SubjectCache getCache() {
