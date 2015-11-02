@@ -66,6 +66,7 @@ import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -346,8 +347,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public File getBaseDirectory() {
-        return configDir;
+    public Path getBaseDirectory() {
+        return configDir.toPath();
     }
 
     @Override

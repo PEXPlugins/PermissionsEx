@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -326,7 +327,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     @Override
-    public File getBaseDirectory() {
+    public Path getBaseDirectory() {
         return impl.getBaseDirectory();
     }
 

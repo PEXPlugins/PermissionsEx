@@ -23,19 +23,20 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
 public class TestImplementationInterface implements ImplementationInterface {
-    private final File baseDirectory;
+    private final Path baseDirectory;
     private final Logger logger = LoggerFactory.getLogger("TestImpl");
 
-    public TestImplementationInterface(File baseDirectory) {
+    public TestImplementationInterface(Path baseDirectory) {
         this.baseDirectory = baseDirectory;
     }
 
     @Override
-    public File getBaseDirectory() {
+    public Path getBaseDirectory() {
         return baseDirectory;
     }
 

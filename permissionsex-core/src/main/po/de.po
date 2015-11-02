@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-03 17:09-0700\n"
+"POT-Creation-Date: 2015-11-01 17:13-0800\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:139
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:140
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -26,7 +26,7 @@ msgstr ""
 msgid "%s subjects"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:179
+#: ninja/leaping/permissionsex/PermissionsEx.java:180
 msgid "%s user successfully converted from name to UUID"
 msgid_plural "%s users successfully converted from name to UUID!"
 msgstr[0] ""
@@ -143,7 +143,7 @@ msgstr ""
 msgid "Destination subject already existed or target subject did not!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:149
+#: ninja/leaping/permissionsex/PermissionsEx.java:150
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
@@ -164,11 +164,11 @@ msgid ""
 "details: %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:184
+#: ninja/leaping/permissionsex/PermissionsEx.java:185
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:131
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:132
 msgid "Error creating initial data for file backend"
 msgstr ""
 
@@ -191,11 +191,11 @@ msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 msgid "Error while deserializing backend %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:174
+#: ninja/leaping/permissionsex/PermissionsEx.java:175
 msgid "Error while fetching UUIDs for users"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:288
+#: ninja/leaping/permissionsex/PermissionsEx.java:289
 #, fuzzy
 msgid "Error while loading configuration: %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
@@ -350,7 +350,7 @@ msgstr ""
 msgid "Successfully imported data from backend %s into current backend"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:312
+#: ninja/leaping/permissionsex/PermissionsEx.java:313
 msgid "Successfully migrated old-style default data to new location"
 msgstr ""
 
@@ -387,7 +387,7 @@ msgstr ""
 msgid "Transient permissions:"
 msgstr "Hat Berechtigung: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:138
+#: ninja/leaping/permissionsex/PermissionsEx.java:139
 msgid "Trying to convert users stored by name to UUID"
 msgstr ""
 
@@ -395,7 +395,7 @@ msgstr ""
 msgid "Unable to get data for subject %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:188
+#: ninja/leaping/permissionsex/PermissionsEx.java:189
 msgid ""
 "Unable to resolve Mojang API for UUID conversion. Do you have an internet "
 "connection? UUID conversion will not proceed (but may not be necessary)."
@@ -423,23 +423,23 @@ msgstr "Unbefertigtes quoted Satz befunden"
 msgid "Usage: %s"
 msgstr "Nutzung: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:402
+#: ninja/leaping/permissionsex/PermissionsEx.java:403
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:182
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:183
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:99
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:100
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:118
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:119
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:143
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:144
 msgid "While performing version upgrade"
 msgstr ""
 

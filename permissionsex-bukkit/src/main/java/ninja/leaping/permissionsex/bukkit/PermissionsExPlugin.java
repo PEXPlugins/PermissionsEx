@@ -47,6 +47,7 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -76,6 +77,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     // Permissions subscriptions handling
     private PEXPermissionSubscriptionMap subscriptionHandler;
     private volatile boolean enabled;
+    private Path dataPath;
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -94,6 +96,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        this.dataPath = getDataFolder().toPath();
         logger = createLogger();
         ConfigurationLoader<ConfigurationNode> configLoader = YAMLConfigurationLoader.builder()
                 .setFile(new File(getDataFolder(), "config.yml"))
@@ -285,8 +288,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         };
 
         @Override
-        public File getBaseDirectory() {
-            return getDataFolder();
+        public Path getBaseDirectory() {
+            return dataPath;
         }
 
         @Override

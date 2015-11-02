@@ -16,15 +16,13 @@
  */
 package ninja.leaping.permissionsex;
 
-import com.google.common.base.Functions;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
 
 /**
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
@@ -35,7 +33,7 @@ public interface ImplementationInterface {
      *
      * @return The base directory
      */
-    File getBaseDirectory();
+    Path getBaseDirectory();
     /**
      * Gets the appropriate logger
      * @return

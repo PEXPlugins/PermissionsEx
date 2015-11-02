@@ -42,8 +42,9 @@ import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -73,9 +74,9 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
 
-    private ConfigurationLoader<? extends ConfigurationNode> createLoader(File file) {
+    private ConfigurationLoader<? extends ConfigurationNode> createLoader(Path file) {
         return GsonConfigurationLoader.builder()
-                .setFile(file)
+                .setPath(file)
                 .setIndent(4)
                 .setLenient(true)
                 .build();
@@ -86,15 +87,15 @@ public final class FileDataStore extends AbstractDataStore {
         }*/
     }
 
-    private File migrateLegacy(File permissionsFile, String extension, ConfigurationLoader<?> loader, String formatName) throws PermissionsLoadingException {
-        File legacyPermissionsFile = permissionsFile;
+    private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> loader, String formatName) throws PermissionsLoadingException {
+        Path legacyPermissionsFile = permissionsFile;
         file = file.replace(extension, ".json");
-        permissionsFile = new File(getManager().getBaseDirectory(), file);
+        permissionsFile = getManager().getBaseDirectory().resolve(file);
         permissionsFileLoader = createLoader(permissionsFile);
         try {
             permissionsConfig = loader.load();
             permissionsFileLoader.save(permissionsConfig);
-            legacyPermissionsFile.renameTo(new File(legacyPermissionsFile.getCanonicalPath() + ".legacy-backup"));
+            Files.move(legacyPermissionsFile, legacyPermissionsFile.resolveSibling(legacyPermissionsFile.getFileName().toString() + ".legacy-backup"));
         } catch (IOException e) {
             throw new PermissionsLoadingException(t("While loading legacy %s permissions from %s", formatName, permissionsFile), e);
         }
@@ -103,11 +104,11 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     protected void initializeInternal() throws PermissionsLoadingException {
-        File permissionsFile = new File(getManager().getBaseDirectory(), file);
+        Path permissionsFile = getManager().getBaseDirectory().resolve(file);
         if (file.endsWith(".yml")) {
-            permissionsFile = migrateLegacy(permissionsFile, ".yml", YAMLConfigurationLoader.builder().setFile(permissionsFile).build(), "YML");
+            permissionsFile = migrateLegacy(permissionsFile, ".yml", YAMLConfigurationLoader.builder().setPath(permissionsFile).build(), "YML");
         } else if (file.endsWith(".conf")) {
-            permissionsFile = migrateLegacy(permissionsFile, ".conf", HoconConfigurationLoader.builder().setFile(permissionsFile).build(), "HOCON");
+            permissionsFile = migrateLegacy(permissionsFile, ".conf", HoconConfigurationLoader.builder().setPath(permissionsFile).build(), "HOCON");
         } else {
             permissionsFileLoader = createLoader(permissionsFile);
         }

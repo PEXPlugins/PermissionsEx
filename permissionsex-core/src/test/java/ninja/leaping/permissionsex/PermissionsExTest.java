@@ -39,7 +39,7 @@ public abstract class PermissionsExTest {
         PermissionsExConfiguration config = populate();
         config.validate();
 
-        manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder.newFolder()));
+        manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder.newFolder().toPath()));
     }
 
     @After
