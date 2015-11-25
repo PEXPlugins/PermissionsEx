@@ -91,7 +91,7 @@ import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
 
     private ServiceReference<SqlService> sql;
-    private ServiceReference<SchedulerService> scheduler;
+    private SchedulerService scheduler;
     @Inject private ServiceManager services;
     private final TranslatableLogger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
@@ -111,7 +111,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
     private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
-    private Executor spongeExecutor = runnable -> scheduler.ref().get()
+    private Executor spongeExecutor = runnable -> scheduler
             .createTaskBuilder()
             .async()
             .execute(runnable)
@@ -126,7 +126,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public void onPreInit(GamePreInitializationEvent event) throws PEBKACException {
         logger.info(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
         sql = services.potentiallyProvide(SqlService.class);
-        scheduler = services.potentiallyProvide(SchedulerService.class);
+        scheduler = game.getScheduler();
 
         try {
             convertFromBukkit();
