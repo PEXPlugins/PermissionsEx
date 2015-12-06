@@ -32,6 +32,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -186,7 +187,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         injectPermissible(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR) // Happen last
     public void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
         getManager().uncache(PermissionsEx.SUBJECTS_USER, event.getPlayer().getUniqueId().toString());
