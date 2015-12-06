@@ -39,7 +39,9 @@ import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.GameProfile;
+import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.config.ConfigDir;
+import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
@@ -47,20 +49,18 @@ import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.profile.GameProfile;
+import org.spongepowered.api.profile.GameProfileManager;
+import org.spongepowered.api.scheduler.Scheduler;
 import org.spongepowered.api.service.ProviderExistsException;
 import org.spongepowered.api.service.ServiceManager;
 import org.spongepowered.api.service.ServiceReference;
-import org.spongepowered.api.service.config.ConfigDir;
-import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
-import org.spongepowered.api.service.profile.GameProfileResolver;
-import org.spongepowered.api.service.scheduler.SchedulerService;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.util.command.CommandSource;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -91,7 +91,7 @@ import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
 
     private ServiceReference<SqlService> sql;
-    private SchedulerService scheduler;
+    private Scheduler scheduler;
     @Inject private ServiceManager services;
     private final TranslatableLogger logger;
     @Inject @ConfigDir(sharedRoot = false) private File configDir;
@@ -170,12 +170,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 if (player.isPresent()) {
                     return player.get().getUniqueId().toString();
                 } else {
-                    Optional<GameProfileResolver> res = game.getServiceManager().provide(GameProfileResolver.class);
-                    if (res.isPresent()) {
-                        for (GameProfile profile : res.get().match(input)) {
-                            if (profile.getName().equalsIgnoreCase(input)) {
-                                return profile.getUniqueId().toString();
-                            }
+                    GameProfileManager res = game.getServer().getGameProfileManager();
+                    for (GameProfile profile : res.match(input)) {
+                        if (profile.getName().equalsIgnoreCase(input)) {
+                            return profile.getUniqueId().toString();
                         }
                     }
                     return input;
@@ -382,7 +380,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public void registerCommand(CommandSpec command) {
-        game.getCommandDispatcher().register(this, new PEXSpongeCommand(command, this), command.getAliases());
+        game.getCommandManager().register(this, new PEXSpongeCommand(command, this), command.getAliases());
     }
 
     @Override

@@ -25,11 +25,11 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.util.Tristate;
-import org.spongepowered.api.util.command.CommandSource;
 
 import java.util.Map;
 import java.util.Optional;

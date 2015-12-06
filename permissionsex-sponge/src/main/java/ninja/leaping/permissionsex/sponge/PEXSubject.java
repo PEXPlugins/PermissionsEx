@@ -20,13 +20,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.util.command.CommandSource;
 
 import java.util.Collections;
 import java.util.HashSet;
