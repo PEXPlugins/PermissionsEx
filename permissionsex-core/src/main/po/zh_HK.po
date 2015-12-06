@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-01 17:13-0800\n"
+"POT-Creation-Date: 2015-12-05 20:08-0800\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:140
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:152
 msgid "%s schema version updated from %s to %s"
 msgstr ""
 
@@ -163,7 +163,7 @@ msgstr ""
 msgid "Error converting users to UUID"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:132
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:144
 msgid "Error creating initial data for file backend"
 msgstr ""
 
@@ -412,19 +412,19 @@ msgstr ""
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:183
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:195
 msgid "While deserializing subject data for %s:"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:100
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:112
 msgid "While loading legacy %s permissions from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:119
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:131
 msgid "While loading permissions file from %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:144
+#: ninja/leaping/permissionsex/backend/file/FileDataStore.java:156
 msgid "While performing version upgrade"
 msgstr ""
 
@@ -474,11 +474,11 @@ msgstr ""
 msgid "position"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
 #: ninja/leaping/permissionsex/command/RankingCommands.java:51
 #: ninja/leaping/permissionsex/command/RankingCommands.java:75
 #: ninja/leaping/permissionsex/command/RankingCommands.java:157
 #: ninja/leaping/permissionsex/command/RankingCommands.java:188
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
 msgid "subject"
 msgstr ""
 

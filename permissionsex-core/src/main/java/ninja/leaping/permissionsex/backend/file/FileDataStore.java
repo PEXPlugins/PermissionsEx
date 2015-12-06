@@ -30,6 +30,7 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
+import ninja.leaping.configurate.util.MapFactories;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
@@ -42,6 +43,7 @@ import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 
+import javax.security.auth.login.Configuration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,8 +63,8 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Setting
     private String file;
-    @Setting
-    private boolean compat = false;
+    @Setting(value = "alphabetize-entries", comment = "Place file entries in alphabetical order")
+    private boolean alphabetizeEntries = false;
 
     private ConfigurationLoader permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
@@ -80,11 +82,14 @@ public final class FileDataStore extends AbstractDataStore {
                 .setIndent(4)
                 .setLenient(true)
                 .build();
+    }
 
-        /*if (!compat) { // old jackson stuff
-            build.getFactory().disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
-            build.getFactory().enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
-        }*/
+    private ConfigurationOptions getLoadOptions() {
+        ConfigurationOptions ret = ConfigurationOptions.defaults();
+        if (alphabetizeEntries) {
+            ret = ret.setMapFactory(MapFactories.sortedNatural());
+        }
+        return ret;
     }
 
     private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> loader, String formatName) throws PermissionsLoadingException {
@@ -114,7 +119,7 @@ public final class FileDataStore extends AbstractDataStore {
         }
 
         try {
-            permissionsConfig = permissionsFileLoader.load(ConfigurationOptions.defaults());//.setMapFactory(MapFactories.unordered()));
+            permissionsConfig = permissionsFileLoader.load(getLoadOptions());
         } catch (IOException e) {
             throw new PermissionsLoadingException(t("While loading permissions file from %s", permissionsFile), e);
         }
