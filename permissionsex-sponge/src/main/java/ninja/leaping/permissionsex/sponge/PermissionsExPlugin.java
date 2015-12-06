@@ -64,9 +64,10 @@ import org.spongepowered.api.util.annotation.NonnullByDefault;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -94,7 +95,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private Scheduler scheduler;
     @Inject private ServiceManager services;
     private final TranslatableLogger logger;
-    @Inject @ConfigDir(sharedRoot = false) private File configDir;
+    @Inject @ConfigDir(sharedRoot = false) private Path configDir;
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
 
@@ -130,7 +131,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
         try {
             convertFromBukkit();
-            configDir.mkdirs();
+            Files.createDirectories(configDir);
             this.manager = new PermissionsEx(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
             throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
@@ -230,21 +231,17 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
 
     private void convertFromBukkit() throws IOException {
-        File bukkitConfigDir = new File("plugins/PermissionsEx");
-        if (bukkitConfigDir.isDirectory() && !configDir.isDirectory()) {
+        Path bukkitConfigPath = Paths.get("plugins/PermissionsEx");
+        if (Files.isDirectory(bukkitConfigPath) && !Files.isDirectory(configDir)) {
             logger.info(t("Migrating configuration data from Bukkit"));
-            if (!bukkitConfigDir.renameTo(configDir)) {
-                throw new IOException(t("Unable to move Bukkit configuration directory to location for Sponge!").translateFormatted(logger.getLogLocale()));
-            }
+            Files.move(bukkitConfigPath, configDir);
         }
-        File bukkitConfigFile = new File(configDir, "config.yml");
-        if (bukkitConfigFile.isFile()) {
-            ConfigurationLoader<ConfigurationNode> yamlReader = YAMLConfigurationLoader.builder().setFile(bukkitConfigFile).build();
+        Path bukkitConfigFile = configDir.resolve("config.yml");
+        if (Files.exists(bukkitConfigFile)) {
+            ConfigurationLoader<ConfigurationNode> yamlReader = YAMLConfigurationLoader.builder().setPath(bukkitConfigFile).build();
             ConfigurationNode bukkitConfig = yamlReader.load();
             configLoader.save(bukkitConfig);
-            if (!bukkitConfigFile.renameTo(new File(configDir, "config.yml.bukkit"))) {
-                logger.warn(t("Could not rename old Bukkit configuration file to old name"));
-            }
+            Files.move(bukkitConfigFile, configDir.resolve("config.yml.bukkit"));
         }
     }
 
@@ -346,7 +343,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public Path getBaseDirectory() {
-        return configDir.toPath();
+        return configDir;
     }
 
     @Override
