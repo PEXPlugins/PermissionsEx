@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "id": "http://permissionsex.leaping.ninja/schemas/permissions.json",
+
+  "definitions": {
+    "subject": {
+      "type": "string",
+      "pattern": "^[^:]+:.*$"
+    }
+  },
+
+  "type": "object",
+  "properties": {
+    "schema-version": {
+      "type": "integer"
+    },
+    "subjects": {
+      "type": "object",
+      "additionalProperties": { // Any subject type (user, group, etc)
+        "type": "object",
+        "additionalProperties": { // Any subject
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "contexts": {
+                "type": "object",
+                "additionalProperties": {"type": "string"}
+              },
+              "permissions-default": {
+                "type": "integer"
+              },
+              "permissions": {
+                "type": "object",
+                "additionalProperties": {"type": "integer"}
+              },
+              "options": {
+                "type": "object"
+              },
+              "parents": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/subject"}
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "rank-ladders": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"$ref": "#/definitions/subject"}
+      }
+    },
+    "context-inheritance": {
+      "type": "object",
+      "patternProperties": {
+        "^[^:]+:.*$": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/subject"}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["schema-version", "subjects"]
+}
