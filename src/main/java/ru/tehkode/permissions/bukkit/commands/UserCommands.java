@@ -529,17 +529,7 @@ public class UserCommands extends PermissionsCommand {
 			permission = "",
 			description = "Set <group> for <user>")
 	public void userSetGroup(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
-		String userName = this.autoCompletePlayerName(args.get("user"));
-		String worldName = this.autoCompleteWorldName(args.get("world"));
-
 		PermissionManager manager = plugin.getPermissionsManager();
-		PermissionUser user = manager.getUser(userName);
-
-		if (user == null) {
-			sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
-			return;
-		}
-
 		String groupName = args.get("group");
 
 		List<PermissionGroup> groups;
@@ -573,6 +563,17 @@ public class UserCommands extends PermissionsCommand {
 				return;
 			}
 		}
+
+		String userName = this.autoCompletePlayerName(args.get("user"));
+		String worldName = this.autoCompleteWorldName(args.get("world"));
+
+		PermissionUser user = manager.getUser(userName);
+
+		if (user == null) {
+			sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
+			return;
+		}
+
 
 		if (!groups.isEmpty()) {
 			user.setParents(groups, worldName);
