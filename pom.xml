@@ -20,12 +20,12 @@
     <repository>
       <id>pex-repo</id>
       <name>PermissionsEx Repository</name>
-      <url>http://pex-repo.aoeu.xyz/</url>
+      <url>https://pex-repo.aoeu.xyz/</url>
     </repository>
   </distributionManagement>
   <ciManagement>
     <system>Jenkins</system>
-    <url>http://ci.yawk.at/job/PermissionsEx</url>
+    <url>https://ci.yawk.at/job/PermissionsEx</url>
   </ciManagement>
   <licenses>
     <license>
@@ -151,15 +151,15 @@
   <repositories>
     <repository>
       <id>pex-repo</id>
-      <url>http://pex-repo.aoeu.xyz</url>
+      <url>https://pex-repo.aoeu.xyz</url>
     </repository>
     <repository>
       <id>sk89q-repo</id>
-      <url>http://maven.sk89q.com/repo/</url>
+      <url>https://maven.sk89q.com/repo/</url>
     </repository>
     <repository>
       <id>oss-sonatype</id>
-      <url>http://oss.sonatype.org/content/groups/public/</url>
+      <url>https://oss.sonatype.org/content/groups/public/</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>

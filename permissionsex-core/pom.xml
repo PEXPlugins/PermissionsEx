@@ -131,16 +131,6 @@
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
-  <repositories>
-    <repository>
-      <id>pex-repo</id>
-      <url>http://pex-repo.aoeu.xyz</url>
-    </repository>
-    <repository>
-      <id>sk89q-repo</id>
-      <url>http://maven.sk89q.com/repo/</url>
-    </repository>
-  </repositories>
   <reporting>
     <plugins>
       <plugin>

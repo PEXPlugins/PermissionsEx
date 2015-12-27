@@ -141,10 +141,6 @@
       <id>sponge-repo</id>
       <url>https://repo.spongepowered.org/maven</url>
     </repository>
-    <repository>
-      <id>sk89q-repo</id>
-      <url>http://maven.sk89q.com/repo/</url>
-    </repository>
   </repositories>
   <reporting>
     <plugins>
