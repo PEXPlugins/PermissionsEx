@@ -25,7 +25,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.pagination.PaginationBuilder;
 import org.spongepowered.api.service.pagination.PaginationService;
-import org.spongepowered.api.text.TextBuilder;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
 import javax.annotation.Nullable;
@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
-class SpongeCommander implements Commander<TextBuilder> {
+class SpongeCommander implements Commander<Text.Builder> {
     private final PermissionsExPlugin pex;
     private final CommandSource commandSource;
     private final SpongeMessageFormatter formatter;
@@ -74,27 +74,27 @@ class SpongeCommander implements Commander<TextBuilder> {
     }
 
     @Override
-    public MessageFormatter<TextBuilder> fmt() {
+    public MessageFormatter<Text.Builder> fmt() {
         return formatter;
     }
 
     @Override
-    public void msg(TextBuilder text) {
+    public void msg(Text.Builder text) {
         commandSource.sendMessage(text.color(TextColors.DARK_AQUA).build());
     }
 
     @Override
-    public void debug(TextBuilder text) {
+    public void debug(Text.Builder text) {
         commandSource.sendMessage(text.color(TextColors.GRAY).build());
     }
 
     @Override
-    public void error(TextBuilder text) {
+    public void error(Text.Builder text) {
         commandSource.sendMessage(text.color(TextColors.RED).build());
     }
 
     @Override
-    public void msgPaginated(Translatable title, @Nullable Translatable header, final Iterable<TextBuilder> text) {
+    public void msgPaginated(Translatable title, @Nullable Translatable header, final Iterable<Text.Builder> text) {
         PaginationBuilder build = pex.getGame().getServiceManager().provide(PaginationService.class).get().builder();
 
         build.title(fmt().hl(fmt().header(fmt().tr(title))).build());

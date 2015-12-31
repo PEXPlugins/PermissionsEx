@@ -58,7 +58,7 @@ import org.spongepowered.api.service.ServiceReference;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
-import org.spongepowered.api.service.permission.context.ContextCalculator;
+import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 

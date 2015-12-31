@@ -18,16 +18,16 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import org.spongepowered.api.service.context.Context;
+import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.context.Context;
-import org.spongepowered.api.service.permission.context.ContextCalculator;
 
 import java.util.Set;
 
 /**
  * Adds PEX-specific contexts
  */
-class PEXContextCalculator implements ContextCalculator {
+class PEXContextCalculator implements ContextCalculator<Subject> {
     public static final String SERVER_TAG_KEY = "server-tag";
     private Set<Context> serverTags = ImmutableSet.of();
 
