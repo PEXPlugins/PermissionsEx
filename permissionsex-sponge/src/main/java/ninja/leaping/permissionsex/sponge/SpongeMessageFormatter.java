@@ -23,8 +23,6 @@ import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.TextBuilder;
-import org.spongepowered.api.text.Texts;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
@@ -43,8 +41,8 @@ import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 /**
  * Factory to create formatted elements of messages
  */
-class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
-    private static final Text EQUALS_SIGN = Texts.of(TextColors.GRAY, "=");
+class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
+    private static final Text EQUALS_SIGN = Text.of(TextColors.GRAY, "=");
     private final PermissionsExPlugin pex;
 
     SpongeMessageFormatter(PermissionsExPlugin pex) {
@@ -52,7 +50,7 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
     }
 
     @Override
-    public TextBuilder subject(Map.Entry<String, String> subject) {
+    public Text.Builder subject(Map.Entry<String, String> subject) {
         Function<String, Optional<CommandSource>> func = pex.getCommandSourceProvider(subject.getKey());
         Optional<CommandSource> source = func == null ? Optional.empty() : func.apply(subject.getValue());
         String name;
@@ -64,32 +62,32 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
 
         Text nameText;
         if (name != null) {
-            nameText = Texts.of(Texts.of(TextColors.GRAY, subject.getValue()), "/", name);
+            nameText = Text.of(Text.of(TextColors.GRAY, subject.getValue()), "/", name);
         } else {
-            nameText = Texts.of(subject.getValue());
+            nameText = Text.of(subject.getValue());
         }
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
-        return Texts.builder().append(Texts.builder(subject.getKey()).style(TextStyles.BOLD).build(), Texts.of(" "),
+        return Text.builder().append(Text.builder(subject.getKey()).style(TextStyles.BOLD).build(), Text.of(" "),
                 nameText).onHover(TextActions.showText(tr(t("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
     }
 
     @Override
-    public TextBuilder ladder(RankLadder ladder) {
-        return Texts.builder(ladder.getName())
+    public Text.Builder ladder(RankLadder ladder) {
+        return Text.builder(ladder.getName())
                 .style(TextStyles.BOLD)
                 .onHover(TextActions.showText(tr(t("Click here to view more info")).build()))
                 .onClick(TextActions.runCommand("/pex rank " + ladder.getName()));
     }
 
     @Override
-    public TextBuilder booleanVal(boolean val) {
+    public Text.Builder booleanVal(boolean val) {
         return (val ? tr(t("true")) : tr(t("false"))).color(val ? TextColors.GREEN : TextColors.RED);
     }
 
     @Override
-    public TextBuilder button(ButtonType type, Translatable label, @Nullable Translatable tooltip, String command, boolean execute) {
-        TextBuilder builder = tr(label);
+    public Text.Builder button(ButtonType type, Translatable label, @Nullable Translatable tooltip, String command, boolean execute) {
+        Text.Builder builder = tr(label);
         TextColor textColor;
         switch (type) {
             case POSITIVE:
@@ -117,7 +115,7 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
     }
 
     @Override
-    public TextBuilder permission(String permission, int value) {
+    public Text.Builder permission(String permission, int value) {
         TextColor valueColor;
         if (value > 0) {
             valueColor = TextColors.GREEN;
@@ -126,42 +124,42 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
         } else {
             valueColor = TextColors.GRAY;
         }
-        return Texts.builder().append(Texts.of(valueColor, permission), EQUALS_SIGN, Texts.of(value));
+        return Text.builder().append(Text.of(valueColor, permission), EQUALS_SIGN, Text.of(value));
     }
 
     @Override
-    public TextBuilder option(String permission, String value) {
-        return Texts.builder(permission).append(EQUALS_SIGN, Texts.of(value));
+    public Text.Builder option(String permission, String value) {
+        return Text.builder(permission).append(EQUALS_SIGN, Text.of(value));
     }
 
     @Override
-    public TextBuilder header(TextBuilder text) {
+    public Text.Builder header(Text.Builder text) {
         return text.style(TextStyles.BOLD);
     }
 
     @Override
-    public TextBuilder hl(TextBuilder text) {
+    public Text.Builder hl(Text.Builder text) {
         return text.color(TextColors.AQUA);
     }
 
     @Override
-    public TextBuilder combined(Object... elements) {
-        TextBuilder build = Texts.builder();
+    public Text.Builder combined(Object... elements) {
+        Text.Builder build = Text.builder();
         for (Object el : elements) {
-            if (el instanceof TextBuilder) {
-                build.append(((TextBuilder) el).build());
+            if (el instanceof Text.Builder) {
+                build.append(((Text.Builder) el).build());
             } else {
-                build.append(Texts.of(el));
+                build.append(Text.of(el));
             }
         }
         return build;
     }
 
     @Override
-    public TextBuilder tr(Translatable tr) {
+    public Text.Builder tr(Translatable tr) {
         boolean unwrapArgs = false;
         for (Object arg: tr.getArgs()) {
-            if (arg instanceof Translatable || arg instanceof TextBuilder) {
+            if (arg instanceof Translatable || arg instanceof Text.Builder) {
                 unwrapArgs = true;
                 break;
             }
@@ -174,13 +172,13 @@ class SpongeMessageFormatter implements MessageFormatter<TextBuilder> {
                 Object arg = oldArgs[i];
                 if (arg instanceof Translatable) {
                     arg = tr(tr).build();
-                } else if (arg instanceof TextBuilder) {
-                    arg = ((TextBuilder) arg).build();
+                } else if (arg instanceof Text.Builder) {
+                    arg = ((Text.Builder) arg).build();
                 }
                 args[i] = arg;
             }
         }
-        return Texts.builder(new PEXTranslation(tr), args);
+        return Text.builder(new PEXTranslation(tr), args);
     }
 
     @NonnullByDefault

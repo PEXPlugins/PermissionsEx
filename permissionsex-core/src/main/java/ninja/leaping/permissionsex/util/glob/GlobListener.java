@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.util.glob;
 
 import ninja.leaping.permissionsex.util.glob.parser.GlobParser;
 import ninja.leaping.permissionsex.util.glob.parser.GlobParserBaseListener;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -38,13 +37,13 @@ class GlobListener extends GlobParserBaseListener {
     }
 
     @Override
-    public void enterGlob(@NotNull GlobParser.GlobContext ctx) {
+    public void enterGlob(GlobParser.GlobContext ctx) {
         super.enterGlob(ctx);
         children.push(newList());
     }
 
     @Override
-    public void exitGlob(@NotNull GlobParser.GlobContext ctx) {
+    public void exitGlob(GlobParser.GlobContext ctx) {
         super.exitGlob(ctx);
         if (children.size() > 1) {
             GlobNode toAdd = popNode();
@@ -53,20 +52,20 @@ class GlobListener extends GlobParserBaseListener {
     }
 
     @Override
-    public void enterOr(@NotNull GlobParser.OrContext ctx) {
+    public void enterOr(GlobParser.OrContext ctx) {
         super.enterOr(ctx);
         children.push(newList());
     }
 
     @Override
-    public void exitOr(@NotNull GlobParser.OrContext ctx) {
+    public void exitOr(GlobParser.OrContext ctx) {
         super.exitOr(ctx);
         GlobNode toAdd = new OrNode(children.pop());
         children.peek().add(toAdd);
     }
 
     @Override
-    public void exitLiteral(@NotNull GlobParser.LiteralContext ctx) {
+    public void exitLiteral(GlobParser.LiteralContext ctx) {
         super.exitLiteral(ctx);
         children.peek().add(Globs.literal(ctx.getText()));
     }

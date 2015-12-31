@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-05 19:20-0800\n"
+"POT-Creation-Date: 2016-01-01 20:51-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,41 +25,41 @@ msgstr ""
 msgid "Click to view more info"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:114
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:115
 msgid "Error occurred while enabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:170
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:171
 msgid "Error while loading data for user %s/%s during prelogin: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:144
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:145
 msgid "Hooked into Vault for Permission and Chat interfaces"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:267
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:268
 msgid ""
 "No Permissible injector found for your server implementation (while "
 "uninjecting for %s)!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:229
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:230
 msgid "No Permissible injector found for your server implementation!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:237
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:238
 msgid "Permissions handler for %s successfully injected"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:269
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:270
 msgid "Permissions handler for %s successfully uninjected"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:231
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:232
 msgid "Unable to inject PEX's permissible for %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:240
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:241
 msgid "Unable to inject permissible for %s"
 msgstr ""
 

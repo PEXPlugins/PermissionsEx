@@ -16,9 +16,9 @@
  */
 package ninja.leaping.permissionsex.sponge.rank;
 
+import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectData;
-import org.spongepowered.api.service.permission.context.Context;
 
 import java.util.List;
 import java.util.Set;

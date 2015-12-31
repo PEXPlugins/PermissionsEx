@@ -22,8 +22,8 @@ import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.context.Context;
-import org.spongepowered.api.service.permission.context.ContextCalculator;
+import org.spongepowered.api.service.context.Context;
+import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
@@ -136,7 +136,7 @@ class PEXSubject implements OptionSubject {
     @Override
     public Set<Context> getActiveContexts() {
         Set<Context> set = new HashSet<>();
-        for (ContextCalculator calc : this.collection.getPlugin().getContextCalculators()) {
+        for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
             calc.accumulateContexts(this, set);
         }
         return Collections.unmodifiableSet(set);

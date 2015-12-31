@@ -87,11 +87,11 @@ abstract class PermissibleInjector {
         return permField;
     }
 
+    @SuppressWarnings("unchecked")
     private void copyValues(PermissibleBase old, PermissibleBase newPerm) throws NoSuchFieldException, IllegalAccessException {
         // Attachments
         Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
         attachmentField.setAccessible(true);
-        @SuppressWarnings("unchecked")
         List<Object> attachmentPerms = (List<Object>) attachmentField.get(newPerm);
         attachmentPerms.clear();
         attachmentPerms.addAll((List) attachmentField.get(old));

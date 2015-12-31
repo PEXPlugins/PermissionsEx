@@ -34,6 +34,7 @@ import java.util.Set;
 import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_GROUP;
 import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_USER;
 
+@SuppressWarnings("deprecation")
 public class PEXVault extends Permission {
     final PermissionsExPlugin plugin;
 
