@@ -52,9 +52,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.profile.GameProfile;
 import org.spongepowered.api.profile.GameProfileManager;
 import org.spongepowered.api.scheduler.Scheduler;
-import org.spongepowered.api.service.ProviderExistsException;
 import org.spongepowered.api.service.ServiceManager;
-import org.spongepowered.api.service.ServiceReference;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectCollection;
@@ -91,7 +89,7 @@ import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 @Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION)
 public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
 
-    private ServiceReference<SqlService> sql;
+    private Optional<SqlService> sql;
     private Scheduler scheduler;
     @Inject private ServiceManager services;
     private final TranslatableLogger logger;
@@ -126,7 +124,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Listener
     public void onPreInit(GamePreInitializationEvent event) throws PEBKACException {
         logger.info(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
-        sql = services.potentiallyProvide(SqlService.class);
+        sql = services.provide(SqlService.class);
         scheduler = game.getScheduler();
 
         try {
@@ -183,11 +181,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         });
 
         // Registering the PEX service *must* occur after the plugin has been completely initialized
-        try {
+        if (!services.isRegistered(PermissionService.class)) {
             services.setProvider(this, PermissionService.class, this);
-        } catch (ProviderExistsException e) {
+        } else {
             manager.close();
-            throw new PEBKACException(t("Your appear to already be using a different permissions plugin: %s", e.getMessage()));
+            throw new PEBKACException(t("Your appear to already be using a different permissions plugin!"));
         }
     }
 
@@ -354,11 +352,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     @Nullable
     public DataSource getDataSourceForURL(String url) {
-        if (!sql.ref().isPresent()) {
+        if (!sql.isPresent()) {
             return null;
         }
         try {
-            return sql.ref().get().getDataSource(url);
+            return sql.get().getDataSource(url);
         } catch (SQLException e) {
             logger.error(t("Unable to get data source for jdbc url %s", url), e);
             return null;
