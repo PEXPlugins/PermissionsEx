@@ -18,22 +18,21 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsExTest;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import org.junit.Test;
-import org.spongepowered.api.data.manipulator.immutable.block.ImmutableLayeredData;
-import org.spongepowered.api.service.permission.context.Context;
+import org.spongepowered.api.service.context.Context;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for the concept calculator
