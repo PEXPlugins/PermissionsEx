@@ -59,11 +59,11 @@ public class InfoCommand {
             final ImmutableSubjectData data = getSubjectData(pex.getSubjects(subject.getKey()), subject.getValue());
 
             src.msg(src.fmt().header(src.fmt().tr(t("Information for %s", src.fmt().subject(subject)))));
-            if (!data.getAllPermissions().isEmpty()) {
+            if (!data.getAllPermissions().isEmpty() || !data.getAllDefaultValues().isEmpty()) {
                 src.msg(src.fmt().hl(src.fmt().tr(t("Permissions:"))));
                 printPermissions(src, data);
             }
-            if (!transientData.getAllPermissions().isEmpty()) {
+            if (!transientData.getAllPermissions().isEmpty() || !transientData.getAllDefaultValues().isEmpty()) {
                 src.msg(src.fmt().hl(src.fmt().tr(t("Transient permissions:"))));
                 printPermissions(src, transientData);
             }
