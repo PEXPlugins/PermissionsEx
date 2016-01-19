@@ -9,7 +9,7 @@
   </parent>
   <artifactId>permissionsex-core</artifactId>
   <properties>
-    <version.configurate>3.1</version.configurate>
+    <version.configurate>3.1.1</version.configurate>
   </properties>
   <build>
     <resources>
@@ -85,7 +85,7 @@
     <dependency>
       <groupId>org.gnu.gettext</groupId>
       <artifactId>libintl</artifactId>
-      <version>0.18.2</version>
+      <version>0.18.3</version>
     </dependency>
     <dependency>
       <groupId>com.j256.ormlite</groupId>
