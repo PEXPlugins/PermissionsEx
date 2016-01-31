@@ -22,7 +22,6 @@ import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.pagination.PaginationBuilder;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
@@ -60,7 +59,7 @@ class SpongeCommander implements Commander<Text.Builder> {
 
     @Override
     public Locale getLocale() {
-        return commandSource instanceof Player ? ((Player) commandSource).getLocale() : Locale.getDefault();
+        return commandSource.getLocale();
     }
 
     @Override
