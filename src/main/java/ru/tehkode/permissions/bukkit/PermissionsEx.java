@@ -24,6 +24,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.zachsthings.netevents.NetEventsPlugin;
 import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
@@ -134,6 +136,19 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 
 	@Override
 	public void onLoad() {
+		try {
+			CacheBuilder.newBuilder().maximumSize(28).build(new CacheLoader<Object, Object>() {
+				@Override
+				public Object load(Object o) throws Exception {
+                    return "This is a dummy loader";
+				}
+			});
+		} catch (Throwable t) {
+			getLogger().log(Level.SEVERE, "READ THIS: You are running with the incorrect version of PEX for your MC version. Remember: use 1.22.x for 1.7.9+, and 1.23.x for 1.8.x");
+			errored = true;
+			return;
+        }
+
 		try {
 			this.config = new PermissionsExConfig(this.getConfig(), this);
 			this.commandsManager = new CommandsManager(this);
