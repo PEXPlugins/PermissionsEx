@@ -39,11 +39,11 @@ public interface Commander<TextType> {
         msg(fmt().tr(text));
     }
     default void debug(Translatable text) {
-        msg(fmt().tr(text));
+        debug(fmt().tr(text));
     }
 
     default void error(Translatable text) {
-        msg(fmt().tr(text));
+        error(fmt().tr(text));
     }
 
     void msg(TextType text);
