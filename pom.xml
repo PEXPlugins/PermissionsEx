@@ -165,7 +165,7 @@
         <dependency>
             <groupId>net.gravitydevelopment.updater</groupId>
             <artifactId>updater</artifactId>
-            <version>LATEST</version>
+            <version>2.3</version>
         </dependency>
       <dependency>
         <groupId>com.mojang</groupId>
