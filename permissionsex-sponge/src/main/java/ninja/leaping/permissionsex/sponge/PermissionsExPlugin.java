@@ -36,7 +36,11 @@ import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
+import ninja.leaping.permissionsex.util.command.CommandContext;
+import ninja.leaping.permissionsex.util.command.CommandException;
+import ninja.leaping.permissionsex.util.command.CommandExecutor;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
+import ninja.leaping.permissionsex.util.command.Commander;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandSource;
@@ -82,6 +86,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
+import static ninja.leaping.permissionsex.util.command.args.GenericArguments.string;
 
 /**
  * PermissionsEx plugin
@@ -180,6 +185,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             }
         });
 
+        registerFakeOpCommand("op", "minecraft.command.op");
+        registerFakeOpCommand("deop", "minecraft.command.deop");
+
+
         // Registering the PEX service *must* occur after the plugin has been completely initialized
         if (!services.isRegistered(PermissionService.class)) {
             services.setProvider(this, PermissionService.class, this);
@@ -187,6 +196,21 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             manager.close();
             throw new PEBKACException(t("Your appear to already be using a different permissions plugin!"));
         }
+    }
+
+    private void registerFakeOpCommand(String alias, String permission) {
+        registerCommand(CommandSpec.builder()
+                .setAliases(alias)
+                .setPermission(permission)
+                .setDescription(t("A dummy replacement for vanilla's operator commands"))
+                .setArguments(string(t("user")))
+                .setExecutor(new CommandExecutor() {
+                    @Override
+                    public <TextType> void execute(Commander<TextType> src, CommandContext ctx) throws CommandException {
+                        throw new CommandException(t("PermissionsEx replaces the server op/deop commands. Use PEX commands to manage permissions instead!"));
+                    }
+                })
+                .build());
     }
 
     @Listener
