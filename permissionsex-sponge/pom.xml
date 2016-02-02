@@ -57,6 +57,8 @@
             <phase>package</phase>
             <configuration>
               <createDependencyReducedPom>false</createDependencyReducedPom>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>shaded</shadedClassifierName> <!-- Any name that makes sense -->
               <relocations>
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>

@@ -100,29 +100,28 @@
   <build>
     <pluginManagement>
       <plugins>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>2.11</version>
-        <configuration>
-          <header>../LICENSE_HEADER</header>
-          <includes>
-            <include>src/main/java/**</include>
-            <include>src/test/java/**</include>
-          </includes>
-          <useDefaultExcludes>true</useDefaultExcludes>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>format</goal>
-            </goals>
-            <phase>process-sources</phase>
-          </execution>
-        </executions>
-      </plugin>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>2.11</version>
+          <configuration>
+            <header>../LICENSE_HEADER</header>
+            <includes>
+              <include>src/main/java/**</include>
+              <include>src/test/java/**</include>
+            </includes>
+            <useDefaultExcludes>true</useDefaultExcludes>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>format</goal>
+              </goals>
+              <phase>process-sources</phase>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
-
     </pluginManagement>
     <plugins>
       <plugin>
