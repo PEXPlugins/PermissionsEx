@@ -34,11 +34,8 @@ import java.util.logging.Level;
  */
 public class PermissionUser extends PermissionEntity {
 
-	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
-
 	private final PermissionsUserData data;
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
-	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
 	protected Map<String, String> cachedOptions = new HashMap<>();
 
 	public PermissionUser(String playerName, PermissionsUserData data, PermissionManager manager) {
@@ -507,33 +504,10 @@ public class PermissionUser extends PermissionEntity {
 		}
 	}
 
-	@Override
-	public String getMatchingExpression(String permission, String world) {
-		String cacheId = world + ":" + permission;
-		if (!this.cachedAnwsers.containsKey(cacheId)) {
-			String result = super.getMatchingExpression(permission, world);
-
-			if (result == null) {    // this is actually kinda dirty clutch
-				result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
-			}
-
-			this.cachedAnwsers.put(cacheId, result);
-		}
-
-		String result = this.cachedAnwsers.get(cacheId);
-
-		if (PERMISSION_NOT_FOUND.equals(result)) {
-			result = null;
-		}
-
-		return result;
-	}
-
 	protected void clearCache() {
 		super.clearCache();
 
 		this.cachedGroups.clear();
-		this.cachedAnwsers.clear();
 		this.cachedOptions.clear();
 	}
 

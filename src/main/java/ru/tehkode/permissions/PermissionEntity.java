@@ -37,6 +37,7 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  */
 public abstract class PermissionEntity {
 	protected final static String NON_INHERITABLE_PREFIX = "#";
+	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
 	public static enum Type {
 		USER, GROUP;
 	}
@@ -50,6 +51,7 @@ public abstract class PermissionEntity {
 	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
 	protected Map<String, String> cachedPrefix = new HashMap<>();
 	protected Map<String, String> cachedSuffix = new HashMap<>();
+	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
 
 	public PermissionEntity(String name, PermissionManager manager) {
 		this.manager = manager;
@@ -65,6 +67,7 @@ public abstract class PermissionEntity {
 		cachedPermissions.clear();
 		cachedSuffix.clear();
 		cachedPrefix.clear();
+		cachedAnwsers.clear();
 	}
 
 	/**
@@ -785,7 +788,25 @@ public abstract class PermissionEntity {
 	}
 
 	public String getMatchingExpression(String permission, String world) {
-		return this.getMatchingExpression(this.getPermissions(world), permission);
+
+		String cacheId = world + ":" + permission;
+		if (!this.cachedAnwsers.containsKey(cacheId)) {
+			String result = this.getMatchingExpression(this.getPermissions(world), permission);
+
+			if (result == null) {    // this is actually kinda dirty clutch
+				result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
+			}
+
+			this.cachedAnwsers.put(cacheId, result);
+		}
+
+		String result = this.cachedAnwsers.get(cacheId);
+
+		if (PERMISSION_NOT_FOUND.equals(result)) {
+			result = null;
+		}
+
+		return result;
 	}
 
 	public String getMatchingExpression(List<String> permissions, String permission) {
