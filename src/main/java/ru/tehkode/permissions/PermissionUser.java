@@ -36,7 +36,6 @@ public class PermissionUser extends PermissionEntity {
 
 	private final PermissionsUserData data;
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
-	protected Map<String, String> cachedOptions = new HashMap<>();
 
 	public PermissionUser(String playerName, PermissionsUserData data, PermissionManager manager) {
 		super(playerName, manager);
@@ -79,24 +78,6 @@ public class PermissionUser extends PermissionEntity {
 	@Override
 	public Type getType() {
 		return Type.USER;
-	}
-
-	@Override
-	public String getOption(String optionName, String worldName, String defaultValue) {
-		String cacheIndex = worldName + "|" + optionName;
-
-		if (this.cachedOptions.containsKey(cacheIndex)) {
-			return this.cachedOptions.get(cacheIndex);
-		}
-
-		String value = super.getOption(optionName, worldName, null);
-		if (value != null) {
-			this.cachedOptions.put(cacheIndex, value);
-			return value;
-		}
-
-		// Nothing found
-		return defaultValue;
 	}
 
 	@Override
@@ -508,7 +489,6 @@ public class PermissionUser extends PermissionEntity {
 		super.clearCache();
 
 		this.cachedGroups.clear();
-		this.cachedOptions.clear();
 	}
 
 	@Override

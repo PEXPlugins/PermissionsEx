@@ -52,6 +52,7 @@ public abstract class PermissionEntity {
 	protected Map<String, String> cachedPrefix = new HashMap<>();
 	protected Map<String, String> cachedSuffix = new HashMap<>();
 	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
+	protected Map<String, String> cachedOptions = new HashMap<>();
 
 	public PermissionEntity(String name, PermissionManager manager) {
 		this.manager = manager;
@@ -68,6 +69,7 @@ public abstract class PermissionEntity {
 		cachedSuffix.clear();
 		cachedPrefix.clear();
 		cachedAnwsers.clear();
+		cachedOptions.clear();
 	}
 
 	/**
@@ -418,6 +420,12 @@ public abstract class PermissionEntity {
 	 * @return Value of option as String
 	 */
 	public String getOption(final String option, String world, String defaultValue) {
+		String cacheIndex = world + "|" + option;
+
+		if (this.cachedOptions.containsKey(cacheIndex)) {
+			return this.cachedOptions.get(cacheIndex);
+		}
+
 		String ret = new HierarchyTraverser<String>(this, world) {
 			@Override
 			protected String fetchLocal(PermissionEntity entity, String world) {
@@ -425,11 +433,13 @@ public abstract class PermissionEntity {
 			}
 		}.traverse();
 
-		if (ret == null) {
-			ret = defaultValue;
+		if (ret != null) {
+			this.cachedOptions.put(cacheIndex, ret);
+			return ret;
 		}
 
-		return ret;
+		// Nothing found
+		return defaultValue;
 	}
 
 	/**
