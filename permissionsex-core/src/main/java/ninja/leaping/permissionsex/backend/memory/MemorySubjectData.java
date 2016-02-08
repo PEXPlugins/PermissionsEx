@@ -53,7 +53,11 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return ImmutableMap.of(newKey, newVal);
         }
         Map<K, V> ret = new HashMap<>(input);
-        ret.put(newKey, newVal);
+        if (newVal == null) {
+            ret.remove(newKey);
+        } else {
+            ret.put(newKey, newVal);
+        }
         return Collections.unmodifiableMap(ret);
     }
 
@@ -161,9 +165,18 @@ public class MemorySubjectData implements ImmutableSubjectData {
                     '}';
         }
 
+        public boolean isEmpty() {
+            return (this.permissions == null || this.permissions.isEmpty())
+                    && (this.options == null || this.options.isEmpty())
+                    && (this.parents == null || this.parents.isEmpty())
+                    && this.defaultValue == null;
+        }
     }
 
     protected final MemorySubjectData newWithUpdated(Set<Entry<String, String>> key, DataEntry val) {
+        if (val.isEmpty()) {
+            val = null;
+        }
         return newData(updateImmutable(contexts, immutSet(key), val));
     }
 
