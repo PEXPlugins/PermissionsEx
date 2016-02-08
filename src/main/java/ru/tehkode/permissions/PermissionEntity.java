@@ -48,6 +48,7 @@ public abstract class PermissionEntity {
 	protected boolean debugMode = false;
         
 	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
+	protected Map<String, String> cachedPrefix = new HashMap<>();
 	protected Map<String, String> cachedSuffix = new HashMap<>();
 
 	public PermissionEntity(String name, PermissionManager manager) {
@@ -63,6 +64,7 @@ public abstract class PermissionEntity {
 	protected void clearCache() {
 		cachedPermissions.clear();
 		cachedSuffix.clear();
+		cachedPrefix.clear();
 	}
 
 	/**
@@ -130,14 +132,20 @@ public abstract class PermissionEntity {
 	 * @return prefix
 	 */
 	public String getPrefix(String worldName) {
-		String ret = new HierarchyTraverser<String>(this, worldName) {
-			@Override
-			protected String fetchLocal(PermissionEntity entity, String world) {
-				final String ret = entity.getOwnPrefix(world);
-				return ret == null || ret.isEmpty() ? null : ret;
-			}
-		}.traverse();
-		return ret == null ? "" : ret;
+            	if (!this.cachedPrefix.containsKey(worldName)) {
+
+			String ret = new HierarchyTraverser<String>(this, worldName) {
+				@Override
+				protected String fetchLocal(PermissionEntity entity, String world) {
+					final String ret = entity.getOwnPrefix(world);
+					return ret == null || ret.isEmpty() ? null : ret;
+				}
+			}.traverse();
+                
+			this.cachedPrefix.put(worldName, ret == null ? "" : ret);
+		}
+
+		return this.cachedPrefix.get(worldName);
 	}
 
 	/**

@@ -38,7 +38,6 @@ public class PermissionUser extends PermissionEntity {
 
 	private final PermissionsUserData data;
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
-	protected Map<String, String> cachedPrefix = new HashMap<>();
 	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
 	protected Map<String, String> cachedOptions = new HashMap<>();
 
@@ -491,15 +490,6 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public String getPrefix(String worldName) {
-		if (!this.cachedPrefix.containsKey(worldName)) {
-			this.cachedPrefix.put(worldName, super.getPrefix(worldName));
-		}
-
-		return this.cachedPrefix.get(worldName);
-	}
-
-	@Override
 	public boolean has(String permission) {
 		Player player = getPlayer();
 		if (player != null) {
@@ -541,7 +531,6 @@ public class PermissionUser extends PermissionEntity {
 
 	protected void clearCache() {
 		super.clearCache();
-		this.cachedPrefix.clear();
 
 		this.cachedGroups.clear();
 		this.cachedAnwsers.clear();
