@@ -40,7 +40,6 @@ public class PermissionUser extends PermissionEntity {
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
 	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
 	protected Map<String, String> cachedPrefix = new HashMap<>();
-	protected Map<String, String> cachedSuffix = new HashMap<>();
 	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
 	protected Map<String, String> cachedOptions = new HashMap<>();
 
@@ -529,15 +528,6 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public String getSuffix(String worldName) {
-		if (!this.cachedSuffix.containsKey(worldName)) {
-			this.cachedSuffix.put(worldName, super.getSuffix(worldName));
-		}
-
-		return this.cachedSuffix.get(worldName);
-	}
-
-	@Override
 	public String getMatchingExpression(String permission, String world) {
 		String cacheId = world + ":" + permission;
 		if (!this.cachedAnwsers.containsKey(cacheId)) {
@@ -560,8 +550,8 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	protected void clearCache() {
+		super.clearCache();
 		this.cachedPrefix.clear();
-		this.cachedSuffix.clear();
 
 		this.cachedGroups.clear();
 		this.cachedPermissions.clear();

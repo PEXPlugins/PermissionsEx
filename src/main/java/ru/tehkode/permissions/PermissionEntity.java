@@ -46,6 +46,8 @@ public abstract class PermissionEntity {
 	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<>();
 	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<>();
 	protected boolean debugMode = false;
+        
+	protected Map<String, String> cachedSuffix = new HashMap<>();
 
 	public PermissionEntity(String name, PermissionManager manager) {
 		this.manager = manager;
@@ -57,7 +59,9 @@ public abstract class PermissionEntity {
 	/**
 	 * Clears cache of entity or members.
 	 */
-	protected abstract void clearCache();
+	protected void clearCache() {
+		cachedSuffix.clear();
+	}
 
 	/**
 	 * This method 100% run after all constructors have been run and entity
@@ -159,14 +163,17 @@ public abstract class PermissionEntity {
 	 * @return suffix
 	 */
 	public String getSuffix(String worldName) {
-		String ret = new HierarchyTraverser<String>(this, worldName) {
-			@Override
-			protected String fetchLocal(PermissionEntity entity, String world) {
-				final String ret = entity.getOwnSuffix(world);
-				return ret == null || ret.isEmpty() ? null : ret;
-			}
-		}.traverse();
-		return ret == null ? "" : ret;
+		if (!this.cachedSuffix.containsKey(worldName)) {
+			String ret = new HierarchyTraverser<String>(this, worldName) {
+				@Override
+				protected String fetchLocal(PermissionEntity entity, String world) {
+					final String ret = entity.getOwnSuffix(world);
+					return ret == null || ret.isEmpty() ? null : ret;
+				}
+            		}.traverse();
+            		this.cachedSuffix.put(worldName, ret == null ? "" : ret);
+        	}
+        	return this.cachedSuffix.get(worldName);
 	}
 
 	public String getSuffix() {
