@@ -168,7 +168,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setPrefix(String prefix, String worldName) {
 		getData().setOption("prefix", prefix, worldName);
-		clearCache();
+		cachedPrefix.clear();
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -202,7 +202,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setSuffix(String suffix, String worldName) {
 		getData().setOption("suffix", suffix, worldName);
-		clearCache();
+		cachedSuffix.clear();
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -398,7 +398,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setPermissions(List<String> permissions, String world) {
 		getData().setPermissions(permissions, world);
-		clearCache();
+		cachedPermissions.clear();
 		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
 	}
 
@@ -529,7 +529,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setOption(String option, String value, String world) {
 		getData().setOption(option, value, world);
-		clearCache();
+		cachedOptions.clear();
 		this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
 	}
 
