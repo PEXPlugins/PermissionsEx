@@ -38,7 +38,6 @@ public class PermissionUser extends PermissionEntity {
 
 	private final PermissionsUserData data;
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
-	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
 	protected Map<String, String> cachedPrefix = new HashMap<>();
 	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
 	protected Map<String, String> cachedOptions = new HashMap<>();
@@ -458,15 +457,6 @@ public class PermissionUser extends PermissionEntity {
 		return ladders;
 	}
 
-	@Override
-	public List<String> getPermissions(String worldName) {
-		if (!this.cachedPermissions.containsKey(worldName)) {
-			this.cachedPermissions.put(worldName, super.getPermissions(worldName));
-		}
-
-		return this.cachedPermissions.get(worldName);
-	}
-
 	protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
 		if (!this.isRanked(ladderName)) { // not ranked
 			throw new RankingException("User are not in this ladder", this, promoter);
@@ -554,7 +544,6 @@ public class PermissionUser extends PermissionEntity {
 		this.cachedPrefix.clear();
 
 		this.cachedGroups.clear();
-		this.cachedPermissions.clear();
 		this.cachedAnwsers.clear();
 		this.cachedOptions.clear();
 	}

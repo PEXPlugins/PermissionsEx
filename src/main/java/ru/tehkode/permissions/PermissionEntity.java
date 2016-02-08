@@ -47,6 +47,7 @@ public abstract class PermissionEntity {
 	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<>();
 	protected boolean debugMode = false;
         
+	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
 	protected Map<String, String> cachedSuffix = new HashMap<>();
 
 	public PermissionEntity(String name, PermissionManager manager) {
@@ -60,6 +61,7 @@ public abstract class PermissionEntity {
 	 * Clears cache of entity or members.
 	 */
 	protected void clearCache() {
+		cachedPermissions.clear();
 		cachedSuffix.clear();
 	}
 
@@ -229,7 +231,11 @@ public abstract class PermissionEntity {
 	 * @return Array of permission expressions
 	 */
 	public List<String> getPermissions(String world) {
-		return Collections.unmodifiableList(getPermissionsInternal(world));
+		if (!this.cachedPermissions.containsKey(world)) {
+			this.cachedPermissions.put(world, Collections.unmodifiableList(getPermissionsInternal(world)));
+		}
+
+		return this.cachedPermissions.get(world);
 	}
 
 	/**
