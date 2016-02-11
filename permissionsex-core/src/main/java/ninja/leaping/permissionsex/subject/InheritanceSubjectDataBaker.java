@@ -16,10 +16,12 @@
  */
 package ninja.leaping.permissionsex.subject;
 
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
@@ -39,11 +41,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.Map.Entry;
+import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
  * Handles baking of subject data inheritance tree and context tree into a single data set
  */
 class InheritanceSubjectDataBaker implements SubjectDataBaker {
+    private static final int CIRCULAR_INHERITANCE_THRESHOLD = 3;
     static final SubjectDataBaker INSTANCE = new InheritanceSubjectDataBaker();
 
     private InheritanceSubjectDataBaker() {
@@ -86,7 +90,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         final Map.Entry<String, String> subject = data.getIdentifier();
         final BakeState state = new BakeState(data, processContexts(data.getManager(), activeContexts));
 
-        final Set<Map.Entry<String, String>> visitedSubjects = new HashSet<>();
+        final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
         visitSubject(state, subject, visitedSubjects, 0);
         Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
         if (!subject.equals(defIdentifier)) {
@@ -97,9 +101,9 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         return new BakedSubjectData(NodeTree.of(state.combinedPermissions, state.defaultValue), ImmutableList.copyOf(state.parents), ImmutableMap.copyOf(state.options));
     }
 
-    private void visitSubject(BakeState state, Map.Entry<String, String> subject, Set<Map.Entry<String, String>> visitedSubjects, int inheritanceLevel) throws ExecutionException {
-        if (visitedSubjects.contains(subject)) {
-            state.pex.getLogger().warn("Potential circular inheritance found while traversing inheritance for " + state.base.getIdentifier() + " when visiting " + subject);
+    private void visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) throws ExecutionException {
+        if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
+            state.pex.getLogger().warn(t("Potential circular inheritance found while traversing inheritance for %s when visiting %s", state.base.getIdentifier(), subject));
             return;
         }
         visitedSubjects.add(subject);
@@ -148,6 +152,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                 state.options.put(ent.getKey(), ent.getValue());
             }
         }
+
         if (Math.abs(data.getDefaultValue(specificCombination)) > Math.abs(state.defaultValue)) {
             state.defaultValue = data.getDefaultValue(specificCombination);
         }
