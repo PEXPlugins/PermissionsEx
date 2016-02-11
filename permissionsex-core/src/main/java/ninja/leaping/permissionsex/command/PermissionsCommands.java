@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
+import static ninja.leaping.permissionsex.util.command.args.GameArguments.permission;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
 public class PermissionsCommands {
@@ -44,7 +45,7 @@ public class PermissionsCommands {
     public static CommandSpec getPermissionCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("permission", "permissions", "perm", "perms", "p")
-                .setArguments(seq(string(t("key")), permissionValue(t("value"))))
+                .setArguments(seq(permission(t("key"), pex), permissionValue(t("value"))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {

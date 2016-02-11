@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-31 19:12-0500\n"
+"POT-Creation-Date: 2016-02-10 19:26-0800\n"
 "PO-Revision-Date: 2015-04-02 17:09-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: German\n"
@@ -26,7 +26,7 @@ msgstr ""
 msgid "%s subjects"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:180
+#: ninja/leaping/permissionsex/PermissionsEx.java:183
 msgid "%s user successfully converted from name to UUID"
 msgid_plural "%s users successfully converted from name to UUID!"
 msgstr[0] ""
@@ -81,11 +81,11 @@ msgid ""
 " Please see the server console for details"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:1090
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:1094
 msgid "Argument %s did not match expected next argument %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:550
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:554
 msgid "Argument was not a valid choice. Valid choices: %s"
 msgstr ""
 
@@ -106,7 +106,7 @@ msgstr ""
 msgid "Commands to modify ranking"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:174
+#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:178
 msgid "Context must be of the form <key>=<value>!"
 msgstr ""
 
@@ -143,7 +143,7 @@ msgstr ""
 msgid "Destination subject already existed or target subject did not!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:150
+#: ninja/leaping/permissionsex/PermissionsEx.java:153
 msgid "Duplicate entry for %s found while converting to UUID"
 msgstr ""
 
@@ -153,7 +153,7 @@ msgid ""
 "has occurred."
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:987
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:991
 msgid "Enum value %s not valid"
 msgstr ""
 
@@ -164,7 +164,7 @@ msgid ""
 "details: %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:185
+#: ninja/leaping/permissionsex/PermissionsEx.java:188
 msgid "Error converting users to UUID"
 msgstr ""
 
@@ -191,11 +191,11 @@ msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 msgid "Error while deserializing backend %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:175
+#: ninja/leaping/permissionsex/PermissionsEx.java:178
 msgid "Error while fetching UUIDs for users"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:289
+#: ninja/leaping/permissionsex/PermissionsEx.java:309
 #, fuzzy
 msgid "Error while loading configuration: %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
@@ -210,7 +210,7 @@ msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 msgid "Error while serializing backend %s"
 msgstr "Fehler wÃ¤hrend das Laufen des Befehles: %s"
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:918
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:922
 msgid "Expected an integer, but input '%s' was not"
 msgstr ""
 
@@ -314,15 +314,15 @@ msgstr ""
 msgid "Removed parent %s for %s in %s context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:93
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:94
 msgid "Set default permission to %s for %s in %s context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/OptionCommands.java:57
+#: ninja/leaping/permissionsex/command/OptionCommands.java:58
 msgid "Set option %s for %s in %s context"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:66
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:67
 msgid "Set permission %s for %s in %s context"
 msgstr ""
 
@@ -330,7 +330,7 @@ msgstr ""
 msgid "Subject %s does not exist!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:60
+#: ninja/leaping/permissionsex/util/command/args/GameArguments.java:64
 msgid "Subject type %s was not valid!"
 msgstr ""
 
@@ -350,7 +350,7 @@ msgstr ""
 msgid "Successfully imported data from backend %s into current backend"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:313
+#: ninja/leaping/permissionsex/PermissionsEx.java:333
 msgid "Successfully migrated old-style default data to new location"
 msgstr ""
 
@@ -387,7 +387,7 @@ msgstr ""
 msgid "Transient permissions:"
 msgstr "Hat Berechtigung: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:139
+#: ninja/leaping/permissionsex/PermissionsEx.java:142
 msgid "Trying to convert users stored by name to UUID"
 msgstr ""
 
@@ -395,22 +395,22 @@ msgstr ""
 msgid "Unable to get data for subject %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:189
+#: ninja/leaping/permissionsex/PermissionsEx.java:192
 msgid ""
 "Unable to resolve Mojang API for UUID conversion. Do you have an internet "
 "connection? UUID conversion will not proceed (but may not be necessary)."
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:252
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:268
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:256
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:272
 msgid "Unknown long flag %s specified"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:294
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:298
 msgid "Unknown short flag %s specified"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/OptionCommands.java:53
+#: ninja/leaping/permissionsex/command/OptionCommands.java:54
 msgid "Unset option '%s' for %s in %s context"
 msgstr ""
 
@@ -423,7 +423,7 @@ msgstr "Unbefertigtes quoted Satz befunden"
 msgid "Usage: %s"
 msgstr "Nutzung: %s"
 
-#: ninja/leaping/permissionsex/PermissionsEx.java:403
+#: ninja/leaping/permissionsex/PermissionsEx.java:423
 msgid "While calculating subject data for %s:%s"
 msgstr ""
 
@@ -465,8 +465,8 @@ msgstr ""
 msgid "filter"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/OptionCommands.java:39
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:48
+#: ninja/leaping/permissionsex/command/OptionCommands.java:40
 msgid "key"
 msgstr ""
 
@@ -489,11 +489,11 @@ msgstr ""
 msgid "position"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
 #: ninja/leaping/permissionsex/command/RankingCommands.java:51
 #: ninja/leaping/permissionsex/command/RankingCommands.java:75
 #: ninja/leaping/permissionsex/command/RankingCommands.java:157
 #: ninja/leaping/permissionsex/command/RankingCommands.java:188
+#: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
 msgid "subject"
 msgstr ""
 
@@ -501,9 +501,9 @@ msgstr ""
 msgid "subject-type"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/OptionCommands.java:39
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:75
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:48
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:76
+#: ninja/leaping/permissionsex/command/OptionCommands.java:40
 msgid "value"
 msgstr ""
 

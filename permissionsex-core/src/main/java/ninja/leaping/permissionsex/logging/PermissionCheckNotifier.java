@@ -14,22 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.util;
+package ninja.leaping.permissionsex.logging;
 
-import java.util.function.Predicate;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * A predicate that filters based on case-insensitive starts with
+ * Delegate to handle notifying of permission and option checks
  */
-public class StartsWithPredicate implements Predicate<String> {
-    private final String test;
+public interface PermissionCheckNotifier {
+    void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value);
+    void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value);
+    void onParentCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents);
 
-    public StartsWithPredicate(String test) {
-        this.test = test;
-    }
-
-    @Override
-    public boolean test(String input) {
-        return input != null && input.toLowerCase().startsWith(test.toLowerCase());
-    }
 }

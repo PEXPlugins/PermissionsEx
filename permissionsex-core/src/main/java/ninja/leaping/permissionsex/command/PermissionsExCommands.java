@@ -22,7 +22,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectCache;
-import ninja.leaping.permissionsex.util.StartsWithPredicate;
+import ninja.leaping.permissionsex.util.GuavaStartsWithPredicate;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.ChildCommands;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -84,7 +84,7 @@ public class PermissionsExCommands {
                             SubjectCache cache = args.hasAny("transient") ? pex.getTransientSubjects(subjectType) : pex.getSubjects(subjectType);
                             Iterable<String> iter = cache.getAllIdentifiers();
                             if (args.hasAny("filter")) {
-                                iter = Iterables.filter(iter, new StartsWithPredicate(args.<String>getOne("filter")));
+                                iter = Iterables.filter(iter, new GuavaStartsWithPredicate(args.<String>getOne("filter")));
                             }
 
                             src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), Iterables.transform(iter, new Function<String, TextType>() {

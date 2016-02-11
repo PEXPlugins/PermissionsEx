@@ -66,9 +66,6 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         return identifier;
     }
 
-    private String stringIdentifier() {
-        return this.identifier.getKey() + " " + this.identifier.getValue();
-    }
 
     PermissionsEx getManager() {
         return pex;
@@ -96,9 +93,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         Preconditions.checkNotNull(contexts, "contexts");
         try {
             List<Map.Entry<String, String>> parents = data.get(contexts).getParents();
-            if (pex.hasDebugMode()) {
-                pex.getLogger().info("Parents checked in " + contexts + " for " +  stringIdentifier() + ": " + parents);
-            }
+            pex.getNotifier().onParentCheck(getIdentifier(), contexts, parents);
             return parents;
         } catch (ExecutionException e) {
             return ImmutableList.of();
@@ -111,17 +106,13 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
 
     public int getPermission(Set<Entry<String, String>> contexts, String permission) {
         int ret = getPermissions(contexts).get(Preconditions.checkNotNull(permission, "permission"));
-        if (pex.hasDebugMode()) {
-            pex.getLogger().info("Permission " + permission + " checked in " + contexts + " for " + stringIdentifier() + ": " + ret);
-        }
+        pex.getNotifier().onPermissionCheck(getIdentifier(), contexts, permission, ret);
         return ret;
     }
 
     public Optional<String> getOption(Set<Entry<String, String>> contexts, String option) {
         String val = getOptions(contexts).get(Preconditions.checkNotNull(option, "option"));
-        if (pex.hasDebugMode()) {
-            pex.getLogger().info("Option " + option + " checked in " + contexts + " for " + stringIdentifier() + ": " + val);
-        }
+        pex.getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
         return Optional.ofNullable(val);
     }
 

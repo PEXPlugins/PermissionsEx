@@ -16,20 +16,22 @@
  */
 package ninja.leaping.permissionsex.util;
 
-import java.util.function.Predicate;
+import com.google.common.base.Predicate;
+
+import javax.annotation.Nullable;
 
 /**
  * A predicate that filters based on case-insensitive starts with
  */
-public class StartsWithPredicate implements Predicate<String> {
+public class GuavaStartsWithPredicate implements Predicate<String> {
     private final String test;
 
-    public StartsWithPredicate(String test) {
+    public GuavaStartsWithPredicate(String test) {
         this.test = test;
     }
 
     @Override
-    public boolean test(String input) {
+    public boolean apply(@Nullable String input) {
         return input != null && input.toLowerCase().startsWith(test.toLowerCase());
     }
 }

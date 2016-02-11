@@ -20,6 +20,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import ninja.leaping.permissionsex.util.GuavaCollectors;
+import ninja.leaping.permissionsex.util.GuavaStartsWithPredicate;
 import ninja.leaping.permissionsex.util.StartsWithPredicate;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.Translations;
@@ -29,12 +31,14 @@ import ninja.leaping.permissionsex.util.command.Commander;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
 
@@ -394,7 +398,7 @@ public class GenericArguments {
             } else {
                 CommandElement element = longFlags.get(longFlag.toLowerCase());
                 if (element == null) {
-                    return ImmutableList.copyOf(Iterables.transform(Iterables.filter(longFlags.keySet(), new StartsWithPredicate(longFlag.toLowerCase())), input -> "--" + input));
+                    return ImmutableList.copyOf(Iterables.transform(Iterables.filter(longFlags.keySet(), new GuavaStartsWithPredicate(longFlag.toLowerCase())), input -> "--" + input));
                 } else {
                     boolean complete = false;
                     int position = args.getPosition();
@@ -555,7 +559,7 @@ public class GenericArguments {
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
             final String prefix = args.nextIfPresent().orElse("");
-            return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new StartsWithPredicate(prefix)));
+            return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new GuavaStartsWithPredicate(prefix)));
         }
 
         @Override
@@ -995,7 +999,7 @@ public class GenericArguments {
             if (args.hasNext()) {
                 try {
                     final String prefix = args.next();
-                    validValues = Iterables.filter(validValues, new StartsWithPredicate(prefix));
+                    validValues = Iterables.filter(validValues, new GuavaStartsWithPredicate(prefix));
                 } catch (ArgumentParseException ignore) {
                 }
             }
@@ -1115,6 +1119,33 @@ public class GenericArguments {
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
             return src.fmt().combined(Joiner.on(' ').join(this.expectedArgs));
+        }
+    }
+
+    public static CommandElement suggestibleString(Translatable key, Supplier<Collection<String>> keySupplier) {
+        return new SuggestibleStringCommandElement(key, keySupplier);
+    }
+
+    private static class SuggestibleStringCommandElement extends CommandElement {
+
+        private final Supplier<Collection<String>> keySupplier;
+
+        public SuggestibleStringCommandElement(Translatable key, Supplier<Collection<String>> keySupplier) {
+            super(key);
+            this.keySupplier = keySupplier;
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            return args.next();
+        }
+
+        @Override
+        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+            return args.nextIfPresent()
+                    .map(arg -> keySupplier.get().stream().filter(new StartsWithPredicate(arg))
+                            .collect(GuavaCollectors.toImmutableList()))
+                    .orElse(ImmutableList.of());
         }
     }
 

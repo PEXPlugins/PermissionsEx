@@ -19,7 +19,7 @@ package ninja.leaping.permissionsex.util.command;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import ninja.leaping.permissionsex.util.StartsWithPredicate;
+import ninja.leaping.permissionsex.util.GuavaStartsWithPredicate;
 import ninja.leaping.permissionsex.util.command.args.ArgumentParseException;
 import ninja.leaping.permissionsex.util.command.args.CommandArgs;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
@@ -107,7 +107,7 @@ public class ChildCommands {
                         }
                         return ImmutableList.of();
                     } else {
-                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new StartsWithPredicate(commandComponent.get())));
+                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new GuavaStartsWithPredicate(commandComponent.get())));
                     }
                 } else {
                     return ImmutableList.copyOf(children.keySet());

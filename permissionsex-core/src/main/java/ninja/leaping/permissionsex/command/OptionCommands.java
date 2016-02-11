@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
+import static ninja.leaping.permissionsex.util.command.args.GameArguments.option;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.*;
 
 public class OptionCommands {
@@ -36,7 +37,7 @@ public class OptionCommands {
     public static CommandSpec getOptionCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("options", "option", "opt", "o")
-                .setArguments(seq(string(t("key")), optional(string(t("value")))))
+                .setArguments(seq(option(t("key"), pex), optional(string(t("value")))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {

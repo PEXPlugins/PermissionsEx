@@ -32,6 +32,9 @@ import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.exception.PEBKACException;
+import ninja.leaping.permissionsex.logging.DebugPermissionCheckNotifier;
+import ninja.leaping.permissionsex.logging.PermissionCheckNotifier;
+import ninja.leaping.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
@@ -44,7 +47,6 @@ import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 
 import javax.sql.DataSource;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -74,7 +76,8 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private final TranslatableLogger logger;
     private final ImplementationInterface impl;
     private final MemoryDataStore transientData;
-    private volatile boolean debug;
+    private final RecordingPermissionCheckNotifier baseNotifier = new RecordingPermissionCheckNotifier();
+    private volatile PermissionCheckNotifier notifier = baseNotifier;
 
     private final AtomicReference<State> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
@@ -103,7 +106,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         this.logger = TranslatableLogger.forLogger(impl.getLogger());
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
-        this.debug = config.isDebugEnabled();
+        setDebugMode(config.isDebugEnabled());
         initialize(config);
         convertUuids();
 
@@ -271,12 +274,29 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return getState().activeDataStore.getRegisteredTypes();
     }
 
-    public void setDebugMode(boolean debug) {
-        this.debug = debug;
+    public PermissionCheckNotifier getNotifier() {
+        return this.notifier;
     }
 
+    public RecordingPermissionCheckNotifier getRecordingNotifier() {
+        return this.baseNotifier;
+    }
+
+    // TODO: Proper thread-safety
     public boolean hasDebugMode() {
-        return this.debug;
+        return this.getNotifier() instanceof DebugPermissionCheckNotifier;
+    }
+
+    public void setDebugMode(boolean debug) {
+        if (debug) {
+            if (!(this.notifier instanceof DebugPermissionCheckNotifier)) {
+                this.notifier = new DebugPermissionCheckNotifier(getLogger(), this.notifier);
+            }
+        } else {
+            if (this.notifier instanceof DebugPermissionCheckNotifier) {
+                this.notifier = ((DebugPermissionCheckNotifier) this.notifier).getDelegate();
+            }
+        }
     }
 
     private void reloadSync() throws PEBKACException, PermissionsLoadingException {
