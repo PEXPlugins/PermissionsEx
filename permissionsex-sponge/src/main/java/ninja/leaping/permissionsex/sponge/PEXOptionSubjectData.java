@@ -18,12 +18,11 @@ package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.util.GuavaCollectors;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.option.OptionSubjectData;
@@ -68,9 +67,9 @@ class PEXOptionSubjectData implements OptionSubjectData {
     private static <T> Map<Set<Context>, T> tKeys(Map<Set<Map.Entry<String, String>>, T> input) {
         final ImmutableMap.Builder<Set<Context>, T> ret = ImmutableMap.builder();
         for (Map.Entry<Set<Map.Entry<String, String>>, T> ent : input.entrySet()) {
-            ret.put(ImmutableSet.copyOf(
-                    Iterables.transform(ent.getKey(), ctx -> ctx instanceof Context ? (Context) ctx : new Context(ctx.getKey(), ctx.getValue()))),
-                    ent.getValue());
+            ret.put(ent.getKey().stream()
+                    .map(ctx -> ctx instanceof Context ? (Context) ctx : new Context(ctx.getKey(), ctx.getValue()))
+                    .collect(GuavaCollectors.toImmutableSet()), ent.getValue());
         }
         return ret.build();
     }

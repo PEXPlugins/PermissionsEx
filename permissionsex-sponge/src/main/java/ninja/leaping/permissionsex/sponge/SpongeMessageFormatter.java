@@ -51,8 +51,7 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
 
     @Override
     public Text.Builder subject(Map.Entry<String, String> subject) {
-        Function<String, Optional<CommandSource>> func = pex.getCommandSourceProvider(subject.getKey());
-        Optional<CommandSource> source = func == null ? Optional.empty() : func.apply(subject.getValue());
+        Optional<CommandSource> source = pex.getCommandSourceProvider(subject.getKey()).apply(subject.getValue());
         String name;
         if (source.isPresent()) {
             name = source.get().getName();

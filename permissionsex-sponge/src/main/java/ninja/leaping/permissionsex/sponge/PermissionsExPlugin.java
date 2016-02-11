@@ -413,7 +413,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {
-        return commandSourceProviders.get(subjectCollection);
+        return commandSourceProviders.getOrDefault(subjectCollection, k -> Optional.empty());
     }
 
     public void setCommandSourceProvider(PEXSubjectCollection subjectCollection, Function<String, Optional<CommandSource>> provider) {
