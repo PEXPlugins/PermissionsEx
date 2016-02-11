@@ -1,0 +1,16 @@
+image: maven:latest
+
+cache:
+    paths:
+    - ~/.m2/
+
+jar:
+    script: 
+    - "apt-get update"
+    - "apt-get install -y gettext"
+    - "mvn install -B"
+    artifacts:
+        paths:
+        - permissionsex-*/target/*-shaded.jar
+    only:
+    - master
