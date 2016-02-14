@@ -24,6 +24,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.util.Util;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -124,9 +125,8 @@ public class SubjectCache {
         return dataStore.isRegistered(type, identifier);
     }
 
-    public CompletableFuture<ImmutableSubjectData> set(String identifier, ImmutableSubjectData newData) {
+    public CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
         Objects.requireNonNull(identifier, "identifier");
-        Objects.requireNonNull(newData, "newData");
 
         return dataStore.setData(type, identifier, newData);
     }
