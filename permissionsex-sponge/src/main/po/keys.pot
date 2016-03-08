@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-31 14:51-0800\n"
+"POT-Creation-Date: 2016-03-07 18:22-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,64 +17,70 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:205
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:210
 msgid "A dummy replacement for vanilla's operator commands"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:79
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:77
 msgid "Click here to view more info"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:72
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:70
 msgid "Click to view more info"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:227
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:232
 msgid "Disabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:141
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:144
 msgid "Error occurred while enabling %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:221
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:226
 msgid "Error while loading data for user %s/%s during prelogin: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:258
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:283
+msgid ""
+"Migrated legacy sponge config directory to new location. Configuration is "
+"now located in %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:263
 msgid "Migrating configuration data from Bukkit"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:210
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:215
 msgid ""
 "PermissionsEx replaces the server op/deop commands. Use PEX commands to "
 "manage permissions instead!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:132
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:134
 msgid "Pre-init of %s v%s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:385
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:411
 msgid "Unable to get data source for jdbc url %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:308
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:334
 msgid "Unable to get subject collection for type %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:197
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:202
 msgid "Your appear to already be using a different permissions plugin!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:85
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:83
 msgid "false"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:85
+#: ninja/leaping/permissionsex/sponge/SpongeMessageFormatter.java:83
 msgid "true"
 msgstr ""
 
-#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:206
+#: ninja/leaping/permissionsex/sponge/PermissionsExPlugin.java:211
 msgid "user"
 msgstr ""

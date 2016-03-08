@@ -22,7 +22,7 @@ import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.service.pagination.PaginationBuilder;
+import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
@@ -94,7 +94,7 @@ class SpongeCommander implements Commander<Text.Builder> {
 
     @Override
     public void msgPaginated(Translatable title, @Nullable Translatable header, final Iterable<Text.Builder> text) {
-        PaginationBuilder build = pex.getGame().getServiceManager().provide(PaginationService.class).get().builder();
+        PaginationList.Builder build = pex.getGame().getServiceManager().provide(PaginationService.class).get().builder();
 
         build.title(fmt().hl(fmt().header(fmt().tr(title))).build());
         if (header != null) {

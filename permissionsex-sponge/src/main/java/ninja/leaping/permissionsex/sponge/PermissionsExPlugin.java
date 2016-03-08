@@ -54,7 +54,7 @@ import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.profile.GameProfile;
-import org.spongepowered.api.profile.GameProfileManager;
+import org.spongepowered.api.profile.GameProfileCache;
 import org.spongepowered.api.scheduler.Scheduler;
 import org.spongepowered.api.service.ServiceManager;
 import org.spongepowered.api.service.permission.PermissionDescription;
@@ -68,9 +68,11 @@ import org.spongepowered.api.util.annotation.NonnullByDefault;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -135,11 +137,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
         try {
             convertFromBukkit();
+            convertFromLegacySpongeName();
             Files.createDirectories(configDir);
             this.manager = new PermissionsEx(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
             throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
+
         defaults = getSubjects(PermissionsEx.SUBJECTS_DEFAULTS).get(PermissionsEx.SUBJECTS_DEFAULTS);
 
         setCommandSourceProvider(getUserSubjects(),name -> {
@@ -174,9 +178,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 if (player.isPresent()) {
                     return player.get().getUniqueId().toString();
                 } else {
-                    GameProfileManager res = game.getServer().getGameProfileManager();
+                    GameProfileCache res = game.getServiceManager().provideUnchecked(GameProfileCache.class);
                     for (GameProfile profile : res.match(input)) {
-                        if (profile.getName().equalsIgnoreCase(input)) {
+
+                        if (profile.getName().isPresent() && profile.getName().get().equalsIgnoreCase(input)) {
                             return profile.getUniqueId().toString();
                         }
                     }
@@ -254,9 +259,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     private void convertFromBukkit() throws IOException {
         Path bukkitConfigPath = Paths.get("plugins/PermissionsEx");
-        if (Files.isDirectory(bukkitConfigPath) && !Files.isDirectory(configDir)) {
+        if (Files.isDirectory(bukkitConfigPath) && isDirectoryEmpty(configDir)) {
             logger.info(t("Migrating configuration data from Bukkit"));
-            Files.move(bukkitConfigPath, configDir);
+            Files.move(bukkitConfigPath, configDir, StandardCopyOption.REPLACE_EXISTING);
         }
         Path bukkitConfigFile = configDir.resolve("config.yml");
         if (Files.exists(bukkitConfigFile)) {
@@ -264,6 +269,25 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             ConfigurationNode bukkitConfig = yamlReader.load();
             configLoader.save(bukkitConfig);
             Files.move(bukkitConfigFile, configDir.resolve("config.yml.bukkit"));
+        }
+    }
+
+    private void convertFromLegacySpongeName() throws IOException {
+        Path oldPath = configDir.resolveSibling("permissionsex"); // Old plugin ID
+
+        if (Files.exists(oldPath) && isDirectoryEmpty(configDir)) {
+            Files.move(oldPath, configDir, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(configDir.resolve("permissionsex.conf"), configDir.resolve(PomData.ARTIFACT_ID + ".conf"));
+            logger.info(t("Migrated legacy sponge config directory to new location. Configuration is now located in %s", configDir.toString()));
+        }
+    }
+
+    private boolean isDirectoryEmpty(Path dir) throws IOException {
+        if (Files.exists(dir)) {
+            return true;
+        }
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+            return !dirStream.iterator().hasNext();
         }
     }
 
@@ -305,7 +329,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return subjectCollections.get(identifier);
         } catch (ExecutionException e) {
-            logger.error(t("Unable to get subject collection for type %s", identifier), e);
+            getLogger().error(t("Unable to get subject collection for type %s", identifier), e);
             return null;
         }
     }
@@ -369,7 +393,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public Logger getLogger() {
+    public TranslatableLogger getLogger() {
         return logger;
     }
 

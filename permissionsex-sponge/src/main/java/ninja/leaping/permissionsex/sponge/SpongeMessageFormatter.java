@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 
