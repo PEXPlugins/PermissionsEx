@@ -108,7 +108,7 @@ public abstract class AbstractDataStore implements DataStore {
      */
     protected final void applyDefaultData() {
         setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, getData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, null)
-                .setDefaultValue(ImmutableSet.of(Maps.immutableEntry("srcip", "127.0.0.1")), 1));
+                .setDefaultValue(ImmutableSet.of(Maps.immutableEntry("localip", "127.0.0.1")), 1));
     }
 
     protected abstract ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException;

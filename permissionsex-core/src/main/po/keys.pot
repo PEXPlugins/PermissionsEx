@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-10 19:26-0800\n"
+"POT-Creation-Date: 2016-03-07 18:22-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -262,6 +262,12 @@ msgstr ""
 msgid "Permissions:"
 msgstr ""
 
+#: ninja/leaping/permissionsex/subject/InheritanceSubjectDataBaker.java:106
+msgid ""
+"Potential circular inheritance found while traversing inheritance for %s "
+"when visiting %s"
+msgstr ""
+
 #: ninja/leaping/permissionsex/command/RankingCommands.java:50
 msgid "Promote a subject on the given ladder"
 msgstr ""
@@ -451,8 +457,8 @@ msgstr ""
 msgid "filter"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:48
 #: ninja/leaping/permissionsex/command/OptionCommands.java:40
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:48
 msgid "key"
 msgstr ""
 
@@ -487,9 +493,9 @@ msgstr ""
 msgid "subject-type"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/OptionCommands.java:40
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:48
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:76
-#: ninja/leaping/permissionsex/command/OptionCommands.java:40
 msgid "value"
 msgstr ""
 
