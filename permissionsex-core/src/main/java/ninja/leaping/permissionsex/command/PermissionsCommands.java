@@ -19,8 +19,7 @@ package ninja.leaping.permissionsex.command;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -49,11 +48,8 @@ public class PermissionsCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        Map.Entry<String, String> subject = subjectOrSelf(src, args);
-                        checkSubjectPermission(src, subject, "permissionsex.permission.set");
+                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.permission.set");
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
 
                         final String key = args.getOne("key");
                         Object value = args.getOne("value");
@@ -63,8 +59,8 @@ public class PermissionsCommands {
                         int intVal = (Integer) value;
 
                         messageSubjectOnFuture(
-                                dataCache.set(subject.getValue(), data.setPermission(contexts, key, intVal)), src,
-                                t("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                ref.update(old -> old.setPermission(contexts, key, intVal)), src,
+                                t("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(ref)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
@@ -77,11 +73,8 @@ public class PermissionsCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        Map.Entry<String, String> subject = subjectOrSelf(src, args);
-                        checkSubjectPermission(src, subject, "permissionsex.permission.set-default");
+                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.permission.set-default");
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
 
                         Object value = args.getOne("value");
                         if (value instanceof Boolean) {
@@ -90,8 +83,8 @@ public class PermissionsCommands {
                         int intVal = (Integer) value;
 
                         messageSubjectOnFuture(
-                                dataCache.set(subject.getValue(), data.setDefaultValue(contexts, intVal)), src,
-                                t("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                ref.update(old -> old.setDefaultValue(contexts, intVal)), src,
+                                t("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(ref)), formatContexts(src, contexts)));
                     }
                 })
                 .build();

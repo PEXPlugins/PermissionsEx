@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -37,13 +38,13 @@ public class DeleteCommand {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        Map.Entry<String, String> subject = subjectOrSelf(src, args);
-                        checkSubjectPermission(src, subject, "permissionsex.delete");
-                        SubjectCache cache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        if (!cache.isRegistered(subject.getValue())) {
+                        CalculatedSubject subject = subjectOrSelf(src, args);
+                        checkSubjectPermission(src, subject.getIdentifier(), "permissionsex.delete");
+                        SubjectCache cache = args.hasAny("transient") ? subject.transientData().getCache() : subject.data().getCache();
+                        if (!cache.isRegistered(subject.getIdentifier().getValue())) {
                             throw new CommandException(t("Subject %s does not exist!", src.fmt().subject(subject)));
                         }
-                        messageSubjectOnFuture(cache.set(subject.getValue(), null), src, t("Successfully deleted data for subject %s", src.fmt().subject(subject)));
+                        messageSubjectOnFuture(cache.set(subject.getIdentifier().getValue(), null), src, t("Successfully deleted data for subject %s", src.fmt().subject(subject)));
                     }
                 })
                 .build();

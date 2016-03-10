@@ -99,7 +99,7 @@ public interface DataStore {
      * @param type
      * @return
      */
-    Iterable<String> getAllIdentifiers(String type);
+    Set<String> getAllIdentifiers(String type);
 
     /**
      * Return all subject types that contain data

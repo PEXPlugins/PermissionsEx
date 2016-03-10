@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -41,21 +43,17 @@ public class OptionCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        Map.Entry<String, String> subject = subjectOrSelf(src, args);
-                        checkSubjectPermission(src, subject, "permissionsex.option.set");
+                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.option.set");
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
                         final String key = args.getOne("key");
                         final String value = args.getOne("value");
                         if (value == null) {
-                            messageSubjectOnFuture(
-                                    dataCache.set(subject.getValue(), data.setOption(contexts, key, null)), src,
-                                    t("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                            messageSubjectOnFuture(ref.update(old -> old.setOption(contexts, key, null)), src,
+                                    t("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(ref)), formatContexts(src, contexts)));
                         } else {
                             messageSubjectOnFuture(
-                                    dataCache.set(subject.getValue(), data.setOption(contexts, key, value)), src,
-                                    t("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subject)), formatContexts(src, contexts)));
+                                    ref.update(old -> old.setOption(contexts, key, value)), src,
+                                    t("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(ref)), formatContexts(src, contexts)));
                         }
                     }
                 })

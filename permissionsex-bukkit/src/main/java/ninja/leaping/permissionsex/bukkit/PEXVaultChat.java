@@ -20,21 +20,19 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.chat.Chat;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.bukkit.OfflinePlayer;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_GROUP;
-import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_USER;
-
 @SuppressWarnings("deprecation")
 public class PEXVaultChat extends Chat {
     private final PermissionsExPlugin plugin;
+    private final PEXVault perms;
     public PEXVaultChat(PEXVault perms) {
         super(perms);
+        this.perms = perms;
         this.plugin = perms.plugin;
     }
 
@@ -54,39 +52,23 @@ public class PEXVaultChat extends Chat {
 
     @Override
     public String getGroupInfoString(final String world, String name, final String key, String defaultValue) {
-        try {
-            return plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).getOption(contextsFrom(world), key).orElse(defaultValue);
-        } catch (PermissionsLoadingException e) {
-            return defaultValue;
-        }
+        return perms.getGroup(name).getOption(contextsFrom(world), key).orElse(defaultValue);
     }
 
     @Override
     public void setGroupInfoString(final String world, String name, final String key, final String value) {
-        try {
-            plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, name).data().update(input -> input.setOption(contextsFrom(world), key, value));
-        } catch (PermissionsLoadingException e) {
-            return; // TODO: Log exception?
-        }
+        perms.getSubject(name).data().update(input -> input.setOption(contextsFrom(world), key, value));
     }
 
 
     @Override
     public String getPlayerInfoString(String world, OfflinePlayer player, String node, String defaultValue) {
-        try {
-            return plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).getOption(contextsFrom(world), node).orElse(defaultValue);
-        } catch (PermissionsLoadingException e) {
-            return defaultValue;
-        }
+        return perms.getSubject(player).getOption(contextsFrom(world), node).orElse(defaultValue);
     }
 
     @Override
     public void setPlayerInfoString(final String world, OfflinePlayer player, final String node, final String value) {
-        try {
-            plugin.getManager().getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString()).data().update(input -> input.setOption(contextsFrom(world), node, value));
-        } catch (PermissionsLoadingException e) {
-            return; // TODO: Log exception?
-        }
+        perms.getSubject(player).data().update(input -> input.setOption(contextsFrom(world), node, value));
     }
 
     // -- Passthrough methods

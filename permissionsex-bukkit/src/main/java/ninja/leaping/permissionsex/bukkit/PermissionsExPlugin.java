@@ -25,8 +25,8 @@ import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
-import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.PluginCommand;
@@ -117,23 +117,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             return;
         }
 
-        manager.registerNameTransformer(PermissionsEx.SUBJECTS_USER, input -> {
-            try {
-                UUID.fromString(input);
-                return input;
-            } catch (IllegalArgumentException ex) {
-                Player player = getServer().getPlayer(input);
-                if (player != null) {
-                    return player.getUniqueId().toString();
-                } else {
-                    OfflinePlayer offline = getServer().getOfflinePlayer(input);
-                    if (offline != null && offline.getUniqueId() != null) {
-                        return offline.getUniqueId().toString();
-                    }
-                    return input;
-                }
-            }
-        });
+        manager.getSubjects(PermissionsEx.SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(PermissionsEx.SUBJECTS_USER, this));
         getServer().getPluginManager().registerEvents(this, this);
         subscriptionHandler = PEXPermissionSubscriptionMap.inject(this, this.getServer().getPluginManager());
         permsList = PermissionList.inject(this);
@@ -176,7 +160,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         if (getUserSubjects().isRegistered(identifier)) {
-            getUserSubjects().update(identifier, input -> {
+            getUserSubjects().persistentData().update(identifier, input -> {
                 if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                     return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
                 } else {
@@ -190,7 +174,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     public void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
-        getManager().uncache(PermissionsEx.SUBJECTS_USER, event.getPlayer().getUniqueId().toString());
+        getUserSubjects().uncache(event.getPlayer().getUniqueId().toString());
     }
 
     public PermissionList getPermissionList() {
@@ -201,11 +185,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         return this.manager;
     }
 
-    public SubjectCache getUserSubjects() {
+    public SubjectType getUserSubjects() {
         return getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
     }
 
-    public SubjectCache getGroupSubjects() {
+    public SubjectType getGroupSubjects() {
         return getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
     }
 

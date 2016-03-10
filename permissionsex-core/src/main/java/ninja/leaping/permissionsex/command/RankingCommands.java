@@ -19,7 +19,7 @@ package ninja.leaping.permissionsex.command;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.ButtonType;
@@ -52,17 +52,16 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        Map.Entry<String, String> subject = subjectOrSelf(src, args);
                         RankLadder ladder = args.hasAny("ladder") ? args.<RankLadder>getOne("ladder") : pex.getLadders().get("default", null);
-                        checkSubjectPermission(src, subject, "permissionsex.promote." + ladder);
+                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.promote." + ladder);
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData data = ref.get();
                         ImmutableSubjectData newData = ladder.promote(contexts, data);
                         if (newData == data) {
-                            throw new CommandException(t("%s was already at the top of ladder %s", src.fmt().subject(subject), src.fmt().ladder(ladder)));
+                            throw new CommandException(t("%s was already at the top of ladder %s", src.fmt().subject(ref), src.fmt().ladder(ladder)));
                         }
-                        messageSubjectOnFuture(dataCache.set(subject.getValue(), newData), src, t("Promoted %s on ladder %s", src.fmt().subject(subject), src.fmt().hl(src.fmt().combined(ladder.getName()))));
+                        messageSubjectOnFuture(ref.set(newData), src,
+                                t("Promoted %s on ladder %s", src.fmt().subject(ref), src.fmt().hl(src.fmt().combined(ladder.getName()))));
                     }
                 })
                 .build();
@@ -76,17 +75,15 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        Map.Entry<String, String> subject = subjectOrSelf(src, args);
                         RankLadder ladder = args.hasAny("ladder") ? args.<RankLadder>getOne("ladder") : pex.getLadders().get("default", null);
-                        checkSubjectPermission(src, subject, "permissionsex.demote." + ladder);
+                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.demote." + ladder);
                         Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        SubjectCache dataCache = args.hasAny("transient") ? pex.getTransientSubjects(subject.getKey()) : pex.getSubjects(subject.getKey());
-                        ImmutableSubjectData data = getSubjectData(dataCache, subject.getValue());
+                        ImmutableSubjectData data = ref.get();
                         ImmutableSubjectData newData = ladder.demote(contexts, data);
                         if (newData == data) {
-                            throw new CommandException(t("%s was not on ladder %s", src.fmt().subject(subject), src.fmt().ladder(ladder)));
+                            throw new CommandException(t("%s was not on ladder %s", src.fmt().subject(ref), src.fmt().ladder(ladder)));
                         }
-                        messageSubjectOnFuture(dataCache.set(subject.getValue(), newData), src, t("Demoted %s on ladder %s", src.fmt().subject(subject), src.fmt().hl(src.fmt().combined(ladder.getName()))));
+                        messageSubjectOnFuture(ref.set(newData), src, t("Demoted %s on ladder %s", src.fmt().subject(ref), src.fmt().hl(src.fmt().combined(ladder.getName()))));
                     }
                 })
                 .build();

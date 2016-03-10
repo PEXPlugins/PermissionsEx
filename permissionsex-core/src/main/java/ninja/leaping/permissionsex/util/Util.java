@@ -71,7 +71,7 @@ public class Util {
 
     public static <T> CompletableFuture<T> asyncFailableFuture(ThrowingSupplier<T> supplier, Executor exec) {
         CompletableFuture<T> ret = new CompletableFuture<>();
-        exec.execute((Runnable & CompletableFuture.AsynchronousCompletionTask) () -> {
+        exec.execute(() -> {
             try {
                 ret.complete(supplier.supply());
             } catch (Exception e) {

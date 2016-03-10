@@ -25,6 +25,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
@@ -43,7 +44,7 @@ import java.util.function.Function;
 class PEXSubjectCollection implements SubjectCollection {
     private final String identifier;
     private final PermissionsExPlugin plugin;
-    private volatile SubjectCache cache, transientCache;
+    private final SubjectType collection;
 
     private final LoadingCache<String, PEXSubject> subjectCache = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubject>() {
         @Override
@@ -55,16 +56,7 @@ class PEXSubjectCollection implements SubjectCollection {
     public PEXSubjectCollection(final String identifier, final PermissionsExPlugin plugin) throws ExecutionException, PermissionsLoadingException {
         this.identifier = identifier;
         this.plugin = plugin;
-        this.cache = plugin.getManager().getSubjects(identifier);
-        this.transientCache = plugin.getManager().getTransientSubjects(identifier);
-    }
-
-    SubjectCache getCache() {
-        return cache;
-    }
-
-    SubjectCache getTransientCache() {
-        return transientCache;
+        this.collection = plugin.getManager().getSubjects(identifier);
     }
 
     @Override
@@ -87,20 +79,17 @@ class PEXSubjectCollection implements SubjectCollection {
 
     public void uncache(String identifier) {
         subjectCache.invalidate(identifier);
-        PermissionsEx manager = plugin.getManager();
-        if (manager != null) {
-            manager.uncache(getIdentifier(), identifier);
-        }
+        collection.uncache(identifier);
     }
 
     @Override
     public boolean hasRegistered(String identifier) {
-        return cache.isRegistered(identifier);
+        return collection.isRegistered(identifier);
     }
 
     @Override
     public Iterable<Subject> getAllSubjects() {
-        return Iterables.transform(cache.getAllIdentifiers(), this::get);
+        return Iterables.transform(collection.getAllIdentifiers(), this::get);
     }
 
     @Override
@@ -134,6 +123,10 @@ class PEXSubjectCollection implements SubjectCollection {
     }
 
     public CalculatedSubject getCalculatedSubject(String identifier) throws PermissionsLoadingException {
-        return plugin.getManager().getCalculatedSubject(this.identifier, identifier);
+        return plugin.getManager().getSubjects(this.identifier).get(identifier);
+    }
+
+    SubjectType getType() {
+        return this.collection;
     }
 }

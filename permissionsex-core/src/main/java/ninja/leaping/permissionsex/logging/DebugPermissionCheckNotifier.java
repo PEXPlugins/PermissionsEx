@@ -22,14 +22,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static ninja.leaping.permissionsex.util.Translations.t;
+
 /**
  * Log debug messages
  */
 public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
-    private final Logger logger;
+    private final TranslatableLogger logger;
     private final PermissionCheckNotifier delegate;
 
-    public DebugPermissionCheckNotifier(Logger logger, PermissionCheckNotifier delegate) {
+    public DebugPermissionCheckNotifier(TranslatableLogger logger, PermissionCheckNotifier delegate) {
         this.logger = logger;
         this.delegate = delegate;
     }
@@ -44,20 +46,19 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
 
     @Override
     public void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value) {
-        logger.info("Permission " + permission + " checked in " + contexts + " for " + stringIdentifier(subject) + ": " + value);
+        logger.info(t("Permission %s checked in %s for %s: %s", permission, contexts, stringIdentifier(subject), value));
         delegate.onPermissionCheck(subject, contexts, permission, value);
     }
 
     @Override
     public void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value) {
-        logger.info("Option " + option + " checked in " + contexts + " for " + stringIdentifier(subject) + ": " + value);
+        logger.info(t("Option %s checked in %s for %s: %s", option, contexts, stringIdentifier(subject), value));
         delegate.onOptionCheck(subject, contexts, option, value);
     }
 
     @Override
     public void onParentCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents) {
-        logger.info("Parents checked in " + contexts + " for " +  stringIdentifier(subject) + ": " + parents);
+        logger.info(t("Parents checked in %s for %s: %s", contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
-
     }
 }

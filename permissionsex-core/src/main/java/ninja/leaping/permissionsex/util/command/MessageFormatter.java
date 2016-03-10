@@ -16,7 +16,9 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
+import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import javax.annotation.Nullable;
@@ -33,6 +35,14 @@ public interface MessageFormatter<TextType> {
      * @return the formatted value
      */
     TextType subject(Map.Entry<String, String> subject);
+
+    default TextType subject(CalculatedSubject subject) {
+        return subject(subject.getIdentifier());
+    }
+
+    default TextType subject(SubjectDataReference ref) {
+        return subject(ref.getIdentifier());
+    }
 
     /**
      * Print the rank ladder in a user-friendly manner. May link to the subject info printout

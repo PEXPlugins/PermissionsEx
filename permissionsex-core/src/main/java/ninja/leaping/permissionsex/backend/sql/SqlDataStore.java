@@ -105,11 +105,11 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<String> getAllIdentifiers(String type) {
+    public Set<String> getAllIdentifiers(String type) {
         try {
-            return Iterables.transform(subjectDao.queryBuilder().selectColumns("identifier").where().eq("type", type).queryRaw(), input -> input[0]);
+            return ImmutableSet.copyOf(Iterables.transform(subjectDao.queryBuilder().selectColumns("identifier").where().eq("type", type).queryRaw(), input -> input[0]));
         } catch (SQLException e) {
-            return ImmutableList.of();
+            return ImmutableSet.of();
         }
     }
 

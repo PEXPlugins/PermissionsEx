@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -53,10 +54,10 @@ public class InfoCommand {
 
         @Override
         public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-            Map.Entry<String, String> subject = subjectOrSelf(src, args);
-            checkSubjectPermission(src, subject, "permissionsex.info");
-            final ImmutableSubjectData transientData = getSubjectData(pex.getTransientSubjects(subject.getKey()), subject.getValue());
-            final ImmutableSubjectData data = getSubjectData(pex.getSubjects(subject.getKey()), subject.getValue());
+            CalculatedSubject subject = subjectOrSelf(src, args);
+            checkSubjectPermission(src, subject.getIdentifier(), "permissionsex.info");
+            final ImmutableSubjectData transientData = subject.transientData().get();
+            final ImmutableSubjectData data = subject.data().get();
 
             src.msg(src.fmt().header(src.fmt().tr(t("Information for %s", src.fmt().subject(subject)))));
             if (!data.getAllPermissions().isEmpty() || !data.getAllDefaultValues().isEmpty()) {

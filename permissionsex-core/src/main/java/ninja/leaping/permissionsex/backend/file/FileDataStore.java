@@ -220,7 +220,7 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Iterable<String> getAllIdentifiers(String type) {
+    public Set<String> getAllIdentifiers(String type) {
         return (Set) getSubjectsNode().getNode(type).getChildrenMap().keySet();
     }
 

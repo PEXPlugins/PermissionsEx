@@ -49,7 +49,7 @@ class PEXOptionSubjectData implements OptionSubjectData {
     public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
         this.identifier = identifier;
-        this.data = SubjectDataReference.forSubject(this.identifier, cache);
+        this.data = cache.getReference(this.identifier);
         this.data.onUpdate(this::clearCache);
     }
 

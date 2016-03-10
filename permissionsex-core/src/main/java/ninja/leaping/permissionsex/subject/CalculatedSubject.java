@@ -28,6 +28,7 @@ import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.NodeTree;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,32 +44,32 @@ import static java.util.Map.Entry;
 public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final SubjectDataBaker baker;
     private final Map.Entry<String, String> identifier;
-    private final PermissionsEx pex;
+    private final SubjectType type;
+    //private final PermissionsEx pex;
     private final SubjectDataReference ref, transientRef;
 
     private final LoadingCache<Set<Map.Entry<String, String>>, BakedSubjectData> data = CacheBuilder.newBuilder().maximumSize(5)
             .build(new CacheLoader<Set<Map.Entry<String, String>>, BakedSubjectData>() {
         @Override
-        public BakedSubjectData load(Set<Map.Entry<String, String>> contexts) throws Exception {
+        public BakedSubjectData load(@Nonnull Set<Map.Entry<String, String>> contexts) throws Exception {
             return baker.bake(CalculatedSubject.this, contexts);
         }
     });
 
-    public CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, PermissionsEx pex) throws ExecutionException {
+    public CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) throws ExecutionException {
         this.baker = Preconditions.checkNotNull(baker, "baker");
         this.identifier = Preconditions.checkNotNull(identifier, "identifier");
-        this.pex = Preconditions.checkNotNull(pex, "pex");
-        this.ref = SubjectDataReference.forSubject(identifier.getValue(), pex.getSubjects(identifier.getKey()));
-        this.transientRef = SubjectDataReference.forSubject(identifier.getValue(), pex.getTransientSubjects(identifier.getKey()));
+        this.type = Preconditions.checkNotNull(type, "type");
+        this.ref = type.persistentData().getReference(identifier.getValue());
+        this.transientRef = type.transientData().getReference(identifier.getValue());
     }
 
     public Map.Entry<String, String> getIdentifier() {
         return identifier;
     }
 
-
     PermissionsEx getManager() {
-        return pex;
+        return this.type.getManager();
     }
 
     public NodeTree getPermissions(Set<Map.Entry<String, String>> contexts) {
@@ -93,7 +94,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         Preconditions.checkNotNull(contexts, "contexts");
         try {
             List<Map.Entry<String, String>> parents = data.get(contexts).getParents();
-            pex.getNotifier().onParentCheck(getIdentifier(), contexts, parents);
+            getManager().getNotifier().onParentCheck(getIdentifier(), contexts, parents);
             return parents;
         } catch (ExecutionException e) {
             return ImmutableList.of();
@@ -106,13 +107,13 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
 
     public int getPermission(Set<Entry<String, String>> contexts, String permission) {
         int ret = getPermissions(contexts).get(Preconditions.checkNotNull(permission, "permission"));
-        pex.getNotifier().onPermissionCheck(getIdentifier(), contexts, permission, ret);
+        getManager().getNotifier().onPermissionCheck(getIdentifier(), contexts, permission, ret);
         return ret;
     }
 
     public Optional<String> getOption(Set<Entry<String, String>> contexts, String option) {
         String val = getOptions(contexts).get(Preconditions.checkNotNull(option, "option"));
-        pex.getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
+        getManager().getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
         return Optional.ofNullable(val);
     }
 
@@ -127,13 +128,20 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     @Override
     public void clearCache(ImmutableSubjectData newData) {
         data.invalidateAll();
-        for (CalculatedSubject subject : pex.getActiveCalculatedSubjects()) {
-            for (Set<Map.Entry<String, String>> ent : subject.getActiveContexts()) {
-                if (subject.getParents(ent).contains(this.identifier)) {
-                    subject.data.invalidateAll();
-                    break;
-                }
-            }
-        }
+        getManager().getActiveSubjectTypes().stream()
+                .flatMap(type -> type.getActiveSubjects().stream())
+                .filter(subj -> {
+                    for (Set<Map.Entry<String, String>> ent : subj.getActiveContexts()) {
+                        if (subj.getParents(ent).contains(this.identifier)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .forEach(subj -> subj.data.invalidateAll());
+    }
+
+    public SubjectType getType() {
+        return this.type;
     }
 }

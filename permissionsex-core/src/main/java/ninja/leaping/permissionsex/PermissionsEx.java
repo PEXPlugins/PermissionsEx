@@ -43,6 +43,7 @@ import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.subject.SubjectDataBaker;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 
@@ -51,6 +52,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +64,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static ninja.leaping.permissionsex.util.Translations.*;
@@ -80,14 +83,8 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private volatile PermissionCheckNotifier notifier = baseNotifier;
 
     private final AtomicReference<State> state = new AtomicReference<>();
-    private final ConcurrentMap<String, SubjectCache> subjectCaches = new ConcurrentHashMap<>(), transientSubjectCaches = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
     private RankLadderCache rankLadderCache;
-    private final LoadingCache<Map.Entry<String, String>, CalculatedSubject> calculatedSubjects = CacheBuilder.newBuilder().maximumSize(512).build(new CacheLoader<Map.Entry<String, String>, CalculatedSubject>() {
-        @Override
-        public CalculatedSubject load(Map.Entry<String, String> key) throws Exception {
-            return new CalculatedSubject(SubjectDataBaker.inheritance(), key, PermissionsEx.this);
-        }
-    });
     private volatile ContextInheritance cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
 
@@ -194,42 +191,13 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     }
 
-    public SubjectCache getSubjects(String type) {
-        checkNotNull(type, "type");
-        SubjectCache cache = subjectCaches.get(type);
-        if (cache == null) {
-            cache = new SubjectCache(type, getState().activeDataStore);
-            SubjectCache newCache = subjectCaches.putIfAbsent(type, cache);
-            if (newCache != null) {
-                cache = newCache;
-            }
-        }
-        return cache;
+    public SubjectType getSubjects(String type) {
+        return subjectTypeCache.computeIfAbsent(type,
+                key -> new SubjectType(this, type, new SubjectCache(type, getState().activeDataStore), new SubjectCache(type, transientData)));
     }
 
-    public SubjectCache getTransientSubjects(String type) {
-        checkNotNull(type, "type");
-        SubjectCache cache = transientSubjectCaches.get(type);
-        if (cache == null) {
-            cache = new SubjectCache(type, transientData);
-            SubjectCache newCache = transientSubjectCaches.putIfAbsent(type, cache);
-            if (newCache != null) {
-                cache = newCache;
-            }
-        }
-        return cache;
-    }
-
-    public void uncache(String type, String identifier) {
-        SubjectCache cache = subjectCaches.get(type);
-        if (cache != null) {
-            cache.invalidate(identifier);
-        }
-        cache = transientSubjectCaches.get(type);
-        if (cache != null) {
-            cache.invalidate(identifier);
-        }
-        calculatedSubjects.invalidate(Maps.immutableEntry(type, identifier));
+    public Collection<SubjectType> getActiveSubjectTypes() {
+        return Collections.unmodifiableCollection(subjectTypeCache.values());
     }
 
     /**
@@ -322,7 +290,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
         getSubjects(SUBJECTS_GROUP).cacheAll();
         this.rankLadderCache = new RankLadderCache(this.rankLadderCache, newState.activeDataStore);
-        this.subjectCaches.replaceAll((key, existing) -> new SubjectCache(existing, newState.activeDataStore));
+        this.subjectTypeCache.forEach((key, val) -> val.update(newState.activeDataStore));
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
             this.cachedInheritanceListeners.call(true, getContextInheritance(null));
@@ -386,46 +354,8 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return impl.getVersion();
     }
 
-    /**
-     * Returns a function that can be applied to a friendly name to convert it into a valid subject identifier.
-     * If no function is explicitly registered, an identity function ({@link Function#identity()}) should be used.
-     *
-     * @param type The type of subject
-     * @return The transformation function
-     */
-    public Function<String, String> getNameTransformer(String type) {
-        Function<String, String> xform = nameTransformerMap.get(type);
-        if (xform == null) {
-            xform = Function.identity();
-        }
-        return xform;
-    }
-
-    /**
-     * Register a name transformer for a subject type if none is present
-     * @param type The subject type to register a name transformer for
-     * @param func The transformer function
-     * @return true if the transformer was successfully registered
-     */
-    public boolean registerNameTransformer(String type, Function<String, String> func) {
-        return this.nameTransformerMap.putIfAbsent(checkNotNull(type, "type"), checkNotNull(func, "func")) == null;
-    }
-
-
     public PermissionsExConfiguration getConfig() {
         return getState().config;
-    }
-
-    public CalculatedSubject getCalculatedSubject(String type, String identifier) throws PermissionsLoadingException {
-        try {
-            return calculatedSubjects.get(Maps.immutableEntry(type, identifier));
-        } catch (ExecutionException e) {
-            throw new PermissionsLoadingException(t("While calculating subject data for %s:%s", type, identifier), e);
-        }
-    }
-
-    public Iterable<? extends CalculatedSubject> getActiveCalculatedSubjects() {
-        return Collections.unmodifiableCollection(calculatedSubjects.asMap().values());
     }
 
     public ContextInheritance getContextInheritance(Caching<ContextInheritance> listener) {

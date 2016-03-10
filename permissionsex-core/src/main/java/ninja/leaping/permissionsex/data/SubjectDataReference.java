@@ -17,12 +17,13 @@
 package ninja.leaping.permissionsex.data;
 
 import com.google.common.collect.MapMaker;
+import com.google.common.collect.Maps;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -31,26 +32,18 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     private final String identifier;
     private final SubjectCache cache;
     private final Set<Consumer<ImmutableSubjectData>> updateListeners;
-    private final AtomicReference<ImmutableSubjectData> data = new AtomicReference<>();
+    final AtomicReference<ImmutableSubjectData> data = new AtomicReference<>();
     private final boolean strongListeners;
-
-    public static SubjectDataReference forSubject(String identifier, SubjectCache holder) throws ExecutionException {
-        return forSubject(identifier, holder, true);
-    }
-    public static SubjectDataReference forSubject(String identifier, SubjectCache holder, boolean strongListeners) throws ExecutionException {
-        final SubjectDataReference ref = new SubjectDataReference(identifier, holder, strongListeners);
-        ref.data.set(holder.getData(identifier, ref));
-        return ref;
-    }
 
     /**
      * Create a new reference to subject data
+     * Instances are accessible through a {@link SubjectCache} instance
      *
      * @param identifier The subject's identifier
      * @param cache The cache to get data from and listen for changes from
      * @param strongListeners Whether or not to hold strong references to listeners registered
      */
-    private SubjectDataReference(String identifier, SubjectCache cache, boolean strongListeners) {
+    SubjectDataReference(String identifier, SubjectCache cache, boolean strongListeners) {
         this.identifier = identifier;
         this.cache = cache;
         this.strongListeners = strongListeners;
@@ -111,5 +104,9 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
 
     public SubjectCache getCache() {
         return cache;
+    }
+
+    public Map.Entry<String, String> getIdentifier() {
+        return Maps.immutableEntry(getCache().getType(), this.identifier);
     }
 }

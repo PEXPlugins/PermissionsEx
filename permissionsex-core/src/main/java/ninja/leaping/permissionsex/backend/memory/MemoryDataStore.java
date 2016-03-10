@@ -27,6 +27,7 @@ import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.util.GuavaCollectors;
 
 import java.util.Map;
 import java.util.Set;
@@ -105,10 +106,11 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<String> getAllIdentifiers(final String type) {
-        return Iterables.transform(Maps.filterKeys(data, input -> {
-                return input.getKey().equals(type);
-        }).keySet(), Map.Entry::getValue);
+    public Set<String> getAllIdentifiers(final String type) {
+        return data.keySet().stream()
+                .filter(inp -> inp.getKey().equals(type))
+                .map(Map.Entry::getValue)
+                .collect(GuavaCollectors.toImmutableSet());
     }
 
     @Override

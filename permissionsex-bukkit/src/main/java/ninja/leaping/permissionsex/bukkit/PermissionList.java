@@ -134,7 +134,8 @@ public class PermissionList extends HashMap<String, Permission> {
         FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
         repl.set(v, new NotifyingChildrenMap(v));
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
-            plugin.getManager().getTransientSubjects(PermissionsEx.SUBJECTS_DEFAULTS)
+            plugin.getManager().getSubjects(PermissionsEx.SUBJECTS_DEFAULTS)
+                    .transientData()
                     .update(PermissionsEx.SUBJECTS_USER, input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1));
         }
         return super.put(k, v);
@@ -147,7 +148,8 @@ public class PermissionList extends HashMap<String, Permission> {
             removeAllChildren(k.toString());
             getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
-                plugin.getManager().getTransientSubjects(PermissionsEx.SUBJECTS_DEFAULTS)
+                plugin.getManager().getSubjects(PermissionsEx.SUBJECTS_DEFAULTS)
+                        .transientData()
                         .update(PermissionsEx.SUBJECTS_USER, input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, ret.getName(), 0));
             }
         }

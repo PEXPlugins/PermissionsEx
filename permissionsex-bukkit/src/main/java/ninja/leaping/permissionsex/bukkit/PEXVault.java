@@ -23,7 +23,6 @@ import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
-import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -32,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_GROUP;
-import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_USER;
 
 @SuppressWarnings("deprecation")
 public class PEXVault extends Permission {
@@ -67,26 +65,21 @@ public class PEXVault extends Permission {
         return true;
     }
 
-    private CalculatedSubject getGroup(String name) {
-        try {
-            return this.plugin.getManager().getCalculatedSubject(SUBJECTS_GROUP, Preconditions.checkNotNull(name, "name"));
-        } catch (PermissionsLoadingException e) {
-            throw new RuntimeException(e);
-        }
+    CalculatedSubject getGroup(String name) {
+        return this.plugin.getGroupSubjects().get(name);
     }
 
-    private CalculatedSubject getSubject(OfflinePlayer player) {
-        try {
-            return this.plugin.getManager().getCalculatedSubject(SUBJECTS_USER, Preconditions.checkNotNull(player, "player").getUniqueId().toString());
-        } catch (PermissionsLoadingException e) {
-            throw new RuntimeException(e);
-        }
+    CalculatedSubject getSubject(OfflinePlayer player) {
+        return this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player").getUniqueId().toString());
+    }
+
+    CalculatedSubject getSubject(String player) {
+        return this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player"));
     }
 
     private Set<Map.Entry<String, String>> contextsFrom(@Nullable String world) {
         return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(Maps.immutableEntry("world", world));
     }
-
 
     @Override
     public boolean groupHas(String world, String name, String permission) {

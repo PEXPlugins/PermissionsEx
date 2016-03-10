@@ -27,6 +27,7 @@ import ninja.leaping.permissionsex.util.Util;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -77,6 +78,16 @@ public class SubjectCache {
             listeners.addListener(identifier, listener);
         }
         return ret;
+    }
+
+    public SubjectDataReference getReference(String identifier) throws ExecutionException {
+        return getReference(identifier, true);
+    }
+
+    public SubjectDataReference getReference(String identifier, boolean strongListeners) throws ExecutionException {
+        final SubjectDataReference ref = new SubjectDataReference(identifier, this, strongListeners);
+        ref.data.set(getData(identifier, ref));
+        return ref;
     }
 
     public CompletableFuture<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
@@ -151,13 +162,13 @@ public class SubjectCache {
         return type;
     }
 
-    public Iterable<String> getAllIdentifiers() {
+    public Set<String> getAllIdentifiers() {
         return dataStore.getAllIdentifiers(type);
     }
 
     /**
      * Get the identifier for the subject holding default data for subjects of this type
-     * @return
+     * @return The id for the default subject of this type
      */
     public Map.Entry<String, String> getDefaultIdentifier() {
         return defaultIdentifier;

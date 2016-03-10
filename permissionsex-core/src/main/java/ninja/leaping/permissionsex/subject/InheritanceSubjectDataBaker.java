@@ -107,7 +107,8 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
             return;
         }
         visitedSubjects.add(subject);
-        ImmutableSubjectData data = state.pex.getSubjects(subject.getKey()).getData(subject.getValue(), state.base), transientData = state.pex.getTransientSubjects(subject.getKey()).getData(subject.getValue(), state.base);
+        SubjectType type = state.pex.getSubjects(subject.getKey());
+        ImmutableSubjectData data = type.persistentData().getData(subject.getValue(), state.base), transientData = type.transientData().getData(subject.getValue(), state.base);
         for (Set<Entry<String, String>> combo : state.activeContexts) {
             visitSingle(state, transientData, combo, inheritanceLevel);
             for (Entry<String, String> parent : transientData.getParents(combo)) {

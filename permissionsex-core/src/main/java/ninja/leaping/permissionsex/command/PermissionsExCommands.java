@@ -81,7 +81,7 @@ public class PermissionsExCommands {
                         if (args.hasAny("list")) {
                             final String subjectType = args.getOne("subject-type");
                             args.checkPermission(src, "permissionsex.command.list." + subjectType);
-                            SubjectCache cache = args.hasAny("transient") ? pex.getTransientSubjects(subjectType) : pex.getSubjects(subjectType);
+                            SubjectCache cache = args.hasAny("transient") ? pex.getSubjects(subjectType).transientData() : pex.getSubjects(subjectType).persistentData();
                             Iterable<String> iter = cache.getAllIdentifiers();
                             if (args.hasAny("filter")) {
                                 iter = Iterables.filter(iter, new GuavaStartsWithPredicate(args.<String>getOne("filter")));

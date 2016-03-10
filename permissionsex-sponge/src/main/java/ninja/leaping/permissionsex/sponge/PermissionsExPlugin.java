@@ -32,10 +32,9 @@ import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PEBKACException;
-import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
@@ -46,15 +45,12 @@ import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.config.DefaultConfig;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
-import org.spongepowered.api.profile.GameProfile;
-import org.spongepowered.api.profile.GameProfileCache;
 import org.spongepowered.api.scheduler.Scheduler;
 import org.spongepowered.api.service.ServiceManager;
 import org.spongepowered.api.service.permission.PermissionDescription;
@@ -169,26 +165,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         });
 
         registerContextCalculator(contextCalculator);
-        manager.registerNameTransformer(PermissionService.SUBJECTS_USER, input -> {
-            try {
-                UUID.fromString(input);
-                return input;
-            } catch (IllegalArgumentException ex) {
-                Optional<Player> player = game.getServer().getPlayer(input);
-                if (player.isPresent()) {
-                    return player.get().getUniqueId().toString();
-                } else {
-                    GameProfileCache res = game.getServiceManager().provideUnchecked(GameProfileCache.class);
-                    for (GameProfile profile : res.match(input)) {
-
-                        if (profile.getName().isPresent() && profile.getName().get().equalsIgnoreCase(input)) {
-                            return profile.getUniqueId().toString();
-                        }
-                    }
-                    return input;
-                }
-            }
-        });
+        getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(SUBJECTS_USER, this));
 
         registerFakeOpCommand("op", "minecraft.command.op");
         registerFakeOpCommand("deop", "minecraft.command.deop");
@@ -221,8 +198,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Listener
     public void cacheUserAsync(ClientConnectionEvent.Auth event) {
         try {
-            getManager().getCalculatedSubject(PermissionsEx.SUBJECTS_USER, event.getProfile().getUniqueId().toString());
-        } catch (PermissionsLoadingException e) {
+            getManager().getSubjects(PermissionsEx.SUBJECTS_USER).get(event.getProfile().getUniqueId().toString());
+        } catch (Exception e) {
             logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage()), e);
         }
     }
@@ -239,9 +216,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Listener
     public void onPlayerJoin(final ClientConnectionEvent.Join event) {
         final String identifier = event.getTargetEntity().getIdentifier();
-        final SubjectCache cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
+        final SubjectType cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
         if (cache.isRegistered(identifier)) {
-            cache.update(identifier, input -> {
+            cache.persistentData().update(identifier, input -> {
                 if (event.getTargetEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                     return input;
                 } else {
@@ -357,10 +334,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
         this.descriptions.put(description.getId(), description);
-        final SubjectCache coll = getManager().getTransientSubjects(SUBJECTS_ROLE_TEMPLATE);
+        final SubjectType coll = getManager().getSubjects(SUBJECTS_ROLE_TEMPLATE);
         for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
             try {
-                coll.update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
+                coll.transientData().update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
                     @Nullable
                     @Override
                     public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {

@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.bukkit;
 
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
@@ -44,7 +43,7 @@ public class PEXPermissionAttachment extends PermissionAttachment {
         this.perm = perm;
 
         try {
-            this.subjectData = SubjectDataReference.forSubject(this.identifier, perm.getManager().getTransientSubjects(ATTACHMENT_TYPE));
+            this.subjectData = perm.getManager().getSubjects(ATTACHMENT_TYPE).transientData().getReference(this.identifier);
         } catch (ExecutionException e) {
             throw new ExceptionInInitializerError(e);
         }

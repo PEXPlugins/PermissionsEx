@@ -19,6 +19,8 @@ package ninja.leaping.permissionsex.command;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -52,17 +54,24 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         return src.fmt().hl(contexts.isEmpty() ? src.fmt().tr(t("Global")) : src.fmt().combined(contexts.toString()));
     }
 
-    protected Map.Entry<String, String> subjectOrSelf(Commander<?> src, CommandContext args) throws CommandException {
+    protected CalculatedSubject subjectOrSelf(Commander<?> src, CommandContext args) throws CommandException {
         if (args.hasAny("subject")) {
-            return args.getOne("subject");
+            Map.Entry<String, String> ret = args.getOne("subject");
+            return pex.getSubjects(ret.getKey()).get(ret.getValue());
         } else {
             Optional<Map.Entry<String, String>> ret = src.getSubjectIdentifier();
             if (!ret.isPresent()) {
                 throw new CommandException(t("A subject must be provided for this command!"));
             } else {
-                return ret.get();
+                return pex.getSubjects(ret.get().getKey()).get(ret.get().getValue());
             }
         }
+    }
+
+    protected <TextType> SubjectDataReference getDataRef(Commander<TextType> src, CommandContext args, String permission) throws CommandException {
+        CalculatedSubject subject = subjectOrSelf(src, args);
+        checkSubjectPermission(src, subject.getIdentifier(), permission);
+        return args.hasAny("transient") ? subject.transientData() : subject.data();
     }
 
     protected void checkSubjectPermission(final Commander<?> src, Map.Entry<String, String> subject, String basePermission) throws CommandException {

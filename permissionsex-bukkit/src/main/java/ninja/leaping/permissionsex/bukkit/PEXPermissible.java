@@ -22,7 +22,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.NodeTree;
 import org.bukkit.entity.Player;
@@ -137,12 +136,8 @@ public class PEXPermissible extends PermissibleBase {
         super(player);
         this.player = player;
         this.plugin = plugin;
-        try {
-            this.pex = plugin.getManager();
-            this.subj = pex.getCalculatedSubject(SUBJECTS_USER, player.getUniqueId().toString());
-        } catch (PermissionsLoadingException e) {
-            throw new ExceptionInInitializerError(e);
-        }
+        this.pex = plugin.getManager();
+        this.subj = pex.getSubjects(SUBJECTS_USER).get(player.getUniqueId().toString());
     }
 
 

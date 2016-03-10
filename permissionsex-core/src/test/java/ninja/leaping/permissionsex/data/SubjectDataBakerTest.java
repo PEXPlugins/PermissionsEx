@@ -17,8 +17,6 @@
 package ninja.leaping.permissionsex.data;
 
 import com.google.common.collect.ImmutableList;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.SimpleConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.PermissionsExTest;
 import ninja.leaping.permissionsex.backend.DataStore;
@@ -27,6 +25,7 @@ import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -48,27 +47,20 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException {
-        SubjectCache groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
-        ImmutableSubjectData parentData = groupCache.getData("parent", null);
-        parentData = parentData.setPermission(GLOBAL_CONTEXT, "#test.permission.parent", 1);
-        groupCache.set("parent", parentData);
-        ImmutableSubjectData childData = groupCache.getData("child", null);
-        childData = childData.addParent(GLOBAL_CONTEXT, groupCache.getType(), "parent")
-                             .setPermission(GLOBAL_CONTEXT, "#test.permission.child", 1);
-        groupCache.set("child", childData);
-        ImmutableSubjectData subjectData = groupCache.getData("subject", null);
-        subjectData = subjectData.addParent(GLOBAL_CONTEXT, groupCache.getType(), "child");
-        groupCache.set("subject", subjectData);
+        SubjectType groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
+        CalculatedSubject parent = groupCache.get("parent");
+        parent.data().update(old -> old.setPermission(GLOBAL_CONTEXT, "#test.permission.parent", 1));
+        CalculatedSubject child = groupCache.get("child");
+        child.data().update(old -> old.addParent(GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parent.getIdentifier().getValue())
+        .setPermission(GLOBAL_CONTEXT, "#test.permission.child", 1));
+        CalculatedSubject subject = groupCache.get("subject");
+        subject.data().update(old -> old.addParent(GLOBAL_CONTEXT, child.getIdentifier().getKey(), child.getIdentifier().getValue()));
 
-        CalculatedSubject calculatedParent = getManager().getCalculatedSubject(groupCache.getType(), "parent"),
-                            calculatedChild = getManager().getCalculatedSubject(groupCache.getType(), "child"),
-                            calculatedSubject = getManager().getCalculatedSubject(groupCache.getType(), "subject");
-
-        assertEquals(1, calculatedParent.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, calculatedChild.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, calculatedChild.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
-        assertEquals(0, calculatedSubject.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, calculatedSubject.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
+        assertEquals(1, parent.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, child.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, child.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
+        assertEquals(0, subject.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, subject.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
     }
 
     @Override
