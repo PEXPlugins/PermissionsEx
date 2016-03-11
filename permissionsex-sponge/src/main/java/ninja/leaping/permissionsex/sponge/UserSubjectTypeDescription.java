@@ -55,7 +55,7 @@ public class UserSubjectTypeDescription extends SubjectTypeDefinition {
             if (player.isPresent()) {
                 return Optional.of(player.get().getUniqueId().toString());
             } else {
-                GameProfileCache res = plugin.getGame().getServiceManager().provideUnchecked(GameProfileCache.class);
+                GameProfileCache res = plugin.getGame().getServer().getGameProfileManager().getCache();
                 for (GameProfile profile : res.match(input)) {
                     if (profile.getName().isPresent() && profile.getName().get().equalsIgnoreCase(input)) {
                         return Optional.of(profile.getUniqueId().toString());
