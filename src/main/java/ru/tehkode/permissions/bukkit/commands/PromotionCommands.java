@@ -157,7 +157,7 @@ public class PromotionCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "promote",
-			syntax = "<user>",
+			syntax = "<user> [ladder]",
 			description = "Promotes <user> to next group",
 			isPrimary = true,
 			permission = "permissions.user.rank.promote")
@@ -166,7 +166,7 @@ public class PromotionCommands extends PermissionsCommand {
 	}
 
 	@Command(name = "demote",
-			syntax = "<user>",
+			syntax = "<user> [ladder]",
 			description = "Demotes <user> to previous group",
 			isPrimary = true,
 			permission = "permissions.user.rank.demote")
