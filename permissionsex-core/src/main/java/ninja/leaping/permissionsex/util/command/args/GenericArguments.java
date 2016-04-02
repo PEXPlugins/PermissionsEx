@@ -245,6 +245,10 @@ public class GenericArguments {
         }
 
         private boolean parseLongFlag(String longFlag, CommandArgs args, CommandContext context) throws ArgumentParseException {
+            if (longFlag.isEmpty()) {
+                return false;
+            }
+
             if (longFlag.contains("=")) {
                 final String[] flagSplit = longFlag.split("=", 2);
                 longFlag = flagSplit[0];
@@ -285,6 +289,10 @@ public class GenericArguments {
         }
 
         private boolean parseShortFlags(String shortFlags, CommandArgs args, CommandContext context) throws ArgumentParseException {
+            if (shortFlags.isEmpty()) {
+                return false;
+            }
+
             for (int i = 0; i < shortFlags.length(); ++i) {
                 final String flagChar = shortFlags.substring(i, i + 1);
                 CommandElement element = this.shortFlags.get(flagChar);
@@ -373,6 +381,10 @@ public class GenericArguments {
         }
 
         private <TextType> List<String> tabCompleteLongFlag(String longFlag, Commander<TextType> src, CommandArgs args, CommandContext context) {
+            if (longFlag.isEmpty()) {
+                return null;
+            }
+
             if (longFlag.contains("=")) {
                 final String[] flagSplit = longFlag.split("=", 2);
                 longFlag = flagSplit[0];
@@ -420,6 +432,10 @@ public class GenericArguments {
         }
 
         private <TextType> List<String> tabCompleteShortFlags(String shortFlags, Commander<TextType> src, CommandArgs args, CommandContext context) {
+            if (shortFlags.isEmpty()) {
+                return null;
+            }
+
             for (int i = 0; i < shortFlags.length(); ++i) {
                 final String flagChar = shortFlags.substring(i, i + 1);
                 CommandElement element = this.shortFlags.get(flagChar);
