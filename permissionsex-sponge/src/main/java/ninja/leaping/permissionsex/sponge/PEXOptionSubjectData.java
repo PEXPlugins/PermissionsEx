@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.sponge;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.data.Change;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
@@ -74,7 +75,7 @@ class PEXOptionSubjectData implements OptionSubjectData {
         return ret.build();
     }
 
-    private boolean wasSuccess(CompletableFuture<ImmutableSubjectData> future) {
+    private boolean wasSuccess(CompletableFuture<Change<ImmutableSubjectData>> future) {
         if (future.isDone()) {
             try {
                 future.get();

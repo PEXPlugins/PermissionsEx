@@ -136,7 +136,11 @@ public class SubjectCache {
         return dataStore.isRegistered(type, identifier);
     }
 
-    public CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
+    public CompletableFuture<ImmutableSubjectData> remove(String identifier) {
+        return set(identifier, null);
+    }
+
+    CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
         Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.setData(type, identifier, newData);

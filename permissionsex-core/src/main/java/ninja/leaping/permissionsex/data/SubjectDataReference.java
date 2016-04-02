@@ -58,21 +58,18 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
         return this.data.get();
     }
 
-    public CompletableFuture<ImmutableSubjectData> set(ImmutableSubjectData newData) {
-        return cache.set(this.identifier, newData);
-    }
-
-    public CompletableFuture<ImmutableSubjectData> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
+    public CompletableFuture<Change<ImmutableSubjectData>> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
         ImmutableSubjectData data, newData;
         do {
             data = get();
 
             newData = modifierFunc.apply(data);
             if (newData == data) {
-                return CompletableFuture.completedFuture(data);
+                return CompletableFuture.completedFuture(new Change<>(data, newData));
             }
         } while (!this.data.compareAndSet(data, newData));
-        return set(newData);
+        final ImmutableSubjectData finalNew = newData;
+        return this.cache.set(this.identifier, newData).thenApply(old -> new Change<>(old, finalNew));
     }
 
     @Override

@@ -287,9 +287,11 @@ public final class FileDataStore extends AbstractDataStore {
     public CompletableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
         ConfigurationNode childNode = getRankLaddersNode().getNode(identifier.toLowerCase());
         childNode.setValue(null);
-        for (Map.Entry<String, String> rank : ladder.getRanks()) {
-            childNode.getAppendedNode().setValue(Util.subjectToString(rank));
+        if (ladder != null) {
+            for (Map.Entry<String, String> rank : ladder.getRanks()) {
+                childNode.getAppendedNode().setValue(Util.subjectToString(rank));
 
+            }
         }
         dirty.set(true);
         return save().thenApply(none -> ladder);

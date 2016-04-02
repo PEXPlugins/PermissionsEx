@@ -22,11 +22,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.util.Util;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 public class RankLadderCache {
     private final DataStore dataStore;
@@ -72,6 +74,19 @@ public class RankLadderCache {
         return ret;
     }
 
+    public CompletableFuture<RankLadder> update(String identifier, Function<RankLadder, RankLadder> updateFunc) {
+        try {
+            RankLadder old = cache.get(identifier);
+            RankLadder newLadder = updateFunc.apply(old);
+            if (old == newLadder) {
+                return CompletableFuture.completedFuture(newLadder);
+            }
+            return set(identifier, newLadder);
+        } catch (Exception e) {
+            return Util.failedFuture(e);
+        }
+    }
+
     public void load(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
@@ -97,7 +112,6 @@ public class RankLadderCache {
 
     public CompletableFuture<RankLadder> set(String identifier, RankLadder newData) {
         Preconditions.checkNotNull(identifier, "identifier");
-        Preconditions.checkNotNull(newData, "newData");
 
         return dataStore.setRankLadder(identifier, newData);
     }

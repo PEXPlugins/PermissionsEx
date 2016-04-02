@@ -83,9 +83,26 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
 
     protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Translatable message) {
         future.thenRun(() -> src.msg(message)).exceptionally(err -> {
-            src.error(t("Error (%s) occurred while performing command task! Please see console for details: %s", err.getClass().getSimpleName(), err.getMessage()));
-            pex.getLogger().error(t("Error occurred while executing command for user %s", src.getName()), err);
+            if (err instanceof RuntimeCommandException) {
+                src.error(((RuntimeCommandException) err).getTranslatedMessage());
+            } else {
+                src.error(t("Error (%s) occurred while performing command task! Please see console for details: %s", err.getClass().getSimpleName(), err.getMessage()));
+                pex.getLogger().error(t("Error occurred while executing command for user %s", src.getName()), err);
+            }
             return null;
         });
+    }
+
+    static class RuntimeCommandException extends RuntimeException {
+        private final Translatable message;
+
+        RuntimeCommandException(Translatable message) {
+            super(message.getUntranslated());
+            this.message = message;
+        }
+
+        public Translatable getTranslatedMessage() {
+            return this.message;
+        }
     }
 }

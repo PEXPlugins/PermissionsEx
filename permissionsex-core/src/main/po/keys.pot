@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-10 13:42-0800\n"
+"POT-Creation-Date: 2016-04-01 18:01-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32,19 +32,19 @@ msgid_plural "%s users successfully converted from name to UUID!"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:61
+#: ninja/leaping/permissionsex/command/RankingCommands.java:59
 msgid "%s was already at the top of ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:84
+#: ninja/leaping/permissionsex/command/RankingCommands.java:80
 msgid "%s was not on ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:140
+#: ninja/leaping/permissionsex/command/RankingCommands.java:136
 msgid "+"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:93
+#: ninja/leaping/permissionsex/command/RankingCommands.java:89
 msgid "-"
 msgstr ""
 
@@ -57,7 +57,7 @@ msgid ""
 "Actual next character '%c' did not match expected quotation character '%c'"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:140
+#: ninja/leaping/permissionsex/command/RankingCommands.java:136
 msgid "Add a rank to this ladder"
 msgstr ""
 
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Buffer overrun while parsing args"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:167
+#: ninja/leaping/permissionsex/command/RankingCommands.java:163
 msgid "Cannot do a relative move on a rank that is not in the ladder"
 msgstr ""
 
@@ -100,7 +100,7 @@ msgstr ""
 msgid "Commands for PermissionsEx"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:108
+#: ninja/leaping/permissionsex/command/RankingCommands.java:104
 msgid "Commands to modify ranking"
 msgstr ""
 
@@ -128,11 +128,11 @@ msgstr ""
 msgid "Default permission: %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:73
+#: ninja/leaping/permissionsex/command/RankingCommands.java:70
 msgid "Demote a subject on the given ladder"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:86
+#: ninja/leaping/permissionsex/command/RankingCommands.java:82
 msgid "Demoted %s on ladder %s"
 msgstr ""
 
@@ -154,7 +154,7 @@ msgstr ""
 msgid "Enum value %s not valid"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:86
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:89
 msgid ""
 "Error (%s) occurred while performing command task! Please see console for "
 "details: %s"
@@ -172,7 +172,7 @@ msgstr ""
 msgid "Error creating subject DAO"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:87
+#: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:90
 msgid "Error occurred while executing command for user %s"
 msgstr ""
 
@@ -226,11 +226,11 @@ msgid ""
 "arg %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:101
+#: ninja/leaping/permissionsex/command/RankingCommands.java:97
 msgid "Move this rank to a higher position in the ladder"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:97
+#: ninja/leaping/permissionsex/command/RankingCommands.java:93
 msgid "Move this rank to a lower position in the ladder"
 msgstr ""
 
@@ -242,7 +242,7 @@ msgstr ""
 msgid "No backends defined!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:120
+#: ninja/leaping/permissionsex/command/RankingCommands.java:116
 msgid "No ranks in ladder %s"
 msgstr ""
 
@@ -284,11 +284,11 @@ msgid ""
 "when visiting %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:50
+#: ninja/leaping/permissionsex/command/RankingCommands.java:49
 msgid "Promote a subject on the given ladder"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:64
+#: ninja/leaping/permissionsex/command/RankingCommands.java:61
 msgid "Promoted %s on ladder %s"
 msgstr ""
 
@@ -296,15 +296,15 @@ msgstr ""
 msgid "Provide information about a subject"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:194
+#: ninja/leaping/permissionsex/command/RankingCommands.java:190
 msgid "Rank %s was not in ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:140
+#: ninja/leaping/permissionsex/command/RankingCommands.java:136
 msgid "Rank ladder %s %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:141
+#: ninja/leaping/permissionsex/command/RankingCommands.java:137
 msgid "Ranks are sorted from highest to lowest"
 msgstr ""
 
@@ -316,7 +316,7 @@ msgstr ""
 msgid "Reloading PermissionsEx"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:93
+#: ninja/leaping/permissionsex/command/RankingCommands.java:89
 msgid "Remove this rank from the ladder"
 msgstr ""
 
@@ -344,11 +344,11 @@ msgstr ""
 msgid "Subject type %s was not valid!"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:173
+#: ninja/leaping/permissionsex/command/RankingCommands.java:169
 msgid "Successfully added %s to ladder %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:171
+#: ninja/leaping/permissionsex/command/RankingCommands.java:167
 msgid "Successfully added %s to ladder %s at position %s"
 msgstr ""
 
@@ -364,7 +364,7 @@ msgstr ""
 msgid "Successfully migrated old-style default data to new location"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:196
+#: ninja/leaping/permissionsex/command/RankingCommands.java:192
 msgid "Successfully removed %s from ladder %s"
 msgstr ""
 
@@ -474,9 +474,9 @@ msgstr ""
 msgid "key"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:51
-#: ninja/leaping/permissionsex/command/RankingCommands.java:74
-#: ninja/leaping/permissionsex/command/RankingCommands.java:109
+#: ninja/leaping/permissionsex/command/RankingCommands.java:50
+#: ninja/leaping/permissionsex/command/RankingCommands.java:71
+#: ninja/leaping/permissionsex/command/RankingCommands.java:105
 msgid "ladder"
 msgstr ""
 
@@ -489,15 +489,15 @@ msgstr ""
 msgid "parent"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:154
+#: ninja/leaping/permissionsex/command/RankingCommands.java:150
 msgid "position"
 msgstr ""
 
 #: ninja/leaping/permissionsex/command/PermissionsExCommands.java:71
-#: ninja/leaping/permissionsex/command/RankingCommands.java:51
-#: ninja/leaping/permissionsex/command/RankingCommands.java:74
-#: ninja/leaping/permissionsex/command/RankingCommands.java:154
-#: ninja/leaping/permissionsex/command/RankingCommands.java:185
+#: ninja/leaping/permissionsex/command/RankingCommands.java:50
+#: ninja/leaping/permissionsex/command/RankingCommands.java:71
+#: ninja/leaping/permissionsex/command/RankingCommands.java:150
+#: ninja/leaping/permissionsex/command/RankingCommands.java:181
 msgid "subject"
 msgstr ""
 
@@ -511,10 +511,10 @@ msgstr ""
 msgid "value"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:101
+#: ninja/leaping/permissionsex/command/RankingCommands.java:97
 msgid "▲"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/RankingCommands.java:97
+#: ninja/leaping/permissionsex/command/RankingCommands.java:93
 msgid "▼"
 msgstr ""

@@ -10,3 +10,4 @@ permissionsex-*/target
 /.idea/
 /PermissionsEx.iml
 .DS_Store
+.*.swp

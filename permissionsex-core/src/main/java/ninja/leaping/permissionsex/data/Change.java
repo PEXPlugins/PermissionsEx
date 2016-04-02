@@ -16,6 +16,19 @@
  */
 package ninja.leaping.permissionsex.data;
 
-public interface Caching<T> {
-    void clearCache(T newData);
+public class Change<T> {
+    private final T old, newVal;
+
+    public Change(T old, T newVal) {
+        this.old = old;
+        this.newVal = newVal;
+    }
+
+    public T getOld() {
+        return this.old;
+    }
+
+    public T getNew() {
+        return this.newVal;
+    }
 }
