@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.backend.memory;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -65,7 +66,7 @@ public class MemoryDataStore extends AbstractDataStore {
         final Map.Entry<String, String> key = Maps.immutableEntry(type, identifier);
         ImmutableSubjectData ret = data.get(key);
         if (ret == null) {
-            ret = new MemorySubjectData();
+            ret = createSubjectData(ImmutableMap.of());
             if (track) {
                 final ImmutableSubjectData existingData = data.putIfAbsent(key, ret);
                 if (existingData != null) {
