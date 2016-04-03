@@ -38,8 +38,8 @@ import java.util.Map;
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 import static ninja.leaping.permissionsex.util.Translations.t;
 
-class SchemaMigrations {
-    static final int LATEST_VERSION = 4;
+public class SchemaMigrations {
+    public static final int LATEST_VERSION = 4;
     private SchemaMigrations() {
     }
 
@@ -95,7 +95,7 @@ class SchemaMigrations {
                 tBuilder()
                         .addAction(new Object[]{"subjects", "group", WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
                             for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                if (child.getNode(FileDataStore.KEY_CONTEXTS).isVirtual() || child.getNode(FileDataStore.KEY_CONTEXTS).getChildrenMap().isEmpty()) {
+                                if (child.getNode(FileSubjectData.KEY_CONTEXTS).isVirtual() || child.getNode(FileSubjectData.KEY_CONTEXTS).getChildrenMap().isEmpty()) {
                                     ConfigurationNode optionsNode = child.getNode("options");
                                     if (optionsNode.isVirtual()) {
                                         return null;
@@ -147,7 +147,7 @@ class SchemaMigrations {
                             ConfigurationNode entityNode = configurationNode.getParent().getParent();
                             for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
                                 entityNode.getAppendedNode().setValue(ent.getValue())
-                                        .getNode(FileDataStore.KEY_CONTEXTS, "world").setValue(ent.getKey());
+                                        .getNode(FileSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
 
                             }
                             configurationNode.setValue(null);
@@ -202,7 +202,7 @@ class SchemaMigrations {
                                     ConfigurationNode addToNode = null;
                                     final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
                                     for (ConfigurationNode node : defaultsParent.getChildrenList()) {
-                                        if (Objects.equal(node.getNode(FileDataStore.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileDataStore.KEY_CONTEXTS).getValue())) {
+                                        if (Objects.equal(node.getNode(FileSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS).getValue())) {
                                             addToNode = node;
                                             break;
                                         }

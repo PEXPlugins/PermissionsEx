@@ -16,9 +16,7 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -35,7 +33,7 @@ import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.util.MapFactories;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
-import ninja.leaping.permissionsex.backend.DataEntry;
+import ninja.leaping.permissionsex.backend.ConversionUtils;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryContextInheritance;
 import ninja.leaping.permissionsex.data.ContextInheritance;
@@ -45,11 +43,10 @@ import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 
+import javax.security.auth.login.Configuration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -186,7 +183,7 @@ public final class FileDataStore extends AbstractDataStore {
     @Override
     public ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
         try {
-            return createSubjectData(getSubjectsNode().getNode(type, identifier));
+            return FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
         } catch (ObjectMappingException e) {
             throw new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e);
         }
@@ -201,64 +198,18 @@ public final class FileDataStore extends AbstractDataStore {
                 return save().thenApply(input -> null);
             }
 
-            serializeData(getSubjectsNode().getNode(type, identifier), dataToMap(data));
+            final FileSubjectData fileData;
+
+            if (data instanceof FileSubjectData) {
+                fileData = (FileSubjectData) data;
+            } else {
+                fileData = ConversionUtils.transfer(data, new FileSubjectData());
+            }
+            fileData.serialize(getSubjectsNode().getNode(type, identifier));
             dirty.set(true);
-            return save().thenApply(none -> data);
+            return save().thenApply(none -> fileData);
         } catch (ObjectMappingException e) {
             return Util.failedFuture(e);
-        }
-    }
-
-
-    static final String KEY_CONTEXTS = "contexts";
-
-    private ImmutableSubjectData createSubjectData(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
-        ImmutableMap.Builder<Set<Map.Entry<String, String>>, DataEntry> map = ImmutableMap.builder();
-        if (node.hasListChildren()) {
-            for (ConfigurationNode child : node.getChildrenList()) {
-                if (!child.hasMapChildren()) {
-                    throw new PermissionsLoadingException(t("Each context section must be of map type! Check that no duplicate nesting has occurred."));
-                }
-                Set<Map.Entry<String, String>> contexts = contextsFrom(child);
-                DataEntry value = DataEntry.MAPPER.bindToNew().populate(child);
-                map.put(contexts, value);
-            }
-        }
-        return createSubjectData(map.build());
-    }
-
-    private static Set<Map.Entry<String, String>> contextsFrom(ConfigurationNode node) {
-        Set<Map.Entry<String, String>> contexts = Collections.emptySet();
-        ConfigurationNode contextsNode = node.getNode(KEY_CONTEXTS);
-        if (contextsNode.hasMapChildren()) {
-            contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.getChildrenMap().entrySet(), ent -> {
-                return Maps.immutableEntry(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
-            }));
-        }
-        return contexts;
-    }
-
-    private void serializeData(ConfigurationNode node, Map<Set<Map.Entry<String, String>>, DataEntry> contexts) throws ObjectMappingException {
-        if (!node.hasListChildren()) {
-            node.setValue(null);
-        }
-        Map<Set<Map.Entry<String, String>>, ConfigurationNode> existingSections = new HashMap<>();
-        for (ConfigurationNode child : node.getChildrenList()) {
-            existingSections.put(contextsFrom(child), child);
-        }
-        for (Map.Entry<Set<Map.Entry<String, String>>, DataEntry> ent : contexts.entrySet()) {
-            ConfigurationNode contextSection = existingSections.remove(ent.getKey());
-            if (contextSection == null) {
-                contextSection = node.getAppendedNode();
-                ConfigurationNode contextsNode = contextSection.getNode(KEY_CONTEXTS);
-                for (Map.Entry<String, String> context : ent.getKey()) {
-                    contextsNode.getNode(context.getKey()).setValue(context.getValue());
-                }
-            }
-            DataEntry.MAPPER.bind(ent.getValue()).serialize(contextSection);
-        }
-        for (ConfigurationNode unused : existingSections.values()) {
-            unused.setValue(null);
         }
     }
 

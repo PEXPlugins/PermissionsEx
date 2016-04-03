@@ -14,15 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backend;
+package ninja.leaping.permissionsex.backend.memory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import ninja.leaping.configurate.objectmapping.ObjectMapper;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.configurate.objectmapping.Setting;
+import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.Util;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,9 +38,17 @@ import java.util.Set;
 
 import static java.util.Map.Entry;
 
-final class SubjectDataImpl implements ImmutableSubjectData {
+public class MemorySubjectData implements ImmutableSubjectData {
+    protected static final ObjectMapper<DataEntry> MAPPER;
+    static {
+        try {
+            MAPPER = ObjectMapper.forClass(DataEntry.class);
+        } catch (ObjectMappingException e) {
+            throw new ExceptionInInitializerError(e); // This debug indicates a programming issue
+        }
+    }
 
-    static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
+    protected static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
         if (input == null) {
             return ImmutableMap.of(newKey, newVal);
         }
@@ -46,24 +61,136 @@ final class SubjectDataImpl implements ImmutableSubjectData {
         return Collections.unmodifiableMap(ret);
     }
 
-    private final SubjectDataImpl newWithUpdated(Set<Entry<String, String>> key, DataEntry val) {
+    @ConfigSerializable
+    protected static class DataEntry {
+        @Nullable @Setting private Map<String, Integer> permissions;
+        @Nullable @Setting private Map<String, String> options;
+        @Nullable @Setting private List<String> parents;
+        @Nullable @Setting("permissions-default") private Integer defaultValue;
+
+        private DataEntry(@Nullable Map<String, Integer> permissions, @Nullable Map<String, String> options, @Nullable List<String> parents, @Nullable Integer defaultValue) {
+            this.permissions = permissions;
+            this.options = options;
+            this.parents = parents;
+            this.defaultValue = defaultValue;
+        }
+
+        private DataEntry() { // Objectmapper constructor
+        }
+
+        public DataEntry withOption(String key, String value) {
+            return new DataEntry(permissions, updateImmutable(options, key, value), parents, defaultValue);
+        }
+
+        public DataEntry withoutOption(String key) {
+            if (options == null || !options.containsKey(key)) {
+                return this;
+            }
+
+            Map<String, String> newOptions = new HashMap<>(options);
+            newOptions.remove(key);
+            return new DataEntry(permissions, newOptions, parents, defaultValue);
+
+        }
+
+        public DataEntry withOptions(Map<String, String> values) {
+            return new DataEntry(permissions, values == null ? null : ImmutableMap.copyOf(values), parents, defaultValue);
+        }
+
+        public DataEntry withoutOptions() {
+            return new DataEntry(permissions, null, parents, defaultValue);
+        }
+
+        public DataEntry withPermission(String permission, int value) {
+            return new DataEntry(updateImmutable(permissions, permission, value), options, parents, defaultValue);
+
+        }
+
+        public DataEntry withoutPermission(String permission) {
+            if (permissions == null || !permissions.containsKey(permission)) {
+                return this;
+            }
+
+            Map<String, Integer> newPermissions = new HashMap<>(permissions);
+            newPermissions.remove(permission);
+            return new DataEntry(newPermissions, options, parents, defaultValue);
+        }
+
+        public DataEntry withPermissions(Map<String, Integer> values) {
+            return new DataEntry(ImmutableMap.copyOf(values), options, parents, defaultValue);
+        }
+
+        public DataEntry withoutPermissions() {
+            return new DataEntry(null, options, parents, defaultValue);
+        }
+
+        public DataEntry withDefaultValue(Integer defaultValue) {
+            return new DataEntry(permissions, options, parents, defaultValue);
+        }
+
+        public DataEntry withAddedParent(String parent) {
+            ImmutableList.Builder<String> parents = ImmutableList.builder();
+            parents.add(parent);
+            if (this.parents != null) {
+                parents.addAll(this.parents);
+            }
+            return new DataEntry(permissions, options, parents.build(), defaultValue);
+        }
+
+        public DataEntry withRemovedParent(String parent) {
+            if (this.parents == null || this.parents.isEmpty()) {
+                return this;
+            }
+
+            final List<String> newParents = new ArrayList<>(parents);
+            newParents.remove(parent);
+            return new DataEntry(permissions, options, newParents, defaultValue);
+        }
+
+        public DataEntry withParents(List<String> transform) {
+            return new DataEntry(permissions, options, transform == null ? null : ImmutableList.copyOf(transform), defaultValue);
+        }
+
+        public DataEntry withoutParents() {
+            return new DataEntry(permissions, options, null, defaultValue);
+        }
+
+        @Override
+        public String toString() {
+            return "DataEntry{" +
+                    "permissions=" + permissions +
+                    ", options=" + options +
+                    ", parents=" + parents +
+                    ", defaultValue=" + defaultValue +
+                    '}';
+        }
+
+        public boolean isEmpty() {
+            return (this.permissions == null || this.permissions.isEmpty())
+                    && (this.options == null || this.options.isEmpty())
+                    && (this.parents == null || this.parents.isEmpty())
+                    && this.defaultValue == null;
+        }
+    }
+
+    protected final MemorySubjectData newWithUpdated(Set<Entry<String, String>> key, DataEntry val) {
         if (val.isEmpty()) {
             val = null;
         }
         return newData(updateImmutable(contexts, immutSet(key), val));
     }
 
-    protected SubjectDataImpl newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
-        return new SubjectDataImpl(contexts);
+    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+        return new MemorySubjectData(contexts);
     }
 
     protected final Map<Set<Entry<String, String>>, DataEntry> contexts;
 
-    SubjectDataImpl() {
+    protected MemorySubjectData() {
         this.contexts = ImmutableMap.of();
     }
 
-    SubjectDataImpl(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected MemorySubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
         this.contexts = contexts;
     }
 

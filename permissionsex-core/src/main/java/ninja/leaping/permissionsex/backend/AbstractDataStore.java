@@ -33,7 +33,6 @@ import ninja.leaping.permissionsex.util.Util;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -113,20 +112,6 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     protected abstract ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException;
-
-    protected ImmutableSubjectData createSubjectData(Map<Set<Map.Entry<String, String>>, DataEntry> entries) {
-        return new SubjectDataImpl(entries);
-    }
-
-    protected Map<Set<Map.Entry<String, String>>, DataEntry> dataToMap(ImmutableSubjectData data) {
-        SubjectDataImpl dataImpl;
-        if (!(data instanceof SubjectDataImpl)) {
-            dataImpl = ConversionUtils.transfer(data, new SubjectDataImpl());
-        } else {
-            dataImpl = (SubjectDataImpl) data;
-        }
-        return dataImpl.contexts;
-    }
 
     protected abstract CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data);
 
