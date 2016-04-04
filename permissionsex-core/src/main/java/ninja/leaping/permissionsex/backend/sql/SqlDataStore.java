@@ -16,29 +16,26 @@
  */
 package ninja.leaping.permissionsex.backend.sql;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.db.DatabaseTypeUtils;
-import com.j256.ormlite.jdbc.DataSourceConnectionSource;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
-import ninja.leaping.permissionsex.backend.sql.tables.SqlSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
 
@@ -47,6 +44,7 @@ import static ninja.leaping.permissionsex.util.Translations.t;
  */
 public final class SqlDataStore extends AbstractDataStore {
     public static final Factory FACTORY = new Factory("sql", SqlDataStore.class);
+    private static final Pattern BRACES_PATTERN = Pattern.compile("\\{\\}");
 
     protected SqlDataStore() {
         super(FACTORY);
@@ -54,18 +52,59 @@ public final class SqlDataStore extends AbstractDataStore {
 
     @Setting("url")
     private String connectionUrl;
+    @Setting("prefix")
+    private String prefix = "";
+    private String realPrefix;
+    @Setting("aliases")
+    private Map<String, String> legacyAliases;
 
+    private final ConcurrentMap<String, String> queryPrefixCache = new ConcurrentHashMap<>();
     private DataSource sql;
-    private Dao<SqlSubject, String> subjectDao;
+
+    SqlDao getDao() throws SQLException {
+        return new SqlDao(this);
+    }
 
     @Override
-    protected ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
-        try (Connection conn = sql.getConnection()) {
-            SqlSubject subject = subjectDao.queryBuilder().where().eq("type", type).eq("identifier", identifier).queryForFirst();
-        } catch (SQLException e) {
-            //throw new PermissionsLoadingException(_("Unable to get data for user %s:%s"), e, type, identifier);
+    protected void initializeInternal() throws PermissionsLoadingException {
+        sql = getManager().getDataSourceForURL(connectionUrl);
+        if (this.prefix != null && !this.prefix.isEmpty() && !this.prefix.endsWith("_")) {
+            this.realPrefix = this.prefix + "_";
+        } else if (this.prefix == null) {
+            this.realPrefix = "";
+        } else {
+            this.realPrefix = this.prefix;
         }
-        return null;
+        try (SqlDao dao = getDao()) {
+            dao.initializeTables();
+        } catch (SQLException e) {
+            throw new PermissionsLoadingException(t("Error interacting with SQL database"), e);
+        }
+    }
+
+    DataSource getDataSource() {
+        return this.sql;
+    }
+
+    String insertPrefix(String query) {
+        return queryPrefixCache.computeIfAbsent(query, qu -> BRACES_PATTERN.matcher(qu).replaceAll(this.realPrefix));
+    }
+
+    // Make getting data asynchronous
+    @Override
+    protected ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
+        try (SqlDao dao = getDao()) {
+            SubjectRef ref = dao.getOrCreateSubjectRef(type, identifier);
+            List<Segment> segments = dao.getSegments(ref);
+            Map<Set<Map.Entry<String, String>>, Segment> contexts = new HashMap<>();
+            for (Segment segment : segments) {
+                contexts.put(segment.getContexts(), segment);
+            }
+
+            return new SqlSubjectData(contexts);
+        } catch (SQLException e) {
+            throw new PermissionsLoadingException(t("Error loading permissions for %s %s", type, identifier), e);
+        }
     }
 
     @Override
@@ -84,30 +123,18 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected void initializeInternal() throws PermissionsLoadingException {
-        sql = getManager().getDataSourceForURL(connectionUrl);
-        try {
-            subjectDao = DaoManager.createDao(new DataSourceConnectionSource(sql, DatabaseTypeUtils.createDatabaseType(connectionUrl)), SqlSubject.class);
-        } catch (SQLException e) {
-            throw new PermissionsLoadingException(t("Error creating subject DAO"), e);
-        }
-
-    }
-
-    @Override
-    public void close() {
-
-    }
-
-    @Override
     public boolean isRegistered(String type, String identifier) {
-        return false;
+        try (SqlDao dao = getDao()) {
+            return dao.getSubjectRef(type, identifier).isPresent();
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     @Override
     public Set<String> getAllIdentifiers(String type) {
-        try {
-            return ImmutableSet.copyOf(Iterables.transform(subjectDao.queryBuilder().selectColumns("identifier").where().eq("type", type).queryRaw(), input -> input[0]));
+        try (SqlDao dao = getDao()) {
+            return dao.getAllIdentifiers(type);
         } catch (SQLException e) {
             return ImmutableSet.of();
         }
@@ -115,21 +142,22 @@ public final class SqlDataStore extends AbstractDataStore {
 
     @Override
     public Set<String> getRegisteredTypes() {
-        try {
-            return ImmutableSet.copyOf(Iterables.transform(subjectDao.queryBuilder().selectColumns("type").distinct().queryRaw(), input -> input[0]));
+        try (SqlDao dao = getDao()) {
+            return dao.getRegisteredTypes();
         } catch (SQLException e) {
             return ImmutableSet.of();
         }
+
     }
 
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
-        return ImmutableList.of();
+        return ImmutableSet.of();
     }
 
     @Override
     public Iterable<String> getAllRankLadders() {
-        return null;
+        return ImmutableSet.of();
     }
 
     @Override
@@ -149,7 +177,17 @@ public final class SqlDataStore extends AbstractDataStore {
 
     @Override
     protected <T> T performBulkOperationSync(final Function<DataStore, T> function) throws Exception {
-        return subjectDao.callBatchTasks(() -> function.apply(SqlDataStore.this));
+        // Begin a transaction
+        // perform with a single DAO?
+        // maybe changes will be required to the api?
+        /*try (SqlDao dao = getDao()) {
+            dao.executeInTransaction(function)
+        }*/
+        return function.apply(this);
     }
 
+    @Override
+    public void close() {
+        this.queryPrefixCache.clear();
+    }
 }

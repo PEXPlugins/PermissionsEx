@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-01 18:01-0700\n"
+"POT-Creation-Date: 2016-04-03 21:04-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,11 +79,11 @@ msgid ""
 " Please see the server console for details"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:1094
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:1110
 msgid "Argument %s did not match expected next argument %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:554
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:570
 msgid "Argument was not a valid choice. Valid choices: %s"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgid ""
 "has occurred."
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:991
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:1007
 msgid "Enum value %s not valid"
 msgstr ""
 
@@ -168,8 +168,12 @@ msgstr ""
 msgid "Error creating initial data for file backend"
 msgstr ""
 
-#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:92
-msgid "Error creating subject DAO"
+#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:81
+msgid "Error interacting with SQL database"
+msgstr ""
+
+#: ninja/leaping/permissionsex/backend/sql/SqlDataStore.java:106
+msgid "Error loading permissions for %s %s"
 msgstr ""
 
 #: ninja/leaping/permissionsex/command/PermissionsExExecutor.java:90
@@ -200,7 +204,7 @@ msgstr ""
 msgid "Error while serializing backend %s"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:922
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:938
 msgid "Expected an integer, but input '%s' was not"
 msgstr ""
 
@@ -410,12 +414,12 @@ msgid ""
 "connection? UUID conversion will not proceed (but may not be necessary)."
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:256
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:272
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:260
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:276
 msgid "Unknown long flag %s specified"
 msgstr ""
 
-#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:298
+#: ninja/leaping/permissionsex/util/command/args/GenericArguments.java:306
 msgid "Unknown short flag %s specified"
 msgstr ""
 

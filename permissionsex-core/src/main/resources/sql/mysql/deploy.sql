@@ -1,67 +1,82 @@
-# Possible 2.0 Schema
-CREATE TABLE IF NOT EXISTS `{segments}` (
+-- PermissionsEx Schema v3, MySQL/MariaDB Edition
+-- Requires InnoDB backend for foreign keys
+
+-- Data Types Used
+-- ---------------
+-- Identifier: varchar(255)
+-- Permission value: smallint
+-- Unique ids: int(11)
+
+CREATE TABLE `{}subjects` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `type` VARCHAR(50),
-  `identifier` VARCHAR(50),
-  UNIQUE KEY `unique` (`type`,`identifier`)
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-CREATE TABLE IF NOT EXISTS `{permissions}` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
-  `key` TEXT,
-  `value` int(11)
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-CREATE TABLE IF NOT EXISTS `{options}` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
-  `key` TEXT,
-  `value` TEXT
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-CREATE TABLE IF NOT EXISTS `{inheritance}` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `segment` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
-  `parent` int(11) REFERENCES `{segments}` (`id`) ON DELETE CASCADE,
-  UNIQUE KEY `unique` (`segment`, `parent`)
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-
-# Current
-
-CREATE TABLE IF NOT EXISTS `{permissions}` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL,
-  `type` tinyint(1) NOT NULL,
-  `permission` text NOT NULL,
-  `world` varchar(50) NOT NULL,
-  `value` text NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  #UNIQUE KEY `unique` (`name`,`permission`,`world`,`type`),
-  KEY `user` (`name`,`type`),
-  KEY `world` (`world`,`name`,`type`)
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+  UNIQUE KEY `ident` (`type`,`name`),
+  KEY `type_k` (`type`)
+) DEFAULT CHARSET=utf8;
 
+CREATE TABLE `{}segments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `subject` int(11) NOT NULL,
+  `perm_default` smallint(6) DEFAULT NULL,
+  KEY `subject_k` (`subject`),
+  CONSTRAINT `subject_fk` FOREIGN KEY (`subject`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `{permissions_entity}` (
+CREATE TABLE `{}permissions` (
+  `segment` int(11) NOT NULL,
+  `key` varchar(255) NOT NULL,
+  `value` smallint(6) NOT NULL,
+  UNIQUE KEY `segment_k` (`segment`,`key`),
+  CONSTRAINT `segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=utf8;
+
+ CREATE TABLE `{}contexts` (
+  `segment` int(11) NOT NULL,
+  `key` varchar(255) NOT NULL,
+  `value` varchar(255) NOT NULL,
+  UNIQUE KEY `k` (`segment`,`key`),
+  UNIQUE KEY `kv` (`segment`,`key`,`value`),
+  CONSTRAINT `segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=utf8;
+
+CREATE TABLE `{}options` (
+  `segment` int(11) NOT NULL,
+  `key` varchar(255) NOT NULL,
+  `value` text,
+  UNIQUE KEY `segment` (`segment`,`key`),
+  CONSTRAINT `segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=utf8;
+
+CREATE TABLE `{}inheritance` (
+  `segment` int(11) NOT NULL,
+  `parent` int(11) NOT NULL,
+  UNIQUE KEY `segment` (`segment`,`parent`),
+  KEY `parent` (`parent`),
+  CONSTRAINT `segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `parent_fk` FOREIGN KEY (`parent`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=utf8;
+
+ CREATE TABLE `{}rank_ladders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL,
-  `type` tinyint(1) NOT NULL,
-  `default` tinyint(1) NOT NULL DEFAULT '0',
+  `name` varchar(255) NOT NULL,
+  `idx` int(11) NOT NULL,
+  `subject` int(11) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`, `type`),
-  KEY `default` (`default`)
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+  UNIQUE KEY `name` (`name`,`idx`,`subject`),
+  KEY `subject` (`subject`),
+  CONSTRAINT `subject_fk` FOREIGN KEY (`subject`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `{permissions_inheritance}` (
+ CREATE TABLE `{}context_inheritance` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `child` varchar(50) NOT NULL,
-  `parent` varchar(50) NOT NULL,
-  `type` tinyint(1) NOT NULL,
-  `world` varchar(50) NULL,
+  `child_key` varchar(255) NOT NULL,
+  `child_value` varchar(255) NOT NULL,
+  `parent_key` varchar(255) NOT NULL,
+  `parent_value` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `child` (`child`,`parent`,`type`,`world`),
-  KEY `child_2` (`child`,`type`),
-  KEY `parent` (`parent`,`type`)
-) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+  UNIQUE KEY `both_key` (`child_key`,`child_value`,`parent_key`,`parent_value`),
+  KEY `child_key` (`child_key`,`child_value`),
+  KEY `parent_key` (`parent_key`,`parent_value`)
+) DEFAULT CHARSET=utf8;

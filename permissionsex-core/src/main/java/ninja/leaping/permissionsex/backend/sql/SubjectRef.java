@@ -14,13 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.backend.sql.tables;
+package ninja.leaping.permissionsex.backend.sql;
 
-import com.j256.ormlite.table.DatabaseTable;
+public class SubjectRef {
+    private final int id;
+    private final String type, name;
 
-@DatabaseTable(tableName = "permissions")
-public class SqlPermission {
-    private SqlSegment segment;
-    private String key;
-    private int value;
+    SubjectRef(int id, String type, String name) {
+        this.id = id;
+        this.type = type;
+        this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

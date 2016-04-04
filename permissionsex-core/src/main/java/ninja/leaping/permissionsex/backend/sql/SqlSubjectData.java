@@ -16,25 +16,144 @@
  */
 package ninja.leaping.permissionsex.backend.sql;
 
-import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
+import com.google.common.collect.ImmutableMap;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by zml on 21.03.15.
+ * Data for SQL-backed subjects
  */
-public class SqlSubjectData extends MemorySubjectData {
-    @Override
-    protected MemorySubjectData newData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
-        return new SqlSubjectData(contexts);
-    }
+public class SqlSubjectData implements ImmutableSubjectData {
+    private final Map<Set<Map.Entry<String, String>>, Segment> segments;
 
     SqlSubjectData() {
-        super();
+        this(ImmutableMap.of());
     }
 
-    SqlSubjectData(Map<Set<Map.Entry<String, String>>, DataEntry> contexts) {
-        super(contexts);
+    SqlSubjectData(Map<Set<Map.Entry<String, String>>, Segment> segments) {
+        this.segments = segments;
+    }
+
+    @Override
+    public Map<Set<Map.Entry<String, String>>, Map<String, String>> getAllOptions() {
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData setOption(Set<Map.Entry<String, String>> contexts, String key, String value) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData setOptions(Set<Map.Entry<String, String>> contexts, Map<String, String> values) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData clearOptions(Set<Map.Entry<String, String>> contexts) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData clearOptions() {
+        return null;
+    }
+
+    @Override
+    public Map<Set<Map.Entry<String, String>>, Map<String, Integer>> getAllPermissions() {
+        return null;
+    }
+
+    @Override
+    public Map<String, Integer> getPermissions(Set<Map.Entry<String, String>> contexts) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData setPermission(Set<Map.Entry<String, String>> contexts, String permission, int value) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData setPermissions(Set<Map.Entry<String, String>> contexts, Map<String, Integer> values) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData clearPermissions() {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData clearPermissions(Set<Map.Entry<String, String>> contexts) {
+        return null;
+    }
+
+    @Override
+    public Map<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> getAllParents() {
+        return null;
+    }
+
+    @Override
+    public List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData addParent(Set<Map.Entry<String, String>> contexts, String type, String identifier) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData removeParent(Set<Map.Entry<String, String>> contexts, String type, String identifier) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData setParents(Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents) {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData clearParents() {
+        return null;
+    }
+
+    @Override
+    public ImmutableSubjectData clearParents(Set<Map.Entry<String, String>> contexts) {
+        return null;
+    }
+
+    @Override
+    public int getDefaultValue(Set<Map.Entry<String, String>> contexts) {
+        return 0;
+    }
+
+    @Override
+    public ImmutableSubjectData setDefaultValue(Set<Map.Entry<String, String>> contexts, int defaultValue) {
+        return null;
+    }
+
+    /**
+     * Gets the contexts we have data for
+     *
+     * @return
+     */
+    @Override
+    public Iterable<Set<Map.Entry<String, String>>> getActiveContexts() {
+        return null;
+    }
+
+    @Override
+    public Map<Set<Map.Entry<String, String>>, Integer> getAllDefaultValues() {
+        return null;
     }
 }
