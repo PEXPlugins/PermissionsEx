@@ -59,14 +59,19 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>shaded</shadedClassifierName> <!-- Any name that makes sense -->
+              <minimizeJar>true</minimizeJar>
               <relocations>
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com.sk89q.squirrelid</shadedPattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org.gnu.gettext</shadedPattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.org-gnu-gettext</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.github.benmanes.caffeine</pattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.com-github-benmanes-caffeine</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -114,7 +119,7 @@
     <dependency>
       <groupId>org.spongepowered</groupId>
       <artifactId>spongeapi</artifactId>
-      <version>4.0.0</version>
+      <version>4.1.0-SNAPSHOT</version>
       <type>jar</type>
       <scope>provided</scope>
     </dependency>

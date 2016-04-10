@@ -16,25 +16,20 @@
  */
 package ninja.leaping.permissionsex.subject;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.NodeTree;
 
-import javax.annotation.Nonnull;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Map.Entry;
 
@@ -46,22 +41,23 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final Map.Entry<String, String> identifier;
     private final SubjectType type;
     //private final PermissionsEx pex;
-    private final SubjectDataReference ref, transientRef;
+    private SubjectDataReference ref, transientRef;
 
-    private final LoadingCache<Set<Map.Entry<String, String>>, BakedSubjectData> data = CacheBuilder.newBuilder().maximumSize(5)
-            .build(new CacheLoader<Set<Map.Entry<String, String>>, BakedSubjectData>() {
-        @Override
-        public BakedSubjectData load(@Nonnull Set<Map.Entry<String, String>> contexts) throws Exception {
-            return baker.bake(CalculatedSubject.this, contexts);
-        }
-    });
+    private final AsyncLoadingCache<Set<Entry<String, String>>, BakedSubjectData> data;
 
-    public CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) throws ExecutionException {
+    CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) {
         this.baker = Preconditions.checkNotNull(baker, "baker");
         this.identifier = Preconditions.checkNotNull(identifier, "identifier");
         this.type = Preconditions.checkNotNull(type, "type");
-        this.ref = type.persistentData().getReference(identifier.getValue());
-        this.transientRef = type.transientData().getReference(identifier.getValue());
+        this.data = Caffeine.newBuilder()
+                .maximumSize(32)
+                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
+    }
+
+    void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
+        this.ref = persistentRef;
+        this.transientRef = transientRef;
     }
 
     public Map.Entry<String, String> getIdentifier() {
@@ -72,37 +68,29 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         return this.type.getManager();
     }
 
+    private BakedSubjectData getData(Set<Entry<String, String>> contexts) {
+        return data.synchronous().get(contexts);
+    }
+
     public NodeTree getPermissions(Set<Map.Entry<String, String>> contexts) {
         Preconditions.checkNotNull(contexts, "contexts");
-        try {
-            return data.get(contexts).getPermissions();
-        } catch (ExecutionException e) {
-            return NodeTree.of(Collections.<String, Integer>emptyMap());
-        }
+        return getData(contexts).getPermissions();
     }
 
     public Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts) {
         Preconditions.checkNotNull(contexts, "contexts");
-        try {
-            return data.get(contexts).getOptions();
-        } catch (ExecutionException e) {
-            return ImmutableMap.of();
-        }
+        return getData(contexts).getOptions();
     }
 
     public List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts) {
         Preconditions.checkNotNull(contexts, "contexts");
-        try {
-            List<Map.Entry<String, String>> parents = data.get(contexts).getParents();
-            getManager().getNotifier().onParentCheck(getIdentifier(), contexts, parents);
-            return parents;
-        } catch (ExecutionException e) {
-            return ImmutableList.of();
-        }
+        List<Map.Entry<String, String>> parents = getData(contexts).getParents();
+        getManager().getNotifier().onParentCheck(getIdentifier(), contexts, parents);
+        return parents;
     }
 
     private Set<Set<Map.Entry<String, String>>> getActiveContexts() {
-        return data.asMap().keySet();
+        return data.synchronous().asMap().keySet();
     }
 
     public int getPermission(Set<Entry<String, String>> contexts, String permission) {
@@ -127,7 +115,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
 
     @Override
     public void clearCache(ImmutableSubjectData newData) {
-        data.invalidateAll();
+        data.synchronous().invalidateAll();
         getManager().getActiveSubjectTypes().stream()
                 .flatMap(type -> type.getActiveSubjects().stream())
                 .filter(subj -> {
@@ -138,7 +126,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
                     }
                     return false;
                 })
-                .forEach(subj -> subj.data.invalidateAll());
+                .forEach(subj -> subj.data.synchronous().invalidateAll());
     }
 
     public SubjectType getType() {

@@ -16,23 +16,20 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.rank.RankLadder;
-import ninja.leaping.permissionsex.util.Util;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 public class RankLadderCache {
     private final DataStore dataStore;
-    private final LoadingCache<String, RankLadder> cache;
+    private final AsyncLoadingCache<String, RankLadder> cache;
     private final Map<String, Caching<RankLadder>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, RankLadder> listeners;
 
@@ -42,72 +39,65 @@ public class RankLadderCache {
 
     public RankLadderCache(final RankLadderCache existing, final DataStore dataStore) {
         this.dataStore = dataStore;
-        cache = CacheBuilder.newBuilder()
-                .maximumSize(512)
-                .build(new CacheLoader<String, RankLadder>() {
-                    @Override
-                    public RankLadder load(String identifier) throws Exception {
-                        return dataStore.getRankLadder(identifier, clearListener(identifier));
-                    }
-                });
+        cache = Caffeine.newBuilder()
+                .maximumSize(256)
+                .buildAsync(((key, executor) -> dataStore.getRankLadder(key, clearListener(key))));
         if (existing != null) {
             listeners = existing.listeners;
-            existing.cache.asMap().forEach((k, old) -> listeners.call(k, get(k, null)));
+            existing.cache.synchronous().asMap().forEach((key, rankLadder) -> {
+                get(key, null).thenAccept(data -> listeners.call(key, data));
+            });
         } else {
             listeners = new CacheListenerHolder<>();
         }
     }
 
 
-    public RankLadder get(String identifier, Caching<RankLadder> listener) {
+    public CompletableFuture<RankLadder> get(String identifier, Caching<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        RankLadder ret;
-        try {
-            ret = cache.get(identifier);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e); // This shouldn't happen? -- we throw now checked exceptions
-        }
-        if (listener != null) {
-            listeners.addListener(identifier, listener);
-        }
+        CompletableFuture<RankLadder> ret = cache.get(identifier);
+        ret.thenRun(() -> {
+            if (listener != null) {
+                listeners.addListener(identifier, listener);
+            }
+        });
         return ret;
     }
 
     public CompletableFuture<RankLadder> update(String identifier, Function<RankLadder, RankLadder> updateFunc) {
-        try {
-            RankLadder old = cache.get(identifier);
-            RankLadder newLadder = updateFunc.apply(old);
-            if (old == newLadder) {
-                return CompletableFuture.completedFuture(newLadder);
-            }
-            return set(identifier, newLadder);
-        } catch (Exception e) {
-            return Util.failedFuture(e);
-        }
+        return cache.get(identifier)
+                .thenCompose(oldLadder -> {
+                    RankLadder newLadder = updateFunc.apply(oldLadder);
+                    if (oldLadder == newLadder) {
+                        return CompletableFuture.completedFuture(newLadder);
+                    }
+                    return set(identifier, newLadder);
+
+                });
     }
 
     public void load(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
-
-        try {
-            cache.get(identifier);
-        } catch (ExecutionException e) {
-        }
+        cache.synchronous().refresh(identifier);
     }
 
     public void invalidate(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        cache.invalidate(identifier);
+        cache.synchronous().invalidate(identifier);
         cacheHolders.remove(identifier);
         listeners.removeAll(identifier);
     }
 
-    public boolean has(String identifier) {
+    public CompletableFuture<Boolean> has(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        return dataStore.hasRankLadder(identifier);
+        if (cache.synchronous().getIfPresent(identifier) != null) {
+            return CompletableFuture.completedFuture(true);
+        } else {
+            return dataStore.hasRankLadder(identifier);
+        }
     }
 
     public CompletableFuture<RankLadder> set(String identifier, RankLadder newData) {
@@ -118,7 +108,7 @@ public class RankLadderCache {
 
     private Caching<RankLadder> clearListener(final String name) {
         Caching<RankLadder> ret = newData -> {
-            cache.put(name, newData);
+            cache.synchronous().put(name, newData);
             listeners.call(name, newData);
         };
         cacheHolders.put(name, ret);
@@ -129,10 +119,6 @@ public class RankLadderCache {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(listener, "listener");
 
-        try {
-            cache.get(identifier);
-        } catch (ExecutionException e) {
-        }
         listeners.addListener(identifier, listener);
     }
 

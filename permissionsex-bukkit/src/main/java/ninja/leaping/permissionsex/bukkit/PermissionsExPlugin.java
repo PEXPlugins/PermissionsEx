@@ -16,7 +16,10 @@
  */
 package ninja.leaping.permissionsex.bukkit;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -28,7 +31,6 @@ import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -49,10 +51,16 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static ninja.leaping.permissionsex.bukkit.CraftBukkitInterface.getCBClassName;
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
@@ -68,6 +76,38 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             new PermissibleInjector.ClassPresencePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true),
     };
     public static final String SERVER_TAG_CONTEXT = "server-tag";
+    private static final Pattern JDBC_URL_REGEX = Pattern.compile("(?:jdbc:)?([^:]+):(//)?(?:([^:]+)(?::([^@]+))?@)?(.*)");
+
+    static final Map<String, BiFunction<PermissionsExPlugin, String, String>> PATH_CANONICALIZERS;
+    static final Map<String, Properties> PROTOCOL_SPECIFIC_PROPS;
+
+    static {
+        ImmutableMap.Builder<String, Properties> build = ImmutableMap.builder();
+        final Properties mySqlProps = new Properties();
+        mySqlProps.setProperty("useConfigs",
+                "maxPerformance"); // Config options based on http://assets.en.oreilly
+        // .com/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf
+        build.put("com.mysql.jdbc.Driver", mySqlProps);
+        build.put("org.mariadb.jdbc.Driver", mySqlProps);
+
+        PROTOCOL_SPECIFIC_PROPS = build.build();
+        PATH_CANONICALIZERS = ImmutableMap.of("h2", (plugin, orig) -> {
+            // Bleh if only h2 had a better way of supplying a base directory... oh well...
+            org.h2.engine.ConnectionInfo h2Info = new org.h2.engine.ConnectionInfo(orig);
+            if (!h2Info.isPersistent() || h2Info.isRemote()) {
+                return orig;
+            }
+            if (orig.startsWith("file:")) {
+                orig = orig.substring("file:".length());
+            }
+            Path origPath = Paths.get(orig);
+            if (origPath.isAbsolute()) {
+                return origPath.toString();
+            } else {
+                return plugin.getDataFolder().toPath().toAbsolutePath().resolve(origPath).toString();
+            }
+        });
+    }
 
     private PermissionsEx manager;
 
@@ -149,25 +189,26 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
-        try {
-            getUserSubjects().load(event.getUniqueId().toString());
-        } catch (ExecutionException e) {
+        getUserSubjects().get(event.getUniqueId().toString()).exceptionally(e -> {
             logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
-        }
+            return null;
+        });
     }
 
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
-        if (getUserSubjects().isRegistered(identifier)) {
-            getUserSubjects().persistentData().update(identifier, input -> {
-                if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
-                    return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
-                } else {
-                    return input;
-                }
-            });
-        }
+        getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
+            if (registered) {
+                getUserSubjects().persistentData().update(identifier, input -> {
+                    if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
+                    } else {
+                        return input;
+                    }
+                });
+            }
+        });
         injectPermissible(event.getPlayer());
     }
 
@@ -263,6 +304,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     private class BukkitImplementationInterface implements ImplementationInterface {
+
         private final Executor bukkitExecutor = runnable -> {
             if (enabled) {
                 getServer().getScheduler()
@@ -283,8 +325,37 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         }
 
         @Override
-        public DataSource getDataSourceForURL(String url) {
-            return null;
+        public DataSource getDataSourceForURL(String url) throws SQLException {
+            // Based on Sponge`s code, but without alias handling and caching
+            Matcher match = JDBC_URL_REGEX.matcher(url);
+            if (!match.matches()) {
+                throw new IllegalArgumentException("URL " + url + " is not a valid JDBC URL");
+            }
+
+            final String protocol = match.group(1);
+            final boolean hasSlashes = match.group(2) != null;
+            final String user = match.group(3);
+            final String pass = match.group(4);
+            String serverDatabaseSpecifier = match.group(5);
+            BiFunction<PermissionsExPlugin, String, String> derelativizer = PATH_CANONICALIZERS.get(protocol);
+            if (derelativizer != null) {
+                serverDatabaseSpecifier = derelativizer.apply(PermissionsExPlugin.this, serverDatabaseSpecifier);
+            }
+            final String unauthedUrl = "jdbc:" + protocol + (hasSlashes ? "://" : ":") + serverDatabaseSpecifier;
+            final String driverClass = DriverManager.getDriver(unauthedUrl).getClass().getCanonicalName();
+
+            HikariConfig config = new HikariConfig();
+            config.setUsername(user);
+            config.setPassword(pass);
+            config.setDriverClassName(driverClass);
+            // https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing for info on pool sizing
+            config.setMaximumPoolSize((Runtime.getRuntime().availableProcessors() * 2) + 1);
+            Properties driverSpecificProperties = PROTOCOL_SPECIFIC_PROPS.get(driverClass);
+            final Properties dsProps = driverSpecificProperties == null ? new Properties() : new Properties(driverSpecificProperties);
+            dsProps.setProperty("baseDir", getBaseDirectory().toAbsolutePath().toString());
+            config.setDataSourceProperties(dsProps);
+            config.setJdbcUrl(unauthedUrl);
+            return new HikariDataSource(config);
         }
 
         /**

@@ -18,9 +18,11 @@ package ninja.leaping.permissionsex.logging;
 
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
 
@@ -30,10 +32,12 @@ import static ninja.leaping.permissionsex.util.Translations.t;
 public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     private final TranslatableLogger logger;
     private final PermissionCheckNotifier delegate;
+    private final Predicate<String> filterPredicate;
 
-    public DebugPermissionCheckNotifier(TranslatableLogger logger, PermissionCheckNotifier delegate) {
+    public DebugPermissionCheckNotifier(TranslatableLogger logger, PermissionCheckNotifier delegate, @Nullable Predicate<String> filterPredicate) {
         this.logger = logger;
         this.delegate = delegate;
+        this.filterPredicate = filterPredicate == null ? x -> true : filterPredicate;
     }
 
     private String stringIdentifier(Map.Entry<String, String> identifier) {
@@ -46,13 +50,17 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
 
     @Override
     public void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value) {
-        logger.info(t("Permission %s checked in %s for %s: %s", permission, contexts, stringIdentifier(subject), value));
+        if (this.filterPredicate.test(permission)) {
+            logger.info(t("Permission %s checked in %s for %s: %s", permission, contexts, stringIdentifier(subject), value));
+        }
         delegate.onPermissionCheck(subject, contexts, permission, value);
     }
 
     @Override
     public void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value) {
-        logger.info(t("Option %s checked in %s for %s: %s", option, contexts, stringIdentifier(subject), value));
+        if (this.filterPredicate.test(option)) {
+            logger.info(t("Option %s checked in %s for %s: %s", option, contexts, stringIdentifier(subject), value));
+        }
         delegate.onOptionCheck(subject, contexts, option, value);
     }
 

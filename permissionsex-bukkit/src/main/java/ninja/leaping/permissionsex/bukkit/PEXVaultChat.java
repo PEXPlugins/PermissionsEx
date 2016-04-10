@@ -27,10 +27,10 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("deprecation")
-public class PEXVaultChat extends Chat {
+class PEXVaultChat extends Chat {
     private final PermissionsExPlugin plugin;
     private final PEXVault perms;
-    public PEXVaultChat(PEXVault perms) {
+    PEXVaultChat(PEXVault perms) {
         super(perms);
         this.perms = perms;
         this.plugin = perms.plugin;

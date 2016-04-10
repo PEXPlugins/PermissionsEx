@@ -36,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 /**
  * A data store backed entirely in memory
  */
@@ -61,7 +63,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ImmutableSubjectData getDataInternal(String type, String identifier) {
+    public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         final Map.Entry<String, String> key = Maps.immutableEntry(type, identifier);
         ImmutableSubjectData ret = data.get(key);
         if (ret == null) {
@@ -73,7 +75,7 @@ public class MemoryDataStore extends AbstractDataStore {
                 }
             }
         }
-        return ret;
+        return completedFuture(ret);
     }
 
     @Override
@@ -82,27 +84,27 @@ public class MemoryDataStore extends AbstractDataStore {
             this.data.put(Maps.immutableEntry(type, identifier), data);
         }
 
-        return CompletableFuture.completedFuture(data);
+        return completedFuture(data);
     }
 
     @Override
-    protected RankLadder getRankLadderInternal(String name) {
+    protected CompletableFuture<RankLadder> getRankLadderInternal(String name) {
         RankLadder ladder = rankLadders.get(name.toLowerCase());
         if (ladder == null) {
             ladder = new FixedRankLadder(name, ImmutableList.<Map.Entry<String, String>>of());
         }
-        return ladder;
+        return completedFuture(ladder);
     }
 
     @Override
     protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
         this.rankLadders.put(ladder, newLadder);
-        return CompletableFuture.completedFuture(newLadder);
+        return completedFuture(newLadder);
     }
 
     @Override
-    public boolean isRegistered(String type, String identifier) {
-        return data.containsKey(Maps.immutableEntry(type, identifier));
+    public CompletableFuture<Boolean> isRegistered(String type, String identifier) {
+        return completedFuture(data.containsKey(Maps.immutableEntry(type, identifier)));
     }
 
     @Override
@@ -129,19 +131,19 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    public boolean hasRankLadder(String ladder) {
-        return rankLadders.containsKey(ladder.toLowerCase());
+    public CompletableFuture<Boolean> hasRankLadder(String ladder) {
+        return completedFuture(rankLadders.containsKey(ladder.toLowerCase()));
     }
 
     @Override
-    public ContextInheritance getContextInheritanceInternal() {
-        return this.inheritance;
+    public CompletableFuture<ContextInheritance> getContextInheritanceInternal() {
+        return completedFuture(this.inheritance);
     }
 
     @Override
     public CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
         this.inheritance = inheritance;
-        return CompletableFuture.completedFuture(this.inheritance);
+        return completedFuture(this.inheritance);
     }
 
     @Override

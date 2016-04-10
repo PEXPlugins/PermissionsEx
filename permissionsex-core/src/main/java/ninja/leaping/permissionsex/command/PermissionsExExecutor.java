@@ -17,8 +17,6 @@
 package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.Translatable;
@@ -33,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
 
@@ -43,29 +42,25 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         this.pex = pex;
     }
 
-    protected ImmutableSubjectData getSubjectData(SubjectCache cache, String identifier) throws CommandException {
-        try {
-            return cache.getData(identifier, null);
-        } catch (ExecutionException e) {
-            throw new CommandException(t("Unable to get data for subject %s", identifier), e);
-        }
-    }
-
     protected <TextType> TextType formatContexts(Commander<TextType> src, Set<Map.Entry<String, String>> contexts) {
         return src.fmt().hl(contexts.isEmpty() ? src.fmt().tr(t("Global")) : src.fmt().combined(contexts.toString()));
     }
 
     protected CalculatedSubject subjectOrSelf(Commander<?> src, CommandContext args) throws CommandException {
-        if (args.hasAny("subject")) {
-            Map.Entry<String, String> ret = args.getOne("subject");
-            return pex.getSubjects(ret.getKey()).get(ret.getValue());
-        } else {
-            Optional<Map.Entry<String, String>> ret = src.getSubjectIdentifier();
-            if (!ret.isPresent()) {
-                throw new CommandException(t("A subject must be provided for this command!"));
+        try {
+            if (args.hasAny("subject")) {
+                Map.Entry<String, String> ret = args.getOne("subject");
+                return pex.getSubjects(ret.getKey()).get(ret.getValue()).get();
             } else {
-                return pex.getSubjects(ret.get().getKey()).get(ret.get().getValue());
+                Optional<Map.Entry<String, String>> ret = src.getSubjectIdentifier();
+                if (!ret.isPresent()) {
+                    throw new CommandException(t("A subject must be provided for this command!"));
+                } else {
+                    return pex.getSubjects(ret.get().getKey()).get(ret.get().getValue()).get();
+                }
             }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new CommandException(t("Unable to get subject"), e);
         }
     }
 
@@ -83,7 +78,11 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
     }
 
     protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Translatable message) {
-        future.thenRun(() -> src.msg(message)).exceptionally(err -> {
+        messageSubjectOnFuture(future, src, () -> message);
+    }
+
+    protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Supplier<Translatable> message) {
+        future.thenRun(() -> src.msg(message.get())).exceptionally(err -> {
             if (err instanceof CompletionException && err.getCause() != null) {
                 err = err.getCause();
             }

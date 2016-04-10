@@ -18,10 +18,11 @@ package ninja.leaping.permissionsex.subject;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public interface SubjectDataBaker {
-    BakedSubjectData bake(CalculatedSubject data, Set<Map.Entry<String, String>> activeContexts) throws ExecutionException;
+    CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<Map.Entry<String, String>> activeContexts);
 
     static SubjectDataBaker inheritance() {
         return InheritanceSubjectDataBaker.INSTANCE;

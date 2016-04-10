@@ -46,6 +46,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
@@ -214,18 +215,27 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
+    public void onReload(GameReloadEvent event) {
+        if (this.manager != null) {
+            this.manager.reload();
+        }
+    }
+
+    @Listener
     public void onPlayerJoin(final ClientConnectionEvent.Join event) {
         final String identifier = event.getTargetEntity().getIdentifier();
         final SubjectType cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
-        if (cache.isRegistered(identifier)) {
-            cache.persistentData().update(identifier, input -> {
-                if (event.getTargetEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
-                    return input;
-                } else {
-                    return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getTargetEntity().getName());
-                }
-            });
-        }
+        cache.isRegistered(identifier).thenAccept(registered -> {
+           if (registered)  {
+               cache.persistentData().update(identifier, input -> {
+                   if (event.getTargetEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                       return input;
+                   } else {
+                       return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getTargetEntity().getName());
+                   }
+               });
+           }
+        });
     }
 
     @Listener
@@ -381,7 +391,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             return null;
         }
         try {
-            return sql.get().getDataSource(url);
+            return sql.get().getDataSource(this, url);
         } catch (SQLException e) {
             logger.error(t("Unable to get data source for jdbc url %s", url), e);
             return null;

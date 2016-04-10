@@ -52,8 +52,8 @@ class PEXSubject implements OptionSubject {
         this.identifier = identifier;
         this.collection = collection;
         this.baked = collection.getCalculatedSubject(identifier);
-        this.data = new PEXOptionSubjectData(collection.getType().persistentData(), identifier, collection.getPlugin());
-        this.transientData = new PEXOptionSubjectData(collection.getType().transientData(), identifier, collection.getPlugin());
+        this.data = new PEXOptionSubjectData(baked.data(), identifier, collection.getPlugin());
+        this.transientData = new PEXOptionSubjectData(baked.transientData(), identifier, collection.getPlugin());
     }
 
     @Override

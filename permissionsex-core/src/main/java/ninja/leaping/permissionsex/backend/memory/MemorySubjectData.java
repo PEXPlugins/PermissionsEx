@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Map.Entry;
+import static ninja.leaping.permissionsex.util.Util.updateImmutable;
 
 public class MemorySubjectData implements ImmutableSubjectData {
     protected static final ObjectMapper<DataEntry> MAPPER;
@@ -46,19 +47,6 @@ public class MemorySubjectData implements ImmutableSubjectData {
         } catch (ObjectMappingException e) {
             throw new ExceptionInInitializerError(e); // This debug indicates a programming issue
         }
-    }
-
-    protected static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
-        if (input == null) {
-            return ImmutableMap.of(newKey, newVal);
-        }
-        Map<K, V> ret = new HashMap<>(input);
-        if (newVal == null) {
-            ret.remove(newKey);
-        } else {
-            ret.put(newKey, newVal);
-        }
-        return Collections.unmodifiableMap(ret);
     }
 
     @ConfigSerializable

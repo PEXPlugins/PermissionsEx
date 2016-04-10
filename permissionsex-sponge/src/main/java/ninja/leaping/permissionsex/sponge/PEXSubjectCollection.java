@@ -84,7 +84,11 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public boolean hasRegistered(String identifier) {
-        return collection.isRegistered(identifier);
+        try {
+            return collection.isRegistered(identifier).get();
+        } catch (InterruptedException | ExecutionException e) {
+            return false;
+        }
     }
 
     @Override
@@ -123,7 +127,11 @@ class PEXSubjectCollection implements SubjectCollection {
     }
 
     public CalculatedSubject getCalculatedSubject(String identifier) throws PermissionsLoadingException {
-        return plugin.getManager().getSubjects(this.identifier).get(identifier);
+        try {
+            return plugin.getManager().getSubjects(this.identifier).get(identifier).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new PermissionsLoadingException(e);
+        }
     }
 
     SubjectType getType() {

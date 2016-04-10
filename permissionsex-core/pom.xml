@@ -73,6 +73,11 @@
       <version>${version.configurate}</version>
     </dependency>
     <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+      <version>2.2.6</version>
+    </dependency>
+    <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>squirrelid</artifactId>
       <version>0.1.0</version>
@@ -114,6 +119,24 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>[2.0,3.0)</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.191</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
+      <version>1.4.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>9.4.1208</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

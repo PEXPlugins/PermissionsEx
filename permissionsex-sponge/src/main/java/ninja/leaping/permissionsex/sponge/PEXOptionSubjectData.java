@@ -47,10 +47,10 @@ class PEXOptionSubjectData implements OptionSubjectData {
     private SubjectDataReference data;
     private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
 
-    public PEXOptionSubjectData(SubjectCache cache, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
+    public PEXOptionSubjectData(SubjectDataReference data, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
         this.identifier = identifier;
-        this.data = cache.getReference(this.identifier);
+        this.data = data;
         this.data.onUpdate(this::clearCache);
     }
 
@@ -183,7 +183,7 @@ class PEXOptionSubjectData implements OptionSubjectData {
                 } else {
                     parents = new ArrayList<>(rawParents.size());
                     for (Map.Entry<String, String> ent : rawParents) {
-                        parents.add(plugin.getSubjects(ent.getKey()).get(ent.getValue()));
+                        parents.add(plugin.getSubjects(ent.getKey()).get(ent.getValue())); // TODO: Parallelize
                     }
                 }
                 List<Subject> existingParents = parentsCache.putIfAbsent(set, parents);

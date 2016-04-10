@@ -41,10 +41,13 @@ public class DeleteCommand {
                         CalculatedSubject subject = subjectOrSelf(src, args);
                         checkSubjectPermission(src, subject.getIdentifier(), "permissionsex.delete");
                         SubjectCache cache = args.hasAny("transient") ? subject.transientData().getCache() : subject.data().getCache();
-                        if (!cache.isRegistered(subject.getIdentifier().getValue())) {
-                            throw new CommandException(t("Subject %s does not exist!", src.fmt().subject(subject)));
-                        }
-                        messageSubjectOnFuture(cache.remove(subject.getIdentifier().getValue()), src, t("Successfully deleted data for subject %s", src.fmt().subject(subject)));
+                        messageSubjectOnFuture(cache.isRegistered(subject.getIdentifier().getValue())
+                                .thenCompose(registered -> {
+                                    if (!registered) {
+                                        throw new RuntimeCommandException(t("Subject %s does not exist!", src.fmt().subject(subject)));
+                                    }
+                                    return cache.remove(subject.getIdentifier().getValue());
+                                }), src, t("Successfully deleted data for subject %s", src.fmt().subject(subject)));
                     }
                 })
                 .build();

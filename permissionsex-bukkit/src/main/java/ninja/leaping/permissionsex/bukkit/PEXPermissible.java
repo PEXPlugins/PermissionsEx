@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
@@ -132,14 +133,17 @@ public class PEXPermissible extends PermissibleBase {
     private Permissible previousPermissible;
     private final Set<PEXPermissionAttachment> attachments = new HashSet<>();
 
-    public PEXPermissible(Player player, PermissionsExPlugin plugin) {
+    public PEXPermissible(Player player, PermissionsExPlugin plugin) throws ExecutionException, InterruptedException {
         super(player);
         this.player = player;
         this.plugin = plugin;
         this.pex = plugin.getManager();
-        this.subj = pex.getSubjects(SUBJECTS_USER).get(player.getUniqueId().toString());
+        this.subj = pex.getSubjects(SUBJECTS_USER).get(player.getUniqueId().toString()).get();
     }
 
+    CalculatedSubject getPEXSubject() {
+        return this.subj;
+    }
 
     public PermissionsEx getManager() {
         return this.pex;

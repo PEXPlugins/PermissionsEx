@@ -1,0 +1,19 @@
+language: java
+jdk:
+    - oraclejdk8
+sudo: false
+
+# Databases
+addons:
+    mariadb: '10.1'
+services: 
+    - postgresql
+before_script:
+      - psql -c 'create database pextest;' -U postgres
+      - mysql -u root -c 'create database pextest;'
+script:
+    - mvn -Dninja.leaping.permissionsex.backend.sql.testDatabases=mysql!jdbc:mysql://localhost/pextest?user=root;postgres!jdbc:postgresql://localhost/pextest?user=postgres
+
+cache:
+    directories:
+        - $HOME/.m2

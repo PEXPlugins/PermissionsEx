@@ -22,6 +22,6 @@ package ninja.leaping.permissionsex.util;
  * @param <O>
  */
 @FunctionalInterface
-public interface ThrowingFunction<I, O> {
-    O apply(I input) throws Exception;
+public interface ThrowingFunction<I, O, E extends Exception> {
+    O apply(I input) throws E;
 }

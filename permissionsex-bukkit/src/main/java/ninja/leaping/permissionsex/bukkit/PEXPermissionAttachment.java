@@ -43,8 +43,8 @@ public class PEXPermissionAttachment extends PermissionAttachment {
         this.perm = perm;
 
         try {
-            this.subjectData = perm.getManager().getSubjects(ATTACHMENT_TYPE).transientData().getReference(this.identifier);
-        } catch (ExecutionException e) {
+            this.subjectData = perm.getManager().getSubjects(ATTACHMENT_TYPE).transientData().getReference(this.identifier).get();
+        } catch (ExecutionException | InterruptedException e) {
             throw new ExceptionInInitializerError(e);
         }
     }

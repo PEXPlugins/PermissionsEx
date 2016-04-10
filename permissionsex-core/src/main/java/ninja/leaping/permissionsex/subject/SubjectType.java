@@ -16,9 +16,8 @@
  */
 package ninja.leaping.permissionsex.subject;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backend.DataStore;
@@ -28,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -37,12 +37,13 @@ public class SubjectType {
     private final PermissionsEx pex;
     private SubjectTypeDefinition type;
     private SubjectCache persistentData, transientData;
-    private final LoadingCache<String, CalculatedSubject> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, CalculatedSubject>() {
-        @Override
-        public CalculatedSubject load(String key) throws Exception {
-            return new CalculatedSubject(SubjectDataBaker.inheritance(), Maps.immutableEntry(type.getTypeName(), key), SubjectType.this);
-        }
-    });
+    private final AsyncLoadingCache<String, CalculatedSubject> cache = Caffeine.newBuilder().buildAsync(((key, executor) -> {
+        CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), Maps.immutableEntry(type.getTypeName(), key), SubjectType.this);
+        return persistentData.getReference(key).thenCombine(transientData.getReference(key), (persistentRef, transientRef) -> {
+            subj.initialize(persistentRef, transientRef);
+            return subj;
+        });
+    }));
 
     public SubjectType(PermissionsEx pex, String type, SubjectCache persistentData, SubjectCache transientData) {
         this.pex = pex;
@@ -65,7 +66,7 @@ public class SubjectType {
     }
 
     public Collection<CalculatedSubject> getActiveSubjects() {
-        return Collections.unmodifiableCollection(this.cache.asMap().values());
+        return Collections.unmodifiableCollection(this.cache.synchronous().asMap().values());
     }
 
     public void uncache(String identifier) {
@@ -75,19 +76,15 @@ public class SubjectType {
 
         persistentData.invalidate(identifier);
         transientData.invalidate(identifier);
-        cache.invalidate(identifier);
+        cache.synchronous().invalidate(identifier);
     }
 
-    public CalculatedSubject get(String identifier) {
+    public CompletableFuture<CalculatedSubject> get(String identifier) {
         if (!getTypeInfo().isNameValid(identifier)) {
             throw new IllegalArgumentException("Provided name " + identifier + " is not valid for subjects of type " + type.getTypeName());
         }
 
-        try {
-            return cache.get(identifier);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return cache.get(identifier);
     }
 
     public SubjectCache transientData() {
@@ -111,7 +108,7 @@ public class SubjectType {
         this.transientData.load(identifier);
     }
 
-    public boolean isRegistered(String identifier) {
+    public CompletableFuture<Boolean> isRegistered(String identifier) {
         return this.persistentData.isRegistered(identifier);
     }
 

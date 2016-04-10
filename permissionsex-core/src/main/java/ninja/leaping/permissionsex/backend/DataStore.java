@@ -57,7 +57,7 @@ public interface DataStore {
      * @param listener The update listener for this subject
      * @return The relevant subject data
      */
-    ImmutableSubjectData getData(String type, String identifier, @Nullable Caching<ImmutableSubjectData> listener);
+    CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, @Nullable Caching<ImmutableSubjectData> listener);
 
     /**
      * Sets the data at the specified type and identifier.
@@ -70,12 +70,17 @@ public interface DataStore {
     CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
 
     default CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {
-        if (isRegistered(oldType, oldIdentifier) && !isRegistered(newType, newIdentifier)) {
-            return setData(newType, newIdentifier, getData(oldType, oldIdentifier, null))
-                    .thenRun(() -> setData(oldType, oldIdentifier, null));
-        } else {
-            return Util.failedFuture(new PermissionsException(t("Destination subject already existed or target subject did not!")));
-        }
+        return isRegistered(oldType, oldIdentifier).thenCombine(isRegistered(newType, newIdentifier), (oldRegistered, newRegistered) -> {
+            if (oldRegistered && !newRegistered) {
+                return getData(oldType, oldIdentifier, null)
+                        .thenCompose(oldData -> setData(newType, newIdentifier, oldData))
+                        .thenCompose(newData -> setData(oldType, oldIdentifier, null))
+                        .thenApply(inp -> (Void) null);
+            } else {
+                return Util.<Void>failedFuture(new PermissionsException(t("Destination subject already existed or target subject did not!")));
+            }
+
+        }).thenCompose(future -> future);
     }
 
     /**
@@ -85,7 +90,7 @@ public interface DataStore {
      * @param identifier The subject's identifier
      * @return whether any data is stored
      */
-    boolean isRegistered(String type, String identifier);
+    CompletableFuture<Boolean> isRegistered(String type, String identifier);
 
     /**
      * Get all data for subjects of the specified type. This {@link Iterable} may be filled asynchronously
@@ -95,9 +100,10 @@ public interface DataStore {
     Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(String type);
 
     /**
+     * Get all subject identifiers for subjects of the given type.
      *
-     * @param type
-     * @return
+     * @param type The type of subject to get identifiers for
+     * @return The registered identifiers of subjects of type {@code type}
      */
     Set<String> getAllIdentifiers(String type);
 
@@ -109,10 +115,9 @@ public interface DataStore {
     Set<String> getRegisteredTypes();
 
     /**
-     * Serialize the configuration state of this data store to a configuration node
+     * Returns all subjects present in this data store
      *
-     * @param node The node to serialize state to
-     * @return The type name of this data store
+     * @return An iterable containing all subjects
      */
      String serialize(ConfigurationNode node) throws PermissionsLoadingException;
 
@@ -147,7 +152,7 @@ public interface DataStore {
      * @param listener The listener to track possible updates
      * @return the ladder
      */
-    RankLadder getRankLadder(String ladder, @Nullable Caching<RankLadder> listener);
+    CompletableFuture<RankLadder> getRankLadder(String ladder, @Nullable Caching<RankLadder> listener);
 
     /**
      * Whether a rank ladder by the given name is present.
@@ -155,7 +160,7 @@ public interface DataStore {
      * @param ladder The ladder to check. Case-insensitive
      * @return Whether a ladder by the provided name exists
      */
-    boolean hasRankLadder(String ladder);
+    CompletableFuture<Boolean> hasRankLadder(String ladder);
 
     /**
      * Set the rank ladder at the given identifier.
@@ -166,7 +171,12 @@ public interface DataStore {
      */
     CompletableFuture<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
 
-    ContextInheritance getContextInheritance(Caching<ContextInheritance> inheritance);
+    /**
+     * Get context inheritance information
+     * @param inheritance The listener to notify about changes
+     * @return A future that will supply context inheritance
+     */
+    CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> inheritance);
 
     CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
 }

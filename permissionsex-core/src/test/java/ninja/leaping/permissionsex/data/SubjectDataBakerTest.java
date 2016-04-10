@@ -46,21 +46,19 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      * ignored inheritance permission in child has effect in both
      */
     @Test
-    public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException {
+    public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
         SubjectType groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
-        CalculatedSubject parent = groupCache.get("parent");
-        parent.data().update(old -> old.setPermission(GLOBAL_CONTEXT, "#test.permission.parent", 1));
-        CalculatedSubject child = groupCache.get("child");
-        child.data().update(old -> old.addParent(GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parent.getIdentifier().getValue())
-        .setPermission(GLOBAL_CONTEXT, "#test.permission.child", 1));
-        CalculatedSubject subject = groupCache.get("subject");
-        subject.data().update(old -> old.addParent(GLOBAL_CONTEXT, child.getIdentifier().getKey(), child.getIdentifier().getValue()));
+        CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
+        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parentS.getIdentifier().getValue())
+                .setPermission(GLOBAL_CONTEXT, "#test.permission.child", 1)
+        ).thenApply(data -> child)).get();
+        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(GLOBAL_CONTEXT, childS.getIdentifier().getKey(), childS.getIdentifier().getValue())).thenApply(data -> subject)).get();
 
-        assertEquals(1, parent.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, child.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, child.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
-        assertEquals(0, subject.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, subject.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
+        assertEquals(1, parentS.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, childS.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, childS.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
+        assertEquals(0, subjectS.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, subjectS.getPermissions(GLOBAL_CONTEXT).get("test.permission.child"));
     }
 
     @Override

@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
 
@@ -113,12 +114,12 @@ public class GameArguments {
                 identifier = args.next();
             }
             SubjectType subjType = pex.getSubjects(type);
-            if (!subjType.isRegistered(identifier)) {
+            //if (!subjType.isRegistered(identifier)) { // TODO: Async command elements
                 final Optional<String> newIdentifier = subjType.getTypeInfo().getAliasForName(identifier);
                 if (newIdentifier.isPresent()) {
                     identifier = newIdentifier.get();
                 }
-            }
+            //}
 
             if (!subjType.getTypeInfo().isNameValid(identifier)) {
                 throw args.createError(t("Name '%s' is invalid for subjects of type %s", identifier, type));

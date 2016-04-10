@@ -29,14 +29,16 @@ import org.bukkit.entity.Player;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.PermissionsEx.SUBJECTS_GROUP;
 
 @SuppressWarnings("deprecation")
-public class PEXVault extends Permission {
+class PEXVault extends Permission {
     final PermissionsExPlugin plugin;
 
-    public PEXVault(PermissionsExPlugin plugin) {
+    PEXVault(PermissionsExPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -65,16 +67,24 @@ public class PEXVault extends Permission {
         return true;
     }
 
+    private <T> T getUnchecked(CompletableFuture<T> future) {
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     CalculatedSubject getGroup(String name) {
-        return this.plugin.getGroupSubjects().get(name);
+        return getUnchecked(this.plugin.getGroupSubjects().get(Preconditions.checkNotNull(name, "name")));
     }
 
     CalculatedSubject getSubject(OfflinePlayer player) {
-        return this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player").getUniqueId().toString());
+        return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player").getUniqueId().toString()));
     }
 
     CalculatedSubject getSubject(String player) {
-        return this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player"));
+        return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player")));
     }
 
     private Set<Map.Entry<String, String>> contextsFrom(@Nullable String world) {

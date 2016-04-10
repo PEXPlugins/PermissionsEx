@@ -18,10 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
-import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;

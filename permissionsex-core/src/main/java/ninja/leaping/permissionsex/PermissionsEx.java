@@ -16,12 +16,8 @@
  */
 package ninja.leaping.permissionsex;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.sk89q.squirrelid.resolver.HttpRepositoryService;
 import com.sk89q.squirrelid.resolver.ProfileService;
 import ninja.leaping.permissionsex.backend.DataStore;
@@ -36,12 +32,9 @@ import ninja.leaping.permissionsex.logging.DebugPermissionCheckNotifier;
 import ninja.leaping.permissionsex.logging.PermissionCheckNotifier;
 import ninja.leaping.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
-import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.data.ContextInheritance;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
-import ninja.leaping.permissionsex.subject.SubjectDataBaker;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.Util;
@@ -52,21 +45,21 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static ninja.leaping.permissionsex.util.Translations.*;
 
 public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
@@ -75,7 +68,6 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     public static final String SUBJECTS_DEFAULTS = "default";
     public static final ImmutableSet<Map.Entry<String, String>> GLOBAL_CONTEXT = ImmutableSet.of();
 
-    private final Map<String, Function<String, String>> nameTransformerMap = new ConcurrentHashMap<>();
     private final TranslatableLogger logger;
     private final ImplementationInterface impl;
     private final MemoryDataStore transientData;
@@ -85,7 +77,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private final AtomicReference<State> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
     private RankLadderCache rankLadderCache;
-    private volatile ContextInheritance cachedInheritance;
+    private volatile CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
 
     private static class State {
@@ -123,8 +115,9 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private void convertUuids() {
         try {
             InetAddress.getByName("api.mojang.com");
-            getState().activeDataStore.performBulkOperation(input -> {
-                Iterable<String> toConvert = Iterables.filter(input.getAllIdentifiers(SUBJECTS_USER), input1 -> {
+            final List<CompletableFuture<?>> actions = new ArrayList<>();
+            getState().activeDataStore.performBulkOperation(dataStore -> {
+                Iterable<String> toConvert = Iterables.filter(dataStore.getAllIdentifiers(SUBJECTS_USER), input1 -> {
                     if (input1 == null || input1.length() != 36) {
                         return true;
                     }
@@ -146,28 +139,33 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     final int[] converted = {0};
                     service.findAllByName(toConvert, profile -> {
                         final String newIdentifier = profile.getUniqueId().toString();
-                        if (input.isRegistered(SUBJECTS_USER, newIdentifier)) {
-                            getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
-                            return false; // We already have a registered UUID, this is a duplicate.
-                        }
-
                         String lookupName = profile.getName();
-                        if (!input.isRegistered(SUBJECTS_USER, lookupName)) {
-                            lookupName = lookupName.toLowerCase();
-                        }
-                        if (!input.isRegistered(SUBJECTS_USER, lookupName)) {
-                            return false;
-                        }
-                        converted[0]++;
+                        actions.add(dataStore.isRegistered(SUBJECTS_USER, newIdentifier).thenCombine(
+                                dataStore.isRegistered(SUBJECTS_USER, lookupName)
+                                        .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
+                                    if (newRegistered) {
+                                        getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
+                                        return false;
+                                    } else if (!oldRegistered) {
+                                        return false;
+                                    }
+                                    converted[0]++;
+                                    return true;
 
-                        ImmutableSubjectData oldData = input.getData(SUBJECTS_USER, profile.getName(), null);
-                        final String finalLookupName = lookupName;
-                        input.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
-                                .thenAccept(result -> input.setData(SUBJECTS_USER, finalLookupName, null)
-                                        .exceptionally(t -> {
-                                            t.printStackTrace();
-                                            return null;
-                                        }));
+                        }).thenCompose(doConvert -> {
+                            if (!doConvert) {
+                                return Util.emptyFuture();
+                            }
+                            return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
+                                    .thenCompose(oldData -> {
+                                        return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
+                                                .thenAccept(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)
+                                                        .exceptionally(t -> {
+                                                            t.printStackTrace();
+                                                            return null;
+                                                        }));
+                                    });
+                        }));
                         return true;
                     });
                     return converted[0];
@@ -175,7 +173,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     getLogger().error(t("Error while fetching UUIDs for users"), e);
                     return 0;
                 }
-            }).thenAccept(result -> {
+            }).thenCombine(CompletableFuture.allOf(actions.toArray(new CompletableFuture[actions.size()])), (count, none) -> count).thenAccept(result -> {
                     if (result != null && result > 0) {
                         getLogger().info(tn("%s user successfully converted from name to UUID",
                                 "%s users successfully converted from name to UUID!",
@@ -230,9 +228,9 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return state.activeDataStore.performBulkOperation(store -> {
             CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(),
                     input -> store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue())), CompletableFuture.class))
-                    .thenCombine(store.setContextInheritance(expected.getContextInheritance(null)), (v, a) -> null);
+                    .thenCombine(expected.getContextInheritance(null).thenCompose(store::setContextInheritance), (v, a) -> null);
             for (String ladder : store.getAllRankLadders()) {
-                ret = ret.thenCombine(store.setRankLadder(ladder, expected.getRankLadder(ladder, null)), (v, a) -> null);
+                ret = ret.thenCombine(expected.getRankLadder(ladder, null).thenCompose(ladderObj -> store.setRankLadder(ladder, ladderObj)), (v, a) -> null);
             }
             return ret;
         }).thenCompose(val -> Util.failableFuture(val::get));
@@ -256,9 +254,13 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     public void setDebugMode(boolean debug) {
+        setDebugMode(debug, null);
+    }
+
+    public void setDebugMode(boolean debug, Pattern filterPattern) {
         if (debug) {
             if (!(this.notifier instanceof DebugPermissionCheckNotifier)) {
-                this.notifier = new DebugPermissionCheckNotifier(getLogger(), this.notifier);
+                this.notifier = new DebugPermissionCheckNotifier(getLogger(), this.notifier, filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
             }
         } else {
             if (this.notifier instanceof DebugPermissionCheckNotifier) {
@@ -293,7 +295,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         getSubjects(SUBJECTS_GROUP).cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
-            this.cachedInheritanceListeners.call(true, getContextInheritance(null));
+            getContextInheritance(null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
         }
 
         // Migrate over legacy subject data
@@ -325,7 +327,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     @Override
-    public DataSource getDataSourceForURL(String url) {
+    public DataSource getDataSourceForURL(String url) throws SQLException {
         return impl.getDataSourceForURL(url);
     }
 
@@ -358,7 +360,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return getState().config;
     }
 
-    public ContextInheritance getContextInheritance(Caching<ContextInheritance> listener) {
+    public CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
             this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
         }
@@ -375,7 +377,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     @Override
     public void clearCache(ContextInheritance newData) {
-        this.cachedInheritance = newData;
+        this.cachedInheritance = CompletableFuture.completedFuture(newData);
         this.cachedInheritanceListeners.call(true, newData);
     }
 }

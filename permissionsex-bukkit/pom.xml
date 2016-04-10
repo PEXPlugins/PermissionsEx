@@ -49,18 +49,27 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>shaded</shadedClassifierName> <!-- Any name that makes sense -->
+              <minimizeJar>true</minimizeJar>
               <relocations>
                 <relocation>
                   <pattern>ninja.leaping.configurate</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.configurate</shadedPattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.ninja-leaping-configurate</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com.sk89q.squirrelid</shadedPattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org.gnu.gettext</shadedPattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.org-gnu-gettext</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.zaxxer.hikari</pattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.com-zaxxer-hikari</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.github.benmanes.caffeine</pattern>
+                  <shadedPattern>ninja.leaping.permissionsex.libs.com-github-benmanes-caffeine</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -110,6 +119,13 @@
       <version>1.5</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.192</version>
+      <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
     <!-- Test deps -->
     <dependency>
       <groupId>junit</groupId>
@@ -127,6 +143,11 @@
       <artifactId>mockito-core</artifactId>
       <version>[2.0,3.0)</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>2.4.5</version>
     </dependency>
   </dependencies>
   <repositories>

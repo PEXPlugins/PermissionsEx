@@ -17,7 +17,6 @@
 package ninja.leaping.permissionsex.backend.file;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -41,9 +40,9 @@ import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.util.GuavaCollectors;
 import ninja.leaping.permissionsex.util.Util;
 
-import javax.security.auth.login.Configuration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static ninja.leaping.permissionsex.util.Translations.t;
 
 public final class FileDataStore extends AbstractDataStore {
@@ -168,7 +168,7 @@ public final class FileDataStore extends AbstractDataStore {
                 return null;
             }, getManager().getAsyncExecutor());
         } else {
-            return CompletableFuture.completedFuture(null);
+            return completedFuture(null);
         }
     }
 
@@ -181,11 +181,13 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public ImmutableSubjectData getDataInternal(String type, String identifier) throws PermissionsLoadingException {
+    public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         try {
-            return FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
+            return completedFuture(FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier)));
+        } catch (PermissionsLoadingException e) {
+            return Util.failedFuture(e);
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e);
+            return Util.failedFuture(new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e));
         }
     }
 
@@ -214,8 +216,8 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public boolean isRegistered(String type, String identifier) {
-        return !getSubjectsNode().getNode(type, identifier).isVirtual();
+    public CompletableFuture<Boolean> isRegistered(String type, String identifier) {
+        return completedFuture(!getSubjectsNode().getNode(type, identifier).isVirtual());
     }
 
     @Override
@@ -226,17 +228,29 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public Set<String> getRegisteredTypes() {
-        return ImmutableSet.copyOf(Iterables.transform(Maps.filterValues(getSubjectsNode().getChildrenMap(),
-                input -> input != null && input.hasMapChildren()).keySet(), Object::toString));
+        return getSubjectsNode().getChildrenMap().entrySet().stream()
+                .filter(ent -> ent.getValue().hasMapChildren())
+                .map(Map.Entry::getKey)
+                .map(Object::toString)
+                .distinct()
+                .collect(GuavaCollectors.toImmutableSet());
     }
 
     @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
+        /*return getSubjectsNode().getChildrenMap().keySet().stream()
+                .filter(i -> i != null)
+                .flatMap(type -> {
+                    final String typeStr = type.toString();
+                    return getAll(typeStr)
+                            .stream()
+                            .map(ent -> Maps.immutableEntry(Maps.immutableEntry(typeStr, ent.getKey()), ent.getValue()));
+                })
+                .collect(GuavaCollectors.toImmutableSet());*/
         return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), type -> {
                 if (type == null) {
                     return null;
                 }
-
                 final String typeStr = type.toString();
 
                 return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
@@ -253,21 +267,21 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public RankLadder getRankLadderInternal(String ladder) {
-        return new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), input -> Util.subjectFromString(input.getString()))));
+    public CompletableFuture<RankLadder> getRankLadderInternal(String ladder) {
+        return completedFuture(new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), input -> Util.subjectFromString(input.getString())))));
     }
 
     @Override
-    public boolean hasRankLadder(String ladder) {
-        return !getRankLaddersNode().getNode(ladder.toLowerCase()).isVirtual();
+    public CompletableFuture<Boolean> hasRankLadder(String ladder) {
+        return completedFuture(!getRankLaddersNode().getNode(ladder.toLowerCase()).isVirtual());
     }
 
     @Override
-    public ContextInheritance getContextInheritanceInternal() {
+    public CompletableFuture<ContextInheritance> getContextInheritanceInternal() {
         try {
-            return this.permissionsConfig.getValue(TypeToken.of(MemoryContextInheritance.class));
+            return completedFuture(this.permissionsConfig.getValue(TypeToken.of(MemoryContextInheritance.class)));
         } catch (ObjectMappingException e) {
-            throw new RuntimeException(e);
+            return Util.failedFuture(e);
         }
     }
 

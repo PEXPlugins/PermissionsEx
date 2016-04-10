@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.backend;
 import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.backend.file.FileDataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
+import ninja.leaping.permissionsex.backend.sql.SqlDataStore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +30,7 @@ public class DataStoreFactories {
     static {
         register("file", FileDataStore.FACTORY);
         register("memory", MemoryDataStore.FACTORY);
+        register("sql", SqlDataStore.FACTORY);
     }
 
     private DataStoreFactories() {

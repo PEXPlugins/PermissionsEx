@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
@@ -46,7 +47,7 @@ public interface ImplementationInterface {
      * @param url The specifier to get a data source for
      * @return The appropriate data source, or null if not supported
      */
-    DataSource getDataSourceForURL(String url);
+    DataSource getDataSourceForURL(String url) throws SQLException;
 
     /**
      * Get an executor to run tasks asynchronously on.

@@ -58,8 +58,8 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
     public BaseComponent subject(Map.Entry<String, String> subject) {
         String name;
         try {
-            name = pex.getManager().getSubjects(subject.getKey()).persistentData().getData(subject.getValue(), null).getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
-        } catch (ExecutionException e) {
+            name = pex.getManager().getSubjects(subject.getKey()).persistentData().getData(subject.getValue(), null).get().getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
+        } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 

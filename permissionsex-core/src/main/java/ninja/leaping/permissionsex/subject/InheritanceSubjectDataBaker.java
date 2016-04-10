@@ -23,10 +23,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.Combinations;
 import ninja.leaping.permissionsex.util.NodeTree;
+import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.glob.GlobParseException;
 import ninja.leaping.permissionsex.util.glob.Globs;
 
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.Map.Entry;
 import static ninja.leaping.permissionsex.util.Translations.t;
@@ -72,53 +72,61 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         }
     }
 
-    private static Set<Set<Entry<String, String>>> processContexts(PermissionsEx pex, Set<Entry<String, String>> rawContexts) {
-        ContextInheritance inheritance = pex.getContextInheritance(null);
-        Queue<Entry<String, String>> inProgressContexts = new LinkedList<>(rawContexts);
-        Set<Entry<String, String>> contexts = new HashSet<>();
-        Entry<String, String> context;
-        while ((context = inProgressContexts.poll()) != null) {
-            if (contexts.add(context)) {
-                inProgressContexts.addAll(inheritance.getParents(context));
+    private static CompletableFuture<Set<Set<Entry<String, String>>>> processContexts(PermissionsEx pex, Set<Entry<String, String>> rawContexts) {
+        return pex.getContextInheritance(null).thenApply(inheritance -> {
+            Queue<Entry<String, String>> inProgressContexts = new LinkedList<>(rawContexts);
+            Set<Entry<String, String>> contexts = new HashSet<>();
+            Entry<String, String> context;
+            while ((context = inProgressContexts.poll()) != null) {
+                if (contexts.add(context)) {
+                    inProgressContexts.addAll(inheritance.getParents(context));
+                }
             }
-        }
-        return ImmutableSet.copyOf(Combinations.of(contexts));
+            return ImmutableSet.copyOf(Combinations.of(contexts));
+
+        });
     }
 
     @Override
-    public BakedSubjectData bake(CalculatedSubject data, Set<Entry<String, String>> activeContexts) throws ExecutionException {
+    public CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<Entry<String, String>> activeContexts) {
         final Map.Entry<String, String> subject = data.getIdentifier();
-        final BakeState state = new BakeState(data, processContexts(data.getManager(), activeContexts));
+        return processContexts(data.getManager(), activeContexts)
+                .thenCompose(processedContexts -> {
+                    final BakeState state = new BakeState(data, processedContexts);
 
-        final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
-        visitSubject(state, subject, visitedSubjects, 0);
-        Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
-        if (!subject.equals(defIdentifier)) {
-            visitSubject(state, defIdentifier, visitedSubjects, 1);
-            visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2); // Force in global defaults
-        }
+                    final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
+                    CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
+                    Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
+                    if (!subject.equals(defIdentifier)) {
+                        visitSubject(state, defIdentifier, visitedSubjects, 1);
+                        visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2); // Force in global defaults
+                    }
+                    return ret.thenApply(none -> state);
 
-        return new BakedSubjectData(NodeTree.of(state.combinedPermissions, state.defaultValue), ImmutableList.copyOf(state.parents), ImmutableMap.copyOf(state.options));
+                }).thenApply(state -> new BakedSubjectData(NodeTree.of(state.combinedPermissions, state.defaultValue), ImmutableList.copyOf(state.parents), ImmutableMap.copyOf(state.options)));
     }
 
-    private void visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) throws ExecutionException {
+    private CompletableFuture<Void> visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
             state.pex.getLogger().warn(t("Potential circular inheritance found while traversing inheritance for %s when visiting %s", state.base.getIdentifier(), subject));
-            return;
+            return Util.emptyFuture();
         }
         visitedSubjects.add(subject);
         SubjectType type = state.pex.getSubjects(subject.getKey());
-        ImmutableSubjectData data = type.persistentData().getData(subject.getValue(), state.base), transientData = type.transientData().getData(subject.getValue(), state.base);
-        for (Set<Entry<String, String>> combo : state.activeContexts) {
-            visitSingle(state, transientData, combo, inheritanceLevel);
-            for (Entry<String, String> parent : transientData.getParents(combo)) {
-                visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1);
+        return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
+            CompletableFuture<Void> ret = Util.emptyFuture();
+            for (Set<Entry<String, String>> combo : state.activeContexts) {
+                ret = ret.thenRun(() -> visitSingle(state, transientData, combo, inheritanceLevel));
+                for (Entry<String, String> parent : transientData.getParents(combo)) {
+                    ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                }
+                ret = ret.thenRun(() -> visitSingle(state, persistent, combo, inheritanceLevel));
+                for (Entry<String, String> parent : persistent.getParents(combo)) {
+                    ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                }
             }
-            visitSingle(state, data, combo, inheritanceLevel);
-            for (Entry<String, String> parent : data.getParents(combo)) {
-                visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1);
-            }
-        }
+            return ret;
+        }).thenCompose(res -> res);
     }
 
     private void putPermIfNecessary(BakeState state, String perm, int val) {

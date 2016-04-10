@@ -17,6 +17,6 @@
 package ninja.leaping.permissionsex.util;
 
 @FunctionalInterface
-public interface ThrowingSupplier<V> {
-    V supply() throws Exception;
+public interface ThrowingSupplier<V, E extends Exception> {
+    V supply() throws E;
 }
