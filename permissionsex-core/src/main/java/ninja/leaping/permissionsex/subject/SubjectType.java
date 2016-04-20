@@ -103,7 +103,7 @@ public class SubjectType {
     }
 
     public void update(DataStore newDataStore) {
-        this.persistentData = new SubjectCache(this.persistentData, newDataStore);
+        this.persistentData.update(newDataStore);
     }
 
     public void load(String identifier) throws ExecutionException {

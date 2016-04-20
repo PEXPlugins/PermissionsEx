@@ -288,9 +288,9 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
             } catch (Exception e) {} // TODO maybe warn?
         }
 
-        getSubjects(SUBJECTS_GROUP).cacheAll();
         this.rankLadderCache = new RankLadderCache(this.rankLadderCache, newState.activeDataStore);
         this.subjectTypeCache.forEach((key, val) -> val.update(newState.activeDataStore));
+        getSubjects(SUBJECTS_GROUP).cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
             this.cachedInheritanceListeners.call(true, getContextInheritance(null));

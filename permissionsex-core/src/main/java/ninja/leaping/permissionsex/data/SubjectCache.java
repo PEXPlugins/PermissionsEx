@@ -31,49 +31,44 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public class SubjectCache {
     private final String type;
-    private final DataStore dataStore;
-    private final LoadingCache<String, ImmutableSubjectData> cache;
+    private DataStore dataStore;
+    private final AtomicReference<LoadingCache<String, ImmutableSubjectData>> cache = new AtomicReference<>();
     private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
     private final Map.Entry<String, String> defaultIdentifier;
 
     public SubjectCache(final String type, final DataStore dataStore) {
-        this(type, null, dataStore);
-    }
-
-    public SubjectCache(final SubjectCache existing, final DataStore dataStore) {
-        this(existing.getType(), existing, dataStore);
-    }
-
-    private SubjectCache(final String type, final SubjectCache existing, final DataStore dataStore) {
         this.type = type;
-        this.dataStore = dataStore;
+        update(dataStore);
         this.defaultIdentifier = Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, type);
-        cache = CacheBuilder.newBuilder()
+        this.listeners = new CacheListenerHolder<>();
+    }
+
+    public void update(DataStore newDataStore) {
+        this.dataStore = newDataStore;
+        LoadingCache<String, ImmutableSubjectData> oldCache = this.cache.getAndSet(CacheBuilder.newBuilder()
                 .maximumSize(512)
-                .build(CacheLoader.from(identifier -> dataStore.getData(type, identifier, clearListener(identifier))));
-        if (existing != null) {
-            this.listeners = existing.listeners;
-            existing.cache.asMap().forEach((k, v) -> {
+                .build(CacheLoader.from(identifier -> newDataStore.getData(type, identifier, clearListener(identifier)))));
+        if (oldCache != null) {
+            oldCache.asMap().forEach((k, v) -> {
                 try {
                     listeners.call(k, getData(k, null));
                 } catch (ExecutionException e) {
                     // TODO: Not ignore this somehow? Add a listener in to the backend?
                 }
             });
-        } else {
-            this.listeners = new CacheListenerHolder<>();
         }
     }
 
     public ImmutableSubjectData getData(String identifier, Caching<ImmutableSubjectData> listener) throws ExecutionException {
         Objects.requireNonNull(identifier, "identifier");
 
-        ImmutableSubjectData ret = cache.get(identifier);
+        ImmutableSubjectData ret = cache.get().get(identifier);
         if (listener != null) {
             listeners.addListener(identifier, listener);
         }
@@ -109,13 +104,13 @@ public class SubjectCache {
     public void load(String identifier) throws ExecutionException {
         Objects.requireNonNull(identifier, "identifier");
 
-        cache.get(identifier);
+        cache.get().get(identifier);
     }
 
     public void invalidate(String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
-        cache.invalidate(identifier);
+        cache.get().invalidate(identifier);
         cacheHolders.remove(identifier);
         listeners.removeAll(identifier);
     }
@@ -123,7 +118,7 @@ public class SubjectCache {
     public void cacheAll() {
         for (String ident : dataStore.getAllIdentifiers(type)) {
             try {
-                cache.get(ident);
+                cache.get().get(ident);
             } catch (ExecutionException e) {
                 // oh noes, but we'll still squash it
             }
@@ -148,7 +143,7 @@ public class SubjectCache {
 
     private Caching<ImmutableSubjectData> clearListener(final String name) {
         Caching<ImmutableSubjectData> ret = newData -> {
-            cache.put(name, newData);
+            cache.get().put(name, newData);
             listeners.call(name, newData);
         };
         cacheHolders.put(name, ret);
