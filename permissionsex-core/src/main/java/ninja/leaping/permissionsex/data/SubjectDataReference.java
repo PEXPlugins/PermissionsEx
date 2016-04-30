@@ -68,8 +68,8 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
                 return CompletableFuture.completedFuture(new Change<>(data, newData));
             }
         } while (!this.data.compareAndSet(data, newData));
-        final ImmutableSubjectData finalNew = newData;
-        return this.cache.set(this.identifier, newData).thenApply(old -> new Change<>(old, finalNew));
+        final ImmutableSubjectData finalData = data;
+        return this.cache.set(this.identifier, newData).thenApply(finalNew -> new Change<>(finalData, finalNew));
     }
 
     @Override

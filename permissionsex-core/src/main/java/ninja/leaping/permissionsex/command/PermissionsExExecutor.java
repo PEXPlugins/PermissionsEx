@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
@@ -83,6 +84,10 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
 
     protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Translatable message) {
         future.thenRun(() -> src.msg(message)).exceptionally(err -> {
+            if (err instanceof CompletionException && err.getCause() != null) {
+                err = err.getCause();
+            }
+
             if (err instanceof RuntimeCommandException) {
                 src.error(((RuntimeCommandException) err).getTranslatedMessage());
             } else {
