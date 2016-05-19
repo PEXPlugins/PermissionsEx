@@ -35,7 +35,7 @@ public class NodeTree {
 
 
     private NodeTree(int value) {
-        this.rootNode = new Node(new HashMap<String, Node>());
+        this.rootNode = new Node(new HashMap<>());
         this.rootNode.value = value;
     }
 
@@ -69,7 +69,7 @@ public class NodeTree {
                 if (currentNode.children.containsKey(part)) {
                     currentNode = currentNode.children.get(part);
                 } else {
-                    Node newNode = new Node(new HashMap<String, Node>());
+                    Node newNode = new Node(new HashMap<>());
                     currentNode.children.put(part, newNode);
                     currentNode = newNode;
                 }

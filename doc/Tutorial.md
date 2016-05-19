@@ -10,28 +10,30 @@ Downloads of dev builds are available from [the CI server](https://ci.yawk.at/vi
 
 On PEX's first run, the necessary configuration files will be created. By default, no permissions are explicitly assigned to anybody. However, the default configuration gives all permissions to users connecting from the same host as the server (so if you're running a local server you'll automatically be able to run anything from ingame). On Sponge, PEX replaces the op system entirely, so setting op beforehand will not have any effect on permissions once PEX is installed.
 
-Currently, the default backend is the file backend, to be changed to H2 in the future once such a database is available. While the permissions database is human-readable, it is recommended to edit the PEX configuration. The SQL backend for MySQL and PostgreSQL is also available (**TODO document this**) for more complex server configurations.
+Currently, the default backend is the file backend, to be changed to H2 in the future once such a database is available. While the permissions database is human-readable, it is recommended to edit the PEX configuration using in-game commands. The SQL backend for MySQL and PostgreSQL is also available (**TODO document this**) for more complex server configurations.
 
 ## Creating an admin group
 
 Subjects in PEX are automatically created as soon as data is assigned to them. Because of that, any command that edits a group will create a group if no such group is present, so no command to explicitly create a group exists.
 
-The feature we're going to use for creating an admin group is *permission defaults*. This sets the permission result that will be given when any permission that has not otherwise been specified is checked. This means, that for an admin group, unless a plugin or the user explicitly forbids a permission any user in the group will have the permission. The resulting group will have all permissions, and users can be added.
+The feature we're going to use for creating an admin group is *permission defaults*. This sets the permission result that will be given when any permission that has not otherwise been specified is checked. This means, that for an admin group, unless a plugin or the user explicitly forbids a permission any user in the group will have the permission. The resulting group will have all permissions, and users can be added. **WARNING** Don't set the permission default to false on the global default subject (default:default). This will override subject-specific options, including the console, in effect locking the console out of commands, which is often not the desired behavior.
 
-Currently, a user must have joined and left the server at least once to have identification information stored for PEX to use. However, once that has happened, the following commands (run from the console or ingame with appropriate permissions) will create an admin group.
+
+
+Currently, a user must have joined and left the server at least once to have identification information stored for PEX to use. However, once that has happened, the following commands (run from the console or ingame with appropriate permissions) will create an admin group, creatively named `admin` in this case, though any name is possible as long as it's used consistently.
 
 ```
 /pex group admin def true
 /pex user <name> parent add group admin
 ```
 
-Note that the admin group is not part of any inheritance hierarchies. The admin group does not need any extra permissions, so having it be part of an inheritance hierarchy opens up the possibility for problematic overrides happening. From now on, any permissions changes can be done from ingame if desired.
+Note that the admin group has not been added to any inheritance hierarchies. The admin group does not need any extra permissions, so having it be part of an inheritance hierarchy opens up the possibility for problematic overrides happening. From now on, any permissions changes can be done from ingame if desired.
 
 ## Creating general user groups
 
 Beyond the admin group, there are almost as many possibilities for configuring ranks as there are individual servers. For the purposes of this tutorial, we'll create a default group and several inheriting groups as a useful starting point. For any individual server, it may make sense to add or remove groups as necessary. This configuration has the groups connected both by inheritance and in a rank ladder. A rank ladder is used only for the `/promote` and `/demote` commands, while inheritance is only used for permissions and options calculations. Again, because groups are only created when relevant data is present, these commands are just about configuring inheritance.
 
-Our configuration will consist of 3 groups: Default, a group users are assigned to on joining the server, Members, and VIP.
+Our configuration will consist of 3 groups: default, a group users are assigned to on joining the server, member, and VIP. (All group names are case-sensitive, so make sure you keep that consistent, or use tab completion to verify)
 
 First off, we add the default group:
 
@@ -76,7 +78,7 @@ However, these groups don't do much. To fix that, we need to set some permission
 
 This is what PEX is all about: permissions. Now that we have a structure, we can add permissions to each group. Because each plugin has its own set of checked permissions and options, the exact permissions added may vary a lot. However, any permissions changes follow the same structure.
 
-First, let's add prefixes to each group. **Note that PEX does not handle prefixes or suffixes itself.** PEX is purely a data provider plugin, so a separate chat plugin is required for prefixes or suffixes to have any effect. Usually these plugins will use the `prefix` and `suffix` options for prefix and suffix respectively. Thus we can set them:
+First, let's add prefixes to each group. **Note that PEX does not handle prefixes or suffixes itself.** PEX is purely a data provider plugin, so a separate chat plugin is required for prefixes or suffixes to have any effect. Usually these plugins will use the `prefix` and `suffix` options for prefix and suffix respectively. These are generic options -- PEX doesn't perform any special handling for them, so any chat plugin can choose to do things differently. These options can be set (as one example) like so:
 
 ```
 /pex group default option prefix "[<color name='grey'>Guest</color>]"
@@ -98,8 +100,10 @@ This can be repeated for any other permission as necessary. Permissions can even
 
 This would give both the permissions featherchat.channel.add and featherchat.channel.remove to the group VIP.
 
+Wildcards are another supported permission resolution shortcut. Giving a permission `a` will give any permission that is a subnode of `a` (split by the `.` character), for example `a.b`, `a.c`, or `a.b.d`. Resolution is performed with priority as higher weight overrides lower weight, and at the same weight more specific overrides less specific, and at the same specificity and weight closer in inheritance overrides farther in inheritance.
+
 ## Further reading
 
-- Rank Ladders 
+- Rank Ladders
 - Timed Permissions
 - Contexts
