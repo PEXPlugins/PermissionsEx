@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -115,7 +116,7 @@ public class RankingCommands {
                 .setExecutor(ChildCommands.optionalExecutor(arg, new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        final RankLadder ladder = args.getOne("ladder");
+                        final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
                         List<TextType> ranksList = new ArrayList<>();
                         List<? extends Map.Entry<String, String>> rawRanks = new ArrayList<>(ladder.getRanks());
                         Collections.reverse(rawRanks);
@@ -160,7 +161,7 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        final RankLadder ladder = args.getOne("ladder");
+                        final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
                         Map.Entry<String, String> toAdd = args.getOne("subject");
                         checkSubjectPermission(src, toAdd, "permissionsex.rank.add." + ladder.getName());
                         Integer position = args.getOne("position");
@@ -191,7 +192,7 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        final RankLadder ladder = args.getOne("ladder");
+                        final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
                         Map.Entry<String, String> toRemove = args.getOne("subject");
                         checkSubjectPermission(src, toRemove, "permissionsex.rank.remove." + ladder.getName());
                         RankLadder newLadder = ladder.removeRank(toRemove);
