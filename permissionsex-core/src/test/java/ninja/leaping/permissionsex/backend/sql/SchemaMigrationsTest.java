@@ -59,9 +59,9 @@ public class SchemaMigrationsTest extends PermissionsExTest {
         if (propertyTestDbs.length == 1 && propertyTestDbs[0].equals("")) {
             propertyTestDbs = new String[0];
         }
-        final Object[][] tests = new Object[propertyTestDbs.length + 1][2];
+        final Object[][] tests = new Object[propertyTestDbs.length][2];
         //tests[propertyTestDbs.length] = new Object[] {"h2", "jdbc:h2:{base}/test.db"};
-        tests[propertyTestDbs.length] = new Object[] {"mysql", "jdbc:mysql://localhost/pextest?user=root"};
+        //tests[propertyTestDbs.length] = new Object[] {"mysql", "jdbc:mysql://localhost/pextest?user=root"};
         for (int i = 0; i < propertyTestDbs.length; ++i) {
             tests[i] = propertyTestDbs[i].split("!");
         }
@@ -69,11 +69,9 @@ public class SchemaMigrationsTest extends PermissionsExTest {
     }
 
     private final SqlDataStore sqlStore = new SqlDataStore();
-    private final String databaseName;
     private String jdbcUrl;
 
     public SchemaMigrationsTest(String databaseName, String jdbcUrl) throws IOException {
-        this.databaseName = databaseName;
         this.jdbcUrl = jdbcUrl;
     }
 
