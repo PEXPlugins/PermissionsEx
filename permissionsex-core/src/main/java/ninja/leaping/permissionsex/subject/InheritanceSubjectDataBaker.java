@@ -20,13 +20,15 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import ninja.leaping.permissionsex.PermissionsEx;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.DataSegment;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Combinations;
 import ninja.leaping.permissionsex.util.NodeTree;
+import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.Util;
+import ninja.leaping.permissionsex.util.WeightedImmutableSet;
 import ninja.leaping.permissionsex.util.glob.GlobParseException;
 import ninja.leaping.permissionsex.util.glob.Globs;
 
@@ -56,7 +58,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     private static class BakeState {
         // Accumulators
         private final Map<String, Integer> combinedPermissions = new HashMap<>();
-        private final List<Entry<String, String>> parents = new ArrayList<>();
+        private final List<SubjectRef> parents = new ArrayList<>();
         private final Map<String, String> options = new HashMap<>();
         private int defaultValue;
 
@@ -89,81 +91,94 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     @Override
     public CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<Entry<String, String>> activeContexts) {
-        final Map.Entry<String, String> subject = data.getIdentifier();
+        final SubjectRef subject = data.getIdentifier();
         return processContexts(data.getManager(), activeContexts)
                 .thenCompose(processedContexts -> {
                     final BakeState state = new BakeState(data, processedContexts);
 
-                    final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
+                    final Multiset<SubjectRef> visitedSubjects = HashMultiset.create();
                     CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
-                    Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
+                    SubjectRef defIdentifier = data.data().getCache().getDefaultIdentifier();
                     if (!subject.equals(defIdentifier)) {
                         visitSubject(state, defIdentifier, visitedSubjects, 1);
-                        visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2); // Force in global defaults
+                        visitSubject(state, SubjectRef.of(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2); // Force in global defaults
                     }
                     return ret.thenApply(none -> state);
 
                 }).thenApply(state -> new BakedSubjectData(NodeTree.of(state.combinedPermissions, state.defaultValue), ImmutableList.copyOf(state.parents), ImmutableMap.copyOf(state.options)));
     }
 
-    private CompletableFuture<Void> visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
+    private CompletableFuture<Void> visitSubject(BakeState state, SubjectRef subject, Multiset<SubjectRef> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
             state.pex.getLogger().warn(t("Potential circular inheritance found while traversing inheritance for %s when visiting %s", state.base.getIdentifier(), subject));
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);
-        SubjectType type = state.pex.getSubjects(subject.getKey());
-        return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
+        SubjectType type = state.pex.getSubjects(subject.getType());
+        return type.persistentData().getData(subject.getIdentifier(), state.base).thenCombine(type.transientData().getData(subject.getIdentifier(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
             for (Set<Entry<String, String>> combo : state.activeContexts) {
-                ret = ret.thenRun(() -> visitSingle(state, transientData, combo, inheritanceLevel));
-                for (Entry<String, String> parent : transientData.getParents(combo)) {
-                    ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                WeightedImmutableSet<DataSegment> transientSegs = transientData.getAllSegments(combo, true);
+                if (inheritanceLevel <= 1) {
+                    transientSegs = transientSegs.withAll(transientData.getAllSegments(combo, false));
                 }
-                ret = ret.thenRun(() -> visitSingle(state, persistent, combo, inheritanceLevel));
-                for (Entry<String, String> parent : persistent.getParents(combo)) {
-                    ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                final WeightedImmutableSet<DataSegment> finalTransientSegs = transientSegs;
+                ret = ret.thenRun(() -> visitSingle(state, finalTransientSegs));
+                for (DataSegment seg : transientSegs) {
+                    for (SubjectRef parent : seg.getParents()) {
+                        ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                    }
+                }
+
+                WeightedImmutableSet<DataSegment> persistentSegs = transientData.getAllSegments(combo, true);
+                if (inheritanceLevel <= 1) {
+                    persistentSegs = persistentSegs.withAll(transientData.getAllSegments(combo, false));
+                }
+                final WeightedImmutableSet<DataSegment> finalPersistentSegs = persistentSegs;
+                ret = ret.thenRun(() -> visitSingle(state, finalPersistentSegs));
+                for (DataSegment seg : persistentSegs) {
+                    for (SubjectRef parent : seg.getParents()) {
+                        ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                    }
                 }
             }
             return ret;
         }).thenCompose(res -> res);
     }
 
-    private void putPermIfNecessary(BakeState state, String perm, int val) {
+    private void putPermIfNecessary(BakeState state, String perm, int weight, Tristate status) {
+        int val = status.asInt() * (Math.abs(weight) + 1);
         Integer existing = state.combinedPermissions.get(perm);
         if (existing == null || Math.abs(val) > Math.abs(existing)) {
             state.combinedPermissions.put(perm, val);
         }
     }
 
-    private void visitSingle(BakeState state, ImmutableSubjectData data, Set<Entry<String, String>> specificCombination, int inheritanceLevel) {
-        for (Map.Entry<String, Integer> ent : data.getPermissions(specificCombination).entrySet()) {
-            String perm = ent.getKey();
-            if (ent.getKey().startsWith("#")) { // Prefix to exclude from inheritance
-                if (inheritanceLevel > 1) {
-                    continue;
+    private void visitSingle(BakeState state, WeightedImmutableSet<DataSegment> segments) {
+        for (DataSegment data : segments.reverse()) {
+            for (Map.Entry<String, Tristate> ent : data.getPermissions().entrySet()) {
+                String perm = ent.getKey();
+                try {
+                    for (String matched : Globs.parse(perm)) {
+                        putPermIfNecessary(state, matched, data.getWeight(), ent.getValue());
+                    }
+                } catch (GlobParseException e) { // If the permission is not a valid glob, assume it's a literal
+                    putPermIfNecessary(state, perm, data.getWeight(), ent.getValue());
                 }
-                perm = perm.substring(1);
             }
 
-            try {
-                for (String matched : Globs.parse(perm)) {
-                    putPermIfNecessary(state, matched, ent.getValue());
+            state.parents.addAll(data.getParents());
+            for (Map.Entry<String, String> ent : data.getOptions().entrySet()) {
+                if (!state.options.containsKey(ent.getKey())) {
+                    state.options.put(ent.getKey(), ent.getValue());
                 }
-            } catch (GlobParseException e) { // If the permission is not a valid glob, assume it's a literal
-                putPermIfNecessary(state, perm, ent.getValue());
             }
-        }
 
-        state.parents.addAll(data.getParents(specificCombination));
-        for (Map.Entry<String, String> ent : data.getOptions(specificCombination).entrySet()) {
-            if (!state.options.containsKey(ent.getKey())) {
-                state.options.put(ent.getKey(), ent.getValue());
+            int defaultVal = data.getPermissionDefault().asInt() * (Math.abs(data.getWeight()) + 1);
+
+            if (Math.abs(defaultVal) > Math.abs(state.defaultValue)) {
+                state.defaultValue = defaultVal;
             }
-        }
-
-        if (Math.abs(data.getDefaultValue(specificCombination)) > Math.abs(state.defaultValue)) {
-            state.defaultValue = data.getDefaultValue(specificCombination);
         }
     }
 }

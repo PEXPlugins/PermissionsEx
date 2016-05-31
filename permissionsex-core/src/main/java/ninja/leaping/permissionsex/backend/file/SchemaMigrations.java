@@ -39,7 +39,7 @@ import static ninja.leaping.configurate.transformation.ConfigurationTransformati
 import static ninja.leaping.permissionsex.util.Translations.t;
 
 public class SchemaMigrations {
-    public static final int LATEST_VERSION = 4;
+    public static final int LATEST_VERSION = 5;
     private SchemaMigrations() {
     }
 
@@ -51,10 +51,20 @@ public class SchemaMigrations {
     static ConfigurationTransformation versionedMigration(final TranslatableLogger logger) {
         return ConfigurationTransformation.versionedBuilder()
                 .setVersionKey("schema-version")
-                .addVersion(LATEST_VERSION, threeToFour())
+                .addVersion(LATEST_VERSION, fourToFive())
+                .addVersion(4, threeToFour())
                 .addVersion(3, twoTo3())
                 .addVersion(2, oneTo2(logger))
                 .addVersion(1, initialTo1())
+                .build();
+    }
+
+    static ConfigurationTransformation fourToFive() {
+        return tBuilder()
+                .addAction(new Object[] {"subjects", WILDCARD_OBJECT, WILDCARD_OBJECT}, ((inputPath, valueAtPath) -> {
+                    Map<Integer, ConfigurationNode> weightSections = new HashMap<>();
+                    return null;
+                }))
                 .build();
     }
 

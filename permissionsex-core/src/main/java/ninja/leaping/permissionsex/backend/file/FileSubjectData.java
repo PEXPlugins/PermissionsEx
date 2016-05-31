@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.permissionsex.backend.memory.MemorySegment;
 import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
@@ -37,15 +38,14 @@ public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
 
     static FileSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
-        ImmutableMap.Builder<Set<Entry<String, String>>, DataEntry> map = ImmutableMap.builder();
+        ImmutableMap.Builder<Set<Entry<String, String>>, ContextSegments> map = ImmutableMap.builder();
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
                 if (!child.hasMapChildren()) {
                     throw new PermissionsLoadingException(t("Each context section must be of map type! Check that no duplicate nesting has occurred."));
                 }
-                Set<Entry<String, String>> contexts = contextsFrom(child);
-                DataEntry value = MAPPER.bindToNew().populate(child);
-                map.put(contexts, value);
+                MemorySegment value = MAPPER.bindToNew().populate(child);
+                map.put(value.getContexts(), value);
             }
         }
         return new FileSubjectData(map.build());
@@ -55,12 +55,12 @@ public final class FileSubjectData extends MemorySubjectData {
         super();
     }
 
-    protected FileSubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected FileSubjectData(Map<Set<Entry<String, String>>, ContextSegments> contexts) {
         super(contexts);
     }
 
     @Override
-    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, ContextSegments> contexts) {
         return new FileSubjectData(contexts);
     }
 
@@ -83,7 +83,7 @@ public final class FileSubjectData extends MemorySubjectData {
         for (ConfigurationNode child : node.getChildrenList()) {
             existingSections.put(contextsFrom(child), child);
         }
-        for (Map.Entry<Set<Entry<String, String>>, DataEntry> ent : contexts.entrySet()) {
+        for (Map.Entry<Set<Entry<String, String>>, ContextSegments> ent : contexts.entrySet()) {
             ConfigurationNode contextSection = existingSections.remove(ent.getKey());
             if (contextSection == null) {
                 contextSection = node.getAppendedNode();

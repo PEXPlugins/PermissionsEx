@@ -16,12 +16,11 @@
  */
 package ninja.leaping.permissionsex.command;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.GuavaStartsWithPredicate;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.ChildCommands;
@@ -32,7 +31,6 @@ import ninja.leaping.permissionsex.util.command.CommandSpec;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.args.CommandElement;
 
-import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -88,13 +86,8 @@ public class PermissionsExCommands {
                                 iter = Iterables.filter(iter, new GuavaStartsWithPredicate(args.<String>getOne("filter")));
                             }
 
-                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), Iterables.transform(iter, new Function<String, TextType>() {
-                                @Nullable
-                                @Override
-                                public TextType apply(String input) {
-                                    return src.fmt().subject(Maps.immutableEntry(subjectType, input));
-                                }
-                            }));
+                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType),
+                                    Iterables.transform(iter, input -> src.fmt().subject(SubjectRef.of(subjectType, input))));
                         } else if (args.hasAny(subjectChildren.getKey().getUntranslated())) {
                             ChildCommands.executor(subjectChildren).execute(src, args);
                         } else if (args.hasAny(children.getKey().getUntranslated())) {

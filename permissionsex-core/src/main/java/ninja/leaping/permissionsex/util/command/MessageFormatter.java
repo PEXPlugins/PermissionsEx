@@ -17,9 +17,11 @@
 package ninja.leaping.permissionsex.util.command;
 
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Tristate;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -34,7 +36,7 @@ public interface MessageFormatter<TextType> {
      * @param subject The subject to show
      * @return the formatted value
      */
-    TextType subject(Map.Entry<String, String> subject);
+    TextType subject(SubjectRef subject);
 
     default TextType subject(CalculatedSubject subject) {
         return subject(subject.getIdentifier());
@@ -70,7 +72,7 @@ public interface MessageFormatter<TextType> {
      * @return the formatted text
      */
     TextType button(ButtonType type, Translatable label, @Nullable Translatable tooltip, String command, boolean execute);
-    TextType permission(String permission, int value);
+    TextType permission(String permission, Tristate value);
     TextType option(String permission, String value);
 
     /**

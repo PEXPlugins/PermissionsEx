@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.GuavaStartsWithPredicate;
 import ninja.leaping.permissionsex.util.Translatable;
@@ -125,7 +126,7 @@ public class GameArguments {
                 throw args.createError(t("Name '%s' is invalid for subjects of type %s", identifier, type));
             }
 
-            return Maps.immutableEntry(type, identifier);
+            return SubjectRef.of(type, identifier);
         }
 
         @Override

@@ -18,7 +18,6 @@ package ninja.leaping.permissionsex.backend.file;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -37,6 +36,7 @@ import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryContextInheritance;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -89,6 +89,7 @@ public final class FileDataStore extends AbstractDataStore {
         if (alphabetizeEntries) {
             ret = ret.setMapFactory(MapFactories.sortedNatural());
         }
+        ret = ret.setSerializers(ret.getSerializers().newChild().registerType(TypeToken.of(SubjectRef.class), new SubjectRefTypeSerializer()));
         return ret;
     }
 
@@ -268,7 +269,11 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public CompletableFuture<RankLadder> getRankLadderInternal(String ladder) {
-        return completedFuture(new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), input -> Util.subjectFromString(input.getString())))));
+        try {
+            return completedFuture(new FixedRankLadder(ladder, ImmutableList.copyOf(getRankLaddersNode().getNode(ladder.toLowerCase()).getList(SUBJECT_REF_TYPE))));
+        } catch (ObjectMappingException e) {
+            return Util.failedFuture(e);
+        }
     }
 
     @Override
@@ -297,13 +302,18 @@ public final class FileDataStore extends AbstractDataStore {
         return save().thenApply(none -> realInheritance);
     }
 
+    private static final TypeToken<SubjectRef> SUBJECT_REF_TYPE = TypeToken.of(SubjectRef.class);
     @Override
     public CompletableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
         ConfigurationNode childNode = getRankLaddersNode().getNode(identifier.toLowerCase());
         childNode.setValue(null);
         if (ladder != null) {
-            for (Map.Entry<String, String> rank : ladder.getRanks()) {
-                childNode.getAppendedNode().setValue(Util.subjectToString(rank));
+            for (SubjectRef rank : ladder.getRanks()) {
+                try {
+                    childNode.getAppendedNode().setValue(SUBJECT_REF_TYPE, rank);
+                } catch (ObjectMappingException e) {
+                    return Util.failedFuture(e);
+                }
 
             }
         }

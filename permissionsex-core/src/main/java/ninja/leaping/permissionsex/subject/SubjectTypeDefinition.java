@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.subject;
 
-import ninja.leaping.permissionsex.util.command.Commander;
-
 import java.util.Optional;
 
 /**

@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.backend.sql;
 
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.AbstractRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
@@ -24,22 +25,22 @@ import java.util.List;
 import java.util.Map;
 
 public class SqlRankLadder extends AbstractRankLadder {
-    private final List<SubjectRef> entries;
+    private final List<SqlSubjectRef> entries;
 
-    public SqlRankLadder(String name, List<SubjectRef> entries) {
+    public SqlRankLadder(String name, List<SqlSubjectRef> entries) {
         super(name);
         this.entries = entries;
     }
 
     @Override
-    public List<SubjectRef> getRanks() {
+    public List<SqlSubjectRef> getRanks() {
         return entries;
     }
 
     @Override
-    protected RankLadder newWithRanks(List<Map.Entry<String, String>> ents) {
+    protected RankLadder newWithRanks(List<SubjectRef> ents) {
         return new SqlRankLadder(getName(), ents.stream()
-                .map(ent -> ent instanceof SubjectRef ? (SubjectRef) ent : SubjectRef.unresolved(ent.getKey(), ent.getValue()))
+                .map(SqlSubjectRef::of)
                 .collect(GuavaCollectors.toImmutableList()));
     }
 }

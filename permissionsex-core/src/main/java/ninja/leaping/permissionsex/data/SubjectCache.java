@@ -32,18 +32,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class SubjectCache {
     private final String type;
     private DataStore dataStore;
     private final AtomicReference<AsyncLoadingCache<String, ImmutableSubjectData>> cache = new AtomicReference<>();
     private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
-    private final Map.Entry<String, String> defaultIdentifier;
+    private final SubjectRef defaultIdentifier;
 
     public SubjectCache(final String type, final DataStore dataStore) {
         this.type = type;
         update(dataStore);
-        this.defaultIdentifier = Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, type);
+        this.defaultIdentifier = SubjectRef.of(PermissionsEx.SUBJECTS_DEFAULTS, type);
         this.listeners = new CacheListenerHolder<>();
     }
 
@@ -77,7 +79,7 @@ public class SubjectCache {
     }
 
     public CompletableFuture<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
-        final SubjectDataReference ref = new SubjectDataReference(identifier, this, strongListeners);
+        final SubjectDataReference ref = new SubjectDataReference(SubjectRef.of(this.type, checkNotNull(identifier, "identifier")), this, strongListeners);
         return getData(identifier, ref).thenApply(data -> {
             ref.data.set(data);
             return ref;
@@ -160,7 +162,7 @@ public class SubjectCache {
      * Get the identifier for the subject holding default data for subjects of this type
      * @return The id for the default subject of this type
      */
-    public Map.Entry<String, String> getDefaultIdentifier() {
+    public SubjectRef getDefaultIdentifier() {
         return defaultIdentifier;
     }
 }

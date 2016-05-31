@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.util.command;
 
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import javax.annotation.Nullable;
@@ -30,7 +31,7 @@ import java.util.Set;
 public interface Commander<TextType> {
     String getName();
     Locale getLocale();
-    Optional<Map.Entry<String, String>> getSubjectIdentifier();
+    Optional<SubjectRef> getSubjectIdentifier();
     boolean hasPermission(String permission);
     Set<Map.Entry<String, String>> getActiveContexts();
     MessageFormatter<TextType> fmt();

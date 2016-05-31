@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.subject;
 
 import com.google.common.base.Preconditions;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.List;
@@ -27,10 +28,10 @@ import java.util.Map;
  */
 class BakedSubjectData {
     private final NodeTree permissions;
-    private final List<Map.Entry<String, String>> parents;
+    private final List<SubjectRef> parents;
     private final Map<String, String> options;
 
-    public BakedSubjectData(NodeTree permissions, List<Map.Entry<String, String>> parents, Map<String, String> options) {
+    public BakedSubjectData(NodeTree permissions, List<SubjectRef> parents, Map<String, String> options) {
         Preconditions.checkNotNull(permissions, "permissions");
         Preconditions.checkNotNull(parents, "parents");
         Preconditions.checkNotNull(options, "options");
@@ -43,7 +44,7 @@ class BakedSubjectData {
         return permissions;
     }
 
-    public List<Map.Entry<String, String>> getParents() {
+    public List<SubjectRef> getParents() {
         return parents;
     }
 

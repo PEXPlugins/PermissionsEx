@@ -19,8 +19,6 @@ package ninja.leaping.permissionsex.util;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.eventbus.Subscribe;
-import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.command.args.GenericArguments;
 
 import java.util.Collections;
@@ -33,25 +31,28 @@ import java.util.concurrent.Executor;
 import static ninja.leaping.permissionsex.util.Translations.t;
 import static ninja.leaping.permissionsex.util.command.args.GameArguments.context;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.flags;
+import static ninja.leaping.permissionsex.util.command.args.GenericArguments.integer;
 
 public class Util {
-    public static Map.Entry<String, String> subjectFromString(String input) {
+    public static Map.Entry<String, String> contextFromString(String input) {
         String[] entries = input.split(":", 2);
-        if (entries.length == 1) {
-            return Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, entries[0]);
+        if (entries.length != 2) {
+            throw new IllegalArgumentException("Input string must be of the format key:value, but was '" + input + "'");
         } else {
             return Maps.immutableEntry(entries[0], entries[1]);
         }
 
     }
 
-    public static String subjectToString(Map.Entry<String, String> input) {
+    public static String contextToString(Map.Entry<String, String> input) {
         return input.getKey() + ":" + input.getValue();
     }
 
     public static GenericArguments.FlagCommandElementBuilder contextTransientFlags() {
         return flags()
                 .flag("-transient")
+                .flag("n", "-non-inheritable")
+                .valueFlag(integer(t("priority")), "p", "-priority")
                 .valueFlag(context(t("context")), "-context", "-contexts", "c");
     }
 

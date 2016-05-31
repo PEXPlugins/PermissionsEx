@@ -19,34 +19,35 @@ package ninja.leaping.permissionsex.backend.sql;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.data.DataSegment;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.ThrowingBiConsumer;
 import ninja.leaping.permissionsex.util.Util;
+import ninja.leaping.permissionsex.util.WeightedImmutableSet;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 /**
  * Data for SQL-backed subjects
  */
 class SqlSubjectData implements ImmutableSubjectData {
-    private final SubjectRef subject;
+    private final SqlSubjectRef subject;
     private final Map<Set<Entry<String, String>>, Segment> segments;
     private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    SqlSubjectData(SubjectRef subject) {
+    SqlSubjectData(SqlSubjectRef subject) {
         this(subject, ImmutableMap.of(), null);
     }
 
-    SqlSubjectData(SubjectRef subject, Map<Set<Entry<String, String>>, Segment> segments, ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
+    SqlSubjectData(SqlSubjectRef subject, Map<Set<Entry<String, String>>, Segment> segments, ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
         this.subject = subject;
         this.segments = segments;
         this.updatesToPerform.set(updates);
@@ -97,41 +98,27 @@ class SqlSubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public Map<Set<Entry<String, String>>, Map<String, String>> getAllOptions() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getOptions()), el -> el != null);
+    public WeightedImmutableSet<DataSegment> getAllSegments() {
+        return null;
     }
 
     @Override
-    public Map<String, String> getOptions(Set<Entry<String, String>> segments) {
-        final Segment entry = this.segments.get(segments);
-        return entry == null || entry.getOptions() == null ? Collections.emptyMap() : entry.getOptions();
+    public WeightedImmutableSet<DataSegment> getAllSegments(Set<Entry<String, String>> contexts, boolean inheritable) {
+        return null;
     }
 
     @Override
-    public ImmutableSubjectData setOption(Set<Entry<String, String>> segments, String key, String value) {
-        if (value == null) {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withoutOption(key));
-        } else {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withOption(key, value));
-        }
+    public DataSegment getOrCreateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable) {
+        return null;
     }
 
     @Override
-    public ImmutableSubjectData setOptions(Set<Entry<String, String>> segments, Map<String, String> values) {
-        return newWithUpdated(segments, getSegmentOrNew(segments).withOptions(values));
+    public SqlSubjectData updateOrCreateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return null;
     }
 
     @Override
-    public ImmutableSubjectData clearOptions(Set<Entry<String, String>> segments) {
-        if (!this.segments.containsKey(segments)) {
-            return this;
-        }
-        return newWithUpdated(segments, getSegmentOrNew(segments).withoutOptions());
-    }
-
-    @Override
-    public ImmutableSubjectData clearOptions() {
+    public SqlSubjectData clearOptions() {
         if (this.segments.isEmpty()) {
             return this;
         }
@@ -157,32 +144,6 @@ class SqlSubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public Map<Set<Entry<String, String>>, Map<String, Integer>> getAllPermissions() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getPermissions()), o -> o != null);
-    }
-
-    @Override
-    public Map<String, Integer> getPermissions(Set<Entry<String, String>> set) {
-        final Segment entry = this.segments.get(set);
-        return entry == null || entry.getPermissions()== null ? Collections.emptyMap() : entry.getPermissions();
-    }
-
-    @Override
-    public ImmutableSubjectData setPermission(Set<Entry<String, String>> segments, String permission, int value) {
-        if (value == 0) {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withoutPermission(permission));
-        } else {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withPermission(permission, value));
-        }
-    }
-
-    @Override
-    public ImmutableSubjectData setPermissions(Set<Entry<String, String>> segments, Map<String, Integer> values) {
-        return newWithUpdated(segments, getSegmentOrNew(segments).withPermissions(values));
-    }
-
-    @Override
     public ImmutableSubjectData clearPermissions() {
         if (this.segments.isEmpty()) {
             return this;
@@ -191,57 +152,6 @@ class SqlSubjectData implements ImmutableSubjectData {
         Map<Set<Entry<String, String>>, Segment> newValue = Maps.transformValues(this.segments,
                 dataEntry -> dataEntry == null ? null : dataEntry.withoutPermissions());
         return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    @Override
-    public ImmutableSubjectData clearPermissions(Set<Entry<String, String>> segments) {
-        if (!this.segments.containsKey(segments)) {
-            return this;
-        }
-        return newWithUpdated(segments, getSegmentOrNew(segments).withoutPermissions());
-
-    }
-
-    @Override
-    public Map<Set<Entry<String, String>>, List<Entry<String, String>>> getAllParents() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getParents() == null ? null : ImmutableList.copyOf(dataEntry.getParents())), v -> v != null);
-    }
-
-    @Override
-    public List<Entry<String, String>> getParents(Set<Entry<String, String>> segments) {
-        Segment ent = this.segments.get(segments);
-        return ent == null || ent.getParents() == null ? Collections.emptyList() : ImmutableList.copyOf(ent.getParents());
-    }
-
-    @Override
-    public ImmutableSubjectData addParent(Set<Entry<String, String>> segments, String type, String ident) {
-        Segment entry = getSegmentOrNew(segments);
-        final SubjectRef parentIdent = SubjectRef.unresolved(type, ident);
-        if (entry.getParents() != null && entry.getParents().contains(parentIdent)) {
-            return this;
-        }
-        return newWithUpdated(segments, entry.withAddedParent(parentIdent));
-    }
-
-    @Override
-    public ImmutableSubjectData removeParent(Set<Entry<String, String>> segments, String type, String identifier) {
-        Segment ent = this.segments.get(segments);
-        if (ent == null) {
-            return this;
-        }
-
-        final SubjectRef parentIdent = SubjectRef.unresolved(type, identifier);
-        if (ent.getParents() == null || !ent.getParents().contains(parentIdent)) {
-            return this;
-        }
-        return newWithUpdated(segments, ent.withRemovedParent(parentIdent));
-    }
-
-    @Override
-    public ImmutableSubjectData setParents(Set<Entry<String, String>> segments, List<Entry<String, String>> parents) {
-        Segment entry = getSegmentOrNew(segments);
-        return newWithUpdated(segments, entry.withParents(Lists.transform(parents, ent -> ent instanceof SubjectRef ? (SubjectRef) ent : SubjectRef.unresolved(ent.getKey(), ent.getValue()))));
     }
 
     @Override
@@ -256,33 +166,8 @@ class SqlSubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public ImmutableSubjectData clearParents(Set<Entry<String, String>> segments) {
-        if (!this.segments.containsKey(segments)) {
-            return this;
-        }
-        return newWithUpdated(segments, getSegmentOrNew(segments).withoutParents());
-    }
-
-    @Override
-    public int getDefaultValue(Set<Entry<String, String>> segments) {
-        Segment ent = this.segments.get(segments);
-        return ent == null || ent.getPermissionDefault() == null ? 0 : ent.getPermissionDefault();
-    }
-
-    @Override
-    public ImmutableSubjectData setDefaultValue(Set<Entry<String, String>> segments, int defaultValue) {
-        return newWithUpdated(segments, getSegmentOrNew(segments).withDefaultValue(defaultValue));
-    }
-
-    @Override
-    public Iterable<Set<Entry<String, String>>> getActiveContexts() {
-        return segments.keySet();
-    }
-
-    @Override
-    public Map<Set<Entry<String, String>>, Integer> getAllDefaultValues() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getPermissionDefault()), v -> v != null);
+    public ImmutableSubjectData clearDefaultValues() {
+        return null;
     }
 
     public void doUpdates(SqlDao dao) throws SQLException {

@@ -37,15 +37,24 @@ import java.util.Objects;
  * Schema migrations for the SQL database
  */
 public class SchemaMigrations {
-    public static final int VERSION_LATEST = 3;
+    public static final int VERSION_LATEST = 4;
 
     public static List<SchemaMigration> getMigrations() {
         List<SchemaMigration> migrations = new ArrayList<>();
         migrations.add(0, SchemaMigrations.initialToZero());
         migrations.add(1, SchemaMigrations.zeroToOne());
         migrations.add(2, SchemaMigrations.oneToTwo());
-        migrations.add(VERSION_LATEST, SchemaMigrations.twoToThree());
+        migrations.add(3, SchemaMigrations.twoToThree());
+        migrations.add(VERSION_LATEST, SchemaMigrations.threeToFour());
         return migrations;
+    }
+
+    public static SchemaMigration threeToFour() {
+        return dao -> {
+            // split out segments by weight
+            // take out any non-inheritable permissions from those
+
+        };
     }
 
     // Pre-2.x only needs to support MySQL because tbh nobody uses SQLite
@@ -72,13 +81,13 @@ public class SchemaMigrations {
                 }
             }
 
-            Map<String, List<SubjectRef>> defaultSubjects = new HashMap<>();
-            Map<String, List<Map.Entry<SubjectRef, Integer>>> tempRankLadders = new HashMap<>();
+            Map<String, List<SqlSubjectRef>> defaultSubjects = new HashMap<>();
+            Map<String, List<Map.Entry<SqlSubjectRef, Integer>>> tempRankLadders = new HashMap<>();
 
             try (PreparedStatement select = dao.prepareStatement("SELECT type, name FROM {}permissions_entity_old")) {
                 ResultSet rs = select.executeQuery();
                 while (rs.next()) {
-                    SubjectRef ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
+                    SqlSubjectRef ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
                     Segment currentSeg = null;
                     String currentWorld = null;
                     Map<String, Segment> worldSegments = new HashMap<>();
@@ -140,7 +149,7 @@ public class SchemaMigrations {
                                             rankLadder = value;
                                         }
                                         if (rank != null && rankLadder != null) {
-                                            List<Map.Entry<SubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
+                                            List<Map.Entry<SqlSubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
                                             try {
                                                 ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
                                             } catch (IllegalArgumentException ex) {}
@@ -169,7 +178,7 @@ public class SchemaMigrations {
                                 dao.setDefaultValue(currentSeg, defaultVal);
                             }
                             if (rank != null) {
-                                List<Map.Entry<SubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
+                                List<Map.Entry<SqlSubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
                                 try {
                                     ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
                                 } catch (IllegalArgumentException ex) {}
@@ -178,8 +187,8 @@ public class SchemaMigrations {
                         }
                     }
 
-                    for (Map.Entry<String, List<Map.Entry<SubjectRef, Integer>>> ent : tempRankLadders.entrySet()) {
-                        List<SubjectRef> ladder = ent.getValue().stream()
+                    for (Map.Entry<String, List<Map.Entry<SqlSubjectRef, Integer>>> ent : tempRankLadders.entrySet()) {
+                        List<SqlSubjectRef> ladder = ent.getValue().stream()
                                 .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
                                 .map(Map.Entry::getKey)
                                 .collect(GuavaCollectors.toImmutableList());
@@ -188,9 +197,9 @@ public class SchemaMigrations {
                     }
 
                     if (!defaultSubjects.isEmpty()) {
-                        SubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_USER);
+                        SqlSubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_USER);
                         List<Segment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
-                        for (Map.Entry<String, List<SubjectRef>> ent : defaultSubjects.entrySet()) {
+                        for (Map.Entry<String, List<SqlSubjectRef>> ent : defaultSubjects.entrySet()) {
                             Segment seg = null;
                             if (!segments.isEmpty()) {
                                 for (Segment segment : segments) {
@@ -220,7 +229,7 @@ public class SchemaMigrations {
                         selectInheritance.setInt(2, rs.getInt(1));
 
                         ResultSet inheritance = selectInheritance.executeQuery();
-                        List<SubjectRef> newInheritance = new LinkedList<>();
+                        List<SqlSubjectRef> newInheritance = new LinkedList<>();
                         while (inheritance.next()) {
                             if (currentSeg == null || !Objects.equals(inheritance.getString(3), currentWorld)) {
                                 if (currentSeg != null && !newInheritance.isEmpty()) {

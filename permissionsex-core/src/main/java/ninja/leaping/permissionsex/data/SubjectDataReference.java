@@ -17,10 +17,8 @@
 package ninja.leaping.permissionsex.data;
 
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +27,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SubjectDataReference implements Caching<ImmutableSubjectData> {
-    private final String identifier;
+    private final SubjectRef identifier;
     private final SubjectCache cache;
     private final Set<Consumer<ImmutableSubjectData>> updateListeners;
     final AtomicReference<ImmutableSubjectData> data = new AtomicReference<>();
@@ -43,7 +41,7 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
      * @param cache The cache to get data from and listen for changes from
      * @param strongListeners Whether or not to hold strong references to listeners registered
      */
-    SubjectDataReference(String identifier, SubjectCache cache, boolean strongListeners) {
+    SubjectDataReference(SubjectRef identifier, SubjectCache cache, boolean strongListeners) {
         this.identifier = identifier;
         this.cache = cache;
         this.strongListeners = strongListeners;
@@ -69,7 +67,7 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
             }
         } while (!this.data.compareAndSet(data, newData));
         final ImmutableSubjectData finalData = data;
-        return this.cache.set(this.identifier, newData).thenApply(finalNew -> new Change<>(finalData, finalNew));
+        return this.cache.set(this.identifier.getIdentifier(), newData).thenApply(finalNew -> new Change<>(finalData, finalNew));
     }
 
     @Override
@@ -103,7 +101,7 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
         return cache;
     }
 
-    public Map.Entry<String, String> getIdentifier() {
-        return Maps.immutableEntry(getCache().getType(), this.identifier);
+    public SubjectRef getIdentifier() {
+        return this.identifier;
     }
 }

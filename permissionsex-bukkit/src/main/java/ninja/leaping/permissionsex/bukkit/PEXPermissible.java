@@ -22,6 +22,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.NodeTree;
 import org.bukkit.entity.Player;
@@ -72,8 +73,8 @@ public class PEXPermissible extends PermissibleBase {
                 @Override
                 public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
                     return subj.getParents(contexts).stream()
-                            .filter(ent -> ent.getKey().equals(SUBJECTS_GROUP))
-                            .flatMap(ent -> StreamSupport.<String>stream(Spliterators.spliterator(new String[]{"group." + ent.getValue(), "groups." + ent.getValue()}, Spliterator.IMMUTABLE | Spliterator.DISTINCT), false))
+                            .filter(ent -> ent.getType().equals(SUBJECTS_GROUP))
+                            .flatMap(ent -> StreamSupport.<String>stream(Spliterators.spliterator(new String[]{"group." + ent.getIdentifier(), "groups." + ent.getIdentifier()}, Spliterator.IMMUTABLE | Spliterator.DISTINCT), false))
                             .iterator();
                 }
             },
@@ -230,13 +231,13 @@ public class PEXPermissible extends PermissibleBase {
     @Override
     public PermissionAttachment addAttachment(Plugin plugin) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
-        this.subj.transientData().update(input -> input.addParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
+        this.subj.transientData().update(input -> input.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withAddedParent(SubjectRef.of(PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))))
                 .thenRun(() -> this.attachments.add(attach));
         return attach;
     }
 
     public boolean removeAttachmentInternal(final PEXPermissionAttachment attach) {
-        this.subj.transientData().update(input -> input.removeParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
+        this.subj.transientData().update(input -> input.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withRemovedParent(SubjectRef.of(PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))))
                 .thenRun(() -> {
                     PermissionRemovedExecutor exec = attach.getRemovalCallback();
                     if (exec != null) {

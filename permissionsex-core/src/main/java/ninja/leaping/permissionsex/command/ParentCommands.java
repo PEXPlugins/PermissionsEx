@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.command;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
@@ -46,12 +47,9 @@ public class ParentCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.parent.add");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        Map.Entry<String, String> parent = args.getOne("parent");
-                        messageSubjectOnFuture(
-                                ref.update(old -> old.addParent(contexts, parent.getKey(), parent.getValue())), src,
-                                t("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(ref)), formatContexts(src, contexts)));
+                        SubjectRef parent = args.getOne("parent");
+                        updateDataSegment(src, args, "permissionsex.parent.add", seg -> seg.withAddedParent(parent),
+                                (subj, contexts) -> t("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
                     }
                 })
                 .build();
@@ -59,17 +57,14 @@ public class ParentCommands {
 
     private static CommandSpec getRemoveParentCommand(final PermissionsEx pex) {
         return CommandSpec.builder()
-                .setAliases("remove", "rem", "delete", "del", "-")
+                .setAliases("remove", "rem", "delete", "del", "r", "d", "-")
                 .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.parent.remove");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
-                        Map.Entry<String, String> parent = args.getOne("parent");
-                        messageSubjectOnFuture(
-                                ref.update(old -> old.removeParent(contexts, parent.getKey(), parent.getValue())), src,
-                                t("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(ref)), formatContexts(src, contexts)));
+                        SubjectRef parent = args.getOne("parent");
+                        updateDataSegment(src, args, "permissionsex.parent.remove", seg -> seg.withRemovedParent(parent),
+                                (subj, contexts) -> t("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
                     }
                 })
                 .build();

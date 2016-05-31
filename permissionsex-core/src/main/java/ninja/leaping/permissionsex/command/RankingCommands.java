@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.ButtonType;
@@ -95,16 +96,16 @@ public class RankingCommands {
                 .build();
     }
 
-    private static <TextType> TextType deleteButton(Commander<TextType> cmd, RankLadder rank, Map.Entry<String, String> subject) {
-        return cmd.fmt().button(ButtonType.NEGATIVE, t("-"), t("Remove this rank from the ladder"), "/pex rank " + rank.getName() + " remove " + subject.getKey() + " " + subject.getValue(), true);
+    private static <TextType> TextType deleteButton(Commander<TextType> cmd, RankLadder rank, SubjectRef subject) {
+        return cmd.fmt().button(ButtonType.NEGATIVE, t("-"), t("Remove this rank from the ladder"), "/pex rank " + rank.getName() + " remove " + subject.getType() + " " + subject.getIdentifier(), true);
     }
 
-    private static <TextType> TextType moveDownButton(Commander<TextType> cmd, RankLadder rank, Map.Entry<String, String> subject) {
-        return cmd.fmt().button(ButtonType.NEUTRAL, t("\u25bc"), t("Move this rank to a lower position in the ladder"), "/pex rank " + rank.getName() + " add -r -1 " + subject.getKey() + " " + subject.getValue(), true);
+    private static <TextType> TextType moveDownButton(Commander<TextType> cmd, RankLadder rank, SubjectRef subject) {
+        return cmd.fmt().button(ButtonType.NEUTRAL, t("\u25bc"), t("Move this rank to a lower position in the ladder"), "/pex rank " + rank.getName() + " add -r -1 " + subject.getType() + " " + subject.getIdentifier(), true);
     }
 
-    private static <TextType> TextType moveUpButton(Commander<TextType> cmd, RankLadder rank, Map.Entry<String, String> subject) {
-        return cmd.fmt().button(ButtonType.NEUTRAL, t("\u25b2"), t("Move this rank to a higher position in the ladder"), "/pex rank " + rank.getName() + " add -r 1 " + subject.getKey() + " " + subject.getValue(), true);
+    private static <TextType> TextType moveUpButton(Commander<TextType> cmd, RankLadder rank, SubjectRef subject) {
+        return cmd.fmt().button(ButtonType.NEUTRAL, t("\u25b2"), t("Move this rank to a higher position in the ladder"), "/pex rank " + rank.getName() + " add -r 1 " + subject.getType() + " " + subject.getIdentifier(), true);
     }
 
     public static CommandSpec getRankingCommand(PermissionsEx pex) {
@@ -118,7 +119,7 @@ public class RankingCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
                         List<TextType> ranksList = new ArrayList<>();
-                        List<? extends Map.Entry<String, String>> rawRanks = new ArrayList<>(ladder.getRanks());
+                        List<? extends SubjectRef> rawRanks = new ArrayList<>(ladder.getRanks());
                         Collections.reverse(rawRanks);
                         if (rawRanks.size() == 1) {
                             ranksList.add(src.fmt().combined(src.fmt().subject(rawRanks.get(0)), deleteButton(src, ladder, rawRanks.get(0))));
@@ -126,7 +127,7 @@ public class RankingCommands {
                             throw new CommandException(t("No ranks in ladder %s", src.fmt().ladder(ladder)));
                         } else {
                             for (int i = 0; i < rawRanks.size(); ++i) {
-                                Map.Entry<String, String> rank = rawRanks.get(i);
+                                SubjectRef rank = rawRanks.get(i);
                                 if (i == 0) {
                                     ranksList.add(src.fmt().combined(src.fmt().subject(rawRanks.get(i)),
                                             " ", moveDownButton(src, ladder, rank),
@@ -162,7 +163,7 @@ public class RankingCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
-                        Map.Entry<String, String> toAdd = args.getOne("subject");
+                        SubjectRef toAdd = args.getOne("subject");
                         checkSubjectPermission(src, toAdd, "permissionsex.rank.add." + ladder.getName());
                         Integer position = args.getOne("position");
                         if (position != null) {
@@ -193,7 +194,7 @@ public class RankingCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
-                        Map.Entry<String, String> toRemove = args.getOne("subject");
+                        SubjectRef toRemove = args.getOne("subject");
                         checkSubjectPermission(src, toRemove, "permissionsex.rank.remove." + ladder.getName());
                         RankLadder newLadder = ladder.removeRank(toRemove);
                         if (newLadder == ladder) {

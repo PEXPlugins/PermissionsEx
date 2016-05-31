@@ -25,7 +25,9 @@ CREATE TABLE `{}subjects` (
 CREATE TABLE `{}segments` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `subject` int(11) NOT NULL,
-  `perm_default` smallint DEFAULT NULL,
+  `perm_default` TINYINT DEFAULT NULL,
+  `weight` int(11) NOT NULL,
+  `inheritable` BOOLEAN NOT NULL,
   KEY `subject_k` (`subject`),
   CONSTRAINT `subject_fk` FOREIGN KEY (`subject`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARSET=utf8;
@@ -33,7 +35,7 @@ CREATE TABLE `{}segments` (
 CREATE TABLE `{}permissions` (
   `segment` int(11) NOT NULL,
   `key` varchar(255) NOT NULL,
-  `value` smallint NOT NULL,
+  `value` TINYINT NOT NULL,
   UNIQUE KEY `perm_segment_k` (`segment`,`key`),
   CONSTRAINT `perm_segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARSET=utf8;

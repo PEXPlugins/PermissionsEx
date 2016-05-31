@@ -24,7 +24,9 @@ KEY "type_k" ("type")
 CREATE TABLE "{}segments" (
 "id" int NOT NULL PRIMARY KEY ,
 "subject" int NOT NULL,
-"perm_default" smallint DEFAULT NULL,
+"perm_default" SMALLINT DEFAULT NULL,
+"weight" int NOT NULL,
+"inheritable" BOOLEAN NOT NULL,
 PRIMARY KEY ("id"),
 KEY "subject" ("subject"),
 FOREIGN KEY ("subject") REFERENCES "{}subjects" ("id") ON DELETE CASCADE ON UPDATE CASCADE

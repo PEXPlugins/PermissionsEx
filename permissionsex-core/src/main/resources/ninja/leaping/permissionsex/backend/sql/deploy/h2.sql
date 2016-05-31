@@ -25,7 +25,9 @@ CREATE INDEX ON `{}subjects` (`type`);
 CREATE TABLE `{}segments` (
   `id` int(11) NOT NULL IDENTITY ,
   `subject` int(11) NOT NULL,
-  `perm_default` smallint DEFAULT NULL,
+  `perm_default` TINYINT DEFAULT NULL,
+  `weight` int(11) NOT NULL,
+  `inheritable` BOOLEAN NOT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`subject`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -34,7 +36,7 @@ CREATE INDEX ON `{}segments` (`subject`);
 CREATE TABLE `{}permissions` (
   `segment` int(11) NOT NULL,
   `key` varchar(255) NOT NULL,
-  `value` smallint NOT NULL,
+  `value` TINYINT NOT NULL,
   PRIMARY KEY (`segment`,`key`),
   FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 );

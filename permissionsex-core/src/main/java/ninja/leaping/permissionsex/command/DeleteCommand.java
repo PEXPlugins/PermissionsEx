@@ -24,8 +24,6 @@ import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import ninja.leaping.permissionsex.util.command.Commander;
 
-import java.util.Map;
-
 import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
@@ -41,12 +39,12 @@ public class DeleteCommand {
                         CalculatedSubject subject = subjectOrSelf(src, args);
                         checkSubjectPermission(src, subject.getIdentifier(), "permissionsex.delete");
                         SubjectCache cache = args.hasAny("transient") ? subject.transientData().getCache() : subject.data().getCache();
-                        messageSubjectOnFuture(cache.isRegistered(subject.getIdentifier().getValue())
+                        messageSubjectOnFuture(cache.isRegistered(subject.getIdentifier().getIdentifier())
                                 .thenCompose(registered -> {
                                     if (!registered) {
                                         throw new RuntimeCommandException(t("Subject %s does not exist!", src.fmt().subject(subject)));
                                     }
-                                    return cache.remove(subject.getIdentifier().getValue());
+                                    return cache.remove(subject.getIdentifier().getIdentifier());
                                 }), src, t("Successfully deleted data for subject %s", src.fmt().subject(subject)));
                     }
                 })

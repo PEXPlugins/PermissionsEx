@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.rank;
 
 import com.google.common.collect.ImmutableList;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,15 +45,15 @@ public abstract class AbstractRankLadder implements RankLadder {
             return input;
         }
 
-        List<Entry<String, String>> parents = input.getParents(contexts);
+        List<SubjectRef> parents = input.getParents(contexts);
         if (parents.isEmpty()) {
-            return input.addParent(contexts, getRanks().get(0).getKey(), getRanks().get(0).getValue());
+            return input.addParent(contexts, getRanks().get(0));
         } else {
             int index;
             parents = new ArrayList<>(parents);
             boolean found = false;
-            for (ListIterator<Entry<String, String>> it = parents.listIterator(); it.hasNext();) {
-                Entry<String, String> parent = it.next();
+            for (ListIterator<SubjectRef> it = parents.listIterator(); it.hasNext();) {
+                SubjectRef parent = it.next();
                 if ((index = getRanks().indexOf(parent)) > -1) {
                     if (index == getRanks().size() - 1) {
                         return input;
@@ -65,7 +66,7 @@ public abstract class AbstractRankLadder implements RankLadder {
             if (found) {
                 return input.setParents(contexts, parents); // Promotion happened
             } else {
-                return input.addParent(contexts, getRanks().get(0).getKey(), getRanks().get(0).getValue());
+                return input.addParent(contexts, getRanks().get(0));
             }
         }
     }
@@ -76,15 +77,15 @@ public abstract class AbstractRankLadder implements RankLadder {
             return input;
         }
 
-        List<Entry<String, String>> parents = input.getParents(contexts);
+        List<SubjectRef> parents = input.getParents(contexts);
         if (parents.isEmpty()) {
             return input;
         } else {
             int index;
             parents = new ArrayList<>(parents);
             boolean found = false;
-            for (ListIterator<Entry<String, String>> it = parents.listIterator(); it.hasNext();) {
-                Entry<String, String> parent = it.next();
+            for (ListIterator<SubjectRef> it = parents.listIterator(); it.hasNext();) {
+                SubjectRef parent = it.next();
                 if ((index = getRanks().indexOf(parent)) > -1) {
                     if (index == 0) {
                         // At bottom of rank ladder, remove the rank entirely
@@ -109,7 +110,7 @@ public abstract class AbstractRankLadder implements RankLadder {
             return false;
         }
 
-        for (Entry<String, String> par : subject.getParents(contexts)) {
+        for (SubjectRef par : subject.getParents(contexts)) {
             if (getRanks().indexOf(par) != -1) {
                 return true;
             }
@@ -118,33 +119,33 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final int indexOfRank(Entry<String, String> subject) {
+    public final int indexOfRank(SubjectRef subject) {
         return getRanks().indexOf(subject);
     }
 
     @Override
-    public final RankLadder addRank(Entry<String, String> subject) {
+    public final RankLadder addRank(SubjectRef subject) {
         int indexOf = getRanks().indexOf(subject);
         if (indexOf != -1) {
-            List<Entry<String, String>> ents = new ArrayList<>(this.getRanks());
+            List<SubjectRef> ents = new ArrayList<>(this.getRanks());
             ents.remove(indexOf);
             ents.add(subject);
             return newWithRanks(ents);
         } else {
-            return newWithRanks(ImmutableList.<Entry<String, String>>builder().addAll(this.getRanks()).add(subject).build());
+            return newWithRanks(ImmutableList.<SubjectRef>builder().addAll(this.getRanks()).add(subject).build());
         }
 
     }
 
 
     @Override
-    public final RankLadder addRankAt(Entry<String, String> subject, int index) {
+    public final RankLadder addRankAt(SubjectRef subject, int index) {
         if (index > getRanks().size() || index < 0) {
             return this;
         }
 
         int indexOf = getRanks().indexOf(subject);
-        final List<Entry<String, String>> newEnts = new ArrayList<>(getRanks());
+        final List<SubjectRef> newEnts = new ArrayList<>(getRanks());
         newEnts.add(index, subject);
         if (indexOf != -1) {
             if (indexOf >= index) {
@@ -156,19 +157,19 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final RankLadder removeRank(Entry<String, String> subject) {
+    public final RankLadder removeRank(SubjectRef subject) {
         int indexOf = getRanks().indexOf(subject);
         if (indexOf == -1) {
             return this;
         } else {
-            List<Entry<String, String>> newRanks = new ArrayList<>(getRanks());
+            List<SubjectRef> newRanks = new ArrayList<>(getRanks());
             newRanks.remove(indexOf);
             return newWithRanks(newRanks);
         }
     }
 
     @Override
-    public abstract List<? extends Entry<String, String>> getRanks();
+    public abstract List<? extends SubjectRef> getRanks();
 
-    protected abstract RankLadder newWithRanks(List<Entry<String,String>> ents);
+    protected abstract RankLadder newWithRanks(List<SubjectRef> ents);
 }

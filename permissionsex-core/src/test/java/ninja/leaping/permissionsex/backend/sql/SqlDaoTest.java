@@ -162,14 +162,14 @@ public class SqlDaoTest extends PermissionsExTest {
     public void testGetOrCreateSubjectRef() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
             assertFalse(dao.getSubjectRef("group", "admin").isPresent());
-            SubjectRef created = dao.getOrCreateSubjectRef("group", "admin");
-            SubjectRef fetched = dao.getSubjectRef("group", "admin").get();
+            SqlSubjectRef created = dao.getOrCreateSubjectRef("group", "admin");
+            SqlSubjectRef fetched = dao.getSubjectRef("group", "admin").get();
             assertEquals(created.getId(), fetched.getId());
 
-            SubjectRef couldBeCreated = dao.getOrCreateSubjectRef("group", "admin");
+            SqlSubjectRef couldBeCreated = dao.getOrCreateSubjectRef("group", "admin");
             assertEquals(created.getId(), couldBeCreated.getId());
 
-            SubjectRef gottenById = dao.getSubjectRef(created.getId()).get();
+            SqlSubjectRef gottenById = dao.getSubjectRef(created.getId()).get();
             assertEquals(created.getId(), gottenById.getId());
             assertEquals(created, gottenById);
         }
@@ -178,8 +178,8 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testRemoveSubject() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef first = dao.getOrCreateSubjectRef("group", "one");
-            SubjectRef second = dao.getOrCreateSubjectRef("group", "two");
+            SqlSubjectRef first = dao.getOrCreateSubjectRef("group", "one");
+            SqlSubjectRef second = dao.getOrCreateSubjectRef("group", "two");
 
             assertTrue(dao.removeSubject("group", "one"));
             assertFalse(dao.getSubjectRef(first.getType(), first.getIdentifier()).isPresent());
@@ -218,7 +218,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testAddRemoveSegment() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
+            SqlSubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
             assertTrue(dao.getSegments(subject).isEmpty());
 
             Segment seg = dao.addSegment(subject);
@@ -234,7 +234,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testContexts() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef subject = dao.getOrCreateSubjectRef("test", "contexts");
+            final SqlSubjectRef subject = dao.getOrCreateSubjectRef("test", "contexts");
 
             Segment testSeg = dao.addSegment(subject);
             assertTrue(testSeg.getContexts().isEmpty());
@@ -255,7 +255,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testOptions() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
+            SqlSubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
             Segment seg = dao.addSegment(subject);
             assertFalse(seg.getOptions().containsKey("test"));
 
@@ -315,7 +315,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testPermissions() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
+            SqlSubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
             Segment seg = dao.addSegment(subject);
             assertFalse(seg.getPermissions().containsKey("test.first"));
 
@@ -375,7 +375,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testParents() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef member = dao.getOrCreateSubjectRef("group", "member"),
+            final SqlSubjectRef member = dao.getOrCreateSubjectRef("group", "member"),
                     vip = dao.getOrCreateSubjectRef("group", "vip"),
                     potato = dao.getOrCreateSubjectRef("group", "potato"),
                     guest = dao.getOrCreateSubjectRef("group", "guest"),
@@ -416,7 +416,7 @@ public class SqlDaoTest extends PermissionsExTest {
             assertTrue(vipSeg.getParents().contains(potato));
             assertTrue(vipSeg.getParents().contains(member));
 
-            final SubjectRef unallocatedGroup = SubjectRef.unresolved("group", "unresolved");
+            final SqlSubjectRef unallocatedGroup = SqlSubjectRef.unresolved("group", "unresolved");
             assertTrue(unallocatedGroup.isUnallocated());
 
             // Test unallocated
@@ -430,7 +430,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testSetDefaultValue() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef subject = dao.getOrCreateSubjectRef("test", "defvalue");
+            final SqlSubjectRef subject = dao.getOrCreateSubjectRef("test", "defvalue");
             Segment newSeg = Segment.unallocated().withDefaultValue(5);
             dao.allocateSegment(subject, newSeg);
 
@@ -479,7 +479,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testRankLadder() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef member = dao.getOrCreateSubjectRef("group", "member"),
+            final SqlSubjectRef member = dao.getOrCreateSubjectRef("group", "member"),
                     vip = dao.getOrCreateSubjectRef("group", "vip"),
                     potato = dao.getOrCreateSubjectRef("group", "potato"),
                     guest = dao.getOrCreateSubjectRef("group", "guest"),

@@ -16,23 +16,28 @@
  */
 package ninja.leaping.permissionsex.backend.sql;
 
-import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.util.Map;
 import java.util.Objects;
 
-public class SubjectRef implements Map.Entry<String, String> {
+public class SqlSubjectRef extends SubjectRef implements Map.Entry<String, String> {
     private volatile int id;
-    private final String type, identifier;
 
-    SubjectRef(int id, String type, String identifier) {
+    SqlSubjectRef(int id, String type, String identifier) {
+        super(type, identifier);
         this.id = id;
-        this.type = type;
-        this.identifier = identifier;
     }
 
-    public static SubjectRef unresolved(String type, String name) {
-        return new SubjectRef(SqlConstants.UNALLOCATED, type, name);
+    public static SqlSubjectRef unresolved(String type, String name) {
+        return new SqlSubjectRef(SqlConstants.UNALLOCATED, type, name);
+    }
+
+    public static SqlSubjectRef of(SubjectRef ref) {
+        if (ref instanceof SqlSubjectRef) {
+            return (SqlSubjectRef) ref;
+        }
+        return unresolved(ref.getType(), ref.getIdentifier());
     }
 
     public int getId() {
@@ -48,14 +53,6 @@ public class SubjectRef implements Map.Entry<String, String> {
 
     boolean isUnallocated() {
         return id == SqlConstants.UNALLOCATED;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getIdentifier() {
-        return identifier;
     }
 
     /**
@@ -112,25 +109,11 @@ public class SubjectRef implements Map.Entry<String, String> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SubjectRef)) return false;
-        SubjectRef that = (SubjectRef) o;
-        return Objects.equals(type, that.type) &&
-                Objects.equals(identifier, that.identifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, identifier);
-    }
-
-    @Override
     public String toString() {
         return com.google.common.base.Objects.toStringHelper(this)
                 .add("id", id)
-                .add("type", type)
-                .add("identifier", identifier)
+                .add("type", getType())
+                .add("identifier", getIdentifier())
                 .toString();
     }
 }

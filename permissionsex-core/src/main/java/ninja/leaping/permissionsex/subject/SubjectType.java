@@ -18,10 +18,10 @@ package ninja.leaping.permissionsex.subject;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.data.SubjectCache;
+import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +38,7 @@ public class SubjectType {
     private SubjectTypeDefinition type;
     private SubjectCache persistentData, transientData;
     private final AsyncLoadingCache<String, CalculatedSubject> cache = Caffeine.newBuilder().buildAsync(((key, executor) -> {
-        CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), Maps.immutableEntry(type.getTypeName(), key), SubjectType.this);
+        CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), SubjectRef.of(type.getTypeName(), key), SubjectType.this);
         return persistentData.getReference(key).thenCombine(transientData.getReference(key), (persistentRef, transientRef) -> {
             subj.initialize(persistentRef, transientRef);
             return subj;

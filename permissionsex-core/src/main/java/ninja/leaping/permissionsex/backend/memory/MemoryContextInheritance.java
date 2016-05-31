@@ -47,18 +47,18 @@ public class MemoryContextInheritance implements ContextInheritance {
 
     @Override
     public List<Map.Entry<String, String>> getParents(Map.Entry<String, String> context) {
-        final List<String> inheritance = contextInheritance.get(Util.subjectToString(context));
+        final List<String> inheritance = contextInheritance.get(Util.contextToString(context));
         if (inheritance == null) {
             return ImmutableList.of();
         }
 
-        return Collections.unmodifiableList(Lists.transform(inheritance, Util::subjectFromString));
+        return Collections.unmodifiableList(Lists.transform(inheritance, Util::contextFromString));
     }
 
     @Override
     public ContextInheritance setParents(Map.Entry<String, String> context, List<Map.Entry<String, String>> parents) {
         final Map<String, List<String>> newData = new HashMap<>(contextInheritance);
-        newData.put(Util.subjectToString(context), ImmutableList.copyOf(Lists.transform(ImmutableList.copyOf(parents), Util::subjectToString)));
+        newData.put(Util.contextToString(context), ImmutableList.copyOf(Lists.transform(ImmutableList.copyOf(parents), Util::contextToString)));
         return newCopy(newData);
     }
 
@@ -66,7 +66,7 @@ public class MemoryContextInheritance implements ContextInheritance {
     public Map<Map.Entry<String, String>, List<Map.Entry<String, String>>> getAllParents() {
         ImmutableMap.Builder<Map.Entry<String, String>, List<Map.Entry<String, String>>> ret = ImmutableMap.builder();
         for (Map.Entry<String, List<String>> entry : contextInheritance.entrySet()) {
-            ret.put(Util.subjectFromString(entry.getKey()), Lists.transform(entry.getValue(), Util::subjectFromString));
+            ret.put(Util.contextFromString(entry.getKey()), Lists.transform(entry.getValue(), Util::contextFromString));
         }
         return ret.build();
     }
@@ -81,7 +81,7 @@ public class MemoryContextInheritance implements ContextInheritance {
         } else {
             Map<String, List<String>> data = new HashMap<>();
             for (Map.Entry<Map.Entry<String, String>, List<Map.Entry<String, String>>> ent : inheritance.getAllParents().entrySet()) {
-                data.put(Util.subjectToString(ent.getKey()), Lists.transform(ent.getValue(), Util::subjectToString));
+                data.put(Util.contextToString(ent.getKey()), Lists.transform(ent.getValue(), Util::contextToString));
             }
             return new MemoryContextInheritance(data);
         }

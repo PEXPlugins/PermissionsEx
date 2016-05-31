@@ -182,11 +182,11 @@ public final class SqlDataStore extends AbstractDataStore {
     protected CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
-                Optional<SubjectRef> ref = dao.getSubjectRef(type, identifier);
+                Optional<SqlSubjectRef> ref = dao.getSubjectRef(type, identifier);
                 if (ref.isPresent()) {
                     return getDataForRef(dao, ref.get());
                 } else {
-                    return new SqlSubjectData(SubjectRef.unresolved(type, identifier));
+                    return new SqlSubjectData(SqlSubjectRef.unresolved(type, identifier));
                 }
             } catch (SQLException e) {
                 throw new PermissionsLoadingException(t("Error loading permissions for %s %s", type, identifier), e);
@@ -194,7 +194,7 @@ public final class SqlDataStore extends AbstractDataStore {
         });
     }
 
-    private SqlSubjectData getDataForRef(SqlDao dao, SubjectRef ref) throws SQLException {
+    private SqlSubjectData getDataForRef(SqlDao dao, SqlSubjectRef ref) throws SQLException {
         List<Segment> segments = dao.getSegments(ref);
         Map<Set<Entry<String, String>>, Segment> contexts = new HashMap<>();
         for (Segment segment : segments) {
@@ -214,7 +214,7 @@ public final class SqlDataStore extends AbstractDataStore {
         } else {
             return runAsync(() -> {
                 try (SqlDao dao = getDao()) {
-                    SubjectRef ref = dao.getOrCreateSubjectRef(type, identifier);
+                    SqlSubjectRef ref = dao.getOrCreateSubjectRef(type, identifier);
                     SqlSubjectData newData = getDataForRef(dao, ref);
                     newData = ConversionUtils.transfer(data, newData);
                     newData.doUpdates(dao);
@@ -262,7 +262,7 @@ public final class SqlDataStore extends AbstractDataStore {
     public Iterable<Entry<Entry<String, String>, ImmutableSubjectData>> getAll() {
         try (SqlDao dao = getDao()) {
             ImmutableSet.Builder<Entry<Entry<String, String>, ImmutableSubjectData>> builder = ImmutableSet.builder();
-            for (SubjectRef ref : dao.getAllSubjectRefs()) {
+            for (SqlSubjectRef ref : dao.getAllSubjectRefs()) {
                 builder.add(Maps.immutableEntry(ref, getDataForRef(dao, ref)));
             }
             return builder.build();

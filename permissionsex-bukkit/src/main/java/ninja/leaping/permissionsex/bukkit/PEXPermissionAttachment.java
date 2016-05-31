@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.bukkit;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.util.Tristate;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
@@ -55,12 +56,12 @@ public class PEXPermissionAttachment extends PermissionAttachment {
 
     @Override
     public Map<String, Boolean> getPermissions() {
-        return Maps.transformValues(subjectData.get().getPermissions(PermissionsEx.GLOBAL_CONTEXT), val -> val > 0);
+        return Maps.transformValues(subjectData.get().getOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT).getPermissions(), val -> val == Tristate.TRUE);
     }
 
     @Override
     public void setPermission(String name, boolean value) {
-        subjectData.update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, checkNotNull(name, "name"), value ? 1 : -1));
+        subjectData.update(old -> old.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg-> seg.withPermission(checkNotNull(name, "name"), value ? Tristate.TRUE : Tristate.FALSE)));
     }
 
     @Override
@@ -70,7 +71,7 @@ public class PEXPermissionAttachment extends PermissionAttachment {
 
     @Override
     public void unsetPermission(String name) {
-        subjectData.update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, checkNotNull(name, "name"), 0));
+        subjectData.update(old -> old.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg-> seg.withPermission(checkNotNull(name, "name"), Tristate.UNDEFINED)));
     }
 
     @Override

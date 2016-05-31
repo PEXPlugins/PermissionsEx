@@ -19,6 +19,12 @@ package ninja.leaping.permissionsex.backend.sql;
 public class SqlConstants {
     public static final String OPTION_SCHEMA_VERSION = "schema_version";
     public static final int UNALLOCATED = -1;
+    /**
+     * A version constant representing an unitialized database (no PEX tables, etc)
+     */
     public static final int VERSION_NOT_INITIALIZED = -2;
+    /**
+     * A version constant representing a database in a state matching a version before schema versioning was added
+     */
     public static final int VERSION_PRE_VERSIONING = -1;
 }

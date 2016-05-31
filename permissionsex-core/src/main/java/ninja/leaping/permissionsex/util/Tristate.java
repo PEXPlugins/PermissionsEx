@@ -14,20 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ninja.leaping.permissionsex.logging;
-
-import ninja.leaping.permissionsex.data.SubjectRef;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package ninja.leaping.permissionsex.util;
 
 /**
- * Delegate to handle notifying of permission and option checks
+ * A tristate value
  */
-public interface PermissionCheckNotifier {
-    void onPermissionCheck(SubjectRef subject, Set<Map.Entry<String, String>> contexts, String permission, int value);
-    void onOptionCheck(SubjectRef subject, Set<Map.Entry<String, String>> contexts, String option, String value);
-    void onParentCheck(SubjectRef subject, Set<Map.Entry<String, String>> contexts, List<SubjectRef> parents);
+public enum Tristate {
+    TRUE(1),
+    FALSE(-1),
+    UNDEFINED(0);
 
+    private final int intVal;
+
+    private Tristate(int intVal) {
+        this.intVal = intVal;
+    }
+
+    public int asInt() {
+        return this.intVal;
+    }
 }

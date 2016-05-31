@@ -24,6 +24,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.NodeTree;
 
 import java.util.List;
@@ -39,13 +40,13 @@ import static java.util.Map.Entry;
  */
 public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final SubjectDataBaker baker;
-    private final Map.Entry<String, String> identifier;
+    private final SubjectRef identifier;
     private final SubjectType type;
     private SubjectDataReference ref, transientRef;
 
     private final AsyncLoadingCache<Set<Entry<String, String>>, BakedSubjectData> data;
 
-    CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) {
+    CalculatedSubject(SubjectDataBaker baker, SubjectRef identifier, SubjectType type) {
         this.baker = Preconditions.checkNotNull(baker, "baker");
         this.identifier = Preconditions.checkNotNull(identifier, "identifier");
         this.type = Preconditions.checkNotNull(type, "type");
@@ -60,7 +61,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         this.transientRef = transientRef;
     }
 
-    public Map.Entry<String, String> getIdentifier() {
+    public SubjectRef getIdentifier() {
         return identifier;
     }
 
@@ -81,8 +82,8 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         return getData(contexts).getOptions();
     }
 
-    public List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts) {
-        List<Map.Entry<String, String>> parents = getData(contexts).getParents();
+    public List<SubjectRef> getParents(Set<Map.Entry<String, String>> contexts) {
+        List<SubjectRef> parents = getData(contexts).getParents();
         getManager().getNotifier().onParentCheck(getIdentifier(), contexts, parents);
         return parents;
     }

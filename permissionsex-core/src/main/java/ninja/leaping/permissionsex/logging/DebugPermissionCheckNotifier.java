@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.logging;
 
+import ninja.leaping.permissionsex.data.SubjectRef;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
@@ -40,8 +41,8 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
         this.filterPredicate = filterPredicate == null ? x -> true : filterPredicate;
     }
 
-    private String stringIdentifier(Map.Entry<String, String> identifier) {
-        return identifier.getKey() + " " + identifier.getValue();
+    private String stringIdentifier(SubjectRef identifier) {
+        return identifier.getType() + " " + identifier.getIdentifier();
     }
 
     public PermissionCheckNotifier getDelegate() {
@@ -49,7 +50,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value) {
+    public void onPermissionCheck(SubjectRef subject, Set<Map.Entry<String, String>> contexts, String permission, int value) {
         if (this.filterPredicate.test(permission)) {
             logger.info(t("Permission %s checked in %s for %s: %s", permission, contexts, stringIdentifier(subject), value));
         }
@@ -57,7 +58,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value) {
+    public void onOptionCheck(SubjectRef subject, Set<Map.Entry<String, String>> contexts, String option, String value) {
         if (this.filterPredicate.test(option)) {
             logger.info(t("Option %s checked in %s for %s: %s", option, contexts, stringIdentifier(subject), value));
         }
@@ -65,7 +66,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onParentCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(SubjectRef subject, Set<Map.Entry<String, String>> contexts, List<SubjectRef> parents) {
         logger.info(t("Parents checked in %s for %s: %s", contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }

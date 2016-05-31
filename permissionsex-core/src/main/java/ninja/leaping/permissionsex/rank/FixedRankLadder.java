@@ -17,25 +17,27 @@
 package ninja.leaping.permissionsex.rank;
 
 import com.google.common.collect.ImmutableList;
+import ninja.leaping.permissionsex.data.SubjectRef;
+
 import java.util.List;
 
 import static java.util.Map.Entry;
 
 public class FixedRankLadder extends AbstractRankLadder {
-    private final List<Entry<String, String>> ranks;
+    private final List<SubjectRef> ranks;
 
-    public FixedRankLadder(String name, List<Entry<String, String>> ranks) {
+    public FixedRankLadder(String name, List<SubjectRef> ranks) {
         super(name);
         this.ranks = ImmutableList.copyOf(ranks);
     }
 
     @Override
-    public List<? extends Entry<String, String>> getRanks() {
+    public List<? extends SubjectRef> getRanks() {
         return this.ranks;
     }
 
     @Override
-    protected RankLadder newWithRanks(List<Entry<String, String>> ents) {
+    protected RankLadder newWithRanks(List<SubjectRef> ents) {
         return new FixedRankLadder(getName(), ents);
     }
 }
