@@ -94,6 +94,16 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
     }
 
     @Override
+    public void save() throws IOException {
+        try {
+            ObjectMapper.forObject(this).serialize(this.node);
+        } catch (ObjectMappingException e) {
+            throw new IOException(e);
+        }
+        this.loader.save(node);
+    }
+
+    @Override
     public DataStore getDataStore(String name) {
         return backends.get(name);
     }

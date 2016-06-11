@@ -283,6 +283,12 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private void initialize(PermissionsExConfiguration config) throws PermissionsLoadingException {
         State newState = new State(config, config.getDefaultDataStore());
         newState.activeDataStore.initialize(this);
+        try {
+            newState.config.save();
+        } catch (IOException e) {
+            throw new PermissionsLoadingException(t("Unable to write permissions configuration"), e);
+        }
+
         State oldState = this.state.getAndSet(newState);
         if (oldState != null) {
             try {

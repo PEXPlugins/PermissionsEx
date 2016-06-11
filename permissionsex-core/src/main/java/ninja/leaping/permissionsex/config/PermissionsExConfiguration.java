@@ -37,4 +37,6 @@ public interface PermissionsExConfiguration {
     void validate() throws PEBKACException;
 
     PermissionsExConfiguration reload() throws IOException;
+
+    default void save() throws IOException {}
 }

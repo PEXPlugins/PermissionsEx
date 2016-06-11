@@ -102,7 +102,7 @@ public final class FileDataStore extends AbstractDataStore {
             permissionsFileLoader.save(permissionsConfig);
             Files.move(legacyPermissionsFile, legacyPermissionsFile.resolveSibling(legacyPermissionsFile.getFileName().toString() + ".legacy-backup"));
         } catch (IOException e) {
-            throw new PermissionsLoadingException(t("While loading legacy %s permissions from %s", formatName, permissionsFile), e);
+            throw new PermissionsLoadingException(t("While loading legacy %s permissions from %s", formatName, legacyPermissionsFile), e);
         }
         return permissionsFile;
     }
