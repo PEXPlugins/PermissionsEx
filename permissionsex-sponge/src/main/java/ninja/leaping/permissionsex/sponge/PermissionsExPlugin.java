@@ -308,11 +308,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public PEXOptionSubjectData getDefaultData() {
-        return defaults.getTransientSubjectData();
-    }
-
-    public PEXSubject getDefaultSubject() {
+    public PEXSubject getDefaults() {
         return defaults;
     }
 

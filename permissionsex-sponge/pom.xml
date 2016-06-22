@@ -119,7 +119,7 @@
     <dependency>
       <groupId>org.spongepowered</groupId>
       <artifactId>spongeapi</artifactId>
-      <version>4.1.0-SNAPSHOT</version>
+      <version>5.0.0-SNAPSHOT</version>
       <type>jar</type>
       <scope>provided</scope>
     </dependency>

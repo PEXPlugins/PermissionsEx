@@ -22,7 +22,10 @@ import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,7 +73,7 @@ class PEXSpongeCommand implements CommandCallable {
     }
 
     @Override
-    public List<String> getSuggestions(CommandSource commandSource, String commandLine) throws CommandException {
+    public List<String> getSuggestions(CommandSource commandSource, String commandLine, @Nullable Location<World> targetPosition) throws CommandException {
         return command.tabComplete(new SpongeCommander(plugin, commandSource), commandLine);
     }
 }
