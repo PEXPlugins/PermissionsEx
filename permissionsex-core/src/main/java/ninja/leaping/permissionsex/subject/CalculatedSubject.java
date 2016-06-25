@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.subject;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
@@ -40,7 +41,6 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final SubjectDataBaker baker;
     private final Map.Entry<String, String> identifier;
     private final SubjectType type;
-    //private final PermissionsEx pex;
     private SubjectDataReference ref, transientRef;
 
     private final AsyncLoadingCache<Set<Entry<String, String>>, BakedSubjectData> data;
@@ -69,21 +69,19 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     }
 
     private BakedSubjectData getData(Set<Entry<String, String>> contexts) {
-        return data.synchronous().get(contexts);
+        Preconditions.checkNotNull(contexts, "contexts");
+        return data.synchronous().get(ImmutableSet.copyOf(contexts));
     }
 
     public NodeTree getPermissions(Set<Map.Entry<String, String>> contexts) {
-        Preconditions.checkNotNull(contexts, "contexts");
         return getData(contexts).getPermissions();
     }
 
     public Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts) {
-        Preconditions.checkNotNull(contexts, "contexts");
         return getData(contexts).getOptions();
     }
 
     public List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts) {
-        Preconditions.checkNotNull(contexts, "contexts");
         List<Map.Entry<String, String>> parents = getData(contexts).getParents();
         getManager().getNotifier().onParentCheck(getIdentifier(), contexts, parents);
         return parents;

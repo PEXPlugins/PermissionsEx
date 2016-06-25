@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -139,7 +140,7 @@ class PEXSubject implements OptionSubject {
         for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
             calc.accumulateContexts(this, set);
         }
-        return Collections.unmodifiableSet(set);
+        return ImmutableSet.copyOf(set);
     }
 
     @Override
