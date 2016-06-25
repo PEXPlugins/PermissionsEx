@@ -134,9 +134,6 @@ public class SubjectCache {
 
     private Caching<ImmutableSubjectData> clearListener(final String name) {
         Caching<ImmutableSubjectData> ret = newData -> {
-            if (newData == null) {
-                System.out.println("What? This is null?");
-            }
             cache.get().put(name, CompletableFuture.completedFuture(newData));
             listeners.call(name, newData);
         };
