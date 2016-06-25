@@ -53,8 +53,12 @@ class PEXSubject implements OptionSubject {
         this.identifier = identifier;
         this.collection = collection;
         this.baked = collection.getCalculatedSubject(identifier);
-        this.data = new PEXOptionSubjectData(baked.data(), identifier, collection.getPlugin());
-        this.transientData = new PEXOptionSubjectData(baked.transientData(), identifier, collection.getPlugin());
+        this.data = new PEXOptionSubjectData(baked.data(), collection.getPlugin());
+        this.transientData = new PEXOptionSubjectData(baked.transientData(), collection.getPlugin());
+    }
+
+    private Timings time() {
+        return collection.getPlugin().getTimings();
     }
 
     @Override
@@ -93,14 +97,14 @@ class PEXSubject implements OptionSubject {
 
     @Override
     public Optional<String> getOption(Set<Context> contexts, String key) {
-        Preconditions.checkNotNull(contexts, "contexts");
-        Preconditions.checkNotNull(key, "key");
-        return baked.getOption(parSet(contexts), key);
-    }
-
-    @Override
-    public Optional<String> getOption(String key) {
-        return getOption(getActiveContexts(), key);
+        time().onGetOption().startTimingIfSync();
+        try {
+            Preconditions.checkNotNull(contexts, "contexts");
+            Preconditions.checkNotNull(key, "key");
+            return baked.getOption(parSet(contexts), key);
+        } finally {
+            time().onGetOption().stopTimingIfSync();
+        }
     }
 
     @Override
@@ -109,22 +113,16 @@ class PEXSubject implements OptionSubject {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
-        return hasPermission(getActiveContexts(), permission);
-    }
-
-    @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        Preconditions.checkNotNull(contexts, "contexts");
-        Preconditions.checkNotNull(permission, "permission");
-        int ret = baked.getPermission(parSet(contexts), permission);
-        return ret == 0 ? Tristate.UNDEFINED : ret > 0 ? Tristate.TRUE : Tristate.FALSE;
-    }
-
-
-    @Override
-    public boolean isChildOf(Subject parent) {
-        return isChildOf(getActiveContexts(), parent);
+        time().onGetPermission().startTimingIfSync();
+        try {
+            Preconditions.checkNotNull(contexts, "contexts");
+            Preconditions.checkNotNull(permission, "permission");
+            int ret = baked.getPermission(parSet(contexts), permission);
+            return ret == 0 ? Tristate.UNDEFINED : ret > 0 ? Tristate.TRUE : Tristate.FALSE;
+        } finally {
+            time().onGetPermission().stopTimingIfSync();
+        }
     }
 
     @Override
@@ -136,22 +134,27 @@ class PEXSubject implements OptionSubject {
 
     @Override
     public Set<Context> getActiveContexts() {
-        Set<Context> set = new HashSet<>();
-        for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
-            calc.accumulateContexts(this, set);
+        time().onGetActiveContexts().startTimingIfSync();
+        try {
+            Set<Context> set = new HashSet<>();
+            for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
+                calc.accumulateContexts(this, set);
+            }
+            return ImmutableSet.copyOf(set);
+        } finally {
+            time().onGetActiveContexts().stopTimingIfSync();
         }
-        return ImmutableSet.copyOf(set);
-    }
-
-    @Override
-    public List<Subject> getParents() {
-        return getParents(getActiveContexts());
     }
 
     @Override
     public List<Subject> getParents(final Set<Context> contexts) {
-        Preconditions.checkNotNull(contexts, "contexts");
-        return Lists.transform(baked.getParents(parSet(contexts)), input -> collection.getPlugin().getSubjects(input.getKey()).get(input.getValue()));
+        time().onGetParents().startTimingIfSync();
+        try {
+            Preconditions.checkNotNull(contexts, "contexts");
+            return Lists.transform(baked.getParents(parSet(contexts)), input -> collection.getPlugin().getSubjects(input.getKey()).get(input.getValue()));
+        } finally {
+            time().onGetParents().stopTimingIfSync();
+        }
     }
 
     @Override

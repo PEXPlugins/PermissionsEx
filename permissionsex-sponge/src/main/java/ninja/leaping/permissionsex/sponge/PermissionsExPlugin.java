@@ -121,6 +121,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             .execute(runnable)
             .submit(PermissionsExPlugin.this);
 
+    private Timings timings;
+
     @Inject
     PermissionsExPlugin(Logger logger) {
         this.logger = TranslatableLogger.forLogger(logger);
@@ -128,6 +130,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Listener
     public void onPreInit(GamePreInitializationEvent event) throws PEBKACException {
+        this.timings = new Timings(this);
         logger.info(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
         sql = services.provide(SqlService.class);
         scheduler = game.getScheduler();
@@ -243,6 +246,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         getUserSubjects().uncache(event.getTargetEntity().getIdentifier());
     }
 
+    public Timings getTimings() {
+        return timings;
+    }
 
     private void convertFromBukkit() throws IOException {
         Path bukkitConfigPath = Paths.get("plugins/PermissionsEx");

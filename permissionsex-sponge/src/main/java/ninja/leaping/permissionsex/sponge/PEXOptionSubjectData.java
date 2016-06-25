@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.Change;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
 import org.spongepowered.api.service.permission.Subject;
@@ -43,13 +42,11 @@ import java.util.concurrent.ExecutionException;
  */
 class PEXOptionSubjectData implements OptionSubjectData {
     private final PermissionsExPlugin plugin;
-    private final String identifier;
     private SubjectDataReference data;
     private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
 
-    public PEXOptionSubjectData(SubjectDataReference data, String identifier, PermissionsExPlugin plugin) throws ExecutionException {
+    public PEXOptionSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
-        this.identifier = identifier;
         this.data = data;
         this.data.onUpdate(this::clearCache);
     }

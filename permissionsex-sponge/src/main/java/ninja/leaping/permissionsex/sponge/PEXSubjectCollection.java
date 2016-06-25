@@ -70,10 +70,13 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public PEXSubject get(String identifier) {
+        plugin.getTimings().onGetSubject().startTimingIfSync();
         try {
             return subjectCache.get(identifier);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        } finally {
+            plugin.getTimings().onGetSubject().stopTimingIfSync();
         }
     }
 
