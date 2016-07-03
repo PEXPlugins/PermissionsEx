@@ -25,27 +25,25 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.context.ContextCalculator;
-import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import static ninja.leaping.permissionsex.sponge.PEXOptionSubjectData.parSet;
+import static ninja.leaping.permissionsex.sponge.PEXSubjectData.parSet;
 
 /**
  * Permissions subject implementation
  */
 @NonnullByDefault
-class PEXSubject implements OptionSubject {
+class PEXSubject implements Subject {
     private final PEXSubjectCollection collection;
-    private final PEXOptionSubjectData data;
-    private final PEXOptionSubjectData transientData;
+    private final PEXSubjectData data;
+    private final PEXSubjectData transientData;
     private volatile CalculatedSubject baked;
     private final String identifier;
 
@@ -53,8 +51,8 @@ class PEXSubject implements OptionSubject {
         this.identifier = identifier;
         this.collection = collection;
         this.baked = collection.getCalculatedSubject(identifier);
-        this.data = new PEXOptionSubjectData(baked.data(), collection.getPlugin());
-        this.transientData = new PEXOptionSubjectData(baked.transientData(), collection.getPlugin());
+        this.data = new PEXSubjectData(baked.data(), collection.getPlugin());
+        this.transientData = new PEXSubjectData(baked.transientData(), collection.getPlugin());
     }
 
     private Timings time() {
@@ -86,12 +84,12 @@ class PEXSubject implements OptionSubject {
     }
 
     @Override
-    public PEXOptionSubjectData getSubjectData() {
+    public PEXSubjectData getSubjectData() {
         return data;
     }
 
     @Override
-    public PEXOptionSubjectData getTransientSubjectData() {
+    public PEXSubjectData getTransientSubjectData() {
         return transientData;
     }
 
