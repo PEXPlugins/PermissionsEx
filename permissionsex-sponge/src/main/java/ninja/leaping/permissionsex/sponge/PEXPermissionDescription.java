@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Preconditions;
+import ninja.leaping.permissionsex.util.Tristate;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.Subject;
@@ -66,7 +67,7 @@ class PEXPermissionDescription implements PermissionDescription {
         private final PermissionsExPlugin plugin;
         private String id;
         private Text description;
-        private Map<String, Integer> ranks = new HashMap<>();
+        private Map<String, Tristate> ranks = new HashMap<>();
 
         Builder(PluginContainer owner, PermissionsExPlugin plugin) {
             this.owner = owner;
@@ -89,10 +90,10 @@ class PEXPermissionDescription implements PermissionDescription {
 
         @Override
         public Builder assign(String s, boolean b) {
-            return assign(s, b ? 1 : -1);
+            return assign(s, b ? Tristate.TRUE : Tristate.FALSE);
         }
 
-        public Builder assign(String rankTemplate, int power) {
+        public Builder assign(String rankTemplate, Tristate power) {
             ranks.put(rankTemplate, power);
             return this;
         }

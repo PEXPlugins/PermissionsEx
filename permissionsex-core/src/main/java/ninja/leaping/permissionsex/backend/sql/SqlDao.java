@@ -376,8 +376,8 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public List<Segment> getSegments(SqlSubjectRef ref) throws SQLException {
-        ImmutableList.Builder<Segment> result = ImmutableList.builder();
+    public List<SqlDataSegment> getSegments(SqlSubjectRef ref) throws SQLException {
+        ImmutableList.Builder<SqlDataSegment> result = ImmutableList.builder();
         try (PreparedStatement stmt = prepareStatement(getSelectSegmentsSubjectQuery())) {
             stmt.setInt(1, getIdAllocating(ref));
             ResultSet rs = stmt.executeQuery();
@@ -421,20 +421,20 @@ public abstract class SqlDao implements AutoCloseable {
                     }
                 }
 
-                result.add(new Segment(id, contexts, weight, inheritable, permValues.build(), optionValues.build(), inheritanceValues.build(), permDef, null));
+                result.add(new SqlDataSegment(id, contexts, weight, inheritable, permValues.build(), optionValues.build(), inheritanceValues.build(), permDef, null));
 
             }
         }
         return result.build();
     }
 
-    public Segment addSegment(SqlSubjectRef ref) throws SQLException { // TODO: Is this method useful?
-        Segment segment = Segment.unallocated();
+    public SqlDataSegment addSegment(SqlSubjectRef ref) throws SQLException { // TODO: Is this method useful?
+        SqlDataSegment segment = SqlDataSegment.unallocated();
         allocateSegment(ref, segment);
         return segment;
     }
 
-    public void updateFullSegment(SqlSubjectRef ref, Segment segment) throws SQLException {
+    public void updateFullSegment(SqlSubjectRef ref, SqlDataSegment segment) throws SQLException {
         executeInTransaction(() -> {
             allocateSegment(ref, segment);
             setContexts(segment, segment.getContexts());
@@ -446,7 +446,7 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public void updateMetadata(Segment segment) throws SQLException {
+    public void updateMetadata(SqlDataSegment segment) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getUpdateSegmentMetaQuery())) {
             tristateParam(stmt, 1, segment.getPermissionDefault());
             stmt.setInt(2, segment.getWeight());
@@ -456,7 +456,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setContexts(Segment seg, Set<Entry<String, String>> contexts) throws SQLException {
+    public void setContexts(SqlDataSegment seg, Set<Entry<String, String>> contexts) throws SQLException {
         // Update contexts
         executeInTransaction(() -> {
             try (PreparedStatement delete = prepareStatement(getDeleteContextQuery());
@@ -478,7 +478,7 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void allocateSegment(SqlSubjectRef subject, Segment val) throws SQLException {
+    public void allocateSegment(SqlSubjectRef subject, SqlDataSegment val) throws SQLException {
         if (!val.isUnallocated()) {
             return;
         }
@@ -499,7 +499,7 @@ public abstract class SqlDao implements AutoCloseable {
         setContexts(val, val.getContexts());
     }
 
-    public boolean removeSegment(Segment segment) throws SQLException {
+    public boolean removeSegment(SqlDataSegment segment) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteSegmentIdQuery())) {
             stmt.setInt(1, segment.getId());
             return stmt.executeUpdate() > 0;
@@ -579,7 +579,7 @@ public abstract class SqlDao implements AutoCloseable {
         return conn.getMetaData().getTables(null, null, this.ds.getTableName(table).toUpperCase(), null).next(); // Upper-case for H2
     }
 
-    public void clearOption(Segment segment, String option) throws SQLException {
+    public void clearOption(SqlDataSegment segment, String option) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteOptionKeyQuery())) {
             stmt.setInt(1, segment.getId());
             stmt.setString(2, option);
@@ -587,7 +587,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setOptions(Segment seg, Map<String, String> options) throws SQLException {
+    public void setOptions(SqlDataSegment seg, Map<String, String> options) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeleteOptionsQuery());
                  PreparedStatement ins = prepareStatement(getInsertOptionUpdatingQuery())) {
@@ -608,7 +608,7 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public void setOption(Segment segment, String key, String value) throws SQLException {
+    public void setOption(SqlDataSegment segment, String key, String value) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getInsertOptionUpdatingQuery())) {
             stmt.setInt(1, segment.getId());
             stmt.setString(2, key);
@@ -617,7 +617,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setPermission(Segment segment, String permission, Tristate value) throws SQLException {
+    public void setPermission(SqlDataSegment segment, String permission, Tristate value) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getInsertPermissionUpdatingQuery())) {
             stmt.setInt(1, segment.getId());
             stmt.setString(2, permission);
@@ -627,7 +627,7 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void clearPermission(Segment segment, String permission) throws SQLException {
+    public void clearPermission(SqlDataSegment segment, String permission) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeletePermissionKeyQuery())) {
             stmt.setInt(1, segment.getId());
             stmt.setString(2, permission);
@@ -635,7 +635,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setPermissions(Segment segment, Map<String, Tristate> permissions) throws SQLException {
+    public void setPermissions(SqlDataSegment segment, Map<String, Tristate> permissions) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeletePermissionsQuery());
                  PreparedStatement ins = prepareStatement(getInsertPermissionUpdatingQuery())) {
@@ -657,7 +657,7 @@ public abstract class SqlDao implements AutoCloseable {
     }
 
 
-    public void addParent(Segment seg, SqlSubjectRef parent) throws SQLException {
+    public void addParent(SqlDataSegment seg, SqlSubjectRef parent) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getInsertInheritanceQuery())) {
             stmt.setInt(1, seg.getId());
             stmt.setInt(2, getIdAllocating(parent));
@@ -665,7 +665,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void removeParent(Segment segment, SqlSubjectRef parent) throws SQLException {
+    public void removeParent(SqlDataSegment segment, SqlSubjectRef parent) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteInheritanceParentQuery())) {
             stmt.setInt(1, segment.getId());
             stmt.setInt(2, getIdAllocating(parent));
@@ -673,7 +673,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setParents(Segment segment, List<SqlSubjectRef> parents) throws SQLException {
+    public void setParents(SqlDataSegment segment, List<SqlSubjectRef> parents) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeleteInheritanceQuery());
                  PreparedStatement ins = prepareStatement(getInsertInheritanceQuery())) {

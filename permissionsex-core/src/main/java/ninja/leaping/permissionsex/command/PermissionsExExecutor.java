@@ -100,7 +100,7 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
             runtimeCheckSubjectPermission(src, subject.getIdentifier(), permission);
             SubjectDataReference dat = args.hasAny("transient") ? subject.transientData() : subject.data();
             msg.set(messageProvider.apply(subject, contexts));
-            return dat.update(old -> old.updateOrCreateSegment(contexts, weight, inheritable, updateFunc));
+            return dat.updateSegment(contexts, weight, inheritable, updateFunc);
         });
         messageSubjectOnFuture(ret, src, msg::get);
         return ret;

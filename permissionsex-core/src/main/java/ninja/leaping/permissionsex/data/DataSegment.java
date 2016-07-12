@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.data;
 
-import ninja.leaping.permissionsex.util.Weighted;
 import ninja.leaping.permissionsex.util.Tristate;
 
 import javax.annotation.Nonnull;
@@ -27,19 +26,15 @@ import java.util.Set;
 /**
  * A segment of permissions data with specific flags
  */
-public interface DataSegment extends Comparable<DataSegment>, Weighted {
-    // -- Applicability flags
-    Set<Map.Entry<String, String>> getContexts();
-
+public interface DataSegment extends Comparable<DataSegment>, SegmentKey {
+    @Override
     DataSegment withContexts(Set<Map.Entry<String, String>> contexts);
 
+    @Override
     DataSegment withWeight(int weight);
 
-    boolean isInheritable();
-
+    @Override
     DataSegment withInheritability(boolean inheritable);
-
-    // -- The data itself
 
     Map<String, Tristate> getPermissions();
 

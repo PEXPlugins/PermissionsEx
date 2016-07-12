@@ -88,6 +88,10 @@ public final class SqlDataStore extends AbstractDataStore {
     @Override
     protected void initializeInternal() throws PermissionsLoadingException {
         try {
+            if (this.connectionUrl == null) {
+                throw new PermissionsLoadingException(t("The connection URL must be set for this backend"));
+            }
+
             sql = getManager().getDataSourceForURL(connectionUrl);
             if (this.prefix != null && !this.prefix.isEmpty() && !this.prefix.endsWith("_")) {
                 this.realPrefix = this.prefix + "_";
@@ -195,9 +199,9 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     private SqlSubjectData getDataForRef(SqlDao dao, SqlSubjectRef ref) throws SQLException {
-        List<Segment> segments = dao.getSegments(ref);
-        Map<Set<Entry<String, String>>, Segment> contexts = new HashMap<>();
-        for (Segment segment : segments) {
+        List<SqlDataSegment> segments = dao.getSegments(ref);
+        Map<Set<Entry<String, String>>, SqlDataSegment> contexts = new HashMap<>();
+        for (SqlDataSegment segment : segments) {
             contexts.put(segment.getContexts(), segment);
         }
 

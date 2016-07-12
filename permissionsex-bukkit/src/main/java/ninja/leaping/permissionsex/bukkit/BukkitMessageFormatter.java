@@ -23,8 +23,10 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.command.ButtonType;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.apache.commons.lang.LocaleUtils;
@@ -33,7 +35,6 @@ import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
@@ -55,10 +56,10 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
     }
 
     @Override
-    public BaseComponent subject(Map.Entry<String, String> subject) {
+    public BaseComponent subject(SubjectRef subject) {
         String name;
         try {
-            name = pex.getManager().getSubjects(subject.getKey()).persistentData().getData(subject.getValue(), null).get().getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
+            name = pex.getManager().getSubjects(subject.getType()).persistentData().getData(subject.getIdentifier(), null).get().getSegment(PermissionsEx.GLOBAL_CONTEXT).getOptions().get("name");
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -66,24 +67,24 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
         BaseComponent nameText;
         if (name != null) {
             nameText = new TextComponent("");
-            final BaseComponent child = new TextComponent(subject.getValue());
+            final BaseComponent child = new TextComponent(subject.getIdentifier());
             child.setColor(ChatColor.GRAY);
             nameText.addExtra(child);
             nameText.addExtra("/");
             nameText.addExtra(name);
         } else {
-            nameText = new TextComponent(subject.getValue());
+            nameText = new TextComponent(subject.getIdentifier());
         }
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         BaseComponent ret = new TextComponent("");
-        BaseComponent typeComponent = new TextComponent(subject.getKey());
+        BaseComponent typeComponent = new TextComponent(subject.getIdentifier());
         typeComponent.setBold(true);
         ret.addExtra(typeComponent);
         ret.addExtra(" ");
         ret.addExtra(nameText);
         ret.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{tr(t("Click to view more info"))}));
-        ret.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex " + subject.getKey() + " " + subject.getValue() + " info"));
+        ret.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex " + subject.getType() + " " + subject.getIdentifier() + " info"));
         return ret;
     }
 
@@ -129,14 +130,20 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
     }
 
     @Override
-    public BaseComponent permission(String permission, int value) {
+    public BaseComponent permission(String permission, Tristate value) {
         ChatColor valueColor;
-        if (value > 0) {
-            valueColor = ChatColor.GREEN;
-        } else if (value < 0) {
-            valueColor = ChatColor.RED;
-        } else {
-            valueColor = ChatColor.GRAY;
+        switch (value) {
+            case TRUE:
+                valueColor = ChatColor.GREEN;
+                break;
+            case FALSE:
+                valueColor = ChatColor.RED;
+                break;
+            case UNDEFINED:
+                valueColor = ChatColor.GRAY;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid Tristate element passed in value: " + value);
         }
         BaseComponent ret = new TextComponent("");
         BaseComponent perm = new TextComponent(permission);

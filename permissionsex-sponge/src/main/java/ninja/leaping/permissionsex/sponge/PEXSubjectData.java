@@ -20,8 +20,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.data.Change;
+import ninja.leaping.permissionsex.data.DataSegment;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
@@ -98,17 +100,17 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<String, String> getOptions(Set<Context> contexts) {
-        return this.data.get().getOptions(parSet(contexts));
+        return this.data.get().getSegment(parSet(contexts)).getOptions();
     }
 
     @Override
     public boolean setOption(final Set<Context> contexts, final String key, final String value) {
-        return wasSuccess(data.update(input -> input.setOption(parSet(contexts), key, value)));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(contexts), seg -> seg.withOption(key, value))));
     }
 
     @Override
     public boolean clearOptions(final Set<Context> contexts) {
-        return wasSuccess(data.update(input -> input.clearOptions(parSet(contexts))));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(contexts), DataSegment::withoutOptions)));
     }
 
     @Override
@@ -119,32 +121,32 @@ class PEXSubjectData implements SubjectData {
     @Override
     public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
         return Maps.transformValues(tKeys(data.get().getAllPermissions()),
-                map -> Maps.transformValues(map, i -> i > 0));
+                map -> Maps.transformValues(map, i -> i == Tristate.TRUE));
     }
 
     @Override
     public Map<String, Boolean> getPermissions(Set<Context> set) {
-        return Maps.transformValues(data.get().getPermissions(parSet(set)), value -> value > 0);
+        return Maps.transformValues(data.get().getSegment(parSet(set)).getPermissions(), val -> val == ninja.leaping.permissionsex.util.Tristate.TRUE);
     }
 
     @Override
     public boolean setPermission(final Set<Context> set, final String s, Tristate tristate) {
-        final int val;
+        final ninja.leaping.permissionsex.util.Tristate val;
         switch (tristate) {
             case TRUE:
-                val = 1;
+                val = ninja.leaping.permissionsex.util.Tristate.TRUE;
                 break;
             case FALSE:
-                val = -1;
+                val = ninja.leaping.permissionsex.util.Tristate.FALSE;
                 break;
             case UNDEFINED:
-                val = 0;
+                val = ninja.leaping.permissionsex.util.Tristate.UNDEFINED;
                 break;
             default:
                 throw new IllegalStateException("Unknown tristate provided " + tristate);
         }
 
-        return wasSuccess(data.update(input -> input.setPermission(parSet(set), s, val)));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(set), seg -> seg.withPermission(s, val))));
     }
 
     @Override
@@ -154,13 +156,13 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public boolean clearPermissions(final Set<Context> set) {
-        return wasSuccess(data.update(input -> input.clearPermissions(parSet(set))));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(set), DataSegment::withoutPermissions)));
     }
 
     @Override
     public Map<Set<Context>, List<Subject>> getAllParents() {
         synchronized (parentsCache) {
-            data.get().getActiveContexts().forEach(this::getParentsInternal);
+            data.get().getAllSegments().stream().map(DataSegment::getContexts).distinct().forEach(this::getParentsInternal);
             return tKeys(parentsCache);
         }
     }
@@ -174,13 +176,13 @@ class PEXSubjectData implements SubjectData {
         List<Subject> parents = parentsCache.get(set);
         if (parents == null) {
             synchronized (parentsCache) {
-                List<Map.Entry<String, String>> rawParents = data.get().getParents(set);
+                List<SubjectRef> rawParents = data.get().getSegment(set).getParents();
                 if (rawParents == null) {
                     parents = ImmutableList.of();
                 } else {
                     parents = new ArrayList<>(rawParents.size());
-                    for (Map.Entry<String, String> ent : rawParents) {
-                        parents.add(plugin.getSubjects(ent.getKey()).get(ent.getValue())); // TODO: Parallelize
+                    for (SubjectRef ent : rawParents) {
+                        parents.add(plugin.getSubjects(ent.getType()).get(ent.getIdentifier())); // TODO: Parallelize
                     }
                 }
                 List<Subject> existingParents = parentsCache.putIfAbsent(set, parents);
@@ -192,14 +194,20 @@ class PEXSubjectData implements SubjectData {
         return parents;
     }
 
+    private SubjectRef identOf(Subject subject) {
+        if (subject instanceof PEXSubject) {
+            return ((PEXSubject) subject).getRef();
+        }
+    }
+
     @Override
     public boolean addParent(final Set<Context> set, final Subject subject) {
-        return wasSuccess(data.update(input -> input.addParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier())));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(set), seg -> seg.withAddedParent(identOf(subject)))));
     }
 
     @Override
     public boolean removeParent(final Set<Context> set, final Subject subject) {
-        return wasSuccess(data.update(input -> input.removeParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier())));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(set), seg -> seg.withRemovedParent(identOf(subject)))));
     }
 
     @Override
@@ -209,6 +217,6 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public boolean clearParents(final Set<Context> set) {
-        return wasSuccess(data.update(input -> input.clearParents(parSet(set))));
+        return wasSuccess(data.update(input -> input.updateSegment(parSet(set), DataSegment::withoutParents)));
     }
 }

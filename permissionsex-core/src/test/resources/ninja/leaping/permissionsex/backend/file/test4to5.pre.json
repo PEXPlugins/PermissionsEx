@@ -1,0 +1,30 @@
+{
+  "subjects": {
+    "group": {
+      "default": [
+        {
+          "permissions": {
+            "some.perm": 1
+          }
+        },
+        {
+          "contexts": {
+            "world": "DIM-1"
+          },
+          "permissions": {
+            "some.perm": -4,
+            "#some.perm.noninheritable": 4,
+            "#non.inheritable": 1,
+            "another.perm": 1,
+            "another.perm.cooler": -1
+          }
+        }
+      ],
+      "owner": [
+        {
+          "permissions-default": 1
+        }
+      ]
+    }
+  }
+}

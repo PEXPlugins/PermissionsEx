@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.util.Tristate;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
@@ -136,7 +137,7 @@ public class PermissionList extends HashMap<String, Permission> {
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
             plugin.getManager().getSubjects(PermissionsEx.SUBJECTS_DEFAULTS)
                     .transientData()
-                    .update(PermissionsEx.SUBJECTS_USER, input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1));
+                    .update(PermissionsEx.SUBJECTS_USER, input -> input.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withPermission(v.getName(), v.getDefault() == PermissionDefault.TRUE ? Tristate.TRUE : Tristate.FALSE)));
         }
         return super.put(k, v);
     }
@@ -150,7 +151,7 @@ public class PermissionList extends HashMap<String, Permission> {
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
                 plugin.getManager().getSubjects(PermissionsEx.SUBJECTS_DEFAULTS)
                         .transientData()
-                        .update(PermissionsEx.SUBJECTS_USER, input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, ret.getName(), 0));
+                        .update(PermissionsEx.SUBJECTS_USER, input -> input.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withoutPermission(ret.getName())));
             }
         }
         return ret;

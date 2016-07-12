@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.sponge;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.Sponge;
@@ -92,6 +93,10 @@ class PEXSubject implements Subject {
 
     public CalculatedSubject getBaked() {
         return this.baked;
+    }
+
+    public SubjectRef getRef() {
+        return this.baked.getIdentifier();
     }
 
     @Override
@@ -180,7 +185,7 @@ class PEXSubject implements Subject {
         time().onGetParents().startTimingIfSync();
         try {
             Preconditions.checkNotNull(contexts, "contexts");
-            return Lists.transform(baked.getParents(parSet(contexts)), input -> collection.getPlugin().getSubjects(input.getKey()).get(input.getValue()));
+            return Lists.transform(baked.getParents(parSet(contexts)), input -> collection.getPlugin().getSubjects(input.getType()).get(input.getIdentifier()));
         } finally {
             time().onGetParents().stopTimingIfSync();
         }

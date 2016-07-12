@@ -23,10 +23,10 @@ import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.data.DataSegment;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.WeightedImmutableSet;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -84,23 +84,18 @@ public class MemorySubjectData implements ImmutableSubjectData {
         }
     }
 
-    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, ContextSegments> segments) {
+    protected MemorySubjectData newData(Map<SegmentKey, DataSegment> segments) {
         return new MemorySubjectData(segments);
     }
 
-    protected final Map<Set<Entry<String, String>>, ContextSegments> contexts;
-
-    /**
-     * Data structure for segments:
-     * contexts, inheritable t/f, sortedset
-     */
+    protected final Map<SegmentKey, DataSegment> segments;
 
     protected MemorySubjectData() {
-        this.contexts = ImmutableMap.of();
+        this.segments = ImmutableMap.of();
     }
 
-    protected MemorySubjectData(Map<Set<Entry<String, String>>, ContextSegments> contexts) {
-        this.contexts = contexts;
+    protected MemorySubjectData(Map<SegmentKey, DataSegment> segments) {
+        this.segments = segments;
     }
 
     private <E> ImmutableSet<E> immutSet(Set<E> set) {
@@ -109,130 +104,81 @@ public class MemorySubjectData implements ImmutableSubjectData {
 
     @Override
     public WeightedImmutableSet<DataSegment> getAllSegments() {
-        return contexts.values().stream().collect(() -> new ArrayList<>(contexts.size() * 2), (acc, el ) -> {
-            if (el.getInheritableSegments() != null) {
-                acc.addAll(el.getInheritableSegments().asSet()); // TODO: Make more efficient
-            }
-            if (el.getNonInheritableSegments() != null) {
-                acc.addAll(el.getNonInheritableSegments().asSet());
-            }
-        }, ArrayList::addAll);
+        return WeightedImmutableSet.copyOf(this.segments.values());
     }
 
     @Override
     public WeightedImmutableSet<DataSegment> getAllSegments(Set<Entry<String, String>> contexts, boolean inheritable) {
-        ContextSegments segs = this.contexts.get(contexts);
-        if (segs == null) {
-            return WeightedImmutableSet.of();
-        }
-        WeightedImmutableSet<MemorySegment> ret = inheritable ? segs.getInheritableSegments() : segs.getNonInheritableSegments();
-        if (ret == null) {
-            return WeightedImmutableSet.of();
-        }
-        return WeightedImmutableSet.copyOf(ret);
+        return WeightedImmutableSet.ofStream(this.segments.values().stream()
+                .filter(seg -> seg.getContexts().equals(contexts) && seg.isInheritable() == inheritable));
     }
 
     @Override
-    public DataSegment getOrCreateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable) {
-        ContextSegments contextSegs = this.contexts.get(contexts);
-        if (contextSegs != null) {
-            WeightedImmutableSet<MemorySegment> entries = inheritable ? contextSegs.getInheritableSegments() : contextSegs.getNonInheritableSegments();
-            if (entries != null && !entries.isEmpty()) {
-                MemorySegment ret = entries.get(weight);
-                if (ret != null) {
-                    return ret;
-                }
-
-            }
+    public DataSegment getSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable) {
+        DataSegment ret = this.segments.get(SegmentKey.of(contexts, weight, inheritable));
+        if (ret != null) {
+            return ret;
         }
         return new MemorySegment(contexts, weight, inheritable);
     }
 
     @Override
-    public ImmutableSubjectData updateOrCreateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+    public ImmutableSubjectData updateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
         contexts = immutSet(contexts);
-        ContextSegments contextSegs = this.contexts.get(contexts);
-        if (contextSegs != null) {
-            WeightedImmutableSet<MemorySegment> entries = inheritable ? contextSegs.getInheritableSegments() : contextSegs.getNonInheritableSegments(), newEntries;
-            if (entries != null && !entries.isEmpty()) {
-                MemorySegment ret = entries.get(weight);
-                DataSegment newSeg;
-                if (ret != null) {
-                    newSeg = updateFunc.apply(ret);
-                } else {
-                    newSeg = updateFunc.apply(new MemorySegment(contexts, weight, inheritable));
-                }
-                newEntries = entries.with(MemorySegment.fromSegment(newSeg));
-            } else {
-                DataSegment newSeg = updateFunc.apply(new MemorySegment(contexts, weight, inheritable));
-                newEntries = WeightedImmutableSet.of(MemorySegment.fromSegment(updateFunc.apply(newSeg)));
-            }
-            if (inheritable) {
-                contextSegs = contextSegs.withInheritableSegments(newEntries);
-            } else {
-                contextSegs = contextSegs.withNonInheritableSegments(newEntries);
-            }
-        } else {
-            DataSegment newSeg = updateFunc.apply(new MemorySegment(contexts, weight, inheritable));
-            WeightedImmutableSet<MemorySegment> entry = WeightedImmutableSet.of(MemorySegment.fromSegment(updateFunc.apply(newSeg)));
-            if (inheritable) {
-                contextSegs = new ContextSegments(entry, null);
-            } else {
-                contextSegs = new ContextSegments(null, entry);
-            }
+        SegmentKey key = SegmentKey.of(contexts, weight, inheritable);
+        DataSegment seg = this.segments.get(key);
+        if (seg == null) {
+            seg = new MemorySegment(contexts, weight, inheritable);
         }
-        return newData(updateImmutable(this.contexts, contexts, contextSegs));
+        DataSegment newSeg = updateFunc.apply(seg);
+        if (newSeg == seg) {
+            return this;
+        }
+
+        return newData(updateImmutable(this.segments, key, newSeg.getKey(), newSeg));
     }
 
 
     @Override
     public ImmutableSubjectData clearOptions() {
-        if (this.contexts.isEmpty()) {
+        if (this.segments.isEmpty()) {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, ContextSegments> newValue = Maps.transformValues(this.contexts,
-                dataEntry -> dataEntry.withBothUpdated(oldList -> oldList.map(MemorySegment::withoutOptions)));
-        return newData(newValue);
+        return newData(Maps.transformValues(this.segments, DataSegment::withoutOptions));
     }
 
     @Override
     public ImmutableSubjectData clearPermissions() {
-        if (this.contexts.isEmpty()) {
+        if (this.segments.isEmpty()) {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, ContextSegments> newValue = Maps.transformValues(this.contexts,
-                dataEntry -> dataEntry.withBothUpdated(oldList -> oldList.map(MemorySegment::withoutPermissions)));
-        return newData(newValue);
+        return newData(Maps.transformValues(this.segments, DataSegment::withoutPermissions));
     }
 
     @Override
     public ImmutableSubjectData clearParents() {
-        if (this.contexts.isEmpty()) {
+        if (this.segments.isEmpty()) {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, ContextSegments> newValue = Maps.transformValues(this.contexts,
-                dataEntry -> dataEntry.withBothUpdated(oldList -> oldList.map(MemorySegment::withoutParents)));
-        return newData(newValue);
+        return newData(Maps.transformValues(this.segments, DataSegment::withoutParents));
     }
 
     @Override
     public ImmutableSubjectData clearDefaultValues() {
-        if (this.contexts.isEmpty()) {
+        if (this.segments.isEmpty()) {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, ContextSegments> newValue = Maps.transformValues(this.contexts,
-                dataEntry -> dataEntry.withBothUpdated(oldList-> oldList.map(entry -> entry.withDefaultValue(Tristate.UNDEFINED))));
-        return newData(newValue);
+        return newData(Maps.transformValues(this.segments, old -> old.withDefaultValue(Tristate.UNDEFINED)));
     }
 
     @Override
     public String toString() {
         return "MemoryOptionSubjectData{" +
-                "contexts=" + contexts +
+                "segments=" + segments +
                 '}';
     }
 }

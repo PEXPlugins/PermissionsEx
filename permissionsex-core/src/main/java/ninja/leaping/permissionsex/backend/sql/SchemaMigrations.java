@@ -88,9 +88,9 @@ public class SchemaMigrations {
                 ResultSet rs = select.executeQuery();
                 while (rs.next()) {
                     SqlSubjectRef ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
-                    Segment currentSeg = null;
+                    SqlDataSegment currentSeg = null;
                     String currentWorld = null;
-                    Map<String, Segment> worldSegments = new HashMap<>();
+                    Map<String, SqlDataSegment> worldSegments = new HashMap<>();
                     try (PreparedStatement selectPermissionsOptions = dao.prepareStatement("SELECT id, permission, world, value FROM {}permissions_old WHERE type=? AND name=? ORDER BY world, id DESC")) {
                         selectPermissionsOptions.setInt(1, rs.getInt(1));
                         selectPermissionsOptions.setString(2, rs.getString(2));
@@ -121,7 +121,7 @@ public class SchemaMigrations {
                                     }
                                 }
                                 currentWorld = worldChecked;
-                                currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
+                                currentSeg = SqlDataSegment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
                                 dao.allocateSegment(ref, currentSeg);
                                 worldSegments.put(currentWorld, currentSeg);
                             }
@@ -198,11 +198,11 @@ public class SchemaMigrations {
 
                     if (!defaultSubjects.isEmpty()) {
                         SqlSubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_USER);
-                        List<Segment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
+                        List<SqlDataSegment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
                         for (Map.Entry<String, List<SqlSubjectRef>> ent : defaultSubjects.entrySet()) {
-                            Segment seg = null;
+                            SqlDataSegment seg = null;
                             if (!segments.isEmpty()) {
-                                for (Segment segment : segments) {
+                                for (SqlDataSegment segment : segments) {
                                     if (ent.getKey() == null && segment.getContexts().isEmpty()) {
                                         seg = segment;
                                         break;
@@ -216,7 +216,7 @@ public class SchemaMigrations {
                                 }
                             }
                             if (seg == null) {
-                                seg = Segment.unallocated(ent.getKey() == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", ent.getKey())));
+                                seg = SqlDataSegment.unallocated(ent.getKey() == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", ent.getKey())));
                                 dao.allocateSegment(defaultSubj, seg);
                                 segments.add(seg);
                             }
@@ -239,7 +239,7 @@ public class SchemaMigrations {
                                 currentWorld = inheritance.getString(3);
                                 currentSeg = worldSegments.get(currentWorld);
                                 if (currentSeg == null) {
-                                    currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
+                                    currentSeg = SqlDataSegment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
                                     dao.allocateSegment(ref, currentSeg);
                                     worldSegments.put(currentWorld, currentSeg);
                                 }

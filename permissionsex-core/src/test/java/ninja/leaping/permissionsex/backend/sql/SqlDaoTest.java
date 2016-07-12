@@ -221,8 +221,8 @@ public class SqlDaoTest extends PermissionsExTest {
             SqlSubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
             assertTrue(dao.getSegments(subject).isEmpty());
 
-            Segment seg = dao.addSegment(subject);
-            List<Segment> segments = dao.getSegments(subject);
+            SqlDataSegment seg = dao.addSegment(subject);
+            List<SqlDataSegment> segments = dao.getSegments(subject);
             assertFalse(segments.isEmpty());
             assertEquals(seg.getId(), segments.get(0).getId());
 
@@ -236,7 +236,7 @@ public class SqlDaoTest extends PermissionsExTest {
         try (SqlDao dao = sqlStore.getDao()) {
             final SqlSubjectRef subject = dao.getOrCreateSubjectRef("test", "contexts");
 
-            Segment testSeg = dao.addSegment(subject);
+            SqlDataSegment testSeg = dao.addSegment(subject);
             assertTrue(testSeg.getContexts().isEmpty());
 
             final Set<Entry<String, String>> contexts = ImmutableSet.of(Maps.immutableEntry("world", "DIM-1"),
@@ -256,7 +256,7 @@ public class SqlDaoTest extends PermissionsExTest {
     public void testOptions() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
             SqlSubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
-            Segment seg = dao.addSegment(subject);
+            SqlDataSegment seg = dao.addSegment(subject);
             assertFalse(seg.getOptions().containsKey("test"));
 
             // Set individually
@@ -316,7 +316,7 @@ public class SqlDaoTest extends PermissionsExTest {
     public void testPermissions() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
             SqlSubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
-            Segment seg = dao.addSegment(subject);
+            SqlDataSegment seg = dao.addSegment(subject);
             assertFalse(seg.getPermissions().containsKey("test.first"));
 
             // Set individually
@@ -381,7 +381,7 @@ public class SqlDaoTest extends PermissionsExTest {
                     guest = dao.getOrCreateSubjectRef("group", "guest"),
                     novice = dao.getOrCreateSubjectRef("group", "novice");
 
-            Segment vipSeg = dao.addSegment(vip);
+            SqlDataSegment vipSeg = dao.addSegment(vip);
             assertTrue(vipSeg.getParents().isEmpty());
             dao.addParent(vipSeg, member);
             vipSeg = dao.getSegments(vip).get(0);
@@ -431,10 +431,10 @@ public class SqlDaoTest extends PermissionsExTest {
     public void testSetDefaultValue() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
             final SqlSubjectRef subject = dao.getOrCreateSubjectRef("test", "defvalue");
-            Segment newSeg = Segment.unallocated().withDefaultValue(5);
+            SqlDataSegment newSeg = SqlDataSegment.unallocated().withDefaultValue(5);
             dao.allocateSegment(subject, newSeg);
 
-            Segment testSeg = dao.getSegments(subject).get(0);
+            SqlDataSegment testSeg = dao.getSegments(subject).get(0);
             assertEquals(5, testSeg.getPermissionDefault().intValue());
 
             testSeg = testSeg.withDefaultValue(-4);

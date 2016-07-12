@@ -16,8 +16,10 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.command.ButtonType;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.command.CommandSource;
@@ -49,25 +51,25 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
     }
 
     @Override
-    public Text.Builder subject(Map.Entry<String, String> subject) {
-        Optional<CommandSource> source = pex.getCommandSourceProvider(subject.getKey()).apply(subject.getValue());
+    public Text.Builder subject(SubjectRef subject) {
+        Optional<CommandSource> source = pex.getCommandSourceProvider(subject.getType()).apply(subject.getIdentifier());
         String name;
         if (source.isPresent()) {
             name = source.get().getName();
         } else {
-            name = pex.getSubjects(subject.getKey()).get(subject.getValue()).getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
+            name = pex.getSubjects(subject.getType()).get(subject.getIdentifier()).getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
         }
 
         Text nameText;
         if (name != null) {
-            nameText = Text.of(Text.of(TextColors.GRAY, subject.getValue()), "/", name);
+            nameText = Text.of(Text.of(TextColors.GRAY, subject.getIdentifier()), "/", name);
         } else {
-            nameText = Text.of(subject.getValue());
+            nameText = Text.of(subject.getIdentifier());
         }
 
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
-        return Text.builder().append(Text.builder(subject.getKey()).style(TextStyles.BOLD).build(), Text.of(" "),
-                nameText).onHover(TextActions.showText(tr(t("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
+        return Text.builder().append(Text.builder(subject.getType()).style(TextStyles.BOLD).build(), Text.of(" "),
+                nameText).onHover(TextActions.showText(tr(t("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getType() + " " + subject.getIdentifier() + " info"));
     }
 
     @Override
@@ -113,14 +115,20 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
     }
 
     @Override
-    public Text.Builder permission(String permission, int value) {
+    public Text.Builder permission(String permission, Tristate value) {
         TextColor valueColor;
-        if (value > 0) {
-            valueColor = TextColors.GREEN;
-        } else if (value < 0) {
-            valueColor = TextColors.RED;
-        } else {
-            valueColor = TextColors.GRAY;
+        switch (value) {
+            case TRUE:
+                valueColor = TextColors.GREEN;
+                break;
+            case FALSE:
+                valueColor = TextColors.RED;
+                break;
+            case UNDEFINED:
+                valueColor = TextColors.GRAY;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown Tristate value " + value);
         }
         return Text.builder().append(Text.of(valueColor, permission), EQUALS_SIGN, Text.of(value));
     }

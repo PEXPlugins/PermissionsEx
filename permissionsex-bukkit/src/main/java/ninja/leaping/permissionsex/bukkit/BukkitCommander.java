@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
@@ -61,7 +62,7 @@ public class BukkitCommander implements Commander<BaseComponent> {
     }
 
     @Override
-    public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
+    public Optional<SubjectRef> getSubjectIdentifier() {
         return Optional.empty();
         //return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
     }

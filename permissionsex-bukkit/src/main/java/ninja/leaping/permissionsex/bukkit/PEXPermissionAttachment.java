@@ -56,12 +56,12 @@ public class PEXPermissionAttachment extends PermissionAttachment {
 
     @Override
     public Map<String, Boolean> getPermissions() {
-        return Maps.transformValues(subjectData.get().getOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT).getPermissions(), val -> val == Tristate.TRUE);
+        return Maps.transformValues(subjectData.get().getSegment(PermissionsEx.GLOBAL_CONTEXT).getPermissions(), val -> val == Tristate.TRUE);
     }
 
     @Override
     public void setPermission(String name, boolean value) {
-        subjectData.update(old -> old.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg-> seg.withPermission(checkNotNull(name, "name"), value ? Tristate.TRUE : Tristate.FALSE)));
+        subjectData.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg-> seg.withPermission(checkNotNull(name, "name"), value ? Tristate.TRUE : Tristate.FALSE));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class PEXPermissionAttachment extends PermissionAttachment {
 
     @Override
     public void unsetPermission(String name) {
-        subjectData.update(old -> old.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg-> seg.withPermission(checkNotNull(name, "name"), Tristate.UNDEFINED)));
+        subjectData.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg-> seg.withPermission(checkNotNull(name, "name"), Tristate.UNDEFINED));
     }
 
     @Override

@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static ninja.leaping.permissionsex.util.Util.appendImmutable;
 import static ninja.leaping.permissionsex.util.Util.updateImmutable;
 
-class Segment implements DataSegment {
+class SqlDataSegment implements DataSegment {
     private volatile int id;
     private final Set<Map.Entry<String, String>> contexts;
     private final int weight;
@@ -45,9 +45,9 @@ class Segment implements DataSegment {
     private final Map<String, String> options;
     private final List<SqlSubjectRef> parents;
     private final Tristate permissionDefault;
-    private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    Segment(int id, Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Map<String, Tristate> permissions, Map<String, String> options, List<SqlSubjectRef> parents, Tristate permissionDefault, ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>> updates) {
+    SqlDataSegment(int id, Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Map<String, Tristate> permissions, Map<String, String> options, List<SqlSubjectRef> parents, Tristate permissionDefault, ImmutableList<ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException>> updates) {
         this.id = id;
         this.contexts = ImmutableSet.copyOf(contexts);
         this.weight = weight;
@@ -59,28 +59,28 @@ class Segment implements DataSegment {
         this.updatesToPerform.set(updates);
     }
 
-    static Segment empty(int id) {
-        return new Segment(id, ImmutableSet.of(), 0, true, ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
+    static SqlDataSegment empty(int id) {
+        return new SqlDataSegment(id, ImmutableSet.of(), 0, true, ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
     }
 
-    static Segment empty(int id, Set<Map.Entry<String, String>> contexts) {
-        return new Segment(id, contexts, 0, true, ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
+    static SqlDataSegment empty(int id, Set<Map.Entry<String, String>> contexts) {
+        return new SqlDataSegment(id, contexts, 0, true, ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
     }
 
-    private Segment newWithUpdate(Map<String, Tristate> permissions, Map<String, String> options, List<SqlSubjectRef> parents, Tristate permissionDefault, ThrowingBiConsumer<SqlDao, Segment, SQLException> updateFunc) {
-        return new Segment(this.id, this.contexts, this.weight, this.inheritable, permissions, options, parents, permissionDefault, appendImmutable(this.updatesToPerform.get(), updateFunc));
+    private SqlDataSegment newWithUpdate(Map<String, Tristate> permissions, Map<String, String> options, List<SqlSubjectRef> parents, Tristate permissionDefault, ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException> updateFunc) {
+        return new SqlDataSegment(this.id, this.contexts, this.weight, this.inheritable, permissions, options, parents, permissionDefault, appendImmutable(this.updatesToPerform.get(), updateFunc));
     }
 
-    private Segment newWithUpdate(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, ThrowingBiConsumer<SqlDao, Segment, SQLException> updateFunc) {
-        return new Segment(this.id, contexts, weight, inheritable, this.permissions, this.options, this.parents, this.permissionDefault, appendImmutable(this.updatesToPerform.get(), updateFunc));
+    private SqlDataSegment newWithUpdate(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException> updateFunc) {
+        return new SqlDataSegment(this.id, contexts, weight, inheritable, this.permissions, this.options, this.parents, this.permissionDefault, appendImmutable(this.updatesToPerform.get(), updateFunc));
     }
 
-    static Segment unallocated() {
-        return Segment.empty(-1);
+    static SqlDataSegment unallocated() {
+        return SqlDataSegment.empty(-1);
     }
 
-    static Segment unallocated(Set<Map.Entry<String, String>> contexts) {
-        return Segment.empty(-1, contexts);
+    static SqlDataSegment unallocated(Set<Map.Entry<String, String>> contexts) {
+        return SqlDataSegment.empty(-1, contexts);
     }
 
     public int getId() {
@@ -146,7 +146,7 @@ class Segment implements DataSegment {
 
 
     @Override
-    public Segment withOption(String key, String value) {
+    public SqlDataSegment withOption(String key, String value) {
         return newWithUpdate(this.permissions, updateImmutable(this.options, key, value), this.parents, this.permissionDefault, (dao, seg) -> {
             dao.setOption(seg, key, value);
         });
@@ -154,7 +154,7 @@ class Segment implements DataSegment {
     }
 
     @Override
-    public Segment withoutOption(String key) {
+    public SqlDataSegment withoutOption(String key) {
         if (options == null || !options.containsKey(key)) {
             return this;
         }
@@ -167,7 +167,7 @@ class Segment implements DataSegment {
     }
 
     @Override
-    public Segment withOptions(Map<String, String> values) {
+    public SqlDataSegment withOptions(Map<String, String> values) {
         Map<String, String> immValues = values == null ? null : ImmutableMap.copyOf(values);
         return newWithUpdate(permissions, immValues, parents, permissionDefault, (dao, seg) -> {
             dao.setOptions(seg, immValues);
@@ -175,18 +175,18 @@ class Segment implements DataSegment {
     }
 
     @Override
-    public Segment withoutOptions() {
+    public SqlDataSegment withoutOptions() {
         return newWithUpdate(permissions, null, parents, permissionDefault, (dao, seg) -> dao.setOptions(seg, null));
     }
 
     @Override
-    public Segment withPermission(String permission, Tristate value) {
+    public SqlDataSegment withPermission(String permission, Tristate value) {
         return newWithUpdate(updateImmutable(permissions, permission, value), options, parents, permissionDefault, (dao, seg) -> dao.setPermission(seg, permission, value));
 
     }
 
     @Override
-    public Segment withoutPermission(String permission) {
+    public SqlDataSegment withoutPermission(String permission) {
         if (permissions == null || !permissions.containsKey(permission)) {
             return this;
         }
@@ -197,23 +197,23 @@ class Segment implements DataSegment {
     }
 
     @Override
-    public Segment withPermissions(Map<String, Tristate> values) {
+    public SqlDataSegment withPermissions(Map<String, Tristate> values) {
         Map<String, Tristate> immValues = values == null ? null : ImmutableMap.copyOf(values);
         return newWithUpdate(immValues, options, parents, permissionDefault, (dao, seg) -> dao.setPermissions(seg, immValues));
     }
 
     @Override
-    public Segment withoutPermissions() {
+    public SqlDataSegment withoutPermissions() {
         return newWithUpdate(null, options, parents, permissionDefault, (dao, seg) -> dao.setPermissions(seg, null));
     }
 
     @Override
-    public Segment withDefaultValue(Tristate permissionDefault) {
+    public SqlDataSegment withDefaultValue(Tristate permissionDefault) {
         return newWithUpdate(permissions, options, parents, permissionDefault, SqlDao::updateMetadata);
     }
 
     @Override
-    public Segment withAddedParent(SubjectRef parent) {
+    public SqlDataSegment withAddedParent(SubjectRef parent) {
         ImmutableList.Builder<SqlSubjectRef> parents = ImmutableList.builder();
         SqlSubjectRef sqlParent = SqlSubjectRef.of(parent);
         parents.add(sqlParent);
@@ -224,7 +224,7 @@ class Segment implements DataSegment {
     }
 
     @Override
-    public Segment withRemovedParent(SubjectRef parent) {
+    public SqlDataSegment withRemovedParent(SubjectRef parent) {
         if (this.parents == null || this.parents.isEmpty()) {
             return this;
         }
@@ -239,24 +239,24 @@ class Segment implements DataSegment {
     }
 
     @Override
-    public Segment withParents(List<SubjectRef> parents) {
+    public SqlDataSegment withParents(List<SubjectRef> parents) {
         List<SqlSubjectRef> immValues = parents == null ? null : parents.stream().map(SqlSubjectRef::of).collect(GuavaCollectors.toImmutableList());
         return newWithUpdate(permissions, options, immValues, permissionDefault, (dao, seg) -> dao.setParents(seg, immValues));
     }
 
     @Override
-    public Segment withoutParents() {
+    public SqlDataSegment withoutParents() {
         return newWithUpdate(permissions, options, null, permissionDefault, (dao, seg) -> dao.setParents(seg, null));
     }
 
-    List<ThrowingBiConsumer<SqlDao, Segment, SQLException>> popUpdates() {
+    List<ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException>> popUpdates() {
         return this.updatesToPerform.getAndSet(null);
     }
 
     void doUpdates(SqlDao dao) throws SQLException {
-        List<ThrowingBiConsumer<SqlDao, Segment, SQLException>> updateFuncs = popUpdates();
+        List<ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException>> updateFuncs = popUpdates();
         if (updateFuncs != null) {
-            for (ThrowingBiConsumer<SqlDao, Segment, SQLException> consumer : updateFuncs) {
+            for (ThrowingBiConsumer<SqlDao, SqlDataSegment, SQLException> consumer : updateFuncs) {
                 consumer.accept(dao, this);
             }
         }

@@ -31,10 +31,10 @@ import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import ninja.leaping.permissionsex.ImplementationInterface;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
 import ninja.leaping.permissionsex.subject.SubjectType;
+import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandExecutor;
@@ -231,10 +231,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         cache.isRegistered(identifier).thenAccept(registered -> {
            if (registered)  {
                cache.persistentData().update(identifier, input -> {
-                   if (event.getTargetEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
+                   if (event.getTargetEntity().getName().equals(input.getSegment(PermissionsEx.GLOBAL_CONTEXT).getOptions().get("name"))) {
                        return input;
                    } else {
-                       return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getTargetEntity().getName());
+                       return input.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withOption("name", event.getTargetEntity().getName()));
                    }
                });
            }
@@ -344,18 +344,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         return Optional.of(new PEXPermissionDescription.Builder(container.get(), this));
     }
 
-    void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
+    void registerDescription(final PEXPermissionDescription description, Map<String, Tristate> ranks) {
         this.descriptions.put(description.getId(), description);
         final SubjectType coll = getManager().getSubjects(SUBJECTS_ROLE_TEMPLATE);
-        for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
+        for (final Map.Entry<String, Tristate> rank : ranks.entrySet()) {
             try {
-                coll.transientData().update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                    @Nullable
-                    @Override
-                    public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                        return Preconditions.checkNotNull(input).setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue());
-                    }
-                }).get();
+                coll.transientData().update(rank.getKey(), input -> input.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withPermission(description.getId(), rank.getValue()))).get();
             } catch (InterruptedException | ExecutionException e) {
                 throw Throwables.propagate(e);
             }
@@ -369,7 +363,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public Collection<PermissionDescription> getDescriptions() {
-        return ImmutableSet.<PermissionDescription>copyOf(this.descriptions.values());
+        return ImmutableSet.copyOf(this.descriptions.values());
     }
 
     public List<ContextCalculator<Subject>> getContextCalculators() {

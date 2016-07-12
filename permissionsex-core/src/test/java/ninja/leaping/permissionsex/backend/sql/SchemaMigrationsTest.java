@@ -173,7 +173,7 @@ public class SchemaMigrationsTest extends PermissionsExTest {
                     Arrays.fill(outLine, '=');;
                     System.out.println(outLine);
 
-                    for (Segment seg : dao.getSegments(ref)) {
+                    for (SqlDataSegment seg : dao.getSegments(ref)) {
                         System.out.println(seg);
                     }
                 }

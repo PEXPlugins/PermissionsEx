@@ -24,6 +24,8 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.backend.memory.MemorySegment;
 import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
+import ninja.leaping.permissionsex.data.DataSegment;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import java.util.Collections;
@@ -38,14 +40,14 @@ public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
 
     static FileSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
-        ImmutableMap.Builder<Set<Entry<String, String>>, ContextSegments> map = ImmutableMap.builder();
+        ImmutableMap.Builder<SegmentKey, DataSegment> map = ImmutableMap.builder();
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
                 if (!child.hasMapChildren()) {
                     throw new PermissionsLoadingException(t("Each context section must be of map type! Check that no duplicate nesting has occurred."));
                 }
                 MemorySegment value = MAPPER.bindToNew().populate(child);
-                map.put(value.getContexts(), value);
+                map.put(value, value); // TODO: Separate SegmentKey
             }
         }
         return new FileSubjectData(map.build());
@@ -55,13 +57,13 @@ public final class FileSubjectData extends MemorySubjectData {
         super();
     }
 
-    protected FileSubjectData(Map<Set<Entry<String, String>>, ContextSegments> contexts) {
-        super(contexts);
+    protected FileSubjectData(Map<SegmentKey, DataSegment> segments) {
+        super(segments);
     }
 
     @Override
-    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, ContextSegments> contexts) {
-        return new FileSubjectData(contexts);
+    protected MemorySubjectData newData(Map<SegmentKey, DataSegment> segments) {
+        return new FileSubjectData(segments);
     }
 
     private static Set<Entry<String, String>> contextsFrom(ConfigurationNode node) {
@@ -75,24 +77,27 @@ public final class FileSubjectData extends MemorySubjectData {
         return contexts;
     }
 
+    private static SegmentKey keyFrom(ConfigurationNode node) {
+        Set<Entry<String, String>> contexts = contextsFrom(node);
+        int weight = node.getNode("weight").getInt(DataSegment.DEFAULT_WEIGHT);
+        boolean inheritable = node.getNode("inheritable").getBoolean(DataSegment.DEFAULT_INHERITABILITY);
+        return SegmentKey.of(contexts, weight, inheritable);
+    }
+
     void serialize(ConfigurationNode node) throws ObjectMappingException {
         if (!node.hasListChildren()) {
             node.setValue(null);
         }
-        Map<Set<Entry<String, String>>, ConfigurationNode> existingSections = new HashMap<>();
+        Map<SegmentKey, ConfigurationNode> existingSections = new HashMap<>();
         for (ConfigurationNode child : node.getChildrenList()) {
-            existingSections.put(contextsFrom(child), child);
+            existingSections.put(keyFrom(child), child);
         }
-        for (Map.Entry<Set<Entry<String, String>>, ContextSegments> ent : contexts.entrySet()) {
+        for (Map.Entry<SegmentKey, DataSegment> ent : segments.entrySet()) {
             ConfigurationNode contextSection = existingSections.remove(ent.getKey());
             if (contextSection == null) {
                 contextSection = node.getAppendedNode();
-                ConfigurationNode contextsNode = contextSection.getNode(KEY_CONTEXTS);
-                for (Entry<String, String> context : ent.getKey()) {
-                    contextsNode.getNode(context.getKey()).setValue(context.getValue());
-                }
             }
-            MAPPER.bind(ent.getValue()).serialize(contextSection);
+            MAPPER.bind((MemorySegment) ent.getValue()).serialize(contextSection);
         }
         for (ConfigurationNode unused : existingSections.values()) {
             unused.setValue(null);
@@ -102,7 +107,7 @@ public final class FileSubjectData extends MemorySubjectData {
     @Override
     public String toString() {
         return "FileOptionSubjectData{" +
-                "contexts=" + contexts +
+                "segments=" + segments +
                 '}';
     }
 }

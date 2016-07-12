@@ -1,0 +1,55 @@
+{
+  "subjects": {
+    "group": {
+      "default": [
+        {
+          "permissions": {
+            "some.perm": "TRUE"
+          }
+        },
+        {
+          "contexts": {
+            "world": "DIM-1"
+          },
+          "inheritable": false,
+          "permissions": {
+            "non.inheritable": "TRUE"
+          }
+        },
+        {
+          "contexts": {
+            "world": "DIM-1"
+          },
+          "weight": 3,
+          "permissions": {
+            "some.perm": "FALSE"
+          }
+        },
+        {
+          "contexts": {
+            "world": "DIM-1"
+          },
+          "weight": 3,
+          "inheritable": false,
+          "permissions": {
+            "some.perm.noninheritable": "TRUE"
+          }
+        },
+        {
+          "contexts": {
+            "world": "DIM-1"
+          },
+          "permissions": {
+            "another.perm": "TRUE",
+            "another.perm.cooler": "FALSE"
+          }
+        }
+      ],
+      "owner": [
+        {
+          "permissions-default": "TRUE"
+        }
+      ]
+    }
+  }
+}

@@ -6,10 +6,6 @@
     "subject": {
       "type": "string",
       "pattern": "^[^:]+:.*$"
-    },
-    "tristate": {
-      "type": "string",
-      "enum": ["true", "false", "undefined", "TRUE", "FALSE", "UNDEFINED"]
     }
   },
 
@@ -31,18 +27,12 @@
                 "type": "object",
                 "additionalProperties": {"type": "string"}
               },
-              "inheritable": {
-                "type": "boolean"
-              },
-              "weight": {
-                "type": "integer"
-              },
               "permissions-default": {
-                "$ref": "#/definitions/tristate"
+                "type": "integer"
               },
               "permissions": {
                 "type": "object",
-                "additionalProperties": {"$ref": "#/definitions/tristate"}
+                "additionalProperties": {"type": "integer"}
               },
               "options": {
                 "type": "object"

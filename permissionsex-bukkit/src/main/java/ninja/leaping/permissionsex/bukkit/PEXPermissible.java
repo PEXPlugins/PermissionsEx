@@ -231,13 +231,13 @@ public class PEXPermissible extends PermissibleBase {
     @Override
     public PermissionAttachment addAttachment(Plugin plugin) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
-        this.subj.transientData().update(input -> input.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withAddedParent(SubjectRef.of(PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))))
+        this.subj.transientData().updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withAddedParent(SubjectRef.of(PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier())))
                 .thenRun(() -> this.attachments.add(attach));
         return attach;
     }
 
     public boolean removeAttachmentInternal(final PEXPermissionAttachment attach) {
-        this.subj.transientData().update(input -> input.updateOrCreateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withRemovedParent(SubjectRef.of(PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))))
+        this.subj.transientData().updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> seg.withRemovedParent(SubjectRef.of(PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier())))
                 .thenRun(() -> {
                     PermissionRemovedExecutor exec = attach.getRemovalCallback();
                     if (exec != null) {

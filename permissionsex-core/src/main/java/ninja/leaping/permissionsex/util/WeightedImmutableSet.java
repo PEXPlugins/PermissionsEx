@@ -15,6 +15,8 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -105,7 +107,11 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
         if (it instanceof WeightedImmutableSet) {
             return (WeightedImmutableSet<E>) it;
         }
-        return of((E[]) Iterables.toArray(it, Object.class));
+        E[] elements = (E[]) Iterables.toArray(it, Object.class);
+        if (elements.length == 0) {
+            return of();
+        }
+        return new WeightedImmutableSet<>(elements);
     }
 
     @SuppressWarnings("unchecked")
@@ -121,6 +127,11 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
         E[] newArr = Arrays.copyOf(elements, elements.length);
         Arrays.sort(newArr, Weighted.COMPARATOR);
         return new WeightedImmutableSet<>(newArr);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <E extends Weighted> WeightedImmutableSet<E> ofStream(Stream<E> stream) {
+        return new WeightedImmutableSet<E>((E[]) stream.sorted(Weighted.COMPARATOR).toArray());
     }
 
     public boolean isEmpty() {
@@ -269,6 +280,10 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
         public E next() {
             return elements[getRelative(1)];
         }
+    }
+
+    public Stream<E> stream() {
+        return Stream.of(elements);
     }
 
     @Override

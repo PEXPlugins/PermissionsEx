@@ -200,13 +200,15 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         final String identifier = event.getPlayer().getUniqueId().toString();
         getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
             if (registered) {
-                getUserSubjects().persistentData().update(identifier, input -> {
-                    if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
-                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
-                    } else {
-                        return input;
-                    }
-                });
+                getUserSubjects().persistentData().update(identifier,
+                        input -> input.updateSegment(PermissionsEx.GLOBAL_CONTEXT, seg -> {
+                            if (!event.getPlayer().getName().equals(seg.getOptions().get("name"))) {
+                                return seg.withOption("name", event.getPlayer().getName());
+                            } else {
+                                return seg;
+                            }
+
+                        }));
             }
         });
         injectPermissible(event.getPlayer());

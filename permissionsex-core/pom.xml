@@ -68,11 +68,6 @@
       <version>${version.configurate}</version>
     </dependency>
     <dependency>
-      <groupId>ninja.leaping.configurate</groupId>
-      <artifactId>configurate-hocon</artifactId>
-      <version>${version.configurate}</version>
-    </dependency>
-    <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
       <version>2.3.2</version>

@@ -40,6 +40,10 @@ public class SchemaMigrationsTest {
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
+    @Test
+    public void testFourToFive() throws IOException {
+        doTest("test4to5.pre.json", "test4to5.post.json", SchemaMigrations.fourToFive());
+    }
 
     @Test
     public void testThreeToFour() throws IOException {

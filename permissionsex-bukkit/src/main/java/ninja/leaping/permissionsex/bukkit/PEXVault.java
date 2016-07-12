@@ -22,7 +22,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
+import ninja.leaping.permissionsex.util.Tristate;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -98,12 +100,12 @@ class PEXVault extends Permission {
 
     @Override
     public boolean groupAdd(final String world, String name, final String permission) {
-        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).isCancelled();
+        return !getGroup(name).data().updateSegment(contextsFrom(world), input -> input.withPermission(permission, Tristate.TRUE)).isCancelled();
     }
 
     @Override
     public boolean groupRemove(final String world, String name, final String permission) {
-        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).isCancelled();
+        return !getGroup(name).data().updateSegment(contextsFrom(world), input -> input.withoutPermission(permission)).isCancelled();
 
     }
 
@@ -114,7 +116,7 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerAdd(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).isCancelled();
+        return !getSubject(player).data().updateSegment(contextsFrom(world), input -> input.withPermission(permission, Tristate.TRUE)).isCancelled();
     }
 
     @Override
@@ -129,17 +131,17 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerAddTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 1)).isCancelled();
+        return !getSubject(player).transientData().updateSegment(contextsFrom(worldName), input -> input.withPermission(permission, Tristate.TRUE)).isCancelled();
     }
 
     @Override
     public boolean playerRemoveTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 0)).isCancelled();
+        return !getSubject(player).transientData().updateSegment(contextsFrom(worldName), input -> input.withoutPermission(permission)).isCancelled();
     }
 
     @Override
     public boolean playerRemove(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).isCancelled();
+        return !getSubject(player).data().updateSegment(contextsFrom(world), input -> input.withoutPermission(permission)).isCancelled();
     }
 
     @Override
@@ -154,24 +156,24 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerInGroup(String world, OfflinePlayer player, String group) {
-        return getSubject(player).getParents(contextsFrom(world)).contains(Maps.immutableEntry(SUBJECTS_GROUP, group));
+        return getSubject(player).getParents(contextsFrom(world)).contains(SubjectRef.of(SUBJECTS_GROUP, group));
     }
 
     @Override
     public boolean playerAddGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).data().update(input -> input.addParent(contextsFrom(world), SUBJECTS_GROUP, group)).isCancelled();
+        return !getSubject(player).data().updateSegment(contextsFrom(world), input -> input.withAddedParent(SubjectRef.of(SUBJECTS_GROUP, group))).isCancelled();
     }
 
     @Override
     public boolean playerRemoveGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).data().update(input -> input.removeParent(contextsFrom(world), SUBJECTS_GROUP, group)).isCancelled();
+        return !getSubject(player).data().updateSegment(contextsFrom(world), input -> input.withRemovedParent(SubjectRef.of(SUBJECTS_GROUP, group))).isCancelled();
     }
 
     @Override
     public String[] getPlayerGroups(String world, OfflinePlayer player) {
         return getSubject(player).getParents(contextsFrom(world)).stream()
-                .filter(parent -> parent.getKey().equals(SUBJECTS_GROUP))
-                .map(Map.Entry::getValue)
+                .filter(parent -> parent.getType().equals(SUBJECTS_GROUP))
+                .map(SubjectRef::getIdentifier)
                 .toArray(String[]::new);
     }
 

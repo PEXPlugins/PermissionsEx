@@ -112,6 +112,17 @@ public class Util {
         }
         return Collections.unmodifiableMap(ret);
     }
+    public static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K oldKey, K newKey, V newVal) {
+        if (input == null) {
+            return ImmutableMap.of(newKey, newVal);
+        }
+        Map<K, V> ret = new HashMap<>(input);
+        ret.remove(oldKey);
+        if (newKey != null && newVal != null) {
+            ret.put(newKey, newVal);
+        }
+        return Collections.unmodifiableMap(ret);
+    }
 
     public static <T> ImmutableList<T> appendImmutable(List<T> input, T entry) {
         if (input == null) {

@@ -17,7 +17,7 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
@@ -63,8 +63,8 @@ class SpongeCommander implements Commander<Text.Builder> {
     }
 
     @Override
-    public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
-        return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
+    public Optional<SubjectRef> getSubjectIdentifier() {
+        return Optional.of(SubjectRef.of(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
     }
 
     @Override

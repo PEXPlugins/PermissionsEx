@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.permissionsex.data.DataSegment;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Tristate;
 
@@ -63,7 +62,7 @@ public class MemorySegment implements DataSegment {
         if (seg instanceof MemorySegment) {
             return (MemorySegment) seg;
         } else {
-            return new MemorySegment(seg.getContexts(), seg.getWeight() == ImmutableSubjectData.DEFAULT_WEIGHT ? null : seg.getWeight(), seg.isInheritable() == ImmutableSubjectData.DEFAULT_INHERITABILITY ? null : seg.isInheritable(),
+            return new MemorySegment(seg.getContexts(), seg.getWeight() == DataSegment.DEFAULT_WEIGHT ? null : seg.getWeight(), seg.isInheritable() == DataSegment.DEFAULT_INHERITABILITY ? null : seg.isInheritable(),
                     seg.getPermissions(), seg.getOptions(), seg.getParents(), seg.getPermissionDefault());
         }
     }
@@ -91,23 +90,23 @@ public class MemorySegment implements DataSegment {
 
     @Override
     public int getWeight() {
-        return this.weight == null ? ImmutableSubjectData.DEFAULT_WEIGHT : this.weight;
+        return this.weight == null ? DataSegment.DEFAULT_WEIGHT : this.weight;
     }
 
     @Override
     public DataSegment withWeight(int weight) {
-        return new MemorySegment(contexts, weight == ImmutableSubjectData.DEFAULT_WEIGHT ? null : weight, inheritable,
+        return new MemorySegment(contexts, weight == DataSegment.DEFAULT_WEIGHT ? null : weight, inheritable,
                 permissions, options, parents, defaultValue);
     }
 
     @Override
     public boolean isInheritable() {
-        return this.inheritable == null ? ImmutableSubjectData.DEFAULT_INHERITABILITY : this.inheritable;
+        return this.inheritable == null ? DataSegment.DEFAULT_INHERITABILITY : this.inheritable;
     }
 
     @Override
     public DataSegment withInheritability(boolean inheritable) {
-        return new MemorySegment(contexts, weight, inheritable == ImmutableSubjectData.DEFAULT_INHERITABILITY ? null : inheritable,
+        return new MemorySegment(contexts, weight, inheritable == DataSegment.DEFAULT_INHERITABILITY ? null : inheritable,
                 permissions, options, parents, defaultValue);
     }
 

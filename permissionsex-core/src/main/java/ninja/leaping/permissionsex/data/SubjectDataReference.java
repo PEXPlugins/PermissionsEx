@@ -19,12 +19,17 @@ package ninja.leaping.permissionsex.data;
 import com.google.common.collect.MapMaker;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_CONTEXTS;
+import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_INHERITABILITY;
+import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_WEIGHT;
 
 public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     private final SubjectRef identifier;
@@ -68,6 +73,43 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
         } while (!this.data.compareAndSet(data, newData));
         final ImmutableSubjectData finalData = data;
         return this.cache.set(this.identifier.getIdentifier(), newData).thenApply(finalNew -> new Change<>(finalData, finalNew));
+    }
+
+    /**
+     * Update data for a specific segment. If a segment does not exist with these parameters, a new segment will be created.
+     *
+     * @param contexts The contexts for the segment
+     * @param weight The segment's weight
+     * @param inheritable Whether or not the segment is inheritable
+     * @param updateFunc The function to update the segment
+     * @return A future that will complete with the old and new segment datas.
+     */
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc){
+        return update(data -> data.updateSegment(contexts, weight, inheritable, updateFunc));
+    }
+
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(Set<Map.Entry<String, String>> contexts, int weight, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(contexts, weight, DEFAULT_INHERITABILITY, updateFunc);
+    }
+
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(Set<Map.Entry<String, String>> contexts, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(contexts, DEFAULT_WEIGHT, inheritable, updateFunc);
+    }
+
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(DEFAULT_CONTEXTS, weight, inheritable, updateFunc);
+    }
+
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(Set<Map.Entry<String, String>> contexts, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(contexts, DEFAULT_WEIGHT, DEFAULT_INHERITABILITY, updateFunc);
+    }
+
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(int weight, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(DEFAULT_CONTEXTS, weight, DEFAULT_INHERITABILITY, updateFunc);
+    }
+
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(DEFAULT_CONTEXTS, DEFAULT_WEIGHT, inheritable, updateFunc);
     }
 
     @Override

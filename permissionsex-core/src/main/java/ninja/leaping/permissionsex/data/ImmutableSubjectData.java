@@ -17,18 +17,17 @@
 package ninja.leaping.permissionsex.data;
 
 
-import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.util.WeightedImmutableSet;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_CONTEXTS;
+import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_INHERITABILITY;
+import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_WEIGHT;
+
 public interface ImmutableSubjectData {
-    Set<Map.Entry<String, String>> DEFAULT_CONTEXTS = PermissionsEx.GLOBAL_CONTEXT;
-    int DEFAULT_WEIGHT = 0;
-    boolean DEFAULT_INHERITABILITY = true;
 
     /**
      * Return an immutable list of all data segments this subject data object has an attachment to, sorted by weight
@@ -40,65 +39,71 @@ public interface ImmutableSubjectData {
     WeightedImmutableSet<DataSegment> getAllSegments(Set<Map.Entry<String, String>> contexts, boolean inheritable);
 
     default ImmutableSubjectData withSegment(DataSegment segment) {
-        return updateOrCreateSegment(segment.getContexts(), segment.getWeight(), segment.isInheritable(),
+        return updateSegment(segment.getContexts(), segment.getWeight(), segment.isInheritable(),
                 old -> old.withPermissions(segment.getPermissions())
                 .withOptions(segment.getOptions())
                 .withParents(segment.getParents())
                 .withDefaultValue(segment.getPermissionDefault()));
     }
 
-    DataSegment getOrCreateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable);
+    /**
+     * Get a segment with the specified parameters. If such a segment does not exist, a new one will be instantiated to edit.
+     * @param contexts The contexts of the segment
+     * @param weight The segment's weight
+     * @param inheritable Whether or not the segment is inheritable
+     * @return The segment matching these parameters
+     */
+    DataSegment getSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable);
 
-    default DataSegment getOrCreateSegment(Set<Map.Entry<String, String>> contexts, int weight) {
-        return getOrCreateSegment(contexts, weight, DEFAULT_INHERITABILITY);
+    default DataSegment getSegment(Set<Map.Entry<String, String>> contexts, int weight) {
+        return getSegment(contexts, weight, DEFAULT_INHERITABILITY);
     }
 
-    default DataSegment getOrCreateSegment(Set<Map.Entry<String, String>> contexts, boolean inheritable) {
-        return getOrCreateSegment(contexts, DEFAULT_WEIGHT, inheritable);
+    default DataSegment getSegment(Set<Map.Entry<String, String>> contexts, boolean inheritable) {
+        return getSegment(contexts, DEFAULT_WEIGHT, inheritable);
     }
 
-    default DataSegment getOrCreateSegment(int weight, boolean inheritable) {
-        return getOrCreateSegment(DEFAULT_CONTEXTS, weight, inheritable);
+    default DataSegment getSegment(int weight, boolean inheritable) {
+        return getSegment(DEFAULT_CONTEXTS, weight, inheritable);
     }
 
-    default DataSegment getOrCreateSegment(Set<Map.Entry<String, String>> contexts) {
-        return getOrCreateSegment(contexts, DEFAULT_WEIGHT, DEFAULT_INHERITABILITY);
+    default DataSegment getSegment(Set<Map.Entry<String, String>> contexts) {
+        return getSegment(contexts, DEFAULT_WEIGHT, DEFAULT_INHERITABILITY);
     }
 
-    default DataSegment getOrCreateSegment(int weight) {
-        return getOrCreateSegment(DEFAULT_CONTEXTS, weight, DEFAULT_INHERITABILITY);
+    default DataSegment getSegment(int weight) {
+        return getSegment(DEFAULT_CONTEXTS, weight, DEFAULT_INHERITABILITY);
     }
 
-    default DataSegment getOrCreateSegment(boolean inheritable) {
-        return getOrCreateSegment(DEFAULT_CONTEXTS, DEFAULT_WEIGHT, inheritable);
+    default DataSegment getSegment(boolean inheritable) {
+        return getSegment(DEFAULT_CONTEXTS, DEFAULT_WEIGHT, inheritable);
     }
 
-    ImmutableSubjectData updateOrCreateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc);
+    ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc);
 
-    default ImmutableSubjectData updateOrCreateSegment(Set<Map.Entry<String, String>> contexts, int weight, Function<DataSegment, DataSegment> updateFunc) {
-        return updateOrCreateSegment(contexts, weight, DEFAULT_INHERITABILITY, updateFunc);
+    default ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, int weight, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(contexts, weight, DEFAULT_INHERITABILITY, updateFunc);
     }
 
-    default ImmutableSubjectData updateOrCreateSegment(Set<Map.Entry<String, String>> contexts, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
-        return updateOrCreateSegment(contexts, DEFAULT_WEIGHT, inheritable, updateFunc);
+    default ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(contexts, DEFAULT_WEIGHT, inheritable, updateFunc);
     }
 
-    default ImmutableSubjectData updateOrCreateSegment(int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
-        return updateOrCreateSegment(DEFAULT_CONTEXTS, weight, inheritable, updateFunc);
+    default ImmutableSubjectData updateSegment(int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(DEFAULT_CONTEXTS, weight, inheritable, updateFunc);
     }
 
-    default ImmutableSubjectData updateOrCreateSegment(Set<Map.Entry<String, String>> contexts, Function<DataSegment, DataSegment> updateFunc) {
-        return updateOrCreateSegment(contexts, DEFAULT_WEIGHT, DEFAULT_INHERITABILITY, updateFunc);
+    default ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(contexts, DEFAULT_WEIGHT, DEFAULT_INHERITABILITY, updateFunc);
     }
 
-    default ImmutableSubjectData updateOrCreateSegment(int weight, Function<DataSegment, DataSegment> updateFunc) {
-        return updateOrCreateSegment(DEFAULT_CONTEXTS, weight, DEFAULT_INHERITABILITY, updateFunc);
+    default ImmutableSubjectData updateSegment(int weight, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(DEFAULT_CONTEXTS, weight, DEFAULT_INHERITABILITY, updateFunc);
     }
 
-    default ImmutableSubjectData updateOrCreateSegment(boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
-        return updateOrCreateSegment(DEFAULT_CONTEXTS, DEFAULT_WEIGHT, inheritable, updateFunc);
+    default ImmutableSubjectData updateSegment(boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(DEFAULT_CONTEXTS, DEFAULT_WEIGHT, inheritable, updateFunc);
     }
-
 
     ImmutableSubjectData clearOptions();
 
