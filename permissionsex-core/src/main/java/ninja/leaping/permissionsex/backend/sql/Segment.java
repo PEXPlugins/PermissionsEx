@@ -172,8 +172,11 @@ class Segment {
         }
 
         final List<SubjectRef> newParents = new ArrayList<>(parents);
-        newParents.remove(parent);
-        return newWithUpdate(permissions, options, parents, permissionDefault, (dao, seg) -> dao.removeParent(seg, parent));
+        if (!newParents.remove(parent)) {
+            return this;
+        }
+
+        return newWithUpdate(permissions, options, newParents, permissionDefault, (dao, seg) -> dao.removeParent(seg, parent));
     }
 
     public Segment withParents(List<SubjectRef> parents) {
