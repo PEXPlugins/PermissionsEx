@@ -21,6 +21,7 @@ public class PermissionsExConfig {
 	private final boolean userAddGroupsLast;
 	private final boolean logPlayers;
 	private final boolean createUserRecords;
+	private final boolean saveDefaultGroup;
 	private final String defaultBackend;
 	private final boolean updaterEnabled;
 	private final boolean alwaysUpdate;
@@ -38,6 +39,7 @@ public class PermissionsExConfig {
 		this.userAddGroupsLast = getBoolean("permissions.user-add-groups-last", false);
 		this.logPlayers = getBoolean("permissions.log-players", false);
 		this.createUserRecords = getBoolean("permissions.createUserRecords", false);
+		this.saveDefaultGroup = getBoolean("permissions.save-default-group", false);
 		this.defaultBackend = getString("permissions.backend", PermissionBackend.DEFAULT_BACKEND);
 		this.updaterEnabled = getBoolean("updater", true);
 		this.alwaysUpdate = getBoolean("alwaysUpdate", false);
@@ -98,6 +100,10 @@ public class PermissionsExConfig {
 		return createUserRecords;
 	}
 
+	public boolean saveDefaultGroup() {
+		return saveDefaultGroup;
+	}
+
 	public boolean updaterEnabled() {
 		return updaterEnabled;
 	}
@@ -129,4 +135,5 @@ public class PermissionsExConfig {
 	public void save() {
 		plugin.saveConfig();
 	}
+
 }

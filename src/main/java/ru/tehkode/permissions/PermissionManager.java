@@ -720,4 +720,8 @@ public class PermissionManager {
 	public ScheduledExecutorService getExecutor() {
 		return executor;
 	}
+
+	public boolean shouldSaveDefaultGroup() {
+		return config.saveDefaultGroup();
+	}
 }

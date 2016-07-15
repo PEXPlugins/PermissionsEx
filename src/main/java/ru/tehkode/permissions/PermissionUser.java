@@ -59,7 +59,8 @@ public class PermissionUser extends PermissionEntity {
 		super.initialize();
 
 		if (this.manager.shouldCreateUserRecords() && this.isVirtual()) {
-			this.getData().setParents(this.getOwnParentIdentifiers(null), null);
+			List<String> parents = this.manager.shouldSaveDefaultGroup() ? this.getParentIdentifiers(null) : this.getOwnParentIdentifiers(null);
+			this.getData().setParents(parents, null);
 		}
 		updateTimedGroups();
 
