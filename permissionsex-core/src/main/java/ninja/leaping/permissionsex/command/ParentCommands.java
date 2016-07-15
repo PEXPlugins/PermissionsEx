@@ -35,7 +35,7 @@ public class ParentCommands {
     public static CommandSpec getParentCommand(PermissionsEx pex) {
         return CommandSpec.builder()
                 .setAliases("parents", "parent", "par", "p")
-                .setChildren(getAddParentCommand(pex), getRemoveParentCommand(pex))
+                .setChildren(getAddParentCommand(pex), getRemoveParentCommand(pex), getSetParentsCommand(pex))
                 .build();
     }
 
@@ -73,5 +73,24 @@ public class ParentCommands {
                     }
                 })
                 .build();
+    }
+
+    private static CommandSpec getSetParentsCommand(final PermissionsEx pex) {
+        return CommandSpec.builder()
+                .setAliases("set", "replace", "=")
+                .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
+                .setExecutor(new PermissionsExExecutor(pex) {
+                    @Override
+                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+                        SubjectDataReference ref = getDataRef(src, args, "permissionsex.parent.set");
+                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Map.Entry<String, String> parent = args.getOne("parent");
+                        messageSubjectOnFuture(
+                                ref.update(old -> old.clearParents(contexts).addParent(contexts, parent.getKey(), parent.getValue())), src,
+                                t("Set parent for %s to %s in %s context", src.fmt().hl(src.fmt().subject(ref)), src.fmt().subject(parent), formatContexts(src, contexts)));
+                    }
+                })
+                .build();
+
     }
 }

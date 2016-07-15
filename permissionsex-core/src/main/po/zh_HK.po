@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PermissionsEx git\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-11 13:48-0700\n"
+"POT-Creation-Date: 2016-07-15 07:52-0700\n"
 "PO-Revision-Date: 2015-04-17 16:19-0700\n"
 "Last-Translator:  <zml@aoeu.xyz>\n"
 "Language-Team: Chinese (Hong Kong)\n"
@@ -347,6 +347,10 @@ msgstr ""
 msgid "Set option %s for %s in %s context"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/ParentCommands.java:90
+msgid "Set parent for %s to %s in %s context"
+msgstr ""
+
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:63
 msgid "Set permission %s for %s in %s context"
 msgstr ""
@@ -493,8 +497,8 @@ msgstr ""
 msgid "filter"
 msgstr ""
 
-#: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
 #: ninja/leaping/permissionsex/command/OptionCommands.java:39
+#: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
 msgid "key"
 msgstr ""
 
@@ -510,6 +514,7 @@ msgstr ""
 
 #: ninja/leaping/permissionsex/command/ParentCommands.java:45
 #: ninja/leaping/permissionsex/command/ParentCommands.java:63
+#: ninja/leaping/permissionsex/command/ParentCommands.java:81
 msgid "parent"
 msgstr ""
 
@@ -537,9 +542,9 @@ msgstr ""
 msgid "suffix"
 msgstr ""
 
+#: ninja/leaping/permissionsex/command/OptionCommands.java:39
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:47
 #: ninja/leaping/permissionsex/command/PermissionsCommands.java:72
-#: ninja/leaping/permissionsex/command/OptionCommands.java:39
 msgid "value"
 msgstr ""
 
