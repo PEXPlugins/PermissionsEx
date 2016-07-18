@@ -114,7 +114,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	public List<String> getPermissions(String worldName) {
 		List<String> result = this.node.getStringList(formatPath(worldName, "permissions"));
 
-		return result == null ? Collections.<String>emptyList() : Collections.unmodifiableList(result);
+		return Collections.unmodifiableList(result);
 	}
 
 	@Override
@@ -129,18 +129,14 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 		// Common permissions
 		List<String> commonPermissions = this.node.getStringList("permissions");
-		if (commonPermissions != null) {
-			allPermissions.put(null, Collections.unmodifiableList(commonPermissions));
-		}
+		allPermissions.put(null, Collections.unmodifiableList(commonPermissions));
 
 		//World-specific permissions
 		ConfigurationSection worldsSection = this.node.getConfigurationSection("worlds");
 		if (worldsSection != null) {
 			for (String world : worldsSection.getKeys(false)) {
 				List<String> worldPermissions = this.node.getStringList(FileBackend.buildPath("worlds", world, "permissions"));
-				if (commonPermissions != null) {
-					allPermissions.put(world, Collections.unmodifiableList(worldPermissions));
-				}
+				allPermissions.put(world, Collections.unmodifiableList(worldPermissions));
 			}
 		}
 
@@ -241,7 +237,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 			}
 		}
 
-		if (parents == null || parents.isEmpty()) {
+		if (parents.isEmpty()) {
 			return Collections.emptyList();
 		}
 

@@ -26,7 +26,6 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -34,15 +33,8 @@ import java.util.logging.Level;
  */
 public class PermissionUser extends PermissionEntity {
 
-	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
-
 	private final PermissionsUserData data;
 	protected Map<String, List<PermissionGroup>> cachedGroups = new HashMap<>();
-	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
-	protected Map<String, String> cachedPrefix = new HashMap<>();
-	protected Map<String, String> cachedSuffix = new HashMap<>();
-	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
-	protected Map<String, String> cachedOptions = new HashMap<>();
 
 	public PermissionUser(String playerName, PermissionsUserData data, PermissionManager manager) {
 		super(playerName, manager);
@@ -86,24 +78,6 @@ public class PermissionUser extends PermissionEntity {
 	@Override
 	public Type getType() {
 		return Type.USER;
-	}
-
-	@Override
-	public String getOption(String optionName, String worldName, String defaultValue) {
-		String cacheIndex = worldName + "|" + optionName;
-
-		if (this.cachedOptions.containsKey(cacheIndex)) {
-			return this.cachedOptions.get(cacheIndex);
-		}
-
-		String value = super.getOption(optionName, worldName, null);
-		if (value != null) {
-			this.cachedOptions.put(cacheIndex, value);
-			return value;
-		}
-
-		// Nothing found
-		return defaultValue;
 	}
 
 	@Override
@@ -460,15 +434,6 @@ public class PermissionUser extends PermissionEntity {
 		return ladders;
 	}
 
-	@Override
-	public List<String> getPermissions(String worldName) {
-		if (!this.cachedPermissions.containsKey(worldName)) {
-			this.cachedPermissions.put(worldName, super.getPermissions(worldName));
-		}
-
-		return this.cachedPermissions.get(worldName);
-	}
-
 	protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
 		if (!this.isRanked(ladderName)) { // not ranked
 			throw new RankingException("User are not in this ladder", this, promoter);
@@ -503,15 +468,6 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public String getPrefix(String worldName) {
-		if (!this.cachedPrefix.containsKey(worldName)) {
-			this.cachedPrefix.put(worldName, super.getPrefix(worldName));
-		}
-
-		return this.cachedPrefix.get(worldName);
-	}
-
-	@Override
 	public boolean has(String permission) {
 		Player player = getPlayer();
 		if (player != null) {
@@ -529,45 +485,10 @@ public class PermissionUser extends PermissionEntity {
 		}
 	}
 
-	@Override
-	public String getSuffix(String worldName) {
-		if (!this.cachedSuffix.containsKey(worldName)) {
-			this.cachedSuffix.put(worldName, super.getSuffix(worldName));
-		}
-
-		return this.cachedSuffix.get(worldName);
-	}
-
-	@Override
-	public String getMatchingExpression(String permission, String world) {
-		String cacheId = world + ":" + permission;
-		if (!this.cachedAnwsers.containsKey(cacheId)) {
-			String result = super.getMatchingExpression(permission, world);
-
-			if (result == null) {    // this is actually kinda dirty clutch
-				result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
-			}
-
-			this.cachedAnwsers.put(cacheId, result);
-		}
-
-		String result = this.cachedAnwsers.get(cacheId);
-
-		if (PERMISSION_NOT_FOUND.equals(result)) {
-			result = null;
-		}
-
-		return result;
-	}
-
 	protected void clearCache() {
-		this.cachedPrefix.clear();
-		this.cachedSuffix.clear();
+		super.clearCache();
 
 		this.cachedGroups.clear();
-		this.cachedPermissions.clear();
-		this.cachedAnwsers.clear();
-		this.cachedOptions.clear();
 	}
 
 	@Override

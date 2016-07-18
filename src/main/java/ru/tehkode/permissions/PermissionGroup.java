@@ -267,6 +267,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	}
 
 	protected void clearCache() {
+		super.clearCache();
 		this.dirtyWeight = true;
 		for (PermissionUser user : this.getActiveUsers()) {
 			user.clearCache();

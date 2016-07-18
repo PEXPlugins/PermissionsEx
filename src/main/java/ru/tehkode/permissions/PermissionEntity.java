@@ -37,6 +37,7 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
  */
 public abstract class PermissionEntity {
 	protected final static String NON_INHERITABLE_PREFIX = "#";
+	private final static String PERMISSION_NOT_FOUND = "<not found>"; // used replace null for ConcurrentHashMap
 	public static enum Type {
 		USER, GROUP;
 	}
@@ -46,6 +47,12 @@ public abstract class PermissionEntity {
 	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<>();
 	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<>();
 	protected boolean debugMode = false;
+        
+	protected Map<String, List<String>> cachedPermissions = new HashMap<>();
+	protected Map<String, String> cachedPrefix = new HashMap<>();
+	protected Map<String, String> cachedSuffix = new HashMap<>();
+	protected Map<String, String> cachedAnwsers = new ConcurrentHashMap<>();
+	protected Map<String, String> cachedOptions = new HashMap<>();
 
 	public PermissionEntity(String name, PermissionManager manager) {
 		this.manager = manager;
@@ -57,7 +64,13 @@ public abstract class PermissionEntity {
 	/**
 	 * Clears cache of entity or members.
 	 */
-	protected abstract void clearCache();
+	protected void clearCache() {
+		cachedPermissions.clear();
+		cachedSuffix.clear();
+		cachedPrefix.clear();
+		cachedAnwsers.clear();
+		cachedOptions.clear();
+	}
 
 	/**
 	 * This method 100% run after all constructors have been run and entity
@@ -124,14 +137,20 @@ public abstract class PermissionEntity {
 	 * @return prefix
 	 */
 	public String getPrefix(String worldName) {
-		String ret = new HierarchyTraverser<String>(this, worldName) {
-			@Override
-			protected String fetchLocal(PermissionEntity entity, String world) {
-				final String ret = entity.getOwnPrefix(world);
-				return ret == null || ret.isEmpty() ? null : ret;
-			}
-		}.traverse();
-		return ret == null ? "" : ret;
+            	if (!this.cachedPrefix.containsKey(worldName)) {
+
+			String ret = new HierarchyTraverser<String>(this, worldName) {
+				@Override
+				protected String fetchLocal(PermissionEntity entity, String world) {
+					final String ret = entity.getOwnPrefix(world);
+					return ret == null || ret.isEmpty() ? null : ret;
+				}
+			}.traverse();
+                
+			this.cachedPrefix.put(worldName, ret == null ? "" : ret);
+		}
+
+		return this.cachedPrefix.get(worldName);
 	}
 
 	/**
@@ -149,7 +168,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setPrefix(String prefix, String worldName) {
 		getData().setOption("prefix", prefix, worldName);
-		clearCache();
+		cachedPrefix.clear();
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -159,14 +178,17 @@ public abstract class PermissionEntity {
 	 * @return suffix
 	 */
 	public String getSuffix(String worldName) {
-		String ret = new HierarchyTraverser<String>(this, worldName) {
-			@Override
-			protected String fetchLocal(PermissionEntity entity, String world) {
-				final String ret = entity.getOwnSuffix(world);
-				return ret == null || ret.isEmpty() ? null : ret;
-			}
-		}.traverse();
-		return ret == null ? "" : ret;
+		if (!this.cachedSuffix.containsKey(worldName)) {
+			String ret = new HierarchyTraverser<String>(this, worldName) {
+				@Override
+				protected String fetchLocal(PermissionEntity entity, String world) {
+					final String ret = entity.getOwnSuffix(world);
+					return ret == null || ret.isEmpty() ? null : ret;
+				}
+            		}.traverse();
+            		this.cachedSuffix.put(worldName, ret == null ? "" : ret);
+        	}
+        	return this.cachedSuffix.get(worldName);
 	}
 
 	public String getSuffix() {
@@ -180,7 +202,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setSuffix(String suffix, String worldName) {
 		getData().setOption("suffix", suffix, worldName);
-		clearCache();
+		cachedSuffix.clear();
 		this.callEvent(PermissionEntityEvent.Action.INFO_CHANGED);
 	}
 
@@ -222,7 +244,11 @@ public abstract class PermissionEntity {
 	 * @return Array of permission expressions
 	 */
 	public List<String> getPermissions(String world) {
-		return Collections.unmodifiableList(getPermissionsInternal(world));
+		if (!this.cachedPermissions.containsKey(world)) {
+			this.cachedPermissions.put(world, Collections.unmodifiableList(getPermissionsInternal(world)));
+		}
+
+		return this.cachedPermissions.get(world);
 	}
 
 	/**
@@ -372,7 +398,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setPermissions(List<String> permissions, String world) {
 		getData().setPermissions(permissions, world);
-		clearCache();
+		cachedPermissions.clear();
 		this.callEvent(PermissionEntityEvent.Action.PERMISSIONS_CHANGED);
 	}
 
@@ -394,6 +420,12 @@ public abstract class PermissionEntity {
 	 * @return Value of option as String
 	 */
 	public String getOption(final String option, String world, String defaultValue) {
+		String cacheIndex = world + "|" + option;
+
+		if (this.cachedOptions.containsKey(cacheIndex)) {
+			return this.cachedOptions.get(cacheIndex);
+		}
+
 		String ret = new HierarchyTraverser<String>(this, world) {
 			@Override
 			protected String fetchLocal(PermissionEntity entity, String world) {
@@ -401,11 +433,13 @@ public abstract class PermissionEntity {
 			}
 		}.traverse();
 
-		if (ret == null) {
-			ret = defaultValue;
+		if (ret != null) {
+			this.cachedOptions.put(cacheIndex, ret);
+			return ret;
 		}
 
-		return ret;
+		// Nothing found
+		return defaultValue;
 	}
 
 	/**
@@ -495,7 +529,7 @@ public abstract class PermissionEntity {
 	 */
 	public void setOption(String option, String value, String world) {
 		getData().setOption(option, value, world);
-		clearCache();
+		cachedOptions.clear();
 		this.callEvent(PermissionEntityEvent.Action.OPTIONS_CHANGED);
 	}
 
@@ -764,7 +798,25 @@ public abstract class PermissionEntity {
 	}
 
 	public String getMatchingExpression(String permission, String world) {
-		return this.getMatchingExpression(this.getPermissions(world), permission);
+
+		String cacheId = world + ":" + permission;
+		if (!this.cachedAnwsers.containsKey(cacheId)) {
+			String result = this.getMatchingExpression(this.getPermissions(world), permission);
+
+			if (result == null) {    // this is actually kinda dirty clutch
+				result = PERMISSION_NOT_FOUND;  // ConcurrentHashMap deny storage of null values
+			}
+
+			this.cachedAnwsers.put(cacheId, result);
+		}
+
+		String result = this.cachedAnwsers.get(cacheId);
+
+		if (PERMISSION_NOT_FOUND.equals(result)) {
+			result = null;
+		}
+
+		return result;
 	}
 
 	public String getMatchingExpression(List<String> permissions, String permission) {
