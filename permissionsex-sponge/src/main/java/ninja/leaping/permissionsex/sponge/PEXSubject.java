@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static ninja.leaping.permissionsex.sponge.PEXSubjectData.parSet;
 
@@ -46,6 +48,25 @@ class PEXSubject implements Subject {
     private final PEXSubjectData transientData;
     private volatile CalculatedSubject baked;
     private final String identifier;
+    private final AtomicReference<ActiveContextsHolder> cachedContexts = new AtomicReference<>();
+
+    private static class ActiveContextsHolder {
+        private final int updateTicks;
+        private final Set<Context> contexts;
+
+        private ActiveContextsHolder(int updateTicks, Set<Context> contexts) {
+            this.updateTicks = updateTicks;
+            this.contexts = contexts;
+        }
+
+        public int getUpdateTicks() {
+            return updateTicks;
+        }
+
+        public Set<Context> getContexts() {
+            return contexts;
+        }
+    }
 
     public PEXSubject(String identifier, PEXSubjectCollection collection) throws ExecutionException, PermissionsLoadingException {
         this.identifier = identifier;
@@ -134,11 +155,21 @@ class PEXSubject implements Subject {
     public Set<Context> getActiveContexts() {
         time().onGetActiveContexts().startTimingIfSync();
         try {
-            Set<Context> set = new HashSet<>();
-            for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
-                calc.accumulateContexts(this, set);
-            }
-            return ImmutableSet.copyOf(set);
+            int ticks;
+            ActiveContextsHolder holder, newHolder;
+            do {
+                ticks = Sponge.getGame().getServer().getRunningTimeTicks();
+                holder = this.cachedContexts.get();
+                if (holder != null && ticks == holder.getUpdateTicks()) {
+                    return holder.getContexts();
+                }
+                Set<Context> set = new HashSet<>();
+                for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
+                    calc.accumulateContexts(this, set);
+                }
+                newHolder = new ActiveContextsHolder(ticks, ImmutableSet.copyOf(set));
+            } while (!this.cachedContexts.compareAndSet(holder, newHolder));
+            return newHolder.getContexts();
         } finally {
             time().onGetActiveContexts().stopTimingIfSync();
         }
