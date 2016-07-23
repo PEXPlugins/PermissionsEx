@@ -20,12 +20,17 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
+import ninja.leaping.permissionsex.backend.sql.dao.LegacyDao;
 import ninja.leaping.permissionsex.backend.sql.dao.LegacyMigration;
 import ninja.leaping.permissionsex.backend.sql.dao.SchemaMigration;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -61,10 +66,15 @@ public class SchemaMigrations {
     public static SchemaMigration twoToThree() {
         // The big one
         return dao -> {
-            dao.legacy().renameTable(dao, "permissions", "permissions_old");
-            dao.legacy().renameTable(dao, "permissions_entity", "permissions_entity_old");
-            dao.legacy().renameTable(dao, "permissions_inheritance", "permissions_inheritance_old");
-            dao.initializeTables();
+            LegacyDao legacy = new LegacyDao(dao);
+            legacy.renameTable("permissions", "permissions_old");
+            legacy.renameTable("permissions_entity", "permissions_entity_old");
+            legacy.renameTable("permissions_inheritance", "permissions_inheritance_old");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(SchemaMigration.class.getResourceAsStream("twotothree-migration.sql")))){
+                dao.executeStream(reader);
+            } catch (IOException e) {
+                throw new SQLException(e);
+            }
 
             // Transfer world inheritance
             try (PreparedStatement stmt = dao.prepareStatement("SELECT id, child, parent FROM {}permissions_inheritance_old WHERE type=2 ORDER BY child, parent, id ASC")) {
@@ -88,16 +98,13 @@ public class SchemaMigrations {
                 ResultSet rs = select.executeQuery();
                 while (rs.next()) {
                     SqlSubjectRef ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
-                    SqlDataSegment currentSeg = null;
-                    String currentWorld = null;
-                    Map<String, SqlDataSegment> worldSegments = new HashMap<>();
+                    LegacyDao.LegacySegment currentSeg = null;
+                    Map<String, LegacyDao.LegacySegment> worldSegments = new HashMap<>();
                     try (PreparedStatement selectPermissionsOptions = dao.prepareStatement("SELECT id, permission, world, value FROM {}permissions_old WHERE type=? AND name=? ORDER BY world, id DESC")) {
                         selectPermissionsOptions.setInt(1, rs.getInt(1));
                         selectPermissionsOptions.setString(2, rs.getString(2));
 
                         ResultSet perms = selectPermissionsOptions.executeQuery();
-                        Map<String, Integer> newPerms = new HashMap<>();
-                        Map<String, String> options = new HashMap<>();
                         String rank = null, rankLadder = null;
                         int defaultVal = 0;
                         while (perms.next()) {
@@ -105,25 +112,14 @@ public class SchemaMigrations {
                             if (worldChecked != null && worldChecked.isEmpty()) {
                                 worldChecked = null;
                             }
-                            if (currentSeg == null || !Objects.equals(worldChecked, currentWorld)) {
+                            if (currentSeg == null || !Objects.equals(worldChecked, currentSeg.getWorld())) {
                                 if (currentSeg != null) {
-                                    if (!options.isEmpty()) {
-                                        dao.setOptions(currentSeg, options);
-                                        options.clear();
-                                    }
-                                    if (!newPerms.isEmpty()) {
-                                        dao.setPermissions(currentSeg, newPerms);
-                                        newPerms.clear();
-                                    }
-                                    if (defaultVal != 0) {
-                                        dao.setDefaultValue(currentSeg, defaultVal);
-                                        defaultVal = 0;
-                                    }
+                                    currentSeg.doUpdate();
                                 }
-                                currentWorld = worldChecked;
-                                currentSeg = SqlDataSegment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
-                                dao.allocateSegment(ref, currentSeg);
-                                worldSegments.put(currentWorld, currentSeg);
+                                currentSeg = new LegacyDao.LegacySegment(worldChecked);
+                                //currentSeg = SqlDataSegment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
+                                //dao.allocateSegment(ref, currentSeg);
+                                worldSegments.put(currentSeg.getWorld(), currentSeg);
                             }
                             String key = perms.getString(2);
                             final String value = perms.getString(4);
@@ -138,9 +134,9 @@ public class SchemaMigrations {
                                     continue;
                                 }
                                 key = ConversionUtils.convertLegacyPermission(key);
-                                newPerms.put(key, val);
+                                currentSeg.getPermissions().put(key, val);
                             } else {
-                                if (currentWorld == null) {
+                                if (currentSeg.getWorld() == null) {
                                     boolean rankEq = key.equals("rank"), rankLadderEq = !rankEq && key.equals("rank-ladder");
                                     if (rankEq || rankLadderEq) {
                                         if (rankEq) {
@@ -160,23 +156,16 @@ public class SchemaMigrations {
                                     }
                                 }
                                 if (key.equals("default") && value.equalsIgnoreCase("true")) {
-                                    defaultSubjects.computeIfAbsent(currentWorld, ign -> new ArrayList<>()).add(ref);
+                                    defaultSubjects.computeIfAbsent(currentSeg.getWorld(), ign -> new ArrayList<>()).add(ref);
                                     continue;
                                 }
-                                options.put(key, value);
+                                currentSeg.getOptions().put(key, value);
                             }
                         }
 
                         if (currentSeg != null) {
-                            if (!options.isEmpty()) {
-                                dao.setOptions(currentSeg, options);
-                            }
-                            if (!newPerms.isEmpty()) {
-                                dao.setPermissions(currentSeg, newPerms);
-                            }
-                            if (defaultVal != 0) {
-                                dao.setDefaultValue(currentSeg, defaultVal);
-                            }
+                            currentSeg.doUpdate();
+
                             if (rank != null) {
                                 List<Map.Entry<SqlSubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
                                 try {
@@ -224,24 +213,23 @@ public class SchemaMigrations {
                         }
                     }
 
-                    try (PreparedStatement selectInheritance = dao.prepareStatement(dao.legacy().getSelectParentsQuery())) {
+                    try (PreparedStatement selectInheritance = dao.prepareStatement(legacy.getSelectParentsQuery())) {
                         selectInheritance.setString(1, rs.getString(2));
                         selectInheritance.setInt(2, rs.getInt(1));
 
                         ResultSet inheritance = selectInheritance.executeQuery();
                         List<SqlSubjectRef> newInheritance = new LinkedList<>();
                         while (inheritance.next()) {
-                            if (currentSeg == null || !Objects.equals(inheritance.getString(3), currentWorld)) {
+                            if (currentSeg == null || !Objects.equals(inheritance.getString(3), currentSeg.getWorld())) {
                                 if (currentSeg != null && !newInheritance.isEmpty()) {
                                     dao.setParents(currentSeg, newInheritance);
                                     newInheritance.clear();
                                 }
-                                currentWorld = inheritance.getString(3);
-                                currentSeg = worldSegments.get(currentWorld);
+                                String checkWorld = inheritance.getString(3);
+                                currentSeg = worldSegments.get(checkWorld);
                                 if (currentSeg == null) {
-                                    currentSeg = SqlDataSegment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
-                                    dao.allocateSegment(ref, currentSeg);
-                                    worldSegments.put(currentWorld, currentSeg);
+                                    currentSeg = new LegacyDao.LegacySegment(checkWorld);
+                                    worldSegments.put(currentSeg.getWorld(), currentSeg);
                                 }
                             }
                             newInheritance.add(dao.getOrCreateSubjectRef(PermissionsEx.SUBJECTS_GROUP, inheritance.getString(2)));
@@ -265,14 +253,14 @@ public class SchemaMigrations {
         return dao -> {
             // Change encoding for all columns to utf8mb4
             // Change collation for all columns to utf8mb4_general_ci
-            dao.legacy().prepareStatement(dao, "ALTER TABLE `{permissions}` DROP KEY `unique`, MODIFY COLUMN `permission` TEXT NOT NULL").execute();
+            new LegacyDao(dao).prepareStatement("ALTER TABLE `{permissions}` DROP KEY `unique`, MODIFY COLUMN `permission` TEXT NOT NULL").execute();
         };
     }
 
     public static SchemaMigration zeroToOne() {
         return dao -> {
-            PreparedStatement updateStmt = dao.prepareStatement(dao.legacy().getInsertOptionQuery());
-            ResultSet res = dao.legacy().prepareStatement(dao, "SELECT `name`, `type` FROM `{permissions_entity}` WHERE `default`='1'").executeQuery();
+            PreparedStatement updateStmt = dao.prepareStatement(new LegacyDao(dao).getInsertOptionQuery());
+            ResultSet res = new LegacyDao(dao).prepareStatement("SELECT `name`, `type` FROM `{permissions_entity}` WHERE `default`='1'").executeQuery();
             while (res.next()) {
                 updateStmt.setString(1, res.getString(1));
                 updateStmt.setInt(2, res.getInt(2));
@@ -292,7 +280,8 @@ public class SchemaMigrations {
         return (LegacyMigration) dao -> {
             // TODO: Table modifications not supported in SQLite
             // Prefix/sufix -> options
-            PreparedStatement updateStmt = dao.legacy().prepareStatement(dao, dao.legacy().getInsertOptionQuery());
+            LegacyDao legacy = new LegacyDao(dao);
+            PreparedStatement updateStmt = legacy.prepareStatement(legacy.getInsertOptionQuery());
             ResultSet res = dao.prepareStatement("SELECT `name`, `type`, `prefix`, `suffix` FROM `{permissions_entity}` WHERE LENGTH(`prefix`)>0 OR LENGTH(`suffix`)>0").executeQuery();
             while (res.next()) {
                 String prefix = res.getString("prefix");

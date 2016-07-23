@@ -130,9 +130,9 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                     }
                 }
 
-                WeightedImmutableSet<DataSegment> persistentSegs = transientData.getAllSegments(combo, true);
+                WeightedImmutableSet<DataSegment> persistentSegs = persistent.getAllSegments(combo, true);
                 if (inheritanceLevel <= 1) {
-                    persistentSegs = persistentSegs.withAll(transientData.getAllSegments(combo, false));
+                    persistentSegs = persistentSegs.withAll(persistent.getAllSegments(combo, false));
                 }
                 final WeightedImmutableSet<DataSegment> finalPersistentSegs = persistentSegs;
                 ret = ret.thenRun(() -> visitSingle(state, finalPersistentSegs));
@@ -156,23 +156,20 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     private void visitSingle(BakeState state, WeightedImmutableSet<DataSegment> segments) {
         for (DataSegment data : segments.reverse()) {
-            for (Map.Entry<String, Tristate> ent : data.getPermissions().entrySet()) {
-                String perm = ent.getKey();
+            data.getPermissions().forEach((perm, val) -> {
                 try {
-                    for (String matched : Globs.parse(perm)) {
-                        putPermIfNecessary(state, matched, data.getWeight(), ent.getValue());
-                    }
+                    Globs.parse(perm).forEach(matched -> putPermIfNecessary(state, matched, data.getWeight(), val));
                 } catch (GlobParseException e) { // If the permission is not a valid glob, assume it's a literal
-                    putPermIfNecessary(state, perm, data.getWeight(), ent.getValue());
+                    putPermIfNecessary(state, perm, data.getWeight(), val);
                 }
-            }
+            });
 
             state.parents.addAll(data.getParents());
-            for (Map.Entry<String, String> ent : data.getOptions().entrySet()) {
-                if (!state.options.containsKey(ent.getKey())) {
-                    state.options.put(ent.getKey(), ent.getValue());
+            data.getOptions().forEach((k, v) -> {
+                if (!state.options.containsKey(k)) {
+                    state.options.put(k, v);
                 }
-            }
+            });
 
             int defaultVal = data.getPermissionDefault().asInt() * (Math.abs(data.getWeight()) + 1);
 

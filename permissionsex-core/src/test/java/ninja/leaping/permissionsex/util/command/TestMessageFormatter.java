@@ -18,8 +18,10 @@ package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Tristate;
 
 import javax.annotation.Nullable;
 import java.util.Locale;
@@ -32,8 +34,8 @@ class TestMessageFormatter implements MessageFormatter<String> {
     public static final TestMessageFormatter INSTANCE = new TestMessageFormatter();
 
     @Override
-    public String subject(Map.Entry<String, String> subject) {
-        return subject.getKey() + ":" + subject.getValue();
+    public String subject(SubjectRef subject) {
+        return subject.getType() + ":" + subject.getIdentifier();
     }
 
     @Override
@@ -52,7 +54,7 @@ class TestMessageFormatter implements MessageFormatter<String> {
     }
 
     @Override
-    public String permission(String permission, int value) {
+    public String permission(String permission, Tristate value) {
         return permission + "=" + value;
     }
 

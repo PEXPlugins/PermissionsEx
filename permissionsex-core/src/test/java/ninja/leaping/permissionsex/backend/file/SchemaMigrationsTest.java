@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.backend.file;
 
+import com.google.common.base.Joiner;
 import com.google.common.io.Resources;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
@@ -37,6 +38,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
 public class SchemaMigrationsTest {
+    private static final Joiner LINE_JOIN = Joiner.on('\n');
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -82,7 +84,7 @@ public class SchemaMigrationsTest {
         ConfigurationNode node = yamlLoader.load();
         SchemaMigrations.initialTo1().apply(node);
         yamlLoader.save(node);
-        assertEquals(Resources.readLines(getClass().getResource("test0to1.post.yml"), UTF_8), Files.readAllLines(testFile, UTF_8));
+        assertEquals(LINE_JOIN.join(Resources.readLines(getClass().getResource("test0to1.post.yml"), UTF_8)), LINE_JOIN.join(Files.readAllLines(testFile, UTF_8)));
     }
 
     private void doTest(String preName, String postName, ConfigurationTransformation xform) throws IOException {
@@ -94,7 +96,7 @@ public class SchemaMigrationsTest {
         ConfigurationNode node = jsonLoader.load();
         xform.apply(node);
         jsonLoader.save(node);
-        assertEquals(Resources.readLines(getClass().getResource(postName), UTF_8), Files.readAllLines(testFile, UTF_8));
+        assertEquals(LINE_JOIN.join(Resources.readLines(getClass().getResource(postName), UTF_8)), LINE_JOIN.join(Files.readAllLines(testFile, UTF_8)));
 
     }
 }

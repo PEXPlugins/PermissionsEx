@@ -51,7 +51,7 @@ public class PermissionsCommands {
                         }
                         Tristate intVal = (Tristate) value;
                         updateDataSegment(src, args, "permissionsex.permission.set", seg -> seg.withPermission(key, intVal),
-                                (subj, contexts) -> t("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
+                                (subj, segKey) -> t("Set permission %s for %s in %s context", src.fmt().permission(key, intVal), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, segKey.getContexts())));
                     }
                 })
                 .build();
@@ -71,7 +71,7 @@ public class PermissionsCommands {
                         Tristate intVal = (Tristate) value;
 
                         updateDataSegment(src, args, "permissionsex.permission.unset", seg -> seg.withDefaultValue(intVal),
-                                (subj, contexts) -> t("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
+                                (subj, segKey) -> t("Set default permission to %s for %s in %s context", intVal, src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, segKey.getContexts())));
                     }
                 })
                 .build();

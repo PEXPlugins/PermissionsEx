@@ -21,6 +21,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Change;
 import ninja.leaping.permissionsex.data.DataSegment;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
@@ -54,6 +55,11 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         return src.fmt().hl(contexts.isEmpty() ? src.fmt().tr(t("Global")) : src.fmt().combined(contexts.toString()));
     }
 
+    protected <TextType> TextType formatSegmentKey(Commander<TextType> src, SegmentKey key) {
+        TextType contexts = src.fmt().hl(key.getContexts().isEmpty() ? src.fmt().tr(t("Global")) : src.fmt().combined(key.getContexts().toString()));
+        return src.fmt().combined(contexts, "@", key.getWeight(), " ", key.isInheritable() ? t("Inheritable"): t("Non-inheritable"));
+    }
+
     protected CalculatedSubject subjectOrSelf(Commander<?> src, CommandContext args) throws CommandException {
         try {
             if (args.hasAny("subject")) {
@@ -78,7 +84,14 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         return args.hasAny("transient") ? subject.transientData() : subject.data();
     }
 
-    protected <TextType> CompletableFuture<Change<ImmutableSubjectData>> updateDataSegment(Commander<TextType> src, CommandContext args, String permission, Function<DataSegment, DataSegment> updateFunc, BiFunction<CalculatedSubject, Set<Map.Entry<String, String>>, Translatable> messageProvider) throws CommandException {
+    protected SegmentKey getSegmentKey(CommandContext args) {
+        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.getAll("context"));
+        boolean inheritable = !args.hasAny("noninheritable");
+        int weight = args.hasAny("weight") ? args.getOne("weight") : 0;
+        return SegmentKey.of(contexts, weight, inheritable);
+    }
+
+    protected <TextType> CompletableFuture<Change<ImmutableSubjectData>> updateDataSegment(Commander<TextType> src, CommandContext args, String permission, Function<DataSegment, DataSegment> updateFunc, BiFunction<CalculatedSubject, SegmentKey, Translatable> messageProvider) throws CommandException {
         CompletableFuture<CalculatedSubject> subj;
         if (args.hasAny("subject")) {
             SubjectRef ret = args.getOne("subject");
@@ -91,16 +104,14 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
                 subj = pex.getSubjects(ret.get().getType()).get(ret.get().getIdentifier());
             }
         }
-        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.getAll("context"));
-        boolean inheritable = !args.hasAny("noninheritable");
-        int weight = args.hasAny("weight") ? args.getOne("weight") : 0;
+        SegmentKey key = getSegmentKey(args);
         AtomicReference<Translatable> msg = new AtomicReference<>();
 
         CompletableFuture<Change<ImmutableSubjectData>> ret = subj.thenCompose(subject -> {
             runtimeCheckSubjectPermission(src, subject.getIdentifier(), permission);
             SubjectDataReference dat = args.hasAny("transient") ? subject.transientData() : subject.data();
-            msg.set(messageProvider.apply(subject, contexts));
-            return dat.updateSegment(contexts, weight, inheritable, updateFunc);
+            msg.set(messageProvider.apply(subject, key));
+            return dat.updateSegment(key, updateFunc);
         });
         messageSubjectOnFuture(ret, src, msg::get);
         return ret;

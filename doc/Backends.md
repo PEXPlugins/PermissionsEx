@@ -18,7 +18,7 @@ Type: `sql`
 
 Configuration Field | Default | Usage
 ------------------- | ------- | ------
-`url`               | none    | The database connection URL, in the format `<prefix>:[//][user:password]@host/database`. For advanced users, additional parameters are accepted as they would in any JDBC connection string.
+`url`               | none    | The database connection URL, in the format `<prefix>:[//][user:password]@host/database`. For advanced users, additional parameters are accepted as they would be in any JDBC connection string.
 `prefix`            | `pex`   | The table prefix to use in the database, to allow PEX to share a database with other plugins and not have table conflicts.
 
 

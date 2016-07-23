@@ -18,60 +18,62 @@ package ninja.leaping.permissionsex.backend.sql;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.backend.AbstractSubjectData;
 import ninja.leaping.permissionsex.data.DataSegment;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.util.ThrowingBiConsumer;
 import ninja.leaping.permissionsex.util.Util;
-import ninja.leaping.permissionsex.util.WeightedImmutableSet;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 /**
  * Data for SQL-backed subjects
  */
-class SqlSubjectData implements ImmutableSubjectData {
-    private final SqlSubjectRef subject;
-    private final Map<Set<Entry<String, String>>, SqlDataSegment> segments;
+class SqlSubjectData extends AbstractSubjectData<SqlSubjectRef, SqlDataSegment> {
     private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
 
     SqlSubjectData(SqlSubjectRef subject) {
         this(subject, ImmutableMap.of(), null);
     }
 
-    SqlSubjectData(SqlSubjectRef subject, Map<Set<Entry<String, String>>, SqlDataSegment> segments, ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
-        this.subject = subject;
-        this.segments = segments;
+    @Override
+    protected SqlDataSegment fromSegment(DataSegment seg) {
+        return SqlDataSegment.fromSegment(seg);
+    }
+
+    @Override
+    protected SqlDataSegment newSegment(SegmentKey key) {
+        return SqlDataSegment.unallocated(key);
+    }
+
+    SqlSubjectData(SqlSubjectRef subject, Map<SegmentKey, SqlDataSegment> segments, ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
+        super(subject, segments);
         this.updatesToPerform.set(updates);
     }
 
-    protected final SqlSubjectData newWithUpdate(Map<Set<Entry<String, String>>, SqlDataSegment> segments, ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
-        return new SqlSubjectData(subject, segments, Util.appendImmutable(this.updatesToPerform.get(), updateFunc));
+    protected final SqlSubjectData newWithUpdate(Map<SegmentKey, SqlDataSegment> segments, ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
+        return new SqlSubjectData(getReference(), segments, Util.appendImmutable(this.updatesToPerform.get(), updateFunc));
     }
 
-    protected final SqlSubjectData newWithUpdated(Set<Entry<String, String>> key, SqlDataSegment val) {
+    @Override
+    protected final SqlSubjectData newWithUpdated(SegmentKey oldKey, SqlDataSegment newVal) {
         ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc;
-        if (val.isEmpty()) { // then remove segment
-            if (val.isUnallocated()) {
+        if (newVal == null || newVal.isEmpty()) { // then remove segment
+            /*if (newVal != null && newVal.isUnallocated()) */{
                 updateFunc = (dao, data) -> {};
-            } else {
-                updateFunc = (dao, data) -> dao.removeSegment(val);
+            /*} else {
+                updateFunc = (dao, data) -> dao.removeSegment(oldKey);*/
             }
-        } else if (val.isUnallocated()) { // create new segment
+        } else if (newVal.isUnallocated()) { // create new segment
             updateFunc = (dao, data) -> {
-                SqlDataSegment seg = data.segments.get(key);
+                SqlDataSegment seg = data.segments.get(newVal.getKey());
                 if (seg != null) {
                     if (seg.isUnallocated()) {
                         seg.popUpdates();
-                        dao.updateFullSegment(data.subject, seg);
+                        dao.updateFullSegment(data.getReference(), seg);
                     } else {
                         seg.doUpdates(dao);
                     }
@@ -79,58 +81,16 @@ class SqlSubjectData implements ImmutableSubjectData {
             };
         } else { // just run updates
             updateFunc = (dao, data) -> {
-                val.doUpdates(dao);
+                newVal.doUpdates(dao);
             };
         }
-        return newWithUpdate(Util.updateImmutable(segments, immutSet(key), val), updateFunc);
-    }
-
-    private SqlDataSegment getSegmentOrNew(Set<Entry<String, String>> segments) {
-        SqlDataSegment res = this.segments.get(segments);
-        if (res == null) {
-            res = SqlDataSegment.unallocated();
-        }
-        return res;
-    }
-
-    private <E> ImmutableSet<E> immutSet(Set<E> set) {
-        return ImmutableSet.copyOf(set);
+        return newWithUpdate(Util.updateImmutable(segments, oldKey, newVal == null ? null : newVal.getKey(), newVal), updateFunc);
     }
 
     @Override
-    public WeightedImmutableSet<DataSegment> getAllSegments() {
-        return null;
-    }
-
-    @Override
-    public WeightedImmutableSet<DataSegment> getAllSegments(Set<Entry<String, String>> contexts, boolean inheritable) {
-        return null;
-    }
-
-    @Override
-    public DataSegment getSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable) {
-        return null;
-    }
-
-    @Override
-    public SqlSubjectData updateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
-        return null;
-    }
-
-    @Override
-    public SqlSubjectData clearOptions() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        Map<Set<Entry<String, String>>, SqlDataSegment> newValue = Maps.transformValues(this.segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.withoutOptions());
-        return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    private ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> createBulkUpdateFunc(Collection<Set<Entry<String, String>>> keys) {
-        return (dao, data) -> {
-            for (Set<Entry<String, String>> key : keys) {
+    protected AbstractSubjectData<SqlSubjectRef, SqlDataSegment> newData(Map<SegmentKey, SqlDataSegment> segments) {
+        return newWithUpdate(segments, (dao, data) -> {
+            for (SegmentKey key : segments.keySet()) {
                 SqlDataSegment seg = data.segments.get(key);
                 if (seg != null) {
                     if (seg.isEmpty()) {
@@ -140,34 +100,7 @@ class SqlSubjectData implements ImmutableSubjectData {
                     }
                 }
             }
-        };
-    }
-
-    @Override
-    public ImmutableSubjectData clearPermissions() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        Map<Set<Entry<String, String>>, SqlDataSegment> newValue = Maps.transformValues(this.segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.withoutPermissions());
-        return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    @Override
-    public ImmutableSubjectData clearParents() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        Map<Set<Entry<String, String>>, SqlDataSegment> newValue = Maps.transformValues(this.segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.withoutParents());
-        return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    @Override
-    public ImmutableSubjectData clearDefaultValues() {
-        return null;
+        });
     }
 
     public void doUpdates(SqlDao dao) throws SQLException {

@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.util.command;
 
 import com.google.common.base.Strings;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Translatable;
 
 import java.util.Collections;
@@ -41,7 +42,7 @@ class TestCommander implements Commander<String> {
     }
 
     @Override
-    public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
+    public Optional<SubjectRef> getSubjectIdentifier() {
         return Optional.empty();
     }
 

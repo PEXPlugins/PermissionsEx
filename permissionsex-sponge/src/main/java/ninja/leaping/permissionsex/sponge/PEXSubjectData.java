@@ -31,6 +31,7 @@ import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.util.Tristate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
@@ -95,8 +98,24 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<Set<Context>, Map<String, String>> getAllOptions() {
-        return tKeys(this.data.get().getAllOptions());
+        return getAllInternal(DataSegment::getOptions, (a, b) -> {
+            Map<String, String> ret = new HashMap<>(a);
+            ret.putAll(b);
+            return ret;
+        });
     }
+
+    protected <T> Map<Set<Context>, T> getAllInternal(Function<DataSegment, T> mapper, BinaryOperator<T> join) {
+        Map<Set<Context>, T> ret = new HashMap<>();
+        ret.put(ent.getKey().stream()
+                .map(ctx -> ctx instanceof Context ? (Context) ctx : new Context(ctx.getKey(), ctx.getValue()))
+                .collect(GuavaCollectors.toImmutableSet()), ent.getValue());
+
+        data.get().getAllSegments().stream().map(seg -> seg.getKey().getContexts()).distinct().forEach(this::getParentsInternal);
+
+    }
+
+
 
     @Override
     public Map<String, String> getOptions(Set<Context> contexts) {
@@ -120,8 +139,11 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-        return Maps.transformValues(tKeys(data.get().getAllPermissions()),
-                map -> Maps.transformValues(map, i -> i == Tristate.TRUE));
+        return getAllInternal(seg -> Maps.transformValues(seg.getPermissions(), val -> val == ninja.leaping.permissionsex.util.Tristate.TRUE), (a, b) -> {
+            Map<String, Boolean> ret = new HashMap<>(a);
+            ret.putAll(b);
+            return ret;
+        });
     }
 
     @Override
@@ -162,7 +184,7 @@ class PEXSubjectData implements SubjectData {
     @Override
     public Map<Set<Context>, List<Subject>> getAllParents() {
         synchronized (parentsCache) {
-            data.get().getAllSegments().stream().map(DataSegment::getContexts).distinct().forEach(this::getParentsInternal);
+            data.get().getAllSegments().stream().map(seg -> seg.getKey().getContexts()).distinct().forEach(this::getParentsInternal);
             return tKeys(parentsCache);
         }
     }
@@ -198,6 +220,7 @@ class PEXSubjectData implements SubjectData {
         if (subject instanceof PEXSubject) {
             return ((PEXSubject) subject).getRef();
         }
+        return SubjectRef.of(subject.getContainingCollection().getIdentifier(), subject.getIdentifier());
     }
 
     @Override

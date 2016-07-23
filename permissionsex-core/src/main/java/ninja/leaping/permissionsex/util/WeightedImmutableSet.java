@@ -1,3 +1,19 @@
+/**
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ninja.leaping.permissionsex.util;
 
 import com.google.common.collect.ImmutableList;
@@ -7,6 +23,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableListIterator;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -16,7 +33,6 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,9 +42,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * An object's weight is assumed to be constant, and any changing of the weight will result in undefined behavior.
  */
 public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
-    private final E[] elements;
+    private final Object[] elements;
 
-    WeightedImmutableSet(E... elements) {
+    private WeightedImmutableSet(Object... elements) {
         this.elements = elements;
     }
 
@@ -119,19 +135,20 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
         return new WeightedImmutableSet<>(element);
     }
 
+    @SuppressWarnings("unchecked")
     public static <E extends Weighted> WeightedImmutableSet<E> of(E... elements) {
         if (elements.length == 0) {
             return of();
         }
 
-        E[] newArr = Arrays.copyOf(elements, elements.length);
-        Arrays.sort(newArr, Weighted.COMPARATOR);
+        Object[] newArr = Arrays.copyOf(elements, elements.length, Object[].class);
+        Arrays.sort(newArr, (Comparator) Weighted.COMPARATOR);
         return new WeightedImmutableSet<>(newArr);
     }
 
     @SuppressWarnings("unchecked")
     public static <E extends Weighted> WeightedImmutableSet<E> ofStream(Stream<E> stream) {
-        return new WeightedImmutableSet<E>((E[]) stream.sorted(Weighted.COMPARATOR).toArray());
+        return new WeightedImmutableSet<E>(stream.sorted(Weighted.COMPARATOR).toArray());
     }
 
     public boolean isEmpty() {
@@ -143,44 +160,46 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
         if (idx == -1) {
             return null;
         }
-        return this.elements[weight];
+        return getElement(idx);
     }
 
     @SuppressWarnings("unchecked")
-    private <A> A[] newArr(int length) {
-        return (A[]) new Object[length];
+    private E getElement(int index) {
+        return (E) this.elements[index];
     }
 
     private int indexOf(int weight) {
         if (this.elements.length == 0) {
             return -1;
         }
-        if (weight < this.elements[0].getWeight() || weight > this.elements[this.elements.length - 1].getWeight()) {
+        if (weight < getElement(0).getWeight() || weight > getElement(this.elements.length - 1).getWeight()) {
             return -1;
         }
 
-        int min = 0, max = this.elements.length - 1, mid = (max - min) / 2;
+        int min = 0, max = this.elements.length - 1, mid;
         do {
-            int midWeight = elements[mid].getWeight();
+            mid = Math.floorDiv((max + min), 2);
+            int midWeight = getElement(mid).getWeight();
             if (midWeight == weight) {
                 return mid;
             } else if (midWeight > weight) { // We're in the bottom half
-                max = mid + 1;
+                max = mid;
             } else { // The element is located in the top half
-                min = mid - 1;
+                min = mid + 1;
             }
         } while (min != max);
         return -1;
     }
 
+    @SuppressWarnings("unchecked")
     public WeightedImmutableSet<E> with(E element) {
         checkNotNull(element, "element");
         int weightIndex = indexOf(element.getWeight());
-        E[] newArr;
-        if (weightIndex != -1) {
+        Object[] newArr;
+        if (weightIndex == -1) {
             newArr = Arrays.copyOf(elements, elements.length + 1);
             newArr[newArr.length - 1] = element;
-            Arrays.sort(newArr, Weighted.COMPARATOR);
+            Arrays.sort(newArr, (Comparator) Weighted.COMPARATOR);
         } else {
             newArr = Arrays.copyOf(elements, elements.length);
             newArr[weightIndex] = element;
@@ -189,10 +208,12 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
     }
 
     public WeightedImmutableSet<E> withAll(WeightedImmutableSet<E> elements) {
-        checkNotNull(elements, "elements"); // TODO: How do we get rid of duplicate elements
-        E[] newArr = newArr(this.elements.length + elements.elements.length);
+        checkNotNull(elements, "elements");
+        Object[] newArr = ImmutableSet.builder().addAll(elements).addAll(this).build().toArray();
+        /*Object[] newArr = new Object[this.elements.length + elements.elements.length];
         System.arraycopy(this.elements, 0, newArr, 0, this.elements.length);
-        System.arraycopy(elements.elements, 0, newArr, this.elements.length, elements.elements.length);
+        System.arraycopy(elements.elements, 0, newArr, this.elements.length, elements.elements.length);*/
+        Arrays.sort(newArr, (Comparator) Weighted.COMPARATOR);
         return new WeightedImmutableSet<>(newArr);
     }
 
@@ -209,31 +230,34 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
             return of();
         }
 
-        E[] newArr = newArr(this.elements.length - 1);
+        Object[] newArr = new Object[this.elements.length - 1];
         System.arraycopy(this.elements, 0, newArr, 0, weightIdx);
         System.arraycopy(this.elements, weightIdx + 1, newArr, weightIdx, this.elements.length - weightIdx);
         return new WeightedImmutableSet<>(newArr);
     }
 
     public <N extends E> WeightedImmutableSet<N> map(Function<E, N> func) {
-        N[] newArr = newArr(this.elements.length);
+        Object[] newArr = new Object[this.elements.length];
         for (int i = 0; i < newArr.length; ++i) {
-            newArr[i] = func.apply(this.elements[i]);
+            newArr[i] = func.apply(getElement(i));
         }
         return new WeightedImmutableSet<>(newArr);
     }
 
+    @SuppressWarnings("unchecked")
     public List<E> asList() {
-        return ImmutableList.copyOf(this.elements);
+        return (List) ImmutableList.copyOf(this.elements);
     }
 
+    @SuppressWarnings("unchecked")
     public Set<E> asSet() {
-        return ImmutableSet.copyOf(this.elements);
+        return (Set) ImmutableSet.copyOf(this.elements);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Iterator<E> iterator() {
-        return Iterators.forArray(this.elements);
+        return (Iterator) Iterators.forArray(this.elements);
     }
 
     public Iterable<E> reverse() {
@@ -253,12 +277,12 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
             if (currentIndex + mod < 0 || currentIndex + mod >= elements.length) {
                 throw new NoSuchElementException();
             }
-            return elements.length - (currentIndex += mod);
+            return elements.length - 1 - (currentIndex += mod);
         }
 
         @Override
         public E previous() {
-            return elements[getRelative(-1)];
+            return getElement(getRelative(-1));
         }
 
         @Override
@@ -278,18 +302,20 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
 
         @Override
         public E next() {
-            return elements[getRelative(1)];
+            return getElement(getRelative(1));
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Stream<E> stream() {
-        return Stream.of(elements);
+        return (Stream) Stream.of(elements);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void forEach(Consumer<? super E> action) {
-        for (E el : elements) {
-            action.accept(el);
+        for (Object el : elements) {
+            action.accept((E) el);
         }
     }
 
@@ -314,7 +340,7 @@ public class WeightedImmutableSet<E extends Weighted> implements Iterable<E> {
     @Override
     public String toString() {
         return com.google.common.base.Objects.toStringHelper(this)
-                .add("elements", elements)
+                .add("elements", Arrays.toString(elements))
                 .toString();
     }
 }

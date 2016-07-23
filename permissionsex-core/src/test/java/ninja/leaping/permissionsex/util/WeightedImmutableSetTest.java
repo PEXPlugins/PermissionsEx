@@ -1,3 +1,19 @@
+/**
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ninja.leaping.permissionsex.util;
 
 import org.junit.Test;
@@ -35,6 +51,11 @@ public class WeightedImmutableSetTest {
         public int hashCode() {
             return Objects.hash(weight);
         }
+
+        @Override
+        public String toString() {
+            return "@" + this.weight;
+        }
     }
 
     @Test
@@ -62,9 +83,10 @@ public class WeightedImmutableSetTest {
 
     @Test
     public void testGet() {
-        TestWeight get = new TestWeight(15);
-        WeightedImmutableSet<TestWeight> subject = WeightedImmutableSet.of(new TestWeight(5), new TestWeight(80), new TestWeight(34), new TestWeight(40), get);
-        assertEquals(get, subject.get(15));
+        TestWeight get15 = new TestWeight(15), get40 = new TestWeight(40);
+        WeightedImmutableSet<TestWeight> subject = WeightedImmutableSet.of(new TestWeight(5), new TestWeight(80), new TestWeight(34), get40, get15);
+        assertEquals(get15, subject.get(15));
+        assertEquals(get40, subject.get(40));
 
         assertEquals(null, subject.get(6));
         assertEquals(null, subject.get(-1));
@@ -73,7 +95,7 @@ public class WeightedImmutableSetTest {
     @Test
     public void testMap() {
         WeightedImmutableSet<TestWeight> subject = WeightedImmutableSet.of(new TestWeight(5), new TestWeight(80), new TestWeight(34)),
-        expected = WeightedImmutableSet.of(new TestWeight(6), new TestWeight(81), new TestWeight(34));
+        expected = WeightedImmutableSet.of(new TestWeight(6), new TestWeight(81), new TestWeight(35));
 
         WeightedImmutableSet<TestWeight> newSet = subject.map(w -> new TestWeight(w.getWeight() + 1));
         assertEquals(expected, newSet);

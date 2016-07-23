@@ -1,11 +1,27 @@
+/**
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ninja.leaping.permissionsex.backend.memory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.permissionsex.data.DataSegment;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Tristate;
 
@@ -14,8 +30,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static ninja.leaping.permissionsex.util.Util.updateImmutable;
 
 /**
@@ -23,9 +39,7 @@ import static ninja.leaping.permissionsex.util.Util.updateImmutable;
  */
 @ConfigSerializable
 public class MemorySegment implements DataSegment {
-    @Setting("contexts")
-    private Map<String, String> rawContexts;
-    private Set<Map.Entry<String, String>> contexts;
+    private final SegmentKey key;
     @Nullable
     @Setting
     private Map<String, Tristate> permissions;
@@ -38,76 +52,36 @@ public class MemorySegment implements DataSegment {
     @Nullable
     @Setting("permissions-default")
     private Tristate defaultValue;
-    @Nullable
-    @Setting
-    private Boolean inheritable;
-    @Nullable
-    @Setting
-    private Integer weight;
 
-    private MemorySegment(Set<Map.Entry<String, String>> contexts, @Nullable Integer weight, @Nullable Boolean inheritable, @Nullable Map<String, Tristate> permissions, @Nullable Map<String, String> options, @Nullable List<SubjectRef> parents, @Nullable Tristate defaultValue) {
-        this.contexts = ImmutableSet.copyOf(contexts);
-        this.weight = weight;
-        this.inheritable = inheritable;
+    private MemorySegment(SegmentKey key, @Nullable Map<String, Tristate> permissions, @Nullable Map<String, String> options, @Nullable List<SubjectRef> parents, @Nullable Tristate defaultValue) {
+        this.key = key;
         this.permissions = permissions;
         this.options = options;
         this.parents = parents;
         this.defaultValue = defaultValue;
     }
 
-    private MemorySegment() { // Objectmapper constructor
-    }
-
     static MemorySegment fromSegment(DataSegment seg) {
         if (seg instanceof MemorySegment) {
             return (MemorySegment) seg;
         } else {
-            return new MemorySegment(seg.getContexts(), seg.getWeight() == DataSegment.DEFAULT_WEIGHT ? null : seg.getWeight(), seg.isInheritable() == DataSegment.DEFAULT_INHERITABILITY ? null : seg.isInheritable(),
+            return new MemorySegment(seg.getKey(),
                     seg.getPermissions(), seg.getOptions(), seg.getParents(), seg.getPermissionDefault());
         }
     }
 
-    MemorySegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable) {
-        this.contexts = ImmutableSet.copyOf(contexts);
-        this.weight = weight == 0 ? null : weight;
-        this.inheritable = inheritable ? null : false;
+    public MemorySegment(SegmentKey key) {
+        this.key = key;
     }
 
     @Override
-    public Set<Map.Entry<String, String>> getContexts() {
-        if (this.contexts == null && this.rawContexts != null) {
-            this.contexts = ImmutableSet.copyOf(this.rawContexts.entrySet());
-        } else if (this.contexts == null) {
-            this.contexts = ImmutableSet.of();
-        }
-        return this.contexts;
+    public SegmentKey getKey() {
+        return this.key;
     }
 
     @Override
-    public DataSegment withContexts(Set<Map.Entry<String, String>> contexts) {
-        return null;
-    }
-
-    @Override
-    public int getWeight() {
-        return this.weight == null ? DataSegment.DEFAULT_WEIGHT : this.weight;
-    }
-
-    @Override
-    public DataSegment withWeight(int weight) {
-        return new MemorySegment(contexts, weight == DataSegment.DEFAULT_WEIGHT ? null : weight, inheritable,
-                permissions, options, parents, defaultValue);
-    }
-
-    @Override
-    public boolean isInheritable() {
-        return this.inheritable == null ? DataSegment.DEFAULT_INHERITABILITY : this.inheritable;
-    }
-
-    @Override
-    public DataSegment withInheritability(boolean inheritable) {
-        return new MemorySegment(contexts, weight, inheritable == DataSegment.DEFAULT_INHERITABILITY ? null : inheritable,
-                permissions, options, parents, defaultValue);
+    public MemorySegment withKey(SegmentKey key) {
+        return new MemorySegment(checkNotNull(key, "key"), permissions, options, parents, defaultValue);
     }
 
     @Override
@@ -127,74 +101,66 @@ public class MemorySegment implements DataSegment {
 
     @Override
     public Tristate getPermissionDefault() {
-        return this.defaultValue;
+        return this.defaultValue == null ? Tristate.UNDEFINED : this.defaultValue;
     }
 
     @Override
     public MemorySegment withOption(String key, String value) {
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, updateImmutable(options, key, value), parents, defaultValue);
+        return new MemorySegment(this.key, permissions, updateImmutable(options, checkNotNull(key, "key"), value), parents, defaultValue);
     }
 
     @Override
     public MemorySegment withoutOption(String key) {
+        checkNotNull(key, "key");
         if (options == null || !options.containsKey(key)) {
             return this;
         }
 
         Map<String, String> newOptions = new HashMap<>(options);
         newOptions.remove(key);
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, newOptions, parents, defaultValue);
-
+        return new MemorySegment(this.key, permissions, newOptions, parents, defaultValue);
     }
 
     @Override
     public MemorySegment withOptions(Map<String, String> values) {
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, values == null ? null : ImmutableMap.copyOf(values), parents, defaultValue);
+        return new MemorySegment(this.key, permissions, values == null ? null : ImmutableMap.copyOf(values), parents, defaultValue);
     }
 
     @Override
     public MemorySegment withoutOptions() {
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, null, parents, defaultValue);
+        return new MemorySegment(this.key, permissions, null, parents, defaultValue);
     }
 
     @Override
     public MemorySegment withPermission(String permission, Tristate value) {
-        return new MemorySegment(contexts, weight, inheritable,
-                updateImmutable(permissions, permission, value), options, parents, defaultValue);
+        return new MemorySegment(this.key, updateImmutable(permissions, checkNotNull(permission, "permission"), value), options, parents, defaultValue);
     }
 
     @Override
     public MemorySegment withoutPermission(String permission) {
+        checkNotNull(permission, "permission");
         if (permissions == null || !permissions.containsKey(permission)) {
             return this;
         }
 
         Map<String, Tristate> newPermissions = new HashMap<>(permissions);
         newPermissions.remove(permission);
-        return new MemorySegment(contexts, weight, inheritable,
-                newPermissions, options, parents, defaultValue);
+        return new MemorySegment(this.key, newPermissions, options, parents, defaultValue);
     }
 
     @Override
     public MemorySegment withPermissions(Map<String, Tristate> values) {
-        return new MemorySegment(contexts, weight, inheritable,
-                ImmutableMap.copyOf(values), options, parents, defaultValue);
+        return new MemorySegment(this.key, ImmutableMap.copyOf(values), options, parents, defaultValue);
     }
 
     @Override
     public MemorySegment withoutPermissions() {
-        return new MemorySegment(contexts, weight, inheritable,
-                null, options, parents, defaultValue);
+        return new MemorySegment(this.key, null, options, parents, defaultValue);
     }
 
     @Override
     public MemorySegment withDefaultValue(Tristate defaultValue) {
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, options, parents, defaultValue);
+        return new MemorySegment(this.key, permissions, options, parents, defaultValue);
     }
 
     @Override
@@ -204,8 +170,7 @@ public class MemorySegment implements DataSegment {
         if (this.parents != null) {
             parents.addAll(this.parents);
         }
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, options, parents.build(), defaultValue);
+        return new MemorySegment(this.key, permissions, options, parents.build(), defaultValue);
     }
 
     @Override
@@ -216,20 +181,17 @@ public class MemorySegment implements DataSegment {
 
         final List<SubjectRef> newParents = new ArrayList<>(parents);
         newParents.remove(parent);
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, options, newParents, defaultValue);
+        return new MemorySegment(this.key, permissions, options, newParents, defaultValue);
     }
 
     @Override
     public MemorySegment withParents(List<SubjectRef> parents) {
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, options, parents == null ? null : ImmutableList.copyOf(parents), defaultValue);
+        return new MemorySegment(this.key, permissions, options, parents == null ? null : ImmutableList.copyOf(parents), defaultValue);
     }
 
     @Override
     public MemorySegment withoutParents() {
-        return new MemorySegment(contexts, weight, inheritable,
-                permissions, options, null, defaultValue);
+        return new MemorySegment(this.key, permissions, options, null, defaultValue);
     }
 
     @Override

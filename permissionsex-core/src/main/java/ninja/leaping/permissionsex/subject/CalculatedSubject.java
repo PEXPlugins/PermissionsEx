@@ -26,6 +26,7 @@ import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.NodeTree;
+import ninja.leaping.permissionsex.util.Tristate;
 
 import java.util.List;
 import java.util.Map;
@@ -92,10 +93,16 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         return data.synchronous().asMap().keySet();
     }
 
-    public int getPermission(Set<Entry<String, String>> contexts, String permission) {
+    public Tristate getPermission(Set<Entry<String, String>> contexts, String permission) {
         int ret = getPermissions(contexts).get(Preconditions.checkNotNull(permission, "permission"));
         getManager().getNotifier().onPermissionCheck(getIdentifier(), contexts, permission, ret);
-        return ret;
+        if (ret > 0) {
+            return Tristate.TRUE;
+        } else if (ret < 0) {
+            return Tristate.FALSE;
+        } else {
+            return Tristate.UNDEFINED;
+        }
     }
 
     public Optional<String> getOption(Set<Entry<String, String>> contexts, String option) {

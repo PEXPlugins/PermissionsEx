@@ -27,9 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_CONTEXTS;
-import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_INHERITABILITY;
-import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_WEIGHT;
+import static ninja.leaping.permissionsex.data.SegmentKey.DEFAULT_CONTEXTS;
+import static ninja.leaping.permissionsex.data.SegmentKey.DEFAULT_INHERITABILITY;
+import static ninja.leaping.permissionsex.data.SegmentKey.DEFAULT_WEIGHT;
 
 public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     private final SubjectRef identifier;
@@ -78,12 +78,14 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     /**
      * Update data for a specific segment. If a segment does not exist with these parameters, a new segment will be created.
      *
-     * @param contexts The contexts for the segment
-     * @param weight The segment's weight
-     * @param inheritable Whether or not the segment is inheritable
+     * @param key The paramaters for the segment to update
      * @param updateFunc The function to update the segment
      * @return A future that will complete with the old and new segment datas.
      */
+    public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(SegmentKey key, Function<DataSegment, DataSegment> updateFunc) {
+        return update(data -> data.updateSegment(key, updateFunc));
+    }
+
     public CompletableFuture<Change<ImmutableSubjectData>> updateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc){
         return update(data -> data.updateSegment(contexts, weight, inheritable, updateFunc));
     }

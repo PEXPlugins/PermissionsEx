@@ -16,11 +16,9 @@
  */
 package ninja.leaping.permissionsex.backend;
 
+import ninja.leaping.permissionsex.data.DataSegment;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,17 +41,8 @@ public class ConversionUtils {
     @SuppressWarnings("unchecked")
     public static <T extends ImmutableSubjectData> T transfer(ImmutableSubjectData old, T newData) {
         ImmutableSubjectData tempRet = newData;
-        for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, Integer>> ent : old.getAllPermissions().entrySet()) {
-            tempRet = tempRet.setPermissions(ent.getKey(), ent.getValue());
-        }
-        for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, String>> ent : old.getAllOptions().entrySet()) {
-            tempRet = tempRet.setOptions(ent.getKey(), ent.getValue());
-        }
-        for (Map.Entry<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> ent : old.getAllParents().entrySet()) {
-            tempRet = tempRet.setParents(ent.getKey(), ent.getValue());
-        }
-        for (Map.Entry<Set<Map.Entry<String, String>>, Integer> ent : old.getAllDefaultValues().entrySet()) {
-            tempRet = tempRet.setDefaultValue(ent.getKey(), ent.getValue());
+        for (DataSegment seg : old.getAllSegments()) {
+            tempRet = newData.withSegment(seg);
         }
         return (T) tempRet;
     }

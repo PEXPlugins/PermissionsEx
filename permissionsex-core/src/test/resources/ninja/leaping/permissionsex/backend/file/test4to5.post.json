@@ -11,9 +11,9 @@
           "contexts": {
             "world": "DIM-1"
           },
-          "inheritable": false,
           "permissions": {
-            "non.inheritable": "TRUE"
+            "another.perm": "TRUE",
+            "another.perm.cooler": "FALSE"
           }
         },
         {
@@ -39,9 +39,9 @@
           "contexts": {
             "world": "DIM-1"
           },
+          "inheritable": false,
           "permissions": {
-            "another.perm": "TRUE",
-            "another.perm.cooler": "FALSE"
+            "non.inheritable": "TRUE"
           }
         }
       ],

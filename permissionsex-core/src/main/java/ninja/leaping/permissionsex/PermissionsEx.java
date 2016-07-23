@@ -158,7 +158,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                             }
                             return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
                                     .thenCompose(oldData -> {
-                                        return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
+                                        return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.updateSegment(GLOBAL_CONTEXT, seg -> seg.withOption("name", profile.getName())))
                                                 .thenAccept(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)
                                                         .exceptionally(t -> {
                                                             t.printStackTrace();
@@ -227,7 +227,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
         return state.activeDataStore.performBulkOperation(store -> {
             CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(),
-                    input -> store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue())), CompletableFuture.class))
+                    input -> store.setData(input.getKey().getType(), input.getKey().getIdentifier(), input.getValue())), CompletableFuture.class))
                     .thenCombine(expected.getContextInheritance(null).thenCompose(store::setContextInheritance), (v, a) -> null);
             for (String ladder : store.getAllRankLadders()) {
                 ret = ret.thenCombine(expected.getRankLadder(ladder, null).thenCompose(ladderObj -> store.setRankLadder(ladder, ladderObj)), (v, a) -> null);

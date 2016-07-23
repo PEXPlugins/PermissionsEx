@@ -44,7 +44,7 @@ public class ParentCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectRef parent = args.getOne("parent");
                         updateDataSegment(src, args, "permissionsex.parent.add", seg -> seg.withAddedParent(parent),
-                                (subj, contexts) -> t("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
+                                (subj, segKey) -> t("Added parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, segKey.getContexts())));
                     }
                 })
                 .build();
@@ -59,7 +59,7 @@ public class ParentCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectRef parent = args.getOne("parent");
                         updateDataSegment(src, args, "permissionsex.parent.remove", seg -> seg.withRemovedParent(parent),
-                                (subj, contexts) -> t("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
+                                (subj, segKey) -> t("Removed parent %s for %s in %s context", src.fmt().subject(parent), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, segKey.getContexts())));
                     }
                 })
                 .build();
@@ -74,7 +74,7 @@ public class ParentCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectRef parent = args.getOne("parent");
                         updateDataSegment(src, args, "permissionsex.parent.set", seg -> seg.withoutParents().withAddedParent(parent),
-                                (subj, contexts) -> t("Set parent for %s to %s in %s context", src.fmt().hl(src.fmt().subject(subj)), src.fmt().subject(parent), formatContexts(src, contexts)));
+                                (subj, segKey) -> t("Set parent for %s to %s in %s context", src.fmt().hl(src.fmt().subject(subj)), src.fmt().subject(parent), formatContexts(src, segKey.getContexts())));
                     }
                 })
                 .build();

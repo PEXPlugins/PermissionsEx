@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.backend.sql.dao.LegacyDao;
 import ninja.leaping.permissionsex.backend.sql.dao.LegacyMigration;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.ThrowingSupplier;
 import ninja.leaping.permissionsex.util.Tristate;
@@ -129,7 +130,7 @@ public abstract class SqlDao implements AutoCloseable {
     }
 
     protected String getInsertSegmentQuery() {
-        return "INSERT INTO {}segments (subject, perm_default) VALUES (?, ?)";
+        return "INSERT INTO {}segments (subject, perm_default, weight, inheritable) VALUES (?, ?, ?, ?)";
     }
 
     protected String getDeleteSegmentIdQuery() {
@@ -253,10 +254,6 @@ public abstract class SqlDao implements AutoCloseable {
     }
 
     // -- Operations
-
-    public LegacyDao legacy() {
-        return LegacyDao.INSTANCE;
-    }
 
     public Optional<String> getGlobalParameter(String key) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectGlobalParameterQuery())) {
@@ -389,6 +386,7 @@ public abstract class SqlDao implements AutoCloseable {
                 boolean inheritable = rs.getBoolean(4);
 
                 Set<Entry<String, String>> contexts = getSegmentContexts(id);
+                SegmentKey key = SegmentKey.of(contexts, weight, inheritable);
 
                 ImmutableMap.Builder<String, Tristate> permValues = ImmutableMap.builder();
                 ImmutableMap.Builder<String, String> optionValues = ImmutableMap.builder();
@@ -421,7 +419,7 @@ public abstract class SqlDao implements AutoCloseable {
                     }
                 }
 
-                result.add(new SqlDataSegment(id, contexts, weight, inheritable, permValues.build(), optionValues.build(), inheritanceValues.build(), permDef, null));
+                result.add(new SqlDataSegment(id, key, permValues.build(), optionValues.build(), inheritanceValues.build(), permDef, null));
 
             }
         }
@@ -437,8 +435,7 @@ public abstract class SqlDao implements AutoCloseable {
     public void updateFullSegment(SqlSubjectRef ref, SqlDataSegment segment) throws SQLException {
         executeInTransaction(() -> {
             allocateSegment(ref, segment);
-            setContexts(segment, segment.getContexts());
-            updateMetadata(segment);
+            updateMetadata(segment, segment.getKey());
             setOptions(segment, segment.getOptions());
             setParents(segment, segment.getSqlParents());
             setPermissions(segment, segment.getPermissions());
@@ -446,14 +443,18 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public void updateMetadata(SqlDataSegment segment) throws SQLException {
-        try (PreparedStatement stmt = prepareStatement(getUpdateSegmentMetaQuery())) {
-            tristateParam(stmt, 1, segment.getPermissionDefault());
-            stmt.setInt(2, segment.getWeight());
-            stmt.setBoolean(3, segment.isInheritable());
-            stmt.setInt(4, segment.getId());
-            stmt.executeUpdate();
-        }
+    public void updateMetadata(SqlDataSegment segment, SegmentKey key) throws SQLException {
+        executeInTransaction(() -> {
+            try (PreparedStatement stmt = prepareStatement(getUpdateSegmentMetaQuery())) {
+                tristateParam(stmt, 1, segment.getPermissionDefault());
+                stmt.setInt(2, key.getWeight());
+                stmt.setBoolean(3, key.isInheritable());
+                stmt.setInt(4, segment.getId());
+                stmt.executeUpdate();
+            }
+            setContexts(segment, key.getContexts());
+            return null;
+        });
     }
 
     public void setContexts(SqlDataSegment seg, Set<Entry<String, String>> contexts) throws SQLException {
@@ -490,13 +491,16 @@ public abstract class SqlDao implements AutoCloseable {
             } else {
                 stmt.setInt(2, val.getPermissionDefault().ordinal());
             }
+            stmt.setInt(3, val.getKey().getWeight());
+            stmt.setBoolean(4, val.getKey().isInheritable());
 
             stmt.executeUpdate();
             ResultSet res = stmt.getGeneratedKeys();
             res.next();
             val.setId(res.getInt(1));
         }
-        setContexts(val, val.getContexts());
+
+        setContexts(val, val.getKey().getContexts());
     }
 
     public boolean removeSegment(SqlDataSegment segment) throws SQLException {
@@ -839,6 +843,34 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
+    protected boolean hasLegacyTable(String table) throws SQLException {
+        return getConnection().getMetaData().getTables(null, null, getDataStore().getTableName(table, true).toUpperCase(), null).next(); // Upper-case for H2
+    }
+
+    protected String getLegacySelectOptionQuery() {
+        return "SELECT `value` FROM `{permissions}` WHERE `name` = ? AND `type` = ? AND `permission` = ? AND `world` = ? AND LENGTH(`value`) > 0";
+    }
+
+    String getLegacyOption(String name, LegacyMigration.Type type, String world, String option) throws SQLException {
+        try (PreparedStatement stmt = prepareStatement(getLegacySelectOptionQuery())) {
+            stmt.setString(1, name);
+            stmt.setInt(2, type.ordinal());
+            stmt.setString(3, option);
+            if (world == null) {
+                stmt.setNull(4, Types.VARCHAR);
+            } else {
+                stmt.setString(4, world);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            } else {
+                return null;
+            }
+        }
+    }
+
     /**
      * Get the schema version. Has to include backwards compatibility to correctly handle pre-2.x schema updates.
      *
@@ -848,8 +880,8 @@ public abstract class SqlDao implements AutoCloseable {
     public int getSchemaVersion() throws SQLException {
         if (hasTable("global")) { // Current
             return getGlobalParameter(SqlConstants.OPTION_SCHEMA_VERSION).map(Integer::valueOf).orElse(SqlConstants.VERSION_PRE_VERSIONING);
-        } else if (legacy().hasTable(this, "permissions")) { // Legacy option
-            String ret = legacy().getOption(this, "system", LegacyMigration.Type.WORLD, null, "schema-version");
+        } else if (hasLegacyTable("permissions")) { // Legacy option
+            String ret = getLegacyOption("system", LegacyMigration.Type.WORLD, null, "schema-version");
             return ret == null ? SqlConstants.VERSION_PRE_VERSIONING : Integer.valueOf(ret);
         } else {
             return SqlConstants.VERSION_NOT_INITIALIZED;

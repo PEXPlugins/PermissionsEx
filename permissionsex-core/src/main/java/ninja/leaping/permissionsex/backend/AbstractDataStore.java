@@ -31,6 +31,7 @@ import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.ThrowingSupplier;
+import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.Util;
 
 import java.util.Map;
@@ -116,7 +117,7 @@ public abstract class AbstractDataStore implements DataStore {
      */
     protected final void applyDefaultData() {
         getData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, null)
-                .thenApply(data -> data.setDefaultValue(ImmutableSet.of(Maps.immutableEntry("localip", "127.0.0.1")), 1))
+                .thenApply(data -> data.updateSegment(ImmutableSet.of(Maps.immutableEntry("localip", "127.0.0.1")), seg -> seg.withDefaultValue(Tristate.TRUE)))
                 .thenCompose(data -> setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, data));
     }
 

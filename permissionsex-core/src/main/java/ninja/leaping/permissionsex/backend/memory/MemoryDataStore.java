@@ -19,12 +19,12 @@ package ninja.leaping.permissionsex.backend.memory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
@@ -46,7 +46,7 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Setting(comment = "Whether or not this data store will store subjects being set") private boolean track = true;
 
-    private final ConcurrentMap<Map.Entry<String, String>, ImmutableSubjectData> data = new ConcurrentHashMap<>();
+    private final ConcurrentMap<SubjectRef, ImmutableSubjectData> data = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
@@ -64,10 +64,10 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Override
     public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
-        final Map.Entry<String, String> key = Maps.immutableEntry(type, identifier);
+        final SubjectRef key = SubjectRef.of(type, identifier);
         ImmutableSubjectData ret = data.get(key);
         if (ret == null) {
-            ret = new MemorySubjectData();
+            ret = new MemorySubjectData(key);
             if (track) {
                 final ImmutableSubjectData existingData = data.putIfAbsent(key, ret);
                 if (existingData != null) {
@@ -81,7 +81,7 @@ public class MemoryDataStore extends AbstractDataStore {
     @Override
     public CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
         if (track) {
-            this.data.put(Maps.immutableEntry(type, identifier), data);
+            this.data.put(SubjectRef.of(type, identifier), data);
         }
 
         return completedFuture(data);
@@ -91,7 +91,7 @@ public class MemoryDataStore extends AbstractDataStore {
     protected CompletableFuture<RankLadder> getRankLadderInternal(String name) {
         RankLadder ladder = rankLadders.get(name.toLowerCase());
         if (ladder == null) {
-            ladder = new FixedRankLadder(name, ImmutableList.<Map.Entry<String, String>>of());
+            ladder = new FixedRankLadder(name, ImmutableList.of());
         }
         return completedFuture(ladder);
     }
@@ -104,24 +104,24 @@ public class MemoryDataStore extends AbstractDataStore {
 
     @Override
     public CompletableFuture<Boolean> isRegistered(String type, String identifier) {
-        return completedFuture(data.containsKey(Maps.immutableEntry(type, identifier)));
+        return completedFuture(data.containsKey(SubjectRef.of(type, identifier)));
     }
 
     @Override
     public Set<String> getAllIdentifiers(final String type) {
         return data.keySet().stream()
-                .filter(inp -> inp.getKey().equals(type))
-                .map(Map.Entry::getValue)
+                .filter(inp -> inp.getType().equals(type))
+                .map(SubjectRef::getIdentifier)
                 .collect(GuavaCollectors.toImmutableSet());
     }
 
     @Override
     public Set<String> getRegisteredTypes() {
-        return ImmutableSet.copyOf(Iterables.transform(data.keySet(), Map.Entry::getKey));
+        return ImmutableSet.copyOf(Iterables.transform(data.keySet(), SubjectRef::getType));
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
+    public Iterable<Map.Entry<SubjectRef, ImmutableSubjectData>> getAll() {
         return Iterables.unmodifiableIterable(data.entrySet());
     }
 

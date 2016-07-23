@@ -39,10 +39,10 @@ public class OptionCommands {
                         final String value = args.getOne("value");
                         if (value == null) {
                             updateDataSegment(src, args, "permissionsex.option.set", seg -> seg.withoutOption(key),
-                                    (subj, contexts) -> t("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
+                                    (subj, segKey) -> t("Unset option '%s' for %s in %s context", key, src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, segKey.getContexts())));
                         } else {
                             updateDataSegment(src, args, "permissionsex.option.set", seg -> seg.withOption(key, value),
-                                    (subj, contexts) -> t("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, contexts)));
+                                    (subj, segKey) -> t("Set option %s for %s in %s context", src.fmt().option(key, value), src.fmt().hl(src.fmt().subject(subj)), formatContexts(src, segKey.getContexts())));
                         }
                     }
                 })

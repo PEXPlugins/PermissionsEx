@@ -181,7 +181,8 @@ public final class FileDataStore extends AbstractDataStore {
     @Override
     public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         try {
-            return completedFuture(FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier)));
+            SubjectRef ref = SubjectRef.of(type, identifier);
+            return completedFuture(FileSubjectData.fromNode(ref, getSubjectsNode().getNode(type, identifier)));
         } catch (PermissionsLoadingException e) {
             return Util.failedFuture(e);
         } catch (ObjectMappingException e) {
@@ -200,10 +201,12 @@ public final class FileDataStore extends AbstractDataStore {
 
             final FileSubjectData fileData;
 
+            SubjectRef ref = SubjectRef.of(type, identifier);
+
             if (data instanceof FileSubjectData) {
                 fileData = (FileSubjectData) data;
             } else {
-                fileData = ConversionUtils.transfer(data, new FileSubjectData());
+                fileData = ConversionUtils.transfer(data, new FileSubjectData(ref));
             }
             fileData.serialize(getSubjectsNode().getNode(type, identifier));
             dirty.set(true);
@@ -235,7 +238,7 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
+    public Iterable<Map.Entry<SubjectRef, ImmutableSubjectData>> getAll() {
         /*return getSubjectsNode().getChildrenMap().keySet().stream()
                 .filter(i -> i != null)
                 .flatMap(type -> {
@@ -251,7 +254,7 @@ public final class FileDataStore extends AbstractDataStore {
                 }
                 final String typeStr = type.toString();
 
-                return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
+                return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(SubjectRef.of(type.toString(), input2.getKey()), input2.getValue()));
         }));
     }
 

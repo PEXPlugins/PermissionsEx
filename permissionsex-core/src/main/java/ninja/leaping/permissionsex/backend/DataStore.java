@@ -21,6 +21,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.exception.PermissionsException;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -126,7 +127,7 @@ public interface DataStore {
      *
      * @return An iterable containing all subjects
      */
-    Iterable<Map.Entry<Map.Entry<String,String>,ImmutableSubjectData>> getAll();
+    Iterable<Map.Entry<SubjectRef, ImmutableSubjectData>> getAll();
 
     /**
      * Perform a bulk operation on this data store. While this operation is in progress, all writes must be suppressed

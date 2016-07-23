@@ -26,6 +26,7 @@ import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.subject.SubjectType;
+import ninja.leaping.permissionsex.util.Tristate;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -48,11 +49,11 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
         SubjectType groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
-        CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
-        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parentS.getIdentifier().getValue())
-                .setPermission(GLOBAL_CONTEXT, "#test.permission.child", 1)
+        CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().updateSegment(GLOBAL_CONTEXT, false, seg -> seg.withPermission("test.permission.parent", Tristate.TRUE)).thenApply(data -> parent)).get();
+        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(data -> data.updateSegment(GLOBAL_CONTEXT, old -> old.withAddedParent(parentS.getIdentifier()))
+                .updateSegment(GLOBAL_CONTEXT, false, seg -> seg.withPermission("test.permission.child", Tristate.TRUE))
         ).thenApply(data -> child)).get();
-        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(GLOBAL_CONTEXT, childS.getIdentifier().getKey(), childS.getIdentifier().getValue())).thenApply(data -> subject)).get();
+        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().updateSegment(GLOBAL_CONTEXT, old -> old.withAddedParent(childS.getIdentifier())).thenApply(data -> subject)).get();
 
         assertEquals(1, parentS.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));
         assertEquals(1, childS.getPermissions(GLOBAL_CONTEXT).get("test.permission.parent"));

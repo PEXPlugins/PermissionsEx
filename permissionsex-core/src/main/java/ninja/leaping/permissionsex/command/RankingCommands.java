@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.command;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -57,11 +58,11 @@ public class RankingCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         CompletableFuture<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.promote"); // ." + ladderF); // TODO: Re-add permissions checks for ladders
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        SegmentKey key = getSegmentKey(args);
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
                         messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
                             ladderName.set(ladder);
-                            return ref.update(old -> ladder.promote(contexts, old));
+                            return ref.update(old -> ladder.promote(key, old));
                         })
                                 .thenAccept(res -> {
                                     if (res.getNew() == res.getOld()) {
@@ -83,10 +84,12 @@ public class RankingCommands {
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         CompletableFuture<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.demote"); //." + ladder);
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        SegmentKey key = getSegmentKey(args);
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
                         messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
-                            return ref.update(old -> ladder.demote(contexts, old));}).thenAccept(res -> {
+                            ladderName.set(ladder);
+                            return ref.update(old -> ladder.demote(key, old));
+                        }).thenAccept(res -> {
                             if (res.getNew() == res.getOld()) {
                                 throw new RuntimeCommandException(t("%s was not on ladder %s", src.fmt().subject(ref), src.fmt().ladder(ladderName.get())));
                             }

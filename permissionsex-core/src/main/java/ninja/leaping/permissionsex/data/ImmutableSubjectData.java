@@ -23,9 +23,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_CONTEXTS;
-import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_INHERITABILITY;
-import static ninja.leaping.permissionsex.data.DataSegment.DEFAULT_WEIGHT;
+import static ninja.leaping.permissionsex.data.SegmentKey.DEFAULT_CONTEXTS;
+import static ninja.leaping.permissionsex.data.SegmentKey.DEFAULT_INHERITABILITY;
+import static ninja.leaping.permissionsex.data.SegmentKey.DEFAULT_WEIGHT;
 
 public interface ImmutableSubjectData {
 
@@ -39,7 +39,7 @@ public interface ImmutableSubjectData {
     WeightedImmutableSet<DataSegment> getAllSegments(Set<Map.Entry<String, String>> contexts, boolean inheritable);
 
     default ImmutableSubjectData withSegment(DataSegment segment) {
-        return updateSegment(segment.getContexts(), segment.getWeight(), segment.isInheritable(),
+        return updateSegment(segment.getKey(),
                 old -> old.withPermissions(segment.getPermissions())
                 .withOptions(segment.getOptions())
                 .withParents(segment.getParents())
@@ -48,12 +48,22 @@ public interface ImmutableSubjectData {
 
     /**
      * Get a segment with the specified parameters. If such a segment does not exist, a new one will be instantiated to edit.
+     *
+     * @param key The segment paramaters to get
+     * @return The segment matching these parameters
+     */
+    DataSegment getSegment(SegmentKey key);
+
+    /**
+     * Get a segment with the specified parameters. If such a segment does not exist, a new one will be instantiated to edit.
      * @param contexts The contexts of the segment
      * @param weight The segment's weight
      * @param inheritable Whether or not the segment is inheritable
      * @return The segment matching these parameters
      */
-    DataSegment getSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable);
+    default DataSegment getSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable) {
+        return getSegment(SegmentKey.of(contexts, weight, inheritable));
+    }
 
     default DataSegment getSegment(Set<Map.Entry<String, String>> contexts, int weight) {
         return getSegment(contexts, weight, DEFAULT_INHERITABILITY);
@@ -79,7 +89,11 @@ public interface ImmutableSubjectData {
         return getSegment(DEFAULT_CONTEXTS, DEFAULT_WEIGHT, inheritable);
     }
 
-    ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc);
+    ImmutableSubjectData updateSegment(SegmentKey key, Function<DataSegment, DataSegment> updateFunc);
+
+    default ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
+        return updateSegment(SegmentKey.of(contexts, weight, inheritable), updateFunc);
+    }
 
     default ImmutableSubjectData updateSegment(Set<Map.Entry<String, String>> contexts, int weight, Function<DataSegment, DataSegment> updateFunc) {
         return updateSegment(contexts, weight, DEFAULT_INHERITABILITY, updateFunc);

@@ -28,6 +28,8 @@ import ninja.leaping.permissionsex.backend.sql.dao.MySqlDao;
 import ninja.leaping.permissionsex.backend.sql.dao.SchemaMigration;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SegmentKey;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.ThrowingFunction;
@@ -200,9 +202,9 @@ public final class SqlDataStore extends AbstractDataStore {
 
     private SqlSubjectData getDataForRef(SqlDao dao, SqlSubjectRef ref) throws SQLException {
         List<SqlDataSegment> segments = dao.getSegments(ref);
-        Map<Set<Entry<String, String>>, SqlDataSegment> contexts = new HashMap<>();
+        Map<SegmentKey, SqlDataSegment> contexts = new HashMap<>();
         for (SqlDataSegment segment : segments) {
-            contexts.put(segment.getContexts(), segment);
+            contexts.put(segment.getKey(), segment);
         }
 
         return new SqlSubjectData(ref, contexts, null);
@@ -263,9 +265,9 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<Entry<Entry<String, String>, ImmutableSubjectData>> getAll() {
+    public Iterable<Entry<SubjectRef, ImmutableSubjectData>> getAll() {
         try (SqlDao dao = getDao()) {
-            ImmutableSet.Builder<Entry<Entry<String, String>, ImmutableSubjectData>> builder = ImmutableSet.builder();
+            ImmutableSet.Builder<Entry<SubjectRef, ImmutableSubjectData>> builder = ImmutableSet.builder();
             for (SqlSubjectRef ref : dao.getAllSubjectRefs()) {
                 builder.add(Maps.immutableEntry(ref, getDataForRef(dao, ref)));
             }

@@ -17,11 +17,13 @@
 package ninja.leaping.permissionsex.backend.sql.dao;
 
 import ninja.leaping.permissionsex.backend.sql.SqlDao;
+import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,10 +32,12 @@ import java.util.regex.Pattern;
  * they have to handle bridging between two models of working with the database.
  */
 public class LegacyDao {
-    public static final LegacyDao INSTANCE = new LegacyDao();
     private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
 
-    protected LegacyDao() {
+    private final SqlDao dao;
+
+    public LegacyDao(SqlDao dao) {
+        this.dao = dao;
     }
 
     public String getSelectEntitiesQuery() {
@@ -60,7 +64,7 @@ public class LegacyDao {
         return "SELECT `id`, `parent`, `world` FROM `{}permissions_inheritance_old` WHERE `child` = ? AND `type` = ? ORDER BY `world`, `id` DESC";
     }
 
-    public PreparedStatement prepareStatement(SqlDao dao, String query) throws SQLException {
+    public PreparedStatement prepareStatement(String query) throws SQLException {
         StringBuffer ret = new StringBuffer();
         Matcher m = TABLE_PATTERN.matcher(query);
         while (m.find()) {
@@ -71,14 +75,10 @@ public class LegacyDao {
         return dao.prepareStatement(ret.toString());
     }
 
-    public boolean hasTable(SqlDao dao, String table) throws SQLException {
-        return dao.getConnection().getMetaData().getTables(null, null, dao.getDataStore().getTableName(table, true).toUpperCase(), null).next(); // Upper-case for H2
-    }
-
-    public void renameTable(SqlDao dao, String oldName, String newName) throws SQLException {
+    public void renameTable(String oldName, String newName) throws SQLException {
         final String expandedOld = dao.getDataStore().getTableName(oldName, true);
         final String expandedNew = dao.getDataStore().getTableName(newName, false);
-        try (PreparedStatement stmt = prepareStatement(dao, "ALTER TABLE `" + expandedOld + "` RENAME `" + expandedNew + "`")) {
+        try (PreparedStatement stmt = prepareStatement("ALTER TABLE `" + expandedOld + "` RENAME `" + expandedNew + "`")) {
         /*try (PreparedStatement stmt = prepareStatement(dao, dao.getRenameTableQuery())) {
             stmt.setString(1, expandedOld);
             stmt.setString(2, expandedNew);*/
@@ -86,23 +86,43 @@ public class LegacyDao {
         }
     }
 
-    public String getOption(SqlDao dao, String name, LegacyMigration.Type type, String world, String option) throws SQLException {
-        try (PreparedStatement stmt = dao.prepareStatement(getSelectOptionQuery())) {
-            stmt.setString(1, name);
-            stmt.setInt(2, type.ordinal());
-            stmt.setString(3, option);
-            if (world == null) {
-                stmt.setNull(4, Types.VARCHAR);
-            } else {
-                stmt.setString(4, world);
-            }
+    public static class LegacySegment {
+        private final String world;
+       private final Map<String, Integer> permissions;
+        private final Map<String, String> options;
+        private final List<SubjectRef> parents;
+        private final Integer permissionDefault;
 
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString(1);
-            } else {
-                return null;
-            }
+        public LegacySegment(String world, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault) {
+            this.world = world;
+            this.permissions = permissions;
+            this.options = options;
+            this.parents = parents;
+            this.permissionDefault = permissionDefault;
+        }
+
+        public Map<String, Integer> getPermissions() {
+            return permissions;
+        }
+
+        public Map<String, String> getOptions() {
+            return options;
+        }
+
+        public List<SubjectRef> getParents() {
+            return parents;
+        }
+
+        public Integer getPermissionDefault() {
+            return permissionDefault;
+        }
+
+        public String getWorld() {
+            return world;
+        }
+
+        public void doUpdate() {
+
         }
     }
 }

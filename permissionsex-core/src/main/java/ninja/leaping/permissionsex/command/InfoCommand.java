@@ -17,17 +17,21 @@
 package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.data.DataSegment;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
+import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Tristate;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import ninja.leaping.permissionsex.util.command.Commander;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static ninja.leaping.permissionsex.util.Translations.t;
 
@@ -45,11 +49,9 @@ public class InfoCommand {
     private static class SubjectInfoPrintingExecutor extends PermissionsExExecutor {
         private static final String INDENT = "  ";
         private static final String DOUBLE_INDENT = INDENT + INDENT;
-        private final PermissionsEx pex;
 
         private SubjectInfoPrintingExecutor(PermissionsEx pex) {
             super(pex);
-            this.pex = pex;
         }
 
         @Override
@@ -60,64 +62,47 @@ public class InfoCommand {
             final ImmutableSubjectData data = subject.data().get();
 
             src.msg(src.fmt().header(src.fmt().tr(t("Information for %s", src.fmt().subject(subject)))));
-            if (!data.getAllPermissions().isEmpty() || !data.getAllDefaultValues().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(t("Permissions:"))));
-                printPermissions(src, data);
-            }
-            if (!transientData.getAllPermissions().isEmpty() || !transientData.getAllDefaultValues().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(t("Transient permissions:"))));
-                printPermissions(src, transientData);
-            }
+            printSegments(src, t("Permissions:"), t("Transient permissions"), data, transientData,
+                    seg -> !seg.getPermissions().isEmpty() || seg.getPermissionDefault() != Tristate.UNDEFINED,
+                    (msg, seg) -> {
+                        msg.accept(src.fmt().hl(src.fmt().tr(t("Default permission: %s", seg.getPermissionDefault()))));
+                        for (Map.Entry<String, Tristate> ent : seg.getPermissions().entrySet()) {
+                            msg.accept(src.fmt().permission(ent.getKey(), ent.getValue()));
+                        }
+                    });
 
-            if (!data.getAllOptions().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(t("Options:"))));
-                printOptions(src, data);
-            }
-            if (!transientData.getAllOptions().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(t("Transient options:"))));
-                printOptions(src, transientData);
-            }
+            printSegments(src, t("Options:"), t("Transient options:"), data, transientData,
+                     seg -> !seg.getOptions().isEmpty(),
+                    (msg, seg) -> {
+                        for (Map.Entry<String, String> option : seg.getOptions().entrySet()) {
+                            msg.accept(src.fmt().option(option.getKey(), option.getValue()));
+                        }
+                    });
 
-            if (!data.getAllParents().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(t("Parents:"))));
-                printParents(src, data);
-            }
-            if (!transientData.getAllParents().isEmpty()) {
-                src.msg(src.fmt().hl(src.fmt().tr(t("Transient parents:"))));
-                printParents(src, transientData);
-            }
-
+            printSegments(src, t("Parents:"), t("Transient parents:"), data, transientData,
+                    seg -> !seg.getParents().isEmpty(),
+                    (msg, seg) -> {
+                        for (SubjectRef parent : seg.getParents()) {
+                            msg.accept(src.fmt().subject(parent));
+                        }
+                    });
         }
 
-        private <TextType> void printPermissions(Commander<TextType> src, ImmutableSubjectData data) {
-            Set<Set<Map.Entry<String, String>>> targetContexts = new HashSet<>();
-            targetContexts.addAll(data.getAllPermissions().keySet());
-            targetContexts.addAll(data.getAllDefaultValues().keySet());
-
-            for (Set<Map.Entry<String, String>> entry : targetContexts) {
-                src.msg(src.fmt().combined(INDENT, formatContexts(src, entry), ":"));
-                src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().hl(src.fmt().tr(t("Default permission: %s", data.getDefaultValue(entry))))));
-                for (Map.Entry<String, Integer> ent : data.getPermissions(entry).entrySet()) {
-                    src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().permission(ent.getKey(), ent.getValue())));
-                }
-            }
+        private <TextType> void printSegments(Commander<TextType> src, Translatable heading, Translatable transientHeading, ImmutableSubjectData data, ImmutableSubjectData transientData, Predicate<DataSegment> segmentNonEmpty, BiConsumer<Consumer<TextType>, DataSegment> print) {
+            printSegmentsSingle(src, heading, data, segmentNonEmpty, print);
+            printSegmentsSingle(src, transientHeading, transientData, segmentNonEmpty, print);
         }
 
-        private <TextType> void printOptions(Commander<TextType> src, ImmutableSubjectData data) {
-            for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, String>> ent : data.getAllOptions().entrySet()) {
-                src.msg(src.fmt().combined(INDENT, formatContexts(src, ent.getKey()), ":"));
-                for (Map.Entry<String, String> option : ent.getValue().entrySet()) {
-                    src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().option(option.getKey(), option.getValue())));
-                }
-            }
-        }
-
-        private <TextType> void printParents(Commander<TextType> src, ImmutableSubjectData data) {
-            for (Map.Entry<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> ent : data.getAllParents().entrySet()) {
-
-                src.msg(src.fmt().combined(INDENT, formatContexts(src, ent.getKey()), ":"));
-                for (Map.Entry<String, String> parent : ent.getValue()) {
-                    src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().subject(parent)));
+        private <TextType> void printSegmentsSingle(Commander<TextType> src, Translatable heading, ImmutableSubjectData data, Predicate<DataSegment> segmentNonEmpty, BiConsumer<Consumer<TextType>, DataSegment> print) {
+            boolean printed = false;
+            for (DataSegment segment : data.getAllSegments()) {
+                if (segmentNonEmpty.test(segment)) {
+                    if (!printed) {
+                        src.msg(src.fmt().hl(src.fmt().tr(heading)));
+                        printed = true;
+                    }
+                    src.msg(src.fmt().combined(INDENT, formatSegmentKey(src, segment.getKey()), ":"));
+                    print.accept(msg -> src.msg(src.fmt().combined(DOUBLE_INDENT)), segment);
                 }
             }
         }

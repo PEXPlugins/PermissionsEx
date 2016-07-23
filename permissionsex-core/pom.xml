@@ -64,6 +64,11 @@
     </dependency>
     <dependency>
       <groupId>ninja.leaping.configurate</groupId>
+      <artifactId>configurate-hocon</artifactId>
+      <version>${version.configurate}</version>
+    </dependency>
+    <dependency>
+      <groupId>ninja.leaping.configurate</groupId>
       <artifactId>configurate-gson</artifactId>
       <version>${version.configurate}</version>
     </dependency>

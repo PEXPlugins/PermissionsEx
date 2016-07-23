@@ -18,14 +18,12 @@ package ninja.leaping.permissionsex.rank;
 
 import com.google.common.collect.ImmutableList;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
-
-import static java.util.Map.Entry;
 
 public abstract class AbstractRankLadder implements RankLadder {
     private final String name;
@@ -40,77 +38,80 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final ImmutableSubjectData promote(Set<Entry<String, String>> contexts, ImmutableSubjectData input) {
+    public final ImmutableSubjectData promote(SegmentKey key, ImmutableSubjectData input) {
+        if (getRanks().isEmpty()) {
+            return input;
+        }
+        return input.updateSegment(key, seg -> {
+            List<SubjectRef> parents = seg.getParents();
+            if (parents.isEmpty()) {
+                return seg.withAddedParent(getRanks().get(0));
+            } else {
+                int index;
+                parents = new ArrayList<>(parents);
+                boolean found = false;
+                for (ListIterator<SubjectRef> it = parents.listIterator(); it.hasNext();) {
+                    SubjectRef parent = it.next();
+                    if ((index = getRanks().indexOf(parent)) > -1) {
+                        if (index == getRanks().size() - 1) {
+                            return seg;
+                        } else {
+                            it.set(getRanks().get(index + 1));
+                            found = true;
+                        }
+                    }
+                }
+                if (found) {
+                    return seg.withParents(parents); // Promotion happened
+                } else {
+                    return seg.withAddedParent(getRanks().get(0));
+                }
+            }
+        });
+    }
+
+    @Override
+    public final ImmutableSubjectData demote(SegmentKey key, ImmutableSubjectData input) {
         if (getRanks().isEmpty()) {
             return input;
         }
 
-        List<SubjectRef> parents = input.getParents(contexts);
-        if (parents.isEmpty()) {
-            return input.addParent(contexts, getRanks().get(0));
-        } else {
-            int index;
-            parents = new ArrayList<>(parents);
-            boolean found = false;
-            for (ListIterator<SubjectRef> it = parents.listIterator(); it.hasNext();) {
-                SubjectRef parent = it.next();
-                if ((index = getRanks().indexOf(parent)) > -1) {
-                    if (index == getRanks().size() - 1) {
-                        return input;
-                    } else {
-                        it.set(getRanks().get(index + 1));
+        return input.updateSegment(key, seg -> {
+            List<SubjectRef> parents = seg.getParents();
+            if (parents.isEmpty()) {
+                return seg;
+            } else {
+                int index;
+                parents = new ArrayList<>(parents);
+                boolean found = false;
+                for (ListIterator<SubjectRef> it = parents.listIterator(); it.hasNext(); ) {
+                    SubjectRef parent = it.next();
+                    if ((index = getRanks().indexOf(parent)) > -1) {
+                        if (index == 0) {
+                            // At bottom of rank ladder, remove the rank entirely
+                            it.remove();
+                        } else {
+                            it.set(getRanks().get(index - 1));
+                        }
                         found = true;
                     }
                 }
-            }
-            if (found) {
-                return input.setParents(contexts, parents); // Promotion happened
-            } else {
-                return input.addParent(contexts, getRanks().get(0));
-            }
-        }
-    }
-
-    @Override
-    public final ImmutableSubjectData demote(Set<Entry<String, String>> contexts, ImmutableSubjectData input) {
-        if (getRanks().isEmpty()) {
-            return input;
-        }
-
-        List<SubjectRef> parents = input.getParents(contexts);
-        if (parents.isEmpty()) {
-            return input;
-        } else {
-            int index;
-            parents = new ArrayList<>(parents);
-            boolean found = false;
-            for (ListIterator<SubjectRef> it = parents.listIterator(); it.hasNext();) {
-                SubjectRef parent = it.next();
-                if ((index = getRanks().indexOf(parent)) > -1) {
-                    if (index == 0) {
-                        // At bottom of rank ladder, remove the rank entirely
-                        it.remove();
-                    } else {
-                        it.set(getRanks().get(index - 1));
-                    }
-                    found = true;
+                if (found) {
+                    return seg.withParents(parents);
+                } else {
+                    return seg;
                 }
             }
-            if (found) {
-                return input.setParents(contexts, parents);
-            } else {
-                return input;
-            }
-        }
+        });
     }
 
     @Override
-    public final boolean isOnLadder(Set<Entry<String, String>> contexts, ImmutableSubjectData subject) {
+    public final boolean isOnLadder(SegmentKey key, ImmutableSubjectData subject) {
         if (getRanks().isEmpty()) {
             return false;
         }
 
-        for (SubjectRef par : subject.getParents(contexts)) {
+        for (SubjectRef par : subject.getSegment(key).getParents()) {
             if (getRanks().indexOf(par) != -1) {
                 return true;
             }

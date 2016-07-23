@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.rank;
 
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.util.List;
@@ -41,11 +42,11 @@ public interface RankLadder {
      * If the subject is currently at the top of this rank ladder, nothing will happen.
      * If the subject has multiple memberships at various points in this rank ladder, all of them will be moved up by one step
      *
-     * @param contexts The context combination to promote in
+     * @param key The attributes to update rank with
      * @param input The subject data to promote
      * @return The promoted data
      */
-    ImmutableSubjectData promote(Set<Map.Entry<String, String>> contexts, ImmutableSubjectData input);
+    ImmutableSubjectData promote(SegmentKey key, ImmutableSubjectData input);
 
     /**
      * Demote the given subject data on this rank ladder in the given context.
@@ -54,20 +55,20 @@ public interface RankLadder {
      * If the subject is currently at the bottom of this rank ladder, the subject will be removed from the rank ladder entirely.
      * If the subject has multiple memberships at various points in this rank ladder, all of them will be moved down by one step
      *
-     * @param contexts The context combination to promote in
+     * @param key The attributes to update rank with
      * @param input The subject data to promote
      * @return the demoted data
      */
-    ImmutableSubjectData demote(Set<Map.Entry<String, String>> contexts, ImmutableSubjectData input);
+    ImmutableSubjectData demote(SegmentKey key, ImmutableSubjectData input);
 
     /**
      * Return if this subject is a member of any subjects that are part of this rank ladder within the given contexts.
      *
-     * @param contexts The contexts to check in
+     * @param key The segment lookup key
      * @param subject The subject
      * @return Whether this ladder contains any of the direct parents of the subject in the given contexts
      */
-    boolean isOnLadder(Set<Map.Entry<String, String>> contexts, ImmutableSubjectData subject);
+    boolean isOnLadder(SegmentKey key, ImmutableSubjectData subject);
 
     /**
      * Return a new rank ladder with the specified rank added at the highest point in the rank ladder.

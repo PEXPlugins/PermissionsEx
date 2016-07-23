@@ -26,7 +26,9 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.transformation.TransformAction;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
+import ninja.leaping.permissionsex.data.SegmentKey;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
+import ninja.leaping.permissionsex.util.Tristate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,10 +61,81 @@ public class SchemaMigrations {
                 .build();
     }
 
+    private static final TypeToken<Tristate> TRISTATE_TYPE = TypeToken.of(Tristate.class);
     static ConfigurationTransformation fourToFive() {
         return tBuilder()
                 .addAction(new Object[] {"subjects", WILDCARD_OBJECT, WILDCARD_OBJECT}, ((inputPath, valueAtPath) -> {
-                    Map<Integer, ConfigurationNode> weightSections = new HashMap<>();
+                    Map<SegmentKey, ConfigurationNode> weightSections = new HashMap<>();
+                    for (ConfigurationNode segment : valueAtPath.getChildrenList()) {
+                        SegmentKey key = FileSubjectData.keyFrom(segment);
+                        weightSections.put(key, segment);
+                        ConfigurationNode permsNode = segment.getNode("permissions");
+                        if (!permsNode.isVirtual()) {
+                            for (Map.Entry<Object, ? extends ConfigurationNode> child : permsNode.getChildrenMap().entrySet()) {
+                                boolean inheritable = true;
+                                String perm = child.getKey().toString();
+                                if (perm.startsWith("#")) {
+                                    inheritable = false;
+                                    perm = perm.substring(1);
+                                }
+                                int weight = child.getValue().getInt();
+                                Tristate value;
+                                if (weight > 0) {
+                                    value = Tristate.TRUE;
+                                    weight -= 1;
+                                } else if (weight < 0) {
+                                    value = Tristate.FALSE;
+                                    weight = (-weight) - 1;
+                                } else {
+                                    value = Tristate.UNDEFINED;
+                                }
+                                try {
+                                    if (weight == 0 && inheritable) {
+                                        child.getValue().setValue(TRISTATE_TYPE, value);
+                                    } else {
+                                        SegmentKey newKey = SegmentKey.of(key.getContexts(), weight, inheritable);
+                                        ConfigurationNode newSegment = weightSections.get(newKey);
+                                        if (newSegment == null) {
+                                            newSegment = valueAtPath.getAppendedNode();
+                                            FileSubjectData.keyTo(newKey, newSegment);
+                                            weightSections.put(newKey, newSegment);
+                                        }
+                                        newSegment.getNode("permissions", perm).setValue(TRISTATE_TYPE, value);
+                                        child.getValue().setValue(null);
+                                    }
+                                } catch (ObjectMappingException ignore) {
+                                }
+                            }
+                        }
+                        ConfigurationNode permissionsDefaultNode = segment.getNode("permissions-default");
+                        if (!permissionsDefaultNode.isVirtual()) {
+                            Tristate value = Tristate.UNDEFINED;
+                            int weight = permissionsDefaultNode.getInt();
+                            if (weight > 0) {
+                                value = Tristate.TRUE;
+                                weight -= 1;
+                            } else if (weight < 0) {
+                                value = Tristate.FALSE;
+                                weight = (-weight) -1;
+                            }
+                            try {
+                                if (weight == 0) {
+                                    permissionsDefaultNode.setValue(TRISTATE_TYPE, value);
+                                } else {
+                                    SegmentKey newKey = SegmentKey.of(key.getContexts(), weight, true);
+                                    ConfigurationNode newSegment = weightSections.get(newKey);
+                                    if (newSegment == null) {
+                                        newSegment = valueAtPath.getAppendedNode();
+                                        FileSubjectData.keyTo(newKey, newSegment);
+                                        weightSections.put(newKey, newSegment);
+                                    }
+                                    newSegment.getNode("permissions-default").setValue(TRISTATE_TYPE, value);
+                                    permissionsDefaultNode.setValue(null);
+                                }
+                            } catch (ObjectMappingException ignore) {
+                            }
+                        }
+                    }
                     return null;
                 }))
                 .build();

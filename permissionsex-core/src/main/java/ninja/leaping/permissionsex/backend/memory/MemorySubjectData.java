@@ -16,25 +16,18 @@
  */
 package ninja.leaping.permissionsex.backend.memory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.permissionsex.backend.AbstractSubjectData;
 import ninja.leaping.permissionsex.data.DataSegment;
-import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SegmentKey;
-import ninja.leaping.permissionsex.util.Tristate;
-import ninja.leaping.permissionsex.util.WeightedImmutableSet;
+import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 
-import static java.util.Map.Entry;
 import static ninja.leaping.permissionsex.util.Util.updateImmutable;
 
-public class MemorySubjectData implements ImmutableSubjectData {
+public class MemorySubjectData extends AbstractSubjectData<SubjectRef, MemorySegment> {
     protected static final ObjectMapper<MemorySegment> MAPPER;
     static {
         try {
@@ -44,140 +37,38 @@ public class MemorySubjectData implements ImmutableSubjectData {
         }
     }
 
-    protected static class ContextSegments {
-        private WeightedImmutableSet<MemorySegment> inheritable, notInheritable;
-
-        public ContextSegments(WeightedImmutableSet<MemorySegment> inheritable, WeightedImmutableSet<MemorySegment> notInheritable) {
-            this.inheritable = inheritable;
-            this.notInheritable = notInheritable;
-        }
-
-        public ContextSegments withInheritableSegments(WeightedImmutableSet<MemorySegment> inheritable) {
-            return new ContextSegments(inheritable, this.notInheritable);
-        }
-
-        public ContextSegments withNonInheritableSegments(WeightedImmutableSet<MemorySegment> notInheritable) {
-            return new ContextSegments(this.inheritable, notInheritable);
-        }
-
-        public WeightedImmutableSet<MemorySegment> getInheritableSegments() {
-            return this.inheritable;
-        }
-
-        public WeightedImmutableSet<MemorySegment> getNonInheritableSegments() {
-            return this.notInheritable;
-        }
-
-        public ContextSegments withBothUpdated(Function<WeightedImmutableSet<MemorySegment>, WeightedImmutableSet<MemorySegment>> updateFunc) {
-            return withBothUpdated(updateFunc, updateFunc);
-        }
-
-        public ContextSegments withBothUpdated(Function<WeightedImmutableSet<MemorySegment>, WeightedImmutableSet<MemorySegment>> updateInheritable, Function<WeightedImmutableSet<MemorySegment>, WeightedImmutableSet<MemorySegment>> updateNotInheritable) {
-            WeightedImmutableSet<MemorySegment> inherit = this.inheritable, notInherit = this.notInheritable;
-            if (inherit != null) {
-                inherit = updateInheritable.apply(inherit);
-            }
-            if (notInherit != null) {
-                notInherit = updateNotInheritable.apply(notInherit);
-            }
-            return new ContextSegments(inherit, notInherit);
-        }
+    @Override
+    protected MemorySubjectData newData(Map<SegmentKey, MemorySegment> segments) {
+        return new MemorySubjectData(getReference(), segments);
     }
 
-    protected MemorySubjectData newData(Map<SegmentKey, DataSegment> segments) {
-        return new MemorySubjectData(segments);
+
+    protected MemorySubjectData(SubjectRef ref) {
+        super(ref);
     }
 
-    protected final Map<SegmentKey, DataSegment> segments;
-
-    protected MemorySubjectData() {
-        this.segments = ImmutableMap.of();
-    }
-
-    protected MemorySubjectData(Map<SegmentKey, DataSegment> segments) {
-        this.segments = segments;
-    }
-
-    private <E> ImmutableSet<E> immutSet(Set<E> set) {
-        return ImmutableSet.copyOf(set);
+    protected MemorySubjectData(SubjectRef ref, Map<SegmentKey, MemorySegment> segments) {
+        super(ref, segments);
     }
 
     @Override
-    public WeightedImmutableSet<DataSegment> getAllSegments() {
-        return WeightedImmutableSet.copyOf(this.segments.values());
+    protected MemorySegment fromSegment(DataSegment seg) {
+        return MemorySegment.fromSegment(seg);
     }
 
     @Override
-    public WeightedImmutableSet<DataSegment> getAllSegments(Set<Entry<String, String>> contexts, boolean inheritable) {
-        return WeightedImmutableSet.ofStream(this.segments.values().stream()
-                .filter(seg -> seg.getContexts().equals(contexts) && seg.isInheritable() == inheritable));
+    protected MemorySegment newSegment(SegmentKey key) {
+        return new MemorySegment(key);
     }
 
     @Override
-    public DataSegment getSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable) {
-        DataSegment ret = this.segments.get(SegmentKey.of(contexts, weight, inheritable));
-        if (ret != null) {
-            return ret;
-        }
-        return new MemorySegment(contexts, weight, inheritable);
-    }
-
-    @Override
-    public ImmutableSubjectData updateSegment(Set<Entry<String, String>> contexts, int weight, boolean inheritable, Function<DataSegment, DataSegment> updateFunc) {
-        contexts = immutSet(contexts);
-        SegmentKey key = SegmentKey.of(contexts, weight, inheritable);
-        DataSegment seg = this.segments.get(key);
-        if (seg == null) {
-            seg = new MemorySegment(contexts, weight, inheritable);
-        }
-        DataSegment newSeg = updateFunc.apply(seg);
-        if (newSeg == seg) {
-            return this;
-        }
-
-        return newData(updateImmutable(this.segments, key, newSeg.getKey(), newSeg));
-    }
-
-
-    @Override
-    public ImmutableSubjectData clearOptions() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        return newData(Maps.transformValues(this.segments, DataSegment::withoutOptions));
-    }
-
-    @Override
-    public ImmutableSubjectData clearPermissions() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        return newData(Maps.transformValues(this.segments, DataSegment::withoutPermissions));
-    }
-
-    @Override
-    public ImmutableSubjectData clearParents() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        return newData(Maps.transformValues(this.segments, DataSegment::withoutParents));
-    }
-
-    @Override
-    public ImmutableSubjectData clearDefaultValues() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        return newData(Maps.transformValues(this.segments, old -> old.withDefaultValue(Tristate.UNDEFINED)));
+    protected MemorySubjectData newWithUpdated(SegmentKey oldKey, MemorySegment newVal) {
+        return new MemorySubjectData(getReference(), updateImmutable(segments, oldKey, newVal == null ? null : newVal.getKey(), newVal));
     }
 
     @Override
     public String toString() {
-        return "MemoryOptionSubjectData{" +
+        return "MemorySubjectData{" +
                 "segments=" + segments +
                 '}';
     }
