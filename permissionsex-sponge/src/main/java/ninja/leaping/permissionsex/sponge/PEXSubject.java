@@ -26,9 +26,11 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.context.ContextCalculator;
+import org.spongepowered.api.service.permission.option.OptionSubject;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -36,16 +38,16 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static ninja.leaping.permissionsex.sponge.PEXSubjectData.parSet;
+import static ninja.leaping.permissionsex.sponge.PEXOptionSubjectData.parSet;
 
 /**
  * Permissions subject implementation
  */
 @NonnullByDefault
-class PEXSubject implements Subject {
+class PEXSubject implements OptionSubject {
     private final PEXSubjectCollection collection;
-    private final PEXSubjectData data;
-    private final PEXSubjectData transientData;
+    private final PEXOptionSubjectData data;
+    private final PEXOptionSubjectData transientData;
     private volatile CalculatedSubject baked;
     private final String identifier;
     private final AtomicReference<ActiveContextsHolder> cachedContexts = new AtomicReference<>();
@@ -72,8 +74,8 @@ class PEXSubject implements Subject {
         this.identifier = identifier;
         this.collection = collection;
         this.baked = collection.getCalculatedSubject(identifier);
-        this.data = new PEXSubjectData(baked.data(), collection.getPlugin());
-        this.transientData = new PEXSubjectData(baked.transientData(), collection.getPlugin());
+        this.data = new PEXOptionSubjectData(baked.data(), collection.getPlugin());
+        this.transientData = new PEXOptionSubjectData(baked.transientData(), collection.getPlugin());
     }
 
     private Timings time() {
@@ -105,12 +107,12 @@ class PEXSubject implements Subject {
     }
 
     @Override
-    public PEXSubjectData getSubjectData() {
+    public PEXOptionSubjectData getSubjectData() {
         return data;
     }
 
     @Override
-    public PEXSubjectData getTransientSubjectData() {
+    public PEXOptionSubjectData getTransientSubjectData() {
         return transientData;
     }
 

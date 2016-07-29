@@ -69,7 +69,7 @@ class SpongeCommander implements Commander<Text.Builder> {
 
     @Override
     public Set<Map.Entry<String, String>> getActiveContexts() {
-        return PEXSubjectData.parSet(commandSource.getActiveContexts());
+        return PEXOptionSubjectData.parSet(commandSource.getActiveContexts());
     }
 
     @Override

@@ -25,7 +25,7 @@ import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
-import org.spongepowered.api.service.permission.SubjectData;
+import org.spongepowered.api.service.permission.option.OptionSubjectData;
 import org.spongepowered.api.util.Tristate;
 
 import java.util.ArrayList;
@@ -40,12 +40,12 @@ import java.util.concurrent.ExecutionException;
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-class PEXSubjectData implements SubjectData {
+class PEXOptionSubjectData implements OptionSubjectData {
     private final PermissionsExPlugin plugin;
     private SubjectDataReference data;
     private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
 
-    public PEXSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) throws ExecutionException {
+    public PEXOptionSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) throws ExecutionException {
         this.plugin = plugin;
         this.data = data;
         this.data.onUpdate(this::clearCache);
