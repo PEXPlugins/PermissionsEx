@@ -45,7 +45,6 @@ class PEXSubjectCollection implements SubjectCollection {
     private final String identifier;
     private final PermissionsExPlugin plugin;
     private final SubjectType collection;
-    private final PEXSubject defaults;
 
     private final LoadingCache<String, PEXSubject> subjectCache = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubject>() {
         @Override
@@ -58,7 +57,6 @@ class PEXSubjectCollection implements SubjectCollection {
         this.identifier = identifier;
         this.plugin = plugin;
         this.collection = plugin.getManager().getSubjects(identifier);
-        this.defaults = this.identifier.equals(PermissionsEx.SUBJECTS_DEFAULTS) ? get(PermissionsEx.SUBJECTS_DEFAULTS) : this.plugin.getSubjects(PermissionsEx.SUBJECTS_DEFAULTS).get(identifier);
     }
 
     @Override
@@ -116,16 +114,6 @@ class PEXSubjectCollection implements SubjectCollection {
                 }
         }
         return ret.build();
-    }
-
-    /**
-     * Get the subject that provides defaults for subjects of this type. This subject is placed at the root of any inheritance tree involving subjects of this type.
-     *
-     * @return The subject holding defaults
-     */
-    @Override
-    public Subject getDefaults() {
-        return this.defaults;
     }
 
     public Optional<CommandSource> getCommandSource(String identifier) {
