@@ -10,6 +10,7 @@
   <url>https://github.com/PEXPlugins/PermissionsEx</url>
   <packaging>pom</packaging>
   <properties>
+    <plugin.id>permissionsex</plugin.id>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <version.suffix></version.suffix>
   </properties>

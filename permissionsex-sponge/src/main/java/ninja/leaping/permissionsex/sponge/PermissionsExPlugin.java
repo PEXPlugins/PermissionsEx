@@ -266,11 +266,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     private void convertFromLegacySpongeName() throws IOException {
-        Path oldPath = configDir.resolveSibling("permissionsex"); // Old plugin ID
+        Path oldPath = configDir.resolveSibling("ninja.leaping.permissionsex"); // Old plugin ID
 
         if (Files.exists(oldPath) && isDirectoryEmpty(configDir)) {
             Files.move(oldPath, configDir, StandardCopyOption.REPLACE_EXISTING);
-            Files.move(configDir.resolve("permissionsex.conf"), configDir.resolve(PomData.ARTIFACT_ID + ".conf"));
+            Files.move(configDir.resolve("ninja.leaping.permissionsex.conf"), configDir.resolve(PomData.ARTIFACT_ID + ".conf"));
             logger.info(t("Migrated legacy sponge config directory to new location. Configuration is now located in %s", configDir.toString()));
         }
     }
