@@ -75,13 +75,13 @@ public class PromotionCommands extends PermissionsCommand {
 			isPrimary = true)
 	public void promoteUser(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
-		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
-		if (user == null) {
-			sender.sendMessage("Specified user \"" + args.get("user") + "\" not found!");
+		if (userName == null) {
+			sender.sendMessage(ChatColor.RED + "User does not exist or match any known names.");
 			return;
 		}
-
+                
+		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 		String promoterName = "console";
 		String ladder = "default";
 
@@ -118,13 +118,13 @@ public class PromotionCommands extends PermissionsCommand {
 			isPrimary = true)
 	public void demoteUser(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		String userName = this.autoCompletePlayerName(args.get("user"));
-		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
-		if (user == null) {
-			sender.sendMessage(ChatColor.RED + "Specified user \"" + args.get("user") + "\" not found!");
+		if (userName == null) {
+			sender.sendMessage(ChatColor.RED + "User does not exist or match any known names.");
 			return;
 		}
-
+		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
+                
 		String demoterName = "console";
 		String ladder = "default";
 
