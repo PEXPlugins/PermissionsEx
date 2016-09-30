@@ -609,13 +609,13 @@ public class GroupCommands extends PermissionsCommand {
 
 		for (String userName : users) {
 			userName = this.autoCompletePlayerName(userName);
-			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
-			if (user == null) {
-				sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
+			if (userName == null) {
+				sender.sendMessage(ChatColor.RED + "User does not exist or match any known names.");
 				return;
 			}
-
+                        
+			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 			user.addGroup(groupName, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " added to " + groupName + " !");
@@ -641,13 +641,13 @@ public class GroupCommands extends PermissionsCommand {
 
 		for (String userName : users) {
 			userName = this.autoCompletePlayerName(userName);
-			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
-			if (user == null) {
-				sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
+			if (userName == null) {
+				sender.sendMessage(ChatColor.RED + "User does not exist or match any known names.");
 				return;
 			}
-
+                        
+			PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 			user.removeGroup(groupName, worldName);
 
 			sender.sendMessage(ChatColor.WHITE + "User " + user.getName() + " removed from " + args.get("group") + " !");

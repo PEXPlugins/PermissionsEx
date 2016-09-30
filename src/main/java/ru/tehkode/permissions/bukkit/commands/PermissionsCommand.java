@@ -135,8 +135,8 @@ public abstract class PermissionsCommand implements CommandListener {
 			return players.get(0);
 		}
 
-		// Nothing found
-		return playerName;
+		// Nothing found and so you should not be returning the same string..... catch the null returning to the cmd
+		return null;
 	}
 
 	protected String describeUser(PermissionUser user) {
