@@ -526,7 +526,7 @@ public class UserCommands extends PermissionsCommand {
 
 	@Command(name = "pex",
 			syntax = "user <user> group set <group> [world]",
-			permission = "",
+			permission = "permissions.manage.membership.<group>",
 			description = "Set <group> for <user>")
 	public void userSetGroup(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
 		PermissionManager manager = plugin.getPermissionsManager();
