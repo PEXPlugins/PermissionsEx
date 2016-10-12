@@ -17,7 +17,7 @@
         <repository>
             <id>pex-repo</id>
             <name>PermissionsEx Repository</name>
-            <url>http://pex-repo.aoeu.xyz/</url>
+            <url>https://pex-repo.aoeu.xyz/</url>
         </repository>
     </distributionManagement>
     <scm>
@@ -180,7 +180,7 @@
         </repository>
         <repository>
             <id>pex-repo</id>
-            <url>http://pex-repo.zachsthings.com</url>
+            <url>https://pex-repo.aoeu.xyz/</url>
         </repository>
         <repository>
             <id>gravity-repo</id>

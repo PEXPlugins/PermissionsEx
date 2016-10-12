@@ -563,6 +563,17 @@ public class UserCommands extends PermissionsCommand {
 				return;
 			}
 		}
+		
+		String userName = this.autoCompletePlayerName(args.get("user"));
+		String worldName = this.autoCompleteWorldName(args.get("world"));
+
+		PermissionUser user = manager.getUser(userName);
+
+		if (user == null) {
+			sender.sendMessage(ChatColor.RED + "User \"" + userName + "\" doesn't exist.");
+			return;
+		}
+
 
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		String worldName = this.autoCompleteWorldName(args.get("world"));
