@@ -29,15 +29,24 @@ import java.util.Optional;
  */
 public abstract class SubjectTypeDefinition {
     private final String typeName;
+    private final boolean transientHasPriority;
 
     public static SubjectTypeDefinition defaultFor(String type) {
         return new DefaultSubjectTypeDefinition(type);
+    }
+
+    public static SubjectTypeDefinition defaultFor(String type, boolean transientHasPriority) {
+        return new DefaultSubjectTypeDefinition(type, transientHasPriority);
     }
 
     private static class DefaultSubjectTypeDefinition extends SubjectTypeDefinition {
 
         public DefaultSubjectTypeDefinition(String typeName) {
             super(typeName);
+        }
+
+        public DefaultSubjectTypeDefinition(String typeName, boolean transientHasPriority) {
+            super(typeName, transientHasPriority);
         }
 
         @Override
@@ -51,8 +60,13 @@ public abstract class SubjectTypeDefinition {
         }
     }
 
-    public SubjectTypeDefinition(String typeName) {
+    public SubjectTypeDefinition(String typeName, boolean transientHasPriority) {
         this.typeName = typeName;
+        this.transientHasPriority = transientHasPriority;
+    }
+
+    public SubjectTypeDefinition(String typeName) {
+        this(typeName, true);
     }
 
     public String getTypeName() {
@@ -62,4 +76,8 @@ public abstract class SubjectTypeDefinition {
     public abstract boolean isNameValid(String name);
 
     public abstract Optional<String> getAliasForName(String name);
+
+    public boolean transientHasPriority() {
+        return this.transientHasPriority;
+    }
 }

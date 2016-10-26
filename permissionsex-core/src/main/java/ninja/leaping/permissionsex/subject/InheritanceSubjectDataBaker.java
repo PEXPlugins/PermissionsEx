@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multiset;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.data.DataSegment;
+import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectRef;
 import ninja.leaping.permissionsex.util.Combinations;
 import ninja.leaping.permissionsex.util.NodeTree;
@@ -118,32 +119,31 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         return type.persistentData().getData(subject.getIdentifier(), state.base).thenCombine(type.transientData().getData(subject.getIdentifier(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
             for (Set<Entry<String, String>> combo : state.activeContexts) {
-                WeightedImmutableSet<DataSegment> transientSegs = transientData.getAllSegments(combo, true);
-                if (inheritanceLevel <= 1) {
-                    transientSegs = transientSegs.withAll(transientData.getAllSegments(combo, false));
-                }
-                final WeightedImmutableSet<DataSegment> finalTransientSegs = transientSegs;
-                ret = ret.thenRun(() -> visitSingle(state, finalTransientSegs));
-                for (DataSegment seg : transientSegs) {
-                    for (SubjectRef parent : seg.getParents()) {
-                        ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
-                    }
-                }
-
-                WeightedImmutableSet<DataSegment> persistentSegs = persistent.getAllSegments(combo, true);
-                if (inheritanceLevel <= 1) {
-                    persistentSegs = persistentSegs.withAll(persistent.getAllSegments(combo, false));
-                }
-                final WeightedImmutableSet<DataSegment> finalPersistentSegs = persistentSegs;
-                ret = ret.thenRun(() -> visitSingle(state, finalPersistentSegs));
-                for (DataSegment seg : persistentSegs) {
-                    for (SubjectRef parent : seg.getParents()) {
-                        ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
-                    }
+                if (type.getTypeInfo().transientHasPriority()) {
+                    ret = visitSingleData(ret, state, combo, transientData, visitedSubjects, inheritanceLevel);
+                    ret = visitSingleData(ret, state, combo, persistent, visitedSubjects, inheritanceLevel);
+                } else {
+                    ret = visitSingleData(ret, state, combo, persistent, visitedSubjects, inheritanceLevel);
+                    ret = visitSingleData(ret, state, combo, transientData, visitedSubjects, inheritanceLevel);
                 }
             }
             return ret;
         }).thenCompose(res -> res);
+    }
+
+    private CompletableFuture<Void> visitSingleData(CompletableFuture<Void> ret, BakeState state, Set<Entry<String, String>> combo, ImmutableSubjectData data, Multiset<SubjectRef> visitedSubjects, int inheritanceLevel) {
+        WeightedImmutableSet<DataSegment> transientSegs = data.getAllSegments(combo, true);
+        if (inheritanceLevel <= 1) {
+            transientSegs = transientSegs.withAll(data.getAllSegments(combo, false));
+        }
+        final WeightedImmutableSet<DataSegment> finalTransientSegs = transientSegs;
+        ret = ret.thenRun(() -> visitSingle(state, finalTransientSegs));
+        for (DataSegment seg : transientSegs) {
+            for (SubjectRef parent : seg.getParents()) {
+                ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+            }
+        }
+        return ret;
     }
 
     private void putPermIfNecessary(BakeState state, String perm, int weight, Tristate status) {
