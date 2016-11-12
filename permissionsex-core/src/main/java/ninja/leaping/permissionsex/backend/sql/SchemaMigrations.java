@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Schema migrations for the SQL database
@@ -65,21 +66,24 @@ public class SchemaMigrations {
     // Pre-2.x only needs to support MySQL because tbh nobody uses SQLite
     public static SchemaMigration twoToThree() {
         // The big one
-        return dao -> {
-            LegacyDao legacy = new LegacyDao(dao);
+        return dao_doNotUse -> {
+            LegacyDao legacy = new LegacyDao(dao_doNotUse);
+            // Go from 1.x to a fixed early 2.x schema so that further schema upgrades can all start from the same point
+            // This means that nothing but LegacyDao should be referenced
+            // We can also assume MySQL is being used since SQLite was used by like nobody
             legacy.renameTable("permissions", "permissions_old");
             legacy.renameTable("permissions_entity", "permissions_entity_old");
             legacy.renameTable("permissions_inheritance", "permissions_inheritance_old");
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(SchemaMigration.class.getResourceAsStream("twotothree-migration.sql")))){
-                dao.executeStream(reader);
+                dao_doNotUse.executeStream(reader);
             } catch (IOException e) {
                 throw new SQLException(e);
             }
 
             // Transfer world inheritance
-            try (PreparedStatement stmt = dao.prepareStatement("SELECT id, child, parent FROM {}permissions_inheritance_old WHERE type=2 ORDER BY child, parent, id ASC")) {
+            try (PreparedStatement stmt = legacy.prepareStatement("SELECT id, child, parent FROM {}permissions_inheritance_old WHERE type=2 ORDER BY child, parent, id ASC")) {
                 ResultSet rs = stmt.executeQuery();
-                try (PreparedStatement insert = dao.prepareStatement(dao.getInsertContextInheritanceQuery())) {
+                try (PreparedStatement insert = legacy.prepareStatement("INSERT INTO {}context_inheritance (child_key, child_value, parent_key, parent_value) VALUES (?, ?, ?, ?)")) {
                     insert.setString(1, "world");
                     insert.setString(3, "world");
                     while (rs.next()) {
@@ -91,34 +95,33 @@ public class SchemaMigrations {
                 }
             }
 
-            Map<String, List<SqlSubjectRef>> defaultSubjects = new HashMap<>();
-            Map<String, List<Map.Entry<SqlSubjectRef, Integer>>> tempRankLadders = new HashMap<>();
+            Map<String, List<LegacyDao.LegacySubjectRef>> defaultSubjects = new HashMap<>();
+            Map<String, List<Map.Entry<LegacyDao.LegacySubjectRef, Integer>>> tempRankLadders = new HashMap<>();
 
-            try (PreparedStatement select = dao.prepareStatement("SELECT type, name FROM {}permissions_entity_old")) {
+            /*
+             * Transfer premissions & options data
+             * Our strategy here is to start with permissions, then construct segments by world.
+             * At the end of the whole process, all these segments will be converted into modern segments
+             */
+            try (PreparedStatement select = legacy.prepareStatement("SELECT type, name FROM {}permissions_entity_old")) {
                 ResultSet rs = select.executeQuery();
                 while (rs.next()) {
-                    SqlSubjectRef ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
+                    LegacyDao.LegacySubjectRef ref = legacy.getSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
                     LegacyDao.LegacySegment currentSeg = null;
                     Map<String, LegacyDao.LegacySegment> worldSegments = new HashMap<>();
-                    try (PreparedStatement selectPermissionsOptions = dao.prepareStatement("SELECT id, permission, world, value FROM {}permissions_old WHERE type=? AND name=? ORDER BY world, id DESC")) {
+                    try (PreparedStatement selectPermissionsOptions = legacy.prepareStatement("SELECT id, permission, world, value FROM {}permissions_old WHERE type=? AND name=? ORDER BY world, id DESC")) {
                         selectPermissionsOptions.setInt(1, rs.getInt(1));
                         selectPermissionsOptions.setString(2, rs.getString(2));
 
                         ResultSet perms = selectPermissionsOptions.executeQuery();
                         String rank = null, rankLadder = null;
-                        int defaultVal = 0;
                         while (perms.next()) {
                             String worldChecked = perms.getString(3);
                             if (worldChecked != null && worldChecked.isEmpty()) {
                                 worldChecked = null;
                             }
                             if (currentSeg == null || !Objects.equals(worldChecked, currentSeg.getWorld())) {
-                                if (currentSeg != null) {
-                                    currentSeg.doUpdate();
-                                }
-                                currentSeg = new LegacyDao.LegacySegment(worldChecked);
-                                //currentSeg = SqlDataSegment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
-                                //dao.allocateSegment(ref, currentSeg);
+                                currentSeg = LegacyDao.LegacySegment.empty(ref, worldChecked);
                                 worldSegments.put(currentSeg.getWorld(), currentSeg);
                             }
                             String key = perms.getString(2);
@@ -130,13 +133,13 @@ public class SchemaMigrations {
                                     key = key.substring(1);
                                 }
                                 if (key.equals("*")) {
-                                    defaultVal = val;
+                                    currentSeg.setPermissionDefault(val);
                                     continue;
                                 }
                                 key = ConversionUtils.convertLegacyPermission(key);
                                 currentSeg.getPermissions().put(key, val);
-                            } else {
-                                if (currentSeg.getWorld() == null) {
+                            } else { // option -- let's see if it's something that's become another flag rather than an option
+                                if (currentSeg.getWorld() == null) { // check for rank ladder
                                     boolean rankEq = key.equals("rank"), rankLadderEq = !rankEq && key.equals("rank-ladder");
                                     if (rankEq || rankLadderEq) {
                                         if (rankEq) {
@@ -145,7 +148,7 @@ public class SchemaMigrations {
                                             rankLadder = value;
                                         }
                                         if (rank != null && rankLadder != null) {
-                                            List<Map.Entry<SqlSubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
+                                            List<Map.Entry<LegacyDao.LegacySubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
                                             try {
                                                 ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
                                             } catch (IllegalArgumentException ex) {}
@@ -155,97 +158,69 @@ public class SchemaMigrations {
                                         continue;
                                     }
                                 }
-                                if (key.equals("default") && value.equalsIgnoreCase("true")) {
+
+                                if (key.equals("default") && value.equalsIgnoreCase("true")) { // check for default status
                                     defaultSubjects.computeIfAbsent(currentSeg.getWorld(), ign -> new ArrayList<>()).add(ref);
-                                    continue;
-                                }
-                                currentSeg.getOptions().put(key, value);
-                            }
-                        }
-
-                        if (currentSeg != null) {
-                            currentSeg.doUpdate();
-
-                            if (rank != null) {
-                                List<Map.Entry<SqlSubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
-                                try {
-                                    ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
-                                } catch (IllegalArgumentException ex) {}
-
-                            }
-                        }
-                    }
-
-                    for (Map.Entry<String, List<Map.Entry<SqlSubjectRef, Integer>>> ent : tempRankLadders.entrySet()) {
-                        List<SqlSubjectRef> ladder = ent.getValue().stream()
-                                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
-                                .map(Map.Entry::getKey)
-                                .collect(GuavaCollectors.toImmutableList());
-                        dao.setRankLadder(ent.getKey(), new SqlRankLadder(ent.getKey(), ladder));
-
-                    }
-
-                    if (!defaultSubjects.isEmpty()) {
-                        SqlSubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_USER);
-                        List<SqlDataSegment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
-                        for (Map.Entry<String, List<SqlSubjectRef>> ent : defaultSubjects.entrySet()) {
-                            SqlDataSegment seg = null;
-                            if (!segments.isEmpty()) {
-                                for (SqlDataSegment segment : segments) {
-                                    if (ent.getKey() == null && segment.getContexts().isEmpty()) {
-                                        seg = segment;
-                                        break;
-                                    } else if (segment.getContexts().size() == 1) {
-                                        Map.Entry<String, String> ctx = segment.getContexts().iterator().next();
-                                        if (ctx.getKey().equals("world") && ctx.getValue().equals(ent.getKey())) {
-                                            seg = segment;
-                                            break;
-                                        }
-                                    }
+                                } else {
+                                    currentSeg.getOptions().put(key, value);
                                 }
                             }
-                            if (seg == null) {
-                                seg = SqlDataSegment.unallocated(ent.getKey() == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", ent.getKey())));
-                                dao.allocateSegment(defaultSubj, seg);
-                                segments.add(seg);
-                            }
-                            dao.setParents(seg, ent.getValue());
+                        }
+
+                        if (rank != null) {
+                            List<Map.Entry<LegacyDao.LegacySubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
+                            try {
+                                ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
+                            } catch (IllegalArgumentException ex) {}
+
                         }
                     }
 
-                    try (PreparedStatement selectInheritance = dao.prepareStatement(legacy.getSelectParentsQuery())) {
+                    try (PreparedStatement selectInheritance = legacy.prepareStatement(legacy.getSelectParentsQuery())) {
                         selectInheritance.setString(1, rs.getString(2));
                         selectInheritance.setInt(2, rs.getInt(1));
 
                         ResultSet inheritance = selectInheritance.executeQuery();
-                        List<SqlSubjectRef> newInheritance = new LinkedList<>();
                         while (inheritance.next()) {
                             if (currentSeg == null || !Objects.equals(inheritance.getString(3), currentSeg.getWorld())) {
-                                if (currentSeg != null && !newInheritance.isEmpty()) {
-                                    dao.setParents(currentSeg, newInheritance);
-                                    newInheritance.clear();
-                                }
                                 String checkWorld = inheritance.getString(3);
                                 currentSeg = worldSegments.get(checkWorld);
                                 if (currentSeg == null) {
-                                    currentSeg = new LegacyDao.LegacySegment(checkWorld);
+                                    currentSeg = LegacyDao.LegacySegment.empty(ref, checkWorld);
                                     worldSegments.put(currentSeg.getWorld(), currentSeg);
                                 }
                             }
-                            newInheritance.add(dao.getOrCreateSubjectRef(PermissionsEx.SUBJECTS_GROUP, inheritance.getString(2)));
-                        }
-                        if (currentSeg != null && !newInheritance.isEmpty()) {
-                            dao.setParents(currentSeg, newInheritance);
-                            newInheritance.clear();
+                            currentSeg.getParents().add(legacy.getSubjectRef(PermissionsEx.SUBJECTS_GROUP, inheritance.getString(2)));
                         }
                     }
-
+                    legacy.setSegments(worldSegments.values());
                 }
+
             }
 
-            dao.deleteTable("permissions_old");
-            dao.deleteTable("permissions_entity_old");
-            dao.deleteTable("permissions_inheritance_old");
+
+            for (Map.Entry<String, List<Map.Entry<LegacyDao.LegacySubjectRef, Integer>>> ent : tempRankLadders.entrySet()) {
+                List<LegacyDao.LegacySubjectRef> ladder = ent.getValue().stream()
+                        .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                        .map(Map.Entry::getKey)
+                        .collect(GuavaCollectors.toImmutableList());
+                legacy.setRankLadder(ent.getKey(), ladder);
+            }
+
+            if (!defaultSubjects.isEmpty()) {
+                LegacyDao.LegacySubjectRef defaultSubj = legacy.getSubjectRef(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_USER);
+                legacy.setSegments(defaultSubjects.entrySet().stream()
+                        .map(ent -> {
+                            LegacyDao.LegacySegment seg = LegacyDao.LegacySegment.empty(defaultSubj, ent.getKey());
+                            seg.getParents().addAll(ent.getValue());
+                            return seg;
+                        })
+                        .collect(Collectors.toList()));
+            }
+
+            legacy.deleteTable("permissions_old");
+            legacy.deleteTable("permissions_entity_old");
+            legacy.deleteTable("permissions_inheritance_old");
         };
     }
 

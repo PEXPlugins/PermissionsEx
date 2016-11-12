@@ -54,6 +54,7 @@ class SqlSubjectData extends AbstractSubjectData<SqlSubjectRef, SqlDataSegment> 
         this.updatesToPerform.set(updates);
     }
 
+    // TODO: make sure update logic is correct
     protected final SqlSubjectData newWithUpdate(Map<SegmentKey, SqlDataSegment> segments, ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
         return new SqlSubjectData(getReference(), segments, Util.appendImmutable(this.updatesToPerform.get(), updateFunc));
     }
@@ -62,10 +63,10 @@ class SqlSubjectData extends AbstractSubjectData<SqlSubjectRef, SqlDataSegment> 
     protected final SqlSubjectData newWithUpdated(SegmentKey oldKey, SqlDataSegment newVal) {
         ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc;
         if (newVal == null || newVal.isEmpty()) { // then remove segment
-            /*if (newVal != null && newVal.isUnallocated()) */{
+            if (newVal != null && newVal.isUnallocated()) {
                 updateFunc = (dao, data) -> {};
-            /*} else {
-                updateFunc = (dao, data) -> dao.removeSegment(oldKey);*/
+            } else {
+                updateFunc = (dao, data) -> dao.removeSegment(oldKey);
             }
         } else if (newVal.isUnallocated()) { // create new segment
             updateFunc = (dao, data) -> {

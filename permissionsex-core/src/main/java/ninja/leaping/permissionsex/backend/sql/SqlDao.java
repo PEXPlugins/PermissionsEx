@@ -237,7 +237,7 @@ public abstract class SqlDao implements AutoCloseable {
         return conn.prepareStatement(this.ds.insertPrefix(query), params);
     }
 
-    protected <T> T executeInTransaction(ThrowingSupplier<T, SQLException> func) throws SQLException {
+    public <T> T executeInTransaction(ThrowingSupplier<T, SQLException> func) throws SQLException {
         transactionLevel++;
         conn.setAutoCommit(false);
         try {

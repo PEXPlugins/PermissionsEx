@@ -142,8 +142,17 @@ class PEXSubject implements Subject {
         try {
             Preconditions.checkNotNull(contexts, "contexts");
             Preconditions.checkNotNull(permission, "permission");
-            int ret = baked.getPermission(parSet(contexts), permission);
-            return ret == 0 ? Tristate.UNDEFINED : ret > 0 ? Tristate.TRUE : Tristate.FALSE;
+            ninja.leaping.permissionsex.util.Tristate ret = baked.getPermission(parSet(contexts), permission);
+            switch (ret) {
+                case UNDEFINED:
+                    return Tristate.UNDEFINED;
+                case TRUE:
+                    return Tristate.TRUE;
+                case FALSE:
+                    return Tristate.FALSE;
+                default:
+                    throw new UnsupportedOperationException("Unmatching tristate value encountered: " + ret);
+            }
         } finally {
             time().onGetPermission().stopTimingIfSync();
         }

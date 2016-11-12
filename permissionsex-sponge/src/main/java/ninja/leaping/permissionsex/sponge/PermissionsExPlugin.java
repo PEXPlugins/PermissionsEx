@@ -48,7 +48,9 @@ import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStoppedEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
+import org.spongepowered.api.event.game.state.GameStoppingEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -209,7 +211,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void disable(GameStoppedServerEvent event) {
+    public void disable(GameStoppingEvent event) {
         logger.debug(t("Disabling %s", PomData.NAME));
         PermissionsEx manager = this.manager;
         if (manager != null) {
@@ -327,6 +329,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @SuppressWarnings("unchecked")
     // TODO: Get values from DataStore.getRegisteredTypes()
     public Map<String, SubjectCollection> getKnownSubjects() {
+        getManager().getRegisteredSubjectTypes().forEach(this::getSubjects); // Cache subject types
         return (Map) subjectCollections.asMap();
     }
 

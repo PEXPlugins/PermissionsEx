@@ -16,14 +16,18 @@
  */
 package ninja.leaping.permissionsex.backend.sql.dao;
 
+import ninja.leaping.configurate.loader.AtomicFiles;
 import ninja.leaping.permissionsex.backend.sql.SqlDao;
+import ninja.leaping.permissionsex.backend.sql.SqlSubjectRef;
 import ninja.leaping.permissionsex.data.SubjectRef;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,14 +90,65 @@ public class LegacyDao {
         }
     }
 
-    public static class LegacySegment {
-        private final String world;
-       private final Map<String, Integer> permissions;
-        private final Map<String, String> options;
-        private final List<SubjectRef> parents;
-        private final Integer permissionDefault;
+    public LegacySubjectRef getSubjectRef(String type, String identifier) throws SQLException {
+        SqlSubjectRef ref = dao.getOrCreateSubjectRef(type, identifier);
+        return new LegacySubjectRef(ref.getId(), ref.getType(), ref.getIdentifier());
+    }
 
-        public LegacySegment(String world, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault) {
+    public void setRankLadder(String key, List<LegacySubjectRef> ladder) throws SQLException {
+        dao.executeInTransaction(() -> {
+            try (PreparedStatement delete = prepareStatement("DELETE FROM {}rank_ladders WHERE `name`=?");
+                 PreparedStatement insert = prepareStatement("INSERT INTO {}rank_ladders (`name`, `subject`) VALUES (?, ?)")) {
+                delete.setString(1, key);
+                delete.executeUpdate();
+
+                if (ladder != null) {
+                    insert.setString(1, key);
+                    for (LegacySubjectRef ref : ladder) {
+                        insert.setInt(2, ref.id);
+                        insert.addBatch();
+                    }
+                    insert.executeBatch();
+                }
+            }
+            return null;
+        });
+    }
+
+    public void setSegments(Collection<LegacySegment> values) {
+        AtomicFiles.createAtomicBufferedWriter()
+
+    }
+
+    public void deleteTable(String table) throws SQLException {
+        dao.deleteTable(table);
+    }
+
+    public static class LegacySubjectRef {
+        private final int id;
+        private final String type, identifier;
+
+        LegacySubjectRef(int id, String type, String identifier) {
+            this.id = id;
+            this.type = type;
+            this.identifier = identifier;
+        }
+    }
+
+    public static class LegacySegment {
+        private final LegacySubjectRef ref;
+        private final String world;
+        private final Map<String, Integer> permissions;
+        private final Map<String, String> options;
+        private final List<LegacySubjectRef> parents;
+        private Integer permissionDefault;
+
+        public static LegacySegment empty(LegacySubjectRef ref, String world) {
+            return new LegacySegment(ref, world, new HashMap<>(), new HashMap<>(), new ArrayList<>(), null);
+        }
+
+        public LegacySegment(LegacySubjectRef ref, String world, Map<String, Integer> permissions, Map<String, String> options, List<LegacySubjectRef> parents, Integer permissionDefault) {
+            this.ref = ref;
             this.world = world;
             this.permissions = permissions;
             this.options = options;
@@ -109,7 +164,7 @@ public class LegacyDao {
             return options;
         }
 
-        public List<SubjectRef> getParents() {
+        public List<LegacySubjectRef> getParents() {
             return parents;
         }
 
@@ -117,12 +172,16 @@ public class LegacyDao {
             return permissionDefault;
         }
 
+        public LegacySubjectRef getRef() {
+            return this.ref;
+        }
+
         public String getWorld() {
             return world;
         }
 
-        public void doUpdate() {
-
+        public void setPermissionDefault(int permissionDefault) {
+            this.permissionDefault = permissionDefault;
         }
     }
 }
