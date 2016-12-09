@@ -116,17 +116,24 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
             for (Set<Entry<String, String>> combo : state.activeContexts) {
-                ret = ret.thenRun(() -> visitSingle(state, transientData, combo, inheritanceLevel));
-                for (Entry<String, String> parent : transientData.getParents(combo)) {
-                    ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
-                }
-                ret = ret.thenRun(() -> visitSingle(state, persistent, combo, inheritanceLevel));
-                for (Entry<String, String> parent : persistent.getParents(combo)) {
-                    ret = ret.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+                if (type.getTypeInfo().transientHasPriority()) {
+                    ret = visitSubjectSingle(state, transientData, ret, combo, visitedSubjects, inheritanceLevel);
+                    ret = visitSubjectSingle(state, persistent, ret, combo, visitedSubjects, inheritanceLevel);
+                } else {
+                    ret = visitSubjectSingle(state, persistent, ret, combo, visitedSubjects, inheritanceLevel);
+                    ret = visitSubjectSingle(state, transientData, ret, combo, visitedSubjects, inheritanceLevel);
                 }
             }
             return ret;
         }).thenCompose(res -> res);
+    }
+
+    private CompletableFuture<Void> visitSubjectSingle(BakeState state, ImmutableSubjectData data, CompletableFuture<Void> initial, Set<Entry<String, String>> activeCombo, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
+        initial = initial.thenRun(() -> visitSingle(state, data, activeCombo, inheritanceLevel));
+        for (Entry<String, String> parent : data.getParents(activeCombo)) {
+            initial = initial.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+        }
+        return initial;
     }
 
     private void putPermIfNecessary(BakeState state, String perm, int val) {

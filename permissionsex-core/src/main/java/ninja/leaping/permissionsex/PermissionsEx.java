@@ -37,6 +37,7 @@ import ninja.leaping.permissionsex.data.RankLadderCache;
 import ninja.leaping.permissionsex.data.SubjectCache;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.subject.SubjectType;
+import ninja.leaping.permissionsex.subject.SubjectTypeDefinition;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 
@@ -97,6 +98,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         this.transientData.initialize(this);
         setDebugMode(config.isDebugEnabled());
         initialize(config);
+        getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.defaultFor(SUBJECTS_DEFAULTS, false));
         convertUuids();
 
         registerCommand(PermissionsExCommands.createRootCommand(this));
