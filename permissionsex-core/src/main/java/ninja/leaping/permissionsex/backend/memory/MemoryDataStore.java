@@ -36,8 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
 /**
  * A data store backed entirely in memory
  */
@@ -83,7 +81,6 @@ public class MemoryDataStore extends AbstractDataStore {
         if (track) {
             this.data.put(Maps.immutableEntry(type, identifier), data);
         }
-
         return completedFuture(data);
     }
 
@@ -100,6 +97,10 @@ public class MemoryDataStore extends AbstractDataStore {
     protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
         this.rankLadders.put(ladder, newLadder);
         return completedFuture(newLadder);
+    }
+
+    private <T> CompletableFuture<T> completedFuture(T i) {
+        return CompletableFuture.supplyAsync(() -> i, getManager().getAsyncExecutor());
     }
 
     @Override
