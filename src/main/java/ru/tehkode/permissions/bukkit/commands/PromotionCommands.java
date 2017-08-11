@@ -74,6 +74,18 @@ public class PromotionCommands extends PermissionsCommand {
 			description = "Promotes <user> to next group on [ladder]",
 			isPrimary = true)
 	public void promoteUser(PermissionsEx plugin, CommandSender sender, Map<String, String> args) {
+		
+		PermissionUser promoter = null;
+		if (sender instanceof Player) {
+			promoter = plugin.getPermissionsManager().getUser((Player) sender);
+			if (promoter == null || !promoter.has("permissions.user.promote." + ladder, ((Player) sender).getWorld().getName())) {
+				sender.sendMessage(ChatColor.RED + "You don't have enough permissions to promote on this ladder");
+				return;
+			}
+
+			promoterName = promoter.getName();
+		}
+		
 		String userName = this.autoCompletePlayerName(args.get("user"));
 		PermissionUser user = plugin.getPermissionsManager().getUser(userName);
 
@@ -87,17 +99,6 @@ public class PromotionCommands extends PermissionsCommand {
 
 		if (args.containsKey("ladder")) {
 			ladder = args.get("ladder");
-		}
-
-		PermissionUser promoter = null;
-		if (sender instanceof Player) {
-			promoter = plugin.getPermissionsManager().getUser((Player) sender);
-			if (promoter == null || !promoter.has("permissions.user.promote." + ladder, ((Player) sender).getWorld().getName())) {
-				sender.sendMessage(ChatColor.RED + "You don't have enough permissions to promote on this ladder");
-				return;
-			}
-
-			promoterName = promoter.getName();
 		}
 
 		try {
