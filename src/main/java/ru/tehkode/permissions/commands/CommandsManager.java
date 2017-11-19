@@ -39,7 +39,7 @@ import ru.tehkode.utils.StringUtils;
 public class CommandsManager {
 
 	protected Map<String, Map<CommandSyntax, CommandBinding>> listeners = new LinkedHashMap<>();
-	protected PermissionsEx plugin;
+	public final PermissionsEx plugin;
 
 	public CommandsManager(PermissionsEx plugin) {
 		this.plugin = plugin;
