@@ -103,7 +103,7 @@ public abstract class PermissionsCommand implements CommandListener {
 		}
 
 		/*
-		 * On large servers searching all user names causes lags/crashes see as
+		 * On large servers searching all user names causes lags/crashes as
 		 * described in issue 2923 and 2987.
 		 */
 		if (!manager.plugin.getConfiguration().autocompleteNames()) {
