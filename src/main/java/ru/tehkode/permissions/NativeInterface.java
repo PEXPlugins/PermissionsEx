@@ -1,7 +1,5 @@
 package ru.tehkode.permissions;
 
-import ru.tehkode.permissions.events.PermissionEvent;
-
 import java.util.UUID;
 
 /**
@@ -31,19 +29,4 @@ public interface NativeInterface {
 	 * @return Whether this uuid is online
 	 */
 	public boolean isOnline(UUID uuid);
-
-	/**
-	 * Return the UUID associated with this server
-	 * Mostly used internally
-	 *
-	 * @return This server's uuid
-	 */
-	public UUID getServerUUID();
-
-	/**
-	 * Calls an event on the server
-	 *
-	 * @param event The event to call
-	 */
-	public void callEvent(PermissionEvent event);
 }

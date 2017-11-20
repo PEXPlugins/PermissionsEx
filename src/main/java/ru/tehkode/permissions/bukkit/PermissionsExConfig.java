@@ -26,6 +26,7 @@ public class PermissionsExConfig {
 	private final boolean updaterEnabled;
 	private final boolean alwaysUpdate;
 	private final boolean informPlayers;
+	private final boolean autocompleteNames;
 	private final List<String> serverTags;
 	private final String basedir;
 
@@ -44,6 +45,7 @@ public class PermissionsExConfig {
 		this.updaterEnabled = getBoolean("updater", true);
 		this.alwaysUpdate = getBoolean("alwaysUpdate", false);
 		this.informPlayers = getBoolean("permissions.informplayers.changes", false);
+		this.autocompleteNames = getBoolean("autocompletenames", false);
 		this.basedir = getString("permissions.basedir", "plugins/PermissionsEx");
 	}
 
@@ -114,6 +116,14 @@ public class PermissionsExConfig {
 
 	public boolean informPlayers() {
 		return informPlayers;
+	}
+
+	public boolean autocompleteNames() {
+		/*
+		 * Used in PermissionsCommand.autoCompletePlayerName to disable user autocomplete.
+		 * Enabled by default to preserve normal behaviour.
+		 */
+		return autocompleteNames;
 	}
 
 	public List<String> getServerTags() {
