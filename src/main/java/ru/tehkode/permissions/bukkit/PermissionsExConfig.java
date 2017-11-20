@@ -45,7 +45,7 @@ public class PermissionsExConfig {
 		this.updaterEnabled = getBoolean("updater", true);
 		this.alwaysUpdate = getBoolean("alwaysUpdate", false);
 		this.informPlayers = getBoolean("permissions.informplayers.changes", false);
-		this.autocompleteNames = getBoolean("autocompletenames", true);
+		this.autocompleteNames = getBoolean("autocompletenames", false);
 		this.basedir = getString("permissions.basedir", "plugins/PermissionsEx");
 	}
 

@@ -25,8 +25,6 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 import com.google.common.cache.CacheBuilder;
-import com.zachsthings.netevents.NetEventsPlugin;
-import net.gravitydevelopment.updater.Updater;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -69,7 +67,6 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	private PermissionsExConfig config;
 	protected SuperpermsListener superms;
 	private RegexPermissions regexPerms;
-	private NetEventsPlugin netEvents;
 	private boolean errored = false;
 	private static PermissionsEx instance;
 	{
@@ -208,72 +205,6 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 
 			// Start timed permissions cleaner timer
 			this.permissionsManager.initTimer();
-			if (config.updaterEnabled()) {
-				final Updater updater = new Updater(this, BUKKITDEV_ID, this.getFile(), Updater.UpdateType.DEFAULT, false) {
-					/**
-					 * Customized update check function.
-					 * If update is only a difference in minor version (supermajor.major.minor)
-					 * @param localVerString Local version in string form
-					 * @param remoteVerString Remote version in string format
-					 * @return
-					 */
-					@Override
-					public boolean shouldUpdate(String localVerString, String remoteVerString) {
-						if (localVerString.equals(remoteVerString)) { // Versions are equal
-							return false;
-						}
-
-						if (config.alwaysUpdate()) {
-							return true;
-						}
-
-						if (localVerString.endsWith("-SNAPSHOT") || remoteVerString.endsWith("-SNAPSHOT")) { // Don't update when a dev build is involved
-							return false;
-						}
-
-						String[] localVer = localVerString.split("\\.");
-						int localSuperMajor = Integer.parseInt(localVer[0]);
-						int localMajor = localVer.length > 1 ? Integer.parseInt(localVer[1]) : 0;
-						int localMinor = localVer.length > 2 ? Integer.parseInt(localVer[2]) : 0;
-						String[] remoteVer = remoteVerString.split("\\.");
-						int remoteSuperMajor = Integer.parseInt(remoteVer[0]);
-						int remoteMajor = remoteVer.length > 1 ? Integer.parseInt(remoteVer[1]) : 0;
-						int remoteMinor = remoteVer.length > 2 ? Integer.parseInt(remoteVer[2]) : 0;
-
-						if (localSuperMajor > remoteSuperMajor
-								|| (localSuperMajor == remoteSuperMajor && localMajor > remoteMajor)
-								|| (localSuperMajor == remoteSuperMajor && localMajor == remoteMajor && localMinor >= remoteMinor)) {
-							return false; // Local version is newer or same as remote version
-						}
-						if (localSuperMajor == remoteSuperMajor && localMajor == remoteMajor) {
-							// Versions aren't equal but major version is, this is a minor update
-							return true;
-						} else {
-							getLogger().warning("An update to " + getDescription().getName() + " version " + remoteVerString + " is available to download from" +
-									" http://dev.bukkit.org/bukkit-plugins/permissionsex/. Please review the changes and update as soon as possible!");
-							return false;
-						}
-
-					}
-				};
-				getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
-					@Override
-					public void run() {
-						switch (updater.getResult()) {
-							case SUCCESS:
-								getLogger().info("An update to " + updater.getLatestName() + " was downloaded and will be applied on next server launch.");
-						}
-					}
-				});
-			}
-			if (getConfiguration().useNetEvents()) {
-				Plugin netEventsPlugin = getServer().getPluginManager().getPlugin("NetEvents");
-				if (netEventsPlugin != null && netEventsPlugin.isEnabled()) {
-					NetEventsPlugin netEvents = (NetEventsPlugin) netEventsPlugin;
-					getServer().getPluginManager().registerEvents(new RemoteEventListener(netEvents, permissionsManager), this);
-					this.netEvents = netEvents;
-				}
-			}
 		} catch (PermissionBackendException e) {
 			logBackendExc(e);
 			this.getPluginLoader().disablePlugin(this);
@@ -378,20 +309,6 @@ public class PermissionsEx extends JavaPlugin implements NativeInterface {
 	public boolean isOnline(UUID uuid) {
 		Player player = getServer().getPlayer(uuid);
 		return (player != null && player.isOnline());
-	}
-
-	@Override
-	public UUID getServerUUID() {
-		return netEvents == null ? null : netEvents.getServerUUID();
-	}
-
-	@Override
-	public void callEvent(PermissionEvent event) {
-		if (netEvents != null) {
-			netEvents.callEvent(event);
-		} else {
-			getServer().getPluginManager().callEvent(event);
-		}
 	}
 
 	public static boolean isAvailable() {

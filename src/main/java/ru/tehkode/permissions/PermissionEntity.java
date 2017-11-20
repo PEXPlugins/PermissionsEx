@@ -727,11 +727,11 @@ public abstract class PermissionEntity {
 	}
 
 	protected void callEvent(PermissionEntityEvent event) {
-		manager.callEvent(event);
+
 	}
 
 	protected void callEvent(PermissionEntityEvent.Action action) {
-		this.callEvent(new PermissionEntityEvent(manager.getServerUUID(), this, action));
+
 	}
 
 	@Override

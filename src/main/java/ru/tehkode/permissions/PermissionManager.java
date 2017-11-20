@@ -67,10 +67,6 @@ public class PermissionManager {
 		this.initBackend();
 	}
 
-	UUID getServerUUID() {
-		return nativeI.getServerUUID();
-	}
-
 	public boolean shouldCreateUserRecords() {
 		return config.createUserRecords();
 	}
@@ -694,11 +690,11 @@ public class PermissionManager {
 	}
 
 	protected void callEvent(PermissionEvent event) {
-		nativeI.callEvent(event);
+
 	}
 
 	protected void callEvent(PermissionSystemEvent.Action action) {
-		this.callEvent(new PermissionSystemEvent(getServerUUID(), action));
+		
 	}
 
 	public PermissionMatcher getPermissionMatcher() {
