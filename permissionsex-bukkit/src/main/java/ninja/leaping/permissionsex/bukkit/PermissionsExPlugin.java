@@ -58,6 +58,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,7 +107,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             if (origPath.isAbsolute()) {
                 return origPath.toString();
             } else {
-                return plugin.getDataFolder().toPath().toAbsolutePath().resolve(origPath).toString();
+                return plugin.getDataFolder().toPath().toAbsolutePath().resolve(origPath).toString().replace('\\', '/');
             }
         });
     }
@@ -119,6 +122,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     private PEXPermissionSubscriptionMap subscriptionHandler;
     private volatile boolean enabled;
     private Path dataPath;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -185,6 +189,13 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             permsList.uninject();
         }
         uninjectAllPermissibles();
+        this.executorService.shutdown();
+        try {
+            this.executorService.awaitTermination(20, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.error(t("Timeout while waiting for PEX tasks to finish!"));
+            this.executorService.shutdownNow();
+        }
     }
 
     @EventHandler
@@ -304,16 +315,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     private class BukkitImplementationInterface implements ImplementationInterface {
-
-        private final Executor bukkitExecutor = runnable -> {
-            if (enabled) {
-                getServer().getScheduler()
-                        .runTaskAsynchronously(PermissionsExPlugin.this, runnable);
-            } else {
-                runnable.run();
-            }
-        };
-
         @Override
         public Path getBaseDirectory() {
             return dataPath;
@@ -365,7 +366,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
          */
         @Override
         public Executor getAsyncExecutor() {
-            return bukkitExecutor;
+            return executorService;
         }
 
         @Override
