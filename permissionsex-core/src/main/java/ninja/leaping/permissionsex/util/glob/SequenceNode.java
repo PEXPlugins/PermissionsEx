@@ -39,7 +39,6 @@ class SequenceNode extends GlobNode {
     }
 
     private final class SeqIterator extends AbstractIterator<String> {
-        @SuppressWarnings("unchecked")
         private final Iterator<String>[] iterators;
         private final String[] components;
 

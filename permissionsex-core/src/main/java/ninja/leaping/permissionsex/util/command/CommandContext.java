@@ -45,7 +45,7 @@ public class CommandContext {
         return spec;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Collection<T> getAll(String key) {
         return (Collection) parsedArgs.get(key);
     }

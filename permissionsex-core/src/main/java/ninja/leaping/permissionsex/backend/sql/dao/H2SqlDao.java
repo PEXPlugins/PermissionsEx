@@ -18,12 +18,8 @@ package ninja.leaping.permissionsex.backend.sql.dao;
 
 import ninja.leaping.permissionsex.backend.sql.SqlDao;
 import ninja.leaping.permissionsex.backend.sql.SqlDataStore;
-import ninja.leaping.permissionsex.backend.sql.SubjectRef;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class H2SqlDao extends SqlDao {
 

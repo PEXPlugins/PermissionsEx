@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.data;
 
-import com.google.common.collect.ImmutableSet;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

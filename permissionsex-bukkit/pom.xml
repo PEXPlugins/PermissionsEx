@@ -37,7 +37,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.2</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <goals>
@@ -49,7 +49,7 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>shaded</shadedClassifierName> <!-- Any name that makes sense -->
-              <minimizeJar>true</minimizeJar>
+              <minimizeJar>false</minimizeJar>
               <relocations>
                 <relocation>
                   <pattern>ninja.leaping.configurate</pattern>
@@ -109,20 +109,20 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.8.7-R0.1-SNAPSHOT</version>
+      <version>1.14.4-R0.1-SNAPSHOT</version>
       <type>jar</type>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>net.milkbowl.vault</groupId>
       <artifactId>VaultAPI</artifactId>
-      <version>1.6</version>
+      <version>1.7</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <version>1.4.192</version>
+      <version>1.4.199</version>
       <optional>true</optional>
       <scope>provided</scope>
     </dependency>
@@ -136,18 +136,18 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.21</version>
+      <version>1.7.26</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>[2.0,3.0)</version>
+      <version>3.0.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
-      <version>2.5.1</version>
+      <version>3.3.1</version>
     </dependency>
   </dependencies>
   <repositories>

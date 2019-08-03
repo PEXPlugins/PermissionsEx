@@ -20,6 +20,8 @@ package ninja.leaping.permissionsex.util.glob;
  * This error is thrown when invalid glob syntax is presented
  */
 public class GlobParseException extends Exception {
+    private static final long serialVersionUID = -1855597619477016702L;
+
     GlobParseException(String s) {
         super(s);
     }

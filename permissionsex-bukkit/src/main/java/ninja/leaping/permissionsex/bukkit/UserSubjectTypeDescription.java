@@ -54,6 +54,7 @@ public class UserSubjectTypeDescription extends SubjectTypeDefinition {
             if (player != null) {
                 return Optional.of(player.getUniqueId().toString());
             } else {
+                @SuppressWarnings("deprecation")
                 OfflinePlayer offline = plugin.getServer().getOfflinePlayer(input);
                 if (offline != null && offline.getUniqueId() != null) {
                     return Optional.of(offline.getUniqueId().toString());

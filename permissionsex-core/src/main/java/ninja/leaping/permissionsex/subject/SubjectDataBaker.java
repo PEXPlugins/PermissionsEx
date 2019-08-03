@@ -19,7 +19,6 @@ package ninja.leaping.permissionsex.subject;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public interface SubjectDataBaker {
     CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<Map.Entry<String, String>> activeContexts);

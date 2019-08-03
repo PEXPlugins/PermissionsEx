@@ -66,7 +66,7 @@ public final class FileDataStore extends AbstractDataStore {
     @Setting(value = "alphabetize-entries", comment = "Place file entries in alphabetical order")
     private boolean alphabetizeEntries = false;
 
-    private ConfigurationLoader permissionsFileLoader;
+    private ConfigurationLoader<? extends ConfigurationNode> permissionsFileLoader;
     private ConfigurationNode permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();

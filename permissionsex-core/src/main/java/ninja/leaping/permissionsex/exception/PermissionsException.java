@@ -21,6 +21,8 @@ import ninja.leaping.permissionsex.util.Translatable;
 import java.util.Locale;
 
 public class PermissionsException extends Exception {
+    private static final long serialVersionUID = -1575675581442294748L;
+    
     private final Translatable message;
 
     public PermissionsException(Translatable message) {

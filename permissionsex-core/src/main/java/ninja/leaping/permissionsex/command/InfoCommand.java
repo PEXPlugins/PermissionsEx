@@ -45,11 +45,9 @@ public class InfoCommand {
     private static class SubjectInfoPrintingExecutor extends PermissionsExExecutor {
         private static final String INDENT = "  ";
         private static final String DOUBLE_INDENT = INDENT + INDENT;
-        private final PermissionsEx pex;
 
         private SubjectInfoPrintingExecutor(PermissionsEx pex) {
             super(pex);
-            this.pex = pex;
         }
 
         @Override

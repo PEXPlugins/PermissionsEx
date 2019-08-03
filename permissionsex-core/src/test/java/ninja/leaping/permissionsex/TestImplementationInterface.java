@@ -21,15 +21,11 @@ import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.h2.jdbcx.JdbcDataSource;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
-import org.postgresql.xa.PGXADataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.io.File;
 import java.nio.file.Path;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
@@ -58,12 +54,7 @@ public class TestImplementationInterface implements ImplementationInterface {
             ds.setURL(url);
             return ds;
         } else if (url.startsWith("jdbc:mysql")) {
-            try {
-                return new MariaDbDataSource(url);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-
+            return new MariaDbDataSource(url);
         } else if (url.startsWith("jdbc:postgresql")) {
             PGSimpleDataSource ds = new PGSimpleDataSource();
             ds.setUrl(url);

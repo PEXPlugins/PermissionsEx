@@ -98,6 +98,8 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
     }
 
     static class RuntimeCommandException extends RuntimeException {
+        private static final long serialVersionUID = -7243817601651202895L;
+
         private final Translatable message;
 
         RuntimeCommandException(Translatable message) {

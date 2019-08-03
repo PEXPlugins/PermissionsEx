@@ -21,6 +21,8 @@ import ninja.leaping.permissionsex.util.Translatable;
 import static ninja.leaping.permissionsex.util.Translations.t;
 
 public class PermissionsLoadingException extends PermissionsException {
+    private static final long serialVersionUID = -7821206470445564912L;
+
     public PermissionsLoadingException(Translatable message) {
         super(message);
     }

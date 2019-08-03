@@ -22,6 +22,8 @@ import ninja.leaping.permissionsex.util.Translatable;
  * This exception is thrown when the server admin is a hunk of stupid between the keyboard and chair
  */
 public class PEBKACException extends PermissionsException {
+    private static final long serialVersionUID = -3922462431218213878L;
+
     public PEBKACException(Translatable message) {
         super(message);
     }

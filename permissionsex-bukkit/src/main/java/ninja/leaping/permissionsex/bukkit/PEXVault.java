@@ -183,7 +183,6 @@ class PEXVault extends Permission {
 
     // -- Deprecated methods
 
-    @SuppressWarnings("deprecation")
     private OfflinePlayer pFromName(String name) {
         return this.plugin.getServer().getOfflinePlayer(name);
     }
@@ -226,17 +225,5 @@ class PEXVault extends Permission {
     @Override
     public String getPrimaryGroup(String world, String player) {
         return getPrimaryGroup(world, pFromName(player));
-    }
-
-    @Override
-    @Deprecated
-    public boolean playerAddTransient(String worldName, String player, String permission) {
-        return playerAddTransient(worldName, pFromName(player), permission);
-    }
-
-    @Override
-    @Deprecated
-    public boolean playerRemoveTransient(String worldName, String player, String permission) {
-        return playerRemoveTransient(worldName, pFromName(player), permission);
     }
 }

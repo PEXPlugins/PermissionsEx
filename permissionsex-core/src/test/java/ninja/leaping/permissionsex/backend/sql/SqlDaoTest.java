@@ -59,7 +59,7 @@ public class SqlDaoTest extends PermissionsExTest {
             propertyTestDbs = new String[0];
         }
         final Object[][] tests = new Object[propertyTestDbs.length + 1][2];
-        tests[propertyTestDbs.length] = new Object[] {"h2", "jdbc:h2:{base}/test.db"};
+        tests[propertyTestDbs.length] = new Object[] {"h2", "jdbc:h2:file:{base}/test.db"};
         for (int i = 0; i < propertyTestDbs.length; ++i) {
             tests[i] = propertyTestDbs[i].split("!");
         }
@@ -67,7 +67,7 @@ public class SqlDaoTest extends PermissionsExTest {
     }
 
     private final SqlDataStore sqlStore = new SqlDataStore();
-    private  String jdbcUrl;
+    private String jdbcUrl;
 
     public SqlDaoTest(String databaseName, String jdbcUrl) throws IOException {
         this.jdbcUrl = jdbcUrl;
@@ -77,7 +77,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Override
     public void setUp() throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
         File testDir = tempFolder.newFolder();
-        jdbcUrl = jdbcUrl.replaceAll("\\{base\\}", testDir.getCanonicalPath());
+        jdbcUrl = jdbcUrl.replaceAll("\\{base\\}", testDir.getCanonicalPath().replace('\\', '/'));
         sqlStore.setConnectionUrl(jdbcUrl);
         sqlStore.setPrefix("pextest" + COUNTER.getAndIncrement());
         super.setUp();

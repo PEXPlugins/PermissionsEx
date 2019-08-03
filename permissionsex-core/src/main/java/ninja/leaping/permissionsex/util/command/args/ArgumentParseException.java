@@ -26,6 +26,8 @@ import java.util.Locale;
  * Exception thrown when arguments are parsed
  */
 public class ArgumentParseException extends CommandException {
+    private static final long serialVersionUID = 3406557653990427160L;
+    
     private final String source;
     private final int position;
 

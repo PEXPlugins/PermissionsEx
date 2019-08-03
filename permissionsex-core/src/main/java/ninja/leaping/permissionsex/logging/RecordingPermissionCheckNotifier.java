@@ -33,6 +33,8 @@ public class RecordingPermissionCheckNotifier implements PermissionCheckNotifier
 
     private static <T> Set<T> sizeLimitedSet(int maxSize) {
         return Collections.newSetFromMap(new LinkedHashMap<T, Boolean>() {
+            private static final long serialVersionUID = 9025221898274056636L;
+
             @Override
             protected boolean removeEldestEntry(Map.Entry<T, Boolean> eldest) {
                 return size() > maxSize;

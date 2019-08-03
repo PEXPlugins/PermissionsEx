@@ -325,14 +325,17 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     @Override
+    public TranslatableLogger getLogger() {
+        return this.logger;
+    }
+
+    // -- Implementation interface proxy methods --
+
+    @Override
     public Path getBaseDirectory() {
         return impl.getBaseDirectory();
     }
 
-    @Override
-    public TranslatableLogger getLogger() {
-        return this.logger;
-    }
 
     @Override
     public DataSource getDataSourceForURL(String url) throws SQLException {

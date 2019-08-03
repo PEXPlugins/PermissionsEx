@@ -197,6 +197,6 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
         for (int i = 0; i < oldArgs.length; ++i) {
             args[i] = componentFrom(oldArgs[i]);
         }
-        return new TranslatableComponent(tr.translate(sender instanceof Player ? LocaleUtils.toLocale(((Player) sender).spigot().getLocale()) : Locale.getDefault()), args);
+        return new TranslatableComponent(tr.translate(sender instanceof Player ? LocaleUtils.toLocale(((Player) sender).getLocale()) : Locale.getDefault()), args);
     }
 }

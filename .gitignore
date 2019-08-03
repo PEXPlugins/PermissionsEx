@@ -1,6 +1,8 @@
-/.project
-/.classpath
-/.settings
+.project
+.classpath
+.factorypath
+.settings/
+.vscode
 /target
 permissionsex-*/target
 /build.xml

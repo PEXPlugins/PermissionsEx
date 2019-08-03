@@ -123,7 +123,7 @@ public class PEXPermissible extends PermissibleBase {
         @Override
         public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
             String ret = subj.getOptions(contexts).get(option);
-            return ret == null ? Iterators.emptyIterator() : Iterators.singletonIterator(this.option + "." + ret);
+            return ret == null ? ImmutableSet.<String>of().iterator() : Iterators.singletonIterator(this.option + "." + ret);
         }
     }
     private final Player player;

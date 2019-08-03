@@ -32,9 +32,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @author zml2008
+ * Make Superperms' querying of all players with a given permission accurately follow PEX permission matching rules
  */
+
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class PermissionList extends HashMap<String, Permission> {
+    private static final long serialVersionUID = 5211930944081173317L;
+
     private static FieldReplacer<PluginManager, Map> INJECTOR;
 
     private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<>();
@@ -79,6 +83,8 @@ public class PermissionList extends HashMap<String, Permission> {
     }
 
     private class NotifyingChildrenMap extends LinkedHashMap<String, Boolean> {
+        private static final long serialVersionUID = -8012029306538729479L;
+
         private final Permission perm;
 
         public NotifyingChildrenMap(Permission perm) {
@@ -120,7 +126,6 @@ public class PermissionList extends HashMap<String, Permission> {
             INJECTOR = new FieldReplacer<>(manager.getServer().getPluginManager().getClass(), "permissions", Map.class);
         }
         Map existing = INJECTOR.get(manager.getServer().getPluginManager());
-        @SuppressWarnings("unchecked")
         PermissionList list = new PermissionList(existing, manager);
         INJECTOR.set(manager.getServer().getPluginManager(), list);
         return list;

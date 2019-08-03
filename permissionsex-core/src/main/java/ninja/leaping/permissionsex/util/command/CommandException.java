@@ -23,6 +23,7 @@ import ninja.leaping.permissionsex.util.Translatable;
  * Exception relating to the execution of a command
  */
 public class CommandException extends PermissionsException {
+    private static final long serialVersionUID = 242536509476461379L;
 
     public CommandException(Translatable message) {
         super(message);

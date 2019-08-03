@@ -16,8 +16,6 @@
  */
 package ninja.leaping.permissionsex.logging;
 
-import org.slf4j.Logger;
-
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;

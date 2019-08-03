@@ -57,7 +57,7 @@ public class BukkitCommander implements Commander<BaseComponent> {
 
     @Override
     public Locale getLocale() {
-        return commandSource instanceof Player ? LocaleUtils.toLocale(((Player) commandSource).spigot().getLocale()) : Locale.getDefault();
+        return commandSource instanceof Player ? LocaleUtils.toLocale(((Player) commandSource).getLocale()) : Locale.getDefault();
     }
 
     @Override

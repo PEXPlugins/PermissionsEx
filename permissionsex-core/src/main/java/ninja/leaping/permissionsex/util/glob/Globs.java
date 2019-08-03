@@ -19,8 +19,9 @@ package ninja.leaping.permissionsex.util.glob;
 import com.google.common.collect.ImmutableList;
 import ninja.leaping.permissionsex.util.glob.parser.GlobLexer;
 import ninja.leaping.permissionsex.util.glob.parser.GlobParser;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -47,10 +48,10 @@ public class Globs {
         if (!(input.contains("{") || input.contains("["))) { // If no special characters, just return raw input
             return new UnitNode(input);
         }
-        return parse(new ANTLRInputStream(input));
+        return parse(CharStreams.fromString(input));
     }
 
-    private static GlobNode parse(ANTLRInputStream input) throws GlobParseException {
+    private static GlobNode parse(CharStream input) throws GlobParseException {
         GlobLexer lexer = new GlobLexer(input);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GlobParser parser = new GlobParser(tokenStream);

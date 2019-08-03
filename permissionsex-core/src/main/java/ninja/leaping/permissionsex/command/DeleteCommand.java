@@ -24,8 +24,6 @@ import ninja.leaping.permissionsex.util.command.CommandException;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
 import ninja.leaping.permissionsex.util.command.Commander;
 
-import java.util.Map;
-
 import static ninja.leaping.permissionsex.util.Translations.t;
 
 /**
