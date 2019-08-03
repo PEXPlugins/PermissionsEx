@@ -23,7 +23,6 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.Commander;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
-import org.apache.commons.lang.LocaleUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -57,7 +56,7 @@ public class BukkitCommander implements Commander<BaseComponent> {
 
     @Override
     public Locale getLocale() {
-        return commandSource instanceof Player ? LocaleUtils.toLocale(((Player) commandSource).getLocale()) : Locale.getDefault();
+        return commandSource instanceof Player ? BukkitMessageFormatter.toLocale(((Player) commandSource).getLocale()) : Locale.getDefault();
     }
 
     @Override

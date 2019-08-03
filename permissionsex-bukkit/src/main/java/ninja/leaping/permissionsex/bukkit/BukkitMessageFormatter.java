@@ -27,7 +27,6 @@ import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.ButtonType;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
-import org.apache.commons.lang.LocaleUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -52,6 +51,29 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
     BukkitMessageFormatter(PermissionsExPlugin pex, CommandSender sender) {
         this.pex = pex;
         this.sender = sender;
+    }
+
+    /**
+     * Take a locale string provided from a minecraft client and attempt to parse it as a locale.
+     * These are not strictly compliant with the iso standard, so we try to make things a bit more normalized.
+     *
+     * @param mcLocaleString The locale string, in the format provided by the Minecraft client
+     * @return A Locale object matching the provided locale string
+     */
+    public static Locale toLocale(String mcLocaleString) {
+        String[] parts = mcLocaleString.split("_", 3);
+        switch (parts.length) {
+            case 0:
+                return Locale.getDefault();
+            case 1:
+                return new Locale(parts[0]);
+            case 2:
+                return new Locale(parts[0], parts[1]);
+            case 3:
+                return new Locale(parts[0], parts[1], parts[2]);
+            default:
+                throw new IllegalArgumentException("Provided locale '" + mcLocaleString + "' was not in a valid format!");
+        }
     }
 
     @Override
@@ -197,6 +219,6 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
         for (int i = 0; i < oldArgs.length; ++i) {
             args[i] = componentFrom(oldArgs[i]);
         }
-        return new TranslatableComponent(tr.translate(sender instanceof Player ? LocaleUtils.toLocale(((Player) sender).getLocale()) : Locale.getDefault()), args);
+        return new TranslatableComponent(tr.translate(sender instanceof Player ? toLocale(((Player) sender).getLocale()) : Locale.getDefault()), args);
     }
 }
