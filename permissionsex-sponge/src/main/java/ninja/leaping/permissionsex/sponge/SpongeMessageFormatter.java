@@ -55,7 +55,7 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
         if (source.isPresent()) {
             name = source.get().getName();
         } else {
-            name = pex.getSubjects(subject.getKey()).get(subject.getValue()).getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
+            name = pex.getCollection(subject.getKey()).get().getSubject(subject.getValue()).map(subj -> subj.getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name")).orElse(null);
         }
 
         Text nameText;

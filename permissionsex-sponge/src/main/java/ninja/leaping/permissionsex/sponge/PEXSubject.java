@@ -24,6 +24,7 @@ import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.util.Tristate;
@@ -33,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -47,7 +49,7 @@ class PEXSubject implements Subject {
     private final PEXSubjectData data;
     private final PEXSubjectData transientData;
     private volatile CalculatedSubject baked;
-    private final String identifier;
+    private final SubjectReference ref;
     private final AtomicReference<ActiveContextsHolder> cachedContexts = new AtomicReference<>();
 
     private static class ActiveContextsHolder {
@@ -68,12 +70,18 @@ class PEXSubject implements Subject {
         }
     }
 
-    public PEXSubject(String identifier, PEXSubjectCollection collection) throws ExecutionException, PermissionsLoadingException {
-        this.identifier = identifier;
+    public PEXSubject(CalculatedSubject baked, PEXSubjectCollection collection) {
+        this.ref = (SubjectReference) baked.getIdentifier();
         this.collection = collection;
-        this.baked = collection.getCalculatedSubject(identifier);
+        this.baked = baked;
         this.data = new PEXSubjectData(baked.data(), collection.getPlugin());
         this.transientData = new PEXSubjectData(baked.transientData(), collection.getPlugin());
+    }
+
+    public static CompletableFuture<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
+        return collection.getCalculatedSubject(identifier).thenApply(baked -> {
+            return new PEXSubject(baked, collection);
+        });
     }
 
     private Timings time() {
@@ -82,13 +90,18 @@ class PEXSubject implements Subject {
 
     @Override
     public String getIdentifier() {
-        return identifier;
+        return this.ref.getSubjectIdentifier();
     }
 
-    private String identifyUser() {
-        final Optional<CommandSource> source = getCommandSource();
-        return getIdentifier() + (source.isPresent() ? "/" + source.get().getName() : "");
+    @Override
+    public SubjectReference asSubjectReference() {
+        return this.ref;
     }
+
+    @Override
+    public boolean isSubjectDataPersisted() {
+        return true;
+	}
 
     public CalculatedSubject getBaked() {
         return this.baked;
@@ -96,7 +109,7 @@ class PEXSubject implements Subject {
 
     @Override
     public Optional<CommandSource> getCommandSource() {
-        return getContainingCollection().getCommandSource(this.identifier);
+        return getContainingCollection().getCommandSource(this.ref.getSubjectIdentifier());
     }
 
     @Override
@@ -145,7 +158,7 @@ class PEXSubject implements Subject {
     }
 
     @Override
-    public boolean isChildOf(Set<Context> contexts, Subject parent) {
+    public boolean isChildOf(Set<Context> contexts, SubjectReference parent) {
         Preconditions.checkNotNull(contexts, "contexts");
         Preconditions.checkNotNull(parent, "parent");
         return getParents(contexts).contains(parent);
@@ -176,11 +189,11 @@ class PEXSubject implements Subject {
     }
 
     @Override
-    public List<Subject> getParents(final Set<Context> contexts) {
+    public List<SubjectReference> getParents(final Set<Context> contexts) {
         time().onGetParents().startTimingIfSync();
         try {
             Preconditions.checkNotNull(contexts, "contexts");
-            return Lists.transform(baked.getParents(parSet(contexts)), input -> collection.getPlugin().getSubjects(input.getKey()).get(input.getValue()));
+            return Lists.transform(baked.getParents(parSet(contexts)), input -> (PEXSubjectReference) input);
         } finally {
             time().onGetParents().stopTimingIfSync();
         }
@@ -194,7 +207,7 @@ class PEXSubject implements Subject {
 
         PEXSubject otherSubj = (PEXSubject) other;
 
-        return this.identifier.equals(otherSubj.identifier)
+        return this.ref.equals(otherSubj.ref)
                 && this.data.equals(otherSubj.data);
     }
 }

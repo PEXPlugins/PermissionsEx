@@ -367,6 +367,11 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return impl.getVersion();
     }
 
+    @Override
+    public Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
+        return impl.createSubjectIdentifier(collection, ident);
+    }
+
     public PermissionsExConfiguration getConfig() {
         return getState().config;
     }

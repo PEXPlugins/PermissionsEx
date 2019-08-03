@@ -16,11 +16,10 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -58,6 +57,7 @@ import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
+import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
@@ -77,12 +77,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
 import static ninja.leaping.permissionsex.util.command.args.GenericArguments.string;
@@ -104,22 +106,17 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     private PermissionsEx manager;
 
-    private final List<ContextCalculator<Subject>> contextCalculators = new CopyOnWriteArrayList<>();
-    private final ConcurrentMap<String, Function<String, Optional<CommandSource>>> commandSourceProviders = new ConcurrentHashMap<>();
-    private final LoadingCache<String, PEXSubjectCollection> subjectCollections = CacheBuilder.newBuilder().build(new CacheLoader<String, PEXSubjectCollection>() {
-        @Override
-        public PEXSubjectCollection load(String type) throws Exception {
-            return new PEXSubjectCollection(type, PermissionsExPlugin.this);
-        }
-    });
-    private PEXSubject defaults;
-    private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
-    private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
     private Executor spongeExecutor = runnable -> scheduler
             .createTaskBuilder()
             .async()
             .execute(runnable)
             .submit(PermissionsExPlugin.this);
+    private final List<ContextCalculator<Subject>> contextCalculators = new CopyOnWriteArrayList<>();
+    private final ConcurrentMap<String, Function<String, Optional<CommandSource>>> commandSourceProviders = new ConcurrentHashMap<>();
+    private final AsyncLoadingCache<String, PEXSubjectCollection> subjectCollections = Caffeine.newBuilder().executor(spongeExecutor).buildAsync((type, exec) -> PEXSubjectCollection.load(type, this));
+    private PEXSubject defaults;
+    private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
+    private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
 
     private Timings timings;
 
@@ -129,7 +126,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Listener
-    public void onPreInit(GamePreInitializationEvent event) throws PEBKACException {
+    public void onPreInit(GamePreInitializationEvent event) throws PEBKACException, InterruptedException, ExecutionException {
         this.timings = new Timings(this);
         logger.info(t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
         sql = services.provide(SqlService.class);
@@ -144,7 +141,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
 
-        defaults = getSubjects(PermissionsEx.SUBJECTS_DEFAULTS).get(PermissionsEx.SUBJECTS_DEFAULTS);
+        defaults = (PEXSubject) loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose(coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)).get();
 
         setCommandSourceProvider(getUserSubjects(),name -> {
             UUID uid;
@@ -158,15 +155,18 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             return (Optional) game.getServer().getPlayer(uid);
         });
 
-        setCommandSourceProvider(getSubjects(PermissionService.SUBJECTS_SYSTEM), input -> {
-            switch (input) {
-                case "Server":
-                    return Optional.of(game.getServer().getConsole());
-                case "RCON":
-                    break;
-            }
-            return Optional.empty();
+        loadCollection(PermissionService.SUBJECTS_SYSTEM).thenAccept(coll -> {
+            setCommandSourceProvider(coll, input -> {
+                switch (input) {
+                    case "Server":
+                        return Optional.of(game.getServer().getConsole());
+                    case "RCON":
+                        break;
+                }
+                return Optional.empty();
+            });
         });
+
 
         registerContextCalculator(contextCalculator);
         getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(SUBJECTS_USER, this));
@@ -243,7 +243,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Listener
     public void onPlayerQuit(ClientConnectionEvent.Disconnect event) {
-        getUserSubjects().uncache(event.getTargetEntity().getIdentifier());
+        getUserSubjects().suggestUnload(event.getTargetEntity().getIdentifier());
     }
 
     public Timings getTimings() {
@@ -292,8 +292,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public PEXSubjectCollection getUserSubjects() {
         try {
-            return subjectCollections.get(SUBJECTS_USER);
-        } catch (ExecutionException e) {
+            return subjectCollections.get(SUBJECTS_USER).get();
+        } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -301,8 +301,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public PEXSubjectCollection getGroupSubjects() {
         try {
-            return subjectCollections.get(SUBJECTS_GROUP);
-        } catch (ExecutionException e) {
+            return subjectCollections.get(SUBJECTS_GROUP).get();
+        } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -313,21 +313,42 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public PEXSubjectCollection getSubjects(String identifier) {
-        Preconditions.checkNotNull(identifier, "identifier");
+    public CompletableFuture<SubjectCollection> loadCollection(String identifier) {
+        return (CompletableFuture) this.subjectCollections.get(identifier);
+    }
+
+    @Override
+    public Optional<SubjectCollection> getCollection(String identifier) {
         try {
-            return subjectCollections.get(identifier);
-        } catch (ExecutionException e) {
-            getLogger().error(t("Unable to get subject collection for type %s", identifier), e);
-            return null;
+            return Optional.of(this.subjectCollections.getIfPresent(identifier).get());
+        } catch (InterruptedException | ExecutionException e) {
+            return Optional.empty();
         }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    // TODO: Get values from DataStore.getRegisteredTypes()
-    public Map<String, SubjectCollection> getKnownSubjects() {
-        return (Map) subjectCollections.asMap();
+    public CompletableFuture<Boolean> hasCollection(String identifier) {
+        return CompletableFuture.completedFuture(true); // we like to pretend
+    }
+
+    @Override
+    public Map<String, SubjectCollection> getLoadedCollections() {
+        return (Map) this.subjectCollections.synchronous().asMap();
+    }
+
+    @Override
+    public Predicate<String> getIdentifierValidityPredicate() {
+        return x -> true; // we accept any string as a subject collection name
+    }
+
+    @Override
+    public CompletableFuture<Set<String>> getAllIdentifiers() {
+        return CompletableFuture.completedFuture(this.manager.getRegisteredSubjectTypes());
+    }
+
+    @Override
+    public SubjectReference newSubjectReference(String collectionIdentifier, String subjectIdentifier) {
+        return createSubjectIdentifier(collectionIdentifier, subjectIdentifier);
     }
 
     @Override
@@ -336,12 +357,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public Optional<PermissionDescription.Builder> newDescriptionBuilder(Object instance) {
+    public PermissionDescription.Builder newDescriptionBuilder(Object instance) {
         Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
         if (!container.isPresent()) {
             throw new IllegalArgumentException("Provided plugin did not have an associated plugin instance. Are you sure it's your plugin instance?");
         }
-        return Optional.of(new PEXPermissionDescription.Builder(container.get(), this));
+        return new PEXPermissionDescription.Builder(container.get(), this);
     }
 
     void registerDescription(final PEXPermissionDescription description, Map<String, Integer> ranks) {
@@ -357,7 +378,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                     }
                 }).get();
             } catch (InterruptedException | ExecutionException e) {
-                throw Throwables.propagate(e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
         }
     }
@@ -421,6 +443,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
+    public PEXSubjectReference createSubjectIdentifier(String collection, String ident) {
+        return new PEXSubjectReference(collection, ident, this);
+    }
+
+    @Override
     public String getVersion() {
         return PomData.VERSION;
     }
@@ -429,15 +456,16 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         return commandSourceProviders.getOrDefault(subjectCollection, k -> Optional.empty());
     }
 
-    public void setCommandSourceProvider(PEXSubjectCollection subjectCollection, Function<String, Optional<CommandSource>> provider) {
+    public void setCommandSourceProvider(SubjectCollection subjectCollection, Function<String, Optional<CommandSource>> provider) {
         commandSourceProviders.put(subjectCollection.getIdentifier(), provider);
     }
 
     public Iterable<PEXSubject> getAllActiveSubjects() {
-        return Iterables.concat(Iterables.transform(subjectCollections.asMap().values(), PEXSubjectCollection::getActiveSubjects));
+        return Iterables.concat(Iterables.transform(subjectCollections.synchronous().asMap().values(), PEXSubjectCollection::getActiveSubjects));
     }
 
     public Game getGame() {
         return game;
     }
+
 }

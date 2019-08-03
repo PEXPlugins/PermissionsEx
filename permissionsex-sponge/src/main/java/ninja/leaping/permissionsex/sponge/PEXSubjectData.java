@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.sponge;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -23,9 +24,9 @@ import ninja.leaping.permissionsex.data.Change;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
-import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.SubjectData;
+import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.util.Tristate;
 
 import java.util.ArrayList;
@@ -35,7 +36,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
@@ -43,9 +43,9 @@ import java.util.concurrent.ExecutionException;
 class PEXSubjectData implements SubjectData {
     private final PermissionsExPlugin plugin;
     private SubjectDataReference data;
-    private final ConcurrentMap<Set<Map.Entry<String, String>>, List<Subject>> parentsCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Set<Map.Entry<String, String>>, List<SubjectReference>> parentsCache = new ConcurrentHashMap<>();
 
-    public PEXSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) throws ExecutionException {
+    public PEXSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) {
         this.plugin = plugin;
         this.data = data;
         this.data.onUpdate(this::clearCache);
@@ -72,17 +72,16 @@ class PEXSubjectData implements SubjectData {
         return ret.build();
     }
 
-    private boolean wasSuccess(CompletableFuture<Change<ImmutableSubjectData>> future) {
-        if (future.isDone()) {
-            try {
-                future.get();
-                return true;
-            } catch (InterruptedException | ExecutionException e) {
-                return false;
-            }
-        } else {
-            return true;
-        }
+    /**
+     * Provide a boolean representation of success for the Sponge returns.
+     * 
+     * @param future The PEX-internal result
+     * @return Whether or not the old data object is different from the new data object
+     */
+    private CompletableFuture<Boolean> boolSuccess(CompletableFuture<Change<ImmutableSubjectData>> future) {
+        return future.thenApply(chg -> {
+            return !Objects.equal(chg.getOld(), chg.getNew());
+        });
     }
 
     private void clearCache(ImmutableSubjectData newData) {
@@ -102,18 +101,18 @@ class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public boolean setOption(final Set<Context> contexts, final String key, final String value) {
-        return wasSuccess(data.update(input -> input.setOption(parSet(contexts), key, value)));
+    public CompletableFuture<Boolean> setOption(final Set<Context> contexts, final String key, final String value) {
+        return boolSuccess(data.update(input -> input.setOption(parSet(contexts), key, value)));
     }
 
     @Override
-    public boolean clearOptions(final Set<Context> contexts) {
-        return wasSuccess(data.update(input -> input.clearOptions(parSet(contexts))));
+    public CompletableFuture<Boolean> clearOptions(final Set<Context> contexts) {
+        return boolSuccess(data.update(input -> input.clearOptions(parSet(contexts))));
     }
 
     @Override
-    public boolean clearOptions() {
-        return wasSuccess(data.update(ImmutableSubjectData::clearOptions));
+    public CompletableFuture<Boolean> clearOptions() {
+        return boolSuccess(data.update(ImmutableSubjectData::clearOptions));
     }
 
     @Override
@@ -128,7 +127,7 @@ class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public boolean setPermission(final Set<Context> set, final String s, Tristate tristate) {
+    public CompletableFuture<Boolean> setPermission(final Set<Context> set, final String s, Tristate tristate) {
         final int val;
         switch (tristate) {
             case TRUE:
@@ -144,21 +143,21 @@ class PEXSubjectData implements SubjectData {
                 throw new IllegalStateException("Unknown tristate provided " + tristate);
         }
 
-        return wasSuccess(data.update(input -> input.setPermission(parSet(set), s, val)));
+        return data.update(input -> input.setPermission(parSet(set), s, val)).thenApply(x -> true);
     }
 
     @Override
-    public boolean clearPermissions() {
-        return wasSuccess(data.update(ImmutableSubjectData::clearPermissions));
+    public CompletableFuture<Boolean> clearPermissions() {
+        return boolSuccess(data.update(ImmutableSubjectData::clearPermissions));
     }
 
     @Override
-    public boolean clearPermissions(final Set<Context> set) {
-        return wasSuccess(data.update(input -> input.clearPermissions(parSet(set))));
+    public CompletableFuture<Boolean> clearPermissions(final Set<Context> set) {
+        return boolSuccess(data.update(input -> input.clearPermissions(parSet(set))));
     }
 
     @Override
-    public Map<Set<Context>, List<Subject>> getAllParents() {
+    public Map<Set<Context>, List<SubjectReference>> getAllParents() {
         synchronized (parentsCache) {
             data.get().getActiveContexts().forEach(this::getParentsInternal);
             return tKeys(parentsCache);
@@ -166,12 +165,12 @@ class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public List<Subject> getParents(Set<Context> set) {
+    public List<SubjectReference> getParents(Set<Context> set) {
         return getParentsInternal(parSet(set));
     }
 
-    public List<Subject> getParentsInternal(Set<Map.Entry<String, String>> set) {
-        List<Subject> parents = parentsCache.get(set);
+    public List<SubjectReference> getParentsInternal(Set<Map.Entry<String, String>> set) {
+        List<SubjectReference> parents = parentsCache.get(set);
         if (parents == null) {
             synchronized (parentsCache) {
                 List<Map.Entry<String, String>> rawParents = data.get().getParents(set);
@@ -180,10 +179,10 @@ class PEXSubjectData implements SubjectData {
                 } else {
                     parents = new ArrayList<>(rawParents.size());
                     for (Map.Entry<String, String> ent : rawParents) {
-                        parents.add(plugin.getSubjects(ent.getKey()).get(ent.getValue())); // TODO: Parallelize
+                        parents.add(plugin.newSubjectReference(ent.getKey(), ent.getValue()));
                     }
                 }
-                List<Subject> existingParents = parentsCache.putIfAbsent(set, parents);
+                List<SubjectReference> existingParents = parentsCache.putIfAbsent(set, parents);
                 if (existingParents != null) {
                     parents = existingParents;
                 }
@@ -193,22 +192,22 @@ class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public boolean addParent(final Set<Context> set, final Subject subject) {
-        return wasSuccess(data.update(input -> input.addParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier())));
+    public CompletableFuture<Boolean> addParent(final Set<Context> set, final SubjectReference subject) {
+        return boolSuccess(data.update(input -> input.addParent(parSet(set), subject.getCollectionIdentifier(), subject.getSubjectIdentifier())));
     }
 
     @Override
-    public boolean removeParent(final Set<Context> set, final Subject subject) {
-        return wasSuccess(data.update(input -> input.removeParent(parSet(set), subject.getContainingCollection().getIdentifier(), subject.getIdentifier())));
+    public CompletableFuture<Boolean> removeParent(final Set<Context> set, final SubjectReference subject) {
+        return boolSuccess(data.update(input -> input.removeParent(parSet(set), subject.getCollectionIdentifier(), subject.getSubjectIdentifier())));
     }
 
     @Override
-    public boolean clearParents() {
-        return wasSuccess(data.update(ImmutableSubjectData::clearParents));
+    public CompletableFuture<Boolean> clearParents() {
+        return boolSuccess(data.update(ImmutableSubjectData::clearParents));
     }
 
     @Override
-    public boolean clearParents(final Set<Context> set) {
-        return wasSuccess(data.update(input -> input.clearParents(parSet(set))));
+    public CompletableFuture<Boolean> clearParents(final Set<Context> set) {
+        return boolSuccess(data.update(input -> input.clearParents(parSet(set))));
     }
 }

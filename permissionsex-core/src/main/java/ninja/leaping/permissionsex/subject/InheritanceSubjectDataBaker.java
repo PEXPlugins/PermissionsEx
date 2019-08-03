@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.Map.Entry;
 import static ninja.leaping.permissionsex.util.Translations.t;
@@ -162,7 +163,10 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
             }
         }
 
-        state.parents.addAll(data.getParents(specificCombination));
+        state.parents.addAll(data.getParents(specificCombination).stream()
+            .map(ent -> state.pex.createSubjectIdentifier(ent.getKey(), ent.getValue()))
+            .collect(Collectors.toList()));
+
         for (Map.Entry<String, String> ent : data.getOptions(specificCombination).entrySet()) {
             if (!state.options.containsKey(ent.getKey())) {
                 state.options.put(ent.getKey(), ent.getValue());

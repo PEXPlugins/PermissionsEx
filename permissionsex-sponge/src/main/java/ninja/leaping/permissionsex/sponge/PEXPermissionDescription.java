@@ -17,13 +17,18 @@
 package ninja.leaping.permissionsex.sponge;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.text.Text;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Implementation of a permission description
@@ -31,14 +36,14 @@ import java.util.Map;
 class PEXPermissionDescription implements PermissionDescription {
     private final PermissionsExPlugin plugin;
     private final String permId;
-    private final Text description;
-    private final PluginContainer owner;
+    private final Optional<Text> description;
+    private final Optional<PluginContainer> owner;
 
     public PEXPermissionDescription(PermissionsExPlugin plugin, String permId, Text description, PluginContainer owner) {
         this.plugin = plugin;
         this.permId = permId;
-        this.description = description;
-        this.owner = owner;
+        this.description = Optional.ofNullable(description);
+        this.owner = Optional.ofNullable(owner);
     }
 
     @Override
@@ -47,17 +52,22 @@ class PEXPermissionDescription implements PermissionDescription {
     }
 
     @Override
-    public Text getDescription() {
+    public Optional<Text> getDescription() {
         return this.description;
     }
 
     @Override
-    public Map<Subject, Boolean> getAssignedSubjects(String type) {
-        return plugin.getSubjects(type).getAllWithPermission(getId());
+    public CompletableFuture<Map<SubjectReference, Boolean>> findAssignedSubjects(String type) {
+        return plugin.loadCollection(type).thenCompose(coll -> coll.getAllWithPermission(getId()));
     }
 
     @Override
-    public PluginContainer getOwner() {
+    public Map<Subject, Boolean> getAssignedSubjects(String collectionIdentifier) {
+        return plugin.getCollection(collectionIdentifier).map(coll -> coll.getLoadedWithPermission(getId())).orElseGet(ImmutableMap::of);
+    }
+
+    @Override
+    public Optional<PluginContainer> getOwner() {
         return this.owner;
     }
 
@@ -107,4 +117,5 @@ class PEXPermissionDescription implements PermissionDescription {
             return ret;
         }
     }
+
 }

@@ -37,19 +37,19 @@ public class SubjectType {
     private final PermissionsEx pex;
     private SubjectTypeDefinition type;
     private SubjectCache persistentData, transientData;
-    private final AsyncLoadingCache<String, CalculatedSubject> cache = Caffeine.newBuilder().buildAsync(((key, executor) -> {
-        CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), Maps.immutableEntry(type.getTypeName(), key), SubjectType.this);
-        return persistentData.getReference(key).thenCombine(transientData.getReference(key), (persistentRef, transientRef) -> {
-            subj.initialize(persistentRef, transientRef);
-            return subj;
-        });
-    }));
-
+    private final AsyncLoadingCache<String, CalculatedSubject> cache;
     public SubjectType(PermissionsEx pex, String type, SubjectCache persistentData, SubjectCache transientData) {
         this.pex = pex;
         this.type = SubjectTypeDefinition.defaultFor(type);
         this.persistentData = persistentData;
-        this.transientData = transientData;
+        this.transientData = transientData; 
+        cache = Caffeine.newBuilder().executor(pex.getAsyncExecutor()).buildAsync(((key, executor) -> {
+            CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), this.pex.createSubjectIdentifier(this.type.getTypeName(), key), SubjectType.this);
+            return persistentData.getReference(key).thenCombine(transientData.getReference(key), (persistentRef, transientRef) -> {
+                subj.initialize(persistentRef, transientRef);
+                return subj;
+            });
+        }));
     }
 
     public void setTypeInfo(SubjectTypeDefinition def) {

@@ -20,8 +20,12 @@ import ninja.leaping.permissionsex.util.command.CommandSpec;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
+
+import com.google.common.collect.Maps;
+
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
@@ -76,5 +80,14 @@ public interface ImplementationInterface {
      * @return The currently running version
      */
     String getVersion();
+
+    /**
+     * Return a function that supplies an implementation-dependent variant of a subject reference
+     * 
+     * @return
+     */
+     default Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
+        return Maps.immutableEntry(collection, ident);
+     }
 
 }
