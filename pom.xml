@@ -168,6 +168,10 @@
   </pluginRepositories>
   <repositories>
     <repository>
+      <id>sponge-repo</id>
+      <url>https://repo.spongepowered.org/maven</url>
+    </repository>
+    <repository>
       <id>pex-repo</id>
       <url>https://pex-repo.aoeu.xyz</url>
     </repository>

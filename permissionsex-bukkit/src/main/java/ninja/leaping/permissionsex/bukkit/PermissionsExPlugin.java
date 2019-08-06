@@ -78,10 +78,23 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             new PermissibleInjector.ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer"),
             new PermissibleInjector.ClassPresencePermissibleInjector(getCBClassName("entity.CraftHumanEntity"), "perm", true),
     };
+
+    /**
+     * Context key for tags applied to servers
+     */
     public static final String SERVER_TAG_CONTEXT = "server-tag";
     private static final Pattern JDBC_URL_REGEX = Pattern.compile("(?:jdbc:)?([^:]+):(//)?(?:([^:]+)(?::([^@]+))?@)?(.*)");
 
+    /**
+     *  Map from protocol names to a function that transforms the given JDBC url
+     */
     static final Map<String, BiFunction<PermissionsExPlugin, String, String>> PATH_CANONICALIZERS;
+
+    /**
+     * Properties specific to a certain JDBC protocol, immutable.
+     *
+     * Protocols are identified by their jdbc driver names.
+     */
     static final Map<String, Properties> PROTOCOL_SPECIFIC_PROPS;
 
     static {
@@ -113,20 +126,19 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     private PermissionsEx manager;
-
     private TranslatableLogger logger;
-
     // Injections into superperms
     private PermissionList permsList;
     // Permissions subscriptions handling
     private PEXPermissionSubscriptionMap subscriptionHandler;
-    private volatile boolean enabled;
+    // Location of plugin configuration data
     private Path dataPath;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
-     * @return
+     *
+     * @return Our wrapper of Bukkit's logger
      */
     private TranslatableLogger createLogger() {
         try {
@@ -172,7 +184,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             getServer().getServicesManager().register(Chat.class, new PEXVaultChat(vault), this, ServicePriority.High);
             logger.info(t("Hooked into Vault for Permission and Chat interfaces"));
         }
-        enabled = true;
     }
 
     @Override
@@ -199,7 +210,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
+    private void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
         getUserSubjects().get(event.getUniqueId().toString()).exceptionally(e -> {
             logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
             return null;
@@ -207,7 +218,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(final PlayerJoinEvent event) {
+    private void onPlayerJoin(final PlayerJoinEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
             if (registered) {
@@ -224,28 +235,43 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
-    public void onPlayerQuit(PlayerQuitEvent event) {
+    private void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
         getUserSubjects().uncache(event.getPlayer().getUniqueId().toString());
     }
 
-    public PermissionList getPermissionList() {
+    PermissionList getPermissionList() {
         return permsList;
     }
 
+    /**
+     * Access the PEX engine
+     *
+     * @return The engine
+     */
     public PermissionsEx getManager() {
         return this.manager;
     }
 
+    /**
+     * Access user subjects
+     *
+     * @return The user subject collection
+     */
     public SubjectType getUserSubjects() {
         return getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
     }
 
+    /**
+     * Access group subjects
+     *
+     * @return The group subject collection
+     */
     public SubjectType getGroupSubjects() {
         return getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
     }
 
-    public void injectPermissible(Player player) {
+    private void injectPermissible(Player player) {
         try {
             PEXPermissible permissible = new PEXPermissible(player, this);
 

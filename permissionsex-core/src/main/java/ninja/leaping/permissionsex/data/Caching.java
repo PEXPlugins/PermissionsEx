@@ -16,6 +16,19 @@
  */
 package ninja.leaping.permissionsex.data;
 
+
+/**
+ * This interface can be implemented by any object that holds a reference to a cached object, or can be used
+ * as a callback functional interface.
+ *
+ * @param <T> The type of object being updated
+ */
+@FunctionalInterface
 public interface Caching<T> {
+    /**
+     * Called when an updated value is available and has been written to the cache. By the time this method has been called, the new data object will be available to the cache.
+     *
+     * @param newData The updated data
+     */
     void clearCache(T newData);
 }

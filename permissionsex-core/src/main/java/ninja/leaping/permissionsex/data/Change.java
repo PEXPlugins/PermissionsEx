@@ -16,6 +16,10 @@
  */
 package ninja.leaping.permissionsex.data;
 
+/**
+ * Represents a change in the value of some object
+ * @param <T> The type of object being changed
+ */
 public class Change<T> {
     private final T old, newVal;
 

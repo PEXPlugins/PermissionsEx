@@ -31,6 +31,12 @@ public abstract class SubjectTypeDefinition {
     private final String typeName;
     private final boolean transientHasPriority;
 
+    /**
+     * Create a new subject type definition that represents the default options for a subject type
+     *
+     * @param type The name of the type being checked
+     * @return The type definition
+     */
     public static SubjectTypeDefinition defaultFor(String type) {
         return new DefaultSubjectTypeDefinition(type);
     }
@@ -74,11 +80,29 @@ public abstract class SubjectTypeDefinition {
         return this.typeName;
     }
 
+    /**
+     * Return whether or not transient data takes priority over persistent for this subject type.
+     *
+     * @return Whether or not transient data has priority.
+     */
     public boolean transientHasPriority() {
         return this.transientHasPriority;
     }
 
+    /**
+     * Check if a name is a valid identifier for a given subject collection
+     *
+     * @param name The identifier to check
+     * @return Whether or not the given name is a valid identifier
+     */
     public abstract boolean isNameValid(String name);
 
+    /**
+     * Return the internal identifier to be used for a subject given its friendly name.
+     * If the given name is already a valid identifier, this method may return an empty optional.
+     *
+     * @param name The friendly name that may be used
+     * @return A standard representation of the subject identifier
+     */
     public abstract Optional<String> getAliasForName(String name);
 }

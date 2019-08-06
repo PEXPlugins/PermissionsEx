@@ -9,7 +9,7 @@
   </parent>
   <artifactId>permissionsex-core</artifactId>
   <properties>
-    <version.configurate>3.3</version.configurate>
+    <version.configurate>3.6</version.configurate>
   </properties>
   <build>
     <resources>
@@ -58,17 +58,17 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>ninja.leaping.configurate</groupId>
+      <groupId>org.spongepowered</groupId>
       <artifactId>configurate-yaml</artifactId>
       <version>${version.configurate}</version>
     </dependency>
     <dependency>
-      <groupId>ninja.leaping.configurate</groupId>
+      <groupId>org.spongepowered</groupId>
       <artifactId>configurate-gson</artifactId>
       <version>${version.configurate}</version>
     </dependency>
     <dependency>
-      <groupId>ninja.leaping.configurate</groupId>
+      <groupId>org.spongepowered</groupId>
       <artifactId>configurate-hocon</artifactId>
       <version>${version.configurate}</version>
     </dependency>

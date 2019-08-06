@@ -23,6 +23,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ *  Tracks object listeners for a cache
+ *
+ * @param <Key> The cache key type
+ * @param <CacheType> The cache value type
+ */
 public class CacheListenerHolder<Key, CacheType> {
     private final ConcurrentMap<Key, Set<Caching<CacheType>>> listeners = new MapMaker().concurrencyLevel(10).makeMap();
 

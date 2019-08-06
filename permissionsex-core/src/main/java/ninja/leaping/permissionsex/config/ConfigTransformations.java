@@ -29,8 +29,8 @@ public class ConfigTransformations {
     };
 
     /**
-     * Creat a configuration transformation that converts the Bukkit global configuration structure to the new Sponge configuration structure.
-     * @return A transformation that converts a Bukkit-style configuration to a Sponge-style configuration
+     * Creat a configuration transformation that converts the Bukkit/1.x global configuration structure to the new v2.x configuration structure.
+     * @return A transformation that converts a 1.x-style configuration to a 2.x-style configuration
      */
     private static ConfigurationTransformation initialToZero() {
         return builder()

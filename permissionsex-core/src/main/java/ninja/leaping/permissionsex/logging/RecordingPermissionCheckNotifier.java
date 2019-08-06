@@ -23,7 +23,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Notification delegate for permissions checks that tracks recent permission checks
+ * Notification delegate for permissions checks that tracks recent permission checks.
+ *
+ * Allows accessing currently known permissions
  */
 public class RecordingPermissionCheckNotifier implements PermissionCheckNotifier {
     private static final int MAX_SIZE = 500;

@@ -59,10 +59,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static ninja.leaping.permissionsex.util.Translations.*;
 
+
+/**
+ * The entry point to the PermissionsEx engine.
+ *
+ * The fastest way to get going with working with subjects is to access a subject type collection with {@link #getSubjects(String)}
+ * and request a {@link ninja.leaping.permissionsex.subject.CalculatedSubject} to query data from. Directly working with
+ * {@link ninja.leaping.permissionsex.data.SubjectDataReference}s is another option, preferable if most of the operations
+ * being performed are writes, or querying data directly defined on a subject.
+ *
+ * Keep in mind most of PEX's core data objects are immutable and must be resubmitted to their holders to apply updates.
+ * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
+ * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
+ *
+ *
+ *
+ */
 public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
@@ -191,13 +208,50 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     }
 
+    /**
+     * Get the collection of subjects of a given type. No data is loaded in this operation.
+     * Any string is supported as a subject type, but some common types have been provided as constants
+     * in this class for convenience.
+     *
+     * @see #SUBJECTS_DEFAULTS
+     * @see #SUBJECTS_GROUP
+     * @see #SUBJECTS_USER
+     * @param type The type identifier requested. Can be any string
+     * @return The subject type collection
+     */
     public SubjectType getSubjects(String type) {
         return subjectTypeCache.computeIfAbsent(type,
                 key -> new SubjectType(this, type, new SubjectCache(type, getState().activeDataStore), new SubjectCache(type, transientData)));
     }
 
+    /**
+     * Get a view of the currently cached subject types
+     *
+     * @return Unmodifiable view of the currently cached subject types
+     */
     public Collection<SubjectType> getActiveSubjectTypes() {
         return Collections.unmodifiableCollection(subjectTypeCache.values());
+    }
+
+    /**
+     * Get all registered subject types in the active data store.
+     * The set is an immutable copy of the backend data.
+     *
+     * @return A set of registered subject types
+     */
+    public Set<String> getRegisteredSubjectTypes() {
+        return getState().activeDataStore.getRegisteredTypes();
+    }
+
+    /**
+     * Suppress writes to the data store for the duration of a specific operation. Only really useful for extremely large operations
+     *
+     * @param func The operation to perform
+     * @param <T> The type of data that will be returned
+     * @return A future that completes once all data has been written to the store
+     */
+    public <T> CompletableFuture<T> performBulkOperation(Supplier<CompletableFuture<T>> func) {
+        return getState().activeDataStore.performBulkOperation(store -> func.get()).thenCompose(x -> x);
     }
 
     /**
@@ -210,7 +264,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     }
 
     /**
-     * Imports data into the currently active backend from the backend identified by the provided identifier
+     * Imports data into the currently active backend from another configured backend.
      *
      * @param dataStoreIdentifier The identifier of the backend to import from
      * @return A future that completes once the import operation is complete
@@ -238,30 +292,56 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         }).thenCompose(val -> Util.failableFuture(val::get));
     }
 
-    public Set<String> getRegisteredSubjectTypes() {
-        return getState().activeDataStore.getRegisteredTypes();
-    }
-
+    /**
+     * Get the currently active notifier. This objet has callbacks triggered on every permission check
+     *
+     * @return The active notifier
+     */
     public PermissionCheckNotifier getNotifier() {
         return this.notifier;
     }
 
+    /**
+     * Get the base notifier that logs any permission checks that gave taken place.
+     * @return
+     */
     public RecordingPermissionCheckNotifier getRecordingNotifier() {
         return this.baseNotifier;
     }
 
     // TODO: Proper thread-safety
+
+    /**
+     * Know whether or not debug mode is enabled
+     *
+     * @return true if debug mode is enabled
+     */
     public boolean hasDebugMode() {
         return this.getNotifier() instanceof DebugPermissionCheckNotifier;
     }
 
+    /**
+     * Set whether or not debug mode is enabled, with no filter pattern
+     *
+     * @see #setDebugMode(boolean, Pattern)
+     * @param debug Whether or not debug mode is enabled
+     */
     public void setDebugMode(boolean debug) {
         setDebugMode(debug, null);
     }
 
+    /**
+     * Set whether or not debug mode is enabled. Debug mode logs all permission, option, and inheritance
+     * checks made to the console.
+     *
+     * @param debug Whether to enable debug mode
+     * @param filterPattern A pattern to filter which permissions are logged. Null for no filter.
+     */
     public void setDebugMode(boolean debug, Pattern filterPattern) {
         if (debug) {
-            if (!(this.notifier instanceof DebugPermissionCheckNotifier)) {
+            if (this.notifier instanceof DebugPermissionCheckNotifier) {
+                this.notifier = new DebugPermissionCheckNotifier(getLogger(), ((DebugPermissionCheckNotifier) this.notifier).getDelegate(), filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
+            } else {
                 this.notifier = new DebugPermissionCheckNotifier(getLogger(), this.notifier, filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
             }
         } else {
@@ -271,6 +351,12 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         }
     }
 
+    /**
+     * Synchronous helper to perform reloads
+     *
+     * @throws PEBKACException If the configuration couldn't be parsed
+     * @throws PermissionsLoadingException When there's an error loading the data store
+     */
     private void reloadSync() throws PEBKACException, PermissionsLoadingException {
         try {
             PermissionsExConfiguration config = getState().config.reload();
@@ -282,6 +368,14 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         }
     }
 
+    /**
+     * Initialize the engine.
+     *
+     * May be called even if the engine has been initialized already, with results essentially equivalent to performing a reload
+     *
+     * @param config The configuration to use in this engine
+     * @throws PermissionsLoadingException If an error occurs loading the backend
+     */
     private void initialize(PermissionsExConfiguration config) throws PermissionsLoadingException {
         State newState = new State(config, config.getDefaultDataStore());
         newState.activeDataStore.initialize(this);
@@ -312,6 +406,11 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         });
     }
 
+    /**
+     * Reload the configuration file in use and refresh backend data
+     *
+     * @return A future that completes once a reload has finished
+     */
     public CompletableFuture<Void> reload() {
         return Util.asyncFailableFuture(() -> {
             reloadSync();
@@ -319,6 +418,10 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         }, getAsyncExecutor());
     }
 
+    /**
+     * Shut down the PEX engine. Once this has been done, no further action can be taken
+     * until the engine is reinitialized with a fresh configuration.
+     */
     public void close() {
         State state = this.state.getAndSet(null);
         state.activeDataStore.close();
@@ -372,10 +475,24 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         return impl.createSubjectIdentifier(collection, ident);
     }
 
+    /**
+     * Get the current configuration PEX is operating with. This object is immutable.
+     *
+     * @return The current configuration object
+     */
     public PermissionsExConfiguration getConfig() {
         return getState().config;
     }
 
+    /**
+     * Get context inheritance data. The result of the future is immutable -- to take effect, the object returned by any
+     * update methods in {@link ContextInheritance} must be passed to {@link #setContextInheritance(ContextInheritance)}.
+     *  It follows that anybody else's changes will not appear in the returned inheritance object -- so if updates are
+     *  desired providing a callback function is important.
+     *
+     * @param listener A callback function that will be triggered whenever there is a change to the context inheritance
+     * @return A future providing the current context inheritance data
+     */
     public CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
             this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
@@ -387,10 +504,21 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
     }
 
+    /**
+     * Update the context inheritance when values have been changed
+     *
+     * @param newInheritance The modified inheritance object
+     * @return A future containing the latest context inheritance object
+     */
     public CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance newInheritance) {
         return getState().activeDataStore.setContextInheritance(newInheritance);
     }
 
+    /**
+     * Listener method that handles changes to context inheritance. Should not be called by outside users
+     *
+     * @param newData The new data to replace cached information
+     */
     @Override
     public void clearCache(ContextInheritance newData) {
         this.cachedInheritance = CompletableFuture.completedFuture(newData);

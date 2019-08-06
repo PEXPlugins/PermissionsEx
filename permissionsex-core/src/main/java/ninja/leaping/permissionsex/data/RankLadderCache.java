@@ -27,6 +27,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * Access information about rank ladders
+ */
 public class RankLadderCache {
     private final DataStore dataStore;
     private final AsyncLoadingCache<String, RankLadder> cache;

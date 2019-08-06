@@ -83,19 +83,19 @@
       <version>${project.parent.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>ninja.leaping.configurate</groupId>
+          <groupId>org.spongepowered</groupId>
           <artifactId>configurate-yaml</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>ninja.leaping.configurate</groupId>
+          <groupId>org.spongepowered</groupId>
           <artifactId>configurate-hocon</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>ninja.leaping.configurate</groupId>
+          <groupId>org.spongepowered</groupId>
           <artifactId>configurate-core</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>ninja.leaping.configurate</groupId>
+          <groupId>org.spongepowered</groupId>
           <artifactId>configurate-gson</artifactId>
         </exclusion>
         <exclusion>
@@ -143,12 +143,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <repositories>
-    <repository>
-      <id>sponge-repo</id>
-      <url>https://repo.spongepowered.org/maven</url>
-    </repository>
-  </repositories>
   <reporting>
     <plugins>
       <plugin>

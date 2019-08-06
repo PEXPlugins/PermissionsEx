@@ -28,6 +28,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * An automatically updating reference to the latest data for a certain subject.
+ */
 public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     private final String identifier;
     private final SubjectCache cache;
@@ -54,10 +57,21 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
         }
     }
 
+    /**
+     * Get the current subject data
+     *
+     * @return The current data
+     */
     public ImmutableSubjectData get() {
         return this.data.get();
     }
 
+    /**
+     * Update the contained data based on the result of a function
+     *
+     * @param modifierFunc The function that will be called to update the data
+     * @return A future completing when data updates have been written to the data store
+     */
     public CompletableFuture<Change<ImmutableSubjectData>> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
         ImmutableSubjectData data, newData;
         do {
@@ -99,10 +113,18 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
         updateListeners.add(listener);
     }
 
+    /**
+     * Get the cache this subject is held in
+     * @return The cache holding this data
+     */
     public SubjectCache getCache() {
         return cache;
     }
 
+    /**
+     * Get an identifier that can be used to refer to this subject
+     * @return The subject's identifier
+     */
     public Map.Entry<String, String> getIdentifier() {
         return Maps.immutableEntry(getCache().getType(), this.identifier);
     }

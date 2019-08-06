@@ -28,14 +28,21 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+/**
+ * Cache for subject data objects from a single data store.
+ *
+ * Provides operations to manage querying, writing, and updating {@link ImmutableSubjectData} objects.
+ */
 public class SubjectCache {
     private final String type;
     private DataStore dataStore;
     private final AtomicReference<AsyncLoadingCache<String, ImmutableSubjectData>> cache = new AtomicReference<>();
+    /**
+     * Holds cache listeners to prevent them from being garbage-collected
+     */
     private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
     private final Map.Entry<String, String> defaultIdentifier;
@@ -47,6 +54,11 @@ public class SubjectCache {
         this.listeners = new CacheListenerHolder<>();
     }
 
+    /**
+     * For internal use only. Replace the backing data store while maintaining cache entries, ex. when the engine is reloaded.
+     *
+     * @param newDataStore The new data store to use
+     */
     public void update(DataStore newDataStore) {
         this.dataStore = newDataStore;
         AsyncLoadingCache<String, ImmutableSubjectData> oldCache = this.cache.getAndSet(Caffeine.newBuilder()
@@ -60,6 +72,17 @@ public class SubjectCache {
         }
     }
 
+    /**
+     * Get data for a given subject.
+     * This will return a data object even if the subject is not registered -- the data object will just be empty.
+     *
+     * For most longer-lifetime use cases, {@link #getReference(String)} will be the preferred method to get a reference
+     * to the latest subject data.
+     *
+     * @param identifier The identifier of the subject to query
+     * @param listener A callback that will be notified whenever a change is made to the data object
+     * @return A future returning when the data is available
+     */
     public CompletableFuture<ImmutableSubjectData> getData(String identifier, Caching<ImmutableSubjectData> listener) {
         Objects.requireNonNull(identifier, "identifier");
 
@@ -72,11 +95,25 @@ public class SubjectCache {
         return ret;
     }
 
+    /**
+     * Get a reference to subject data for a given subject. The reference will update as changes are made to the backing
+     * data store, and can always be used to query a specific subject's raw data.
+     *
+     * @param identifier The identifier of the subject to get data for
+     * @return A future returning with a full reference to the given subject's data.
+     */
     public CompletableFuture<SubjectDataReference> getReference(String identifier) {
         return getReference(identifier, true);
     }
 
-    public CompletableFuture<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
+    /**
+     * Get a reference to subject data for a given subject
+     *
+     * @param identifier The identifier of the subject to get data for
+     * @param strongListeners Whether to hold listeners to this subject data even after they would be otherwise GC'd
+     * @return A future completing with the subject data reference
+     */
+    private CompletableFuture<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
         final SubjectDataReference ref = new SubjectDataReference(identifier, this, strongListeners);
         return getData(identifier, ref).thenApply(data -> {
             ref.data.set(data);
@@ -84,6 +121,14 @@ public class SubjectCache {
         });
     }
 
+    /**
+     * Update data for a given subject, acting on the latest data available.
+     * The {@code action} callback may be called within an asynchronous task.
+     *
+     * @param identifier The identifier of the subject to be updated
+     * @param action A function taking an old subject data instance and returning an updated one
+     * @return A future completing with the latest subject data after modifications are made
+     */
     public CompletableFuture<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
         return getData(identifier, null)
                 .thenCompose(data -> {
@@ -96,12 +141,22 @@ public class SubjectCache {
                 });
     }
 
-    public void load(String identifier) throws ExecutionException {
+    /**
+     * Load data (if any) known for the given identifier
+     *
+     * @param identifier The subject identifier
+     */
+    public void load(String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
         cache.get().get(identifier);
     }
 
+    /**
+     * Remove a given subject identifier from the cache
+     *
+     * @param identifier The identifier of the subject to be removed
+     */
     public void invalidate(String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
@@ -110,18 +165,34 @@ public class SubjectCache {
         listeners.removeAll(identifier);
     }
 
+    /**
+     * Enter all subjects of this type into cache
+     */
     public void cacheAll() {
         for (String ident : dataStore.getAllIdentifiers(type)) {
             cache.get().synchronous().refresh(ident);
         }
     }
 
+    /**
+     * Check if a given subject is registered. This operation occurs asynchronously
+     * Registered means that a subject has any sort of data stored.
+     *
+     * @param identifier The identifier of the subject to check
+     * @return A future returning whether the subject has data stored
+     */
     public CompletableFuture<Boolean> isRegistered(String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.isRegistered(type, identifier);
     }
 
+    /**
+     * Remove a subject from the backing data store
+     *
+     * @param identifier The identifier of the subject to remove
+     * @return A future returning the previous subject data.
+     */
     public CompletableFuture<ImmutableSubjectData> remove(String identifier) {
         return set(identifier, null);
     }
@@ -132,6 +203,13 @@ public class SubjectCache {
         return dataStore.setData(type, identifier, newData);
     }
 
+    /**
+     * Create a new listener to pass to the backing data store. This listener will update our cache and notify all
+     * listeners to the cache that new data is available.
+     *
+     * @param name The subject identifier
+     * @return A caching function
+     */
     private Caching<ImmutableSubjectData> clearListener(final String name) {
         Caching<ImmutableSubjectData> ret = newData -> {
             cache.get().put(name, CompletableFuture.completedFuture(newData));
@@ -141,6 +219,12 @@ public class SubjectCache {
         return ret;
     }
 
+    /**
+     * Add a listener to be notified on updates to the given subject
+     *
+     * @param identifier The identifier of the subject to receive notifications about
+     * @param listener The callback function to notify
+     */
     public void addListener(String identifier, Caching<ImmutableSubjectData> listener) {
         Objects.requireNonNull(identifier, "identifier");
         Objects.requireNonNull(listener, "listener");
@@ -148,10 +232,20 @@ public class SubjectCache {
         listeners.addListener(identifier, listener);
     }
 
+    /**
+     * Get the subject type identifier
+     *
+     * @return The identifier for this subject type
+     */
     public String getType() {
         return type;
     }
 
+    /**
+     * Get a set of identifiers for all registered subjects of this type
+     *
+     * @return The set of identifiers
+     */
     public Set<String> getAllIdentifiers() {
         return dataStore.getAllIdentifiers(type);
     }
