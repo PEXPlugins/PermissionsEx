@@ -24,7 +24,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.rank.RankLadder;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.Translatable;
+import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.ButtonType;
 import ninja.leaping.permissionsex.util.command.MessageFormatter;
 import org.bukkit.command.CommandSender;
@@ -34,6 +36,7 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import static ninja.leaping.permissionsex.bukkit.BukkitTranslations.t;
 
@@ -78,11 +81,14 @@ public class BukkitMessageFormatter implements MessageFormatter<BaseComponent> {
 
     @Override
     public BaseComponent subject(Map.Entry<String, String> subject) {
-        String name;
-        try {
-            name = pex.getManager().getSubjects(subject.getKey()).persistentData().getData(subject.getValue(), null).get().getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+        SubjectType subjType = pex.getManager().getSubjects(subject.getKey());
+        String name = Util.castOptional(subjType.getTypeInfo().getAssociatedObject(subject.getValue()), CommandSender.class).map(CommandSender::getName).orElse(null);
+        if (name == null) {
+            try {
+                name = subjType.persistentData().getData(subject.getValue(), null).get().getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name");
+            } catch (ExecutionException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         BaseComponent nameText;

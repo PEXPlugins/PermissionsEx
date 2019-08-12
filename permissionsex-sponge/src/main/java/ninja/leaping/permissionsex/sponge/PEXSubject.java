@@ -107,7 +107,7 @@ class PEXSubject implements Subject {
 
     @Override
     public Optional<CommandSource> getCommandSource() {
-        return getContainingCollection().getCommandSource(this.ref.getSubjectIdentifier());
+        return this.baked.getAssociatedObject().filter(obj -> obj instanceof CommandSource).map(x -> (CommandSource) x);
     }
 
     @Override

@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -46,6 +47,19 @@ public class Util {
 
     public static String subjectToString(Map.Entry<String, String> input) {
         return input.getKey() + ":" + input.getValue();
+    }
+
+    /**
+     * Given an {@link Optional} of an unknown type, safely cast it to the expected type.
+     * If the optional is not of the required type, an empty optional is returned.
+     *
+     * @param input The input value
+     * @param clazz The class to cast to
+     * @param <T> The type of the class
+     * @return A casted or empty Optional
+     */
+    public static <T> Optional<T> castOptional(Optional<?> input, Class<T> clazz) {
+        return input.filter(clazz::isInstance).map(clazz::cast);
     }
 
     public static GenericArguments.FlagCommandElementBuilder contextTransientFlags() {

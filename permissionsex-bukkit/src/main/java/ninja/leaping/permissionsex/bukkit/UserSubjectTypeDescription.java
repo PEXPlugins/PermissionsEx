@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Metadata for user types
  */
-public class UserSubjectTypeDescription extends SubjectTypeDefinition {
+public class UserSubjectTypeDescription extends SubjectTypeDefinition<Player> {
     private final PermissionsExPlugin plugin;
 
     public UserSubjectTypeDescription(String typeName, PermissionsExPlugin plugin) {
@@ -62,6 +62,15 @@ public class UserSubjectTypeDescription extends SubjectTypeDefinition {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<Player> getAssociatedObject(String identifier) {
+        try {
+            return Optional.ofNullable(plugin.getServer().getPlayer(UUID.fromString(identifier)));
+        } catch (IllegalArgumentException ex) { // not a valid user ID
+            return Optional.empty();
+        }
     }
 
     public Optional<Commander<?>> getCommanderFor(String identifier) {

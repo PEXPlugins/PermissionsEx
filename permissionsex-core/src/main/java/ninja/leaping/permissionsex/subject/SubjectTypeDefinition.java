@@ -19,15 +19,10 @@ package ninja.leaping.permissionsex.subject;
 import java.util.Optional;
 
 /**
- * Provide metadata about a specific subject type
- *
- * Handles:
- * - name validation
- * - name alias handling
- * -
- * - what else does a subject type define?
+ * Provide metadata about a specific type of attachment
+ * @param <AttachmentType>
  */
-public abstract class SubjectTypeDefinition {
+public abstract class SubjectTypeDefinition<AttachmentType> {
     private final String typeName;
     private final boolean transientHasPriority;
 
@@ -37,7 +32,7 @@ public abstract class SubjectTypeDefinition {
      * @param type The name of the type being checked
      * @return The type definition
      */
-    public static SubjectTypeDefinition defaultFor(String type) {
+    public static SubjectTypeDefinition<Void> defaultFor(String type) {
         return new DefaultSubjectTypeDefinition(type);
     }
 
@@ -46,7 +41,7 @@ public abstract class SubjectTypeDefinition {
         return new DefaultSubjectTypeDefinition(type, transientHasPriority);
     }
 
-    private static class DefaultSubjectTypeDefinition extends SubjectTypeDefinition {
+    private static class DefaultSubjectTypeDefinition extends SubjectTypeDefinition<Void> {
 
         public DefaultSubjectTypeDefinition(String typeName) {
             super(typeName);
@@ -63,6 +58,11 @@ public abstract class SubjectTypeDefinition {
 
         @Override
         public Optional<String> getAliasForName(String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Void> getAssociatedObject(String identifier) {
             return Optional.empty();
         }
     }
@@ -105,4 +105,11 @@ public abstract class SubjectTypeDefinition {
      * @return A standard representation of the subject identifier
      */
     public abstract Optional<String> getAliasForName(String name);
+
+    /**
+     * The native object that may be held
+     *
+     * @return A native object that has its permissions defined by this subject
+     */
+    public abstract Optional<AttachmentType> getAssociatedObject(String identifier);
 }

@@ -222,15 +222,6 @@ class PEXSubjectCollection implements SubjectCollection {
         return this.defaults;
     }
 
-    public Optional<CommandSource> getCommandSource(String identifier) {
-        final Function<String, Optional<CommandSource>> provider = plugin.getCommandSourceProvider(getIdentifier());
-        if (provider != null) {
-            return provider.apply(identifier);
-        } else {
-            return Optional.empty();
-        }
-    }
-
     public CompletableFuture<CalculatedSubject> getCalculatedSubject(String identifier) {
             return this.collection.get(identifier);
     }

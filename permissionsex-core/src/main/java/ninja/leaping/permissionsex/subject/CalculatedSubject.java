@@ -42,6 +42,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final Map.Entry<String, String> identifier;
     private final SubjectType type;
     private SubjectDataReference ref, transientRef;
+    private Optional<?> associatedObject;
 
     private final AsyncLoadingCache<Set<Entry<String, String>>, BakedSubjectData> data;
 
@@ -53,6 +54,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
                 .maximumSize(32)
                 .expireAfterAccess(30, TimeUnit.MINUTES)
                 .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
+        this.associatedObject = this.type.getTypeInfo().getAssociatedObject(identifier.getValue());
     }
 
     void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
@@ -181,6 +183,10 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
      */
     public SubjectDataReference transientData() {
         return this.transientRef;
+    }
+
+    public Optional<?> getAssociatedObject() {
+        return this.associatedObject;
     }
 
     /**

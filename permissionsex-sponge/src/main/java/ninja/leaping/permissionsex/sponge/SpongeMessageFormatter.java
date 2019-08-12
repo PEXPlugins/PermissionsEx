@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static ninja.leaping.permissionsex.sponge.SpongeTranslations.t;
+import static ninja.leaping.permissionsex.util.Util.castOptional;
 
 /**
  * Factory to create formatted elements of messages
@@ -50,13 +51,9 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
 
     @Override
     public Text.Builder subject(Map.Entry<String, String> subject) {
-        Optional<CommandSource> source = pex.getCommandSourceProvider(subject.getKey()).apply(subject.getValue());
-        String name;
-        if (source.isPresent()) {
-            name = source.get().getName();
-        } else {
-            name = pex.getCollection(subject.getKey()).get().getSubject(subject.getValue()).map(subj -> subj.getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name")).orElse(null);
-        }
+        Optional<CommandSource> source = castOptional(pex.getManager().getSubjects(subject.getKey()).getTypeInfo().getAssociatedObject(subject.getValue()), CommandSource.class);
+        String name = source.map(CommandSource::getName)
+                .orElseGet(() -> pex.getCollection(subject.getKey()).get().getSubject(subject.getValue()).map(subj -> subj.getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name")).orElse(null));
 
         Text nameText;
         if (name != null) {

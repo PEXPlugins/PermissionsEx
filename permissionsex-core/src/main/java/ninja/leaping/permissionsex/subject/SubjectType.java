@@ -35,7 +35,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class SubjectType {
     private final PermissionsEx pex;
-    private SubjectTypeDefinition type;
+    private SubjectTypeDefinition<?> type;
     private SubjectCache persistentData, transientData;
     private final AsyncLoadingCache<String, CalculatedSubject> cache;
 
@@ -53,11 +53,11 @@ public class SubjectType {
         }));
     }
 
-    public void setTypeInfo(SubjectTypeDefinition def) {
+    public void setTypeInfo(SubjectTypeDefinition<?> def) {
         this.type = def;
     }
 
-    public SubjectTypeDefinition getTypeInfo() {
+    public SubjectTypeDefinition<?> getTypeInfo() {
         return this.type;
     }
 

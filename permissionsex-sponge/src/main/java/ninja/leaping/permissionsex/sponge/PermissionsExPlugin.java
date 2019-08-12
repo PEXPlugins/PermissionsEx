@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -33,6 +34,7 @@ import ninja.leaping.permissionsex.config.FilePermissionsExConfiguration;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.logging.TranslatableLogger;
+import ninja.leaping.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
 import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -112,7 +114,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             .execute(runnable)
             .submit(PermissionsExPlugin.this);
     private final List<ContextCalculator<Subject>> contextCalculators = new CopyOnWriteArrayList<>();
-    private final ConcurrentMap<String, Function<String, Optional<CommandSource>>> commandSourceProviders = new ConcurrentHashMap<>();
     private final AsyncLoadingCache<String, PEXSubjectCollection> subjectCollections = Caffeine.newBuilder().executor(spongeExecutor).buildAsync((type, exec) -> PEXSubjectCollection.load(type, this));
     private PEXSubject defaults;
     private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
@@ -143,33 +144,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
         defaults = (PEXSubject) loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose(coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)).get();
 
-        setCommandSourceProvider(getUserSubjects(),name -> {
-            UUID uid;
-            try {
-                uid = UUID.fromString(name);
-            } catch (IllegalArgumentException ex) {
-                return Optional.empty();
-            }
-
-            // Yeah, java generics are stupid
-            return (Optional) game.getServer().getPlayer(uid);
-        });
-
-        loadCollection(PermissionService.SUBJECTS_SYSTEM).thenAccept(coll -> {
-            setCommandSourceProvider(coll, input -> {
-                switch (input) {
-                    case "Server":
-                        return Optional.of(game.getServer().getConsole());
-                    case "RCON":
-                        break;
-                }
-                return Optional.empty();
-            });
-        });
+        getManager().getSubjects(SUBJECTS_SYSTEM).setTypeInfo(new FixedEntriesSubjectTypeDefinition<>(SUBJECTS_SYSTEM, ImmutableMap.of(
+                "Server", () -> game.getServer().getConsole(),
+                "RCON", () -> null)));
+        getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(SUBJECTS_USER, this));
 
 
         registerContextCalculator(contextCalculator);
-        getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(SUBJECTS_USER, this));
 
         registerFakeOpCommand("op", "minecraft.command.op");
         registerFakeOpCommand("deop", "minecraft.command.deop");
@@ -450,14 +431,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Override
     public String getVersion() {
         return PomData.VERSION;
-    }
-
-    Function<String, Optional<CommandSource>> getCommandSourceProvider(String subjectCollection) {
-        return commandSourceProviders.getOrDefault(subjectCollection, k -> Optional.empty());
-    }
-
-    public void setCommandSourceProvider(SubjectCollection subjectCollection, Function<String, Optional<CommandSource>> provider) {
-        commandSourceProviders.put(subjectCollection.getIdentifier(), provider);
     }
 
     public Iterable<PEXSubject> getAllActiveSubjects() {
