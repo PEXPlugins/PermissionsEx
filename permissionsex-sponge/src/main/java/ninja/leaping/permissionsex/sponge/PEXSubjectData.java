@@ -79,9 +79,7 @@ class PEXSubjectData implements SubjectData {
      * @return Whether or not the old data object is different from the new data object
      */
     private CompletableFuture<Boolean> boolSuccess(CompletableFuture<Change<ImmutableSubjectData>> future) {
-        return future.thenApply(chg -> {
-            return !Objects.equal(chg.getOld(), chg.getNew());
-        });
+        return future.thenApply(chg -> !Objects.equal(chg.getOld(), chg.getNew()));
     }
 
     private void clearCache(ImmutableSubjectData newData) {
@@ -117,13 +115,22 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-        return Maps.transformValues(tKeys(data.get().getAllPermissions()),
-                map -> Maps.transformValues(map, i -> i > 0));
+        return Maps.transformValues(getAllPermissionValues(), map -> Maps.transformValues(map, i -> i > 0));
     }
 
     @Override
-    public Map<String, Boolean> getPermissions(Set<Context> set) {
-        return Maps.transformValues(data.get().getPermissions(parSet(set)), value -> value > 0);
+    public Map<String, Boolean> getPermissions(Set<Context> contexts) {
+        return Maps.transformValues(getPermissionValues(contexts), i -> i > 0);
+    }
+
+    @Override
+    public Map<Set<Context>, Map<String, Integer>> getAllPermissionValues() {
+        return tKeys(data.get().getAllPermissions());
+    }
+
+    @Override
+    public Map<String, Integer> getPermissionValues(Set<Context> set) {
+        return data.get().getPermissions(parSet(set));
     }
 
     @Override
@@ -142,8 +149,12 @@ class PEXSubjectData implements SubjectData {
             default:
                 throw new IllegalStateException("Unknown tristate provided " + tristate);
         }
+        return setPermission(set, s, val);
+    }
 
-        return data.update(input -> input.setPermission(parSet(set), s, val)).thenApply(x -> true);
+    @Override
+    public CompletableFuture<Boolean> setPermission(final Set<Context> set, final String s, int value) {
+        return data.update(input -> input.setPermission(parSet(set), s, value)).thenApply(x -> true);
     }
 
     @Override

@@ -67,6 +67,16 @@ class PEXPermissionDescription implements PermissionDescription {
     }
 
     @Override
+    public CompletableFuture<Map<SubjectReference, Integer>> findAssignedSubjectValues(String type) {
+        return plugin.loadCollection(type).thenCompose(coll -> coll.getAllWithPermissionValue(getId()));
+    }
+
+    @Override
+    public Map<Subject, Integer> getAssignedSubjectValues(String collectionIdentifier) {
+        return plugin.getCollection(collectionIdentifier).map(coll -> coll.getLoadedWithPermissionValue(getId())).orElseGet(ImmutableMap::of);
+    }
+
+    @Override
     public Optional<PluginContainer> getOwner() {
         return this.owner;
     }
@@ -102,6 +112,7 @@ class PEXPermissionDescription implements PermissionDescription {
             return assign(s, b ? 1 : -1);
         }
 
+        @Override
         public Builder assign(String rankTemplate, int power) {
             ranks.put(rankTemplate, power);
             return this;

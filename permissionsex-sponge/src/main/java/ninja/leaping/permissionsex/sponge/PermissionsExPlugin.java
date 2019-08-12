@@ -360,7 +360,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public PermissionDescription.Builder newDescriptionBuilder(Object instance) {
         Optional<PluginContainer> container = this.game.getPluginManager().fromInstance(instance);
         if (!container.isPresent()) {
-            throw new IllegalArgumentException("Provided plugin did not have an associated plugin instance. Are you sure it's your plugin instance?");
+            throw new IllegalArgumentException("Provided plugin did not have an associated plugin container. Are you sure it's your plugin instance?");
         }
         return new PEXPermissionDescription.Builder(container.get(), this);
     }
