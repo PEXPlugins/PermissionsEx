@@ -22,6 +22,7 @@ import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.backend.ConversionUtils;
 import ninja.leaping.permissionsex.backend.sql.dao.LegacyMigration;
 import ninja.leaping.permissionsex.backend.sql.dao.SchemaMigration;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
 
 import java.sql.PreparedStatement;
@@ -112,7 +113,7 @@ public class SchemaMigrations {
                                     }
                                 }
                                 currentWorld = worldChecked;
-                                currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
+                                currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(new ContextValue<String>("world", currentWorld)));
                                 dao.allocateSegment(ref, currentSeg);
                                 worldSegments.put(currentWorld, currentSeg);
                             }
@@ -198,8 +199,8 @@ public class SchemaMigrations {
                                         seg = segment;
                                         break;
                                     } else if (segment.getContexts().size() == 1) {
-                                        Map.Entry<String, String> ctx = segment.getContexts().iterator().next();
-                                        if (ctx.getKey().equals("world") && ctx.getValue().equals(ent.getKey())) {
+                                        ContextValue<?> ctx = segment.getContexts().iterator().next();
+                                        if (ctx.getKey().equals("world") && ctx.getRawValue().equals(ent.getKey())) {
                                             seg = segment;
                                             break;
                                         }
@@ -207,7 +208,7 @@ public class SchemaMigrations {
                                 }
                             }
                             if (seg == null) {
-                                seg = Segment.unallocated(ent.getKey() == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", ent.getKey())));
+                                seg = Segment.unallocated(ent.getKey() == null ? ImmutableSet.of() : ImmutableSet.of(new ContextValue<String>("world", ent.getKey())));
                                 dao.allocateSegment(defaultSubj, seg);
                                 segments.add(seg);
                             }
@@ -230,7 +231,7 @@ public class SchemaMigrations {
                                 currentWorld = inheritance.getString(3);
                                 currentSeg = worldSegments.get(currentWorld);
                                 if (currentSeg == null) {
-                                    currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(Maps.immutableEntry("world", currentWorld)));
+                                    currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(new ContextValue<String>("world", currentWorld)));
                                     dao.allocateSegment(ref, currentSeg);
                                     worldSegments.put(currentWorld, currentSeg);
                                 }

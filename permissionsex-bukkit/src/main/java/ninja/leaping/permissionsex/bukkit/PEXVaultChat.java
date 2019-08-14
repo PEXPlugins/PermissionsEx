@@ -17,16 +17,14 @@
 package ninja.leaping.permissionsex.bukkit;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import net.milkbowl.vault.chat.Chat;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import org.bukkit.OfflinePlayer;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("deprecation")
 class PEXVaultChat extends Chat {
     private final PermissionsExPlugin plugin;
     private final PEXVault perms;
@@ -46,8 +44,8 @@ class PEXVaultChat extends Chat {
         return this.plugin.isEnabled();
     }
 
-    private Set<Map.Entry<String, String>> contextsFrom(@Nullable String world) {
-        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(Maps.immutableEntry("world", world));
+    private Set<ContextValue<?>> contextsFrom(@Nullable String world) {
+        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createContextValue(world));
     }
 
     @Override

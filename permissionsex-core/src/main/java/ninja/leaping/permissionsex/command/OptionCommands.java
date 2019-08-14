@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -41,7 +42,7 @@ public class OptionCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.option.set");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         final String key = args.getOne("key");
                         final String value = args.getOne("value");
                         if (value == null) {

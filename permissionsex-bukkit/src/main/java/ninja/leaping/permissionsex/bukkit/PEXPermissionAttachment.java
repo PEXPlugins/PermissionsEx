@@ -47,6 +47,8 @@ public class PEXPermissionAttachment extends PermissionAttachment {
         } catch (ExecutionException | InterruptedException e) {
             throw new ExceptionInInitializerError(e);
         }
+
+        this.subjectData.update(data -> data.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", getPlugin().getName()));
     }
 
     public String getIdentifier() {
@@ -80,6 +82,7 @@ public class PEXPermissionAttachment extends PermissionAttachment {
 
     @Override
     public boolean remove() {
+        this.subjectData.update(data -> null);
         return perm.removeAttachmentInternal(this);
     }
 }

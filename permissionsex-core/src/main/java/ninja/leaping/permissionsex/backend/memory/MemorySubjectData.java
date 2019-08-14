@@ -25,6 +25,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.Util;
 
@@ -161,28 +162,28 @@ public class MemorySubjectData implements ImmutableSubjectData {
         }
     }
 
-    protected final MemorySubjectData newWithUpdated(Set<Entry<String, String>> key, DataEntry val) {
+    protected final MemorySubjectData newWithUpdated(Set<ContextValue<?>> key, DataEntry val) {
         if (val.isEmpty()) {
             val = null;
         }
         return newData(updateImmutable(contexts, immutSet(key), val));
     }
 
-    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected MemorySubjectData newData(Map<Set<ContextValue<?>>, DataEntry> contexts) {
         return new MemorySubjectData(contexts);
     }
 
-    protected final Map<Set<Entry<String, String>>, DataEntry> contexts;
+    protected final Map<Set<ContextValue<?>>, DataEntry> contexts;
 
     protected MemorySubjectData() {
         this.contexts = ImmutableMap.of();
     }
 
-    protected MemorySubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected MemorySubjectData(Map<Set<ContextValue<?>>, DataEntry> contexts) {
         this.contexts = contexts;
     }
 
-    private DataEntry getDataEntryOrNew(Set<Entry<String, String>> contexts) {
+    private DataEntry getDataEntryOrNew(Set<ContextValue<?>> contexts) {
         DataEntry res = this.contexts.get(contexts);
         if (res == null) {
             res = new DataEntry();
@@ -195,19 +196,19 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public Map<Set<Entry<String, String>>, Map<String, String>> getAllOptions() {
+    public Map<Set<ContextValue<?>>, Map<String, String>> getAllOptions() {
         return Maps.filterValues(Maps.transformValues(contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.options), el -> el != null);
     }
 
     @Override
-    public Map<String, String> getOptions(Set<Entry<String, String>> contexts) {
+    public Map<String, String> getOptions(Set<ContextValue<?>> contexts) {
         final DataEntry entry = this.contexts.get(contexts);
         return entry == null || entry.options == null ? Collections.<String, String>emptyMap() : entry.options;
     }
 
     @Override
-    public ImmutableSubjectData setOption(Set<Entry<String, String>> contexts, String key, String value) {
+    public ImmutableSubjectData setOption(Set<ContextValue<?>> contexts, String key, String value) {
         if (value == null) {
             return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutOption(key));
         } else {
@@ -216,12 +217,12 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public ImmutableSubjectData setOptions(Set<Entry<String, String>> contexts, Map<String, String> values) {
+    public ImmutableSubjectData setOptions(Set<ContextValue<?>> contexts, Map<String, String> values) {
         return newWithUpdated(contexts, getDataEntryOrNew(contexts).withOptions(values));
     }
 
     @Override
-    public ImmutableSubjectData clearOptions(Set<Entry<String, String>> contexts) {
+    public ImmutableSubjectData clearOptions(Set<ContextValue<?>> contexts) {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
@@ -234,25 +235,25 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts,
+        Map<Set<ContextValue<?>>, DataEntry> newValue = Maps.transformValues(this.contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.withoutOptions());
         return newData(newValue);
     }
 
     @Override
-    public Map<Set<Entry<String, String>>, Map<String, Integer>> getAllPermissions() {
+    public Map<Set<ContextValue<?>>, Map<String, Integer>> getAllPermissions() {
         return Maps.filterValues(Maps.transformValues(contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.permissions), o -> o != null);
     }
 
     @Override
-    public Map<String, Integer> getPermissions(Set<Entry<String, String>> set) {
+    public Map<String, Integer> getPermissions(Set<ContextValue<?>> set) {
         final DataEntry entry = this.contexts.get(set);
         return entry == null || entry.permissions == null ? Collections.<String, Integer>emptyMap() : entry.permissions;
     }
 
     @Override
-    public ImmutableSubjectData setPermission(Set<Entry<String, String>> contexts, String permission, int value) {
+    public ImmutableSubjectData setPermission(Set<ContextValue<?>> contexts, String permission, int value) {
         if (value == 0) {
             return newWithUpdated(contexts, getDataEntryOrNew(contexts).withoutPermission(permission));
         } else {
@@ -261,7 +262,7 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public ImmutableSubjectData setPermissions(Set<Entry<String, String>> contexts, Map<String, Integer> values) {
+    public ImmutableSubjectData setPermissions(Set<ContextValue<?>> contexts, Map<String, Integer> values) {
         return newWithUpdated(contexts, getDataEntryOrNew(contexts).withPermissions(values));
     }
 
@@ -271,13 +272,13 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts,
+        Map<Set<ContextValue<?>>, DataEntry> newValue = Maps.transformValues(this.contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.withoutPermissions());
         return newData(newValue);
     }
 
     @Override
-    public ImmutableSubjectData clearPermissions(Set<Entry<String, String>> contexts) {
+    public ImmutableSubjectData clearPermissions(Set<ContextValue<?>> contexts) {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
@@ -286,19 +287,19 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public Map<Set<Entry<String, String>>, List<Entry<String, String>>> getAllParents() {
+    public Map<Set<ContextValue<?>>, List<Entry<String, String>>> getAllParents() {
         return Maps.filterValues(Maps.transformValues(contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.parents == null ? null : Lists.transform(dataEntry.parents, Util::subjectFromString)), v -> v != null);
     }
 
     @Override
-    public List<Map.Entry<String, String>> getParents(Set<Entry<String, String>> contexts) {
+    public List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
         return ent == null || ent.parents == null ? Collections.<Map.Entry<String, String>>emptyList() : Lists.transform(ent.parents, Util::subjectFromString);
     }
 
     @Override
-    public ImmutableSubjectData addParent(Set<Entry<String, String>> contexts, String type, String ident) {
+    public ImmutableSubjectData addParent(Set<ContextValue<?>> contexts, String type, String ident) {
         DataEntry entry = getDataEntryOrNew(contexts);
         final String parentIdent = type + ":" + ident;
         if (entry.parents != null && entry.parents.contains(parentIdent)) {
@@ -308,7 +309,7 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public ImmutableSubjectData removeParent(Set<Entry<String, String>> contexts, String type, String identifier) {
+    public ImmutableSubjectData removeParent(Set<ContextValue<?>> contexts, String type, String identifier) {
         DataEntry ent = this.contexts.get(contexts);
         if (ent == null) {
             return this;
@@ -322,7 +323,7 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public ImmutableSubjectData setParents(Set<Entry<String, String>> contexts, List<Entry<String, String>> parents) {
+    public ImmutableSubjectData setParents(Set<ContextValue<?>> contexts, List<Entry<String, String>> parents) {
         DataEntry entry = getDataEntryOrNew(contexts);
         return newWithUpdated(contexts, entry.withParents(Lists.transform(parents, Util::subjectToString)));
     }
@@ -333,13 +334,13 @@ public class MemorySubjectData implements ImmutableSubjectData {
             return this;
         }
 
-        Map<Set<Entry<String, String>>, DataEntry> newValue = Maps.transformValues(this.contexts,
+        Map<Set<ContextValue<?>>, DataEntry> newValue = Maps.transformValues(this.contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.withoutParents());
         return newData(newValue);
     }
 
     @Override
-    public ImmutableSubjectData clearParents(Set<Entry<String, String>> contexts) {
+    public ImmutableSubjectData clearParents(Set<ContextValue<?>> contexts) {
         if (!this.contexts.containsKey(contexts)) {
             return this;
         }
@@ -347,23 +348,23 @@ public class MemorySubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public int getDefaultValue(Set<Entry<String, String>> contexts) {
+    public int getDefaultValue(Set<ContextValue<?>> contexts) {
         DataEntry ent = this.contexts.get(contexts);
         return ent == null || ent.defaultValue == null ? 0 : ent.defaultValue;
     }
 
     @Override
-    public ImmutableSubjectData setDefaultValue(Set<Entry<String, String>> contexts, int defaultValue) {
+    public ImmutableSubjectData setDefaultValue(Set<ContextValue<?>> contexts, int defaultValue) {
         return newWithUpdated(contexts, getDataEntryOrNew(contexts).withDefaultValue(defaultValue));
     }
 
     @Override
-    public Iterable<Set<Entry<String, String>>> getActiveContexts() {
+    public Iterable<Set<ContextValue<?>>> getActiveContexts() {
         return contexts.keySet();
     }
 
     @Override
-    public Map<Set<Entry<String, String>>, Integer> getAllDefaultValues() {
+    public Map<Set<ContextValue<?>>, Integer> getAllDefaultValues() {
         return Maps.filterValues(Maps.transformValues(contexts,
                 dataEntry -> dataEntry == null ? null : dataEntry.defaultValue), v -> v != null);
     }

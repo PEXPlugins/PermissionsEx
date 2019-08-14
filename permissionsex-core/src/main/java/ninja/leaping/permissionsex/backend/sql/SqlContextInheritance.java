@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.backend.sql;
 
 import com.google.common.collect.ImmutableList;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.util.ThrowingBiConsumer;
 import ninja.leaping.permissionsex.util.Util;
@@ -24,14 +25,13 @@ import ninja.leaping.permissionsex.util.Util;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SqlContextInheritance implements ContextInheritance {
-    private final Map<Entry<String, String>, List<Entry<String, String>>> inheritance;
+    private final Map<ContextValue<?>, List<ContextValue<?>>> inheritance;
     private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    SqlContextInheritance(Map<Entry<String, String>, List<Entry<String, String>>> inheritance, List<ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
+    SqlContextInheritance(Map<ContextValue<?>, List<ContextValue<?>>> inheritance, List<ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
         this.inheritance = inheritance;
         if (updates != null) {
             this.updatesToPerform.set(ImmutableList.copyOf(updates));
@@ -39,20 +39,20 @@ public class SqlContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public List<Entry<String, String>> getParents(Entry<String, String> context) {
-        List<Entry<String, String>> ret = inheritance.get(context);
+    public List<ContextValue<?>> getParents(ContextValue<?> context) {
+        List<ContextValue<?>> ret = inheritance.get(context);
         return ret == null ? ImmutableList.of() : ret;
     }
 
     @Override
-    public SqlContextInheritance setParents(Entry<String, String> context, List<Entry<String, String>> parents) {
+    public SqlContextInheritance setParents(ContextValue<?> context, List<ContextValue<?>> parents) {
         if (parents == null) {
             return new SqlContextInheritance(Util.updateImmutable(this.inheritance, context, null), Util.appendImmutable(this.updatesToPerform.get(), (dao, inherit) -> {
                 dao.setContextInheritance(context, null);
             }));
         } else {
             return new SqlContextInheritance(Util.updateImmutable(this.inheritance, context, parents), Util.appendImmutable(this.updatesToPerform.get(), (dao, inherit) -> {
-                List<Entry<String, String>> newParents = inherit.getParents(context);
+                List<ContextValue<?>> newParents = inherit.getParents(context);
                 if (newParents != null) {
                     dao.setContextInheritance(context, newParents);
                 }
@@ -61,7 +61,7 @@ public class SqlContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public Map<Entry<String, String>, List<Entry<String, String>>> getAllParents() {
+    public Map<ContextValue<?>, List<ContextValue<?>>> getAllParents() {
         return inheritance;
     }
 

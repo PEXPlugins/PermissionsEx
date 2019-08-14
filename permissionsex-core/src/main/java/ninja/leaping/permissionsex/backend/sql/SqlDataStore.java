@@ -26,6 +26,7 @@ import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.sql.dao.H2SqlDao;
 import ninja.leaping.permissionsex.backend.sql.dao.MySqlDao;
 import ninja.leaping.permissionsex.backend.sql.dao.SchemaMigration;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
@@ -196,7 +197,7 @@ public final class SqlDataStore extends AbstractDataStore {
 
     private SqlSubjectData getDataForRef(SqlDao dao, SubjectRef ref) throws SQLException {
         List<Segment> segments = dao.getSegments(ref);
-        Map<Set<Entry<String, String>>, Segment> contexts = new HashMap<>();
+        Map<Set<ContextValue<?>>, Segment> contexts = new HashMap<>();
         for (Segment segment : segments) {
             contexts.put(segment.getContexts(), segment);
         }
@@ -256,6 +257,15 @@ public final class SqlDataStore extends AbstractDataStore {
             return ImmutableSet.of();
         }
 
+    }
+
+    @Override
+    public CompletableFuture<Set<String>> getDefinedContextKeys() {
+        return runAsync(() -> {
+            try (SqlDao dao = getDao()) {
+                return dao.getUsedContextKeys();
+            }
+        });
     }
 
     @Override
@@ -326,7 +336,7 @@ public final class SqlDataStore extends AbstractDataStore {
                     sqlInheritance = (SqlContextInheritance) inheritance;
                 } else {
                     sqlInheritance = new SqlContextInheritance(inheritance.getAllParents(), Util.appendImmutable(null, (dao_, inheritance_) -> {
-                        for (Entry<Entry<String, String>, List<Entry<String, String>>> ent : inheritance_.getAllParents().entrySet()) {
+                        for (Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.getAllParents().entrySet()) {
                             dao_.setContextInheritance(ent.getKey(), ent.getValue());
                         }
                     }));

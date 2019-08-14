@@ -34,6 +34,7 @@ import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.util.Tristate;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -181,11 +182,11 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public CompletableFuture<Map<SubjectReference, Integer>> getAllWithPermissionValue(String permission) {
-        return getAllWithPermissionValue(ImmutableSet.of(), permission); // TODO: make this use active contexts
+        return getAllWithPermissionValue(null, permission); // TODO: make this use active contexts
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Integer>> getAllWithPermissionValue(Set<Context> contexts,
+    public CompletableFuture<Map<SubjectReference, Integer>> getAllWithPermissionValue(@Nullable Set<Context> contexts,
             String permission) {
         Set<String> raw = this.collection.getAllIdentifiers();
         CompletableFuture<CalculatedSubject>[] futures = new CompletableFuture[raw.size()];
@@ -205,7 +206,7 @@ class PEXSubjectCollection implements SubjectCollection {
                     return null;
                 }
             }).map(subj -> {
-                final int perm = subj.getPermission(PEXSubjectData.parSet(contexts), permission);
+                final int perm = subj.getPermission(contexts == null ? subj.getActiveContexts() : PEXSubjectData.contextsSpongeToPex(contexts, this.plugin.getManager()), permission);
                 return Maps.immutableEntry((SubjectReference) subj.getIdentifier(), perm);
             }).filter(ent -> ent.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

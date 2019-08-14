@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextDefinition;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.util.GuavaStartsWithPredicate;
 import ninja.leaping.permissionsex.util.Translatable;
@@ -163,14 +165,16 @@ public class GameArguments {
         }
     }
 
-    public static CommandElement context(Translatable key) {
-        return new ContextCommandElement(key);
+    public static CommandElement context(Translatable key, PermissionsEx pex) {
+        return new ContextCommandElement(key, pex);
     }
 
     private static class ContextCommandElement extends CommandElement {
+        private final PermissionsEx pex;
 
-        protected ContextCommandElement(Translatable key) {
+        protected ContextCommandElement(Translatable key, PermissionsEx pex) {
             super(key);
+            this.pex = pex;
         }
 
         @Override
@@ -180,7 +184,15 @@ public class GameArguments {
             if (contextSplit.length != 2) {
                 throw args.createError(t("Context must be of the form <key>=<value>!"));
             }
-            return Maps.immutableEntry(contextSplit[0], contextSplit[1]);
+            ContextDefinition<?> def = pex.getContextDefinition(contextSplit[0]);
+            if (def == null) {
+                throw args.createError(t("Unknown context type %s", contextSplit[0]));
+            }
+            return toCtxValue(def, contextSplit[1]);
+        }
+
+        private <T> ContextValue<T> toCtxValue(ContextDefinition<T> def, String input) {
+            return def.createContextValue(def.deserialize(input));
         }
 
         @Override

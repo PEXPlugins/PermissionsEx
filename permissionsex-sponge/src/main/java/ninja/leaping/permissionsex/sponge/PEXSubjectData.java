@@ -19,17 +19,21 @@ package ninja.leaping.permissionsex.sponge;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
+import ninja.leaping.permissionsex.context.ContextDefinition;
 import ninja.leaping.permissionsex.data.Change;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
-import ninja.leaping.permissionsex.util.GuavaCollectors;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.util.Tristate;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,9 +47,9 @@ import java.util.concurrent.ConcurrentMap;
 class PEXSubjectData implements SubjectData {
     private final PermissionsExPlugin plugin;
     private SubjectDataReference data;
-    private final ConcurrentMap<Set<Map.Entry<String, String>>, List<SubjectReference>> parentsCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Set<ContextValue<?>>, List<SubjectReference>> parentsCache = new ConcurrentHashMap<>();
 
-    public PEXSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) {
+    PEXSubjectData(SubjectDataReference data, PermissionsExPlugin plugin) {
         this.plugin = plugin;
         this.data = data;
         this.data.onUpdate(this::clearCache);
@@ -62,12 +66,34 @@ class PEXSubjectData implements SubjectData {
         return (Set) input;
     }
 
-    private static <T> Map<Set<Context>, T> tKeys(Map<Set<Map.Entry<String, String>>, T> input) {
+    static Set<Context> contextsPexToSponge(Set<ContextValue<?>> input) {
+        Set<Context> build = new HashSet<>();
+        for (ContextValue<?> ctx : input) {
+            build.add(new Context(ctx.getKey(), ctx.getRawValue()));
+        }
+        return build;
+    }
+
+    private static <T> ContextValue<T> singleContextToPex(Context ctx, ContextDefinition<T> def) {
+        return def.createContextValue(def.deserialize(ctx.getValue()));
+    }
+
+    static Set<ContextValue<?>> contextsSpongeToPex(Set<Context> input, PermissionsEx manager) {
+       ImmutableSet.Builder<ContextValue<?>> builder = ImmutableSet.builder();
+       for (Context ctx : input) {
+           ContextDefinition<?> def = manager.getContextDefinition(ctx.getKey());
+           if (def == null) {
+               continue; // TODO: what do here? this gross
+           }
+           builder.add(singleContextToPex(ctx, def));
+       }
+       return builder.build();
+    }
+
+    private static <T> Map<Set<Context>, T> tKeys(Map<Set<ContextValue<?>>, T> input) {
         final ImmutableMap.Builder<Set<Context>, T> ret = ImmutableMap.builder();
-        for (Map.Entry<Set<Map.Entry<String, String>>, T> ent : input.entrySet()) {
-            ret.put(ent.getKey().stream()
-                    .map(ctx -> ctx instanceof Context ? (Context) ctx : new Context(ctx.getKey(), ctx.getValue()))
-                    .collect(GuavaCollectors.toImmutableSet()), ent.getValue());
+        for (Map.Entry<Set<ContextValue<?>>, T> ent : input.entrySet()) {
+            ret.put(contextsPexToSponge(ent.getKey()), ent.getValue());
         }
         return ret.build();
     }
@@ -95,17 +121,17 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<String, String> getOptions(Set<Context> contexts) {
-        return this.data.get().getOptions(parSet(contexts));
+        return this.data.get().getOptions(contextsSpongeToPex(contexts, plugin.getManager()));
     }
 
     @Override
     public CompletableFuture<Boolean> setOption(final Set<Context> contexts, final String key, final String value) {
-        return boolSuccess(data.update(input -> input.setOption(parSet(contexts), key, value)));
+        return boolSuccess(data.update(input -> input.setOption(contextsSpongeToPex(contexts, plugin.getManager()), key, value)));
     }
 
     @Override
     public CompletableFuture<Boolean> clearOptions(final Set<Context> contexts) {
-        return boolSuccess(data.update(input -> input.clearOptions(parSet(contexts))));
+        return boolSuccess(data.update(input -> input.clearOptions(contextsSpongeToPex(contexts, plugin.getManager()))));
     }
 
     @Override
@@ -130,7 +156,7 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<String, Integer> getPermissionValues(Set<Context> set) {
-        return data.get().getPermissions(parSet(set));
+        return data.get().getPermissions(contextsSpongeToPex(set, plugin.getManager()));
     }
 
     @Override
@@ -154,7 +180,7 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public CompletableFuture<Boolean> setPermission(final Set<Context> set, final String s, int value) {
-        return data.update(input -> input.setPermission(parSet(set), s, value)).thenApply(x -> true);
+        return data.update(input -> input.setPermission(contextsSpongeToPex(set, plugin.getManager()), s, value)).thenApply(x -> true);
     }
 
     @Override
@@ -164,7 +190,7 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public CompletableFuture<Boolean> clearPermissions(final Set<Context> set) {
-        return boolSuccess(data.update(input -> input.clearPermissions(parSet(set))));
+        return boolSuccess(data.update(input -> input.clearPermissions(contextsSpongeToPex(set, plugin.getManager()))));
     }
 
     @Override
@@ -177,10 +203,10 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public List<SubjectReference> getParents(Set<Context> set) {
-        return getParentsInternal(parSet(set));
+        return getParentsInternal(contextsSpongeToPex(set, plugin.getManager()));
     }
 
-    public List<SubjectReference> getParentsInternal(Set<Map.Entry<String, String>> set) {
+    private List<SubjectReference> getParentsInternal(Set<ContextValue<?>> set) {
         List<SubjectReference> parents = parentsCache.get(set);
         if (parents == null) {
             synchronized (parentsCache) {
@@ -204,12 +230,13 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public CompletableFuture<Boolean> addParent(final Set<Context> set, final SubjectReference subject) {
-        return boolSuccess(data.update(input -> input.addParent(parSet(set), subject.getCollectionIdentifier(), subject.getSubjectIdentifier())));
+        PEXSubjectReference.of(subject, plugin); // validate subject reference
+        return boolSuccess(data.update(input -> input.addParent(contextsSpongeToPex(set, plugin.getManager()), subject.getCollectionIdentifier(), subject.getSubjectIdentifier())));
     }
 
     @Override
     public CompletableFuture<Boolean> removeParent(final Set<Context> set, final SubjectReference subject) {
-        return boolSuccess(data.update(input -> input.removeParent(parSet(set), subject.getCollectionIdentifier(), subject.getSubjectIdentifier())));
+        return boolSuccess(data.update(input -> input.removeParent(contextsSpongeToPex(set, plugin.getManager()), subject.getCollectionIdentifier(), subject.getSubjectIdentifier())));
     }
 
     @Override
@@ -219,6 +246,6 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public CompletableFuture<Boolean> clearParents(final Set<Context> set) {
-        return boolSuccess(data.update(input -> input.clearParents(parSet(set))));
+        return boolSuccess(data.update(input -> input.clearParents(contextsSpongeToPex(set, plugin.getManager()))));
     }
 }

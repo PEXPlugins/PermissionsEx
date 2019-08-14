@@ -27,6 +27,7 @@ import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -69,6 +70,15 @@ public interface DataStore {
      */
     CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
 
+    /**
+     * Move data from one subject to another
+     *
+     * @param oldType The old subject's type
+     * @param oldIdentifier The old subject's identifier
+     * @param newType The new subject's type
+     * @param newIdentifier The new subject's identifier
+     * @return A future that will complete when the move is complete
+     */
     default CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {
         return isRegistered(oldType, oldIdentifier).thenCombine(isRegistered(newType, newIdentifier), (oldRegistered, newRegistered) -> {
             if (oldRegistered && !newRegistered) {
@@ -113,6 +123,13 @@ public interface DataStore {
      * @return The registered subject types
      */
     Set<String> getRegisteredTypes();
+
+    /**
+     * Enumerate all contexts defined within this data store
+     *
+     * @return The contexts available within this data store
+     */
+    CompletableFuture<Set<String>> getDefinedContextKeys();
 
     /**
      * Returns all subjects present in this data store

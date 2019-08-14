@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.logging;
 
+import ninja.leaping.permissionsex.context.ContextValue;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,8 +26,8 @@ import java.util.Set;
  * Delegate to handle notifying of permission and option checks
  */
 public interface PermissionCheckNotifier {
-    void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value);
-    void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value);
-    void onParentCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents);
+    void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value);
+    void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value);
+    void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents);
 
 }

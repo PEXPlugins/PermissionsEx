@@ -68,7 +68,7 @@ public class PermissionsExCommands {
                 .setArguments(optional(
                                 firstParsing(
                                         children,
-                                        Util.contextTransientFlags()
+                                        Util.contextTransientFlags(pex)
                                                 .buildWith(seq(subject(t("subject"), pex), subjectChildren)),
                                         flags()
                                                 .flag("-transient")

@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.logging;
 
+import ninja.leaping.permissionsex.context.ContextValue;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,18 +46,18 @@ public class RecordingPermissionCheckNotifier implements PermissionCheckNotifier
         });
     }
     @Override
-    public void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value) {
+    public void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         knownPermissions.add(permission);
 
     }
 
     @Override
-    public void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value) {
+    public void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value) {
         knownOptions.add(option);
     }
 
     @Override
-    public void onParentCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
     }
 
     public Set<String> getKnownPermissions() {

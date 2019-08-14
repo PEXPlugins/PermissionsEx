@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.backend.sql.dao.LegacyDao;
 import ninja.leaping.permissionsex.backend.sql.dao.LegacyMigration;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.ThrowingSupplier;
 
@@ -204,8 +205,12 @@ public abstract class SqlDao implements AutoCloseable {
         return "SELECT `id`, `type`, `identifier` FROM {}subjects";
     }
 
-    public String getRenameTableQuery() {
+    protected String getRenameTableQuery() {
         return "ALTER TABLE ? RENAME ?";
+    }
+
+    protected String getSelectAllContextKeysUniqueQuery() {
+        return "SELECT DISTINCT `key` FROM {}contexts";
     }
 
     public PreparedStatement prepareStatement(String query) throws SQLException {
@@ -343,14 +348,14 @@ public abstract class SqlDao implements AutoCloseable {
     }
 
 
-    private Set<Entry<String, String>> getSegmentContexts(int segmentId) throws SQLException {
+    private Set<ContextValue<?>> getSegmentContexts(int segmentId) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectContextsSegmentQuery())) {
             stmt.setInt(1, segmentId);
-            ImmutableSet.Builder<Entry<String, String>> res = ImmutableSet.builder();
+            ImmutableSet.Builder<ContextValue<?>> res = ImmutableSet.builder();
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                res.add(Maps.immutableEntry(rs.getString(1), rs.getString(2)));
+                res.add(new ContextValue<>(rs.getString(1), rs.getString(2)));
             }
             return res.build();
         }
@@ -365,7 +370,7 @@ public abstract class SqlDao implements AutoCloseable {
             while (rs.next()) {
                 final int id = rs.getInt(1);
                 Number permDef = (Number) rs.getObject(2);
-                Set<Entry<String, String>> contexts = getSegmentContexts(id);
+                Set<ContextValue<?>> contexts = getSegmentContexts(id);
 
                 ImmutableMap.Builder<String, Integer> permValues = ImmutableMap.builder();
                 ImmutableMap.Builder<String, String> optionValues = ImmutableMap.builder();
@@ -423,7 +428,7 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public void setContexts(Segment seg, Set<Entry<String, String>> contexts) throws SQLException {
+    public void setContexts(Segment seg, Set<ContextValue<?>> contexts) throws SQLException {
         // Update contexts
         executeInTransaction(() -> {
             try (PreparedStatement delete = prepareStatement(getDeleteContextQuery());
@@ -433,9 +438,9 @@ public abstract class SqlDao implements AutoCloseable {
 
                 insert.setInt(1, seg.getId());
 
-                for (Map.Entry<String, String> context : contexts) {
+                for (ContextValue<?> context : contexts) {
                     insert.setString(2, context.getKey());
-                    insert.setString(3, context.getValue());
+                    insert.setString(3, context.getRawValue());
                     insert.addBatch();
                 }
                 insert.executeBatch();
@@ -673,23 +678,23 @@ public abstract class SqlDao implements AutoCloseable {
 
     public SqlContextInheritance getContextInheritance() throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectContextInheritanceQuery())) {
-            ImmutableMap.Builder<Entry<String, String>, List<Entry<String, String>>> ret = ImmutableMap.builder();
-            Entry<String, String> current = null;
-            ImmutableList.Builder<Entry<String, String>> builder = null;
+            ImmutableMap.Builder<ContextValue<?>, List<ContextValue<?>>> ret = ImmutableMap.builder();
+            ContextValue<?> current = null;
+            ImmutableList.Builder<ContextValue<?>> builder = null;
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 final String childKey = rs.getString(1),
                         childValue = rs.getString(2),
                         parentKey = rs.getString(3),
                         parentValue = rs.getString(4);
-                if (current == null || !childKey.equals(current.getKey()) || !childValue.equals(current.getValue())) {
+                if (current == null || !childKey.equals(current.getKey()) || !childValue.equals(current.getRawValue())) {
                     if (current != null && builder != null) {
                         ret.put(current, builder.build());
                     }
-                    current = Maps.immutableEntry(childKey, childValue);
+                    current = new ContextValue<>(childKey, childValue);
                     builder = ImmutableList.builder();
                 }
-                builder.add(Maps.immutableEntry(parentKey, parentValue));
+                builder.add(new ContextValue<>(parentKey, parentValue));
             }
 
             if (current != null) {
@@ -701,20 +706,20 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void setContextInheritance(Entry<String, String> child, List<Entry<String, String>> parents) throws SQLException {
+    public void setContextInheritance(ContextValue<?> child, List<ContextValue<?>> parents) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement delete = prepareStatement(getDeleteContextInheritanceQuery());
             PreparedStatement insert = prepareStatement(getInsertContextInheritanceQuery())) {
                 delete.setString(1, child.getKey());
-                delete.setString(2, child.getValue());
+                delete.setString(2, child.getRawValue());
                 delete.executeUpdate();
 
                 if (parents != null && parents.size() > 0) {
                     insert.setString(1, child.getKey());
-                    insert.setString(2, child.getValue());
-                    for (Entry<String, String> parent : parents) {
+                    insert.setString(2, child.getRawValue());
+                    for (ContextValue<?> parent : parents) {
                         insert.setString(3, parent.getKey());
-                        insert.setString(4, parent.getValue());
+                        insert.setString(4, parent.getRawValue());
                         insert.addBatch();
                     }
                     insert.executeBatch();
@@ -791,6 +796,17 @@ public abstract class SqlDao implements AutoCloseable {
                 ret.add(new SubjectRef(rs.getInt(1), rs.getString(2), rs.getString(3)));
             }
             return ret.build();
+        }
+    }
+
+    public Set<String> getUsedContextKeys() throws SQLException {
+        try (PreparedStatement stmt = prepareStatement(getSelectAllContextKeysUniqueQuery())){
+            ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                builder.add(rs.getString(1));
+            }
+            return builder.build();
         }
     }
 

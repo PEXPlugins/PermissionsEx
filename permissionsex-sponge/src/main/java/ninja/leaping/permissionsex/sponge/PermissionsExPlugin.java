@@ -43,7 +43,6 @@ import ninja.leaping.permissionsex.util.command.CommandSpec;
 import ninja.leaping.permissionsex.util.command.Commander;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
@@ -116,7 +115,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private final List<ContextCalculator<Subject>> contextCalculators = new CopyOnWriteArrayList<>();
     private final AsyncLoadingCache<String, PEXSubjectCollection> subjectCollections = Caffeine.newBuilder().executor(spongeExecutor).buildAsync((type, exec) -> PEXSubjectCollection.load(type, this));
     private PEXSubject defaults;
-    private final PEXContextCalculator contextCalculator = new PEXContextCalculator();
     private final Map<String, PEXPermissionDescription> descriptions = new ConcurrentHashMap<>();
 
     private Timings timings;
@@ -149,8 +147,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                 "RCON", () -> null)));
         getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(SUBJECTS_USER, this));
 
-
-        registerContextCalculator(contextCalculator);
 
         registerFakeOpCommand("op", "minecraft.command.op");
         registerFakeOpCommand("deop", "minecraft.command.deop");

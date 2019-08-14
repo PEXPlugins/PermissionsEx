@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.command;
 
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.command.CommandContext;
 import ninja.leaping.permissionsex.util.command.CommandException;
@@ -47,7 +48,7 @@ public class ParentCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.parent.add");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 ref.update(old -> old.addParent(contexts, parent.getKey(), parent.getValue())), src,
@@ -65,7 +66,7 @@ public class ParentCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.parent.remove");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 ref.update(old -> old.removeParent(contexts, parent.getKey(), parent.getValue())), src,
@@ -83,7 +84,7 @@ public class ParentCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.parent.set");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         Map.Entry<String, String> parent = args.getOne("parent");
                         messageSubjectOnFuture(
                                 ref.update(old -> old.clearParents(contexts).addParent(contexts, parent.getKey(), parent.getValue())), src,

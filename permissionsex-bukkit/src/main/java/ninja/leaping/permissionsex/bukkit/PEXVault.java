@@ -22,6 +22,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -87,8 +88,8 @@ class PEXVault extends Permission {
         return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player")));
     }
 
-    private Set<Map.Entry<String, String>> contextsFrom(@Nullable String world) {
-        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(Maps.immutableEntry("world", world));
+    private Set<ContextValue<?>> contextsFrom(@Nullable String world) {
+        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createContextValue(world));
     }
 
     @Override

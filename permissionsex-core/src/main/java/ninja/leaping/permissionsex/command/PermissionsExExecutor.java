@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.Translatable;
@@ -42,8 +43,8 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         this.pex = pex;
     }
 
-    protected <TextType> TextType formatContexts(Commander<TextType> src, Set<Map.Entry<String, String>> contexts) {
-        return src.fmt().hl(contexts.isEmpty() ? src.fmt().tr(t("Global")) : src.fmt().combined(contexts.toString()));
+    protected <TextType> TextType formatContexts(Commander<TextType> src, Set<ContextValue<?>> contexts) {
+        return src.fmt().hl(contexts.isEmpty() ? src.fmt().tr(t("Global")) : src.fmt().combined(contexts.toString())); // TODO: create better context to string representation
     }
 
     protected CalculatedSubject subjectOrSelf(Commander<?> src, CommandContext args) throws CommandException {

@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.logging;
 
+import ninja.leaping.permissionsex.context.ContextValue;
+
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onPermissionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String permission, int value) {
+    public void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         if (this.filterPredicate.test(permission)) {
             logger.info(t("Permission %s checked in %s for %s: %s", permission, contexts, stringIdentifier(subject), value));
         }
@@ -55,7 +57,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onOptionCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, String option, String value) {
+    public void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value) {
         if (this.filterPredicate.test(option)) {
             logger.info(t("Option %s checked in %s for %s: %s", option, contexts, stringIdentifier(subject), value));
         }
@@ -63,7 +65,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onParentCheck(Map.Entry<String, String> subject, Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
         logger.info(t("Parents checked in %s for %s: %s", contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }

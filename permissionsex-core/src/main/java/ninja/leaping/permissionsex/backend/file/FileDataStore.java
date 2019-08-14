@@ -53,6 +53,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static ninja.leaping.permissionsex.util.Translations.t;
@@ -234,6 +235,16 @@ public final class FileDataStore extends AbstractDataStore {
                 .map(Object::toString)
                 .distinct()
                 .collect(GuavaCollectors.toImmutableSet());
+    }
+
+    @Override
+    public CompletableFuture<Set<String>> getDefinedContextKeys() {
+        return CompletableFuture.completedFuture(getSubjectsNode().getChildrenMap().values().stream() // list of types
+                .flatMap(typeNode -> typeNode.getChildrenMap().values().stream()) // list of subjects
+                .flatMap(subjectNode -> subjectNode.getChildrenList().stream()) // list of segments
+                .flatMap(segmentNode -> segmentNode.getNode(FileSubjectData.KEY_CONTEXTS).getChildrenMap().entrySet().stream()) // list of contexts
+                .map(ctx -> ctx.getKey().toString()) // of context objets
+                .collect(Collectors.toSet())); // to a list
     }
 
     @Override

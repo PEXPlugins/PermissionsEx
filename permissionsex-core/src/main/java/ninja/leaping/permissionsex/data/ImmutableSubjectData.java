@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import ninja.leaping.permissionsex.context.ContextValue;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +35,7 @@ public interface ImmutableSubjectData {
      *
      * @return All options registered, or an empty map
      */
-    Map<Set<Map.Entry<String, String>>, Map<String, String>> getAllOptions();
+    Map<Set<ContextValue<?>>, Map<String, String>> getAllOptions();
 
     /**
      * Get options registered in a single context set.
@@ -41,7 +43,7 @@ public interface ImmutableSubjectData {
      * @param contexts The contexts to check in
      * @return The options, as an immutable map
      */
-    Map<String, String> getOptions(Set<Map.Entry<String, String>> contexts);
+    Map<String, String> getOptions(Set<ContextValue<?>> contexts);
 
     /**
      * Return a new subject data object with updated option information
@@ -51,7 +53,7 @@ public interface ImmutableSubjectData {
      * @param value The value to set attached to the key
      * @return An updated data object
      */
-    ImmutableSubjectData setOption(Set<Map.Entry<String, String>> contexts, String key, String value);
+    ImmutableSubjectData setOption(Set<ContextValue<?>> contexts, String key, String value);
 
     /**
      * Return a new subject data object with an entirely new set of options
@@ -60,7 +62,7 @@ public interface ImmutableSubjectData {
      * @param values The options to set
      * @return An updated data object
      */
-    ImmutableSubjectData setOptions(Set<Map.Entry<String, String>> contexts, Map<String, String> values);
+    ImmutableSubjectData setOptions(Set<ContextValue<?>> contexts, Map<String, String> values);
 
     /**
      * Return a new subject data object with no options set in the given contexts
@@ -68,7 +70,7 @@ public interface ImmutableSubjectData {
      * @param contexts The contexts to set these options in
      * @return A new subject data object with no options information in the provided contexts.
      */
-    ImmutableSubjectData clearOptions(Set<Map.Entry<String, String>> contexts);
+    ImmutableSubjectData clearOptions(Set<ContextValue<?>> contexts);
 
     /**
      * Return a new subject data object with no options set.
@@ -82,15 +84,15 @@ public interface ImmutableSubjectData {
      *
      * @return an immutable map from context set to map of permission to value
      */
-    Map<Set<Map.Entry<String, String>>, Map<String, Integer>> getAllPermissions();
+    Map<Set<ContextValue<?>>, Map<String, Integer>> getAllPermissions();
 
     /**
      * Get permissions data for a single context in this subject
      *
-     * @param contexts The context set to get data for
+     * @param contexts The context set to get data fort
      * @return an immutable map from permission to value
      */
-    Map<String, Integer> getPermissions(Set<Map.Entry<String, String>> contexts);
+    Map<String, Integer> getPermissions(Set<ContextValue<?>> contexts);
 
     /**
      * Set a single permission to a specific value. Values greater than zero evaluate to true,
@@ -101,7 +103,7 @@ public interface ImmutableSubjectData {
      * @param value The value. Zero to unset.
      * @return An updated subject data object
      */
-    ImmutableSubjectData setPermission(Set<Map.Entry<String, String>> contexts, String permission, int value);
+    ImmutableSubjectData setPermission(Set<ContextValue<?>> contexts, String permission, int value);
 
     /**
      * Set all permissions in a single context set
@@ -110,7 +112,7 @@ public interface ImmutableSubjectData {
      * @param values A map from permissions to their values
      * @return An updated subject data object
      */
-    ImmutableSubjectData setPermissions(Set<Map.Entry<String, String>> contexts, Map<String, Integer> values);
+    ImmutableSubjectData setPermissions(Set<ContextValue<?>> contexts, Map<String, Integer> values);
 
     /**
      * Return an updated subject data object with all permissions in every context set unset.
@@ -125,21 +127,21 @@ public interface ImmutableSubjectData {
      * @param contexts The context set to unset permissions in
      * @return The updated subject data object
      */
-    ImmutableSubjectData clearPermissions(Set<Map.Entry<String, String>> contexts);
+    ImmutableSubjectData clearPermissions(Set<ContextValue<?>> contexts);
 
     /**
      * Get an immutable map of parents in every context set. The map returned is from context set to a list of subject identifiers
      *
      * @return An immutable map of all parents
      */
-    Map<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> getAllParents();
+    Map<Set<ContextValue<?>>, List<Map.Entry<String, String>>> getAllParents();
 
     /**
      * Get parents in a specific context
      * @param contexts The set of contexts to get parents in
      * @return An immutable list of parents. Empty list
      */
-    List<Map.Entry<String, String>> getParents(Set<Map.Entry<String, String>> contexts);
+    List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> contexts);
 
     /**
      * Add a single parent subject in a single context set
@@ -149,7 +151,7 @@ public interface ImmutableSubjectData {
      * @param identifier The identifier of the parent subject being added
      * @return An updated subject data object
      */
-    ImmutableSubjectData addParent(Set<Map.Entry<String, String>> contexts, String type, String identifier);
+    ImmutableSubjectData addParent(Set<ContextValue<?>> contexts, String type, String identifier);
 
     /**
      * Remove a single parent subject in a single context set
@@ -159,7 +161,7 @@ public interface ImmutableSubjectData {
      * @param identifier The identifier of the parent subject being removed
      * @return An updated subject data object
      */
-    ImmutableSubjectData removeParent(Set<Map.Entry<String, String>> contexts, String type, String identifier);
+    ImmutableSubjectData removeParent(Set<ContextValue<?>> contexts, String type, String identifier);
 
     /**
      * Set the parents in a single context set to the provided list
@@ -168,7 +170,7 @@ public interface ImmutableSubjectData {
      * @param parents The parents that will be written in the given context
      * @return An updated subject data object
      */
-    ImmutableSubjectData setParents(Set<Map.Entry<String, String>> contexts, List<Map.Entry<String, String>> parents);
+    ImmutableSubjectData setParents(Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents);
 
     /**
      * Remove all parents from this subject data object
@@ -183,7 +185,7 @@ public interface ImmutableSubjectData {
      * @param contexts The contexts to remove parents in
      * @return The updated subject data object
      */
-    ImmutableSubjectData clearParents(Set<Map.Entry<String, String>> contexts);
+    ImmutableSubjectData clearParents(Set<ContextValue<?>> contexts);
 
     /**
      * Get the fallback permissions value in a given context set. This is the value that will be returned for permissions
@@ -192,7 +194,7 @@ public interface ImmutableSubjectData {
      * @param contexts The context set to query the default value in
      * @return The default value in the given context set, or 0 if none is set.
      */
-    int getDefaultValue(Set<Map.Entry<String, String>> contexts);
+    int getDefaultValue(Set<ContextValue<?>> contexts);
 
     /**
      * Set the fallback permission value in a given context set
@@ -201,19 +203,20 @@ public interface ImmutableSubjectData {
      * @param defaultValue The default value to apply. A default value of 0 is equivalent to unset
      * @return An updated subject data object
      */
-    ImmutableSubjectData setDefaultValue(Set<Map.Entry<String, String>> contexts, int defaultValue);
+    ImmutableSubjectData setDefaultValue(Set<ContextValue<?>> contexts, int defaultValue);
 
     /**
      * Get every default value set in this subject data entry
      *
      * @return A map from context set to default value
      */
-    Map<Set<Map.Entry<String, String>>, Integer> getAllDefaultValues();
+    Map<Set<ContextValue<?>>, Integer> getAllDefaultValues();
 
     /**
      * Gets the contexts we have data for
      *
      * @return An immutable iterable of all sets of contexts with data stored
      */
-    Iterable<Set<Map.Entry<String, String>>> getActiveContexts();
+    Iterable<Set<ContextValue<?>>> getActiveContexts();
+
 }

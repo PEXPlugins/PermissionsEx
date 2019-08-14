@@ -23,6 +23,7 @@ import com.google.common.collect.Maps;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.backend.memory.MemorySubjectData;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 
 import java.util.Collections;
@@ -37,13 +38,13 @@ public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
 
     static FileSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
-        ImmutableMap.Builder<Set<Entry<String, String>>, DataEntry> map = ImmutableMap.builder();
+        ImmutableMap.Builder<Set<ContextValue<?>>, DataEntry> map = ImmutableMap.builder();
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
                 if (!child.hasMapChildren()) {
                     throw new PermissionsLoadingException(t("Each context section must be of map type! Check that no duplicate nesting has occurred."));
                 }
-                Set<Entry<String, String>> contexts = contextsFrom(child);
+                Set<ContextValue<?>> contexts = contextsFrom(child);
                 DataEntry value = MAPPER.bindToNew().populate(child);
                 map.put(contexts, value);
             }
@@ -55,21 +56,21 @@ public final class FileSubjectData extends MemorySubjectData {
         super();
     }
 
-    protected FileSubjectData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected FileSubjectData(Map<Set<ContextValue<?>>, DataEntry> contexts) {
         super(contexts);
     }
 
     @Override
-    protected MemorySubjectData newData(Map<Set<Entry<String, String>>, DataEntry> contexts) {
+    protected MemorySubjectData newData(Map<Set<ContextValue<?>>, DataEntry> contexts) {
         return new FileSubjectData(contexts);
     }
 
-    private static Set<Entry<String, String>> contextsFrom(ConfigurationNode node) {
-        Set<Entry<String, String>> contexts = Collections.emptySet();
+    private static Set<ContextValue<?>> contextsFrom(ConfigurationNode node) {
+        Set<ContextValue<?>> contexts = Collections.emptySet();
         ConfigurationNode contextsNode = node.getNode(KEY_CONTEXTS);
         if (contextsNode.hasMapChildren()) {
             contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.getChildrenMap().entrySet(), ent -> {
-                    return Maps.immutableEntry(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
+                    return new ContextValue<>(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
             }));
         }
         return contexts;
@@ -79,17 +80,17 @@ public final class FileSubjectData extends MemorySubjectData {
         if (!node.hasListChildren()) {
             node.setValue(null);
         }
-        Map<Set<Entry<String, String>>, ConfigurationNode> existingSections = new HashMap<>();
+        Map<Set<ContextValue<?>>, ConfigurationNode> existingSections = new HashMap<>();
         for (ConfigurationNode child : node.getChildrenList()) {
             existingSections.put(contextsFrom(child), child);
         }
-        for (Map.Entry<Set<Entry<String, String>>, DataEntry> ent : contexts.entrySet()) {
+        for (Map.Entry<Set<ContextValue<?>>, DataEntry> ent : contexts.entrySet()) {
             ConfigurationNode contextSection = existingSections.remove(ent.getKey());
             if (contextSection == null) {
                 contextSection = node.getAppendedNode();
                 ConfigurationNode contextsNode = contextSection.getNode(KEY_CONTEXTS);
-                for (Entry<String, String> context : ent.getKey()) {
-                    contextsNode.getNode(context.getKey()).setValue(context.getValue());
+                for (ContextValue<?> context : ent.getKey()) {
+                    contextsNode.getNode(context.getKey()).setValue(context.getRawValue());
                 }
             }
             MAPPER.bind(ent.getValue()).serialize(contextSection);

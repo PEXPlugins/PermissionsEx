@@ -24,6 +24,7 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
@@ -116,7 +117,7 @@ public abstract class AbstractDataStore implements DataStore {
      */
     protected final void applyDefaultData() {
         getData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, null)
-                .thenApply(data -> data.setDefaultValue(ImmutableSet.of(Maps.immutableEntry("localip", "127.0.0.1")), 1))
+                .thenApply(data -> data.setDefaultValue(ImmutableSet.of(new ContextValue<>("localip", "127.0.0.1")), 1))
                 .thenCompose(data -> setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, data));
     }
 

@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.command;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.util.Translatable;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -49,7 +50,7 @@ public class PermissionsCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.permission.set");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
 
                         final String key = args.getOne("key");
                         Object value = args.getOne("value");
@@ -74,7 +75,7 @@ public class PermissionsCommands {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.permission.set-default");
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
 
                         Object value = args.getOne("value");
                         if (value instanceof Boolean) {

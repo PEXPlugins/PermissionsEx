@@ -22,6 +22,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.BeforeTimeContextDefinition;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.NodeTree;
 import org.bukkit.entity.Player;
@@ -32,13 +34,11 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,12 +65,12 @@ public class PEXPermissible extends PermissibleBase {
              */
             new Metapermission(Pattern.compile("groups?\\.(?<name>.+)")) {
                 @Override
-                public boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                public boolean isMatch(Matcher result, CalculatedSubject subj, Set<ContextValue<?>> contexts) {
                     return subj.getParents(contexts).contains(Maps.immutableEntry(SUBJECTS_GROUP, result.group("name")));
                 }
 
                 @Override
-                public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                public Iterator<String> getValues(CalculatedSubject subj, Set<ContextValue<?>> contexts) {
                     return subj.getParents(contexts).stream()
                             .filter(ent -> ent.getKey().equals(SUBJECTS_GROUP))
                             .flatMap(ent -> StreamSupport.<String>stream(Spliterators.spliterator(new String[]{"group." + ent.getValue(), "groups." + ent.getValue()}, Spliterator.IMMUTABLE | Spliterator.DISTINCT), false))
@@ -79,12 +79,12 @@ public class PEXPermissible extends PermissibleBase {
             },
             new Metapermission(Pattern.compile("options\\.(?<key>.*)\\.(?<value>.*)")) {
                 @Override
-                public boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                public boolean isMatch(Matcher result, CalculatedSubject subj, Set<ContextValue<?>> contexts) {
                     return subj.getOption(contexts, result.group("key")).map(val -> val.equals(result.group("value"))).orElse(false);
                 }
 
                 @Override
-                public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+                public Iterator<String> getValues(CalculatedSubject subj, Set<ContextValue<?>> contexts) {
                     return Iterables.transform(subj.getOptions(contexts).entrySet(),
                             ent -> "options." + ent.getKey() + "." + ent.getValue())
                             .iterator();
@@ -103,9 +103,9 @@ public class PEXPermissible extends PermissibleBase {
             this.matchAgainst = matchAgainst;
         }
 
-        public abstract boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts);
+        public abstract boolean isMatch(Matcher result, CalculatedSubject subj, Set<ContextValue<?>> contexts);
 
-        public abstract Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts);
+        public abstract Iterator<String> getValues(CalculatedSubject subj, Set<ContextValue<?>> contexts);
     }
 
     private static class SpecificOptionMetapermission extends Metapermission {
@@ -116,12 +116,12 @@ public class PEXPermissible extends PermissibleBase {
         }
 
         @Override
-        public boolean isMatch(Matcher result, CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+        public boolean isMatch(Matcher result, CalculatedSubject subj, Set<ContextValue<?>> contexts) {
             return subj.getOption(contexts, option).map(val -> val.equals(result.group("value"))).orElse(false);
         }
 
         @Override
-        public Iterator<String> getValues(CalculatedSubject subj, Set<Map.Entry<String, String>> contexts) {
+        public Iterator<String> getValues(CalculatedSubject subj, Set<ContextValue<?>> contexts) {
             String ret = subj.getOptions(contexts).get(option);
             return ret == null ? ImmutableSet.<String>of().iterator() : Iterators.singletonIterator(this.option + "." + ret);
         }
@@ -160,13 +160,13 @@ public class PEXPermissible extends PermissibleBase {
     }
 
     @Override
-    public boolean isPermissionSet(String name) {
+    public boolean isPermissionSet(@NotNull String name) {
         Preconditions.checkNotNull(name, "name");
         name = name.toLowerCase();
-        return getPermissionValue(getActiveContexts(), name) != 0;
+        return getPermissionValue(subj.getActiveContexts(), name) != 0;
     }
 
-    private int getPermissionValue(Set<Map.Entry<String, String>> contexts, String permission) {
+    private int getPermissionValue(Set<ContextValue<?>> contexts, String permission) {
         int ret = getPermissionValue0(subj.getPermissions(contexts), permission);
 
         if (ret == 0) {
@@ -213,7 +213,7 @@ public class PEXPermissible extends PermissibleBase {
     public boolean hasPermission(String inName) {
         Preconditions.checkNotNull(inName, "inName");
         inName = inName.toLowerCase();
-        return getPermissionValue(getActiveContexts(), inName) > 0;
+        return getPermissionValue(subj.getActiveContexts(), inName) > 0;
     }
 
     @Override
@@ -278,29 +278,22 @@ public class PEXPermissible extends PermissibleBase {
 
     @Override
     public PermissionAttachment addAttachment(Plugin plugin, int ticks) {
-        return addAttachment(plugin); // TODO: Implement timed permissions
+        final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
+        this.subj.transientData().update(input -> input.addParent(ImmutableSet.of(BeforeTimeContextDefinition.INSTANCE.createContextValue(LocalDateTime.now().plus(ticks * 50, ChronoUnit.MILLIS))), PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
+                .thenRun(() -> this.attachments.add(attach));
+        return attach;
     }
 
     @Override
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
         ImmutableSet.Builder<PermissionAttachmentInfo> ret = ImmutableSet.builder();
-        final Set<Map.Entry<String, String>> activeContexts = getActiveContexts();
+        final Set<ContextValue<?>> activeContexts = subj.getActiveContexts();
         ret.addAll(Iterables.transform(subj.getPermissions(activeContexts).asMap().entrySet(),
                 input -> new PermissionAttachmentInfo(player, input.getKey(), null, input.getValue() > 0)));
         for (Metapermission mPerm : METAPERMISSIONS) {
             ret.addAll(Iterators.transform(mPerm.getValues(this.subj, activeContexts), input -> new PermissionAttachmentInfo(player, input, null, true)));
         }
         return ret.build();
-    }
-
-    public Set<Map.Entry<String, String>> getActiveContexts() {
-        ImmutableSet.Builder<Map.Entry<String, String>> builder = ImmutableSet.builder();
-        builder.add(Maps.immutableEntry("world", player.getWorld().getName()));
-        builder.add(Maps.immutableEntry("dimension", player.getWorld().getEnvironment().name().toLowerCase()));
-        for (String serverTag : plugin.getManager().getConfig().getServerTags()) {
-            builder.add(Maps.immutableEntry(PermissionsExPlugin.SERVER_TAG_CONTEXT, serverTag));
-        }
-        return builder.build();
     }
 
     public void setPreviousPermissible(Permissible previousPermissible) {

@@ -19,14 +19,16 @@ package ninja.leaping.permissionsex.sponge;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
-import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.service.context.Context;
-import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
@@ -35,10 +37,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static ninja.leaping.permissionsex.sponge.PEXSubjectData.parSet;
+import static ninja.leaping.permissionsex.sponge.PEXSubjectData.contextsPexToSponge;
+import static ninja.leaping.permissionsex.sponge.PEXSubjectData.contextsSpongeToPex;
 
 /**
  * Permissions subject implementation
@@ -92,6 +94,15 @@ class PEXSubject implements Subject {
     }
 
     @Override
+    public Optional<String> getFriendlyIdentifier() {
+        return Optional.empty();
+    }
+
+    public PermissionsEx getManager() {
+        return this.collection.getPlugin().getManager();
+    }
+
+    @Override
     public SubjectReference asSubjectReference() {
         return this.ref;
     }
@@ -131,15 +142,25 @@ class PEXSubject implements Subject {
         try {
             Preconditions.checkNotNull(contexts, "contexts");
             Preconditions.checkNotNull(key, "key");
-            return baked.getOption(parSet(contexts), key);
+            return baked.getOption(contextsSpongeToPex(contexts, getManager()), key);
         } finally {
             time().onGetOption().stopTimingIfSync();
         }
     }
 
     @Override
+    public Optional<String> getOption(String key) {
+        return getBaked().getOption(getActivePexContexts(), key);
+    }
+
+    @Override
     public boolean hasPermission(Set<Context> contexts, String permission) {
         return getPermission(contexts, permission)> 0;
+    }
+
+    @Override
+    public boolean hasPermission(String permission) {
+        return getBaked().getPermission(getActivePexContexts(), permission) > 0;
     }
 
     @Override
@@ -153,10 +174,15 @@ class PEXSubject implements Subject {
         try {
             Preconditions.checkNotNull(contexts, "contexts");
             Preconditions.checkNotNull(permission, "permission");
-            return baked.getPermission(parSet(contexts), permission);
+            return baked.getPermission(contextsSpongeToPex(contexts, getManager()), permission);
         } finally {
             time().onGetPermission().stopTimingIfSync();
         }
+    }
+
+    @Override
+    public boolean isChildOf(SubjectReference parent) {
+        return getBaked().getParents().contains(PEXSubjectReference.of(parent, getContainingCollection().getPlugin()));
     }
 
     @Override
@@ -164,6 +190,38 @@ class PEXSubject implements Subject {
         Preconditions.checkNotNull(contexts, "contexts");
         Preconditions.checkNotNull(parent, "parent");
         return getParents(contexts).contains(parent);
+    }
+
+    @Override
+    public List<SubjectReference> getParents() {
+        return Lists.transform(getBaked().getParents(), input -> PEXSubjectReference.of(input, getContainingCollection().getPlugin()));
+    }
+
+    public Set<ContextValue<?>> getActivePexContexts() {
+        time().onGetActiveContexts().startTimingIfSync();
+        try {
+            /*int ticks;
+            ActiveContextsHolder holder, newHolder;
+            do {
+                ticks = Sponge.getGame().getServer().getRunningTimeTicks();
+                holder = this.cachedContexts.get();
+                if (holder != null && ticks == holder.getUpdateTicks()) {
+                    return holder.getContexts();
+                }*/
+                Set<Context> spongeContexts = new HashSet<>();
+                for (ContextCalculator<Subject> spongeCalc : this.collection.getPlugin().getContextCalculators()) {
+                    spongeCalc.accumulateContexts(this, spongeContexts);
+                }
+                Set<ContextValue<?>> pexContexts = baked.getActiveContexts();
+                pexContexts.addAll(contextsSpongeToPex(spongeContexts, getManager()));
+                //newHolder = new ActiveContextsHolder(ticks, ImmutableSet.copyOf(contextsPexToSponge(getBaked().getActiveContexts())));
+            /*} while (!this.cachedContexts.compareAndSet(holder, newHolder));
+            return newHolder.getContexts();*/
+            return pexContexts;
+        } finally {
+            time().onGetActiveContexts().stopTimingIfSync();
+        }
+
     }
 
     @Override
@@ -178,11 +236,11 @@ class PEXSubject implements Subject {
                 if (holder != null && ticks == holder.getUpdateTicks()) {
                     return holder.getContexts();
                 }
-                Set<Context> set = new HashSet<>();
-                for (ContextCalculator<Subject> calc : this.collection.getPlugin().getContextCalculators()) {
-                    calc.accumulateContexts(this, set);
+                Set<Context> spongeContexts = contextsPexToSponge(getBaked().getActiveContexts());
+                for (ContextCalculator<Subject> spongeCalc : this.collection.getPlugin().getContextCalculators()) {
+                    spongeCalc.accumulateContexts(this, spongeContexts);
                 }
-                newHolder = new ActiveContextsHolder(ticks, ImmutableSet.copyOf(set));
+                newHolder = new ActiveContextsHolder(ticks, ImmutableSet.copyOf(contextsPexToSponge(getBaked().getActiveContexts())));
             } while (!this.cachedContexts.compareAndSet(holder, newHolder));
             return newHolder.getContexts();
         } finally {
@@ -195,7 +253,7 @@ class PEXSubject implements Subject {
         time().onGetParents().startTimingIfSync();
         try {
             Preconditions.checkNotNull(contexts, "contexts");
-            return Lists.transform(baked.getParents(parSet(contexts)), input -> (PEXSubjectReference) input);
+            return Lists.transform(baked.getParents(contextsSpongeToPex(contexts, getManager())), input -> PEXSubjectReference.of(input, getContainingCollection().getPlugin()));
         } finally {
             time().onGetParents().stopTimingIfSync();
         }

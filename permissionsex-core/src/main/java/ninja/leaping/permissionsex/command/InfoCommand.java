@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.command;
 
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.subject.CalculatedSubject;
 import ninja.leaping.permissionsex.util.command.CommandContext;
@@ -88,11 +89,11 @@ public class InfoCommand {
         }
 
         private <TextType> void printPermissions(Commander<TextType> src, ImmutableSubjectData data) {
-            Set<Set<Map.Entry<String, String>>> targetContexts = new HashSet<>();
+            Set<Set<ContextValue<?>>> targetContexts = new HashSet<>();
             targetContexts.addAll(data.getAllPermissions().keySet());
             targetContexts.addAll(data.getAllDefaultValues().keySet());
 
-            for (Set<Map.Entry<String, String>> entry : targetContexts) {
+            for (Set<ContextValue<?>> entry : targetContexts) {
                 src.msg(src.fmt().combined(INDENT, formatContexts(src, entry), ":"));
                 src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().hl(src.fmt().tr(t("Default permission: %s", data.getDefaultValue(entry))))));
                 for (Map.Entry<String, Integer> ent : data.getPermissions(entry).entrySet()) {
@@ -102,7 +103,7 @@ public class InfoCommand {
         }
 
         private <TextType> void printOptions(Commander<TextType> src, ImmutableSubjectData data) {
-            for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, String>> ent : data.getAllOptions().entrySet()) {
+            for (Map.Entry<Set<ContextValue<?>>, Map<String, String>> ent : data.getAllOptions().entrySet()) {
                 src.msg(src.fmt().combined(INDENT, formatContexts(src, ent.getKey()), ":"));
                 for (Map.Entry<String, String> option : ent.getValue().entrySet()) {
                     src.msg(src.fmt().combined(DOUBLE_INDENT, src.fmt().option(option.getKey(), option.getValue())));
@@ -111,7 +112,7 @@ public class InfoCommand {
         }
 
         private <TextType> void printParents(Commander<TextType> src, ImmutableSubjectData data) {
-            for (Map.Entry<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> ent : data.getAllParents().entrySet()) {
+            for (Map.Entry<Set<ContextValue<?>>, List<Map.Entry<String, String>>> ent : data.getAllParents().entrySet()) {
 
                 src.msg(src.fmt().combined(INDENT, formatContexts(src, ent.getKey()), ":"));
                 for (Map.Entry<String, String> parent : ent.getValue()) {

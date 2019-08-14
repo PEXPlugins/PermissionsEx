@@ -24,6 +24,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.permissionsex.PermissionsExTest;
 import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.exception.PEBKACException;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
 import ninja.leaping.permissionsex.rank.RankLadder;
@@ -238,16 +239,19 @@ public class SqlDaoTest extends PermissionsExTest {
 
             Segment testSeg = dao.addSegment(subject);
             assertTrue(testSeg.getContexts().isEmpty());
+            assertTrue(dao.getUsedContextKeys().isEmpty());
 
-            final Set<Entry<String, String>> contexts = ImmutableSet.of(Maps.immutableEntry("world", "DIM-1"),
-                    Maps.immutableEntry("server-tag", "minigames"));
+            final Set<ContextValue<?>> contexts = ImmutableSet.of(new ContextValue<String>("world", "DIM-1"),
+                    new ContextValue<String>("server-tag", "minigames"));
             dao.setContexts(testSeg, contexts);
             testSeg = dao.getSegments(subject).get(0);
             assertEquals(contexts, testSeg.getContexts());
+            assertEquals(ImmutableSet.of("world", "server-tag"), dao.getUsedContextKeys());
 
             dao.setContexts(testSeg, ImmutableSet.of());
             testSeg = dao.getSegments(subject).get(0);
             assertTrue(testSeg.getContexts().isEmpty());
+            assertTrue(dao.getUsedContextKeys().isEmpty());
 
         }
     }
@@ -451,10 +455,10 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testContextInheritance() throws SQLException {
-        final Entry<String, String> worldNether = Maps.immutableEntry("world", "DIM-1"),
-                serverMinigames = Maps.immutableEntry("server-tag", "minigames");
-        final List<Entry<String, String>> worldNetherParents = ImmutableList.of(Maps.immutableEntry("world", "world")),
-                serverTagMinigamesParents = ImmutableList.of(Maps.immutableEntry("server-tag", "adventure"), Maps.immutableEntry("world", "minigames"));
+        final ContextValue<String> worldNether = new ContextValue<>("world", "DIM-1"),
+                serverMinigames = new ContextValue<>("server-tag", "minigames");
+        final List<ContextValue<?>> worldNetherParents = ImmutableList.of(new ContextValue<String>("world", "world")),
+                serverTagMinigamesParents = ImmutableList.of(new ContextValue<>("server-tag", "adventure"), new ContextValue<>("world", "minigames"));
 
         try (SqlDao dao = sqlStore.getDao()) {
             // resolve, set, set to null, add new

@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.command;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.SubjectDataReference;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.Util;
@@ -50,13 +51,13 @@ public class RankingCommands {
         return CommandSpec.builder()
                 .setAliases("promote", "prom")
                 .setDescription(t("Promote a subject on the given ladder"))
-                .setArguments(Util.contextTransientFlags().buildWith(seq(subject(t("subject"), pex), optional(rankLadder(t("ladder"), pex)))))
+                .setArguments(Util.contextTransientFlags(pex).buildWith(seq(subject(t("subject"), pex), optional(rankLadder(t("ladder"), pex)))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         CompletableFuture<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.promote"); // ." + ladderF); // TODO: Re-add permissions checks for ladders
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
                         messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
                             ladderName.set(ladder);
@@ -76,13 +77,13 @@ public class RankingCommands {
         return CommandSpec.builder()
                 .setAliases("demote", "dem")
                 .setDescription(t("Demote a subject on the given ladder"))
-                .setArguments(Util.contextTransientFlags().buildWith(seq(subject(t("subject"), pex), optional(rankLadder(t("ladder"), pex)))))
+                .setArguments(Util.contextTransientFlags(pex).buildWith(seq(subject(t("subject"), pex), optional(rankLadder(t("ladder"), pex)))))
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
                         CompletableFuture<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.demote"); //." + ladder);
-                        Set<Map.Entry<String, String>> contexts = ImmutableSet.copyOf(args.<Map.Entry<String, String>>getAll("context"));
+                        Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
                         messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
                             return ref.update(old -> ladder.demote(contexts, old));}).thenAccept(res -> {

@@ -16,12 +16,13 @@
  */
 package ninja.leaping.permissionsex.subject;
 
-import java.util.Map;
+import ninja.leaping.permissionsex.context.ContextValue;
+
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface SubjectDataBaker {
-    CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<Map.Entry<String, String>> activeContexts);
+    CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<ContextValue<?>> activeContexts);
 
     static SubjectDataBaker inheritance() {
         return InheritanceSubjectDataBaker.INSTANCE;

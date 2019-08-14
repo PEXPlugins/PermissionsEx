@@ -21,6 +21,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.base.MoreObjects;
+import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.subject.SubjectType;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectReference;
 
@@ -28,10 +30,30 @@ public class PEXSubjectReference implements SubjectReference, Map.Entry<String, 
     private final String collection, ident;
     private final PermissionsExPlugin pex;
 
-    public PEXSubjectReference(String collection, String ident, PermissionsExPlugin pex) {
+    PEXSubjectReference(String collection, String ident, PermissionsExPlugin pex) {
         this.ident = ident;
         this.collection = collection;
         this.pex = pex;
+        if (!pex.getManager().getSubjects(collection).getTypeInfo().isNameValid(ident)) {
+            throw new IllegalArgumentException("Name '" + ident + "' was not a valid name for a subject in collection '" + collection + "'!");
+        }
+    }
+
+    public static PEXSubjectReference of(Map.Entry<String, String> input, PermissionsExPlugin pex) {
+        if (input instanceof PEXSubjectReference) {
+            return ((PEXSubjectReference) input);
+        }
+        return new PEXSubjectReference(input.getKey(), input.getValue(), pex);
+    }
+
+    public static PEXSubjectReference of(SubjectReference input, PermissionsExPlugin pex) {
+        if (input instanceof PEXSubjectReference) {
+            return ((PEXSubjectReference) input);
+        }
+        if (!pex.getManager().getSubjects(input.getCollectionIdentifier()).getTypeInfo().isNameValid(input.getSubjectIdentifier())) {
+            throw new IllegalArgumentException("Name '" +input.getSubjectIdentifier() + "' was not a valid name for a subject in collection '" + input.getCollectionIdentifier() + "'!");
+        }
+        return new PEXSubjectReference(input.getCollectionIdentifier(), input.getSubjectIdentifier(), pex);
     }
 
     @Override

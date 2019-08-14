@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.util.Combinations;
 import ninja.leaping.permissionsex.util.NodeTree;
@@ -64,20 +65,20 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         // State objects
         private final CalculatedSubject base;
         private final PermissionsEx pex;
-        private final Set<Set<Entry<String, String>>> activeContexts;
+        private final Set<Set<ContextValue<?>>> activeContexts;
 
-        private BakeState(CalculatedSubject base, Set<Set<Entry<String, String>>> activeContexts) {
+        private BakeState(CalculatedSubject base, Set<Set<ContextValue<?>>> activeContexts) {
             this.base = base;
             this.activeContexts = activeContexts;
             this.pex = base.getManager();
         }
     }
 
-    private static CompletableFuture<Set<Set<Entry<String, String>>>> processContexts(PermissionsEx pex, Set<Entry<String, String>> rawContexts) {
+    private static CompletableFuture<Set<Set<ContextValue<?>>>> processContexts(PermissionsEx pex, Set<ContextValue<?>> rawContexts) {
         return pex.getContextInheritance(null).thenApply(inheritance -> {
-            Queue<Entry<String, String>> inProgressContexts = new LinkedList<>(rawContexts);
-            Set<Entry<String, String>> contexts = new HashSet<>();
-            Entry<String, String> context;
+            Queue<ContextValue<?>> inProgressContexts = new LinkedList<>(rawContexts);
+            Set<ContextValue<?>> contexts = new HashSet<>();
+            ContextValue<?> context;
             while ((context = inProgressContexts.poll()) != null) {
                 if (contexts.add(context)) {
                     inProgressContexts.addAll(inheritance.getParents(context));
@@ -89,7 +90,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     }
 
     @Override
-    public CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<Entry<String, String>> activeContexts) {
+    public CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<ContextValue<?>> activeContexts) {
         final Map.Entry<String, String> subject = data.getIdentifier();
         return processContexts(data.getManager(), activeContexts)
                 .thenCompose(processedContexts -> {
@@ -116,7 +117,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         SubjectType type = state.pex.getSubjects(subject.getKey());
         return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
-            for (Set<Entry<String, String>> combo : state.activeContexts) {
+            for (Set<ContextValue<?>> combo : state.activeContexts) {
                 if (type.getTypeInfo().transientHasPriority()) {
                     ret = visitSubjectSingle(state, transientData, ret, combo, visitedSubjects, inheritanceLevel);
                     ret = visitSubjectSingle(state, persistent, ret, combo, visitedSubjects, inheritanceLevel);
@@ -129,7 +130,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         }).thenCompose(res -> res);
     }
 
-    private CompletableFuture<Void> visitSubjectSingle(BakeState state, ImmutableSubjectData data, CompletableFuture<Void> initial, Set<Entry<String, String>> activeCombo, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
+    private CompletableFuture<Void> visitSubjectSingle(BakeState state, ImmutableSubjectData data, CompletableFuture<Void> initial, Set<ContextValue<?>> activeCombo, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         initial = initial.thenRun(() -> visitSingle(state, data, activeCombo, inheritanceLevel));
         for (Entry<String, String> parent : data.getParents(activeCombo)) {
             initial = initial.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
@@ -144,7 +145,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         }
     }
 
-    private void visitSingle(BakeState state, ImmutableSubjectData data, Set<Entry<String, String>> specificCombination, int inheritanceLevel) {
+    private void visitSingle(BakeState state, ImmutableSubjectData data, Set<ContextValue<?>> specificCombination, int inheritanceLevel) {
         for (Map.Entry<String, Integer> ent : data.getPermissions(specificCombination).entrySet()) {
             String perm = ent.getKey();
             if (ent.getKey().startsWith("#")) { // Prefix to exclude from inheritance

@@ -16,6 +16,8 @@
  */
 package ninja.leaping.permissionsex.data;
 
+import ninja.leaping.permissionsex.context.ContextValue;
+
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +33,7 @@ public interface ContextInheritance {
      * @param context The child context
      * @return Any parent contexts, or an empty list
      */
-    List<Map.Entry<String, String>> getParents(Map.Entry<String, String> context);
+    List<ContextValue<?>> getParents(ContextValue<?> context);
 
     /**
      * Set the parents for a specific context
@@ -40,13 +42,13 @@ public interface ContextInheritance {
      * @param parents The parents to set
      * @return A new context inheritance object with the updated parents
      */
-    ContextInheritance setParents(Map.Entry<String, String> context, List<Map.Entry<String, String>> parents);
+    ContextInheritance setParents(ContextValue<?> context, List<ContextValue<?>> parents);
 
     /**
      * Get all parent data as a map from context to list of parent contexts. The returned map is immutable.
      *
      * @return parents
      */
-    Map<Map.Entry<String, String>, List<Map.Entry<String, String>>> getAllParents();
+    Map<ContextValue<?>, List<ContextValue<?>>> getAllParents();
 
 }

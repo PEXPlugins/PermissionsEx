@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.backend;
 
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 
 import java.util.List;
@@ -43,16 +44,16 @@ public class ConversionUtils {
     @SuppressWarnings("unchecked")
     public static <T extends ImmutableSubjectData> T transfer(ImmutableSubjectData old, T newData) {
         ImmutableSubjectData tempRet = newData;
-        for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, Integer>> ent : old.getAllPermissions().entrySet()) {
+        for (Map.Entry<Set<ContextValue<?>>, Map<String, Integer>> ent : old.getAllPermissions().entrySet()) {
             tempRet = tempRet.setPermissions(ent.getKey(), ent.getValue());
         }
-        for (Map.Entry<Set<Map.Entry<String, String>>, Map<String, String>> ent : old.getAllOptions().entrySet()) {
+        for (Map.Entry<Set<ContextValue<?>>, Map<String, String>> ent : old.getAllOptions().entrySet()) {
             tempRet = tempRet.setOptions(ent.getKey(), ent.getValue());
         }
-        for (Map.Entry<Set<Map.Entry<String, String>>, List<Map.Entry<String, String>>> ent : old.getAllParents().entrySet()) {
+        for (Map.Entry<Set<ContextValue<?>>, List<Map.Entry<String, String>>> ent : old.getAllParents().entrySet()) {
             tempRet = tempRet.setParents(ent.getKey(), ent.getValue());
         }
-        for (Map.Entry<Set<Map.Entry<String, String>>, Integer> ent : old.getAllDefaultValues().entrySet()) {
+        for (Map.Entry<Set<ContextValue<?>>, Integer> ent : old.getAllDefaultValues().entrySet()) {
             tempRet = tempRet.setDefaultValue(ent.getKey(), ent.getValue());
         }
         return (T) tempRet;

@@ -82,7 +82,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     /**
      * Context key for tags applied to servers
      */
-    public static final String SERVER_TAG_CONTEXT = "server-tag";
     private static final Pattern JDBC_URL_REGEX = Pattern.compile("(?:jdbc:)?([^:]+):(//)?(?:([^:]+)(?::([^@]+))?@)?(.*)");
 
     /**
@@ -172,6 +171,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        manager.registerContextDefinition(WorldContextDefinition.INSTANCE);
+        manager.registerContextDefinition(DimensionContextDefinition.INSTANCE);
 
         manager.getSubjects(PermissionsEx.SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(PermissionsEx.SUBJECTS_USER, this));
         getServer().getPluginManager().registerEvents(this, this);

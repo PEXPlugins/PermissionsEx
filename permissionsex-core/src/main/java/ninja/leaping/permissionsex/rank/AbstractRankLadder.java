@@ -17,6 +17,7 @@
 package ninja.leaping.permissionsex.rank;
 
 import com.google.common.collect.ImmutableList;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final ImmutableSubjectData promote(Set<Entry<String, String>> contexts, ImmutableSubjectData input) {
+    public final ImmutableSubjectData promote(Set<ContextValue<?>> contexts, ImmutableSubjectData input) {
         if (getRanks().isEmpty()) {
             return input;
         }
@@ -71,7 +72,7 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final ImmutableSubjectData demote(Set<Entry<String, String>> contexts, ImmutableSubjectData input) {
+    public final ImmutableSubjectData demote(Set<ContextValue<?>> contexts, ImmutableSubjectData input) {
         if (getRanks().isEmpty()) {
             return input;
         }
@@ -104,7 +105,7 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final boolean isOnLadder(Set<Entry<String, String>> contexts, ImmutableSubjectData subject) {
+    public final boolean isOnLadder(Set<ContextValue<?>> contexts, ImmutableSubjectData subject) {
         if (getRanks().isEmpty()) {
             return false;
         }

@@ -23,18 +23,22 @@ import com.google.common.collect.Maps;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.permissionsex.backend.AbstractDataStore;
 import ninja.leaping.permissionsex.backend.DataStore;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
 import ninja.leaping.permissionsex.rank.FixedRankLadder;
 import ninja.leaping.permissionsex.rank.RankLadder;
 import ninja.leaping.permissionsex.util.GuavaCollectors;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * A data store backed entirely in memory
@@ -122,6 +126,15 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
+    public CompletableFuture<Set<String>> getDefinedContextKeys() {
+        return CompletableFuture.completedFuture(data.values().stream()
+                .flatMap(data -> StreamSupport.stream(data.getActiveContexts().spliterator(), false))
+                .flatMap(Collection::stream)
+                .map(ContextValue::getKey)
+                .collect(Collectors.toSet()));
+    }
+
+    @Override
     public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
         return Iterables.unmodifiableIterable(data.entrySet());
     }
@@ -148,7 +161,7 @@ public class MemoryDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected  <T> T performBulkOperationSync(Function<DataStore, T> function) {
+    protected <T> T performBulkOperationSync(Function<DataStore, T> function) {
         return function.apply(this);
     }
 }

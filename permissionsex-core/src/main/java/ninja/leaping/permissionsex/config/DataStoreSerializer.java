@@ -16,7 +16,6 @@
  */
 package ninja.leaping.permissionsex.config;
 
-import com.google.common.base.Optional;
 import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -25,6 +24,8 @@ import ninja.leaping.permissionsex.backend.DataStore;
 import ninja.leaping.permissionsex.backend.DataStoreFactories;
 import ninja.leaping.permissionsex.backend.DataStoreFactory;
 import ninja.leaping.permissionsex.exception.PermissionsLoadingException;
+
+import java.util.Optional;
 
 public class DataStoreSerializer implements TypeSerializer<DataStore> {
     @Override

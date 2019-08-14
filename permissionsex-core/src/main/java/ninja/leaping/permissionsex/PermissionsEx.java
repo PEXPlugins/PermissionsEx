@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.sk89q.squirrelid.resolver.HttpRepositoryService;
@@ -25,6 +26,12 @@ import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.command.PermissionsExCommands;
 import ninja.leaping.permissionsex.command.RankingCommands;
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration;
+import ninja.leaping.permissionsex.context.AfterTimeContextDefinition;
+import ninja.leaping.permissionsex.context.BeforeTimeContextDefinition;
+import ninja.leaping.permissionsex.context.ContextDefinition;
+import ninja.leaping.permissionsex.context.ContextValue;
+import ninja.leaping.permissionsex.context.PEXContextDefinition;
+import ninja.leaping.permissionsex.context.ServerTagContextDefinition;
 import ninja.leaping.permissionsex.data.CacheListenerHolder;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.exception.PEBKACException;
@@ -40,6 +47,8 @@ import ninja.leaping.permissionsex.subject.SubjectType;
 import ninja.leaping.permissionsex.subject.SubjectTypeDefinition;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.command.CommandSpec;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -84,13 +93,14 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
-    public static final ImmutableSet<Map.Entry<String, String>> GLOBAL_CONTEXT = ImmutableSet.of();
+    public static final ImmutableSet<ContextValue<?>> GLOBAL_CONTEXT = ImmutableSet.of();
 
     private final TranslatableLogger logger;
     private final ImplementationInterface impl;
     private final MemoryDataStore transientData;
     private final RecordingPermissionCheckNotifier baseNotifier = new RecordingPermissionCheckNotifier();
     private volatile PermissionCheckNotifier notifier = baseNotifier;
+    private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
 
     private final AtomicReference<State> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
@@ -114,7 +124,11 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
         this.transientData = new MemoryDataStore();
         this.transientData.initialize(this);
         setDebugMode(config.isDebugEnabled());
+        registerContextDefinition(ServerTagContextDefinition.INSTANCE);
+        registerContextDefinition(BeforeTimeContextDefinition.INSTANCE);
+        registerContextDefinition(AfterTimeContextDefinition.INSTANCE);
         initialize(config);
+
         getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.defaultFor(SUBJECTS_DEFAULTS, false));
         convertUuids();
 
@@ -337,7 +351,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
      * @param debug Whether to enable debug mode
      * @param filterPattern A pattern to filter which permissions are logged. Null for no filter.
      */
-    public void setDebugMode(boolean debug, Pattern filterPattern) {
+    public synchronized void setDebugMode(boolean debug, Pattern filterPattern) {
         if (debug) {
             if (this.notifier instanceof DebugPermissionCheckNotifier) {
                 this.notifier = new DebugPermissionCheckNotifier(getLogger(), ((DebugPermissionCheckNotifier) this.notifier).getDelegate(), filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
@@ -394,6 +408,11 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
         this.rankLadderCache = new RankLadderCache(this.rankLadderCache, newState.activeDataStore);
         this.subjectTypeCache.forEach((key, val) -> val.update(newState.activeDataStore));
+        this.contextTypes.values().forEach(ctxDef -> {
+            if (ctxDef instanceof PEXContextDefinition<?>) {
+                ((PEXContextDefinition<?>) ctxDef).update(newState.config);
+            }
+        });
         getSubjects(SUBJECTS_GROUP).cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
@@ -523,5 +542,46 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     public void clearCache(ContextInheritance newData) {
         this.cachedInheritance = CompletableFuture.completedFuture(newData);
         this.cachedInheritanceListeners.call(true, newData);
+    }
+
+    public CompletableFuture<Set<ContextDefinition<?>>> getUsedContextTypes() {
+        ImmutableSet.Builder<ContextDefinition<?>> build = ImmutableSet.builder();
+        return getState().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
+            for (ContextDefinition<?> def : this.contextTypes.values()) {
+                if (persist.contains(def.getName()) || trans.contains(def.getName())) {
+                    build.add(def);
+                }
+            }
+           return build.build();
+        });
+    }
+
+    /**
+     * Register a new context type that can be queried. If there is another context type registered with the same key
+     * as the one trying to be registered, the registration will fail
+     *
+     * @param contextDefinition The new context type
+     * @param <T> The context value type
+     * @return whether the context was successfully registered
+     */
+    public <T> boolean registerContextDefinition(ContextDefinition<T> contextDefinition) {
+        if (contextDefinition instanceof PEXContextDefinition<?> && this.state.get() != null) {
+            ((PEXContextDefinition<T>) contextDefinition).update(getConfig());
+        }
+       return this.contextTypes.putIfAbsent(contextDefinition.getName(), contextDefinition) == null;
+    }
+
+    /**
+     * Get an immutable copy as a list of the registered context types
+     *
+     * @return The registered context types
+     */
+    public List<ContextDefinition<?>> getRegisteredContextTypes() {
+        return ImmutableList.copyOf(this.contextTypes.values());
+    }
+
+    @Nullable
+    public ContextDefinition<?> getContextDefinition(@NotNull String definitionKey) {
+        return this.contextTypes.get(definitionKey);
     }
 }

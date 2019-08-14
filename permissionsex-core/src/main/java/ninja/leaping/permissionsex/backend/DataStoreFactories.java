@@ -16,12 +16,12 @@
  */
 package ninja.leaping.permissionsex.backend;
 
-import com.google.common.base.Optional;
 import ninja.leaping.permissionsex.backend.file.FileDataStore;
 import ninja.leaping.permissionsex.backend.memory.MemoryDataStore;
 import ninja.leaping.permissionsex.backend.sql.SqlDataStore;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataStoreFactories {
@@ -41,7 +41,7 @@ public class DataStoreFactories {
     }
 
     public static Optional<DataStoreFactory> get(String type) {
-        return Optional.fromNullable(REGISTRY.get(type));
+        return Optional.ofNullable(REGISTRY.get(type));
     }
 
 }

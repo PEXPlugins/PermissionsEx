@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.util.Util;
 
@@ -46,27 +47,27 @@ public class MemoryContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public List<Map.Entry<String, String>> getParents(Map.Entry<String, String> context) {
-        final List<String> inheritance = contextInheritance.get(Util.subjectToString(context));
+    public List<ContextValue<?>> getParents(ContextValue<?> context) {
+        final List<String> inheritance = contextInheritance.get(ctxToString(context));
         if (inheritance == null) {
             return ImmutableList.of();
         }
 
-        return Collections.unmodifiableList(Lists.transform(inheritance, Util::subjectFromString));
+        return Collections.unmodifiableList(Lists.transform(inheritance, MemoryContextInheritance::ctxFromString));
     }
 
     @Override
-    public ContextInheritance setParents(Map.Entry<String, String> context, List<Map.Entry<String, String>> parents) {
+    public ContextInheritance setParents(ContextValue<?> context, List<ContextValue<?>> parents) {
         final Map<String, List<String>> newData = new HashMap<>(contextInheritance);
-        newData.put(Util.subjectToString(context), ImmutableList.copyOf(Lists.transform(ImmutableList.copyOf(parents), Util::subjectToString)));
+        newData.put(ctxToString(context), ImmutableList.copyOf(Lists.transform(ImmutableList.copyOf(parents), MemoryContextInheritance::ctxToString)));
         return newCopy(newData);
     }
 
     @Override
-    public Map<Map.Entry<String, String>, List<Map.Entry<String, String>>> getAllParents() {
-        ImmutableMap.Builder<Map.Entry<String, String>, List<Map.Entry<String, String>>> ret = ImmutableMap.builder();
+    public Map<ContextValue<?>, List<ContextValue<?>>> getAllParents() {
+        ImmutableMap.Builder<ContextValue<?>, List<ContextValue<?>>> ret = ImmutableMap.builder();
         for (Map.Entry<String, List<String>> entry : contextInheritance.entrySet()) {
-            ret.put(Util.subjectFromString(entry.getKey()), Lists.transform(entry.getValue(), Util::subjectFromString));
+            ret.put(ctxFromString(entry.getKey()), Lists.transform(entry.getValue(), MemoryContextInheritance::ctxFromString));
         }
         return ret.build();
     }
@@ -80,11 +81,23 @@ public class MemoryContextInheritance implements ContextInheritance {
             return ((MemoryContextInheritance) inheritance);
         } else {
             Map<String, List<String>> data = new HashMap<>();
-            for (Map.Entry<Map.Entry<String, String>, List<Map.Entry<String, String>>> ent : inheritance.getAllParents().entrySet()) {
-                data.put(Util.subjectToString(ent.getKey()), Lists.transform(ent.getValue(), Util::subjectToString));
+            for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance.getAllParents().entrySet()) {
+                data.put(ctxToString(ent.getKey()), Lists.transform(ent.getValue(), MemoryContextInheritance::ctxToString));
             }
             return new MemoryContextInheritance(data);
         }
+    }
+
+    private static ContextValue<?> ctxFromString(String input) {
+        final String[] values = input.split(":", 2);
+        if (values.length != 2) {
+            throw new IllegalArgumentException("Invalid format for context!");
+        }
+        return new ContextValue<>(values[0], values[1]);
+    }
+
+    private static String ctxToString(ContextValue<?> input) {
+        return input.getKey() + ":" + input.getRawValue();
     }
 
 

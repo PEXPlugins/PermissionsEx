@@ -19,6 +19,7 @@ package ninja.leaping.permissionsex.backend.sql;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.util.ThrowingBiConsumer;
 
 import java.sql.SQLException;
@@ -34,14 +35,14 @@ import static ninja.leaping.permissionsex.util.Util.updateImmutable;
 
 class Segment {
     private volatile int id;
-    private final Set<Map.Entry<String, String>> contexts;
+    private final Set<ContextValue<?>> contexts;
     private final Map<String, Integer> permissions;
     private final Map<String, String> options;
     private final List<SubjectRef> parents;
     private final Integer permissionDefault;
     private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    Segment(int id, Set<Map.Entry<String, String>> contexts, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>> updates) {
+    Segment(int id, Set<ContextValue<?>> contexts, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>> updates) {
         this.id = id;
         this.contexts = ImmutableSet.copyOf(contexts);
         this.permissions = permissions;
@@ -55,7 +56,7 @@ class Segment {
         return new Segment(id, ImmutableSet.of(), ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
     }
 
-    static Segment empty(int id, Set<Map.Entry<String, String>> contexts) {
+    static Segment empty(int id, Set<ContextValue<?>> contexts) {
         return new Segment(id, contexts, ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
     }
 
@@ -67,7 +68,7 @@ class Segment {
         return Segment.empty(-1);
     }
 
-    static Segment unallocated(Set<Map.Entry<String, String>> contexts) {
+    static Segment unallocated(Set<ContextValue<?>> contexts) {
         return Segment.empty(-1, contexts);
     }
 
@@ -78,7 +79,7 @@ class Segment {
         return id;
     }
 
-    public Set<Map.Entry<String, String>> getContexts() {
+    public Set<ContextValue<?>> getContexts() {
         return contexts;
     }
 
