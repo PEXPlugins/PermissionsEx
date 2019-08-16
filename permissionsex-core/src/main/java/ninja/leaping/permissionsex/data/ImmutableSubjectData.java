@@ -215,8 +215,8 @@ public interface ImmutableSubjectData {
     /**
      * Gets the contexts we have data for
      *
-     * @return An immutable iterable of all sets of contexts with data stored
+     * @return An immutable set of all sets of contexts with data stored
      */
-    Iterable<Set<ContextValue<?>>> getActiveContexts();
+    Set<Set<ContextValue<?>>> getActiveContexts();
 
 }

@@ -75,7 +75,7 @@ class PEXSubjectData implements SubjectData {
     }
 
     private static <T> ContextValue<T> singleContextToPex(Context ctx, ContextDefinition<T> def) {
-        return def.createContextValue(def.deserialize(ctx.getValue()));
+        return def.createValue(def.deserialize(ctx.getValue()));
     }
 
     static Set<ContextValue<?>> contextsSpongeToPex(Set<Context> input, PermissionsEx manager) {

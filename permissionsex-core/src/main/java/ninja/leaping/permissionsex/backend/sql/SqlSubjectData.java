@@ -276,7 +276,7 @@ class SqlSubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public Iterable<Set<ContextValue<?>>> getActiveContexts() {
+    public Set<Set<ContextValue<?>>> getActiveContexts() {
         return segments.keySet();
     }
 

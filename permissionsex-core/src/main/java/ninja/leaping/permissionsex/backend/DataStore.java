@@ -18,6 +18,7 @@ package ninja.leaping.permissionsex.backend;
 
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.permissionsex.PermissionsEx;
+import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.Caching;
 import ninja.leaping.permissionsex.data.ContextInheritance;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
@@ -196,5 +197,6 @@ public interface DataStore {
     CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> inheritance);
 
     CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
+
 }
 

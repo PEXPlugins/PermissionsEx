@@ -182,7 +182,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
 
     private <T> void handleAccumulateSingle(ContextDefinition<T> def, Set<ContextValue<?>> acc) {
         def.accumulateCurrentValues(this, val -> {
-            acc.add(def.createContextValue(val));
+            acc.add(def.createValue(val));
             return null;
         });
     }

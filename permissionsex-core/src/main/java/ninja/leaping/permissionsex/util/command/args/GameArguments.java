@@ -192,7 +192,7 @@ public class GameArguments {
         }
 
         private <T> ContextValue<T> toCtxValue(ContextDefinition<T> def, String input) {
-            return def.createContextValue(def.deserialize(input));
+            return def.createValue(def.deserialize(input));
         }
 
         @Override

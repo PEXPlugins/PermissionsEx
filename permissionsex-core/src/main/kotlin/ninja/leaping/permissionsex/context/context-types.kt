@@ -24,7 +24,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeParseException
 
 
-internal object ServerTagContextDefinition: PEXContextDefinition<String>("server-tag"){
+object ServerTagContextDefinition: PEXContextDefinition<String>("server-tag"){
     private var activeTags: List<String> = listOf()
 
     override fun serialize(userValue: String): String = userValue

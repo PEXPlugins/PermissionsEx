@@ -16,6 +16,7 @@
  */
 package ninja.leaping.permissionsex.context
 
+import com.google.common.collect.ImmutableSet
 import ninja.leaping.permissionsex.PermissionsEx
 import ninja.leaping.permissionsex.config.PermissionsExConfiguration
 import ninja.leaping.permissionsex.subject.CalculatedSubject
@@ -23,12 +24,17 @@ import java.lang.IllegalArgumentException
 
 typealias ContextSet = MutableSet<ContextValue<*>>
 
+fun cSet(vararg contexts: ContextValue<*>): Set<ContextValue<*>> {
+    return ImmutableSet.copyOf(contexts)
+}
+
+
 /**
  * A specific type of context, for example world, server-tag, or until
  */
 abstract class ContextDefinition<T>(val name: String) {
 
-    fun createContextValue(value: T): ContextValue<T> = ContextValue(this, value)
+    fun createValue(value: T): ContextValue<T> = ContextValue(this, value)
 
     /**
      * Given a parsed value, write data out as a string

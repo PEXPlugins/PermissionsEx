@@ -89,7 +89,7 @@ class PEXVault extends Permission {
     }
 
     private Set<ContextValue<?>> contextsFrom(@Nullable String world) {
-        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createContextValue(world));
+        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createValue(world));
     }
 
     @Override

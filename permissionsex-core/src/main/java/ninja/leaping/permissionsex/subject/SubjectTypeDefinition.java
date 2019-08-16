@@ -37,7 +37,7 @@ public abstract class SubjectTypeDefinition<AttachmentType> {
     }
 
 
-    public static SubjectTypeDefinition defaultFor(String type, boolean transientHasPriority) {
+    public static SubjectTypeDefinition<Void> defaultFor(String type, boolean transientHasPriority) {
         return new DefaultSubjectTypeDefinition(type, transientHasPriority);
     }
 

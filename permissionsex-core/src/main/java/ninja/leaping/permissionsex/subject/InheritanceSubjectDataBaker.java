@@ -25,13 +25,13 @@ import com.google.common.collect.Multiset;
 import ninja.leaping.permissionsex.PermissionsEx;
 import ninja.leaping.permissionsex.context.ContextValue;
 import ninja.leaping.permissionsex.data.ImmutableSubjectData;
-import ninja.leaping.permissionsex.util.Combinations;
 import ninja.leaping.permissionsex.util.NodeTree;
 import ninja.leaping.permissionsex.util.Util;
 import ninja.leaping.permissionsex.util.glob.GlobParseException;
 import ninja.leaping.permissionsex.util.glob.Globs;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -65,17 +65,18 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         // State objects
         private final CalculatedSubject base;
         private final PermissionsEx pex;
-        private final Set<Set<ContextValue<?>>> activeContexts;
+        private final Set<ContextValue<?>> activeContexts;
 
-        private BakeState(CalculatedSubject base, Set<Set<ContextValue<?>>> activeContexts) {
+        private BakeState(CalculatedSubject base, Set<ContextValue<?>> activeContexts) {
             this.base = base;
             this.activeContexts = activeContexts;
             this.pex = base.getManager();
         }
     }
 
-    private static CompletableFuture<Set<Set<ContextValue<?>>>> processContexts(PermissionsEx pex, Set<ContextValue<?>> rawContexts) {
+    private static CompletableFuture<Set<ContextValue<?>>> processContexts(PermissionsEx pex, Set<ContextValue<?>> rawContexts) {
         return pex.getContextInheritance(null).thenApply(inheritance -> {
+            // Step one: calculate context inheritance
             Queue<ContextValue<?>> inProgressContexts = new LinkedList<>(rawContexts);
             Set<ContextValue<?>> contexts = new HashSet<>();
             ContextValue<?> context;
@@ -84,8 +85,8 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                     inProgressContexts.addAll(inheritance.getParents(context));
                 }
             }
-            return ImmutableSet.copyOf(Combinations.of(contexts));
 
+            return ImmutableSet.copyOf(contexts);
         });
     }
 
@@ -117,7 +118,8 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         SubjectType type = state.pex.getSubjects(subject.getKey());
         return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
-            for (Set<ContextValue<?>> combo : state.activeContexts) {
+
+            for (Set<ContextValue<?>> combo : processContexts(persistent.getActiveContexts(), transientData.getActiveContexts(), state)) {
                 if (type.getTypeInfo().transientHasPriority()) {
                     ret = visitSubjectSingle(state, transientData, ret, combo, visitedSubjects, inheritanceLevel);
                     ret = visitSubjectSingle(state, persistent, ret, combo, visitedSubjects, inheritanceLevel);
@@ -129,6 +131,50 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
             return ret;
         }).thenCompose(res -> res);
     }
+
+    private List<Set<ContextValue<?>>> processContexts(Set<Set<ContextValue<?>>> possibilities, Set<Set<ContextValue<?>>> transientPossibilities, BakeState state) {
+        List<Set<ContextValue<?>>> ret = new ArrayList<>(possibilities.size());
+        processSingleDataContexts(ret, possibilities, state);
+        processSingleDataContexts(ret, transientPossibilities, state);
+        ret.sort(Comparator.<Set<ContextValue<?>>>comparingInt(Set::size).reversed());
+        return ret;
+    }
+
+    /**
+     * Add every context set used for a segment in this subject where for a given set,
+     * every context matches at least one of the active contexts provided for the query
+     *
+     * @param accum Accumulator of context sets
+     * @param possibilities The possible contexts provided by the subject data
+     * @param state The bake state rosna
+     */
+    private void processSingleDataContexts(List<Set<ContextValue<?>>> accum, Set<Set<ContextValue<?>>> possibilities, BakeState state) {
+        nextSegment: for (Set<ContextValue<?>> segmentContexts : possibilities) {
+            for (ContextValue<?> value : segmentContexts) {
+                boolean matched = false;
+                for (ContextValue<?> possibility : state.activeContexts) {
+                    if (checkSingleContextMatch(value, possibility, state.pex)) {
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (!matched) {
+                    continue nextSegment;
+                }
+            }
+            accum.add(segmentContexts);
+        }
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private <T> boolean checkSingleContextMatch(ContextValue<T> value, ContextValue<?> other, PermissionsEx pex) {
+        return value.getKey().equals(other.getKey()) && value.tryResolve(pex)
+                && value.getDefinition().matches(value, ((ContextValue<T>) other).getParsedValue(value.getDefinition()));
+    }
+
+
 
     private CompletableFuture<Void> visitSubjectSingle(BakeState state, ImmutableSubjectData data, CompletableFuture<Void> initial, Set<ContextValue<?>> activeCombo, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         initial = initial.thenRun(() -> visitSingle(state, data, activeCombo, inheritanceLevel));
