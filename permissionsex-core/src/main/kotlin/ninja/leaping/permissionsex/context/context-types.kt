@@ -22,6 +22,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 
 
 object ServerTagContextDefinition: PEXContextDefinition<String>("server-tag"){
@@ -48,7 +49,7 @@ open class TimeContextDefinition internal constructor(name: String): PEXContextD
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: LocalDateTime) -> Unit) {
-        consumer(LocalDateTime.now())
+        consumer(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
     }
 
     override fun serialize(userValue: LocalDateTime): String {
@@ -65,18 +66,18 @@ open class TimeContextDefinition internal constructor(name: String): PEXContextD
     }
 
     override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.isEqual(ctx.getParsedValue(this))
+        return activeValue.truncatedTo(ChronoUnit.SECONDS).isEqual(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
     }
 }
 
 object BeforeTimeContextDefinition: TimeContextDefinition("before-time") {
     override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.isBefore(ctx.getParsedValue(this))
+        return activeValue.truncatedTo(ChronoUnit.SECONDS).isBefore(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
     }
 }
 
 object AfterTimeContextDefinition: TimeContextDefinition("after-time") {
     override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.isAfter(ctx.getParsedValue(this))
+        return activeValue.truncatedTo(ChronoUnit.SECONDS).isAfter(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
     }
 }

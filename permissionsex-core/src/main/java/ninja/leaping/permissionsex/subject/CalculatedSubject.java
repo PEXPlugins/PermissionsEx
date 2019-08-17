@@ -56,7 +56,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
         this.type = Preconditions.checkNotNull(type, "type");
         this.data = Caffeine.newBuilder()
                 .maximumSize(32)
-                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .expireAfterAccess(1, TimeUnit.MINUTES)
                 .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
         this.associatedObject = this.type.getTypeInfo().getAssociatedObject(identifier.getValue());
     }
