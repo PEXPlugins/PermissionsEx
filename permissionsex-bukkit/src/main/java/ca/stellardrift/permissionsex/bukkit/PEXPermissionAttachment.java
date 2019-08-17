@@ -1,0 +1,88 @@
+/**
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ca.stellardrift.permissionsex.bukkit;
+
+import ca.stellardrift.permissionsex.data.SubjectDataReference;
+import com.google.common.collect.Maps;
+import ca.stellardrift.permissionsex.PermissionsEx;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.plugin.Plugin;
+
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+/**
+ * Permissions attachment that integrates with the PEX backend
+ */
+public class PEXPermissionAttachment extends PermissionAttachment {
+    public static final String ATTACHMENT_TYPE = "attachment";
+    private final String identifier = UUID.randomUUID().toString();
+    private final SubjectDataReference subjectData;
+    private final PEXPermissible perm;
+    public PEXPermissionAttachment(Plugin plugin, Player parent, PEXPermissible perm) {
+        super(plugin, parent);
+        this.perm = perm;
+
+        try {
+            this.subjectData = perm.getManager().getSubjects(ATTACHMENT_TYPE).transientData().getReference(this.identifier).get();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+
+        this.subjectData.update(data -> data.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", getPlugin().getName()));
+    }
+
+    public String getIdentifier() {
+        return this.identifier;
+    }
+
+    @Override
+    public Map<String, Boolean> getPermissions() {
+        return Maps.transformValues(subjectData.get().getPermissions(PermissionsEx.GLOBAL_CONTEXT), val -> val > 0);
+    }
+
+    @Override
+    public void setPermission(String name, boolean value) {
+        subjectData.update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, checkNotNull(name, "name"), value ? 1 : -1));
+    }
+
+    @Override
+    public void setPermission(Permission perm, boolean value) {
+        setPermission(checkNotNull(perm, "perm").getName(), value);
+    }
+
+    @Override
+    public void unsetPermission(String name) {
+        subjectData.update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, checkNotNull(name, "name"), 0));
+    }
+
+    @Override
+    public void unsetPermission(Permission perm) {
+        unsetPermission(checkNotNull(perm, "perm").getName());
+    }
+
+    @Override
+    public boolean remove() {
+        this.subjectData.update(data -> null);
+        return perm.removeAttachmentInternal(this);
+    }
+}

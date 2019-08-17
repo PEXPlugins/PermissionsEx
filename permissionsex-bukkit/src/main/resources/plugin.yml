@@ -1,6 +1,6 @@
 name: "${project.parent.name}"
 version: "${project.version}${version.suffix}"
-main: ninja.leaping.permissionsex.bukkit.PermissionsExPlugin
+main: ca.stellardrift.permissionsex.bukkit.PermissionsExPlugin
 api-version: 1.13
 
 commands:
