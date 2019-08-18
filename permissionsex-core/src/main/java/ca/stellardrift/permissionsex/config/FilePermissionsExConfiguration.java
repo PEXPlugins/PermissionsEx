@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
 
@@ -42,14 +43,15 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  */
 @ConfigSerializable
 public class FilePermissionsExConfiguration implements PermissionsExConfiguration {
-    private static final TypeToken<FilePermissionsExConfiguration> TYPE = TypeToken.of(FilePermissionsExConfiguration.class);
     static {
-        TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(DataStore.class), new DataStoreSerializer());
+        TypeSerializers.getDefaultSerializers()
+                .registerType(TypeToken.of(DataStore.class), new DataStoreSerializer())
+                .registerType(new TypeToken<Supplier<?>>() {}, SupplierSerializer.INSTANCE);
     }
 
     private final ConfigurationLoader<?> loader;
     private final ConfigurationNode node;
-    @Setting private Map<String, DataStore> backends;
+    @Setting private Map<String, Supplier<DataStore>> backends;
     @Setting("default-backend") private String defaultBackend;
     @Setting private boolean debug;
     @Setting("server-tags") private List<String> serverTags;
@@ -106,12 +108,12 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
 
     @Override
     public DataStore getDataStore(String name) {
-        return backends.get(name);
+        return backends.get(name).get();
     }
 
     @Override
     public DataStore getDefaultDataStore() {
-        return backends.get(defaultBackend);
+        return backends.get(defaultBackend).get();
     }
 
     @Override
