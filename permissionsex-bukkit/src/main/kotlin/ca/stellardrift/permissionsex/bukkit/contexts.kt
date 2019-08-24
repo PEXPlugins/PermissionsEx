@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.context.EnumContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 
@@ -38,13 +39,18 @@ object WorldContextDefinition: ContextDefinition<String>("world") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
         val associated = subject.associatedObject.orElse(null)
+        println("world: Object associated with $subject is $associated")
         if (associated is Player) {
             consumer(associated.world.name)
         }
     }
+
+    override fun suggestValues(subject: CalculatedSubject): Set<String> {
+        return Bukkit.getWorlds().map(World::getName).toSet()
+    }
 }
 
-object DimensionContextDefinition: EnumContextDefinition<World.Environment>("dimension", enumValueOf = World.Environment::valueOf) {
+object DimensionContextDefinition: EnumContextDefinition<World.Environment>("dimension", World.Environment::class.java) {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: World.Environment) -> Unit) {
         val associated = subject.associatedObject.orElse(null)
         if (associated != null && associated is Player) {

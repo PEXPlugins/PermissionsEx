@@ -21,8 +21,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import java.lang.IllegalArgumentException
-
-typealias ContextSet = MutableSet<ContextValue<*>>
+import kotlin.reflect.KClass
 
 fun cSet(vararg contexts: ContextValue<*>): Set<ContextValue<*>> {
     return ImmutableSet.copyOf(contexts)
@@ -60,6 +59,12 @@ abstract class ContextDefinition<T>(val name: String) {
      */
     abstract fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: T) -> Unit)
 
+    /**
+     * Given a subject, suggest a set of values that may be valid for this context. This need not be an exhaustive list,
+     * or could even be an empty list, but allows providing users possible suggestions to what sensible values for a context may be.
+     */
+    open fun suggestValues(subject: CalculatedSubject): Set<T> = setOf()
+
     override fun toString(): String {
         return "${this.javaClass.simpleName}(name='$name')"
     }
@@ -78,17 +83,21 @@ abstract class ContextDefinition<T>(val name: String) {
     }
 }
 
-abstract class EnumContextDefinition<T: Enum<T>>(name: String, private val enumValueOf: (String) -> T) : ContextDefinition<T>(name) {
+abstract class EnumContextDefinition<T: Enum<T>>(name: String, private val enumClass: Class<T>) : ContextDefinition<T>(name) {
     override fun serialize(userValue: T): String {
         return userValue.name
     }
 
     override fun deserialize(canonicalValue: String): T {
-        return enumValueOf(canonicalValue.toUpperCase())
+        return java.lang.Enum.valueOf(enumClass, canonicalValue.toUpperCase())
     }
 
     override fun matches(ctx: ContextValue<T>, activeValue: T): Boolean {
         return ctx.getParsedValue(this) == activeValue
+    }
+
+    override fun suggestValues(subject: CalculatedSubject): Set<T> {
+        return ImmutableSet.copyOf(enumClass.enumConstants)
     }
 }
 
@@ -135,13 +144,14 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
 
     internal constructor(definition: ContextDefinition<Type>, value: Type) : this(definition.name, definition.serialize(value)) {
         this.definition = definition
-        this.parsedValue = parsedValue
+        this.parsedValue = value
     }
 
     fun tryResolve(engine: PermissionsEx): Boolean {
         if (this.definition != null) {
             return true
         }
+        @Suppress("UNCHECKED_CAST")
         val definition = engine.getContextDefinition(this.key) as ContextDefinition<Type>?
         if (definition != null) {
             this.definition = definition
@@ -171,6 +181,7 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
         if (tempParsed != null) {
             return tempParsed;
         }
+        @Suppress("UNCHECKED_CAST")
         tempParsed = engine.getContextDefinition(this.key)?.deserialize(this.rawValue) as Type?
         if (tempParsed == null) {
             throw RuntimeException("No definition for context $key")
@@ -196,7 +207,7 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
     }
 
     override fun toString(): String {
-        return "ContextValue(key='$key', rawValue='$rawValue', definition=$definition, parsedValue=$parsedValue)"
+        return "$key:$parsedValue (raw: $rawValue)"
     }
 }
 
