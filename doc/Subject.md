@@ -30,11 +30,24 @@ Context Key | Example Value              | Description
 `localip`   | `2607:f8b0:400a:801::200e` | The ip (on the server) that is receiving the connection from a subject
 `localport` | `25565`                    | The port (on the server) that the client is connecting to
 
-**PermissionsEx Contexts**
+**Paper/Spigot/Bukkit contexts**
 
 Context Key | Example Value              | Description
------------ | -------------------------- | -----------
-`server-tag`| `creative`                 | Tags applied to the current server (in `permissionsex.conf`)
+----------- | -------------------------- | -------------------
+`world`     | `world_nether`             | The name of the world a subject is currently in
+`dimension` | `nether`                   | The name of the dimension a subject is currently in
+`remoteip`  | `127.0.0.1`                | The IP address a subject is connecting from
+`localhost` | `myminecraftserver.com`    | The hostname a client is connecting to the server with
+`localip`   | `2607:f8b0:400a:801::200e` | The ip (on the server) that is receiving the connection from a subject
+`localport` | `25565`                    | The port (on the server) that the client is connecting to
+
+**PermissionsEx Contexts**
+
+Context Key   | Example Value         | Description
+------------- | --------------------- | -----------
+`server-tag`  | `creative`            | Tags applied to the current server (in `permissionsex.conf`)
+`before-time` | `2020-07-01T08:00:00` | Only active before this time
+`after-time`  | `2008-04-01T00:00:00` | Only active after the provided time
 
 
 
