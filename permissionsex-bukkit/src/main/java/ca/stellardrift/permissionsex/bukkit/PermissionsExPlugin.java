@@ -16,8 +16,11 @@
  */
 package ca.stellardrift.permissionsex.bukkit;
 
+import ca.stellardrift.permissionsex.ImplementationInterface;
+import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -28,16 +31,13 @@ import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
-import ca.stellardrift.permissionsex.ImplementationInterface;
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.ServicePriority;
@@ -218,7 +218,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    private void onPlayerJoin(final PlayerJoinEvent event) {
+    private void onPlayerLogin(final PlayerLoginEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
             if (registered) {
