@@ -217,7 +217,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         });
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private void onPlayerLogin(final PlayerLoginEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
@@ -233,6 +233,21 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         });
         injectPermissible(event.getPlayer());
     }
+
+    /**
+     * If the login event is cancelled, we want to make sure we properly uninject the permissible.
+     * Because this listener is on priority MONITOR, any plugin that might cancel the event has had a chance to have its say.
+     *
+     * @param event The login event that may be cancelled.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    private void onPlayerLoginDeny(final PlayerLoginEvent event) {
+        if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
+            uninjectPermissible(event.getPlayer());
+            getUserSubjects().uncache(event.getPlayer().getUniqueId().toString());
+        }
+    }
+
 
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     private void onPlayerQuit(PlayerQuitEvent event) {
