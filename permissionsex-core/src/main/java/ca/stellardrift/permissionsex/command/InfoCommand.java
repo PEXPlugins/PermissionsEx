@@ -28,6 +28,7 @@ import ca.stellardrift.permissionsex.util.command.Commander;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
@@ -59,6 +60,12 @@ public class InfoCommand {
             final ImmutableSubjectData data = subject.data().get();
 
             src.msg(src.fmt().header(src.fmt().tr(t("Information for %s", src.fmt().subject(subject)))));
+            if (pex.hasDebugMode()) {
+                Optional<?> associatedObject = subject.getAssociatedObject();
+                associatedObject.ifPresent(o -> src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Associated object: "))), o.toString())));
+                src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Active Contexts: "))), subject.getActiveContexts()));
+                src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Active & Used Contexts: "))), subject.getUsedContextValues().join()));
+            }
             if (!data.getAllPermissions().isEmpty() || !data.getAllDefaultValues().isEmpty()) {
                 src.msg(src.fmt().hl(src.fmt().tr(t("Permissions:"))));
                 printPermissions(src, data);

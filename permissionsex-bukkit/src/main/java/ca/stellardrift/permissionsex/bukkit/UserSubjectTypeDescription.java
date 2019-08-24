@@ -17,7 +17,6 @@
 package ca.stellardrift.permissionsex.bukkit;
 
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
-import ca.stellardrift.permissionsex.util.command.Commander;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -71,9 +70,5 @@ public class UserSubjectTypeDescription extends SubjectTypeDefinition<Player> {
         } catch (IllegalArgumentException ex) { // not a valid user ID
             return Optional.empty();
         }
-    }
-
-    public Optional<Commander<?>> getCommanderFor(String identifier) {
-        return Optional.ofNullable(plugin.getServer().getPlayer(UUID.fromString(identifier))).map(ply -> new BukkitCommander(plugin, ply));
     }
 }

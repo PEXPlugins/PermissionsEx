@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.SimpleConfigurationNode;
 
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     private final Map.Entry<String, String> identifier;
     private final SubjectType type;
     private SubjectDataReference ref, transientRef;
-    private Optional<?> associatedObject;
+    private WeakReference<?> associatedObject;
 
     private final AsyncLoadingCache<Set<ContextValue<?>>, BakedSubjectData> data;
 
@@ -59,7 +60,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
                 .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
-        this.associatedObject = this.type.getTypeInfo().getAssociatedObject(identifier.getValue());
+        getAssociatedObject();
     }
 
     void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
@@ -310,7 +311,14 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
     }
 
     public Optional<?> getAssociatedObject() {
-        return this.associatedObject;
+        Object ret = this.associatedObject == null ? null : this.associatedObject.get();
+        if (ret == null) {
+            ret = this.type.getTypeInfo().getAssociatedObject(this.identifier.getValue()).orElse(null);
+            if (ret != null) {
+                this.associatedObject = new WeakReference<>(ret);
+            }
+        }
+        return Optional.ofNullable(ret);
     }
 
     /**

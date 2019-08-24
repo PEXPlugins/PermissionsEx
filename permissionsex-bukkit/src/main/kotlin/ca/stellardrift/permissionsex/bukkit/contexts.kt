@@ -39,7 +39,6 @@ object WorldContextDefinition: ContextDefinition<String>("world") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
         val associated = subject.associatedObject.orElse(null)
-        println("world: Object associated with $subject is $associated")
         if (associated is Player) {
             consumer(associated.world.name)
         }
