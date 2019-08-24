@@ -1,7 +1,9 @@
 name: "${project.parent.name}"
 version: "${project.version}${version.suffix}"
 main: ca.stellardrift.permissionsex.bukkit.PermissionsExPlugin
-api-version: 1.13
+api-version: "1.13"
+load: STARTUP
+softdepend: [Vault]
 
 commands:
     permissionsex:
