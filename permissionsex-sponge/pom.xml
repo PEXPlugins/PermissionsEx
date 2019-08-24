@@ -39,7 +39,7 @@
         </executions> -->
         <configuration>
           <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ninja.leaping.permissionsex.sponge.Messages</targetBundle>
+          <targetBundle>ca.stellardrift.permissionsex.sponge.Messages</targetBundle>
         </configuration>
       </plugin>
       <plugin>
@@ -63,11 +63,11 @@
               <relocations>
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org-gnu-gettext</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.org-gnu-gettext</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

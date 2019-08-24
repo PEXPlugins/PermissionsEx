@@ -32,7 +32,7 @@
         </executions>-->
         <configuration>
           <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ninja.leaping.permissionsex.bukkit.Messages</targetBundle>
+          <targetBundle>ca.stellardrift.permissionsex.bukkit.Messages</targetBundle>
         </configuration>
       </plugin>
       <plugin>
@@ -53,23 +53,23 @@
               <relocations>
                 <relocation>
                   <pattern>ninja.leaping.configurate</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.ninja-leaping-configurate</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.ninja-leaping-configurate</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.org-gnu-gettext</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.org-gnu-gettext</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.zaxxer.hikari</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com-zaxxer-hikari</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.com-zaxxer-hikari</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.github.benmanes.caffeine</pattern>
-                  <shadedPattern>ninja.leaping.permissionsex.libs.com-github-benmanes-caffeine</shadedPattern>
+                  <shadedPattern>ca.stellardrift.permissionsex.libs.com-github-benmanes-caffeine</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -172,7 +172,7 @@
         <version>1.2.5-SNAPSHOT</version>
         <configuration>
           <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ninja.leaping.permissionsex.bukkit.Messages</targetBundle>
+          <targetBundle>ca.stellardrift.permissionsex.bukkit.Messages</targetBundle>
         </configuration>
       </plugin>
     </plugins>
