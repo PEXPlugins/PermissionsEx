@@ -16,27 +16,22 @@
  */
 package ca.stellardrift.permissionsex.sponge;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import ca.stellardrift.permissionsex.subject.SubjectType;
+import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectReference;
-import org.spongepowered.api.service.context.Context;
+import org.spongepowered.api.util.Tristate;
 
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -111,32 +106,12 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public CompletableFuture<Map<String, Subject>> loadSubjects(Set<String> identifiers) {
-        return this.subjectCache.getAll(identifiers).thenApply(map -> Maps.transformValues(map, x -> x));
+        return null;
     }
 
     @Override
     public SubjectReference newSubjectReference(String subjectIdentifier) {
         return new PEXSubjectReference(subjectIdentifier, this.identifier, plugin);
-    }
-
-    @Override
-    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(String permission) {
-        return getAllWithPermissionValue(permission).thenApply(map -> Maps.transformValues(map, x -> x > 0));
-    }
-
-    @Override
-    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(Set<Context> contexts, String permission) {
-        return getAllWithPermissionValue(contexts, permission).thenApply(map -> Maps.transformValues(map, x -> x > 0));
-    }
-
-    @Override
-    public Map<Subject, Boolean> getLoadedWithPermission(String permission) {
-        return Maps.transformValues(getLoadedWithPermissionValue(permission), x -> x > 0);
-    }
-
-    @Override
-    public Map<Subject, Boolean> getLoadedWithPermission(Set<Context> contexts, String permission) {
-        return Maps.transformValues(getLoadedWithPermissionValue(contexts, permission), x -> x > 0);
     }
 
     @Override
@@ -160,29 +135,29 @@ class PEXSubjectCollection implements SubjectCollection {
     }
 
     @Override
-    public Map<Subject, Integer> getLoadedWithPermissionValue(String permission) {
-        return getLoadedWithPermissionValue(null, permission);
+    public Map<Subject, Boolean> getLoadedWithPermission(String permission) {
+        return getLoadedWithPermission(null, permission);
     }
 
     @Override
-    public Map<Subject, Integer> getLoadedWithPermissionValue(Set<Context> contexts, String permission) {
-        final ImmutableMap.Builder<Subject, Integer> ret = ImmutableMap.builder();
+    public Map<Subject, Boolean> getLoadedWithPermission(Set<Context> contexts, String permission) {
+        final ImmutableMap.Builder<Subject, Boolean> ret = ImmutableMap.builder();
         for (PEXSubject subject : subjectCache.synchronous().asMap().values()) {
-                int permissionValue = subject.getPermission(contexts == null ? subject.getActiveContexts() : contexts, permission);
-                if (permissionValue != 0) {
-                    ret.put(subject, permissionValue);
+                Tristate permissionValue = subject.getPermissionValue(contexts == null ? subject.getActiveContexts() : contexts, permission);
+                if (permissionValue != Tristate.UNDEFINED) {
+                    ret.put(subject, permissionValue.asBoolean());
                 }
         }
         return ret.build();
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Integer>> getAllWithPermissionValue(String permission) {
-        return getAllWithPermissionValue(null, permission); // TODO: make this use active contexts
+    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(String permission) {
+        return getAllWithPermission(null, permission);
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Integer>> getAllWithPermissionValue(@Nullable Set<Context> contexts,
+    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(Set<Context> contexts,
             String permission) {
         Set<String> raw = this.collection.getAllIdentifiers();
         CompletableFuture<CalculatedSubject>[] futures = new CompletableFuture[raw.size()];
@@ -199,11 +174,17 @@ class PEXSubjectCollection implements SubjectCollection {
                 try {
                     return f.get();
                 } catch (InterruptedException | ExecutionException e) {
-                    return null;
+                    return (CalculatedSubject) null;
                 }
             }).map(subj -> {
                 final int perm = subj.getPermission(contexts == null ? subj.getActiveContexts() : PEXSubjectData.contextsSpongeToPex(contexts, this.plugin.getManager()), permission);
-                return Maps.immutableEntry((SubjectReference) subj.getIdentifier(), perm);
+                Boolean bPerm = null;
+                if (perm > 0) {
+                    bPerm = true;
+                } else if (perm < 0) {
+                    bPerm = false;
+                }
+                return Maps.immutableEntry((SubjectReference) subj.getIdentifier(), bPerm);
             }).filter(ent -> ent.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         });

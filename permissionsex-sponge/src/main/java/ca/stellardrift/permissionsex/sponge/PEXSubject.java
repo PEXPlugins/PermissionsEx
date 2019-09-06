@@ -77,7 +77,9 @@ class PEXSubject implements Subject {
     }
 
     public static CompletableFuture<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
-        return collection.getCalculatedSubject(identifier).thenApply(baked -> new PEXSubject(baked, collection));
+        return collection.getCalculatedSubject(identifier).thenApply(baked -> {
+            return new PEXSubject(baked, collection);
+        });
     }
 
     private Timings time() {
@@ -151,7 +153,7 @@ class PEXSubject implements Subject {
 
     @Override
     public boolean hasPermission(Set<Context> contexts, String permission) {
-        return getPermission(contexts, permission)> 0;
+        return getPermissionValue(contexts, permission).asBoolean();
     }
 
     @Override
@@ -161,16 +163,12 @@ class PEXSubject implements Subject {
 
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        return Tristate.fromInt(getPermission(contexts, permission));
-    }
-
-    @Override
-    public int getPermission(Set<Context> contexts, String permission) {
         time().onGetPermission().startTimingIfSync();
         try {
             Preconditions.checkNotNull(contexts, "contexts");
             Preconditions.checkNotNull(permission, "permission");
-            return baked.getPermission(PEXSubjectData.contextsSpongeToPex(contexts, getManager()), permission);
+            int ret = baked.getPermission(PEXSubjectData.contextsSpongeToPex(contexts, getManager()), permission);
+            return ret == 0 ? Tristate.UNDEFINED : ret > 0 ? Tristate.TRUE : Tristate.FALSE;
         } finally {
             time().onGetPermission().stopTimingIfSync();
         }

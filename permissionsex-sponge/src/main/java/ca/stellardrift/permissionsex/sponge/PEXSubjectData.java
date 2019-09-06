@@ -141,22 +141,13 @@ class PEXSubjectData implements SubjectData {
 
     @Override
     public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
-        return Maps.transformValues(getAllPermissionValues(), map -> Maps.transformValues(map, i -> i > 0));
+        return Maps.transformValues(tKeys(data.get().getAllPermissions()),
+                map -> Maps.transformValues(map, i -> i > 0));
     }
 
     @Override
     public Map<String, Boolean> getPermissions(Set<Context> contexts) {
-        return Maps.transformValues(getPermissionValues(contexts), i -> i > 0);
-    }
-
-    @Override
-    public Map<Set<Context>, Map<String, Integer>> getAllPermissionValues() {
-        return tKeys(data.get().getAllPermissions());
-    }
-
-    @Override
-    public Map<String, Integer> getPermissionValues(Set<Context> set) {
-        return data.get().getPermissions(contextsSpongeToPex(set, plugin.getManager()));
+        return Maps.transformValues(data.get().getPermissions(contextsSpongeToPex(contexts, plugin.getManager())), i -> i > 0);
     }
 
     @Override
@@ -175,12 +166,8 @@ class PEXSubjectData implements SubjectData {
             default:
                 throw new IllegalStateException("Unknown tristate provided " + tristate);
         }
-        return setPermission(set, s, val);
-    }
 
-    @Override
-    public CompletableFuture<Boolean> setPermission(final Set<Context> set, final String s, int value) {
-        return data.update(input -> input.setPermission(contextsSpongeToPex(set, plugin.getManager()), s, value)).thenApply(x -> true);
+        return data.update(input -> input.setPermission(contextsSpongeToPex(set, plugin.getManager()), s, val)).thenApply(x -> true);
     }
 
     @Override
