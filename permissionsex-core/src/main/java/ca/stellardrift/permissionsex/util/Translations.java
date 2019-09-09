@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.util;
 
 import gnu.gettext.GettextResource;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Enumeration;
 import java.util.Locale;
@@ -65,6 +66,7 @@ public class Translations {
         }
     }
 
+    @NonNull
     public static Translatable t(final String key, Object... args) {
         return new Translatable(args) {
             @Override
@@ -79,6 +81,7 @@ public class Translations {
         };
     }
 
+    @NonNull
     public static Translatable tn(final String key, final String keyPl, final long count, Object... args) {
         return new Translatable(args) {
             @Override
@@ -93,6 +96,7 @@ public class Translations {
         };
     }
 
+    @NonNull
     public static Translatable untr(final String key) {
         return new Translatable() {
 

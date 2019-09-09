@@ -25,12 +25,13 @@ import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 
 
-object ServerTagContextDefinition: PEXContextDefinition<String>("server-tag"){
+object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
     private var activeTags: List<String> = listOf()
 
     override fun serialize(userValue: String): String = userValue
     override fun deserialize(canonicalValue: String): String = canonicalValue
-    override fun matches(ctx: ContextValue<String>, activeValue: String): Boolean = ctx.getParsedValue(this) == activeValue
+    override fun matches(ctx: ContextValue<String>, activeValue: String): Boolean =
+        ctx.getParsedValue(this) == activeValue
 
     override fun update(config: PermissionsExConfiguration) {
         activeTags = config.serverTags
@@ -42,7 +43,7 @@ object ServerTagContextDefinition: PEXContextDefinition<String>("server-tag"){
 }
 
 
-open class TimeContextDefinition internal constructor(name: String): PEXContextDefinition<LocalDateTime>(name) {
+open class TimeContextDefinition internal constructor(name: String) : PEXContextDefinition<LocalDateTime>(name) {
     private var currentTimeZone: ZoneId = ZoneId.systemDefault()
     override fun update(config: PermissionsExConfiguration) {
         // TODO: implement timezone configuration option
@@ -66,18 +67,21 @@ open class TimeContextDefinition internal constructor(name: String): PEXContextD
     }
 
     override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.truncatedTo(ChronoUnit.SECONDS).isEqual(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
+        return activeValue.truncatedTo(ChronoUnit.SECONDS)
+            .isEqual(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
     }
 }
 
-object BeforeTimeContextDefinition: TimeContextDefinition("before-time") {
+object BeforeTimeContextDefinition : TimeContextDefinition("before-time") {
     override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.truncatedTo(ChronoUnit.SECONDS).isBefore(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
+        return activeValue.truncatedTo(ChronoUnit.SECONDS)
+            .isBefore(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
     }
 }
 
-object AfterTimeContextDefinition: TimeContextDefinition("after-time") {
+object AfterTimeContextDefinition : TimeContextDefinition("after-time") {
     override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.truncatedTo(ChronoUnit.SECONDS).isAfter(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
+        return activeValue.truncatedTo(ChronoUnit.SECONDS)
+            .isAfter(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
     }
 }

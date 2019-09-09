@@ -16,12 +16,10 @@
  */
 package ca.stellardrift.permissionsex.context
 
-import com.google.common.collect.ImmutableSet
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import java.lang.IllegalArgumentException
-import kotlin.reflect.KClass
+import com.google.common.collect.ImmutableSet
 
 fun cSet(vararg contexts: ContextValue<*>): Set<ContextValue<*>> {
     return ImmutableSet.copyOf(contexts)
@@ -79,11 +77,12 @@ abstract class ContextDefinition<T>(val name: String) {
     }
 
     override fun hashCode(): Int {
-        return 31 * name.hashCode();
+        return 31 * name.hashCode()
     }
 }
 
-abstract class EnumContextDefinition<T: Enum<T>>(name: String, private val enumClass: Class<T>) : ContextDefinition<T>(name) {
+abstract class EnumContextDefinition<T : Enum<T>>(name: String, private val enumClass: Class<T>) :
+    ContextDefinition<T>(name) {
     override fun serialize(userValue: T): String {
         return userValue.name
     }
@@ -97,7 +96,7 @@ abstract class EnumContextDefinition<T: Enum<T>>(name: String, private val enumC
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<T> {
-        return ImmutableSet.copyOf(enumClass.enumConstants)
+        return enumClass.enumConstants.toSet()
     }
 }
 
@@ -137,12 +136,16 @@ abstract class PEXContextDefinition<T> internal constructor(name: String) : Cont
 open class ContextValue<Type>(val key: String, val rawValue: String) {
     var definition: ContextDefinition<Type>? protected set
     var parsedValue: Type? protected set
+
     init {
         definition = null
         parsedValue = null
     }
 
-    internal constructor(definition: ContextDefinition<Type>, value: Type) : this(definition.name, definition.serialize(value)) {
+    internal constructor(definition: ContextDefinition<Type>, value: Type) : this(
+        definition.name,
+        definition.serialize(value)
+    ) {
         this.definition = definition
         this.parsedValue = value
     }
@@ -162,24 +165,23 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
     }
 
     fun getParsedValue(definition: ContextDefinition<Type>): Type {
-        if (this.definition != null  && this.definition != definition) {
-            throw IllegalArgumentException("The provided context definition does not match the one this context object currently knows about")
-        }
+        require(!(this.definition != null && this.definition != definition)) { "The provided context definition does not match the one this context object currently knows about" }
+
         this.definition = definition
         var parsedValue = this.parsedValue
-        if (parsedValue == null) {
+        return if (parsedValue == null) {
             parsedValue = definition.deserialize(this.rawValue)
             this.parsedValue = parsedValue
-            return parsedValue
+            parsedValue
         } else {
-            return parsedValue;
+            parsedValue
         }
     }
 
     fun getParsedValue(engine: PermissionsEx): Type {
-        var tempParsed = parsedValue;
+        var tempParsed = parsedValue
         if (tempParsed != null) {
-            return tempParsed;
+            return tempParsed
         }
         @Suppress("UNCHECKED_CAST")
         tempParsed = engine.getContextDefinition(this.key)?.deserialize(this.rawValue) as Type?

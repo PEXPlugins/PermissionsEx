@@ -115,12 +115,12 @@ public class GameArguments {
                 identifier = args.next();
             }
             SubjectType subjType = pex.getSubjects(type);
-            //if (!subjType.isRegistered(identifier)) { // TODO: Async command elements
+            if (!subjType.isRegistered(identifier).join()) { // TODO: Async command elements
                 final Optional<String> newIdentifier = subjType.getTypeInfo().getAliasForName(identifier);
                 if (newIdentifier.isPresent()) {
                     identifier = newIdentifier.get();
                 }
-            //}
+            }
 
             if (!subjType.getTypeInfo().isNameValid(identifier)) {
                 throw args.createError(t("Name '%s' is invalid for subjects of type %s", identifier, type));

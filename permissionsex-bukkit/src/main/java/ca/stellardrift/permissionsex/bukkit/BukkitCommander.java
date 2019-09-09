@@ -39,7 +39,7 @@ public class BukkitCommander implements Commander<BaseComponent> {
     private final CommandSender commandSource;
     private final BukkitMessageFormatter formatter;
 
-    public BukkitCommander(PermissionsExPlugin pex, CommandSender commandSource) {
+    BukkitCommander(PermissionsExPlugin pex, CommandSender commandSource) {
         this.commandSource = commandSource;
         this.formatter = new BukkitMessageFormatter(pex, commandSource);
     }

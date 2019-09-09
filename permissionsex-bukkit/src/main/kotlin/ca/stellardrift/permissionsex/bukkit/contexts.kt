@@ -24,7 +24,7 @@ import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 
-object WorldContextDefinition: ContextDefinition<String>("world") {
+object WorldContextDefinition : ContextDefinition<String>("world") {
     override fun serialize(userValue: String): String {
         return userValue
     }
@@ -49,10 +49,11 @@ object WorldContextDefinition: ContextDefinition<String>("world") {
     }
 }
 
-object DimensionContextDefinition: EnumContextDefinition<World.Environment>("dimension", World.Environment::class.java) {
+object DimensionContextDefinition :
+    EnumContextDefinition<World.Environment>("dimension", World.Environment::class.java) {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: World.Environment) -> Unit) {
         val associated = subject.associatedObject.orElse(null)
-        if (associated != null && associated is Player) {
+        if (associated is Player) {
             consumer(associated.world.environment)
         }
     }
