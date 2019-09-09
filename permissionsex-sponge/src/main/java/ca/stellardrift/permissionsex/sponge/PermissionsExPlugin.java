@@ -288,6 +288,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public CompletableFuture<SubjectCollection> loadCollection(String identifier) {
         return (CompletableFuture) this.subjectCollections.get(identifier);
     }
@@ -307,6 +308,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Map<String, SubjectCollection> getLoadedCollections() {
         return (Map) this.subjectCollections.synchronous().asMap();
     }

@@ -34,7 +34,9 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
+import static ca.stellardrift.permissionsex.sponge.SpongeTranslations.t;
 import static ca.stellardrift.permissionsex.util.Util.castOptional;
 
 /**
@@ -52,7 +54,14 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
     public Text.Builder subject(Map.Entry<String, String> subject) {
         Optional<CommandSource> source = castOptional(pex.getManager().getSubjects(subject.getKey()).getTypeInfo().getAssociatedObject(subject.getValue()), CommandSource.class);
         String name = source.map(CommandSource::getName)
-                .orElseGet(() -> pex.getCollection(subject.getKey()).get().getSubject(subject.getValue()).map(subj -> subj.getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name")).orElse(null));
+                .orElseGet(() -> {
+                    try {
+                        return pex.loadCollection(subject.getKey()).get().loadSubject(subject.getValue()).get().getSubjectData().getOptions(SubjectData.GLOBAL_CONTEXT).get("name");
+                    } catch (InterruptedException | ExecutionException e) {
+                        pex.getLogger().error(t("Unable to get name for subject %s", subject), e);
+                        return null;
+                    }
+                });
 
         Text nameText;
         if (name != null) {
@@ -61,22 +70,22 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
             nameText = Text.of(subject.getValue());
         }
 
-        // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
+        // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier} info)
         return Text.builder().append(Text.builder(subject.getKey()).style(TextStyles.BOLD).build(), Text.of(" "),
-                nameText).onHover(TextActions.showText(tr(SpongeTranslations.t("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
+                nameText).onHover(TextActions.showText(tr(t("Click to view more info")).build())).onClick(TextActions.runCommand("/pex " + subject.getKey() + " " + subject.getValue() + " info"));
     }
 
     @Override
     public Text.Builder ladder(RankLadder ladder) {
         return Text.builder(ladder.getName())
                 .style(TextStyles.BOLD)
-                .onHover(TextActions.showText(tr(SpongeTranslations.t("Click here to view more info")).build()))
+                .onHover(TextActions.showText(tr(t("Click here to view more info")).build()))
                 .onClick(TextActions.runCommand("/pex rank " + ladder.getName()));
     }
 
     @Override
     public Text.Builder booleanVal(boolean val) {
-        return (val ? tr(SpongeTranslations.t("true")) : tr(SpongeTranslations.t("false"))).color(val ? TextColors.GREEN : TextColors.RED);
+        return (val ? tr(t("true")) : tr(t("false"))).color(val ? TextColors.GREEN : TextColors.RED);
     }
 
     @Override
@@ -152,7 +161,7 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
     @Override
     public Text.Builder tr(Translatable tr) {
         boolean unwrapArgs = false;
-        for (Object arg: tr.getArgs()) {
+        for (Object arg : tr.getArgs()) {
             if (arg instanceof Translatable || arg instanceof Text.Builder) {
                 unwrapArgs = true;
                 break;

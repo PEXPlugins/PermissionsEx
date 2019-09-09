@@ -31,6 +31,7 @@ import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.util.Tristate;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -106,7 +107,9 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public CompletableFuture<Map<String, Subject>> loadSubjects(Set<String> identifiers) {
-        return null;
+        Map<String, CompletableFuture<Subject>> subjs =  Maps.asMap(identifiers, ident -> loadSubject(Objects.requireNonNull(ident)));
+        return CompletableFuture.allOf(subjs.values().toArray(new CompletableFuture[0]))
+                .thenApply(none -> Maps.transformValues(subjs, CompletableFuture::join));
     }
 
     @Override
@@ -140,7 +143,7 @@ class PEXSubjectCollection implements SubjectCollection {
     }
 
     @Override
-    public Map<Subject, Boolean> getLoadedWithPermission(Set<Context> contexts, String permission) {
+    public Map<Subject, Boolean> getLoadedWithPermission(@Nullable Set<Context> contexts, String permission) {
         final ImmutableMap.Builder<Subject, Boolean> ret = ImmutableMap.builder();
         for (PEXSubject subject : subjectCache.synchronous().asMap().values()) {
                 Tristate permissionValue = subject.getPermissionValue(contexts == null ? subject.getActiveContexts() : contexts, permission);
@@ -157,9 +160,10 @@ class PEXSubjectCollection implements SubjectCollection {
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(Set<Context> contexts,
+    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(@Nullable Set<Context> contexts,
             String permission) {
         Set<String> raw = this.collection.getAllIdentifiers();
+        @SuppressWarnings("unchecked")
         CompletableFuture<CalculatedSubject>[] futures = new CompletableFuture[raw.size()];
         int i = 0;
         for (String ident : raw) {
