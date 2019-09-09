@@ -51,7 +51,7 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
 
     private final ConfigurationLoader<?> loader;
     private final ConfigurationNode node;
-    @Setting private Map<String, Supplier<DataStore>> backends;
+    @Setting private Map<String, DataStore> backends;
     @Setting("default-backend") private String defaultBackend;
     @Setting private boolean debug;
     @Setting("server-tags") private List<String> serverTags;
@@ -108,12 +108,12 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
 
     @Override
     public DataStore getDataStore(String name) {
-        return backends.get(name).get();
+        return backends.get(name);
     }
 
     @Override
     public DataStore getDefaultDataStore() {
-        return backends.get(defaultBackend).get();
+        return backends.get(defaultBackend);
     }
 
     @Override
