@@ -47,9 +47,9 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
 public abstract class AbstractDataStore implements DataStore {
     private PermissionsEx manager;
     private final Factory factory;
-    private final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
-    private final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
-    private final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
+    protected final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
+    protected final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
+    protected final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
 
     protected AbstractDataStore(Factory factory) {
         if (!factory.expectedClazz.equals(getClass())) {
@@ -63,9 +63,10 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public final void initialize(PermissionsEx core) throws PermissionsLoadingException {
+    public final boolean initialize(PermissionsEx core) throws PermissionsLoadingException {
         this.manager = core;
         initializeInternal();
+        return true;
     }
 
     protected abstract void initializeInternal() throws PermissionsLoadingException;
@@ -208,7 +209,7 @@ public abstract class AbstractDataStore implements DataStore {
         return factory.type;
     }
 
-    protected static class Factory implements DataStoreFactory {
+    public static class Factory implements DataStoreFactory {
         private final String type;
         private final Class<? extends AbstractDataStore> expectedClazz;
         private final ObjectMapper<? extends AbstractDataStore> mapper;

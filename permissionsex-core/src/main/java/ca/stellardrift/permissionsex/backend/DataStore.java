@@ -41,8 +41,9 @@ public interface DataStore {
     /**
      * Activate this data store from the required data
      * @throws PermissionsLoadingException If the backing data cannot be loaded
+     * @return true if there was pre-existing data to load, false if this is first run
      */
-    void initialize(PermissionsEx core) throws PermissionsLoadingException;
+    boolean initialize(PermissionsEx core) throws PermissionsLoadingException;
 
     /**
      * Free any resources this backend may be using

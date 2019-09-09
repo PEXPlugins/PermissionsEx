@@ -87,7 +87,7 @@ public class MemoryContextInheritance implements ContextInheritance {
         }
     }
 
-    private static ContextValue<?> ctxFromString(String input) {
+    public static ContextValue<?> ctxFromString(String input) {
         final String[] values = input.split(":", 2);
         if (values.length != 2) {
             throw new IllegalArgumentException("Invalid format for context!");
@@ -95,7 +95,7 @@ public class MemoryContextInheritance implements ContextInheritance {
         return new ContextValue<>(values[0], values[1]);
     }
 
-    private static String ctxToString(ContextValue<?> input) {
+    public static String ctxToString(ContextValue<?> input) {
         return input.getKey() + ":" + input.getRawValue();
     }
 

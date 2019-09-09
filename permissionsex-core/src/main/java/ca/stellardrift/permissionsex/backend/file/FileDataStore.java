@@ -16,12 +16,22 @@
  */
 package ca.stellardrift.permissionsex.backend.file;
 
+import ca.stellardrift.permissionsex.backend.*;
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance;
-import com.google.common.collect.ImmutableList;
+import ca.stellardrift.permissionsex.data.ContextInheritance;
+import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.rank.FixedRankLadder;
+import ca.stellardrift.permissionsex.rank.RankLadder;
+import ca.stellardrift.permissionsex.util.GuavaCollectors;
+import ca.stellardrift.permissionsex.util.Util;
+import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig;
+import ca.stellardrift.permissionsex.util.configurate.WatchServiceListener;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
@@ -32,43 +42,37 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.util.MapFactories;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
-import ca.stellardrift.permissionsex.backend.AbstractDataStore;
-import ca.stellardrift.permissionsex.backend.ConversionUtils;
-import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import ca.stellardrift.permissionsex.rank.FixedRankLadder;
-import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.GuavaCollectors;
-import ca.stellardrift.permissionsex.util.Util;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static ca.stellardrift.permissionsex.util.Translations.t;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public final class FileDataStore extends AbstractDataStore {
-    public static final String KEY_RANK_LADDERS = "rank-ladders";
+    static final String KEY_RANK_LADDERS = "rank-ladders";
     public static final Factory FACTORY = new Factory("file", FileDataStore.class);
 
     @Setting
     private String file;
     @Setting(value = "alphabetize-entries", comment = "Place file entries in alphabetical order")
     private boolean alphabetizeEntries = false;
+    @Setting(value = "auto-reload", comment = "Automatically reload the data file when changes have been made")
+    private boolean autoReload = true;
 
-    private ConfigurationLoader<? extends ConfigurationNode> permissionsFileLoader;
-    private ConfigurationNode permissionsConfig;
+    private WatchServiceListener reloadService;
+    private ReloadableConfig<ConfigurationNode> permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();
 
@@ -77,30 +81,70 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
 
-    private ConfigurationLoader<? extends ConfigurationNode> createLoader(Path file) {
-        return GsonConfigurationLoader.builder()
-                .setPath(file)
+    private ReloadableConfig<ConfigurationNode> createLoader(Path file) throws IOException {
+        ConfigurationOptions configOptions;
+
+        if (alphabetizeEntries) {
+            configOptions = ConfigurationOptions.defaults().setMapFactory(MapFactories.sortedNatural());
+        } else {
+            configOptions = ConfigurationOptions.defaults();
+        }
+
+        Function1<Path, ConfigurationLoader<ConfigurationNode>> loaderFunc = path -> GsonConfigurationLoader.builder()
+                .setDefaultOptions(configOptions)
+                .setPath(path)
                 .setIndent(4)
                 .setLenient(true)
                 .build();
-    }
 
-    private ConfigurationOptions getLoadOptions() {
-        ConfigurationOptions ret = ConfigurationOptions.defaults();
-        if (alphabetizeEntries) {
-            ret = ret.setMapFactory(MapFactories.sortedNatural());
+        ReloadableConfig<ConfigurationNode> ret;
+        if (reloadService != null) {
+            ret = reloadService.createConfig(loaderFunc, file, this::refresh);
+        } else {
+            ret = new ReloadableConfig<>(loaderFunc.invoke(file));
         }
+
+        ret.setErrorCallback((e, state) -> {
+            getManager().getLogger().error(t("Error while %s permissions configuration: %s. Old configuration will continue to be used until the error is corrected.", state, e.getLocalizedMessage()), e);
+            return Unit.INSTANCE;
+        });
+
         return ret;
     }
 
-    private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> loader, String formatName) throws PermissionsLoadingException {
+    /**
+     * Handle automatic reloads of the permissions storage
+     *
+     * @param newNode The updated node
+     * @return void
+     */
+    private Unit refresh(ConfigurationNode newNode) {
+        this.listeners.getAllKeys().forEach(key -> {
+            try {
+                this.listeners.call(key, getDataSync(key.getKey(), key.getValue()));
+            } catch (PermissionsLoadingException e) {
+                getManager().getLogger().error(t("During an automatic reload of the permissions storage, %s %s failed to load:", key.getKey(), key.getValue()), e);
+            }
+        });
+
+        this.rankLadderListeners.getAllKeys().forEach(key ->
+                this.rankLadderListeners.call(key, getRankLadderInternal(key).join()));
+
+        this.contextInheritanceListeners.getAllKeys().forEach(key ->
+                this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
+
+        getManager().getLogger().info(t("Automatically reloaded %s based on a change made outside of PEX", this.file));
+
+        return Unit.INSTANCE;
+    }
+
+    private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> legacyLoader, String formatName) throws PermissionsLoadingException {
         Path legacyPermissionsFile = permissionsFile;
         file = file.replace(extension, ".json");
         permissionsFile = getManager().getBaseDirectory().resolve(file);
-        permissionsFileLoader = createLoader(permissionsFile);
         try {
-            permissionsConfig = loader.load();
-            permissionsFileLoader.save(permissionsConfig);
+            permissionsConfig = createLoader(permissionsFile);
+            permissionsConfig.save(legacyLoader.load());
             Files.move(legacyPermissionsFile, legacyPermissionsFile.resolveSibling(legacyPermissionsFile.getFileName().toString() + ".legacy-backup"));
         } catch (IOException e) {
             throw new PermissionsLoadingException(t("While loading legacy %s permissions from %s", formatName, legacyPermissionsFile), e);
@@ -110,27 +154,29 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     protected void initializeInternal() throws PermissionsLoadingException {
+        if (autoReload) {
+            reloadService = new WatchServiceListener(Executors.newCachedThreadPool(), getManager().getLogger());
+        }
+
         Path permissionsFile = getManager().getBaseDirectory().resolve(file);
         if (file.endsWith(".yml")) {
             permissionsFile = migrateLegacy(permissionsFile, ".yml", YAMLConfigurationLoader.builder().setPath(permissionsFile).build(), "YML");
         } else if (file.endsWith(".conf")) {
             permissionsFile = migrateLegacy(permissionsFile, ".conf", HoconConfigurationLoader.builder().setPath(permissionsFile).build(), "HOCON");
         } else {
-            permissionsFileLoader = createLoader(permissionsFile);
+            try {
+                permissionsConfig = createLoader(permissionsFile);
+            } catch (IOException e) {
+                throw new PermissionsLoadingException(t("While loading permissions file from %s", permissionsFile), e);
+            }
         }
 
-        try {
-            permissionsConfig = permissionsFileLoader.load(getLoadOptions());
-        } catch (IOException e) {
-            throw new PermissionsLoadingException(t("While loading permissions file from %s", permissionsFile), e);
-        }
-
-        if (permissionsConfig.getChildrenMap().isEmpty()) { // New configuration, populate with default data
+        if (permissionsConfig.getNode().getChildrenMap().isEmpty()) { // New configuration, populate with default data
             try {
                 performBulkOperationSync(input -> {
-                        applyDefaultData();
-                        permissionsConfig.getNode("schema-version").setValue(SchemaMigrations.LATEST_VERSION);
-                        return null;
+                    applyDefaultData();
+                    permissionsConfig.set("schema-version", SchemaMigrations.LATEST_VERSION);
+                    return null;
                 });
             } catch (PermissionsLoadingException e) {
                 throw e;
@@ -139,9 +185,9 @@ public final class FileDataStore extends AbstractDataStore {
             }
         } else {
             ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
-            int startVersion = permissionsConfig.getNode("schema-version").getInt(-1);
-            versionUpdater.apply(permissionsConfig);
-            int endVersion = permissionsConfig.getNode("schema-version").getInt();
+            int startVersion = permissionsConfig.get("schema-version").getInt(-1);
+            versionUpdater.apply(permissionsConfig.getNode());
+            int endVersion = permissionsConfig.get("schema-version").getInt();
             if (endVersion > startVersion) {
                 getManager().getLogger().info(t("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion));
                 try {
@@ -155,11 +201,14 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public void close() {
-
+        if (this.reloadService != null) {
+            this.reloadService.close();
+            this.reloadService = null;
+        }
     }
 
     private ConfigurationNode getSubjectsNode() {
-        return this.permissionsConfig.getNode("subjects");
+        return this.permissionsConfig.get("subjects");
     }
 
     private CompletableFuture<Void> save() {
@@ -176,7 +225,7 @@ public final class FileDataStore extends AbstractDataStore {
     private void saveSync() throws IOException {
         if (saveSuppressed.get() <= 0) {
             if (dirty.compareAndSet(true, false)) {
-                permissionsFileLoader.save(permissionsConfig);
+                permissionsConfig.save();
             }
         }
     }
@@ -184,11 +233,17 @@ public final class FileDataStore extends AbstractDataStore {
     @Override
     public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         try {
-            return completedFuture(FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier)));
+            return completedFuture(getDataSync(type, identifier));
         } catch (PermissionsLoadingException e) {
             return Util.failedFuture(e);
+        }
+    }
+
+    private ImmutableSubjectData getDataSync(String type, String identifier) throws PermissionsLoadingException {
+        try {
+            return FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
         } catch (ObjectMappingException e) {
-            return Util.failedFuture(new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e));
+            throw new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e);
         }
     }
 
@@ -259,17 +314,17 @@ public final class FileDataStore extends AbstractDataStore {
                 })
                 .collect(GuavaCollectors.toImmutableSet());*/
         return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), type -> {
-                if (type == null) {
-                    return null;
-                }
-                final String typeStr = type.toString();
+            if (type == null) {
+                return null;
+            }
+            final String typeStr = type.toString();
 
-                return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
+            return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
         }));
     }
 
     private ConfigurationNode getRankLaddersNode() {
-        return this.permissionsConfig.getNode(KEY_RANK_LADDERS);
+        return this.permissionsConfig.get(KEY_RANK_LADDERS);
     }
 
     @Override
@@ -279,7 +334,9 @@ public final class FileDataStore extends AbstractDataStore {
 
     @Override
     public CompletableFuture<RankLadder> getRankLadderInternal(String ladder) {
-        return completedFuture(new FixedRankLadder(ladder, ImmutableList.copyOf(Lists.transform(getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList(), input -> Util.subjectFromString(input.getString())))));
+        return completedFuture(new FixedRankLadder(ladder, getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList().stream()
+                .map(node -> Util.subjectFromString(Objects.requireNonNull(node.getString())))
+                .collect(Collectors.toList())));
     }
 
     @Override
@@ -290,7 +347,7 @@ public final class FileDataStore extends AbstractDataStore {
     @Override
     public CompletableFuture<ContextInheritance> getContextInheritanceInternal() {
         try {
-            return completedFuture(this.permissionsConfig.getValue(TypeToken.of(MemoryContextInheritance.class)));
+            return completedFuture(this.permissionsConfig.getNode().getValue(TypeToken.of(MemoryContextInheritance.class)));
         } catch (ObjectMappingException e) {
             return Util.failedFuture(e);
         }
@@ -300,7 +357,7 @@ public final class FileDataStore extends AbstractDataStore {
     public CompletableFuture<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
         final MemoryContextInheritance realInheritance = MemoryContextInheritance.fromExistingContextInheritance(inheritance);
         try {
-            this.permissionsConfig.setValue(TypeToken.of(MemoryContextInheritance.class), realInheritance);
+            this.permissionsConfig.getNode().setValue(TypeToken.of(MemoryContextInheritance.class), realInheritance);
         } catch (ObjectMappingException e) {
             throw new RuntimeException(e);
         }
@@ -315,7 +372,6 @@ public final class FileDataStore extends AbstractDataStore {
         if (ladder != null) {
             for (Map.Entry<String, String> rank : ladder.getRanks()) {
                 childNode.getAppendedNode().setValue(Util.subjectToString(rank));
-
             }
         }
         dirty.set(true);
