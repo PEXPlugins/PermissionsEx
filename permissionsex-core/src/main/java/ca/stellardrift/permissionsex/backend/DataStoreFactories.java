@@ -16,6 +16,9 @@
  */
 package ca.stellardrift.permissionsex.backend;
 
+import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsFileDataStore;
+import ca.stellardrift.permissionsex.backend.conversion.groupmanager.GroupManagerDataStore;
+import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsSqlDataStore;
 import ca.stellardrift.permissionsex.backend.file.FileDataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.backend.sql.SqlDataStore;
@@ -31,6 +34,9 @@ public class DataStoreFactories {
         register("file", FileDataStore.FACTORY);
         register("memory", MemoryDataStore.FACTORY);
         register("sql", SqlDataStore.FACTORY);
+        register("groupmanager", GroupManagerDataStore.FACTORY);
+        register("luckperms-file", LuckPermsFileDataStore.FACTORY);
+        register("luckperms-sql", LuckPermsSqlDataStore.FACTORY);
     }
 
     private DataStoreFactories() {

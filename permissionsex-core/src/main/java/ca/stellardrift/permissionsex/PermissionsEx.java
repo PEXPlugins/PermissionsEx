@@ -17,27 +17,23 @@
 package ca.stellardrift.permissionsex;
 
 import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider;
+import ca.stellardrift.permissionsex.backend.conversion.ConversionProviderRegistry;
+import ca.stellardrift.permissionsex.backend.conversion.ConversionResult;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.command.PermissionsExCommands;
 import ca.stellardrift.permissionsex.command.RankingCommands;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
-import ca.stellardrift.permissionsex.context.AfterTimeContextDefinition;
-import ca.stellardrift.permissionsex.context.BeforeTimeContextDefinition;
-import ca.stellardrift.permissionsex.context.ContextDefinition;
-import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.context.PEXContextDefinition;
-import ca.stellardrift.permissionsex.context.ServerTagContextDefinition;
-import ca.stellardrift.permissionsex.data.CacheListenerHolder;
-import ca.stellardrift.permissionsex.data.Caching;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.RankLadderCache;
-import ca.stellardrift.permissionsex.data.SubjectCache;
-import ca.stellardrift.permissionsex.data.SubjectDataReference;
+import ca.stellardrift.permissionsex.context.*;
+import ca.stellardrift.permissionsex.data.*;
+import ca.stellardrift.permissionsex.exception.PEBKACException;
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.logging.DebugPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
 import ca.stellardrift.permissionsex.util.Translations;
 import ca.stellardrift.permissionsex.util.Util;
@@ -47,9 +43,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.sk89q.squirrelid.resolver.HttpRepositoryService;
 import com.sk89q.squirrelid.resolver.ProfileService;
-import ca.stellardrift.permissionsex.exception.PEBKACException;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +52,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -73,6 +60,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+
+import static ca.stellardrift.permissionsex.util.Translations.t;
 
 
 /**
@@ -86,9 +75,6 @@ import java.util.regex.Pattern;
  * Keep in mind most of PEX's core data objects are immutable and must be resubmitted to their holders to apply updates.
  * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
  * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
- *
- *
- *
  */
 public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
@@ -112,6 +98,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
     private static class State {
         private final PermissionsExConfiguration config;
         private final DataStore activeDataStore;
+        private List<ConversionResult> availableConversions;
 
         private State(PermissionsExConfiguration config, DataStore activeDataStore) {
             this.config = config;
@@ -163,7 +150,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     }
                 });
                 if (toConvert.iterator().hasNext()) {
-                    getLogger().info(Translations.t("Trying to convert users stored by name to UUID"));
+                    getLogger().info(t("Trying to convert users stored by name to UUID"));
                 } else {
                     return 0;
                 }
@@ -178,7 +165,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                                 dataStore.isRegistered(SUBJECTS_USER, lookupName)
                                         .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
                                     if (newRegistered) {
-                                        getLogger().warn(Translations.t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
+                                        getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
                                         return false;
                                     } else if (!oldRegistered) {
                                         return false;
@@ -204,21 +191,21 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
                     });
                     return converted[0];
                 } catch (IOException | InterruptedException e) {
-                    getLogger().error(Translations.t("Error while fetching UUIDs for users"), e);
+                    getLogger().error(t("Error while fetching UUIDs for users"), e);
                     return 0;
                 }
-            }).thenCombine(CompletableFuture.allOf(actions.toArray(new CompletableFuture[actions.size()])), (count, none) -> count).thenAccept(result -> {
+            }).thenCombine(CompletableFuture.allOf(actions.toArray(new CompletableFuture[0])), (count, none) -> count).thenAccept(result -> {
                     if (result != null && result > 0) {
                         getLogger().info(Translations.tn("%s user successfully converted from name to UUID",
                                 "%s users successfully converted from name to UUID!",
                                 result, result));
                     }
                 }).exceptionally(t -> {
-                getLogger().error(Translations.t("Error converting users to UUID"), t);
-                return null;
+                    getLogger().error(t("Error converting users to UUID"), t);
+                    return null;
                 });
         } catch (UnknownHostException e) {
-            getLogger().warn(Translations.t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary)."));
+            getLogger().warn(t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary)."));
         }
 
     }
@@ -379,7 +366,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
             initialize(config);
             getSubjects(SUBJECTS_GROUP).cacheAll();
         } catch (IOException e) {
-            throw new PEBKACException(Translations.t("Error while loading configuration: %s", e.getLocalizedMessage()));
+            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
         }
     }
 
@@ -393,11 +380,25 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
      */
     private void initialize(PermissionsExConfiguration config) throws PermissionsLoadingException {
         State newState = new State(config, config.getDefaultDataStore());
-        newState.activeDataStore.initialize(this);
+        boolean existingData = newState.activeDataStore.initialize(this);
         try {
             newState.config.save();
         } catch (IOException e) {
-            throw new PermissionsLoadingException(Translations.t("Unable to write permissions configuration"), e);
+            throw new PermissionsLoadingException(t("Unable to write permissions configuration"), e);
+        }
+
+        if (!existingData) {
+            getLogger().info(t("Welcome to PermissionsEx! We're creating some default data. If you have data from " +
+                    "another plugin to import, it will be listed below now. Run the command /pex import [id] to import from one of those backends:"));
+
+            List<ConversionResult> allResults = new LinkedList<>();
+            for (ConversionProvider prov : ConversionProviderRegistry.INSTANCE.getAllProviders()) {
+                List<ConversionResult> res = prov.listConversionOptions(this);
+                if (!res.isEmpty()) {
+                    getLogger().info(t("Plugin %s has data in stores: %s", prov.getName(), res.toString()));
+                    allResults.addAll(res);
+                }
+            }
         }
 
         State oldState = this.state.getAndSet(newState);
@@ -422,7 +423,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
 
         // Migrate over legacy subject data
         newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
-            getLogger().info(Translations.t("Successfully migrated old-style default data to new location"));
+            getLogger().info(t("Successfully migrated old-style default data to new location"));
         });
     }
 
