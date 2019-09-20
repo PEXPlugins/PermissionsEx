@@ -127,7 +127,7 @@ class WatchServiceListener @JvmOverloads constructor(
      */
     @Throws(IOException::class)
     fun listenToFile(file: Path, listener: WatchServiceCallback): WatchKey {
-        require(!Files.isDirectory(file) && Files.exists(file)) { "Path $file must be a file"}
+        require(!Files.isDirectory(file)) { "Path $file must be a file"}
 
         val key = file.parent.register(watchService, *DEFAULT_WATCH_EVENTS)
         val fileName = file.fileName
@@ -138,7 +138,7 @@ class WatchServiceListener @JvmOverloads constructor(
 
     @Throws(IOException::class)
     fun listenToDirectory(directory: Path, listener: WatchServiceCallback): WatchKey {
-        require(Files.isDirectory(directory)) { "Path $directory must be a directory"}
+        require(Files.isDirectory(directory) || !Files.exists(directory)) { "Path $directory must be a directory"}
 
         val key = directory.register(watchService, *DEFAULT_WATCH_EVENTS)
         activeListeners.getOrPut(key, { DirectoryListenerRegistration(key, ConcurrentHashMap(), mutableListOf()) }).dirListeners += listener
