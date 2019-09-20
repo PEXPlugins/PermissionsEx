@@ -17,32 +17,30 @@
 package ca.stellardrift.permissionsex;
 
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Abstract test for test classes wishing to test in cases requiring a permissions manager
  */
 public abstract class PermissionsExTest {
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
     private PermissionsEx manager;
-    @Before
-    public void setUp() throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
+    @BeforeEach
+    public void setUp(@TempDir Path tempFolder) throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
         PermissionsExConfiguration config = populate();
         config.validate();
 
-        manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder.newFolder().toPath()));
+        manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (manager != null) {
             manager.close();

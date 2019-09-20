@@ -18,7 +18,6 @@ package ca.stellardrift.permissionsex.bukkit;
 
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.Translations;
-import gnu.gettext.GettextResource;
 
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -33,7 +32,7 @@ public class BukkitTranslations {
 
     private static ResourceBundle getBundle(Locale locale) {
         try {
-            return ResourceBundle.getBundle("ninja.leaping.permissionsex.bukkit.Messages", locale, Translations.CLASS_CONTROL);
+            return ResourceBundle.getBundle("ca.stellardrift.permissionsex.bukkit.Messages", locale);
         } catch (MissingResourceException ex) {
             return Translations.EMPTY_RESOURCE_BUNDLE;
         }
@@ -48,7 +47,7 @@ public class BukkitTranslations {
 
             @Override
             public String translate(Locale input) {
-                return GettextResource.gettext(getBundle(input), key);
+                return getUntranslated();
             }
         };
     }
@@ -62,7 +61,7 @@ public class BukkitTranslations {
 
             @Override
             public String translate(Locale input) {
-                return GettextResource.ngettext(getBundle(input), key, keyPl, count);
+                return getUntranslated();
             }
         };
     }

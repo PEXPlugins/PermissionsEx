@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.sponge;
 
-import gnu.gettext.GettextResource;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.Translations;
 
@@ -33,7 +32,7 @@ class SpongeTranslations {
 
     private static ResourceBundle getBundle(Locale locale) {
         try {
-            return ResourceBundle.getBundle("ninja.leaping.permissionsex.sponge.Messages", locale, Translations.CLASS_CONTROL);
+            return ResourceBundle.getBundle("ca.stellardrift.permissionsex.sponge.Messages", locale);
         } catch (MissingResourceException ex) {
             return Translations.EMPTY_RESOURCE_BUNDLE;
         }
@@ -48,7 +47,8 @@ class SpongeTranslations {
 
             @Override
             public String translate(Locale input) {
-                return GettextResource.gettext(getBundle(input), key);
+                return getUntranslated();
+                //return getBundle(input).getString(key);
             }
         };
     }
@@ -62,7 +62,8 @@ class SpongeTranslations {
 
             @Override
             public String translate(Locale input) {
-                return GettextResource.ngettext(getBundle(input), key, keyPl, count);
+                return getUntranslated();
+                //return getBundle(input).getString(getUntranslated());
             }
         };
     }

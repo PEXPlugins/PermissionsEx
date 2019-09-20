@@ -19,14 +19,15 @@ package ca.stellardrift.permissionsex.util;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class CombinationsTest {
 
@@ -39,7 +40,7 @@ public class CombinationsTest {
 		Set<Integer> combinations = ImmutableSet.of(1, 2, 3);
 		List<Set<Integer>> expectedResults = ImmutableList.<Set<Integer>>of(set(1, 2, 3), set(1, 2), set(1, 3), set(2, 3), set(1), set(2), set(3), ImmutableSet.<Integer>of()), actualResults = new ArrayList<>(expectedResults.size());
 		Iterators.addAll(actualResults, Combinations.of(combinations).iterator());
-		assertEquals(expectedResults, actualResults);
+		assertIterableEquals(expectedResults, actualResults);
 	}
 
 	@Test
@@ -48,7 +49,7 @@ public class CombinationsTest {
 		Iterator<Set<String>> testIt = test.iterator();
 		assertTrue(testIt.hasNext());
 		Set<String> emptyResult = testIt.next();
-		assertEquals(ImmutableSet.of(), emptyResult);
+		assertIterableEquals(ImmutableSet.of(), emptyResult);
 		assertFalse(testIt.hasNext());
 	}
 

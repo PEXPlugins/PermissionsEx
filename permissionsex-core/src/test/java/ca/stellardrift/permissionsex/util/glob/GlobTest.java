@@ -17,41 +17,42 @@
 package ca.stellardrift.permissionsex.util.glob;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GlobTest {
     @Test
     public void testSimpleGlob() {
-        Assert.assertEquals(ImmutableList.of("abde", "abdf", "acde", "acdf"), ImmutableList.copyOf(Globs.seq("a", Globs.or("b", "c"), "d", Globs.or("e", "f"))));
-        Assert.assertEquals(ImmutableList.of("abde", "abdf", "acde", "acdf", "axde", "axdf"), ImmutableList.copyOf(Globs.seq("a", Globs.or("b", Globs.or("c", "x")), "d", Globs.or("e", "f"))));
+        assertIterableEquals(ImmutableList.of("abde", "abdf", "acde", "acdf"), ImmutableList.copyOf(Globs.seq("a", Globs.or("b", "c"), "d", Globs.or("e", "f"))));
+        assertIterableEquals(ImmutableList.of("abde", "abdf", "acde", "acdf", "axde", "axdf"), ImmutableList.copyOf(Globs.seq("a", Globs.or("b", Globs.or("c", "x")), "d", Globs.or("e", "f"))));
     }
 
     @Test
     public void testMultiLevelParsing() throws GlobParseException {
         GlobNode parsed = Globs.parse("aaoeu {b,{c,x}} d {e,f}");
-        Assert.assertEquals(Globs.seq("aaoeu ", Globs.or("b", Globs.or("c", "x")), " d ", Globs.or("e", "f")), parsed);
+        assertEquals(Globs.seq("aaoeu ", Globs.or("b", Globs.or("c", "x")), " d ", Globs.or("e", "f")), parsed);
     }
 
     @Test
     public void testLiteralParsing() throws GlobParseException {
-        Assert.assertEquals(Globs.literal("some.node.here"), Globs.parse("some.node.here"));
+        assertEquals(Globs.literal("some.node.here"), Globs.parse("some.node.here"));
     }
 
     @Test
     public void testOrParsing() throws GlobParseException {
-        Assert.assertEquals(Globs.or("a", "b"), Globs.parse("{a,b}"));
+        assertEquals(Globs.or("a", "b"), Globs.parse("{a,b}"));
     }
 
-    @Test(expected = GlobParseException.class)
-    public void testUnterminatedOrFails() throws GlobParseException {
-        Globs.parse("aoeu{xy,b");
+    @Test
+    public void testUnterminatedOrFails() {
+        assertThrows(GlobParseException.class, () -> Globs.parse("aoeu{xy,b"));
     }
 
-    @Ignore("Escape parsing is currently broken, but the rest works fine")
+    @Disabled("Escape parsing is currently broken, but the rest works fine")
     @Test
     public void testEscapes() throws GlobParseException {
-        Assert.assertEquals(Globs.seq("a{b", Globs.or("c", "d")), Globs.parse("a\\{b{c,d}"));
+        assertEquals(Globs.seq("a{b", Globs.or("c", "d")), Globs.parse("a\\{b{c,d}"));
     }
 }

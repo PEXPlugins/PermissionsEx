@@ -18,9 +18,9 @@ package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.util.Translations;
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test for command flags

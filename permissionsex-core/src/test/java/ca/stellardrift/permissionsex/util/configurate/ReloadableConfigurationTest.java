@@ -16,42 +16,46 @@
  */
 package ca.stellardrift.permissionsex.util.configurate;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.WatchKey;
 import java.util.Collections;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class ReloadableConfigurationTest {
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     private static WatchServiceListener listener;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         listener = new WatchServiceListener();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
         listener.close();
     }
 
     @Test
-    public void testListenToPath() throws IOException, InterruptedException, BrokenBarrierException {
-        Path testFile = tempFolder.newFile().toPath();
-        Files.write(testFile, Collections.singleton("version one"), StandardOpenOption.SYNC);
+    public void testListenToPath(@TempDir Path tempFolder) throws IOException, InterruptedException, BrokenBarrierException {
+        Files.createDirectories(tempFolder);
+        Path testFile = tempFolder.resolve("listenPath.txt");
+        Files.write(testFile, Collections.singleton("version one"), StandardOpenOption.SYNC, StandardOpenOption.CREATE);
         final AtomicInteger callCount = new AtomicInteger(0);
         final CyclicBarrier barrier = new CyclicBarrier(2);
         final WatchKey key = listener.listenToFile(testFile, event -> {
@@ -87,12 +91,11 @@ public class ReloadableConfigurationTest {
     }
     
     @Test
-    public void testListenToDirectory() throws IOException, BrokenBarrierException, InterruptedException {
-        Path baseDir = tempFolder.newFolder().toPath();
-        Files.createDirectories(baseDir);
+    public void testListenToDirectory(@TempDir Path tempFolder) throws IOException, BrokenBarrierException, InterruptedException {
+        Files.createDirectories(tempFolder);
         final AtomicReference<Path> lastPath = new AtomicReference<>();
         final CyclicBarrier barrier = new CyclicBarrier(2);
-        final WatchKey key = listener.listenToDirectory(baseDir, event -> {
+        final WatchKey key = listener.listenToDirectory(tempFolder, event -> {
             if (event.context() instanceof Path){
                 lastPath.set(((Path) event.context()));
             } else if (event instanceof CloseWatchEvent) {
@@ -108,21 +111,22 @@ public class ReloadableConfigurationTest {
             return true;
         });
 
-        final Path test1 = baseDir.resolve("test1");
-        Files.write(test1, Collections.singleton("version one"));
+        final Path test1 = tempFolder.resolve("test1");
+        Files.write(test1, Collections.singleton("version one"), StandardOpenOption.SYNC, StandardOpenOption.CREATE);
 
         barrier.await();
         assertEquals(test1.getFileName(), lastPath.get());
         barrier.reset();
 
-        final Path test2 = baseDir.resolve("test2");
-        Files.write(test2, Collections.singleton("version two"));
+        final Path test2 = tempFolder.resolve("test2");
+        Files.write(test2, Collections.singleton("version two"), StandardOpenOption.SYNC, StandardOpenOption.CREATE);
 
         barrier.await();
         assertEquals(test2.getFileName(), lastPath.get());
     }
 
     @Test
+    @Disabled
     public void testReloadableConfig() {
 
     }

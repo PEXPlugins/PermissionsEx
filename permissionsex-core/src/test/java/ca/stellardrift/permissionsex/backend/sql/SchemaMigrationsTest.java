@@ -16,77 +16,74 @@
  */
 package ca.stellardrift.permissionsex.backend.sql;
 
+import ca.stellardrift.permissionsex.PermissionsExTest;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
-import com.google.common.collect.ImmutableList;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ca.stellardrift.permissionsex.PermissionsExTest;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import com.google.common.collect.ImmutableList;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.nio.file.Path;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
  * Test of migrations for SQL backend. Migrations prior to 2-to-3 are not tested because they are part of legacy code (that should not be seen beforehand)
  */
 @SuppressWarnings("OptionalGetWithoutIsPresent")
-@RunWith(Parameterized.class)
 public class SchemaMigrationsTest extends PermissionsExTest {
     private static final AtomicInteger COUNTER = new AtomicInteger();
-    @Parameterized.Parameters(name = "{0}")
-    public static Iterable<Object> data() {
-        String[] propertyTestDbs = System.getProperty("ninja.leaping.permissionsex.backend.sql.testDatabases", "").split(";", -1);
-        if (propertyTestDbs.length == 1 && propertyTestDbs[0].equals("")) {
-            propertyTestDbs = new String[0];
+    private final String jdbcUrl;
+
+    /*public class H2SchemaMigrationsTest extends SchemaMigrationsTest {
+        public H2SchemaMigrationsTest() {
+            super("jdbc:h2:{base}/test.db");
         }
-        final Object[][] tests = new Object[propertyTestDbs.length][2];
-        //tests[propertyTestDbs.length] = new Object[] {"h2", "jdbc:h2:{base}/test.db"};
-        //tests[propertyTestDbs.length] = new Object[] {"mysql", "jdbc:mysql://localhost/pextest?user=root"};
-        for (int i = 0; i < propertyTestDbs.length; ++i) {
-            tests[i] = propertyTestDbs[i].split("!");
-        }
-        return Arrays.asList((Object[]) tests);
     }
+
+    /*public class MySqlSchemaMigrationsTest extends SchemaMigrationsTest {
+        public MySqlSchemaMigrationsTest() {
+            super("jdbc:mysql://localhost/pextest?user=root");
+        }
+    }*/
+
+    public SchemaMigrationsTest() {
+        this.jdbcUrl = "jdbc:h2:{base}/test.db";
+    }
+
+    /*public SchemaMigrationsTest(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
+    }*/
 
     private final SqlDataStore sqlStore = new SqlDataStore();
-    private String jdbcUrl;
 
-    public SchemaMigrationsTest(String databaseName, String jdbcUrl) throws IOException {
-        this.jdbcUrl = jdbcUrl;
-    }
-
-    @Before
-    @Override
-    public void setUp() throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
-        File testDir = tempFolder.newFolder();
-        jdbcUrl = jdbcUrl.replaceAll("\\{base\\}", testDir.getCanonicalPath());
+    @BeforeEach
+    public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
+        Path testDir = tempFolder.resolve("sql");
+        String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));
         sqlStore.setConnectionUrl(jdbcUrl);
         sqlStore.setPrefix("pextest" + COUNTER.getAndIncrement());
         sqlStore.setAutoInitialize(false);
-        super.setUp();
+        super.setUp(info, tempFolder);
     }
 
-    @After
+    @AfterEach
     @Override
     public void tearDown() {
         // Delete all created tables;

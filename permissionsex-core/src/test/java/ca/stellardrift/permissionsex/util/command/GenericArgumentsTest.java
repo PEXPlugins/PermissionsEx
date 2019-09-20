@@ -17,19 +17,15 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.util.Translations;
-import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
-import ca.stellardrift.permissionsex.util.command.args.CommandArgs;
-import ca.stellardrift.permissionsex.util.command.args.CommandElement;
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
-import ca.stellardrift.permissionsex.util.command.args.QuotedStringParser;
+import ca.stellardrift.permissionsex.util.command.args.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * Tests for all argument types contained in GenericArguments
  */
@@ -39,9 +35,6 @@ public class GenericArgumentsTest {
         public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
         }
     };
-
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
 
     private static CommandContext parseForInput(String input, CommandElement element) throws ArgumentParseException {
         CommandSpec spec = CommandSpec.builder()
@@ -63,7 +56,7 @@ public class GenericArgumentsTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testFlags() {
         throw new UnsupportedOperationException();
     }
@@ -76,8 +69,9 @@ public class GenericArgumentsTest {
         assertEquals("b", context.getOne("two"));
         assertEquals("c", context.getOne("three"));
 
-        expected.expect(ArgumentParseException.class);
-        parseForInput("a b", el);
+        Assertions.assertThrows(ArgumentParseException.class, () -> {
+            parseForInput("a b", el);
+        });
     }
 
     @Test
@@ -86,8 +80,9 @@ public class GenericArgumentsTest {
         CommandContext context = parseForInput("a", el);
         assertEquals("one", context.getOne("val"));
 
-        expected.expect(ArgumentParseException.class);
-        parseForInput("c", el);
+        Assertions.assertThrows(ArgumentParseException.class, () -> {
+            parseForInput("c", el);
+        });
     }
 
     @Test
@@ -115,8 +110,8 @@ public class GenericArgumentsTest {
         assertEquals("hello", context.getOne("str"));
 
         el = GenericArguments.seq(GenericArguments.optional(GenericArguments.integer(Translations.untr("val")), GenericArguments.string(Translations.untr("str"))));
-        expected.expect(ArgumentParseException.class);
-        parseForInput("hello", el);
+        final CommandElement finalEl = el;
+        Assertions.assertThrows(ArgumentParseException.class, () -> parseForInput("hello", finalEl));
     }
 
     @Test
@@ -142,8 +137,7 @@ public class GenericArgumentsTest {
         CommandContext context = parseForInput("52", GenericArguments.integer(Translations.untr("a value")));
         assertEquals((Integer) 52, context.getOne("a value"));
 
-        expected.expect(ArgumentParseException.class);
-        parseForInput("notanumber", GenericArguments.integer(Translations.untr("a value")));
+        assertThrows(ArgumentParseException.class, () -> parseForInput("notanumber", GenericArguments.integer(Translations.untr("a value"))));
     }
 
     @Test
@@ -153,8 +147,8 @@ public class GenericArgumentsTest {
         assertEquals(true, parseForInput("t", boolEl).getOne("val"));
         assertEquals(false, parseForInput("f", boolEl).getOne("val"));
 
-        expected.expect(ArgumentParseException.class);
-        parseForInput("notabool", boolEl);
+
+        assertThrows(ArgumentParseException.class, () -> parseForInput("notabool", boolEl));
     }
 
     private enum TestEnum {
@@ -168,8 +162,7 @@ public class GenericArgumentsTest {
         assertEquals(TestEnum.TWO, parseForInput("TwO", enumEl).getOne("val"));
         assertEquals(TestEnum.RED, parseForInput("RED", enumEl).getOne("val"));
 
-        expected.expect(ArgumentParseException.class);
-        parseForInput("notanel", enumEl);
+        assertThrows(ArgumentParseException.class, () -> parseForInput("notanel", enumEl));
     }
 
     @Test

@@ -16,14 +16,9 @@
  */
 package ca.stellardrift.permissionsex.util;
 
-import gnu.gettext.GettextResource;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.NoSuchElementException;
-import java.util.ResourceBundle;
+import java.util.*;
 
 /**
  * Utility class to handle translations to a given locale
@@ -55,12 +50,11 @@ public class Translations {
 
     private Translations() {}
 
-    private static final String BASE_NAME = "ninja.leaping.permissionsex.locale.Messages";
-    public static final ResourceBundle.Control CLASS_CONTROL = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_CLASS);
+    private static final String BASE_NAME = "ca.stellardrift.permissionsex.locale.messages";
 
     private static ResourceBundle getBundle(Locale locale) {
         try {
-            return ResourceBundle.getBundle(BASE_NAME, locale, CLASS_CONTROL);
+            return ResourceBundle.getBundle(BASE_NAME, locale);
         } catch (MissingResourceException ex) {
             return EMPTY_RESOURCE_BUNDLE;
         }
@@ -76,7 +70,8 @@ public class Translations {
 
             @Override
             public String translate(Locale input) {
-                return GettextResource.gettext(getBundle(input), key);
+                return key;
+                //return getBundle(input).getString(key);
             }
         };
     }
@@ -91,7 +86,8 @@ public class Translations {
 
             @Override
             public String translate(Locale input) {
-                return GettextResource.ngettext(getBundle(input), key, keyPl, count);
+                return getUntranslated();
+                //return getBundle(input).getString(count != 1 ? keyPl : key);
             }
         };
     }

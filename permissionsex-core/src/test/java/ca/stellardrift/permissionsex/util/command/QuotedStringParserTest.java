@@ -19,22 +19,20 @@ package ca.stellardrift.permissionsex.util.command;
 import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
 import ca.stellardrift.permissionsex.util.command.args.QuotedStringParser;
 import com.google.common.collect.ImmutableList;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class QuotedStringParserTest {
     private static List<String> parseFrom(String args) throws ArgumentParseException {
         return QuotedStringParser.parseFrom(args, false).getAll(); // Fixed locale for tests
     }
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
     @Test
     public void testEmptyString() throws ArgumentParseException {
         assertEquals(Collections.<String>emptyList(), parseFrom(""));
@@ -65,15 +63,14 @@ public class QuotedStringParserTest {
     }
 
     @Test
-    public void testQuotedParsingDisabled() throws ArgumentParseException {
+    public void testQuotedParsingDisabled() {
 
     }
 
     @Test
-    public void testUnterminatedQuote() throws ArgumentParseException {
-        expectedException.expect(ArgumentParseException.class);
-        expectedException.expectMessage("Unterminated quoted string");
-        parseFrom("a \"unterminated quoted string is bad");
+    public void testUnterminatedQuote() {
+        assertThrows(ArgumentParseException.class, () ->
+        parseFrom("a \"unterminated quoted string is bad"), "Unterminated quoted string");
     }
 
     @Test

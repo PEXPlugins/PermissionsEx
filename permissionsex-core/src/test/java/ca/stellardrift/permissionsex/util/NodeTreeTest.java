@@ -16,12 +16,12 @@
  */
 package ca.stellardrift.permissionsex.util;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class NodeTreeTest {
 
@@ -39,7 +39,7 @@ public class NodeTreeTest {
     }
 
     @Test
-    public void testWithValue() throws Exception {
+    public void testWithValue() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);
@@ -54,7 +54,7 @@ public class NodeTreeTest {
     }
 
     @Test
-    public void testWithAll() throws Exception {
+    public void testWithAll() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);
@@ -81,7 +81,7 @@ public class NodeTreeTest {
     }
 
     @Test
-    public void testCreateFromValues() throws Exception {
+    public void testCreateFromValues() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);

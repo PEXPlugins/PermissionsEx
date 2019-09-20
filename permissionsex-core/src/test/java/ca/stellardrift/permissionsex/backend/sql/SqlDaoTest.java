@@ -16,30 +16,29 @@
  */
 package ca.stellardrift.permissionsex.backend.sql;
 
+import ca.stellardrift.permissionsex.PermissionsExTest;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.exception.PEBKACException;
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ca.stellardrift.permissionsex.PermissionsExTest;
-import ca.stellardrift.permissionsex.exception.PEBKACException;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -48,43 +47,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
-@RunWith(Parameterized.class)
 public class SqlDaoTest extends PermissionsExTest {
     private static final AtomicInteger COUNTER = new AtomicInteger();
-    @Parameterized.Parameters(name = "{0}")
-    public static Iterable<Object> data() {
+
+    /*public static Stream<Arguments> data() {
         String[] propertyTestDbs = System.getProperty("ninja.leaping.permissionsex.backend.sql.testDatabases", "").split(";", -1);
         if (propertyTestDbs.length == 1 && propertyTestDbs[0].equals("")) {
             propertyTestDbs = new String[0];
         }
-        final Object[][] tests = new Object[propertyTestDbs.length + 1][2];
-        tests[propertyTestDbs.length] = new Object[] {"h2", "jdbc:h2:file:{base}/test.db"};
-        for (int i = 0; i < propertyTestDbs.length; ++i) {
-            tests[i] = propertyTestDbs[i].split("!");
-        }
-        return Arrays.asList((Object[]) tests);
+        return Streams.concat(Arrays.stream(propertyTestDbs), Stream.of("jdbc:h2:file:{base}/test.db"))
+                .map(Arguments::of);
+    }*/
+
+    public SqlDaoTest() {
+        this.jdbcUrl = "jdbc:h2:file:{base}/test.db";
     }
 
-    private final SqlDataStore sqlStore = new SqlDataStore();
-    private String jdbcUrl;
+    private static final SqlDataStore sqlStore = new SqlDataStore();
+    private final String jdbcUrl;
 
-    public SqlDaoTest(String databaseName, String jdbcUrl) throws IOException {
-        this.jdbcUrl = jdbcUrl;
-    }
-
-    @Before
-    @Override
-    public void setUp() throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
-        File testDir = tempFolder.newFolder();
-        jdbcUrl = jdbcUrl.replaceAll("\\{base\\}", testDir.getCanonicalPath().replace('\\', '/'));
+    @BeforeEach
+    public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
+        Path testDir = tempDir.resolve(info.getDisplayName() + "-dao");
+        final String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));
         sqlStore.setConnectionUrl(jdbcUrl);
         sqlStore.setPrefix("pextest" + COUNTER.getAndIncrement());
-        super.setUp();
+        super.setUp(info, tempDir);
     }
 
-    @After
-    @Override
-    public void tearDown() {
+    @AfterAll
+    public static void tearDownAll() {
         // Delete all created tables;
         try (Connection conn = sqlStore.getDataSource().getConnection()) {
             ResultSet tables = conn.getMetaData().getTables(null, null, "PEXTEST%", null);
@@ -96,7 +88,6 @@ public class SqlDaoTest extends PermissionsExTest {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        super.tearDown();
     }
 
     @Override

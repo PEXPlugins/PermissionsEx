@@ -23,9 +23,8 @@ import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.DumperOptions;
 
@@ -34,26 +33,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class SchemaMigrationsTest {
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
-
-
     @Test
-    public void testThreeToFour() throws IOException {
-        doTest("test3to4.pre.json", "test3to4.post.json", SchemaMigrations.threeToFour());
+    public void testThreeToFour(@TempDir Path tempDir) throws IOException {
+        doTest("test3to4.pre.json", "test3to4.post.json", tempDir, SchemaMigrations.threeToFour());
     }
 
     @Test
-    public void testTwoToThree() throws IOException {
-        doTest("test2to3.pre.json", "test2to3.post.json", SchemaMigrations.twoTo3());
+    public void testTwoToThree(@TempDir Path tempDir) throws IOException {
+        doTest("test2to3.pre.json", "test2to3.post.json", tempDir, SchemaMigrations.twoTo3());
     }
 
     @Test
-    public void testOneToTwo() throws IOException {
-        final Path testFile = tempFolder.newFile().toPath();
+    public void testOneToTwo(@TempDir Path tempFolder) throws IOException {
+        final Path testFile = tempFolder.resolve("test1to2.json");
         ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder()
                 .setURL(getClass().getResource("test1to2.pre.yml"))
                 .build();
@@ -68,8 +63,8 @@ public class SchemaMigrationsTest {
     }
 
     @Test
-    public void testInitialToOne() throws IOException {
-        final Path testFile = tempFolder.newFile().toPath();
+    public void testInitialToOne(@TempDir Path tempFolder) throws IOException {
+        final Path testFile = tempFolder.resolve("Test0to1.yml");
         ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder()
                 .setPath(testFile)
                 .setURL(getClass().getResource("test0to1.pre.yml"))
@@ -81,8 +76,8 @@ public class SchemaMigrationsTest {
         assertEquals(Resources.readLines(getClass().getResource("test0to1.post.yml"), UTF_8), Files.readAllLines(testFile, UTF_8));
     }
 
-    private void doTest(String preName, String postName, ConfigurationTransformation xform) throws IOException {
-        final Path testFile = tempFolder.newFile().toPath();
+    private void doTest(String preName, String postName, Path tempDir, ConfigurationTransformation xform) throws IOException {
+        final Path testFile = tempDir.resolve("test.json");
         ConfigurationLoader<ConfigurationNode> jsonLoader = GsonConfigurationLoader.builder()
                 .setPath(testFile)
                 .setURL(getClass().getResource(preName))

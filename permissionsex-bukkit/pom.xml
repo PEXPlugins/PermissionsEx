@@ -17,25 +17,6 @@
     </resources>
     <plugins>
       <plugin>
-        <groupId>ninja.leaping</groupId>
-        <artifactId>gettext-maven-plugin</artifactId>
-        <version>1.2.5-SNAPSHOT</version>
-        <!--<executions>
-          <execution>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>gettext</goal>
-              <goal>merge</goal>
-              <goal>dist</goal>
-            </goals>
-          </execution>
-        </executions>-->
-        <configuration>
-          <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ca.stellardrift.permissionsex.bukkit.Messages</targetBundle>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.1</version>
         <executions>
@@ -58,10 +39,6 @@
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
                   <shadedPattern>ca.stellardrift.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ca.stellardrift.permissionsex.libs.org-gnu-gettext</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.zaxxer.hikari</pattern>
@@ -164,17 +141,4 @@
       <url>http://nexus.hc.to/content/repositories/pub_releases</url>
     </repository>
   </repositories>
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>ninja.leaping</groupId>
-        <artifactId>gettext-maven-plugin</artifactId>
-        <version>1.2.5-SNAPSHOT</version>
-        <configuration>
-          <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ca.stellardrift.permissionsex.bukkit.Messages</targetBundle>
-        </configuration>
-      </plugin>
-    </plugins>
-  </reporting>
 </project>

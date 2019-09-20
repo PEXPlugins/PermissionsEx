@@ -16,16 +16,14 @@
  */
 package ca.stellardrift.permissionsex.util.command;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by zml on 04.04.15.
  */
 public class CommandSpecTest {
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
 
     @Test
     public void testNoArgsFunctional() {
@@ -43,25 +41,25 @@ public class CommandSpecTest {
 
     @Test
     public void testExecutorRequired() {
-        expected.expect(IllegalArgumentException.class);
-        expected.expectMessage("An executor is required");
-        CommandSpec.builder()
-                .setAliases("something")
-                .build();
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            CommandSpec.builder()
+                    .setAliases("something")
+                    .build();
+        }, "An executor is required");
 
     }
 
     @Test
     public void testAliasesRequired() {
-        expected.expect(IllegalArgumentException.class);
-        expected.expectMessage("A command may not have no aliases");
-        CommandSpec.builder()
-                .setExecutor(new CommandExecutor() {
-                    @Override
-                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                    }
-                })
-                .build();
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            CommandSpec.builder()
+                    .setExecutor(new CommandExecutor() {
+                        @Override
+                        public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+                        }
+                    })
+                    .build();
+        }, "A command may not have no aliases");
 
     }
 }

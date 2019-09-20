@@ -24,25 +24,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>ninja.leaping</groupId>
-        <artifactId>gettext-maven-plugin</artifactId>
-        <version>1.2.5-SNAPSHOT</version>
-        <!--        <executions>
-          <execution>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>gettext</goal>
-              <goal>merge</goal>
-              <goal>dist</goal>
-            </goals>
-          </execution>
-        </executions> -->
-        <configuration>
-          <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ca.stellardrift.permissionsex.sponge.Messages</targetBundle>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
       </plugin>
@@ -64,10 +45,6 @@
                 <relocation>
                   <pattern>com.sk89q.squirrelid</pattern>
                   <shadedPattern>ca.stellardrift.permissionsex.libs.com-sk89q-squirrelid</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.gnu.gettext</pattern>
-                  <shadedPattern>ca.stellardrift.permissionsex.libs.org-gnu-gettext</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -125,12 +102,6 @@
     </dependency>
     <!-- Test deps -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
       <version>1.7.26</version>
@@ -143,17 +114,4 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>ninja.leaping</groupId>
-        <artifactId>gettext-maven-plugin</artifactId>
-        <version>1.2.5-SNAPSHOT</version>
-        <configuration>
-          <keywords>-kt -ktn:1,2 -kdtr -ktranslated</keywords>
-          <targetBundle>ninja.leaping.permissionsex.sponge.Messages</targetBundle>
-        </configuration>
-      </plugin>
-    </plugins>
-  </reporting>
 </project>
