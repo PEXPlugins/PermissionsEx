@@ -42,7 +42,6 @@ import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.yaml.snakeyaml.DumperOptions
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
@@ -66,7 +65,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
     }
 
     @Setting(comment = "The location of the luckperms base directory, relative to the server plugins folder")
-    var pluginDir: Path = FileSystems.getDefault().getPath("LuckPerms")
+    var pluginDir: String = "LuckPerms"
 
     @Setting(comment = "Whether or not all files are stored as one, equivalent to putting the '-combined' suffix on a data storage option in LuckPerms")
     var combined: Boolean = false
@@ -78,12 +77,12 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
     private lateinit var subjectLayout: SubjectLayout
 
     override fun initializeInternal() {
-        val rootDir = manager.baseDirectory.parent.resolve(pluginDir).resolve(this.format.storageDirName)
-        subjectLayout = if (combined) {
-            CombinedSubjectLayout(this, rootDir)
+        val rootDir = manager.baseDirectory.parent.resolve(pluginDir)
+        subjectLayout = (if (combined) {
+            ::CombinedSubjectLayout
         } else {
-            SeparateSubjectLayout(this, rootDir)
-        }
+            ::SeparateSubjectLayout
+        })(this, rootDir.resolve(this.format.storageDirName))
         lpConfig = ReloadableConfig(
             YAMLConfigurationLoader.builder()
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
@@ -105,7 +104,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
     }
 
     override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not needed for import")
     }
 
     override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
@@ -225,10 +224,14 @@ class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private v
 
     override val types: Set<String>
         get() {
-            return Files.list(rootDir)
-                .map { getNameWithoutExtension(it.fileName.toString()) }
-                .filter { it != "tracks" }
-                .collect(toImmutableSet())
+            Files.list(rootDir).use {list ->
+                return list
+                    .map { getNameWithoutExtension(it.fileName.toString()) }
+                    .filter { it != "tracks" && it != "uuidcache" }
+                    .map {it.substring(0, it.length - 1)}
+                    .collect(toImmutableSet())
+
+            }
         }
 
     private fun getFileFor(type: String): ReloadableConfig<*> {
@@ -257,7 +260,6 @@ class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private v
     override fun getIdentifiers(type: String): Set<String> {
         return getFileFor(type).node.childrenMap.keys.map(Any::toString).toSet()
     }
-
 }
 
 class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private val rootDir: Path) : SubjectLayout {
@@ -267,10 +269,12 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
 
     override val types: Set<String>
         get() {
-            return Files.list(rootDir)
-                .filter { Files.isDirectory(it) }
-                .map { it.fileName.toString().substring(0, -1) }
+            return Files.list(rootDir).use { list ->
+                list.filter { Files.isDirectory(it) }
+                .map { val name = it.fileName.toString()
+                    name.substring(0, name.length - 1) }
                 .collect(toImmutableSet())
+            }
         }
 
     override fun isRegistered(type: String, ident: String): Boolean {
@@ -283,12 +287,12 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
     }
 
     override fun getIdentifiers(type: String): Set<String> {
-        return Files.list(rootDir.resolve("${type}s"))
-            .map { x ->
+        return Files.list(rootDir.resolve("${type}s")).use { list ->
+            list.map { x ->
                 val name = x.fileName.toString()
-                name.substring(0..(name.length - store.format.extension.length))
-            }
-            .collect(Collectors.toSet())
+                name.substring(0, (name.length - store.format.extension.length))
+            }.collect(Collectors.toSet())
+        }
     }
 }
 
@@ -395,20 +399,21 @@ private fun <T> defListFromNode(
     node: ConfigurationNode,
     valueConverter: (ConfigurationNode) -> T,
     valueKey: String = "value",
-    keyOverride: String? = null
+    keyOverride: String? = null,
+    keyPath: String = "permission"
 ): Set<LuckPermsDefinition<T>> {
     val ret = mutableSetOf<LuckPermsDefinition<T>>()
     node.childrenList.forEach {
         val contexts = mutableSetOf<ContextValue<*>>()
-        node["context"].childrenMap.forEach { (k, v) -> contexts.add(ContextValue<String>(k.toString(), v.string!!)) }
-        addIfNotVirtual(node, "world", contexts)
-        addIfNotVirtual(node, "server", contexts, "server-tag")
-        addIfNotVirtual(node, "expiry", contexts, "before-time")
+        it["context"].childrenMap.forEach { (k, v) -> contexts.add(ContextValue<String>(k.toString(), v.string!!)) }
+        addIfNotVirtual(it, "world", contexts)
+        addIfNotVirtual(it, "server", contexts, "server-tag")
+        addIfNotVirtual(it, "expiry", contexts, "before-time")
 
         ret.add(
             LuckPermsDefinition(
                 keyOverride
-                    ?: it["permission"].string!!, valueConverter(it[valueKey]), it["priority"].getInt(0), contexts
+                    ?: it[keyPath].string!!.replace(".*", ""), valueConverter(it[valueKey]), it["priority"].getInt(0), contexts
             )
         )
     }
@@ -416,8 +421,11 @@ private fun <T> defListFromNode(
 }
 
 private fun ConfigurationNode.toSubjectData(): LuckPermsSubjectData {
+    val options: Set<LuckPermsDefinition<String>> = defListFromNode(this["meta"], { it.string!! }, keyPath = "key") +
+            defListFromNode(this["prefixes"], { it.string!! }, keyOverride = "prefix", valueKey = "prefix") +
+            defListFromNode(this["suffixes"], { it.string!! }, keyOverride = "suffix", valueKey = "suffix")
     return LuckPermsSubjectData(defListFromNode(this["permissions"], ConfigurationNode::getBoolean),
-        defListFromNode(this["meta"], { it.string!! }),
+        options,
         defListFromNode(this["parents"], { Maps.immutableEntry("group", it.string!!)},
             valueKey = "group", keyOverride = "group"))
 }
@@ -436,11 +444,11 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
         TODO("read-only")
     }
 
-    override fun setOptions(contexts: Set<ContextValue<*>>, values: MutableMap<String, String>?): ImmutableSubjectData {
+    override fun setOptions(contexts: Set<ContextValue<*>>, values: Map<String, String>?): ImmutableSubjectData {
         TODO("read-only")
     }
 
-    override fun clearOptions(contexts: MutableSet<ContextValue<*>>): ImmutableSubjectData {
+    override fun clearOptions(contexts: Set<ContextValue<*>>): ImmutableSubjectData {
         TODO("read-only")
     }
 
@@ -452,21 +460,21 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
         return permissions.groupBy({ it.contexts }, { it.key to if (it.value) { 1 } else { -1 }}).mapValues { (_, v) -> v.toMap() }
     }
 
-    override fun getPermissions(contexts: MutableSet<ContextValue<*>>?): Map<String, Int> {
+    override fun getPermissions(contexts: Set<ContextValue<*>>): Map<String, Int> {
         return this.permissions.filter { it.contexts == contexts }.associate { it.key to if (it.value) 1 else -1 }
     }
 
     override fun setPermission(
-        contexts: MutableSet<ContextValue<*>>?,
-        permission: String?,
+        contexts: Set<ContextValue<*>>,
+        permission: String,
         value: Int
     ): ImmutableSubjectData {
         TODO("read-only")
     }
 
     override fun setPermissions(
-        contexts: MutableSet<ContextValue<*>>?,
-        values: MutableMap<String, Int>?
+        contexts: Set<ContextValue<*>>,
+        values: Map<String, Int>?
     ): ImmutableSubjectData {
         TODO("read-only")
     }
@@ -475,7 +483,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
         TODO("read-only")
     }
 
-    override fun clearPermissions(contexts: MutableSet<ContextValue<*>>?): ImmutableSubjectData {
+    override fun clearPermissions(contexts: Set<ContextValue<*>>): ImmutableSubjectData {
         TODO("read-only")
     }
 
@@ -483,29 +491,29 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
         return parents.groupBy({ it.contexts }, { it.value})
     }
 
-    override fun getParents(contexts: Set<ContextValue<*>>?): List<Map.Entry<String, String>> {
+    override fun getParents(contexts: Set<ContextValue<*>>): List<Map.Entry<String, String>> {
         return parents.filter { it.contexts == contexts }.map { it.value }
     }
 
     override fun addParent(
-        contexts: MutableSet<ContextValue<*>>?,
-        type: String?,
-        identifier: String?
+        contexts: Set<ContextValue<*>>,
+        type: String,
+        identifier: String
     ): ImmutableSubjectData {
         TODO("read-only")
     }
 
     override fun removeParent(
-        contexts: MutableSet<ContextValue<*>>?,
-        type: String?,
-        identifier: String?
+        contexts: MutableSet<ContextValue<*>>,
+        type: String,
+        identifier: String
     ): ImmutableSubjectData {
         TODO("read-only")
     }
 
     override fun setParents(
-        contexts: MutableSet<ContextValue<*>>?,
-        parents: MutableList<MutableMap.MutableEntry<String, String>>?
+        contexts: Set<ContextValue<*>>,
+        parents: List<Map.Entry<String, String>>?
     ): ImmutableSubjectData {
         TODO("read-only")
     }
@@ -514,15 +522,15 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
         TODO("read-only")
     }
 
-    override fun clearParents(contexts: MutableSet<ContextValue<*>>?): ImmutableSubjectData {
+    override fun clearParents(contexts: Set<ContextValue<*>>): ImmutableSubjectData {
         TODO("read-only")
     }
 
-    override fun getDefaultValue(contexts: MutableSet<ContextValue<*>>?): Int {
+    override fun getDefaultValue(contexts: Set<ContextValue<*>>): Int {
         return permissions.filter { it.contexts == contexts && it.key == "*" }.map { it.value.asInteger() }.maxBy { it.absoluteValue } ?: 0
     }
 
-    override fun setDefaultValue(contexts: MutableSet<ContextValue<*>>?, defaultValue: Int): ImmutableSubjectData {
+    override fun setDefaultValue(contexts: Set<ContextValue<*>>, defaultValue: Int): ImmutableSubjectData {
         TODO("read-only")
     }
 

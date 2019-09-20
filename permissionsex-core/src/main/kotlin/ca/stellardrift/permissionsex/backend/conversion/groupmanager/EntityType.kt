@@ -24,23 +24,17 @@ enum class EntityType {
         override val inheritanceKey: String
             get() = "group"
 
-        override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode? {
-            return null
-        }
+        override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode? = null
 
         override fun getWorldNode(dataStore: GroupManagerDataStore, world: String): ConfigurationNode? {
             val worldPair = dataStore.getUserGroupsConfigForWorld(world) ?: return null
             return worldPair.user
         }
 
-        override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode {
-            return root[name]
-        }
+        override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode = root[name]
     },
     GROUP {
-        override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode {
-            return dataStore.globalGroups
-        }
+        override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode = dataStore.globalGroups
 
         override fun getWorldNode(dataStore: GroupManagerDataStore, world: String): ConfigurationNode? {
             val worldPair = dataStore.getUserGroupsConfigForWorld(world) ?: return null
@@ -59,17 +53,9 @@ enum class EntityType {
         }
     },
     OTHER {
-        override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode? {
-            return null
-        }
-
-        override fun getWorldNode(dataStore: GroupManagerDataStore, world: String): ConfigurationNode? {
-            return null
-        }
-
-        override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode? {
-            return null
-        }
+        override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode? = null
+        override fun getWorldNode(dataStore: GroupManagerDataStore, world: String): ConfigurationNode? = null
+        override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode? = null
     };
 
     open val inheritanceKey: String
@@ -77,9 +63,7 @@ enum class EntityType {
 
 
     abstract fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode?
-
     abstract fun getWorldNode(dataStore: GroupManagerDataStore, world: String): ConfigurationNode?
-
     abstract fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode?
 
     companion object {

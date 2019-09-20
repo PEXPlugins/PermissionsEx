@@ -26,11 +26,11 @@ import ninja.leaping.configurate.SimpleConfigurationNode
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers
 
 operator fun ConfigurationNode.get(vararg path: Any): ConfigurationNode {
-    return getNode(path)
+    return getNode(*path)
 }
 
 operator fun ConfigurationNode.set(vararg path: Any, value: Any?) {
-    getNode(path).value = value
+    getNode(*path).value = value
 }
 
 operator fun ConfigurationNode.contains(path: Array<Any>): Boolean {

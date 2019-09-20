@@ -205,7 +205,6 @@ class ReloadableConfig<T : ConfigurationNode> internal constructor(
             this.open = false
             return false
         }
-        println("Event type ${event.kind()} received at path ${event.context()}")
 
         if (!ignoreUpdates) {
             try {
