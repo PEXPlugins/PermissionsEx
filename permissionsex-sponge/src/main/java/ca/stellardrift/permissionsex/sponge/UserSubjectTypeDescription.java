@@ -17,7 +17,6 @@
 package ca.stellardrift.permissionsex.sponge;
 
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
-import ca.stellardrift.permissionsex.util.command.Commander;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.profile.GameProfile;
 import org.spongepowered.api.profile.GameProfileCache;
@@ -73,9 +72,5 @@ public class UserSubjectTypeDescription extends SubjectTypeDefinition<Player> {
         } catch (IllegalArgumentException ex) {
             return Optional.empty();
         }
-    }
-
-    public Optional<Commander<?>> getCommanderFor(String identifier) {
-        return plugin.getGame().getServer().getPlayer(UUID.fromString(identifier)).map(ply -> new SpongeCommander(plugin, ply));
     }
 }

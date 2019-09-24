@@ -16,13 +16,13 @@
  */
 package ca.stellardrift.permissionsex.bukkit;
 
-import com.google.common.collect.ImmutableSet;
-import net.milkbowl.vault.chat.Chat;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
+import com.google.common.collect.ImmutableSet;
+import net.milkbowl.vault.chat.Chat;
 import org.bukkit.OfflinePlayer;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Set;
 
 class PEXVaultChat extends Chat {

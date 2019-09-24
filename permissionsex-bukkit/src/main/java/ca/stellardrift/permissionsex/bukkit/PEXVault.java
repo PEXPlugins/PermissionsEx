@@ -18,16 +18,16 @@ package ca.stellardrift.permissionsex.bukkit;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
-import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;

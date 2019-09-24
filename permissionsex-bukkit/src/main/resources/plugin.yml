@@ -1,5 +1,6 @@
-name: "${project.parent.name}"
-version: "${project.version}${version.suffix}"
+name: "${project.rootProject.name}"
+version: "${project.version}${project.ext.pexSuffix}"
+description: "${project.ext.pexDescription}"
 main: ca.stellardrift.permissionsex.bukkit.PermissionsExPlugin
 api-version: "1.13"
 load: STARTUP

@@ -1,16 +1,37 @@
-image: maven:latest
+# This is the Gradle build system for JVM applications
+# https://gradle.org/
+# https://github.com/gradle/gradle
+image: gradle:jdk8
 
-cache:
-    paths:
-    - ~/.m2/
+# Disable the Gradle daemon for Continuous Integration servers as correctness
+# is usually a priority over speed in CI environments. Using a fresh
+# runtime for each build is more reliable since the runtime is completely
+# isolated from any previous builds.
+variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
-jar:
-    script: 
-    - "apt-get update"
-    - "apt-get install -y gettext"
-    - "mvn install -B"
+before_script:
+    - export GRADLE_USER_HOME=`pwd`/.gradle
+
+build:
+    stage: build
+    script: gradle --build-cache assemble
     artifacts:
         paths:
-        - permissionsex-*/target/*-shaded.jar
-    only:
-    - master
+            - "build/libs/*-all.jar"
+    cache:
+        key: "$CI_COMMIT_REF_NAME"
+        policy: push
+        paths:
+            - build
+            - .gradle
+
+test:
+    stage: test
+    script: gradle check
+    cache:
+        key: "$CI_COMMIT_REF_NAME"
+        policy: pull
+        paths:
+            - build
+            - .gradle

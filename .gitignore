@@ -3,10 +3,10 @@
 .factorypath
 .settings/
 .vscode
-/target
-permissionsex-*/target
-/build.xml
-/build
+
+.gradle/
+
+build/
 /bin
 /dist
 /.idea/

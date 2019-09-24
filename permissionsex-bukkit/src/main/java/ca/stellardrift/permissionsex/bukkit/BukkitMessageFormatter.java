@@ -18,21 +18,17 @@ package ca.stellardrift.permissionsex.bukkit;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.rank.RankLadder;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.command.ButtonType;
 import ca.stellardrift.permissionsex.util.command.MessageFormatter;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.TranslatableComponent;
-import ca.stellardrift.permissionsex.subject.SubjectType;
+import net.md_5.bungee.api.chat.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;

@@ -4,7 +4,6 @@ options {
     tokenVocab = GlobLexer;
 }
 
-
 rootGlob: glob EOF;
 glob: element+;
 

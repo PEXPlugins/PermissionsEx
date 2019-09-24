@@ -29,7 +29,7 @@ class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) : ContextIn
         for ((key, value) in mirrorsNode.childrenMap) {
             val worldContext = ContextValue<String>("world", key.toString())
             for (child in value.childrenMap.keys) {
-                val world = worlds.computeIfAbsent(child.toString()) { k -> ArrayList() }
+                val world = worlds.computeIfAbsent(child.toString()) { _ -> ArrayList() }
                 world.add(worldContext)
             }
         }
@@ -43,9 +43,7 @@ class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) : ContextIn
         }
     }
 
-    override fun setParents(context: ContextValue<*>, parents: List<ContextValue<*>>): ContextInheritance {
-        return this
-    }
+    override fun setParents(context: ContextValue<*>, parents: List<ContextValue<*>>): ContextInheritance = this
 
     override fun getAllParents(): Map<ContextValue<*>, List<ContextValue<*>>> {
         return worlds.mapKeys { MemoryContextInheritance.ctxFromString(it.key) }

@@ -92,7 +92,7 @@ import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.s
  * PermissionsEx plugin
  */
 @NonnullByDefault
-@Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION)
+@Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION, description = PomData.DESCRIPTION)
 public class PermissionsExPlugin implements PermissionService, ImplementationInterface {
 
     private Optional<SqlService> sql;

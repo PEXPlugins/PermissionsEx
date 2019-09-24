@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class SqlDaoTest extends PermissionsExTest {
@@ -438,7 +438,7 @@ public class SqlDaoTest extends PermissionsExTest {
             testSeg = testSeg.withDefaultValue(null);
             testSeg.doUpdates(dao);
             testSeg = dao.getSegments(subject).get(0);
-            assertEquals(null, testSeg.getPermissionDefault());
+            assertNull(testSeg.getPermissionDefault());
         }
     }
 
