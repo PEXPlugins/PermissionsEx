@@ -22,10 +22,7 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -51,21 +48,15 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static ca.stellardrift.permissionsex.bukkit.BukkitTranslations.t;
+import static ca.stellardrift.permissionsex.hikariconfig.HikariConfig.createHikariDataSource;
 
 /**
  * PermissionsEx plugin
@@ -77,51 +68,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             new PermissibleInjector.ClassNameRegexPermissibleInjector("org.getspout.spout.player.SpoutCraftPlayer", "perm", false, "org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer"),
             new PermissibleInjector.ClassPresencePermissibleInjector(CraftBukkitInterface.getCBClassName("entity.CraftHumanEntity"), "perm", true),
     };
-
-    /**
-     * Context key for tags applied to servers
-     */
-    private static final Pattern JDBC_URL_REGEX = Pattern.compile("(?:jdbc:)?([^:]+):(//)?(?:([^:]+)(?::([^@]+))?@)?(.*)");
-
-    /**
-     *  Map from protocol names to a function that transforms the given JDBC url
-     */
-    static final Map<String, BiFunction<PermissionsExPlugin, String, String>> PATH_CANONICALIZERS;
-
-    /**
-     * Properties specific to a certain JDBC protocol, immutable.
-     *
-     * Protocols are identified by their jdbc driver names.
-     */
-    static final Map<String, Properties> PROTOCOL_SPECIFIC_PROPS;
-
-    static {
-        ImmutableMap.Builder<String, Properties> build = ImmutableMap.builder();
-        final Properties mySqlProps = new Properties();
-        mySqlProps.setProperty("useConfigs",
-                "maxPerformance"); // Config options based on http://assets.en.oreilly
-        // .com/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf
-        build.put("com.mysql.jdbc.Driver", mySqlProps);
-        build.put("org.mariadb.jdbc.Driver", mySqlProps);
-
-        PROTOCOL_SPECIFIC_PROPS = build.build();
-        PATH_CANONICALIZERS = ImmutableMap.of("h2", (plugin, orig) -> {
-            // Bleh if only h2 had a better way of supplying a base directory... oh well...
-            org.h2.engine.ConnectionInfo h2Info = new org.h2.engine.ConnectionInfo(orig);
-            if (!h2Info.isPersistent() || h2Info.isRemote()) {
-                return orig;
-            }
-            if (orig.startsWith("file:")) {
-                orig = orig.substring("file:".length());
-            }
-            Path origPath = Paths.get(orig);
-            if (origPath.isAbsolute()) {
-                return origPath.toString();
-            } else {
-                return plugin.getDataFolder().toPath().toAbsolutePath().resolve(origPath).toString().replace('\\', '/');
-            }
-        });
-    }
 
     private PermissionsEx manager;
     private TranslatableLogger logger;
@@ -368,36 +314,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
         @Override
         public DataSource getDataSourceForURL(String url) throws SQLException {
-            // Based on Sponge`s code, but without alias handling and caching
-            Matcher match = JDBC_URL_REGEX.matcher(url);
-            if (!match.matches()) {
-                throw new IllegalArgumentException("URL " + url + " is not a valid JDBC URL");
-            }
-
-            final String protocol = match.group(1);
-            final boolean hasSlashes = match.group(2) != null;
-            final String user = match.group(3);
-            final String pass = match.group(4);
-            String serverDatabaseSpecifier = match.group(5);
-            BiFunction<PermissionsExPlugin, String, String> derelativizer = PATH_CANONICALIZERS.get(protocol);
-            if (derelativizer != null) {
-                serverDatabaseSpecifier = derelativizer.apply(PermissionsExPlugin.this, serverDatabaseSpecifier);
-            }
-            final String unauthedUrl = "jdbc:" + protocol + (hasSlashes ? "://" : ":") + serverDatabaseSpecifier;
-            final String driverClass = DriverManager.getDriver(unauthedUrl).getClass().getCanonicalName();
-
-            HikariConfig config = new HikariConfig();
-            config.setUsername(user);
-            config.setPassword(pass);
-            config.setDriverClassName(driverClass);
-            // https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing for info on pool sizing
-            config.setMaximumPoolSize((Runtime.getRuntime().availableProcessors() * 2) + 1);
-            Properties driverSpecificProperties = PROTOCOL_SPECIFIC_PROPS.get(driverClass);
-            final Properties dsProps = driverSpecificProperties == null ? new Properties() : new Properties(driverSpecificProperties);
-            dsProps.setProperty("baseDir", getBaseDirectory().toAbsolutePath().toString());
-            config.setDataSourceProperties(dsProps);
-            config.setJdbcUrl(unauthedUrl);
-            return new HikariDataSource(config);
+            return createHikariDataSource(url, this.getBaseDirectory());
         }
 
         /**

@@ -19,11 +19,9 @@ package ca.stellardrift.permissionsex.util.command;
 import ca.stellardrift.permissionsex.util.Translatable;
 import com.google.common.base.Strings;
 
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
 * Created by zml on 04.04.15.
@@ -48,11 +46,6 @@ class TestCommander implements Commander<String> {
     @Override
     public boolean hasPermission(String permission) {
         return true;
-    }
-
-    @Override
-    public Set<Map.Entry<String, String>> getActiveContexts() {
-        return Collections.emptySet();
     }
 
     @Override

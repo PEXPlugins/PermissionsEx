@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Interface implemented by objects that can execute commands and receive command output
@@ -32,7 +31,6 @@ public interface Commander<TextType> {
     Locale getLocale();
     Optional<Map.Entry<String, String>> getSubjectIdentifier();
     boolean hasPermission(String permission);
-    Set<Map.Entry<String, String>> getActiveContexts();
     MessageFormatter<TextType> fmt();
 
     default void msg(Translatable text) {

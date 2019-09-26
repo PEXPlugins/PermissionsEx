@@ -231,6 +231,10 @@ public class CommandSpec {
         return this.aliases;
     }
 
+    public String getPermission() {
+        return this.permission;
+    }
+
     public <TextType> TextType getDescription(Commander<TextType> commander) {
         return this.description == null ? null : commander.fmt().tr(this.description);
     }

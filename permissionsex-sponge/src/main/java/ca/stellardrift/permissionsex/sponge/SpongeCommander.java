@@ -16,11 +16,11 @@
  */
 package ca.stellardrift.permissionsex.sponge;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.Commander;
 import ca.stellardrift.permissionsex.util.command.MessageFormatter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.pagination.PaginationService;
@@ -31,7 +31,6 @@ import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
@@ -41,7 +40,7 @@ class SpongeCommander implements Commander<Text.Builder> {
     private final CommandSource commandSource;
     private final SpongeMessageFormatter formatter;
 
-    public SpongeCommander(PermissionsExPlugin pex, CommandSource commandSource) {
+    SpongeCommander(PermissionsExPlugin pex, CommandSource commandSource) {
         this.pex = pex;
         this.commandSource = commandSource;
         this.formatter = new SpongeMessageFormatter(pex);
@@ -65,11 +64,6 @@ class SpongeCommander implements Commander<Text.Builder> {
     @Override
     public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
         return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
-    }
-
-    @Override
-    public Set<Map.Entry<String, String>> getActiveContexts() {
-        return PEXSubjectData.parSet(commandSource.getActiveContexts());
     }
 
     @Override

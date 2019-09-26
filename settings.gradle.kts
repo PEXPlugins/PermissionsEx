@@ -9,4 +9,11 @@
 
 rootProject.name = "PermissionsEx"
 
-include("permissionsex-core", "permissionsex-sponge", "permissionsex-bukkit")
+include("permissionsex-core",
+    "permissionsex-sponge", "permissionsex-bukkit", "permissionsex-fabric",
+    "permissionsex-bungee", "permissionsex-velocity")
+
+listOf("bungee-text", "proxy-common", "hikari-config").forEach {
+    include("impl-blocks:$it")
+    findProject(":impl-blocks:$it")?.name = "permissionsex-$it"
+}

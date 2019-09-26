@@ -19,8 +19,6 @@ package ca.stellardrift.permissionsex.bukkit;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.Commander;
 import ca.stellardrift.permissionsex.util.command.MessageFormatter;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.command.CommandSender;
@@ -30,7 +28,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
@@ -63,15 +60,6 @@ public class BukkitCommander implements Commander<BaseComponent> {
     public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
         return Optional.empty();
         //return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
-    }
-
-    @Override
-    public Set<Map.Entry<String, String>> getActiveContexts() {
-        if (commandSource instanceof Player) {
-            return ImmutableSet.of(Maps.immutableEntry("world", ((Player) commandSource).getWorld().getName()));
-        } else {
-            return ImmutableSet.of();
-        }
     }
 
     @Override

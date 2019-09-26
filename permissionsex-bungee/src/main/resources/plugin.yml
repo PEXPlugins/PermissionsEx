@@ -1,0 +1,15 @@
+name: "${project.rootProject.name}"
+version: "${project.version}${project.ext.pexSuffix}"
+description: "${project.ext.pexDescription}"
+main: ca.stellardrift.permissionsex.bungee.PermissionsExPlugin
+
+commands:
+  permissionsex:
+    aliases: ["pex"]
+    description: Command for PermissionsEx
+  promote:
+    aliases: ["prom", "rankup"]
+    description: Promote a user
+  demote:
+    aliases: ["dem", "rankdown"]
+    description: Demote a user

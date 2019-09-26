@@ -1,4 +1,3 @@
-
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.applyCommonSettings
 import ca.stellardrift.permissionsex.gradle.configurate
@@ -23,8 +22,6 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  *
  */
 
-val spigotVersion: String = "1.14.4-R0.1-SNAPSHOT"
-
 plugins {
     id("com.github.johnrengelman.shadow")
 }
@@ -34,31 +31,16 @@ setupPublication()
 
 repositories {
     maven {
-        name = "spigot-repo"
-        url = uri("https://hub.spigotmc.org/nexus/content/groups/public/")
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
     }
-    maven {
-        name = "vault-repo"
-        url = uri("http://nexus.hc.to/content/repositories/pub_releases/")
-    }
-}
-
-java {
-    registerFeature("h2dbSupport") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
-
-tasks.processResources {
-    expand("project" to project)
 }
 
 dependencies {
     api(project(":permissionsex-core")) {
-        exclude(group="com.google.guava")
-        exclude("org.yaml", "snakeyaml")
-        exclude("com.googlecode.json-simple", "json-simple")
-        exclude("com.google.code.gson", "gson")
+        exclude("com.google.code.gson")
+        exclude("com.google.code.findbugs")
+        exclude("com.google.guava")
+        exclude("org.checkerframework", "checker-qual")
     }
 
     implementation(configurate("yaml")) {
@@ -66,12 +48,14 @@ dependencies {
     }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-bungee-text")) { isTransitive = false }
+    api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
 
-    // provided at runtime
-    shadow("org.spigotmc:spigot-api:$spigotVersion")
-    shadow("net.milkbowl.vault:VaultAPI:1.7")
-    shadow("com.h2database:h2:1.4.199")
+    shadow("net.md-5:bungeecord-api:1.14-SNAPSHOT")
+}
+
+tasks.processResources {
+    expand("project" to project)
 }
 
 val relocateRoot = project.ext["pexRelocateRoot"]
@@ -79,24 +63,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
-    listOf(
-        "ninja.leaping.configurate",
-        "com.sk89q.squirrelid",
-        "com.zaxxer.hikari",
-        "com.github.benmanes.caffeine",
-        "com.google.errorprone",
-        "com.typesafe",
-        "javax.annotation", // TODO: maybe we don't need to include this?
-        "org.checkerframework",
-        "org.jetbrains.annotations",
-        "org.slf4j",
-        "org.antlr"
-    ).forEach {
+    listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
+        "com.sk89q.squirrelid", "ninja.leaping.configurate", "org.jetbrains.annotations",
+        "org.slf4j", "org.json.simple", "org.antlr.v4.runtime").forEach {
         relocate(it, "$relocateRoot.$it")
-    }
-    dependencies {
-        exclude("org.yaml:snakeyaml")
-        exclude("com.google.code.findbugs:jsr305")
     }
 }
 
