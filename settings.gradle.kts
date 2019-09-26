@@ -10,7 +10,7 @@
 rootProject.name = "PermissionsEx"
 
 include("permissionsex-core",
-    "permissionsex-sponge", "permissionsex-bukkit", "permissionsex-fabric",
+    "permissionsex-sponge", "permissionsex-bukkit",
     "permissionsex-bungee", "permissionsex-velocity")
 
 listOf("bungee-text", "proxy-common", "hikari-config").forEach {
