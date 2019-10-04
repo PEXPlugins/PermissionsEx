@@ -23,9 +23,9 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
-import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import java.net.URI
 
@@ -80,5 +80,14 @@ fun Project.applyCommonSettings() {
     tasks.withType(AbstractArchiveTask::class.java) {
         it.isPreserveFileTimestamps = false
         it.isReproducibleFileOrder = true
+    }
+
+    this.plugins.apply("java-library")
+    extensions.configure(JavaPluginExtension::class.java) {
+        it.sourceCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    tasks.withType(JavaCompile::class.java) {
+        it.options.encoding = "UTF-8"
     }
 }

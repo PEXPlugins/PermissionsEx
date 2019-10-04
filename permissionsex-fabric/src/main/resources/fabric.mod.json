@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "${project.rootProject.name.toLowerCase()}",
+  "version": "${project.version}",
+
+  "name": "${project.rootProject.name}",
+  "description": "${project.ext.pexDescription}",
+  "authors": [
+    "zml"
+  ],
+  "contact": {
+    "homepage": "https://github.com/PEXPlugins/PermissionsEx",
+    "issues": "https://github.com/PEXPlugins/PermissionsEx/issues",
+    "sources": "https://github.com/PEXPlugins/PermissionsEx",
+    "discord": "https://discord.gg/vfxQBBy"
+  },
+
+  "license": "Apache v2.0",
+
+  "environment": "SERVER",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value":"ca.stellardrift.permissionsex.fabric.PermissionsExMod"
+      }
+    ]
+  },
+  "mixins": [
+    "permissionsex.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.4.0",
+    "fabric-language-kotlin": ">=1.3",
+    "fabric": "*"
+  }
+}

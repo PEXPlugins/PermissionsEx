@@ -7,10 +7,22 @@
  * in the user manual at https://docs.gradle.org/5.6.1/userguide/multi_project_builds.html
  */
 
+pluginManagement {
+    repositories {
+        jcenter()
+        mavenLocal()
+        maven {
+            name = "Fabric"
+            url = uri("https://maven.fabricmc.net")
+        }
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = "PermissionsEx"
 
 include("permissionsex-core",
-    "permissionsex-sponge", "permissionsex-bukkit",
+    "permissionsex-sponge", "permissionsex-bukkit", "permissionsex-fabric",
     "permissionsex-bungee", "permissionsex-velocity")
 
 listOf("bungee-text", "proxy-common", "hikari-config").forEach {

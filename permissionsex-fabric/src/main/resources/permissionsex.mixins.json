@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "ca.stellardrift.permissionsex.fabric.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinServerPlayerEntity",
+    "MixinServerCommandSource"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
