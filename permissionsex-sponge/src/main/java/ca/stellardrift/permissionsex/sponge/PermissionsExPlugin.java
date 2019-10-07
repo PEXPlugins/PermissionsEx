@@ -16,7 +16,16 @@
  */
 package ca.stellardrift.permissionsex.sponge;
 
+import ca.stellardrift.permissionsex.ImplementationInterface;
+import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
+import ca.stellardrift.permissionsex.subject.SubjectType;
+import ca.stellardrift.permissionsex.util.CachingValue;
+import ca.stellardrift.permissionsex.util.command.*;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
@@ -25,22 +34,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
+import kotlin.jvm.functions.Function0;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
-import ca.stellardrift.permissionsex.ImplementationInterface;
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.exception.PEBKACException;
-import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
-import ca.stellardrift.permissionsex.subject.SubjectType;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.CommandException;
-import ca.stellardrift.permissionsex.util.command.CommandExecutor;
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
-import ca.stellardrift.permissionsex.util.command.Commander;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.config.ConfigDir;
@@ -54,34 +52,18 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.Scheduler;
 import org.spongepowered.api.service.ServiceManager;
-import org.spongepowered.api.service.permission.PermissionDescription;
-import org.spongepowered.api.service.permission.PermissionService;
-import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.SubjectCollection;
-import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.service.context.ContextCalculator;
+import org.spongepowered.api.service.permission.*;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -436,5 +418,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public Game getGame() {
         return game;
     }
+
+    public <V> CachingValue<V> tickBasedCachingValue(long deltaTicks, Function0<V> update) {
+        return new CachingValue<>(() -> (long) getGame().getServer().getRunningTimeTicks(), deltaTicks, update);
+    }
+
 
 }

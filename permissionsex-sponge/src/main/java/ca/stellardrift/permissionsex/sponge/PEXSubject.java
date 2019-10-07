@@ -16,18 +16,17 @@
  */
 package ca.stellardrift.permissionsex.sponge;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import org.spongepowered.api.Sponge;
+import ca.stellardrift.permissionsex.util.CachingValue;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectReference;
-import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Permissions subject implementation
@@ -48,23 +46,23 @@ class PEXSubject implements Subject {
     private final PEXSubjectData transientData;
     private volatile CalculatedSubject baked;
     private final SubjectReference ref;
-    private final AtomicReference<ActiveContextsHolder> cachedContexts = new AtomicReference<>();
+    private final CachingValue<ActiveContextsHolder> activeContexts;
 
     private static class ActiveContextsHolder {
-        private final int updateTicks;
-        private final Set<Context> contexts;
+        private final Set<Context> spongeContexts;
+        private final Set<ContextValue<?>> pexContexts;
 
-        private ActiveContextsHolder(int updateTicks, Set<Context> contexts) {
-            this.updateTicks = updateTicks;
-            this.contexts = contexts;
+        private ActiveContextsHolder(Set<Context> spongeContexts, Set<ContextValue<?>> pexContexts) {
+            this.spongeContexts = spongeContexts;
+            this.pexContexts = pexContexts;
         }
 
-        public int getUpdateTicks() {
-            return updateTicks;
+        public Set<Context> getSpongeContexts() {
+            return spongeContexts;
         }
 
-        public Set<Context> getContexts() {
-            return contexts;
+        public Set<ContextValue<?>> getPexContexts() {
+            return pexContexts;
         }
     }
 
@@ -74,6 +72,25 @@ class PEXSubject implements Subject {
         this.baked = baked;
         this.data = new PEXSubjectData(baked.data(), collection.getPlugin());
         this.transientData = new PEXSubjectData(baked.transientData(), collection.getPlugin());
+        this.activeContexts = collection.getPlugin().tickBasedCachingValue(1L, () -> {
+            time().onGetActiveContexts().startTimingIfSync();
+            try {
+                Set<ContextValue<?>> pexContexts = baked.getActiveContexts();
+                Set<Context> spongeContexts = PEXSubjectData.contextsPexToSponge(pexContexts);
+
+                Set<Context> spongeContextsAccum = new HashSet<>();
+                for (ContextCalculator<Subject> spongeCalc : this.collection.getPlugin().getContextCalculators()) {
+                    spongeCalc.accumulateContexts(this, spongeContextsAccum);
+                }
+
+                spongeContexts.addAll(spongeContextsAccum);
+                pexContexts.addAll(PEXSubjectData.contextsSpongeToPex(spongeContextsAccum, getManager()));
+
+                return new ActiveContextsHolder(spongeContexts, pexContexts);
+            } finally {
+                time().onGetActiveContexts().stopTimingIfSync();
+            }
+        });
     }
 
     public static CompletableFuture<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
@@ -192,54 +209,12 @@ class PEXSubject implements Subject {
     }
 
     public Set<ContextValue<?>> getActivePexContexts() {
-        time().onGetActiveContexts().startTimingIfSync();
-        try {
-            /*int ticks;
-            ActiveContextsHolder holder, newHolder;
-            do {
-                ticks = Sponge.getGame().getServer().getRunningTimeTicks();
-                holder = this.cachedContexts.get();
-                if (holder != null && ticks == holder.getUpdateTicks()) {
-                    return holder.getContexts();
-                }*/
-                Set<Context> spongeContexts = new HashSet<>();
-                for (ContextCalculator<Subject> spongeCalc : this.collection.getPlugin().getContextCalculators()) {
-                    spongeCalc.accumulateContexts(this, spongeContexts);
-                }
-                Set<ContextValue<?>> pexContexts = baked.getActiveContexts();
-                pexContexts.addAll(PEXSubjectData.contextsSpongeToPex(spongeContexts, getManager()));
-                //newHolder = new ActiveContextsHolder(ticks, ImmutableSet.copyOf(contextsPexToSponge(getBaked().getActiveContexts())));
-            /*} while (!this.cachedContexts.compareAndSet(holder, newHolder));
-            return newHolder.getContexts();*/
-            return pexContexts;
-        } finally {
-            time().onGetActiveContexts().stopTimingIfSync();
-        }
-
+        return activeContexts.get().getPexContexts();
     }
 
     @Override
     public Set<Context> getActiveContexts() {
-        time().onGetActiveContexts().startTimingIfSync();
-        try {
-            int ticks;
-            ActiveContextsHolder holder, newHolder;
-            do {
-                ticks = Sponge.getGame().getServer().getRunningTimeTicks();
-                holder = this.cachedContexts.get();
-                if (holder != null && ticks == holder.getUpdateTicks()) {
-                    return holder.getContexts();
-                }
-                Set<Context> spongeContexts = PEXSubjectData.contextsPexToSponge(getBaked().getActiveContexts());
-                for (ContextCalculator<Subject> spongeCalc : this.collection.getPlugin().getContextCalculators()) {
-                    spongeCalc.accumulateContexts(this, spongeContexts);
-                }
-                newHolder = new ActiveContextsHolder(ticks, ImmutableSet.copyOf(PEXSubjectData.contextsPexToSponge(getBaked().getActiveContexts())));
-            } while (!this.cachedContexts.compareAndSet(holder, newHolder));
-            return newHolder.getContexts();
-        } finally {
-            time().onGetActiveContexts().stopTimingIfSync();
-        }
+        return activeContexts.get().getSpongeContexts();
     }
 
     @Override

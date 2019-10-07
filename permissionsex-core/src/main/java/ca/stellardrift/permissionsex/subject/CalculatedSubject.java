@@ -22,6 +22,8 @@ import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
+import ca.stellardrift.permissionsex.util.CachingValue;
+import ca.stellardrift.permissionsex.util.CachingValueKt;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -47,6 +49,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
 
     private final AsyncLoadingCache<Set<ContextValue<?>>, BakedSubjectData> data;
     private final Set<Consumer<CalculatedSubject>> updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final CachingValue<Set<ContextValue<?>>> activeContexts;
 
     CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) {
         this.baker = Preconditions.checkNotNull(baker, "baker");
@@ -55,7 +58,15 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
         this.data = Caffeine.newBuilder()
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
+                .executor(type.getManager().getAsyncExecutor())
                 .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
+        this.activeContexts = CachingValueKt.cachedByTime(50L, () -> {
+            Set<ContextValue<?>> acc = new HashSet<>();
+            for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
+                handleAccumulateSingle(contextDefinition, acc);
+            }
+            return acc;
+        });
     }
 
     void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
@@ -162,11 +173,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     }
 
     public Set<ContextValue<?>> getActiveContexts() {
-        Set<ContextValue<?>> acc = new HashSet<>();
-        for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
-            handleAccumulateSingle(contextDefinition, acc);
-        }
-        return acc;
+        return new HashSet<>(activeContexts.get());
     }
 
     public CompletableFuture<Set<ContextValue<?>>> getUsedContextValues() {
