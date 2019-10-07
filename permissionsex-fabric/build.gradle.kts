@@ -31,6 +31,10 @@ plugins {
 applyCommonSettings()
 setupPublication()
 
+minecraft {
+    refmapName = "${rootProject.name.toLowerCase()}-refmap.json"
+}
+
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
@@ -44,10 +48,10 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
 
     minecraft("com.mojang:minecraft:1.14.4")
-    mappings("net.fabricmc:yarn:1.14.4+build.12")
-    modCompile("net.fabricmc:fabric-loader:0.6.1+build.166")
+    mappings("net.fabricmc:yarn:1.14.4+build.13")
+    modCompile("net.fabricmc:fabric-loader:0.6.3+build.167")
 
-    listOf("net.fabricmc.fabric-api:fabric-api:0.3.4+build.238-1.15",
+    listOf("net.fabricmc.fabric-api:fabric-api:0.4.0+build.240-1.14",
             "net.fabricmc:fabric-language-kotlin:1.3.50+build.3").forEach {
         modCompile(it)
         include(it)
@@ -86,7 +90,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
 }
 
-val remapShadowJar = tasks.create("remapShadowJar", RemapJarTask::class.java) {
+val remapShadowJar = tasks.register<RemapJarTask>("remapShadowJar") {
     dependsOn(shadowJar)
     archiveClassifier.set("all")
     input.set(shadowJar.archiveFile)

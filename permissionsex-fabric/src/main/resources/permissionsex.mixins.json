@@ -3,8 +3,31 @@
   "package": "ca.stellardrift.permissionsex.fabric.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinServerPlayerEntity",
-    "MixinServerCommandSource"
+    "check.MixinArgumentBuilder",
+    "check.MixinBlockItem",
+    "check.MixinCommandBlockExecutor",
+    "check.MixinCommandBlockItem",
+    "check.MixinDebugStickItem",
+    "check.MixinDedicatedPlayerManager",
+    "check.MixinDedicatedServer",
+    "check.MixinEntityArgumentType",
+    "check.MixinEntitySelector",
+    "check.MixinEntityType",
+    "check.MixinMessageArgumentType",
+    "check.MixinPlayerManager",
+    "check.MixinServerCommandSource",
+    "check.MixinServerPlayerEntity",
+    "check.MixinServerPlayerInteractionManager",
+    "check.MixinServerPlayNetworkHandler",
+    "check.MixinStructureBlockBlockEntity",
+
+    "lifecycle.MixinPlayerManager",
+    "lifecycle.MixinServerPlayNetworkHandler",
+
+    "source.MixinServerPlayerEntity",
+    "source.MixinServerCommandSource",
+    "source.MixinServerCommandOutput",
+    "source.MixinCommandBlockExecutor"
   ],
   "injectors": {
     "defaultRequire": 1

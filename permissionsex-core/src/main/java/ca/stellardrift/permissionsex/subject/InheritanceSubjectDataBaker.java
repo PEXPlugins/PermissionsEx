@@ -101,8 +101,8 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                     CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
                     Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
                     if (!subject.equals(defIdentifier)) {
-                        visitSubject(state, defIdentifier, visitedSubjects, 1);
-                        visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2); // Force in global defaults
+                        ret = ret.thenCompose(none -> visitSubject(state, defIdentifier, visitedSubjects, 1))
+                            .thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2)); // Force in global defaults
                     }
                     return ret.thenApply(none -> state);
 

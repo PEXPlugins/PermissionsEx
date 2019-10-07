@@ -23,7 +23,7 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.util.CachingValue;
-import ca.stellardrift.permissionsex.util.CachingValueKt;
+import ca.stellardrift.permissionsex.util.CachingValues;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -60,7 +60,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
                 .expireAfterAccess(1, TimeUnit.MINUTES)
                 .executor(type.getManager().getAsyncExecutor())
                 .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
-        this.activeContexts = CachingValueKt.cachedByTime(50L, () -> {
+        this.activeContexts = CachingValues.cachedByTime(50L, () -> {
             Set<ContextValue<?>> acc = new HashSet<>();
             for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
                 handleAccumulateSingle(contextDefinition, acc);
@@ -234,6 +234,21 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      */
     public boolean hasPermission(String permission) {
         return getPermission(permission) > 0;
+    }
+
+    /**
+     * Query whether this subject has a specific permission in the provided contexts
+     * This method takes into account context and wildcard inheritance calculations for any permission.
+     *
+     * Any checks made through this method will be logged by the {@link PermissionCheckNotifier}
+     * registered with the PEX engine.
+     *
+     * @param contexts The contexts to query this permission in
+     * @param permission The permission to query
+     * @return Whether the subject has a true permissions value
+     */
+    public boolean hasPermission(Set<ContextValue<?>> contexts, String permission) {
+        return getPermission(contexts, permission) > 0;
     }
 
     /**

@@ -20,10 +20,14 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
+import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_DEFAULTS
+import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.TranslatableLogger
 import ca.stellardrift.permissionsex.util.Translations.t
+import ca.stellardrift.permissionsex.util.Util
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.mojang.brigadier.CommandDispatcher
 import net.fabricmc.api.ModInitializer
@@ -34,6 +38,7 @@ import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.server.network.ServerPlayerEntity
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -45,8 +50,6 @@ import javax.sql.DataSource
 
 private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
-    @JvmField
-    val SUBJECTS_SYSTEM = "system"
 
     val manager: PermissionsEx
     get() {
@@ -98,7 +101,10 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
         manager.registerContextDefinition(WorldContextDefinition)
         manager.registerContextDefinition(DimensionContextDefinition)
-        manager.getSubjects(PermissionsEx.SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition()
+        manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition()
+        manager.getSubjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
+            it.setDefaultValue(GLOBAL_CONTEXT, 1)
+        }
         logger.info(t("%s v%s successfully enabled! Welcome!", container.metadata.name, container.metadata.version))
     }
 
@@ -115,6 +121,30 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             logger.error(t("Unable to shut down PermissionsEx executor in 10 seconds, remaining tasks will be killed"))
             this.exec.shutdownNow()
         }
+    }
+
+    fun handlePlayerJoin(player: ServerPlayerEntity) {
+        manager.getSubjects(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
+            // Update name option
+            it.data().cache.isRegistered(it.identifier.value).thenAccept {isReg ->
+                if (isReg) {
+                    it.data().update {data ->
+                        data.setOption(GLOBAL_CONTEXT, "name", player.name.asString())
+                    }
+                }
+            }
+
+            // Add listener to re-send command tree on a permission update
+            it.registerListener { newSubj ->
+                Util.castOptional(newSubj.associatedObject, ServerPlayerEntity::class.java).ifPresent { ply ->
+                    ply.server.playerManager.sendCommandTree(ply)
+                }
+            }
+        }
+    }
+
+    fun handlePlayerQuit(player: ServerPlayerEntity) {
+            _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 
     override fun getBaseDirectory(): Path {

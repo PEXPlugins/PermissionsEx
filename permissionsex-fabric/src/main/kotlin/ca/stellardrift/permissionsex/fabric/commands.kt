@@ -128,15 +128,6 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCo
         }
         return CompletableFuture.completedFuture(builder.build()) // todo actually run async? - for commands api refactor
     }
-
-}
-
-fun ServerCommandSource.hasPermission(perm: String): Boolean {
-    return if (this is IPermissionCommandSource) {
-        hasPermission(perm)
-    } else {
-        hasPermissionLevel(minecraftServer.opPermissionLevel) // TODO: Warn abt this?
-    }
 }
 
 class FabricCommander(val sender: ServerCommandSource) : Commander<Text> {

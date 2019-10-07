@@ -18,6 +18,8 @@
 
 package ca.stellardrift.permissionsex.fabric
 
+import ca.stellardrift.permissionsex.util.CachingValue
+import net.minecraft.server.MinecraftServer
 import java.util.Locale
 
 /**
@@ -35,4 +37,8 @@ fun String.asMCLocale(): Locale {
         3 -> Locale(parts[0], parts[1], parts[2])
         else -> throw IllegalArgumentException("Provided locale '$this' was not in a valid format!")
     }
+}
+
+fun <Value> tickCachedValue(server: MinecraftServer, maxDelta: Long, update: () -> Value): CachingValue<Value> {
+    return CachingValue({server.ticks.toLong()}, maxDelta, update)
 }

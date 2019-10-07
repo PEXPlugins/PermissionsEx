@@ -16,7 +16,7 @@
  *
  */
 
-package ca.stellardrift.permissionsex.fabric.mixin;
+package ca.stellardrift.permissionsex.fabric.mixin.source;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;

@@ -16,25 +16,45 @@
  *
  */
 
-package ca.stellardrift.permissionsex.fabric.mixin;
+package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.context.ContextDefinition;
+import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.util.CachingValue;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.brigadier.ResultConsumer;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+import net.minecraft.command.arguments.EntityAnchorArgumentType;
+import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Mixin(ServerCommandSource.class)
 public abstract class MixinServerCommandSource implements IPermissionCommandSource {
 
-    @Shadow
+    @Shadow @Final
     private CommandOutput output;
 
-    @Shadow
+    @Shadow @Final
     private String simpleName;
 
     @Shadow
@@ -43,10 +63,46 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     @Shadow
     public abstract MinecraftServer getMinecraftServer();
 
+    private CachingValue<Set<ContextValue<?>>> activeContexts;
+
+    @Inject(method = "<init>(Lnet/minecraft/server/command/CommandOutput;Lnet/minecraft/util/math/Vec3d;" +
+            "Lnet/minecraft/util/math/Vec2f;Lnet/minecraft/server/world/ServerWorld;ILjava/lang/String;" +
+            "Lnet/minecraft/text/Text;Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/entity/Entity;Z" +
+            "Lcom/mojang/brigadier/ResultConsumer;Lnet/minecraft/command/arguments/EntityAnchorArgumentType$EntityAnchor;)V", at = @At("RETURN"))
+    protected void constructor(CommandOutput commandOutput_1, Vec3d vec3d_1, Vec2f vec2f_1,
+                               ServerWorld serverWorld_1, int int_1, String string_1, Text text_1,
+                               MinecraftServer minecraftServer_1, @Nullable Entity entity_1, boolean boolean_1,
+                               ResultConsumer<ServerCommandSource> resultConsumer_1,
+                               EntityAnchorArgumentType.EntityAnchor entityAnchorArgumentType$EntityAnchor_1,
+                               CallbackInfo ci) {
+        activeContexts = UtilKt.tickCachedValue(getMinecraftServer(), 1L, () -> {
+            final Set<ContextValue<?>> accumulator = new HashSet<>();
+            final CalculatedSubject subj = asCalculatedSubject();
+            for (ContextDefinition<?> def : PermissionsExMod.INSTANCE.getManager().getRegisteredContextTypes()) {
+                handleSingleCtx(subj, def, accumulator);
+            }
+            return ImmutableSet.copyOf(accumulator);
+        });
+    }
+
+
+    private <T> void handleSingleCtx(CalculatedSubject subj, ContextDefinition<T> definition, Set<ContextValue<?>> accumulator) {
+        final Function1<T, Unit> callback = key -> {
+            accumulator.add(definition.createValue(key));
+           return null;
+        };
+        if (definition instanceof CommandSourceContextDefinition) {
+            //noinspection ConstantConditions,unchecked // mixin target
+            ((CommandSourceContextDefinition<T>) definition).accumulateCurrentValues((ServerCommandSource) (Object) this, callback);
+        } else {
+            definition.accumulateCurrentValues(subj, callback);
+        }
+    }
+
     @NotNull
     @Override
     public String getPermType() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).getPermType() : PermissionsExMod.SUBJECTS_SYSTEM;
+        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).getPermType() : FabricDefinitions.SUBJECTS_SYSTEM;
     }
 
     @NotNull
@@ -57,12 +113,18 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
 
     @Override
     public boolean hasPermission(@NotNull String perm) {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).hasPermission(perm) : hasPermissionLevel(getMinecraftServer().getOpPermissionLevel());
+        return (output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : asCalculatedSubject()).hasPermission(getActiveContexts(), perm);
     }
 
     @NotNull
     @Override
     public CalculatedSubject asCalculatedSubject() {
         return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+    }
+
+    @NotNull
+    @Override
+    public Set<ContextValue<?>> getActiveContexts() {
+        return activeContexts.get();
     }
 }
