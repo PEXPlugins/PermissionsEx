@@ -32,6 +32,7 @@ import ninja.leaping.configurate.SimpleConfigurationNode;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -45,6 +46,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     private SubjectDataReference ref, transientRef;
 
     private final AsyncLoadingCache<Set<ContextValue<?>>, BakedSubjectData> data;
+    private final Set<Consumer<CalculatedSubject>> updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) {
         this.baker = Preconditions.checkNotNull(baker, "baker");
@@ -308,6 +310,21 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     }
 
     /**
+     * Register a listener that will receive updates to this subject.
+     *
+     * A reference to the listener will be held, so when updates are no longer needed the listener should be unregistered
+     *
+     * @param listener The listener
+     */
+    public void registerListener(Consumer<CalculatedSubject> listener) {
+        updateListeners.add(Objects.requireNonNull(listener));
+    }
+
+    public void unregisterListener(Consumer<CalculatedSubject> listener) {
+        updateListeners.remove(Objects.requireNonNull(listener));
+    }
+
+    /**
      * Internal use only. Cache updating listener
      *
      * @param newData Updated subject data object. Ignored
@@ -326,6 +343,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
                     return false;
                 })
                 .forEach(subj -> subj.data.synchronous().invalidateAll());
+        updateListeners.forEach(listener -> listener.accept(this));
     }
 
 }
