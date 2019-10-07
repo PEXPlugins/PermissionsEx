@@ -4,5 +4,7 @@ releases:
   - openjdk8
   - openjdk11
   - openjdk12
-
-deploy: ./gradlew publish
+jobs:
+  include:
+    - stage: deploy
+      script: ./gradlew publish
