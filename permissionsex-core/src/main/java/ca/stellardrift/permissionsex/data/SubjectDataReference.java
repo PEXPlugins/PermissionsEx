@@ -31,7 +31,7 @@ import java.util.function.Function;
 /**
  * An automatically updating reference to the latest data for a certain subject.
  */
-public class SubjectDataReference implements Caching<ImmutableSubjectData> {
+public class SubjectDataReference implements Consumer<ImmutableSubjectData> {
     private final String identifier;
     private final SubjectCache cache;
     private final Set<Consumer<ImmutableSubjectData>> updateListeners;
@@ -87,7 +87,7 @@ public class SubjectDataReference implements Caching<ImmutableSubjectData> {
     }
 
     @Override
-    public void clearCache(ImmutableSubjectData newData) {
+    public void accept(ImmutableSubjectData newData) {
         synchronized (data) {
             this.data.set(newData);
             this.updateListeners.forEach(cb -> cb.accept(newData));

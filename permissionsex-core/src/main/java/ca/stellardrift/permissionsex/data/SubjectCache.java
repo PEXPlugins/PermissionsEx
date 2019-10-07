@@ -16,11 +16,11 @@
  */
 package ca.stellardrift.permissionsex.data;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Maps;
-import ca.stellardrift.permissionsex.PermissionsEx;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -43,7 +44,7 @@ public class SubjectCache {
     /**
      * Holds cache listeners to prevent them from being garbage-collected
      */
-    private final Map<String, Caching<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
+    private final Map<String, Consumer<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
     private final Map.Entry<String, String> defaultIdentifier;
 
@@ -83,7 +84,7 @@ public class SubjectCache {
      * @param listener A callback that will be notified whenever a change is made to the data object
      * @return A future returning when the data is available
      */
-    public CompletableFuture<ImmutableSubjectData> getData(String identifier, Caching<ImmutableSubjectData> listener) {
+    public CompletableFuture<ImmutableSubjectData> getData(String identifier, Consumer<ImmutableSubjectData> listener) {
         Objects.requireNonNull(identifier, "identifier");
 
         CompletableFuture<ImmutableSubjectData> ret = cache.get().get(identifier);
@@ -113,7 +114,7 @@ public class SubjectCache {
      * @param strongListeners Whether to hold listeners to this subject data even after they would be otherwise GC'd
      * @return A future completing with the subject data reference
      */
-    private CompletableFuture<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
+    public CompletableFuture<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
         final SubjectDataReference ref = new SubjectDataReference(identifier, this, strongListeners);
         return getData(identifier, ref).thenApply(data -> {
             ref.data.set(data);
@@ -210,8 +211,8 @@ public class SubjectCache {
      * @param name The subject identifier
      * @return A caching function
      */
-    private Caching<ImmutableSubjectData> clearListener(final String name) {
-        Caching<ImmutableSubjectData> ret = newData -> {
+    private Consumer<ImmutableSubjectData> clearListener(final String name) {
+        Consumer<ImmutableSubjectData> ret = newData -> {
             cache.get().put(name, CompletableFuture.completedFuture(newData));
             listeners.call(name, newData);
         };
@@ -225,7 +226,7 @@ public class SubjectCache {
      * @param identifier The identifier of the subject to receive notifications about
      * @param listener The callback function to notify
      */
-    public void addListener(String identifier, Caching<ImmutableSubjectData> listener) {
+    public void addListener(String identifier, Consumer<ImmutableSubjectData> listener) {
         Objects.requireNonNull(identifier, "identifier");
         Objects.requireNonNull(listener, "listener");
 

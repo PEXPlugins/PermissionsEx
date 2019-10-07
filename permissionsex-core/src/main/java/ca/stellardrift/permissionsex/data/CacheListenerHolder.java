@@ -22,6 +22,7 @@ import com.google.common.collect.MapMaker;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 /**
  *  Tracks object listeners for a cache
@@ -30,9 +31,9 @@ import java.util.concurrent.ConcurrentMap;
  * @param <CacheType> The cache value type
  */
 public class CacheListenerHolder<Key, CacheType> {
-    private final ConcurrentMap<Key, Set<Caching<CacheType>>> listeners = new MapMaker().concurrencyLevel(10).makeMap();
+    private final ConcurrentMap<Key, Set<Consumer<CacheType>>> listeners = new MapMaker().concurrencyLevel(10).makeMap();
 
-    private Set<Caching<CacheType>> getListeners(Key key) {
+    private Set<Consumer<CacheType>> getListeners(Key key) {
         Preconditions.checkNotNull(key, "key");
 
         return listeners.computeIfAbsent(key, k -> Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).makeMap()));
@@ -42,19 +43,19 @@ public class CacheListenerHolder<Key, CacheType> {
         Preconditions.checkNotNull(key, "key");
         Preconditions.checkNotNull(newData, "newData");
 
-        for (Caching<CacheType> listener : getListeners(key)) {
-            listener.clearCache(newData);
+        for (Consumer<CacheType> listener : getListeners(key)) {
+            listener.accept(newData);
         }
     }
 
-    public void addListener(Key key, Caching<CacheType> listener) {
+    public void addListener(Key key, Consumer<CacheType> listener) {
         Preconditions.checkNotNull(key, "key");
         Preconditions.checkNotNull(listener, "listener");
 
         getListeners(key).add(listener);
     }
 
-    public void removeListener(Key key, Caching<CacheType> listener) {
+    public void removeListener(Key key, Consumer<CacheType> listener) {
         Preconditions.checkNotNull(key, "key");
         Preconditions.checkNotNull(listener, "listener");
 

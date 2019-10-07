@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.subject;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.Caching;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
@@ -34,11 +33,12 @@ import ninja.leaping.configurate.SimpleConfigurationNode;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * This is a holder that maintains the current subject data state
  */
-public class CalculatedSubject implements Caching<ImmutableSubjectData> {
+public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     private final SubjectDataBaker baker;
     private final Map.Entry<String, String> identifier;
     private final SubjectType type;
@@ -313,7 +313,7 @@ public class CalculatedSubject implements Caching<ImmutableSubjectData> {
      * @param newData Updated subject data object. Ignored
      */
     @Override
-    public void clearCache(ImmutableSubjectData newData) {
+    public void accept(ImmutableSubjectData newData) {
         data.synchronous().invalidateAll();
         getManager().getActiveSubjectTypes().stream()
                 .flatMap(type -> type.getActiveSubjects().stream())

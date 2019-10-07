@@ -44,7 +44,7 @@ public class SubjectType {
         this.transientData = transientData; 
         cache = Caffeine.newBuilder().executor(pex.getAsyncExecutor()).buildAsync(((key, executor) -> {
             CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), this.pex.createSubjectIdentifier(this.type.getTypeName(), key), SubjectType.this);
-            return persistentData.getReference(key).thenCombine(transientData.getReference(key), (persistentRef, transientRef) -> {
+            return persistentData.getReference(key, false).thenCombine(transientData.getReference(key, false), (persistentRef, transientRef) -> {
                 subj.initialize(persistentRef, transientRef);
                 return subj;
             });

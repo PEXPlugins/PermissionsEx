@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.data;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -48,11 +49,11 @@ public class CacheListenerHolderTest {
         assertEquals(0, listener.getCount());
     }
 
-    private static class CountingListener implements Caching<Object> {
+    private static class CountingListener implements Consumer<Object> {
         private final AtomicInteger count = new AtomicInteger();
 
         @Override
-        public void clearCache(Object newData) {
+        public void accept(Object newData) {
             count.getAndIncrement();
         }
 

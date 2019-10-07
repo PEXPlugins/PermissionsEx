@@ -58,6 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -76,7 +77,7 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
  * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
  */
-public class PermissionsEx implements ImplementationInterface, Caching<ContextInheritance> {
+public class PermissionsEx implements ImplementationInterface, Consumer<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
@@ -514,7 +515,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
      * @param listener A callback function that will be triggered whenever there is a change to the context inheritance
      * @return A future providing the current context inheritance data
      */
-    public CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> listener) {
+    public CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
             this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
         }
@@ -541,7 +542,7 @@ public class PermissionsEx implements ImplementationInterface, Caching<ContextIn
      * @param newData The new data to replace cached information
      */
     @Override
-    public void clearCache(ContextInheritance newData) {
+    public void accept(ContextInheritance newData) {
         this.cachedInheritance = CompletableFuture.completedFuture(newData);
         this.cachedInheritanceListeners.call(true, newData);
     }

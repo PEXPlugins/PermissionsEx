@@ -25,6 +25,7 @@ import com.google.common.base.Preconditions;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -33,7 +34,7 @@ import java.util.function.Function;
 public class RankLadderCache {
     private final DataStore dataStore;
     private final AsyncLoadingCache<String, RankLadder> cache;
-    private final Map<String, Caching<RankLadder>> cacheHolders = new ConcurrentHashMap<>();
+    private final Map<String, Consumer<RankLadder>> cacheHolders = new ConcurrentHashMap<String, java.util.function.Consumer<RankLadder>>();
     private final CacheListenerHolder<String, RankLadder> listeners;
 
     public RankLadderCache(final DataStore dataStore) {
@@ -56,7 +57,7 @@ public class RankLadderCache {
     }
 
 
-    public CompletableFuture<RankLadder> get(String identifier, Caching<RankLadder> listener) {
+    public CompletableFuture<RankLadder> get(String identifier, Consumer<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
 
         CompletableFuture<RankLadder> ret = cache.get(identifier);
@@ -109,8 +110,8 @@ public class RankLadderCache {
         return dataStore.setRankLadder(identifier, newData);
     }
 
-    private Caching<RankLadder> clearListener(final String name) {
-        Caching<RankLadder> ret = newData -> {
+    private Consumer<RankLadder> clearListener(final String name) {
+        Consumer<RankLadder> ret = newData -> {
             cache.synchronous().put(name, newData);
             listeners.call(name, newData);
         };
@@ -118,7 +119,7 @@ public class RankLadderCache {
         return ret;
     }
 
-    public void addListener(String identifier, Caching<RankLadder> listener) {
+    public void addListener(String identifier, Consumer<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
         Preconditions.checkNotNull(listener, "listener");
 

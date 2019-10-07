@@ -16,20 +16,20 @@
  */
 package ca.stellardrift.permissionsex.backend;
 
-import ninja.leaping.configurate.ConfigurationNode;
 import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.data.Caching;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
+import ninja.leaping.configurate.ConfigurationNode;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
@@ -58,7 +58,7 @@ public interface DataStore {
      * @param listener The update listener for this subject
      * @return The relevant subject data
      */
-    CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, @Nullable Caching<ImmutableSubjectData> listener);
+    CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, @Nullable Consumer<ImmutableSubjectData> listener);
 
     /**
      * Sets the data at the specified type and identifier.
@@ -169,7 +169,7 @@ public interface DataStore {
      * @param listener The listener to track possible updates
      * @return the ladder
      */
-    CompletableFuture<RankLadder> getRankLadder(String ladder, @Nullable Caching<RankLadder> listener);
+    CompletableFuture<RankLadder> getRankLadder(String ladder, @Nullable Consumer<RankLadder> listener);
 
     /**
      * Whether a rank ladder by the given name is present.
@@ -193,7 +193,7 @@ public interface DataStore {
      * @param inheritance The listener to notify about changes
      * @return A future that will supply context inheritance
      */
-    CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> inheritance);
+    CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> inheritance);
 
     CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
 

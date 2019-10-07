@@ -16,6 +16,15 @@
  */
 package ca.stellardrift.permissionsex.backend;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.data.CacheListenerHolder;
+import ca.stellardrift.permissionsex.data.ContextInheritance;
+import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.rank.RankLadder;
+import ca.stellardrift.permissionsex.util.ThrowingSupplier;
+import ca.stellardrift.permissionsex.util.Util;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -23,20 +32,11 @@ import com.google.common.util.concurrent.Futures;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.CacheListenerHolder;
-import ca.stellardrift.permissionsex.data.Caching;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.ThrowingSupplier;
-import ca.stellardrift.permissionsex.util.Util;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
@@ -72,7 +72,7 @@ public abstract class AbstractDataStore implements DataStore {
     protected abstract void initializeInternal() throws PermissionsLoadingException;
 
     @Override
-    public final CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, Caching<ImmutableSubjectData> listener) {
+    public final CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, Consumer<ImmutableSubjectData> listener) {
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(identifier, "identifier");
 
@@ -139,7 +139,7 @@ public abstract class AbstractDataStore implements DataStore {
     }
 
     @Override
-    public final CompletableFuture<RankLadder> getRankLadder(String ladderName, Caching<RankLadder> listener) {
+    public final CompletableFuture<RankLadder> getRankLadder(String ladderName, Consumer<RankLadder> listener) {
         Objects.requireNonNull(ladderName, "ladderName");
         CompletableFuture<RankLadder> ladder = getRankLadderInternal(ladderName);
         if (listener != null) {
@@ -164,7 +164,7 @@ public abstract class AbstractDataStore implements DataStore {
     protected abstract CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
 
     @Override
-    public final CompletableFuture<ContextInheritance> getContextInheritance(Caching<ContextInheritance> listener) {
+    public final CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
         CompletableFuture<ContextInheritance> inheritance = getContextInheritanceInternal();
         if (listener != null) {
             contextInheritanceListeners.addListener(true, listener);
