@@ -4,6 +4,9 @@ releases:
   - openjdk8
   - openjdk11
   - openjdk12
+
+before_script: chmod +x ./gradlew
+
 jobs:
   include:
     - stage: deploy
