@@ -21,6 +21,7 @@
     "check.MixinServerPlayNetworkHandler",
     "check.MixinStructureBlockBlockEntity",
 
+    "lifecycle.MixinGameProfile",
     "lifecycle.MixinPlayerManager",
     "lifecycle.MixinServerPlayNetworkHandler",
 

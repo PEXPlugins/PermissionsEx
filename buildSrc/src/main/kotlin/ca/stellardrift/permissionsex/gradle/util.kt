@@ -18,6 +18,7 @@
 
 package ca.stellardrift.permissionsex.gradle
 
+import net.minecrell.gradle.licenser.LicenseExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.DependencyHandler
@@ -77,11 +78,16 @@ fun Project.applyCommonSettings() {
         sk89qRepo()
     }
 
-    tasks.withType(AbstractArchiveTask::class.java) {
-        it.isPreserveFileTimestamps = false
-        it.isReproducibleFileOrder = true
+
+    afterEvaluate {
+        // For reproducible builds, we want archives to be identical as much as possible
+        tasks.withType(AbstractArchiveTask::class.java) {
+            it.isPreserveFileTimestamps = false
+            it.isReproducibleFileOrder = true
+        }
     }
 
+    // Java
     this.plugins.apply("java-library")
     extensions.configure(JavaPluginExtension::class.java) {
         it.sourceCompatibility = JavaVersion.VERSION_1_8
@@ -90,4 +96,27 @@ fun Project.applyCommonSettings() {
     tasks.withType(JavaCompile::class.java) {
         it.options.encoding = "UTF-8"
     }
+
+    // Set up licensing
+    this.plugins.apply("net.minecrell.licenser")
+    extensions.configure(LicenseExtension::class.java) {
+        it.header = rootProject.file("LICENSE_HEADER")
+
+        // Exclude unsupported file types to avoid warnings
+        it.exclude("**/*.conf")
+        it.exclude("**/*.sql")
+        // Antlr
+        it.exclude("**/*.g4")
+        it.exclude("**/*.interp")
+        it.exclude("**/*.tokens")
+    }
+
+    tasks.findByPath("assemble")?.apply {
+        dependsOn(tasks.getByPath("updateLicenses"))
+    }
+
+    tasks.findByPath("check")?.apply {
+        dependsOn(tasks.getByPath("checkLicenses"))
+    }
+
 }

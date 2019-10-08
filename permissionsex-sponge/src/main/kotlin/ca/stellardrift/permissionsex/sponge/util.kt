@@ -1,9 +1,3 @@
-package ca.stellardrift.permissionsex.sponge
-
-import ca.stellardrift.permissionsex.util.MinecraftProfile
-import org.spongepowered.api.profile.GameProfile
-import java.util.UUID
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -19,9 +13,13 @@ import java.util.UUID
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
+package ca.stellardrift.permissionsex.sponge
+
+import ca.stellardrift.permissionsex.util.MinecraftProfile
+import org.spongepowered.api.profile.GameProfile
+import java.util.UUID
 
 class SpongeMinecraftProfile(private val profile: GameProfile): MinecraftProfile {
     override val name: String

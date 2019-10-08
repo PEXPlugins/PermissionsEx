@@ -82,6 +82,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.checkerframework", "org.antlr.v4").forEach {
         relocate(it, "$relocateRoot.$it")
     }
+    dependencies {
+        exclude("org.checkerframework:.*:.*")
+    }
 }
 
 tasks.assemble {

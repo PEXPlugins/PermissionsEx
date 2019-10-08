@@ -61,6 +61,7 @@ dependencies {
     }
 
     implementation(configurate("yaml")) {
+        exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
@@ -85,7 +86,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "com.github.benmanes.caffeine",
         "com.google.errorprone",
         "com.typesafe",
-        "org.checkerframework",
         "org.jetbrains.annotations",
         "org.slf4j",
         "org.antlr"
@@ -94,6 +94,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     dependencies {
         exclude("org.yaml:snakeyaml")
+        exclude("org.checkerframework:.*:.*")
     }
 }
 

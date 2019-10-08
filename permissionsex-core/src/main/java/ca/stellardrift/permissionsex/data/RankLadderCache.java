@@ -1,4 +1,4 @@
-/**
+/*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
  *
@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ca.stellardrift.permissionsex.data;
 
 import ca.stellardrift.permissionsex.backend.DataStore;

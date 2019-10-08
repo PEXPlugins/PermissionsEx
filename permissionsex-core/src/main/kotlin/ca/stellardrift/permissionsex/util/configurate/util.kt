@@ -1,4 +1,4 @@
-/**
+/*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
  *
@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
- * This file contains information on how
+ * This file contains useful helper mehods for working with Configurate configuration nodes
  */
 package ca.stellardrift.permissionsex.util.configurate
 

@@ -38,12 +38,12 @@ repositories {
 dependencies {
     api(project(":permissionsex-core")) {
         exclude("com.google.code.gson")
-        exclude("com.google.code.findbugs")
         exclude("com.google.guava")
-        exclude("org.checkerframework", "checker-qual")
+        exclude("org.yaml", "snakeyaml")
     }
 
     implementation(configurate("yaml")) {
+        exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
@@ -68,6 +68,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "ninja.leaping.configurate", "org.jetbrains.annotations",
         "org.slf4j", "org.antlr.v4.runtime").forEach {
         relocate(it, "$relocateRoot.$it")
+    }
+    
+    dependencies {
+        exclude("org.checkerframework")
     }
 }
 

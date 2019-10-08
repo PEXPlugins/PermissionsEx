@@ -1,4 +1,4 @@
-/**
+/*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
  *
@@ -14,15 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.sponge;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+package ca.stellardrift.permissionsex.sponge;
 
 import com.google.common.base.MoreObjects;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectReference;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class PEXSubjectReference implements SubjectReference, Map.Entry<String, String> {
     private final String collection, ident;

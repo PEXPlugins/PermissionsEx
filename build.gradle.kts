@@ -30,3 +30,24 @@ subprojects {
     }
 }
 
+tasks.withType<Jar> { // disable
+    onlyIf { false }
+}
+
+val collectImplementationArtifacts by tasks.registering(Copy::class) {
+    subprojects.forEach {
+        val outTask = it.tasks.findByPath("remapShadowJar") ?: it.tasks.findByPath("shadowJar")
+        if (outTask != null) {
+            from(outTask)
+        }
+    }
+    rename("(.+)-all(.+)", "$1$2")
+
+    into("$buildDir/libs")
+}
+
+tasks.register("build") {
+    dependsOn(collectImplementationArtifacts)
+}
+
+
