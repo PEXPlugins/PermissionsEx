@@ -16,18 +16,20 @@
  */
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
-
-import com.google.common.collect.Maps;
-
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
@@ -84,10 +86,18 @@ public interface ImplementationInterface {
     /**
      * Return a function that supplies an implementation-dependent variant of a subject reference
      * 
-     * @return
+     * @return The identifier for a certain subject
      */
      default Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
         return Maps.immutableEntry(collection, ident);
      }
 
+    default CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Consumer<MinecraftProfile> action) {
+         return lookupMinecraftProfilesByName(names, profile -> {
+             action.accept(profile);
+             return CompletableFuture.completedFuture(null);
+         });
+    }
+
+    CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action);
 }

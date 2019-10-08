@@ -16,28 +16,22 @@
  */
 package ca.stellardrift.permissionsex.command;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.data.SubjectCache;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Util;
-import ca.stellardrift.permissionsex.util.command.ChildCommands;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.CommandException;
-import ca.stellardrift.permissionsex.util.command.CommandExecutor;
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
-import ca.stellardrift.permissionsex.util.command.Commander;
+import ca.stellardrift.permissionsex.util.command.*;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
-import static ca.stellardrift.permissionsex.util.command.args.GameArguments.*;
+import static ca.stellardrift.permissionsex.util.command.args.GameArguments.subject;
+import static ca.stellardrift.permissionsex.util.command.args.GameArguments.subjectType;
 import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.*;
 
 /**
@@ -88,13 +82,7 @@ public class PermissionsExCommands {
                                 iter = Iterables.filter(iter, new GuavaStartsWithPredicate(args.<String>getOne("filter")));
                             }
 
-                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), Iterables.transform(iter, new Function<String, TextType>() {
-                                @Nullable
-                                @Override
-                                public TextType apply(String input) {
-                                    return src.fmt().subject(Maps.immutableEntry(subjectType, input));
-                                }
-                            }));
+                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), Iterables.transform(iter, input -> src.fmt().subject(Maps.immutableEntry(subjectType, input))));
                         } else if (args.hasAny(subjectChildren.getKey().getUntranslated())) {
                             ChildCommands.executor(subjectChildren).execute(src, args);
                         } else if (args.hasAny(children.getKey().getUntranslated())) {

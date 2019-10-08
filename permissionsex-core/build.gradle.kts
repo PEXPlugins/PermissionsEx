@@ -46,8 +46,6 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:2.7.0") {
         exclude("com.google.errorprone")
     }
-    implementation("com.sk89q:squirrelid:0.2.0")
-    implementation("com.googlecode.json-simple:json-simple:1.1.1") { isTransitive=false }
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
 

@@ -57,7 +57,6 @@ dependencies {
     api(project(":permissionsex-core")) {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
-        exclude("com.googlecode.json-simple", "json-simple")
         exclude("com.google.code.gson", "gson")
     }
 
@@ -67,6 +66,7 @@ dependencies {
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-bungee-text")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
+    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
 
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")
@@ -81,12 +81,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     listOf(
         "ninja.leaping.configurate",
-        "com.sk89q.squirrelid",
         "com.zaxxer.hikari",
         "com.github.benmanes.caffeine",
         "com.google.errorprone",
         "com.typesafe",
-        "javax.annotation", // TODO: maybe we don't need to include this?
         "org.checkerframework",
         "org.jetbrains.annotations",
         "org.slf4j",
@@ -96,7 +94,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     dependencies {
         exclude("org.yaml:snakeyaml")
-        exclude("com.google.code.findbugs:jsr305")
     }
 }
 

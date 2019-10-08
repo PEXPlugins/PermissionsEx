@@ -28,6 +28,7 @@ import ca.stellardrift.permissionsex.logging.TranslatableLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
+import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.velocitypowered.api.event.Subscribe
@@ -45,14 +46,17 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.Logger
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 import javax.inject.Inject
 import javax.sql.DataSource
 
 @Plugin(id = ProjectData.ARTIFACT_ID, name = ProjectData.NAME, version = ProjectData.VERSION, description = ProjectData.DESCRIPTION)
 class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val server: ProxyServer, @DataDirectory private val dataPath: Path) : ImplementationInterface {
+
     private val exec = Executors.newCachedThreadPool()
     override fun getBaseDirectory(): Path {
         return dataPath
@@ -78,6 +82,13 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     override fun getVersion(): String {
         return ProjectData.VERSION
+    }
+
+    override fun lookupMinecraftProfilesByName(
+        names: Iterable<String>,
+        action: Function<MinecraftProfile, CompletableFuture<Void>>
+    ): CompletableFuture<Int> {
+        return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
     }
 
     private val logger = TranslatableLogger.forLogger(rawLogger)

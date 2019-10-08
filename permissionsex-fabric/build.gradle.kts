@@ -79,12 +79,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))
         exclude(dependency("org.jetbrains:annotations:.*"))
         exclude(dependency("org.checkerframework:checker-qual:.*"))
-        exclude(dependency("com.google.code.findbugs:jsr305:.*"))
     }
 
     listOf("com.zaxxer", "com.github.benmanes",
-        "com.sk89q.squirrelid", "com.typesafe.config",
-        "ninja.leaping.configurate", "org.slf4j", "org.json",
+        "com.typesafe.config", "ninja.leaping.configurate", "org.slf4j",
         "org.antlr", "org.yaml", "org.apache.logging.slf4j").forEach {
         relocate(it, "$relocateRoot.$it")
     }

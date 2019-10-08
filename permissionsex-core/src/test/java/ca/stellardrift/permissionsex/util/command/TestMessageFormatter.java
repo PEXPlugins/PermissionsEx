@@ -20,8 +20,8 @@ import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Translatable;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Map;
 

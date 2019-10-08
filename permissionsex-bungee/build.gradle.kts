@@ -48,6 +48,7 @@ dependencies {
     }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-bungee-text")) { isTransitive = false }
+    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
 
@@ -64,8 +65,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
     listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
-        "com.sk89q.squirrelid", "ninja.leaping.configurate", "org.jetbrains.annotations",
-        "org.slf4j", "org.json.simple", "org.antlr.v4.runtime").forEach {
+        "ninja.leaping.configurate", "org.jetbrains.annotations",
+        "org.slf4j", "org.antlr.v4.runtime").forEach {
         relocate(it, "$relocateRoot.$it")
     }
 }

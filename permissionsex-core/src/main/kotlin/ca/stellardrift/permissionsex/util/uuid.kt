@@ -1,4 +1,4 @@
-/**
+/*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
  *
@@ -13,25 +13,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package ca.stellardrift.permissionsex.util;
 
-import com.google.common.base.Predicate;
-import org.jetbrains.annotations.Nullable;
+package ca.stellardrift.permissionsex.util
 
+import java.util.UUID
 
-/**
- * A predicate that filters based on case-insensitive starts with
- */
-public class GuavaStartsWithPredicate implements Predicate<String> {
-    private final String test;
-
-    public GuavaStartsWithPredicate(String test) {
-        this.test = test;
-    }
-
-    @Override
-    public boolean apply(@Nullable String input) {
-        return input != null && input.toLowerCase().startsWith(test.toLowerCase());
-    }
+interface MinecraftProfile {
+    val name: String
+    val uuid: UUID
 }

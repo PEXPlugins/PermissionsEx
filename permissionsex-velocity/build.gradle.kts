@@ -39,7 +39,6 @@ repositories {
 dependencies {
     api(project(":permissionsex-core")) {
         exclude("org.slf4j", "slf4j-api")
-        exclude("com.google.code.findbugs")
         exclude("com.google.code.gson")
         exclude("com.google.guava")
         exclude("org.spongepowered", "configurate-yaml")
@@ -49,6 +48,7 @@ dependencies {
     implementation(project(":impl-blocks:permissionsex-hikari-config")) {
         exclude("org.slf4j", "slf4j-api")
     }
+    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
 
     shadow("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
     kapt("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
@@ -77,8 +77,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
-    listOf("com.zaxxer", "com.typesafe", "com.sk89q.squirrelid", "com.github.benmanes",
-        "ninja.leaping.configurate", "org.json.simple", "org.jetbrains",
+    listOf("com.zaxxer", "com.typesafe", "com.github.benmanes",
+        "ninja.leaping.configurate", "org.jetbrains",
         "org.checkerframework", "org.antlr.v4").forEach {
         relocate(it, "$relocateRoot.$it")
     }

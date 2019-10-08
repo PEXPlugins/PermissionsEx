@@ -1,4 +1,8 @@
-/**
+import ca.stellardrift.permissionsex.gradle.applyCommonSettings
+import ca.stellardrift.permissionsex.gradle.setupPublication
+import ca.stellardrift.permissionsex.gradle.useJUnit5
+
+/*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
  *
@@ -13,25 +17,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package ca.stellardrift.permissionsex.util;
 
-import com.google.common.base.Predicate;
-import org.jetbrains.annotations.Nullable;
+applyCommonSettings()
+setupPublication()
+useJUnit5()
 
-
-/**
- * A predicate that filters based on case-insensitive starts with
- */
-public class GuavaStartsWithPredicate implements Predicate<String> {
-    private final String test;
-
-    public GuavaStartsWithPredicate(String test) {
-        this.test = test;
-    }
-
-    @Override
-    public boolean apply(@Nullable String input) {
-        return input != null && input.toLowerCase().startsWith(test.toLowerCase());
-    }
+dependencies {
+    api(project(":permissionsex-core"))
+    implementation("com.google.code.gson:gson:2.8.0")
 }

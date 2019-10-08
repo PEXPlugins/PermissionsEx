@@ -20,7 +20,9 @@ import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.profile.ProfileKt;
 import ca.stellardrift.permissionsex.subject.SubjectType;
+import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableSet;
 import net.milkbowl.vault.chat.Chat;
@@ -50,10 +52,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.function.Function;
 
 import static ca.stellardrift.permissionsex.bukkit.BukkitTranslations.t;
 import static ca.stellardrift.permissionsex.hikariconfig.HikariConfig.createHikariDataSource;
@@ -345,6 +345,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         @Override
         public String getVersion() {
             return getDescription().getVersion();
+        }
+
+        @Override
+        public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
+            return ProfileKt.lookupMinecraftProfilesByName(names, action::apply);
         }
     }
 }

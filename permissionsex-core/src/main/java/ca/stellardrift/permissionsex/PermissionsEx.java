@@ -35,14 +35,13 @@ import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
+import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.Translations;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.sk89q.squirrelid.resolver.HttpRepositoryService;
-import com.sk89q.squirrelid.resolver.ProfileService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +58,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -137,65 +137,56 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     private void convertUuids() {
         try {
             InetAddress.getByName("api.mojang.com");
-            final List<CompletableFuture<?>> actions = new ArrayList<>();
-            getState().activeDataStore.performBulkOperation(dataStore -> {
-                Iterable<String> toConvert = Iterables.filter(dataStore.getAllIdentifiers(SUBJECTS_USER), input1 -> {
-                    if (input1 == null || input1.length() != 36) {
-                        return true;
-                    }
-                    try {
-                        UUID.fromString(input1);
-                        return false;
-                    } catch (IllegalArgumentException e) {
-                        return true;
-                    }
-                });
-                if (toConvert.iterator().hasNext()) {
+            final DataStore dataStore = state.get().activeDataStore;
+            performBulkOperation(() -> {
+                Set<String> toConvert = dataStore.getAllIdentifiers(SUBJECTS_USER).stream()
+                        .filter(ident -> {
+                            if (ident.length() != 36) {
+                                return true;
+                            }
+                            try {
+                                UUID.fromString(ident);
+                                return false;
+                            } catch (IllegalArgumentException ex) {
+                                return true;
+                            }
+                        }).collect(ImmutableSet.toImmutableSet());
+                if (!toConvert.isEmpty()) {
                     getLogger().info(t("Trying to convert users stored by name to UUID"));
                 } else {
-                    return 0;
+                    return CompletableFuture.completedFuture(0);
                 }
 
-                final ProfileService service = HttpRepositoryService.forMinecraft();
-                try {
-                    final int[] converted = {0};
-                    service.findAllByName(toConvert, profile -> {
-                        final String newIdentifier = profile.getUniqueId().toString();
-                        String lookupName = profile.getName();
-                        actions.add(dataStore.isRegistered(SUBJECTS_USER, newIdentifier).thenCombine(
-                                dataStore.isRegistered(SUBJECTS_USER, lookupName)
-                                        .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
-                                    if (newRegistered) {
-                                        getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
-                                        return false;
-                                    } else if (!oldRegistered) {
-                                        return false;
-                                    }
-                                    converted[0]++;
-                                    return true;
+                return lookupMinecraftProfilesByName(toConvert, profile -> {
+                    final String newIdentifier = profile.getUuid().toString();
+                    String lookupName = profile.getName();
+                    return dataStore.isRegistered(SUBJECTS_USER, newIdentifier).thenCombine(
+                            dataStore.isRegistered(SUBJECTS_USER, lookupName)
+                                    .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
+                                if (newRegistered) {
+                                    getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
+                                    return false;
+                                } else if (!oldRegistered) {
+                                    return false;
+                                }
+                                return true;
 
-                        }).thenCompose(doConvert -> {
-                            if (!doConvert) {
-                                return Util.emptyFuture();
-                            }
-                            return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
-                                    .thenCompose(oldData -> {
-                                        return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
-                                                .thenAccept(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)
-                                                        .exceptionally(t -> {
-                                                            t.printStackTrace();
-                                                            return null;
-                                                        }));
-                                    });
-                        }));
-                        return true;
+                            }).thenCompose(doConvert -> {
+                        if (!doConvert) {
+                            return Util.<Void>emptyFuture();
+                        }
+                        return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
+                                .thenCompose(oldData -> {
+                                    return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
+                                            .thenAccept(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)
+                                                    .exceptionally(t -> {
+                                                        t.printStackTrace();
+                                                        return null;
+                                                    }));
+                                });
                     });
-                    return converted[0];
-                } catch (IOException | InterruptedException e) {
-                    getLogger().error(t("Error while fetching UUIDs for users"), e);
-                    return 0;
-                }
-            }).thenCombine(CompletableFuture.allOf(actions.toArray(new CompletableFuture[0])), (count, none) -> count).thenAccept(result -> {
+                });
+            }).thenAccept(result -> {
                     if (result != null && result > 0) {
                         getLogger().info(Translations.tn("%s user successfully converted from name to UUID",
                                 "%s users successfully converted from name to UUID!",
@@ -254,7 +245,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * @return A future that completes once all data has been written to the store
      */
     public <T> CompletableFuture<T> performBulkOperation(Supplier<CompletableFuture<T>> func) {
-        return getState().activeDataStore.performBulkOperation(store -> func.get()).thenCompose(x -> x);
+        return getState().activeDataStore.performBulkOperation(store -> func.get().join());
     }
 
     /**
@@ -495,6 +486,16 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     @Override
     public Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
         return impl.createSubjectIdentifier(collection, ident);
+    }
+
+    @Override
+    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Consumer<MinecraftProfile> action) {
+        return impl.lookupMinecraftProfilesByName(names, action);
+    }
+
+    @Override
+    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
+        return impl.lookupMinecraftProfilesByName(names, action);
     }
 
     /**

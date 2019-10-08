@@ -16,28 +16,16 @@
  */
 package ca.stellardrift.permissionsex.util.command.args;
 
+import ca.stellardrift.permissionsex.util.*;
+import ca.stellardrift.permissionsex.util.command.CommandContext;
+import ca.stellardrift.permissionsex.util.command.Commander;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import ca.stellardrift.permissionsex.util.GuavaCollectors;
-import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
-import ca.stellardrift.permissionsex.util.StartsWithPredicate;
-import ca.stellardrift.permissionsex.util.Translatable;
-import ca.stellardrift.permissionsex.util.Translations;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.Commander;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;

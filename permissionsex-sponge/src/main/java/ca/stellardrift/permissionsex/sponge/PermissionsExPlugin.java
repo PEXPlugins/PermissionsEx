@@ -19,16 +19,15 @@ package ca.stellardrift.permissionsex.sponge;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.CachingValue;
+import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.*;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -203,7 +202,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         getUserSubjects().suggestUnload(event.getTargetEntity().getIdentifier());
     }
 
-    public Timings getTimings() {
+    Timings getTimings() {
         return timings;
     }
 
@@ -277,11 +276,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public Optional<SubjectCollection> getCollection(String identifier) {
-        try {
-            return Optional.of(this.subjectCollections.getIfPresent(identifier).get());
-        } catch (InterruptedException | ExecutionException e) {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(this.subjectCollections.getIfPresent(identifier)).map(CompletableFuture::join);
     }
 
     @Override
@@ -329,13 +324,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         final SubjectType coll = getManager().getSubjects(SUBJECTS_ROLE_TEMPLATE);
         for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
             try {
-                coll.transientData().update(rank.getKey(), new Function<ImmutableSubjectData, ImmutableSubjectData>() {
-                    @Nullable
-                    @Override
-                    public ImmutableSubjectData apply(@Nullable ImmutableSubjectData input) {
-                        return Preconditions.checkNotNull(input).setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue());
-                    }
-                }).get();
+                coll.transientData().update(rank.getKey(),
+                        input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue())).get();
             } catch (InterruptedException | ExecutionException e) {
                 Throwables.throwIfUnchecked(e);
                 throw new RuntimeException(e);
@@ -407,6 +397,14 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
+    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
+        return game.getServer().getGameProfileManager().getAllByName(names, true).thenComposeAsync(profiles -> CompletableFuture.allOf(profiles.stream()
+                .map(profile -> action.apply(new SpongeMinecraftProfile(profile)))
+                .toArray(CompletableFuture[]::new))
+                .thenApply(it -> profiles.size()));
+    }
+
+    @Override
     public String getVersion() {
         return PomData.VERSION;
     }
@@ -422,6 +420,4 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public <V> CachingValue<V> tickBasedCachingValue(long deltaTicks, Function0<V> update) {
         return new CachingValue<>(() -> (long) getGame().getServer().getRunningTimeTicks(), deltaTicks, update);
     }
-
-
 }

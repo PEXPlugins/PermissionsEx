@@ -10,6 +10,7 @@ import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import net.md_5.bungee.api.CommandSender
@@ -29,7 +30,9 @@ import org.yaml.snakeyaml.DumperOptions
 import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
+import java.util.function.Function
 import java.util.logging.Logger
 import javax.sql.DataSource
 
@@ -135,6 +138,13 @@ fun CommandSender.toCalculatedSubject(): CalculatedSubject {
 }
 
 class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : ImplementationInterface {
+    override fun lookupMinecraftProfilesByName(
+        names: Iterable<String>,
+        action: Function<MinecraftProfile, CompletableFuture<Void>>
+    ): CompletableFuture<Int> {
+        return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
+    }
+
     private val exec = Executor { task ->
         plugin.proxy.scheduler.runAsync(plugin, task)
     }

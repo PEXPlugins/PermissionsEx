@@ -17,8 +17,8 @@
 package ca.stellardrift.permissionsex.logging;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

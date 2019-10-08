@@ -1,4 +1,4 @@
-/**
+/*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
  *
@@ -13,25 +13,32 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package ca.stellardrift.permissionsex.util;
 
-import com.google.common.base.Predicate;
-import org.jetbrains.annotations.Nullable;
+package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
+import ca.stellardrift.permissionsex.util.MinecraftProfile;
+import com.mojang.authlib.GameProfile;
+import org.jetbrains.annotations.NotNull;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 
-/**
- * A predicate that filters based on case-insensitive starts with
- */
-public class GuavaStartsWithPredicate implements Predicate<String> {
-    private final String test;
+import java.util.UUID;
 
-    public GuavaStartsWithPredicate(String test) {
-        this.test = test;
-    }
-
+@Mixin(value = GameProfile.class, remap = false)
+public abstract class MixinGameProfile implements MinecraftProfile {
+    @Shadow
+    @NotNull
     @Override
-    public boolean apply(@Nullable String input) {
-        return input != null && input.toLowerCase().startsWith(test.toLowerCase());
+    public abstract String getName();
+
+    @Shadow
+    public abstract UUID getId();
+
+    @NotNull
+    @Override
+    public UUID getUuid() {
+        return getId();
     }
 }

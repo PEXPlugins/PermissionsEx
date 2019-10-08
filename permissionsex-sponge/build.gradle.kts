@@ -37,7 +37,6 @@ dependencies {
         exclude("org.spongepowered")
         exclude("com.google.guava", "guava")
         exclude("org.slf4j", "slf4j-api")
-        exclude("com.google.code.findbugs", "jsr305")
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
 
@@ -68,9 +67,7 @@ tasks.compileJava {
 val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
     minimize()
-    listOf("com.sk89q.squirrelid",
-        "org.json.simple",
-        "org.antlr",
+    listOf("org.antlr",
         "org.jetbrains.annotations").forEach {
         relocate(it, "$relocateRoot.$it")
     }
