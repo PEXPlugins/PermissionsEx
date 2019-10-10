@@ -4,8 +4,11 @@ jdk:
   - openjdk8
   - openjdk12
 
-before_install: chmod +x ./gradlew
+cache:
+  directories:
+    - $HOME/.gradle # Gradle build cache
 
+before_install: chmod +x ./gradlew
 
 jobs:
   include:

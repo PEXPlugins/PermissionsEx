@@ -102,6 +102,7 @@ fun Project.applyCommonSettings() {
     extensions.configure(LicenseExtension::class.java) {
         it.header = rootProject.file("LICENSE_HEADER")
 
+        it.exclude("**/*.yml") // Don't process yaml -- unnecessary, and causes test failures
         // Exclude unsupported file types to avoid warnings
         it.exclude("**/*.conf")
         it.exclude("**/*.sql")
@@ -109,6 +110,7 @@ fun Project.applyCommonSettings() {
         it.exclude("**/*.g4")
         it.exclude("**/*.interp")
         it.exclude("**/*.tokens")
+        it.exclude("**/glob/parser/*.java")
     }
 
     tasks.findByPath("assemble")?.apply {
