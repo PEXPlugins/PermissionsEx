@@ -8,11 +8,11 @@ PermissionsEx (PEX (not the pipe)) is a full-service permissions plugin giving i
 - [Velocity] -->
 
 
-💬 Having an issue setting up PEX? Check out our [Discord](https://discord.gg/vfxQBBy)
+💬 Having an issue setting up PEX? Check out our [Discord](https://discord.gg/PHpuzZS)
 
 🐞 Found a bug? File a [bug report](/PEXPlugins/PermissionsEx/issues)
 
-⛏ [Development Builds](https://ci.yawk.at/job/PermissionsEx/lastBuild/)
+⛏ [Development Builds](https://ci.ender.zone/job/PermissionsEx/lastSuccessfulBuild/)
 
 
 # Development
@@ -40,11 +40,26 @@ and its dependency specification is:
 </dependency>
 ```
 
+## On Gradle
+We work in the Kotlin DSL, but Groovy should be similar.
+
+```kotlin
+repositories {
+    maven(url = "https://repo.glaremasters.me/repository/permissionsex/") {
+        name = "pex-repo"
+    }
+}
+
+dependencies {
+    implementation("ca.stellardrift.permissionsex:permissionsex-core:2.0-SNAPSHOT")
+}
+```
+
 # Contributing
 
 PermissionsEx always appreciates well thought-out pull requests for code changes, documentation improvements, and translations. All contributions must be released under the terms of the Apache 2.0 license.
 
-We build with Maven, which is available on all major platforms. Feel free to run ideas by me in the discord before spending time implementing something that doesn't match my vision for the plugin.
+We build with Gradle -- a wrapper is provided, to build the project simply run `./gradlew build`. Feel free to run ideas by me in the discord before spending time implementing something that doesn't match my vision for the plugin.
 
 
 

@@ -227,8 +227,9 @@ class ReloadableConfig<T : ConfigurationNode> internal constructor(
                 loader.save(node)
             } catch (e: Exception) {
                 errorCallback(e, ConfigPhase.SAVING)
+            } finally {
+                ignoreUpdates = false
             }
-            ignoreUpdates = false
         }
     }
 

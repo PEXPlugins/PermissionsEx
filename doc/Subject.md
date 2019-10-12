@@ -27,7 +27,7 @@ Context Key | Example Value              | Description
 `dimension` | `Overworld`                | The dimension of the world a subject is currently in
 `remoteip`  | `127.0.0.1`                | The IP address a subject is connecting from
 `localhost` | `myminecraftserver.com`    | The hostname a client is connecting to the server with
-`localip`   | `2607:f8b0:400a:801::200e` | The ip (on the server) that is receiving the connection from a subject
+`localip`   | `[2607:f8b0:400a:801::200e]` | The ip (on the server) that is receiving the connection from a subject
 `localport` | `25565`                    | The port (on the server) that the client is connecting to
 
 **Paper/Spigot/Bukkit contexts**
@@ -38,7 +38,7 @@ Context Key | Example Value              | Description
 `dimension` | `nether`                   | The name of the dimension a subject is currently in
 `remoteip`  | `127.0.0.1`                | The IP address a subject is connecting from
 `localhost` | `myminecraftserver.com`    | The hostname a client is connecting to the server with
-`localip`   | `2607:f8b0:400a:801::200e` | The ip (on the server) that is receiving the connection from a subject
+`localip`   | `[2607:f8b0:400a:801::200e]` | The ip (on the server) that is receiving the connection from a subject
 `localport` | `25565`                    | The port (on the server) that the client is connecting to
 
 **PermissionsEx Contexts**

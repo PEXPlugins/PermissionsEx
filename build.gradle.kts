@@ -34,11 +34,16 @@ tasks.withType<Jar> { // disable
     onlyIf { false }
 }
 
+val collectExcludes = ext["buildExcludes"].toString().split(',').toSet()
+
+
 val collectImplementationArtifacts by tasks.registering(Copy::class) {
     subprojects.forEach {
-        val outTask = it.tasks.findByPath("remapShadowJar") ?: it.tasks.findByPath("shadowJar")
-        if (outTask != null) {
-            from(outTask)
+        if (it.name !in collectExcludes) {
+            val outTask = it.tasks.findByPath("remapShadowJar") ?: it.tasks.findByPath("shadowJar")
+            if (outTask != null) {
+                from(outTask)
+            }
         }
     }
     rename("(.+)-all(.+)", "$1$2")

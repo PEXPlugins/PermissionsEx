@@ -4,7 +4,7 @@ While PermissionsEx (PEX) is quite powerful, its flexibility means that for a be
 
 ## Installation
 
-Downloads of dev builds are available from [the CI server](https://ci.yawk.at/view/PermissionsEx/job/PermissionsEx/). There have not yet been any releases of the 2.x branch as several major features present in 1.x are still in development, so it is important to keep up to date with dev builds. On Sponge, the downloaded jar goes into the `mods/` folder, and on Spigot into the `plugins/` folder. On first launch, configurations will be created in the `config/ninja.leaping.permissionsex` folder for Sponge, and `plugins/PermissionsEx` for Bukkit. 1.x configurations *will* be automatically converted on first run, and users will be converted to UUID.
+Downloads of dev builds are available from [the CI server](https://ci.ender.zone/view/PermissionsEx/job/PermissionsEx/). There have not yet been any releases of the 2.x branch as several major features present in 1.x are still in development, so it is important to keep up to date with dev builds. On Sponge, the downloaded jar goes into the `mods/` folder, and on Spigot into the `plugins/` folder. On first launch, configurations will be created in the `config/permissionsex` folder for Sponge, Fabric, and Velocity, and `plugins/PermissionsEx` for Paper/Spigot/Bukkit and Bungee. 1.x configurations *will* be automatically converted on first run, and users will be converted to UUID.
 
 ## First Run
 

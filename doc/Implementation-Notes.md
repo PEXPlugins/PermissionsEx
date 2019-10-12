@@ -43,6 +43,7 @@ Because PermissionsEx can run in a variety of environments, different implementa
 ### Known outstanding issues
 - Broadcast to ops should have the subject type of the source in the permission somehow
 - Check whether we enforce creative mode for certain items (debug stick, etc)
+- Changing permissions is very slow -- investigate this
 
 ### Client checks op for
 - F3 Debug toggle creative/spectator 
