@@ -82,8 +82,9 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         this.dataDir = FabricLoader.getInstance().configDirectory.toPath().resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
+        logger.prefix = "[${container.metadata.name}] "
 
-        logger.info(t("Loaded mod %s v%s", container.metadata.name, container.metadata.version.friendlyString))
+        logger.info(t("Loaded mod v%s", container.metadata.version.friendlyString))
         ServerStartCallback.EVENT.register(ServerStartCallback {init(it) })
         ServerStopCallback.EVENT.register(ServerStopCallback {  shutdown(it) })
         CommandRegistry.INSTANCE.register(true) {
@@ -117,7 +118,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         manager.getSubjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
-        logger.info(t("%s v%s successfully enabled! Welcome!", container.metadata.name, container.metadata.version))
+        logger.info(t("v%s successfully enabled! Welcome!", container.metadata.version))
     }
 
     private fun shutdown(server: MinecraftServer) {

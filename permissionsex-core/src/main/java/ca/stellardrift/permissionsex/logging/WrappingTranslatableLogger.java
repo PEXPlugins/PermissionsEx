@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.logging;
 
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
@@ -27,6 +28,7 @@ import java.util.Locale;
  */
 class WrappingTranslatableLogger implements TranslatableLogger {
     private final Logger wrapping;
+    private String prefix;
 
     public WrappingTranslatableLogger(Logger wrapping) {
         this.wrapping = wrapping;
@@ -40,6 +42,22 @@ class WrappingTranslatableLogger implements TranslatableLogger {
     @Override
     public Locale getLogLocale(Marker marker) {
         return getLogLocale();
+    }
+
+    @Nullable
+    @Override
+    public String getPrefix() {
+        return this.prefix;
+    }
+
+    @Override
+    public void setPrefix(@Nullable String prefix) {
+        this.prefix = prefix;
+    }
+
+    private String applyPrefix(String input) {
+        final String prefix = this.prefix;
+        return prefix == null ? input : (prefix + input);
     }
 
     /**
@@ -72,7 +90,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(String msg) {
-        wrapping.trace(msg);
+        wrapping.trace(applyPrefix(msg));
     }
 
     /**
@@ -88,7 +106,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(String format, Object arg) {
-        wrapping.trace(format, arg);
+        wrapping.trace(applyPrefix(format), arg);
     }
 
     /**
@@ -105,7 +123,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(String format, Object arg1, Object arg2) {
-        wrapping.trace(format, arg1, arg2);
+        wrapping.trace(applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -124,7 +142,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(String format, Object... arguments) {
-        wrapping.trace(format, arguments);
+        wrapping.trace(applyPrefix(format), arguments);
     }
 
     /**
@@ -137,7 +155,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(String msg, Throwable t) {
-        wrapping.trace(msg, t);
+        wrapping.trace(applyPrefix(msg), t);
     }
 
     /**
@@ -163,7 +181,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(Marker marker, String msg) {
-        wrapping.trace(marker, msg);
+        wrapping.trace(marker, applyPrefix(msg));
     }
 
     /**
@@ -177,7 +195,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(Marker marker, String format, Object arg) {
-        wrapping.trace(marker, format, arg);
+        wrapping.trace(marker, applyPrefix(format), arg);
     }
 
     /**
@@ -193,7 +211,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(Marker marker, String format, Object arg1, Object arg2) {
-        wrapping.trace(marker, format, arg1, arg2);
+        wrapping.trace(marker, applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -208,7 +226,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(Marker marker, String format, Object... argArray) {
-        wrapping.trace(marker, format, argArray);
+        wrapping.trace(marker, applyPrefix(format), argArray);
     }
 
     /**
@@ -222,7 +240,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void trace(Marker marker, String msg, Throwable t) {
-        wrapping.trace(marker, msg, t);
+        wrapping.trace(marker, applyPrefix(msg), t);
     }
 
     /**
@@ -243,7 +261,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(String msg) {
-        wrapping.debug(msg);
+        wrapping.debug(applyPrefix(msg));
     }
 
     /**
@@ -258,7 +276,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(String format, Object arg) {
-        wrapping.debug(format, arg);
+        wrapping.debug(applyPrefix(format), arg);
     }
 
     /**
@@ -274,7 +292,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(String format, Object arg1, Object arg2) {
-        wrapping.debug(format, arg1, arg2);
+        wrapping.debug(applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -293,7 +311,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(String format, Object... arguments) {
-        wrapping.debug(format, arguments);
+        wrapping.debug(applyPrefix(format), arguments);
     }
 
     /**
@@ -305,7 +323,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(String msg, Throwable t) {
-        wrapping.debug(msg, t);
+        wrapping.debug(applyPrefix(msg), t);
     }
 
     /**
@@ -329,7 +347,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(Marker marker, String msg) {
-        wrapping.debug(marker, msg);
+        wrapping.debug(marker, applyPrefix(msg));
     }
 
     /**
@@ -342,7 +360,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(Marker marker, String format, Object arg) {
-        wrapping.debug(marker, format, arg);
+        wrapping.debug(marker, applyPrefix(format), arg);
     }
 
     /**
@@ -357,7 +375,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(Marker marker, String format, Object arg1, Object arg2) {
-        wrapping.debug(marker, format, arg1, arg2);
+        wrapping.debug(marker, applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -371,7 +389,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(Marker marker, String format, Object... arguments) {
-        wrapping.debug(marker, format, arguments);
+        wrapping.debug(marker, applyPrefix(format), arguments);
     }
 
     /**
@@ -384,7 +402,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void debug(Marker marker, String msg, Throwable t) {
-        wrapping.debug(marker, msg, t);
+        wrapping.debug(marker, applyPrefix(msg), t);
     }
 
     /**
@@ -405,7 +423,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(String msg) {
-        wrapping.info(msg);
+        wrapping.info(applyPrefix(msg));
     }
 
     /**
@@ -420,7 +438,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(String format, Object arg) {
-        wrapping.info(format, arg);
+        wrapping.info(applyPrefix(format), arg);
     }
 
     /**
@@ -436,7 +454,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(String format, Object arg1, Object arg2) {
-        wrapping.info(format, arg1, arg2);
+        wrapping.info(applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -455,7 +473,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(String format, Object... arguments) {
-        wrapping.info(format, arguments);
+        wrapping.info(applyPrefix(format), arguments);
     }
 
     /**
@@ -467,7 +485,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(String msg, Throwable t) {
-        wrapping.info(msg, t);
+        wrapping.info(applyPrefix(msg), t);
     }
 
     /**
@@ -490,7 +508,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(Marker marker, String msg) {
-        wrapping.info(marker, msg);
+        wrapping.info(marker, applyPrefix(msg));
     }
 
     /**
@@ -503,7 +521,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(Marker marker, String format, Object arg) {
-        wrapping.info(marker, format, arg);
+        wrapping.info(marker, applyPrefix(format), arg);
     }
 
     /**
@@ -518,7 +536,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(Marker marker, String format, Object arg1, Object arg2) {
-        wrapping.info(marker, format, arg1, arg2);
+        wrapping.info(marker, applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -532,7 +550,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(Marker marker, String format, Object... arguments) {
-        wrapping.info(marker, format, arguments);
+        wrapping.info(marker, applyPrefix(format), arguments);
     }
 
     /**
@@ -545,7 +563,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void info(Marker marker, String msg, Throwable t) {
-        wrapping.info(marker, msg, t);
+        wrapping.info(marker, applyPrefix(msg), t);
     }
 
     /**
@@ -566,7 +584,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(String msg) {
-        wrapping.warn(msg);
+        wrapping.warn(applyPrefix(msg));
     }
 
     /**
@@ -581,7 +599,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(String format, Object arg) {
-        wrapping.warn(format, arg);
+        wrapping.warn(applyPrefix(format), arg);
     }
 
     /**
@@ -600,7 +618,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(String format, Object... arguments) {
-        wrapping.warn(format, arguments);
+        wrapping.warn(applyPrefix(format), arguments);
     }
 
     /**
@@ -616,7 +634,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(String format, Object arg1, Object arg2) {
-        wrapping.warn(format, arg1, arg2);
+        wrapping.warn(applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -628,7 +646,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(String msg, Throwable t) {
-        wrapping.warn(msg, t);
+        wrapping.warn(applyPrefix(msg), t);
     }
 
     /**
@@ -652,7 +670,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(Marker marker, String msg) {
-        wrapping.warn(marker, msg);
+        wrapping.warn(marker, applyPrefix(msg));
     }
 
     /**
@@ -665,7 +683,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(Marker marker, String format, Object arg) {
-        wrapping.warn(marker, format, arg);
+        wrapping.warn(marker, applyPrefix(format), arg);
     }
 
     /**
@@ -680,7 +698,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(Marker marker, String format, Object arg1, Object arg2) {
-        wrapping.warn(marker, format, arg1, arg2);
+        wrapping.warn(marker, applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -694,7 +712,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(Marker marker, String format, Object... arguments) {
-        wrapping.warn(marker, format, arguments);
+        wrapping.warn(marker, applyPrefix(format), arguments);
     }
 
     /**
@@ -707,7 +725,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void warn(Marker marker, String msg, Throwable t) {
-        wrapping.warn(marker, msg, t);
+        wrapping.warn(marker, applyPrefix(msg), t);
     }
 
     /**
@@ -728,7 +746,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(String msg) {
-        wrapping.error(msg);
+        wrapping.error(applyPrefix(msg));
     }
 
     /**
@@ -743,7 +761,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(String format, Object arg) {
-        wrapping.error(format, arg);
+        wrapping.error(applyPrefix(format), arg);
     }
 
     /**
@@ -759,7 +777,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(String format, Object arg1, Object arg2) {
-        wrapping.error(format, arg1, arg2);
+        wrapping.error(applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -778,7 +796,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(String format, Object... arguments) {
-        wrapping.error(format, arguments);
+        wrapping.error(applyPrefix(format), arguments);
     }
 
     /**
@@ -790,7 +808,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(String msg, Throwable t) {
-        wrapping.error(msg, t);
+        wrapping.error(applyPrefix(msg), t);
     }
 
     /**
@@ -814,7 +832,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(Marker marker, String msg) {
-        wrapping.error(marker, msg);
+        wrapping.error(marker, applyPrefix(msg));
     }
 
     /**
@@ -827,7 +845,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(Marker marker, String format, Object arg) {
-        wrapping.error(marker, format, arg);
+        wrapping.error(marker, applyPrefix(format), arg);
     }
 
     /**
@@ -842,7 +860,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(Marker marker, String format, Object arg1, Object arg2) {
-        wrapping.error(marker, format, arg1, arg2);
+        wrapping.error(marker, applyPrefix(format), arg1, arg2);
     }
 
     /**
@@ -856,7 +874,7 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(Marker marker, String format, Object... arguments) {
-        wrapping.error(marker, format, arguments);
+        wrapping.error(marker, applyPrefix(format), arguments);
     }
 
     /**
@@ -870,6 +888,6 @@ class WrappingTranslatableLogger implements TranslatableLogger {
      */
     @Override
     public void error(Marker marker, String msg, Throwable t) {
-        wrapping.error(marker, msg, t);
+        wrapping.error(marker, applyPrefix(msg), t);
     }
 }

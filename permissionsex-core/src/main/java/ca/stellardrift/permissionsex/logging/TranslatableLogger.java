@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.logging;
 
 import ca.stellardrift.permissionsex.util.Translatable;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
@@ -32,6 +33,11 @@ public interface TranslatableLogger extends Logger {
     Locale getLogLocale();
 
     Locale getLogLocale(Marker marker);
+
+    @Nullable
+    String getPrefix();
+
+    void setPrefix(@Nullable String prefix);
 
     /**
      * Log a message at the TRACE level.
