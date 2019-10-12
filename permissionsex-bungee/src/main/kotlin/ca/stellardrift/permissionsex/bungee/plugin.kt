@@ -33,10 +33,11 @@ import ca.stellardrift.permissionsex.util.command.CommandSpec
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.connection.ProxiedPlayer
+import net.md_5.bungee.api.event.LoginEvent
 import net.md_5.bungee.api.event.PermissionCheckEvent
 import net.md_5.bungee.api.event.PlayerDisconnectEvent
-import net.md_5.bungee.api.event.PlayerHandshakeEvent
 import net.md_5.bungee.api.plugin.Command
+import net.md_5.bungee.api.plugin.Listener
 import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.api.plugin.TabExecutor
 import net.md_5.bungee.event.EventHandler
@@ -53,7 +54,7 @@ import java.util.function.Function
 import java.util.logging.Logger
 import javax.sql.DataSource
 
-class PermissionsExPlugin : Plugin() {
+class PermissionsExPlugin : Plugin(), Listener {
     internal lateinit var logger: TranslatableLogger private set
     internal lateinit var dataPath: Path private set
 
@@ -93,7 +94,8 @@ class PermissionsExPlugin : Plugin() {
         }
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
-        super.onEnable()
+
+        this.proxy.pluginManager.registerListener(this, this)
     }
 
     override fun onDisable() {
@@ -108,8 +110,8 @@ class PermissionsExPlugin : Plugin() {
         event.setHasPermission(event.sender.toCalculatedSubject().hasPermission(event.permission))
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    fun cachePlayer(event: PlayerHandshakeEvent) {
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun cachePlayer(event: LoginEvent) {
         try {
             manager.getSubjects(SUBJECTS_USER).load(event.connection.uniqueId.toString())
         } catch (e: Exception) {

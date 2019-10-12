@@ -62,6 +62,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
 
@@ -151,7 +152,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
                             } catch (IllegalArgumentException ex) {
                                 return true;
                             }
-                        }).collect(ImmutableSet.toImmutableSet());
+                        }).collect(Collectors.toSet());
                 if (!toConvert.isEmpty()) {
                     getLogger().info(t("Trying to convert users stored by name to UUID"));
                 } else {
