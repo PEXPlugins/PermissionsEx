@@ -90,6 +90,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         CommandRegistry.INSTANCE.register(true) {
             tryRegisterCommands(it)
         }
+        registerWorldEdit()
     }
 
     private fun init(gameInstance: MinecraftServer) {
