@@ -57,17 +57,6 @@ class PEXSubjectData implements SubjectData {
         this.data.onUpdate(this::clearCache);
     }
 
-    /**
-     * This is valid because all Contexts are Map.Entries
-     *
-     * @param input The input set
-     * @return A properly casted set
-     */
-    @SuppressWarnings("unchecked")
-    static Set<Map.Entry<String, String>> parSet(Set<Context> input) {
-        return (Set) input;
-    }
-
     static Set<Context> contextsPexToSponge(Set<ContextValue<?>> input) {
         Set<Context> build = new HashSet<>();
         for (ContextValue<?> ctx : input) {
@@ -85,9 +74,9 @@ class PEXSubjectData implements SubjectData {
     static Set<ContextValue<?>> contextsSpongeToPex(Set<Context> input, PermissionsEx manager) {
        ImmutableSet.Builder<ContextValue<?>> builder = ImmutableSet.builder();
        for (Context ctx : input) {
-           ContextDefinition<?> def = manager.getContextDefinition(ctx.getKey());
+           ContextDefinition<?> def = manager.getContextDefinition(ctx.getKey(), true);
            if (def == null) {
-               continue; // TODO: what do here? this gross
+               throw new IllegalStateException("A fallback context value was expected!");
            }
            ContextValue<?> ctxVal = singleContextToPex(ctx, def);
            if (ctxVal != null) {
@@ -132,7 +121,7 @@ class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public CompletableFuture<Boolean> setOption(final Set<Context> contexts, final String key, final String value) {
+    public CompletableFuture<Boolean> setOption(final Set<Context> contexts, final String key, @Nullable final String value) {
         return boolSuccess(data.update(input -> input.setOption(contextsSpongeToPex(contexts, plugin.getManager()), key, value)));
     }
 

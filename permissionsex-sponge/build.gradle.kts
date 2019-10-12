@@ -60,7 +60,7 @@ val generateSource by tasks.registering(Copy::class) {
 }
 
 sourceSets["main"].java.srcDir(generatedSourceRoot)
-tasks.compileJava {
+tasks.compileKotlin {
     dependsOn(generateSource)
 }
 

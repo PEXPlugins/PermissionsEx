@@ -94,7 +94,7 @@ class PEXSubject implements Subject {
         });
     }
 
-    public static CompletableFuture<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
+    static CompletableFuture<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
         return collection.getCalculatedSubject(identifier).thenApply(baked -> {
             return new PEXSubject(baked, collection);
         });

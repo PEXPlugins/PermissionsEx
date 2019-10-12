@@ -155,8 +155,8 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
     }
 
     fun tryResolve(engine: PermissionsEx): Boolean {
-        if (this.definition != null) {
-            return true
+        if (this.definition != null && this.definition !is FallbackContextDefinition) {
+            return this.parsedValue != null
         }
         @Suppress("UNCHECKED_CAST")
         val definition = engine.getContextDefinition(this.key) as ContextDefinition<Type>?

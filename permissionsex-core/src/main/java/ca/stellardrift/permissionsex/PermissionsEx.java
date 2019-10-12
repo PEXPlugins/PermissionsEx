@@ -574,7 +574,12 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
         if (contextDefinition instanceof PEXContextDefinition<?> && this.state.get() != null) {
             ((PEXContextDefinition<T>) contextDefinition).update(getConfig());
         }
-       return this.contextTypes.putIfAbsent(contextDefinition.getName(), contextDefinition) == null;
+       ContextDefinition<?> possibleOut =  this.contextTypes.putIfAbsent(contextDefinition.getName(), contextDefinition);
+        if (possibleOut instanceof FallbackContextDefinition) {
+            return this.contextTypes.replace(contextDefinition.getName(), possibleOut, contextDefinition);
+        } else {
+            return possibleOut == null;
+        }
     }
 
     /**
@@ -605,6 +610,19 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
 
     @Nullable
     public ContextDefinition<?> getContextDefinition(@NotNull String definitionKey) {
-        return this.contextTypes.get(definitionKey);
+        return getContextDefinition(definitionKey, false);
+    }
+
+    @Nullable
+    public ContextDefinition<?> getContextDefinition(@NotNull String definitionKey, boolean allowFallbacks) {
+        ContextDefinition<?> ret = this.contextTypes.get(definitionKey);
+        if (ret == null && allowFallbacks) {
+            ContextDefinition<?> fallback = new FallbackContextDefinition(definitionKey);
+            ret = this.contextTypes.putIfAbsent(definitionKey, fallback);
+            if (ret == null) {
+                ret = fallback;
+            }
+        }
+        return ret;
     }
 }

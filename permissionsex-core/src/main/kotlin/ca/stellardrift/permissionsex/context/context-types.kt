@@ -25,6 +25,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 
+/**
+ * A placeholder context definition for implementations to use when a context query comes in for an unknown context
+ */
+class FallbackContextDefinition(name: String) : SimpleContextDefinition(name)
 
 object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
     private var activeTags: List<String> = listOf()
