@@ -28,6 +28,7 @@ import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.util.command.Commander;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -189,11 +190,21 @@ public class GameArguments {
             if (def == null) {
                 throw args.createError(t("Unknown context type %s", contextSplit[0]));
             }
-            return toCtxValue(def, contextSplit[1]);
+            ContextValue<?> ret = toCtxValue(def, contextSplit[1]);
+            if (ret == null) {
+                throw args.createError(t("Unable to parse value for context " + context));
+            }
+            return ret;
         }
 
+        @Nullable
         private <T> ContextValue<T> toCtxValue(ContextDefinition<T> def, String input) {
-            return def.createValue(def.deserialize(input));
+            T value = def.deserialize(input);
+            if (value == null) {
+                return null;
+            } else {
+                return def.createValue(value);
+            }
         }
 
         @Override

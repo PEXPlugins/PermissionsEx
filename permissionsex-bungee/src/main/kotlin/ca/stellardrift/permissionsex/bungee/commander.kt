@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bungeetext.BungeeMessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Util
+import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.Commander
 import ca.stellardrift.permissionsex.util.command.MessageFormatter
 import com.google.common.collect.Maps.immutableEntry
@@ -91,7 +91,7 @@ class BungeePluginMessageFormatter(pex: PermissionsEx, private val sender: Comma
     }
 
     override fun getFriendlyName(subj: Map.Entry<String, String>): String? {
-        return Util.castOptional(pex.getSubjects(subj.key).typeInfo.getAssociatedObject(subj.value), CommandSender::class.java).map(CommandSender::getName).orElse(null)
+        return pex.getSubjects(subj.key).typeInfo.getAssociatedObject(subj.value).castMap<CommandSender, String> { name }
     }
 
 }

@@ -27,7 +27,7 @@ import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.TranslatableLogger
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
-import ca.stellardrift.permissionsex.util.Util
+import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.google.common.collect.Iterables
 import com.mojang.authlib.Agent
@@ -107,8 +107,12 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             return
         }
 
-        manager.registerContextDefinition(WorldContextDefinition)
-        manager.registerContextDefinition(DimensionContextDefinition)
+        manager.registerContextDefinitions(WorldContextDefinition,
+            DimensionContextDefinition,
+            RemoteIpContextDefinition,
+            LocalIpContextDefinition,
+            LocalHostContextDefinition,
+            LocalPortContextDefinition)
         manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition()
         manager.getSubjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
@@ -144,8 +148,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
-                Util.castOptional(newSubj.associatedObject, ServerPlayerEntity::class.java).ifPresent { ply ->
-                    ply.server.playerManager.sendCommandTree(ply)
+                newSubj.associatedObject.castMap<ServerPlayerEntity> {
+                    server.playerManager.sendCommandTree(this)
                 }
             }
         }

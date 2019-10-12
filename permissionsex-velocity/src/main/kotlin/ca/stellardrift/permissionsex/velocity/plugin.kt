@@ -113,7 +113,8 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 
-        this.manager.registerContextDefinition(ProxyContextDefinition)
+        this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
+            LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
         logger.info(t("Successfully enabled %s v%s", ProjectData.NAME, ProjectData.VERSION))
     }
 

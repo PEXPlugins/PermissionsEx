@@ -27,6 +27,8 @@ import com.mojang.brigadier.builder.ArgumentBuilder
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.util.Identifier
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.util.Locale
 import java.util.function.Predicate
 
@@ -95,6 +97,22 @@ object MinecraftPermissions {
     }
 }
 
+interface IVirtualHostHolder {
+    /**
+     * The hostname a client used to connect to this server
+     * May be *unresolved* if the provided hostname could not be resolved
+     */
+    var virtualHost: InetSocketAddress
+}
+
+@JvmField
+val LOCAL_HOST: InetSocketAddress = InetSocketAddress(InetAddress.getLocalHost(), 25565)
+
+
+interface HandshakeC2SPacketAccess {
+    val address: String
+    val port: Int
+}
 
 interface IPermissionCommandSource {
     @JvmDefault

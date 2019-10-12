@@ -70,5 +70,4 @@ class PEXPermissionFunction(val plugin: PermissionsExPlugin, private val source:
     override fun getPermissionValue(permission: String): Tristate {
         return subject.getPermission(permission).asTristate()
     }
-
 }

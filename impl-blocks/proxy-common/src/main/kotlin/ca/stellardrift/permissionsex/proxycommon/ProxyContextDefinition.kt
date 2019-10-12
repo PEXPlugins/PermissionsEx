@@ -18,24 +18,16 @@
 package ca.stellardrift.permissionsex.proxycommon
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
-import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ninja.leaping.configurate.Types
 
+/**
+ * This context exists to mark the fact that a subject is operating in a proxy environment.
+ */
 object ProxyContextDefinition : ContextDefinition<Boolean>("proxy") {
-    override fun serialize(userValue: Boolean): String {
-        return userValue.toString()
-    }
-
-    override fun deserialize(canonicalValue: String): Boolean {
-        return Types.asBoolean(canonicalValue) ?: false
-    }
-
-    override fun matches(ctx: ContextValue<Boolean>, activeValue: Boolean): Boolean {
-        return ctx.parsedValue == activeValue
-    }
-
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Boolean) -> Unit) {
+    override fun serialize(userValue: Boolean): String = userValue.toString()
+    override fun deserialize(canonicalValue: String): Boolean = Types.asBoolean(canonicalValue) ?: false
+    override fun matches(ownVal: Boolean, testVal: Boolean): Boolean = ownVal == testVal
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Boolean) -> Unit) =
         consumer(true)
-    }
 }

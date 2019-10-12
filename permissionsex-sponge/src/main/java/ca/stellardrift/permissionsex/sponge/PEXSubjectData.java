@@ -28,6 +28,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.data.Change;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.data.SubjectDataReference;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.SubjectReference;
@@ -75,8 +76,10 @@ class PEXSubjectData implements SubjectData {
         return build;
     }
 
+    @Nullable
     private static <T> ContextValue<T> singleContextToPex(Context ctx, ContextDefinition<T> def) {
-        return def.createValue(def.deserialize(ctx.getValue()));
+        T val = def.deserialize(ctx.getValue());
+        return val == null ? null : def.createValue(val);
     }
 
     static Set<ContextValue<?>> contextsSpongeToPex(Set<Context> input, PermissionsEx manager) {
@@ -86,7 +89,10 @@ class PEXSubjectData implements SubjectData {
            if (def == null) {
                continue; // TODO: what do here? this gross
            }
-           builder.add(singleContextToPex(ctx, def));
+           ContextValue<?> ctxVal = singleContextToPex(ctx, def);
+           if (ctxVal != null) {
+               builder.add(ctxVal);
+           }
        }
        return builder.build();
     }

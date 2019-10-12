@@ -563,7 +563,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
 
     /**
      * Register a new context type that can be queried. If there is another context type registered with the same key
-     * as the one trying to be registered, the registration will fail
+     * as the one trying to be registered, the registration will fail.
      *
      * @param contextDefinition The new context type
      * @param <T> The context value type
@@ -574,6 +574,23 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
             ((PEXContextDefinition<T>) contextDefinition).update(getConfig());
         }
        return this.contextTypes.putIfAbsent(contextDefinition.getName(), contextDefinition) == null;
+    }
+
+    /**
+     * Register multiple context definitions.
+     *
+     * @see #registerContextDefinition for details on how individual registrations occur
+     * @param definitions The definitions to register
+     * @return The number of definitions that were successfully registered
+     */
+    public int registerContextDefinitions(ContextDefinition<?>... definitions) {
+        int numRegistered = 0;
+        for (ContextDefinition<?> def : definitions) {
+            if (registerContextDefinition(def)) {
+                numRegistered++;
+            }
+        }
+        return numRegistered;
     }
 
     /**

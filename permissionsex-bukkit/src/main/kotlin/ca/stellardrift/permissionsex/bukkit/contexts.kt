@@ -17,32 +17,27 @@
 
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.context.ContextDefinition
-import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.context.EnumContextDefinition
+import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.util.IpSet
+import ca.stellardrift.permissionsex.util.IpSetContextDefinition
+import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.maxPrefixLength
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 
 object WorldContextDefinition : ContextDefinition<String>("world") {
-    override fun serialize(userValue: String): String {
-        return userValue
-    }
+    override fun serialize(userValue: String): String = userValue
 
-    override fun deserialize(canonicalValue: String): String {
-        return canonicalValue // TODO: attempt to resolve world
-    }
-
-    override fun matches(ctx: ContextValue<String>, activeValue: String): Boolean {
-        return ctx.getParsedValue(this).equals(activeValue, ignoreCase = true)
-    }
+    override fun deserialize(canonicalValue: String): String = canonicalValue
+    override fun matches(ownVal: String, testVal: String): Boolean = ownVal.equals(testVal, ignoreCase = true)
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        val associated = subject.associatedObject.orElse(null)
-        if (associated is Player) {
-            consumer(associated.world.name)
-        }
+        subject.associatedObject.castMap<Player> { consumer(world.name) }
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<String> {
@@ -53,9 +48,39 @@ object WorldContextDefinition : ContextDefinition<String>("world") {
 object DimensionContextDefinition :
     EnumContextDefinition<World.Environment>("dimension", World.Environment::class.java) {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: World.Environment) -> Unit) {
-        val associated = subject.associatedObject.orElse(null)
-        if (associated is Player) {
-            consumer(associated.world.environment)
+        subject.associatedObject.castMap<Player> { consumer(world.environment) }
+    }
+}
+
+object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
+
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+        subject.associatedObject.castMap<Player> {
+            address?.address?.apply {
+                consumer(IpSet.fromAddrPrefix(this, this.maxPrefixLength))
+            }
         }
+    }
+
+}
+
+object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+        subject.transientData().get().getOptions(GLOBAL_CONTEXT)["hostname"]?.apply(consumer)
+    }
+}
+
+object LocalIpContextDefinition : IpSetContextDefinition("localip") {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+    }
+}
+
+object LocalPortContextDefiniiton : ContextDefinition<Int>("localport") {
+    override fun serialize(userValue: Int): String = userValue.toString()
+    override fun deserialize(canonicalValue: String): Int = Integer.parseInt(canonicalValue)
+    override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
+
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) {
+        consumer(Bukkit.getPort())
     }
 }

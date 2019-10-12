@@ -21,8 +21,11 @@
     "check.MixinServerPlayNetworkHandler",
     "check.MixinStructureBlockBlockEntity",
 
+    "lifecycle.MixinClientConnection",
     "lifecycle.MixinGameProfile",
+    "lifecycle.MixinHandshakeC2SPacket",
     "lifecycle.MixinPlayerManager",
+    "lifecycle.MixinServerHandshakeNetworkHandler",
     "lifecycle.MixinServerPlayNetworkHandler",
 
     "source.MixinServerPlayerEntity",

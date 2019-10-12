@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.Translations.t
-import ca.stellardrift.permissionsex.util.Util
+import ca.stellardrift.permissionsex.util.cast
 import ca.stellardrift.permissionsex.util.command.ButtonType
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import ca.stellardrift.permissionsex.util.command.Commander
@@ -186,7 +186,7 @@ class FabricMessageFormatter(private val cmd: FabricCommander, private val hlCol
     override fun subject(subject: Map.Entry<String, String>): Text {
         val subj = PermissionsExMod.manager.getSubjects(subject.key)[subject.value].join()
 
-        val name = Util.castOptional(subj.associatedObject, Nameable::class.java).map(Nameable::getName).orElseGet {
+        val name = subj.associatedObject.cast<Nameable>().map(Nameable::getName).orElseGet {
             val nameStr = subj.data().get().getOptions(GLOBAL_CONTEXT)["name"]
             if (nameStr != null) LiteralText(nameStr) else null
         }

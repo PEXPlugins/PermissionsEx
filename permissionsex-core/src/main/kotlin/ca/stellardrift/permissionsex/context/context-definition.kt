@@ -42,13 +42,16 @@ abstract class ContextDefinition<T>(val name: String) {
     /**
      * Given a string (which may be in user format), return a parsed object
      */
-    abstract fun deserialize(canonicalValue: String): T
+    abstract fun deserialize(canonicalValue: String): T?
 
     /**
      * Given a defined context and the active value (provided by [accumulateCurrentValues]),
      * return whether the active value matches the defined value.
      */
-    abstract fun matches(ctx: ContextValue<T>, activeValue: T): Boolean
+    open fun matches(ctx: ContextValue<T>, activeValue: T): Boolean =
+        matches(ctx.getParsedValue(this), activeValue)
+
+    abstract fun matches(ownVal: T, testVal: T): Boolean
 
     /**
      * Given a player, calculate active context types
@@ -92,8 +95,8 @@ abstract class EnumContextDefinition<T : Enum<T>>(name: String, private val enum
         return java.lang.Enum.valueOf(enumClass, canonicalValue.toUpperCase())
     }
 
-    override fun matches(ctx: ContextValue<T>, activeValue: T): Boolean {
-        return ctx.getParsedValue(this) == activeValue
+    override fun matches(ownVal: T, testVal: T): Boolean {
+        return ownVal == testVal
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<T> {
@@ -105,8 +108,8 @@ open class SimpleContextDefinition(name: String) : ContextDefinition<String>(nam
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
     }
 
-    override fun matches(ctx: ContextValue<String>, activeValue: String): Boolean {
-        return ctx.getParsedValue(this) == activeValue
+    override fun matches(ownVal: String, testVal: String): Boolean {
+        return ownVal == testVal
     }
 
     override fun serialize(userValue: String): String {
@@ -160,7 +163,7 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
         if (definition != null) {
             this.definition = definition
             this.parsedValue = definition.deserialize(this.rawValue)
-            return true
+            return this.parsedValue != null
         }
         return false
     }
@@ -170,13 +173,14 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
 
         this.definition = definition
         var parsedValue = this.parsedValue
-        return if (parsedValue == null) {
+        if (parsedValue == null) {
             parsedValue = definition.deserialize(this.rawValue)
             this.parsedValue = parsedValue
-            parsedValue
-        } else {
-            parsedValue
         }
+        if (parsedValue == null) {
+            throw IllegalArgumentException("Invalid value provided for context ${definition.name}")
+        }
+        return parsedValue
     }
 
     fun getParsedValue(engine: PermissionsEx): Type {

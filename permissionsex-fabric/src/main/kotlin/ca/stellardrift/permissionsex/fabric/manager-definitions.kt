@@ -18,13 +18,18 @@
 @file:JvmName("FabricDefinitions")
 package ca.stellardrift.permissionsex.fabric
 
+import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
-import ca.stellardrift.permissionsex.util.Util
+import ca.stellardrift.permissionsex.util.IpSet
+import ca.stellardrift.permissionsex.util.IpSetContextDefinition
+import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.maxPrefixLength
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.world.dimension.DimensionType
+import java.net.InetSocketAddress
 import java.util.Optional
 import java.util.UUID
 
@@ -50,9 +55,13 @@ object WorldContextDefinition : SimpleContextDefinition("world"), CommandSourceC
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        Util.castOptional(subject.associatedObject, ServerPlayerEntity::class.java).ifPresent {
-            consumer(it.serverWorld.levelProperties.levelName)
+        subject.associatedObject.castMap<ServerPlayerEntity> {
+            consumer(serverWorld.levelProperties.levelName)
         }
+    }
+
+    override fun suggestValues(subject: CalculatedSubject): Set<String> {
+        return PermissionsExMod.server.worlds.map { it.levelProperties.levelName }.toSet()
     }
 }
 
@@ -65,13 +74,73 @@ object DimensionContextDefinition : SimpleContextDefinition("dimension"), Comman
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        Util.castOptional(subject.associatedObject, ServerPlayerEntity::class.java).ifPresent {
-            val key = DimensionType.getId(it.serverWorld.dimension.type)?.path
+        subject.associatedObject.castMap<ServerPlayerEntity> {
+            val key = DimensionType.getId(serverWorld.dimension.type)?.path
             if (key != null) {
                 consumer(key)
             }
         }
     }
+
+    override fun suggestValues(subject: CalculatedSubject): Set<String> {
+        return DimensionType.getAll().mapNotNull { DimensionType.getId(it)?.path }.toSet()
+    }
+}
+
+object RemoteIpContextDefinition : IpSetContextDefinition("remoteip"), CommandSourceContextDefinition<IpSet> {
+    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: IpSet) -> Unit) {
+        source.ifPlayer { (it.networkHandler.client.address as? InetSocketAddress)
+            ?.run { consumer(IpSet.fromAddrPrefix(address, address.maxPrefixLength)) }
+        }
+    }
+
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+        subject.associatedObject.castMap<ServerPlayerEntity> { (networkHandler.client.address as? InetSocketAddress)?.run {
+            consumer(IpSet.fromAddrPrefix(address, address.maxPrefixLength))
+        } }
+    }
+}
+
+object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSourceContextDefinition<IpSet> {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) =
+        subject.associatedObject.castMap<ServerPlayerEntity> { accumulate(this, consumer) }
+
+    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: IpSet) -> Unit) {
+        source.ifPlayer { accumulate(it, consumer) }
+    }
+
+    private fun accumulate(ply: ServerPlayerEntity, consumer: (value: IpSet) -> Unit) =
+        consumer((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.address.run {
+            IpSet.fromAddrPrefix(this, this.maxPrefixLength)
+        })
+
+}
+
+object LocalHostContextDefinition : SimpleContextDefinition("localhost"), CommandSourceContextDefinition<String> {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) =
+        subject.associatedObject.castMap<ServerPlayerEntity> { accumulate(this, consumer) }
+    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: String) -> Unit) {
+        source.ifPlayer { accumulate(it, consumer) }
+    }
+
+    private fun accumulate(ply: ServerPlayerEntity, consumer: (value: String) -> Unit) =
+        consumer((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.hostString)
+}
+
+object LocalPortContextDefinition : ContextDefinition<Int>("localport"), CommandSourceContextDefinition<Int> {
+    override fun serialize(userValue: Int): String = userValue.toString()
+    override fun deserialize(canonicalValue: String): Int = canonicalValue.toInt()
+    override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
+
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) =
+        subject.associatedObject.castMap<ServerPlayerEntity> { accumulate(this, consumer) }
+    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: Int) -> Unit) {
+        source.ifPlayer { accumulate(it, consumer) }
+    }
+
+    private fun accumulate(ply: ServerPlayerEntity, consumer: (value: Int) -> Unit) =
+        consumer((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.port)
+
 }
 
 class UserSubjectTypeDefinition : SubjectTypeDefinition<ServerPlayerEntity>("user") {

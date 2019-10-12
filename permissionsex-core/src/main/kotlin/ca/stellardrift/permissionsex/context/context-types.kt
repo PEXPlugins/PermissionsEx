@@ -31,8 +31,8 @@ object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
 
     override fun serialize(userValue: String): String = userValue
     override fun deserialize(canonicalValue: String): String = canonicalValue
-    override fun matches(ctx: ContextValue<String>, activeValue: String): Boolean =
-        ctx.getParsedValue(this) == activeValue
+    override fun matches(ownVal: String, testVal: String): Boolean =
+        ownVal == testVal
 
     override fun update(config: PermissionsExConfiguration) {
         activeTags = config.serverTags
@@ -67,22 +67,22 @@ open class TimeContextDefinition internal constructor(name: String) : PEXContext
         return LocalDateTime.now()
     }
 
-    override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.truncatedTo(ChronoUnit.SECONDS)
-            .isEqual(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
+    override fun matches(ownVal: LocalDateTime, testVal: LocalDateTime): Boolean {
+        return testVal.truncatedTo(ChronoUnit.SECONDS)
+            .isEqual(ownVal.truncatedTo(ChronoUnit.SECONDS))
     }
 }
 
 object BeforeTimeContextDefinition : TimeContextDefinition("before-time") {
-    override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.truncatedTo(ChronoUnit.SECONDS)
-            .isBefore(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
+    override fun matches(ownVal: LocalDateTime, testVal: LocalDateTime): Boolean {
+        return testVal.truncatedTo(ChronoUnit.SECONDS)
+            .isBefore(ownVal.truncatedTo(ChronoUnit.SECONDS))
     }
 }
 
 object AfterTimeContextDefinition : TimeContextDefinition("after-time") {
-    override fun matches(ctx: ContextValue<LocalDateTime>, activeValue: LocalDateTime): Boolean {
-        return activeValue.truncatedTo(ChronoUnit.SECONDS)
-            .isAfter(ctx.getParsedValue(this).truncatedTo(ChronoUnit.SECONDS))
+    override fun matches(ownVal: LocalDateTime, testVal: LocalDateTime): Boolean {
+        return testVal.truncatedTo(ChronoUnit.SECONDS)
+            .isAfter(ownVal.truncatedTo(ChronoUnit.SECONDS))
     }
 }

@@ -91,7 +91,8 @@ class PermissionsExPlugin : Plugin() {
         manager.getSubjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
             it.setDefaultValue(PermissionsEx.GLOBAL_CONTEXT, 1)
         }
-        this.manager.registerContextDefinition(ProxyContextDefinition)
+        this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
+            LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
         super.onEnable()
     }
 

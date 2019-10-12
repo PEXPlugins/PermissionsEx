@@ -20,11 +20,7 @@
  */
 package ca.stellardrift.permissionsex.util.configurate
 
-import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import com.google.common.reflect.TypeToken
 import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.SimpleConfigurationNode
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers
 
 operator fun ConfigurationNode.get(vararg path: Any): ConfigurationNode {
     return getNode(*path)
@@ -47,8 +43,3 @@ operator fun ConfigurationNode.contains(path: Any): Boolean {
     return !getNode(path).isVirtual
 }
 
-inline fun <reified T> CalculatedSubject.getOption(key: String): T? {
-    val ret = getOption(key).orElse(null)
-    val type = TypeToken.of(T::class.java)
-    return TypeSerializers.getDefaultSerializers().get(TypeToken.of(T::class.java)).deserialize(type, SimpleConfigurationNode.root().setValue(ret))
-}

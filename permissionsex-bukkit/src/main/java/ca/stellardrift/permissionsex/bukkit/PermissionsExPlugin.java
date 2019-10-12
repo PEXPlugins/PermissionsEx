@@ -117,8 +117,12 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        manager.registerContextDefinition(WorldContextDefinition.INSTANCE);
-        manager.registerContextDefinition(DimensionContextDefinition.INSTANCE);
+        manager.registerContextDefinitions(WorldContextDefinition.INSTANCE,
+                DimensionContextDefinition.INSTANCE,
+                RemoteIpContextDefinition.INSTANCE,
+                LocalIpContextDefinition.INSTANCE,
+                LocalHostContextDefinition.INSTANCE,
+                LocalPortContextDefiniiton.INSTANCE);
 
         manager.getSubjects(PermissionsEx.SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(PermissionsEx.SUBJECTS_USER, this));
         getServer().getPluginManager().registerEvents(this, this);
@@ -167,6 +171,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     private void onPlayerLogin(final PlayerLoginEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
+        getUserSubjects().transientData().update(identifier, subj ->
+                subj.setOption(PermissionsEx.GLOBAL_CONTEXT, "hostname", event.getHostname()));
         getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
             if (registered) {
                 getUserSubjects().persistentData().update(identifier, input -> {
