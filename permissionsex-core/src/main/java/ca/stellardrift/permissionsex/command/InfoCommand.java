@@ -65,7 +65,7 @@ public class InfoCommand {
                 Optional<?> associatedObject = subject.getAssociatedObject();
                 associatedObject.ifPresent(o -> src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Associated object: "))), o.toString())));
                 src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Active Contexts: "))), subject.getActiveContexts()));
-                src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Active & Used Contexts: "))), subject.getUsedContextValues().join()));
+                src.msg(src.fmt().combined(src.fmt().hl(src.fmt().tr(t("Active & Used Contexts: "))), subject.getUsedContextValues().collectList().block()));
             }
             if (!data.getAllPermissions().isEmpty() || !data.getAllDefaultValues().isEmpty()) {
                 src.msg(src.fmt().hl(src.fmt().tr(t("Permissions:"))));

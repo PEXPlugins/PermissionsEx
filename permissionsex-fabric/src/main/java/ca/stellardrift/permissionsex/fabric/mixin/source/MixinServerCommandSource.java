@@ -118,7 +118,8 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     @NotNull
     @Override
     public CalculatedSubject asCalculatedSubject() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).blockOptional()
+                .orElseThrow(() -> new RuntimeException("Unable to resolve subject for server command source " + this));
     }
 
     @NotNull

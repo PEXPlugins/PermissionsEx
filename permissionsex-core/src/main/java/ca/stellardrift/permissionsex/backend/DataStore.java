@@ -23,13 +23,15 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.Util;
+import kotlin.Pair;
 import ninja.leaping.configurate.ConfigurationNode;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Nullable;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -38,6 +40,7 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
 /**
  * Data type abstraction for permissions data
  */
+@NonNull
 public interface DataStore {
     /**
      * Activate this data store from the required data
@@ -59,7 +62,7 @@ public interface DataStore {
      * @param listener The update listener for this subject
      * @return The relevant subject data
      */
-    CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, @Nullable Consumer<ImmutableSubjectData> listener);
+    Mono<ImmutableSubjectData> getData(String type, String identifier, @Nullable Consumer<ImmutableSubjectData> listener);
 
     /**
      * Sets the data at the specified type and identifier.
@@ -69,7 +72,7 @@ public interface DataStore {
      * @param data The data to commit to this backend. This being null deletes any data for the given identifier
      * @return A future that can be used to listen for completion of writing the changed data
      */
-    CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
+    Mono<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
 
     /**
      * Move data from one subject to another
@@ -80,18 +83,18 @@ public interface DataStore {
      * @param newIdentifier The new subject's identifier
      * @return A future that will complete when the move is complete
      */
-    default CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {
-        return isRegistered(oldType, oldIdentifier).thenCombine(isRegistered(newType, newIdentifier), (oldRegistered, newRegistered) -> {
-            if (oldRegistered && !newRegistered) {
+    default Mono<?> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {
+        // oldRegistered && !newRegistered
+        return isRegistered(oldType, oldIdentifier).concatWith(isRegistered(newType, newIdentifier).map(x -> !x)).all(x ->x).flatMap(shouldMove -> {
+            if (shouldMove) {
                 return getData(oldType, oldIdentifier, null)
-                        .thenCompose(oldData -> setData(newType, newIdentifier, oldData))
-                        .thenCompose(newData -> setData(oldType, oldIdentifier, null))
-                        .thenApply(inp -> (Void) null);
+                        .flatMap(oldData -> setData(newType, newIdentifier, oldData))
+                        .flatMap(newData -> setData(oldType, oldIdentifier, null))
+                        .ignoreElement();
             } else {
-                return Util.<Void>failedFuture(new PermissionsException(t("Destination subject already existed or target subject did not!")));
+                return Mono.error(new PermissionsException(t("Destination subject already existed or source subject did not!")));
             }
-
-        }).thenCompose(future -> future);
+        });
     }
 
     /**
@@ -101,14 +104,14 @@ public interface DataStore {
      * @param identifier The subject's identifier
      * @return whether any data is stored
      */
-    CompletableFuture<Boolean> isRegistered(String type, String identifier);
+    Mono<Boolean> isRegistered(String type, String identifier);
 
     /**
      * Get all data for subjects of the specified type. This {@link Iterable} may be filled asynchronously
      * @param type The type to get all data for
      * @return An iterable providing data
      */
-    Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(String type);
+    Flux<Pair<String, ImmutableSubjectData>> getAll(String type);
 
     /**
      * Get all subject identifiers for subjects of the given type.
@@ -116,24 +119,24 @@ public interface DataStore {
      * @param type The type of subject to get identifiers for
      * @return The registered identifiers of subjects of type {@code type}
      */
-    Set<String> getAllIdentifiers(String type);
+    Flux<String> getAllIdentifiers(String type);
 
     /**
      * Return all subject types that contain data
      *
      * @return The registered subject types
      */
-    Set<String> getRegisteredTypes();
+    Flux<String> getRegisteredTypes();
 
     /**
      * Enumerate all contexts defined within this data store
      *
      * @return The contexts available within this data store
      */
-    CompletableFuture<Set<String>> getDefinedContextKeys();
+    Flux<String> getDefinedContextKeys();
 
     /**
-     * Returns all subjects present in this data store
+     * Serialize this data store's options
      *
      * @return An iterable containing all subjects
      */
@@ -144,7 +147,7 @@ public interface DataStore {
      *
      * @return An iterable containing all subjects
      */
-    Iterable<Map.Entry<Map.Entry<String,String>,ImmutableSubjectData>> getAll();
+    Flux<Pair<Map.Entry<String,String>,ImmutableSubjectData>> getAll();
 
     /**
      * Perform a bulk operation on this data store. While this operation is in progress, all writes must be suppressed
@@ -154,14 +157,14 @@ public interface DataStore {
      *
      * @param function The function to call containing the operation.
      */
-    <T> CompletableFuture<T> performBulkOperation(Function<DataStore, T> function);
+    <T, F extends Publisher<T>> F performBulkOperation(Function<DataStore, F> function);
 
     /**
      * Get all rank ladders.
      *
      * @return The names of all rank ladders
      */
-    Iterable<String> getAllRankLadders();
+    Flux<String> getAllRankLadders();
 
     /**
      * Get a specific rank ladder, with a possible update listener.
@@ -170,7 +173,7 @@ public interface DataStore {
      * @param listener The listener to track possible updates
      * @return the ladder
      */
-    CompletableFuture<RankLadder> getRankLadder(String ladder, @Nullable Consumer<RankLadder> listener);
+    Mono<RankLadder> getRankLadder(String ladder, @Nullable Consumer<RankLadder> listener);
 
     /**
      * Whether a rank ladder by the given name is present.
@@ -178,7 +181,7 @@ public interface DataStore {
      * @param ladder The ladder to check. Case-insensitive
      * @return Whether a ladder by the provided name exists
      */
-    CompletableFuture<Boolean> hasRankLadder(String ladder);
+    Mono<Boolean> hasRankLadder(String ladder);
 
     /**
      * Set the rank ladder at the given identifier.
@@ -187,16 +190,16 @@ public interface DataStore {
      * @param ladder The ladder to update
      * @return a future tracking the status of this operation
      */
-    CompletableFuture<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
+    Mono<RankLadder> setRankLadder(String identifier, @Nullable RankLadder ladder);
 
     /**
      * Get context inheritance information
      * @param inheritance The listener to notify about changes
      * @return A future that will supply context inheritance
      */
-    CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> inheritance);
+    Mono<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> inheritance);
 
-    CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
+    Mono<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
 
 }
 

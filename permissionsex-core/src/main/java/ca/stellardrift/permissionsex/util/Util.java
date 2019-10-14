@@ -66,36 +66,6 @@ public class Util {
                 .valueFlag(GameArguments.context(Translations.t("context"), pex), "-context", "-contexts", "c");
     }
 
-    public static <T> CompletableFuture<T> failedFuture(Throwable error) {
-        CompletableFuture<T> ret = new CompletableFuture<>();
-        ret.completeExceptionally(error);
-        return ret;
-    }
-
-    private static final CompletableFuture<Object> EMPTY_FUTURE = new CompletableFuture<>();
-    static {
-        EMPTY_FUTURE.complete(null);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> CompletableFuture<T> emptyFuture() {
-        return (CompletableFuture) EMPTY_FUTURE;
-    }
-
-    public static <I, T> CompletableFuture<T> failableFuture(I value, ThrowingFunction<I, T, ?> func) {
-        return failableFuture(() -> func.apply(value));
-    }
-
-    public static <T> CompletableFuture<T> failableFuture(ThrowingSupplier<T, ?> func) {
-        CompletableFuture<T> ret = new CompletableFuture<>();
-        try {
-            ret.complete(func.supply());
-        } catch (Exception e) {
-            ret.completeExceptionally(e);
-        }
-        return ret;
-    }
-
     public static <T> CompletableFuture<T> asyncFailableFuture(ThrowingSupplier<T, ?> supplier, Executor exec) {
         CompletableFuture<T> ret = new CompletableFuture<>();
         exec.execute(() -> {

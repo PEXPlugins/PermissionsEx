@@ -73,7 +73,8 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
         if (ret != null) {
             return ret;
         }
-        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).blockOptional()
+                .orElseThrow(() -> new RuntimeException("Unable to load permissions data for player " + this));
         permSubject.set(updated);
         return updated;
     }

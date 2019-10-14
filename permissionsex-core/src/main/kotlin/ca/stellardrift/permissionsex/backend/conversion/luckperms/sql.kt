@@ -22,7 +22,8 @@ import ca.stellardrift.permissionsex.backend.DataStore
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.RankLadder
-import java.util.concurrent.CompletableFuture
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.function.Function
 
 class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
@@ -32,11 +33,11 @@ class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
         val FACTORY = Factory("luckperms-sql", LuckPermsSqlDataStore::class.java)
     }
 
-    override fun setDataInternal(type: String, identifier: String, data: ImmutableSubjectData?): CompletableFuture<ImmutableSubjectData> {
+    override fun setDataInternal(type: String, identifier: String, data: ImmutableSubjectData?): Mono<ImmutableSubjectData> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getContextInheritanceInternal(): CompletableFuture<ContextInheritance> {
+    override fun getContextInheritanceInternal(): Mono<ContextInheritance> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -44,19 +45,19 @@ class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getAllIdentifiers(type: String): Set<String> {
+    override fun getAllIdentifiers(type: String): Flux<String> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getRegisteredTypes(): Set<String> {
+    override fun getRegisteredTypes(): Flux<String> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {
+    override fun getDefinedContextKeys(): Flux<String> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
+    override fun getAll(): Flux<Pair<MutableMap.MutableEntry<String, String>, ImmutableSubjectData>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -64,11 +65,11 @@ class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getDataInternal(type: String, identifier: String): CompletableFuture<ImmutableSubjectData> {
+    override fun getDataInternal(type: String, identifier: String): Mono<ImmutableSubjectData> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun setContextInheritanceInternal(contextInheritance: ContextInheritance): CompletableFuture<ContextInheritance> {
+    override fun setContextInheritanceInternal(contextInheritance: ContextInheritance): Mono<ContextInheritance> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -76,23 +77,23 @@ class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun isRegistered(type: String, identifier: String): CompletableFuture<Boolean> {
+    override fun isRegistered(type: String, identifier: String): Mono<Boolean> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getAllRankLadders(): Iterable<String> {
+    override fun getAllRankLadders(): Flux<String> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun hasRankLadder(ladder: String): CompletableFuture<Boolean> {
+    override fun hasRankLadder(ladder: String): Mono<Boolean> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
+    override fun getRankLadderInternal(ladder: String): Mono<RankLadder> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder?): CompletableFuture<RankLadder> {
+    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder?): Mono<RankLadder> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

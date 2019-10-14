@@ -22,9 +22,10 @@ import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -46,11 +47,11 @@ public class RankLadderCache {
         this.dataStore = dataStore;
         cache = Caffeine.newBuilder()
                 .maximumSize(256)
-                .buildAsync(((key, executor) -> dataStore.getRankLadder(key, clearListener(key))));
+                .buildAsync(((key, executor) -> dataStore.getRankLadder(key, clearListener(key)).toFuture()));
         if (existing != null) {
             listeners = existing.listeners;
             existing.cache.synchronous().asMap().forEach((key, rankLadder) -> {
-                get(key, null).thenAccept(data -> listeners.call(key, data));
+                get(key, null).subscribe(data -> listeners.call(key, data));
             });
         } else {
             listeners = new CacheListenerHolder<>();
@@ -58,24 +59,23 @@ public class RankLadderCache {
     }
 
 
-    public CompletableFuture<RankLadder> get(String identifier, Consumer<RankLadder> listener) {
+    public Mono<RankLadder> get(String identifier, Consumer<RankLadder> listener) {
         Preconditions.checkNotNull(identifier, "identifier");
 
-        CompletableFuture<RankLadder> ret = cache.get(identifier);
-        ret.thenRun(() -> {
+        Mono<RankLadder> ret = Mono.fromFuture(cache.get(identifier));
+        return ret.doOnSuccess(it -> {
             if (listener != null) {
                 listeners.addListener(identifier, listener);
             }
         });
-        return ret;
     }
 
-    public CompletableFuture<RankLadder> update(String identifier, Function<RankLadder, RankLadder> updateFunc) {
-        return cache.get(identifier)
-                .thenCompose(oldLadder -> {
+    public Mono<RankLadder> update(String identifier, Function<RankLadder, RankLadder> updateFunc) {
+        return Mono.fromFuture(cache.get(identifier))
+                .flatMap(oldLadder -> {
                     RankLadder newLadder = updateFunc.apply(oldLadder);
                     if (oldLadder == newLadder) {
-                        return CompletableFuture.completedFuture(newLadder);
+                        return Mono.just(oldLadder);
                     }
                     return set(identifier, newLadder);
 
@@ -95,17 +95,17 @@ public class RankLadderCache {
         listeners.removeAll(identifier);
     }
 
-    public CompletableFuture<Boolean> has(String identifier) {
+    public Mono<Boolean> has(String identifier) {
         Preconditions.checkNotNull(identifier, "identifier");
 
         if (cache.synchronous().getIfPresent(identifier) != null) {
-            return CompletableFuture.completedFuture(true);
+            return Mono.just(true);
         } else {
             return dataStore.hasRankLadder(identifier);
         }
     }
 
-    public CompletableFuture<RankLadder> set(String identifier, RankLadder newData) {
+    public Mono<RankLadder> set(String identifier, RankLadder newData) {
         Preconditions.checkNotNull(identifier, "identifier");
 
         return dataStore.setRankLadder(identifier, newData);
@@ -127,7 +127,7 @@ public class RankLadderCache {
         listeners.addListener(identifier, listener);
     }
 
-    public Iterable<String> getAll() {
+    public Flux<String> getAll() {
         return dataStore.getAllRankLadders();
     }
 }

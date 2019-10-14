@@ -49,6 +49,15 @@ dependencies {
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
 
+    // Reactive libraries
+    api("org.reactivestreams:reactive-streams:1.0.3")
+    api(platform("io.projectreactor:reactor-bom:Dysprosium-RELEASE"))
+    api("io.projectreactor:reactor-core")
+    api("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    implementation("io.r2dbc:r2dbc-client:0.8.0.RC1")
+
+
+    testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     testImplementation("org.mockito:mockito-core:3.0.0")
     testImplementation("com.h2database:h2:1.4.199")

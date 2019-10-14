@@ -33,18 +33,22 @@ import ca.stellardrift.permissionsex.logging.DebugPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import ca.stellardrift.permissionsex.util.Translations;
-import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -53,13 +57,12 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -95,7 +98,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     private final AtomicReference<State> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
     private RankLadderCache rankLadderCache;
-    private volatile CompletableFuture<ContextInheritance> cachedInheritance;
+    private volatile Mono<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
 
     private static class State {
@@ -110,6 +113,28 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     }
 
     public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
+        Schedulers.setFactory(new Schedulers.Factory() {
+            @Override
+            public Scheduler newElastic(int ttlSeconds, ThreadFactory threadFactory) {
+                return Schedulers.fromExecutor(getAsyncExecutor(), true);
+            }
+
+            @Override
+            public Scheduler newBoundedElastic(int threadCap, int queuedTaskCap, ThreadFactory threadFactory, int ttlSeconds) {
+                return Schedulers.fromExecutor(getAsyncExecutor(), true);
+            }
+
+            @Override
+            public Scheduler newParallel(int parallelism, ThreadFactory threadFactory) {
+                return Schedulers.fromExecutor(getAsyncExecutor(), true);
+            }
+
+            @Override
+            public Scheduler newSingle(ThreadFactory threadFactory) {
+                return Schedulers.fromExecutor(getAsyncExecutor(), true);
+            }
+        });
+
         this.impl = impl;
         this.logger = TranslatableLogger.forLogger(impl.getLogger());
         this.transientData = new MemoryDataStore();
@@ -139,69 +164,64 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     private void convertUuids() {
         try {
             InetAddress.getByName("api.mojang.com");
-            final DataStore dataStore = state.get().activeDataStore;
-            performBulkOperation(() -> {
-                Set<String> toConvert = dataStore.getAllIdentifiers(SUBJECTS_USER).stream()
-                        .filter(ident -> {
-                            if (ident.length() != 36) {
-                                return true;
-                            }
-                            try {
-                                UUID.fromString(ident);
-                                return false;
-                            } catch (IllegalArgumentException ex) {
-                                return true;
-                            }
-                        }).collect(Collectors.toSet());
-                if (!toConvert.isEmpty()) {
-                    getLogger().info(t("Trying to convert users stored by name to UUID"));
-                } else {
-                    return CompletableFuture.completedFuture(0);
-                }
-
-                return lookupMinecraftProfilesByName(toConvert, profile -> {
-                    final String newIdentifier = profile.getUuid().toString();
-                    String lookupName = profile.getName();
-                    return dataStore.isRegistered(SUBJECTS_USER, newIdentifier).thenCombine(
-                            dataStore.isRegistered(SUBJECTS_USER, lookupName)
-                                    .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
-                                if (newRegistered) {
-                                    getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
-                                    return false;
-                                } else if (!oldRegistered) {
-                                    return false;
-                                }
-                                return true;
-
-                            }).thenCompose(doConvert -> {
-                        if (!doConvert) {
-                            return Util.<Void>emptyFuture();
-                        }
-                        return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
-                                .thenCompose(oldData -> {
-                                    return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
-                                            .thenAccept(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)
-                                                    .exceptionally(t -> {
-                                                        t.printStackTrace();
-                                                        return null;
-                                                    }));
-                                });
-                    });
-                });
-            }).thenAccept(result -> {
-                    if (result != null && result > 0) {
-                        getLogger().info(Translations.tn("%s user successfully converted from name to UUID",
-                                "%s users successfully converted from name to UUID!",
-                                result, result));
-                    }
-                }).exceptionally(t -> {
-                    getLogger().error(t("Error converting users to UUID"), t);
-                    return null;
-                });
         } catch (UnknownHostException e) {
             getLogger().warn(t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary)."));
+            return;
         }
-
+        final DataStore dataStore = state.get().activeDataStore;
+        performBulkOperation(() -> {
+            Flux<String> toConvert = dataStore.getAllIdentifiers(SUBJECTS_USER)
+                    .filter(ident -> {
+                        if (ident.length() != 36) {
+                            return true;
+                        }
+                        try {
+                            UUID.fromString(ident);
+                            return false;
+                        } catch (IllegalArgumentException ex) {
+                            return true;
+                        }
+                    });
+            /**
+             * The process:
+             * - check if uuid is registered
+             * - check if username is registered (both returned case and lower case)
+             * - if uuid is already registered, warn of duplicate entry
+             * - if username is not registered, do not convert
+             *
+             * then, the actual conversion:
+             * - get the old subject data
+             * - set the option `name` to the username in global context
+             * - set the data at the uuid to the returned data
+             * - delete the data at the old location
+             *
+             * and repeat for every user
+             */
+            return lookupMinecraftProfilesByName(toConvert)
+                    .filterWhen(profile -> {
+                        final String newIdentifier = profile.getUuid().toString();
+                        String lookupName = profile.getName();
+                        Mono<Boolean> uuidRegistered = dataStore.isRegistered(SUBJECTS_USER, newIdentifier);
+                        Mono<Boolean> nameRegistered = dataStore.isRegistered(SUBJECTS_USER, lookupName);
+                        Mono<Boolean> lowercaseNameRegistered = dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase());
+                        uuidRegistered.doOnSuccess(x -> {
+                            if (x) {
+                                getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + lookupName));
+                            }
+                        });
+                        // !uuidRegistered && (lookupName || lowercaseLookupName)
+                        return Flux.concat(uuidRegistered.map(x -> !x), nameRegistered.concatWith(lowercaseNameRegistered).any(x -> x)).all(x -> x);
+                    }).flatMap(profile -> {
+                        final String newIdent = profile.getUuid().toString();
+                        return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
+                                .flatMap(oldData -> dataStore.setData(SUBJECTS_USER, newIdent, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
+                                        .flatMap(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)));
+                    }).doOnError(t -> getLogger().error(t("Error converting users to UUID"), t));
+        }).count().subscribe(count -> {
+            if (count > 0) {
+                getLogger().info(t("Successfully converted %s users to UUID!", count));
+            }
+        }, error -> getLogger().error(t("Unable to convert users to UUID due to the following error!"), error));
     }
 
     /**
@@ -235,7 +255,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      *
      * @return A set of registered subject types
      */
-    public Set<String> getRegisteredSubjectTypes() {
+    public Flux<String> getRegisteredSubjectTypes() {
         return getState().activeDataStore.getRegisteredTypes();
     }
 
@@ -246,8 +266,8 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * @param <T> The type of data that will be returned
      * @return A future that completes once all data has been written to the store
      */
-    public <T> CompletableFuture<T> performBulkOperation(Supplier<CompletableFuture<T>> func) {
-        return getState().activeDataStore.performBulkOperation(store -> func.get().join());
+    public <T, P extends Publisher<T>> P performBulkOperation(Supplier<P> func) {
+        return getState().activeDataStore.performBulkOperation(store -> func.get());
     }
 
     /**
@@ -265,27 +285,28 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * @param dataStoreIdentifier The identifier of the backend to import from
      * @return A future that completes once the import operation is complete
      */
-    public CompletableFuture<Void> importDataFrom(String dataStoreIdentifier) {
+    public Mono<?> importDataFrom(String dataStoreIdentifier) {
         final State state = getState();
-        final DataStore expected = state.config.getDataStore(dataStoreIdentifier);
-        if (expected == null) {
-            return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
+        final DataStore source = state.config.getDataStore(dataStoreIdentifier);
+        if (source == null) {
+            return Mono.error(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
         try {
-            expected.initialize(this);
+            source.initialize(this);
         } catch (PermissionsLoadingException e) {
-            return Util.failedFuture(e);
+            return Mono.error(e);
         }
 
-        return state.activeDataStore.performBulkOperation(store -> {
-            CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(),
-                    input -> store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue())), CompletableFuture.class))
-                    .thenCombine(expected.getContextInheritance(null).thenCompose(store::setContextInheritance), (v, a) -> null);
-            for (String ladder : store.getAllRankLadders()) {
-                ret = ret.thenCombine(expected.getRankLadder(ladder, null).thenCompose(ladderObj -> store.setRankLadder(ladder, ladderObj)), (v, a) -> null);
-            }
-            return ret;
-        }).thenCompose(val -> Util.failableFuture(val::get));
+
+        return state.activeDataStore.performBulkOperation(destination -> {
+            Flux<String> rankLadderNames = source.getAllRankLadders();
+            Flux<ImmutableSubjectData> subjects = source.getAll()
+                    .flatMap(ent -> destination.setData(ent.getFirst().getKey(), ent.getFirst().getValue(), ent.getSecond()));
+            Mono<ContextInheritance> ctxInherit = source.getContextInheritance(null).flatMap(destination::setContextInheritance);
+            Flux<RankLadder> rankLadders = rankLadderNames.zipWith(rankLadderNames.flatMap(ident -> source.getRankLadder(ident, null)), Pair::new)
+                    .flatMap(ent -> destination.setRankLadder(ent.getFirst(), ent.getSecond()));
+            return Flux.merge(subjects, ctxInherit, rankLadders).last();
+        });
     }
 
     /**
@@ -299,7 +320,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
 
     /**
      * Get the base notifier that logs any permission checks that gave taken place.
-     * @return
+     * @return A log of all permission checks made
      */
     public RecordingPermissionCheckNotifier getRecordingNotifier() {
         return this.baseNotifier;
@@ -412,13 +433,13 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
         getSubjects(SUBJECTS_GROUP).cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
-            getContextInheritance(null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
+            getContextInheritance().subscribe(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
         }
 
         // Migrate over legacy subject data
-        newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
+        newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).subscribe(x -> {
             getLogger().info(t("Successfully migrated old-style default data to new location"));
-        });
+        }, err -> {});
     }
 
     /**
@@ -426,11 +447,11 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      *
      * @return A future that completes once a reload has finished
      */
-    public CompletableFuture<Void> reload() {
-        return Util.asyncFailableFuture(() -> {
+    public Mono<Void> reload() {
+        return Mono.fromCallable(() -> {
             reloadSync();
             return null;
-        }, getAsyncExecutor());
+        }).subscribeOn(getScheduler()).then();
     }
 
     /**
@@ -491,13 +512,8 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     }
 
     @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Consumer<MinecraftProfile> action) {
-        return impl.lookupMinecraftProfilesByName(names, action);
-    }
-
-    @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
-        return impl.lookupMinecraftProfilesByName(names, action);
+    public Flux<MinecraftProfile> lookupMinecraftProfilesByName(Flux<String> names) {
+        return impl.lookupMinecraftProfilesByName(names);
     }
 
     /**
@@ -515,15 +531,13 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      *  It follows that anybody else's changes will not appear in the returned inheritance object -- so if updates are
      *  desired providing a callback function is important.
      *
-     * @param listener A callback function that will be triggered whenever there is a change to the context inheritance
+     *  The returned stream will continue providing updated context inheritance until it is disposed.
+     *
      * @return A future providing the current context inheritance data
      */
-    public CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
+    public Mono<ContextInheritance> getContextInheritance() {
         if (this.cachedInheritance == null) {
             this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
-        }
-        if (listener != null) {
-            this.cachedInheritanceListeners.addListener(true, listener);
         }
         return this.cachedInheritance;
 
@@ -535,7 +549,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * @param newInheritance The modified inheritance object
      * @return A future containing the latest context inheritance object
      */
-    public CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance newInheritance) {
+    public Mono<ContextInheritance> setContextInheritance(ContextInheritance newInheritance) {
         return getState().activeDataStore.setContextInheritance(newInheritance);
     }
 
@@ -546,20 +560,15 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      */
     @Override
     public void accept(ContextInheritance newData) {
-        this.cachedInheritance = CompletableFuture.completedFuture(newData);
+        this.cachedInheritance = Mono.just(newData);
         this.cachedInheritanceListeners.call(true, newData);
     }
 
-    public CompletableFuture<Set<ContextDefinition<?>>> getUsedContextTypes() {
-        ImmutableSet.Builder<ContextDefinition<?>> build = ImmutableSet.builder();
-        return getState().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
-            for (ContextDefinition<?> def : this.contextTypes.values()) {
-                if (persist.contains(def.getName()) || trans.contains(def.getName())) {
-                    build.add(def);
-                }
-            }
-           return build.build();
-        });
+    public Flux<ContextDefinition<?>> getUsedContextTypes() {
+        return Flux.merge(getState().activeDataStore.getDefinedContextKeys(), transientData.getDefinedContextKeys())
+                .collect(Collectors.toSet())
+                .flatMapMany(allKeys -> Flux.fromStream(this.contextTypes.values().stream()
+                        .filter(it -> allKeys.contains(it.getName()))));
     }
 
     /**

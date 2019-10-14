@@ -50,7 +50,7 @@ class BungeeCommander(pex: PermissionsEx, private val src: CommandSender) : Comm
         })
     }
 
-    override fun hasPermission(permission: String?): Boolean {
+    override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
     }
 

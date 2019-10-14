@@ -48,7 +48,6 @@ dependencies {
     implementation(project(":impl-blocks:permissionsex-hikari-config")) {
         exclude("org.slf4j", "slf4j-api")
     }
-    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
 
     shadow("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
     kapt("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")

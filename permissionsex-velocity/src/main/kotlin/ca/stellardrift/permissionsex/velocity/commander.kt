@@ -142,7 +142,7 @@ private object FixedTranslationComponentRenderer : FriendlyComponentRenderer<Vel
 class VelocityMessageFormatter(private val cmd: VelocityCommander, private val hlColor: TextColor = TextColor.YELLOW) :
     MessageFormatter<ComponentBuilder<*, *>> {
     override fun subject(subject: Map.Entry<String, String>): ComponentBuilder<*, *> {
-        val name = cmd.pex.getSubjects(subject.key).get(subject.value).join().data().get().getOptions(setOf())["name"]
+        val name = cmd.pex.getSubjects(subject.key).get(subject.value).block()!!.data().get().getOptions(setOf())["name"]
         val nameText = if (name != null) {
             TextComponent.builder(subject.value, TextColor.GRAY).append("/").append(name).build()
         } else {

@@ -17,9 +17,9 @@
 
 package ca.stellardrift.permissionsex.bukkit;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import com.google.common.collect.Maps;
-import ca.stellardrift.permissionsex.PermissionsEx;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
@@ -27,7 +27,6 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -43,13 +42,8 @@ public class PEXPermissionAttachment extends PermissionAttachment {
         super(plugin, parent);
         this.perm = perm;
 
-        try {
-            this.subjectData = perm.getManager().getSubjects(ATTACHMENT_TYPE).transientData().getReference(this.identifier).get();
-        } catch (ExecutionException | InterruptedException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-
-        this.subjectData.update(data -> data.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", getPlugin().getName()));
+        this.subjectData = perm.getManager().getSubjects(ATTACHMENT_TYPE).transientData().getReference(this.identifier).block();
+        this.subjectData.update(data -> data.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", getPlugin().getName())).subscribe();
     }
 
     public String getIdentifier() {

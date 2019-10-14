@@ -56,7 +56,7 @@ class PEXVaultChat extends Chat {
 
     @Override
     public void setGroupInfoString(final String world, String name, final String key, final String value) {
-        perms.getSubject(name).data().update(input -> input.setOption(contextsFrom(world), key, value));
+        perms.getSubject(name).data().update(input -> input.setOption(contextsFrom(world), key, value)).subscribe();
     }
 
 
@@ -67,7 +67,7 @@ class PEXVaultChat extends Chat {
 
     @Override
     public void setPlayerInfoString(final String world, OfflinePlayer player, final String node, final String value) {
-        perms.getSubject(player).data().update(input -> input.setOption(contextsFrom(world), node, value));
+        perms.getSubject(player).data().update(input -> input.setOption(contextsFrom(world), node, value)).subscribe();
     }
 
     // -- Passthrough methods

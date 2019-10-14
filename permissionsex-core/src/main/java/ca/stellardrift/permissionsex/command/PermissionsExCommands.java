@@ -19,13 +19,12 @@ package ca.stellardrift.permissionsex.command;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.data.SubjectCache;
-import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.command.*;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import reactor.core.publisher.Flux;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -78,12 +77,14 @@ public class PermissionsExCommands {
                             final String subjectType = args.getOne("subject-type");
                             args.checkPermission(src, "permissionsex.command.list." + subjectType);
                             SubjectCache cache = args.hasAny("transient") ? pex.getSubjects(subjectType).transientData() : pex.getSubjects(subjectType).persistentData();
-                            Iterable<String> iter = cache.getAllIdentifiers();
+                            Flux<String> iter = cache.getAllIdentifiers();
+
                             if (args.hasAny("filter")) {
-                                iter = Iterables.filter(iter, new GuavaStartsWithPredicate(args.<String>getOne("filter")));
+                                final String filter = args.<String>getOne("filter").toLowerCase();
+                                iter = iter.filter(it -> it.toLowerCase().startsWith(filter));
                             }
 
-                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), Iterables.transform(iter, input -> src.fmt().subject(Maps.immutableEntry(subjectType, input))));
+                            src.msgPaginated(t("%s subjects", subjectType), t("All subjects of type %s", subjectType), iter.map(ident -> src.fmt().subject(Maps.immutableEntry(subjectType, ident))).toIterable());
                         } else if (args.hasAny(subjectChildren.getKey().getUntranslated())) {
                             ChildCommands.executor(subjectChildren).execute(src, args);
                         } else if (args.hasAny(children.getKey().getUntranslated())) {
@@ -144,14 +145,13 @@ public class PermissionsExCommands {
                     @Override
                     public <TextType> void execute(final Commander<TextType> src, CommandContext args) throws CommandException {
                         src.msg(t("Reloading PermissionsEx"));
-                        pex.reload().thenRun(() -> {
-                            src.msg(t("The reload was successful"));
-                        }).exceptionally(t -> {
+                        pex.reload().subscribe(null, t -> {
                             src.error(t("An error occurred while reloading PEX: %s\n " +
                                     "Please see the server console for details", t.getLocalizedMessage()));
                             pex.getLogger().error(t("An error occurred while reloading PEX (triggered by %s's command): %s",
                                     src.getName(), t.getLocalizedMessage()), t);
-                            return null;
+                        }, () -> {
+                            src.msg(t("The reload was successful"));
                         });
                     }
                 })

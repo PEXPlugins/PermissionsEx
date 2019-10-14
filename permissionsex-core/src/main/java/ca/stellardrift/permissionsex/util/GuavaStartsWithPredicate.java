@@ -28,11 +28,11 @@ public class GuavaStartsWithPredicate implements Predicate<String> {
     private final String test;
 
     public GuavaStartsWithPredicate(String test) {
-        this.test = test;
+        this.test = test.toLowerCase();
     }
 
     @Override
     public boolean apply(@Nullable String input) {
-        return input != null && input.toLowerCase().startsWith(test.toLowerCase());
+        return input != null && input.toLowerCase().startsWith(test);
     }
 }

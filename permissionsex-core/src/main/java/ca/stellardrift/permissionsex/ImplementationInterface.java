@@ -21,16 +21,16 @@ import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
@@ -93,12 +93,20 @@ public interface ImplementationInterface {
         return Maps.immutableEntry(collection, ident);
      }
 
-    default CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Consumer<MinecraftProfile> action) {
-         return lookupMinecraftProfilesByName(names, profile -> {
-             action.accept(profile);
-             return CompletableFuture.completedFuture(null);
-         });
-    }
+    /**
+     * Given a list of player names, attempt to resolve them all to game profiles. Implementations may choose to use their own cache to do this.
+     *
+     * @param names The provider of names to resolve
+     * @return A flowable that will provide
+     */
+     Flux<MinecraftProfile> lookupMinecraftProfilesByName(Flux<String> names);
 
-    CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action);
+    /**
+     * Get a reactor scheduler to be used for data operations
+     *
+     * @return A shared scheduler instance
+     */
+    default Scheduler getScheduler() {
+        return Schedulers.fromExecutor(getAsyncExecutor());
+    }
 }

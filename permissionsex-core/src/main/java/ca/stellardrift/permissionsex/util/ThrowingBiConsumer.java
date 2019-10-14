@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.util;
 
+@FunctionalInterface
 public interface ThrowingBiConsumer<A, B, E extends Exception> {
     /**
      * Perform the action with the provided arguments

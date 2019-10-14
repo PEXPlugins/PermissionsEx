@@ -17,9 +17,8 @@
 
 package ca.stellardrift.permissionsex.sponge;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.service.permission.Subject;
@@ -31,6 +30,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Implementation of a permission description
  */
@@ -40,7 +41,7 @@ class PEXPermissionDescription implements PermissionDescription {
     private final Optional<Text> description;
     private final Optional<PluginContainer> owner;
 
-    public PEXPermissionDescription(PermissionsExPlugin plugin, String permId, Text description, PluginContainer owner) {
+    public PEXPermissionDescription(PermissionsExPlugin plugin, String permId, @Nullable Text description, @Nullable PluginContainer owner) {
         this.plugin = plugin;
         this.permId = permId;
         this.description = Optional.ofNullable(description);
@@ -73,28 +74,26 @@ class PEXPermissionDescription implements PermissionDescription {
     }
 
     static class Builder implements PermissionDescription.Builder {
-        private final PluginContainer owner;
+        private final @Nullable PluginContainer owner;
         private final PermissionsExPlugin plugin;
         private String id;
-        private Text description;
+        private @Nullable Text description;
         private Map<String, Integer> ranks = new HashMap<>();
 
-        Builder(PluginContainer owner, PermissionsExPlugin plugin) {
+        Builder(@Nullable PluginContainer owner, PermissionsExPlugin plugin) {
             this.owner = owner;
             this.plugin = plugin;
         }
 
         @Override
         public Builder id(String id) {
-            Preconditions.checkNotNull(id, "id");
-            this.id = id;
+            this.id = requireNonNull(id, "id");
             return this;
         }
 
         @Override
-        public Builder description(Text text) {
-            Preconditions.checkNotNull(text, "text");
-            this.description = text;
+        public Builder description(@Nullable Text text) {
+            this.description = requireNonNull(text, "text");
             return this;
         }
 
@@ -110,8 +109,7 @@ class PEXPermissionDescription implements PermissionDescription {
 
         @Override
         public PEXPermissionDescription register() throws IllegalStateException {
-            Preconditions.checkNotNull(id, "id");
-            Preconditions.checkNotNull(description, "description");
+            requireNonNull(id, "id");
 
             final PEXPermissionDescription ret = new PEXPermissionDescription(plugin, this.id, this.description, this.owner);
             this.plugin.registerDescription(ret, ranks);

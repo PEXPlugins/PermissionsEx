@@ -17,25 +17,24 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.SubjectType;
-import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.util.command.Commander;
+import com.google.common.collect.Maps;
 import org.jetbrains.annotations.Nullable;
+import reactor.core.publisher.Flux;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.util.Utilities.caseInsensitiveStartsWith;
 
 /**
  * Contains command elements for parts of the game
@@ -60,8 +59,7 @@ public class GameArguments {
         @Override
         protected Object parseValue(CommandArgs args) throws ArgumentParseException {
             final String next = args.next();
-            Set<String> subjectTypes = pex.getRegisteredSubjectTypes();
-            if (!subjectTypes.contains(next)) {
+            if (!pex.getRegisteredSubjectTypes().hasElement(next).defaultIfEmpty(false).block()) {
                 throw args.createError(t("Subject type %s was not valid!", next));
             }
             return next;
@@ -70,7 +68,7 @@ public class GameArguments {
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
             String nextOpt = args.nextIfPresent().orElse("");
-            return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new GuavaStartsWithPredicate(nextOpt)));
+            return pex.getRegisteredSubjectTypes().filter(caseInsensitiveStartsWith(nextOpt)).collect(Collectors.toList()).block();
         }
     }
 
@@ -117,7 +115,7 @@ public class GameArguments {
                 identifier = args.next();
             }
             SubjectType subjType = pex.getSubjects(type);
-            if (!subjType.isRegistered(identifier).join()) { // TODO: Async command elements
+            if (!subjType.isRegistered(identifier).block()) { // TODO: Async command elements
                 final Optional<String> newIdentifier = subjType.getTypeInfo().getAliasForName(identifier);
                 if (newIdentifier.isPresent()) {
                     identifier = newIdentifier.get();
@@ -135,7 +133,7 @@ public class GameArguments {
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
             final Optional<String> typeSegment = args.nextIfPresent();
             if (!typeSegment.isPresent()) {
-                return ImmutableList.copyOf(pex.getRegisteredSubjectTypes());
+                return pex.getRegisteredSubjectTypes().collect(Collectors.toList()).block();
             }
 
             String type = typeSegment.get();
@@ -146,24 +144,28 @@ public class GameArguments {
                     type = argSplit[0];
                     identifierSegment = Optional.of(argSplit[1]);
                     final SubjectType typeObj = pex.getSubjects(type);
-                    final Iterable<String> allIdents = typeObj.getAllIdentifiers();
-                    final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, k -> typeObj.getTypeInfo().getAliasForName(k).orElse(k)), v -> v != null)),
-                            new GuavaStartsWithPredicate(identifierSegment.get())
-                    );
+                    final Flux<String> allIdents = typeObj.getAllIdentifiers();
 
-                    return ImmutableList.copyOf(Iterables.transform(ret, input -> typeObj.getTypeInfo().getTypeName() + ":" + input));
+                    return allIdents.map(k -> typeObj.getTypeInfo().getAliasForName(k).orElse(k))
+                            .concatWith(allIdents)
+                            .filter(caseInsensitiveStartsWith(identifierSegment.get()))
+                            .map(it -> typeObj.getTypeInfo().getTypeName() + ":" + it)
+                            .collect(Collectors.toList()).block();
+
                 } else {
-                    return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new GuavaStartsWithPredicate(type)));
+                    return pex.getRegisteredSubjectTypes()
+                            .filter(caseInsensitiveStartsWith(type))
+                            .collect(Collectors.toList())
+                            .block();
                 }
-
             }
-            final Iterable<String> allIdents = pex.getSubjects(type).getAllIdentifiers();
-            final SubjectType typeObj = pex.getSubjects(type);
-            final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, k -> typeObj.getTypeInfo().getAliasForName(k).orElse(k)), v -> v != null)),
-                    new GuavaStartsWithPredicate(identifierSegment.get())
-            );
 
-            return ImmutableList.copyOf(ret);
+            final Flux<String> allIdents = pex.getSubjects(type).getAllIdentifiers();
+            final SubjectType typeObj = pex.getSubjects(type);
+            return allIdents.map(k -> typeObj.getTypeInfo().getAliasForName(k).orElse(k)).concatWith(allIdents)
+                    .filter(caseInsensitiveStartsWith(identifierSegment.get()))
+                    .collect(Collectors.toList())
+                    .block();
         }
     }
 
@@ -232,7 +234,10 @@ public class GameArguments {
 
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new GuavaStartsWithPredicate(args.nextIfPresent().orElse(""))));
+            return pex.getLadders().getAll()
+                    .filter(caseInsensitiveStartsWith(args.nextIfPresent().orElse("")))
+                    .collect(Collectors.toList())
+                    .block();
         }
     }
 

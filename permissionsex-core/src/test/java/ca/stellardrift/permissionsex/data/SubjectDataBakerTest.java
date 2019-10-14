@@ -24,7 +24,6 @@ import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.*;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.NodeTree;
@@ -37,7 +36,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import static ca.stellardrift.permissionsex.context.Context_definitionKt.cSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,13 +51,13 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      * ignored inheritance permission in child has effect in both
      */
     @Test
-    public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
+    public void testIgnoredInheritancePermissions() {
         SubjectType groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
-        CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
-        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parentS.getIdentifier().getValue())
+        CalculatedSubject parentS = groupCache.get("parent").flatMap(parent -> parent.data().update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.parent", 1)).map(data -> parent)).block();
+        CalculatedSubject childS = groupCache.get("child").flatMap(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parentS.getIdentifier().getValue())
                 .setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.child", 1)
-        ).thenApply(data -> child)).get();
-        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, childS.getIdentifier().getKey(), childS.getIdentifier().getValue())).thenApply(data -> subject)).get();
+        ).map(data -> child)).block();
+        CalculatedSubject subjectS = groupCache.get("subject").flatMap(subject -> subject.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, childS.getIdentifier().getKey(), childS.getIdentifier().getValue())).map(data -> subject)).block();
 
         assertEquals(1, parentS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
         assertEquals(1, childS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
@@ -104,20 +102,17 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      *
      */
     @Test
-    public void testContextCalculation() throws ExecutionException, InterruptedException {
+    public void testContextCalculation() {
         ContextDefinition<String> worldCtx = WorldContextDefinition.INSTANCE,
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
         ContextDefinition<LocalDateTime> beforeTimeCtx = BeforeTimeContextDefinition.INSTANCE;
 
-        CalculatedSubject subject = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP).get("a").get();
-        subject.data().update(data -> {
-            return data.setPermissions(cSet(worldCtx.createValue("nether")), ImmutableMap.of("some.perm", 1, "some.meme", -1))
-                    .setPermissions(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(LocalDateTime.now().plus(2, ChronoUnit.DAYS))), ImmutableMap.of("some.meme", 1, "some.cat", 1))
-                    .setPermission(cSet(worldCtx.createValue("nether"), serverTypeCtx.createValue("bad")), "some.day", 1)
-                    .setPermission(cSet(serverTypeCtx.createValue("good")), "some.year", 1)
-                    .setPermission(PermissionsEx.GLOBAL_CONTEXT, "some.world", 1);
-
-        }).join();
+        CalculatedSubject subject = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP).get("a").block();
+        subject.data().update(data -> data.setPermissions(cSet(worldCtx.createValue("nether")), ImmutableMap.of("some.perm", 1, "some.meme", -1))
+                .setPermissions(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(LocalDateTime.now().plus(2, ChronoUnit.DAYS))), ImmutableMap.of("some.meme", 1, "some.cat", 1))
+                .setPermission(cSet(worldCtx.createValue("nether"), serverTypeCtx.createValue("bad")), "some.day", 1)
+                .setPermission(cSet(serverTypeCtx.createValue("good")), "some.year", 1)
+                .setPermission(PermissionsEx.GLOBAL_CONTEXT, "some.world", 1)).block();
 
         Set<ContextValue<?>> activeSetA = cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(LocalDateTime.now()), serverTypeCtx.createValue("good"));
         Set<ContextValue<?>> activeSetB = cSet(worldCtx.createValue("nether"));

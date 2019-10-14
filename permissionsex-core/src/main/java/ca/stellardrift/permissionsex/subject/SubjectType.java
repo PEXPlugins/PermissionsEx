@@ -22,12 +22,13 @@ import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.data.SubjectCache;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+
+import static ca.stellardrift.permissionsex.subject.SubjectDataBakerKt.defaultBaker;
 
 /**
  * Collection providing a view of subjects of a given type within the PEX engine
@@ -44,11 +45,11 @@ public class SubjectType {
         this.persistentData = persistentData;
         this.transientData = transientData; 
         cache = Caffeine.newBuilder().executor(pex.getAsyncExecutor()).buildAsync(((key, executor) -> {
-            CalculatedSubject subj = new CalculatedSubject(SubjectDataBaker.inheritance(), this.pex.createSubjectIdentifier(this.type.getTypeName(), key), SubjectType.this);
-            return persistentData.getReference(key, false).thenCombine(transientData.getReference(key, false), (persistentRef, transientRef) -> {
+            CalculatedSubject subj = new CalculatedSubject(defaultBaker(), this.pex.createSubjectIdentifier(this.type.getTypeName(), key), SubjectType.this);
+            return persistentData.getReference(key, false).zipWith(transientData.getReference(key, false), (persistentRef, transientRef) -> {
                 subj.initialize(persistentRef, transientRef);
                 return subj;
-            });
+            }).toFuture();
         }));
     }
 
@@ -103,12 +104,12 @@ public class SubjectType {
      * @throws IllegalArgumentException if the given identifier is not valid for this subject type
      * @return A future providing the calculated subject
      */
-    public CompletableFuture<CalculatedSubject> get(String identifier) {
+    public Mono<CalculatedSubject> get(String identifier) {
         if (!getTypeInfo().isNameValid(identifier)) {
             throw new IllegalArgumentException("Provided name " + identifier + " is not valid for subjects of type " + type.getTypeName());
         }
 
-        return cache.get(identifier);
+        return Mono.fromFuture(cache.get(identifier));
     }
 
     /**
@@ -161,9 +162,9 @@ public class SubjectType {
      * @param identifier The identifier of the subject to query
      * @return A future returning whether or not this subject has data registered
      */
-    public CompletableFuture<Boolean> isRegistered(String identifier) {
+    public Mono<Boolean> isRegistered(String identifier) {
         return this.persistentData.isRegistered(identifier)
-                .thenCombine(this.transientData.isRegistered(identifier), Boolean::logicalAnd);
+                .zipWith(this.transientData.isRegistered(identifier), Boolean::logicalAnd);
     }
 
     /**
@@ -171,10 +172,17 @@ public class SubjectType {
      *
      * @return All subject identifiers
      */
-    public Set<String> getAllIdentifiers() {
-        Set<String> ret = new HashSet<>();
-        ret.addAll(this.persistentData.getAllIdentifiers());
-        ret.addAll(this.transientData.getAllIdentifiers());
-        return ret;
+    public Flux<String> getAllIdentifiers() {
+        return this.persistentData.getAllIdentifiers()
+                .concatWith(this.transientData.getAllIdentifiers());
+    }
+
+    /**
+     * Get a publisher providing all subjects of this type that have data stored, either persistent or transient
+     *
+     * @return A Flux providing calculated subjects
+     */
+    public Flux<CalculatedSubject> getAll() {
+        return getAllIdentifiers().flatMap(this::get);
     }
 }

@@ -17,28 +17,25 @@
 
 package ca.stellardrift.permissionsex.sponge;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.context.ContextDefinition;
+import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.data.Change;
+import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.context.ContextDefinition;
-import ca.stellardrift.permissionsex.data.Change;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.api.service.context.Context;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.util.Tristate;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,8 +97,8 @@ class PEXSubjectData implements SubjectData {
      * @param future The PEX-internal result
      * @return Whether or not the old data object is different from the new data object
      */
-    private CompletableFuture<Boolean> boolSuccess(CompletableFuture<Change<ImmutableSubjectData>> future) {
-        return future.thenApply(chg -> !Objects.equal(chg.getOld(), chg.getNew()));
+    private CompletableFuture<Boolean> boolSuccess(Mono<Change<ImmutableSubjectData>> future) {
+        return future.map(chg -> !Objects.equal(chg.getOld(), chg.getNew())).toFuture();
     }
 
     private void clearCache(ImmutableSubjectData newData) {
@@ -163,7 +160,7 @@ class PEXSubjectData implements SubjectData {
                 throw new IllegalStateException("Unknown tristate provided " + tristate);
         }
 
-        return data.update(input -> input.setPermission(contextsSpongeToPex(set, plugin.getManager()), s, val)).thenApply(x -> true);
+        return data.update(input -> input.setPermission(contextsSpongeToPex(set, plugin.getManager()), s, val)).map(x -> true).toFuture();
     }
 
     @Override

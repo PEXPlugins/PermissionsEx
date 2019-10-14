@@ -103,8 +103,8 @@ class GroupManagerSubjectData(
     override fun getParents(contexts: Set<ContextValue<*>>): List<Map.Entry<String, String>> {
         val specificNode = getNodeForContexts(contexts) ?: return emptyList()
 
-        try {
-            return specificNode[this.type.inheritanceKey].getList(TypeToken.of(String::class.java), emptyList())
+        return try {
+            specificNode[this.type.inheritanceKey].getList(TypeToken.of(String::class.java), emptyList())
                 .map {
                     var name = it
                     if (name.startsWith("g:")) {
@@ -113,7 +113,7 @@ class GroupManagerSubjectData(
                     Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, name)
                 }
         } catch (e: ObjectMappingException) {
-            return emptyList()
+            emptyList()
         }
 
     }

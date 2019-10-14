@@ -22,6 +22,9 @@ import com.google.common.reflect.TypeToken
 import ninja.leaping.configurate.SimpleConfigurationNode
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers
 import java.util.Optional
+import java.util.function.Predicate
+
+typealias SubjectIdentifier = Map.Entry<String, String>
 
 inline fun <reified T: Any> Optional<*>.castMap(operation: T.() -> Unit) {
     (this.orElse(null) as? T)?.apply(operation)
@@ -45,4 +48,8 @@ inline fun <reified T> CalculatedSubject.option(key: String): T? {
     val ret = getOption(key).orElse(null)
     val type = TypeToken.of(T::class.java)
     return TypeSerializers.getDefaultSerializers().get(TypeToken.of(T::class.java)).deserialize(type, SimpleConfigurationNode.root().setValue(ret))
+}
+
+fun <T: CharSequence> caseInsensitiveStartsWith(prefix: T): Predicate<T> {
+    return Predicate { it.startsWith(prefix, ignoreCase = true) }
 }

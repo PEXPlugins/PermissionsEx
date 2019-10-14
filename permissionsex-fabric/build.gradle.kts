@@ -74,11 +74,14 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     configurations = listOf(shade)
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
+        exclude(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:.*"))
     }
     archiveClassifier.set("dev-all")
 
     dependencies {
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))
+        exclude(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:.*"))
+        exclude(dependency("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:.*"))
         exclude(dependency("org.jetbrains:annotations:.*"))
         exclude(dependency("org.checkerframework:checker-qual:.*"))
     }

@@ -20,9 +20,7 @@ package ca.stellardrift.permissionsex.bukkit;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.OfflinePlayer;
@@ -31,8 +29,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+
+import static java.util.Objects.requireNonNull;
 
 @SuppressWarnings("deprecation")
 class PEXVault extends Permission {
@@ -59,7 +57,8 @@ class PEXVault extends Permission {
 
     @Override
     public String[] getGroups() {
-        return Iterables.toArray(this.plugin.getGroupSubjects().getAllIdentifiers(), String.class);
+        return this.plugin.getGroupSubjects().getAllIdentifiers().toStream()
+                .toArray(String[]::new);
     }
 
     @Override
@@ -67,24 +66,16 @@ class PEXVault extends Permission {
         return true;
     }
 
-    private <T> T getUnchecked(CompletableFuture<T> future) {
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     CalculatedSubject getGroup(String name) {
-        return getUnchecked(this.plugin.getGroupSubjects().get(Preconditions.checkNotNull(name, "name")));
+        return this.plugin.getGroupSubjects().get(requireNonNull(name, "name")).block();
     }
 
     CalculatedSubject getSubject(OfflinePlayer player) {
-        return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player").getUniqueId().toString()));
+        return this.plugin.getUserSubjects().get(requireNonNull(player, "player").getUniqueId().toString()).block();
     }
 
     CalculatedSubject getSubject(String player) {
-        return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player")));
+        return this.plugin.getUserSubjects().get(requireNonNull(player, "player")).block();
     }
 
     private Set<ContextValue<?>> contextsFrom(@Nullable String world) {
@@ -98,12 +89,12 @@ class PEXVault extends Permission {
 
     @Override
     public boolean groupAdd(final String world, String name, final String permission) {
-        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).isCancelled();
+        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).subscribe().isDisposed();
     }
 
     @Override
     public boolean groupRemove(final String world, String name, final String permission) {
-        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).isCancelled();
+        return !getGroup(name).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).subscribe().isDisposed();
 
     }
 
@@ -114,7 +105,7 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerAdd(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).isCancelled();
+        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 1)).subscribe().isDisposed();
     }
 
     @Override
@@ -129,17 +120,17 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerAddTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 1)).isCancelled();
+        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 1)).subscribe().isDisposed();
     }
 
     @Override
     public boolean playerRemoveTransient(final String worldName, OfflinePlayer player, final String permission) {
-        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 0)).isCancelled();
+        return !getSubject(player).transientData().update(input -> input.setPermission(contextsFrom(worldName), permission, 0)).subscribe().isDisposed();
     }
 
     @Override
     public boolean playerRemove(final String world, OfflinePlayer player, final String permission) {
-        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).isCancelled();
+        return !getSubject(player).data().update(input -> input.setPermission(contextsFrom(world), permission, 0)).subscribe().isDisposed();
     }
 
     @Override
@@ -159,12 +150,12 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerAddGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).data().update(input -> input.addParent(contextsFrom(world), PermissionsEx.SUBJECTS_GROUP, group)).isCancelled();
+        return !getSubject(player).data().update(input -> input.addParent(contextsFrom(world), PermissionsEx.SUBJECTS_GROUP, group)).subscribe().isDisposed();
     }
 
     @Override
     public boolean playerRemoveGroup(final String world, OfflinePlayer player, final String group) {
-        return !getSubject(player).data().update(input -> input.removeParent(contextsFrom(world), PermissionsEx.SUBJECTS_GROUP, group)).isCancelled();
+        return !getSubject(player).data().update(input -> input.removeParent(contextsFrom(world), PermissionsEx.SUBJECTS_GROUP, group)).subscribe().isDisposed();
     }
 
     @Override

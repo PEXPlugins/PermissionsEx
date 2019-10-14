@@ -32,7 +32,6 @@ import net.md_5.bungee.api.chat.HoverEvent.Action
 import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.api.chat.TranslatableComponent
 import java.util.Locale
-import java.util.concurrent.ExecutionException
 import kotlin.collections.Map.Entry
 
 /**
@@ -53,14 +52,8 @@ abstract class BungeeMessageFormatter(protected val pex: PermissionsEx, private 
         val subjType: SubjectType = pex.getSubjects(subject.key)
         var name = getFriendlyName(subject)
         if (name == null) {
-            try {
-                name = subjType.persistentData().getData(subject.value, null).get()
-                    .getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]
-            } catch (e: ExecutionException) {
-                throw RuntimeException(e)
-            } catch (e: InterruptedException) {
-                throw RuntimeException(e)
-            }
+                name = subjType.persistentData().getData(subject.value, null).blockOptional().orElse(null)
+                    ?.getOptions(PermissionsEx.GLOBAL_CONTEXT)?.get("name")
         }
         // <bold>{type}>/bold>:{identifier}/{name} (on click: /pex {type} {identifier}
         val nameText = if (name != null) {

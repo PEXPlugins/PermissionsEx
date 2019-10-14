@@ -30,11 +30,12 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import kotlin.Unit;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.SimpleConfigurationNode;
+import reactor.core.publisher.Flux;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -60,7 +61,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
                 .executor(type.getManager().getAsyncExecutor())
-                .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
+                .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key).toFuture()));
         this.activeContexts = CachingValues.cachedByTime(50L, () -> {
             Set<ContextValue<?>> acc = new HashSet<>();
             for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
@@ -177,11 +178,21 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
         return new HashSet<>(activeContexts.get());
     }
 
-    public CompletableFuture<Set<ContextValue<?>>> getUsedContextValues() {
-        return getManager().getUsedContextTypes().thenApply(defs -> {
-            Set<ContextValue<?>> acc = new HashSet<>();
-            defs.forEach(def -> handleAccumulateSingle(def, acc));
-            return acc;
+    public Flux<ContextValue<?>> getUsedContextValues() {
+        return getManager().getUsedContextTypes().flatMap(this::handleAccumulateSingle);
+    }
+
+    private <T> Flux<ContextValue<T>> handleAccumulateSingle(ContextDefinition<T> def) {
+        return Flux.generate(sink -> {
+            try {
+                def.accumulateCurrentValues(this, val -> {
+                    sink.next(def.createValue(val));
+                    return Unit.INSTANCE;
+                });
+                sink.complete();
+            } catch (Throwable t) {
+                sink.error(t);
+            }
         });
     }
 

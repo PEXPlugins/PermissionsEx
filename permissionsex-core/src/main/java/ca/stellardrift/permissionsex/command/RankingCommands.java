@@ -17,28 +17,17 @@
 
 package ca.stellardrift.permissionsex.command;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.SubjectDataReference;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
-import ca.stellardrift.permissionsex.util.command.ButtonType;
-import ca.stellardrift.permissionsex.util.command.ChildCommands;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.CommandException;
-import ca.stellardrift.permissionsex.util.command.CommandExecutor;
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
-import ca.stellardrift.permissionsex.util.command.Commander;
+import ca.stellardrift.permissionsex.util.command.*;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
+import com.google.common.collect.ImmutableSet;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
@@ -56,15 +45,14 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        CompletableFuture<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
+                        Mono<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.promote"); // ." + ladderF); // TODO: Re-add permissions checks for ladders
                         Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
-                        messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
+                        messageSubjectOnFuture(ladderF.flatMap(ladder -> {
                             ladderName.set(ladder);
                             return ref.update(old -> ladder.promote(contexts, old));
-                        })
-                                .thenAccept(res -> {
+                        }).doOnSuccess(res -> {
                                     if (res.getNew() == res.getOld()) {
                                         throw new RuntimeCommandException(t("%s was already at the top of ladder %s", src.fmt().subject(ref), src.fmt().ladder(ladderName.get())));
                                     }
@@ -82,12 +70,12 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        CompletableFuture<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
+                        Mono<RankLadder> ladderF = args.hasAny("ladder") ? args.getOne("ladder") : pex.getLadders().get("default", null);
                         SubjectDataReference ref = getDataRef(src, args, "permissionsex.demote"); //." + ladder);
                         Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
-                        messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
-                            return ref.update(old -> ladder.demote(contexts, old));}).thenAccept(res -> {
+                        messageSubjectOnFuture(ladderF.flatMap(ladder -> {
+                            return ref.update(old -> ladder.demote(contexts, old));}).doOnSuccess(res -> {
                             if (res.getNew() == res.getOld()) {
                                 throw new RuntimeCommandException(t("%s was not on ladder %s", src.fmt().subject(ref), src.fmt().ladder(ladderName.get())));
                             }
@@ -118,7 +106,7 @@ public class RankingCommands {
                 .setExecutor(ChildCommands.optionalExecutor(arg, new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
+                        final RankLadder ladder = args.<Mono<RankLadder>>getOne("ladder").block();
                         List<TextType> ranksList = new ArrayList<>();
                         List<? extends Map.Entry<String, String>> rawRanks = new ArrayList<>(ladder.getRanks());
                         Collections.reverse(rawRanks);
@@ -163,7 +151,7 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
+                        final RankLadder ladder = args.<Mono<RankLadder>>getOne("ladder").block();
                         Map.Entry<String, String> toAdd = args.getOne("subject");
                         checkSubjectPermission(src, toAdd, "permissionsex.rank.add." + ladder.getName());
                         Integer position = args.getOne("position");
@@ -194,7 +182,7 @@ public class RankingCommands {
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        final RankLadder ladder = Futures.getUnchecked(args.<CompletableFuture<RankLadder>>getOne("ladder"));
+                        final RankLadder ladder = args.<Mono<RankLadder>>getOne("ladder").block();
                         Map.Entry<String, String> toRemove = args.getOne("subject");
                         checkSubjectPermission(src, toRemove, "permissionsex.rank.remove." + ladder.getName());
                         RankLadder newLadder = ladder.removeRank(toRemove);

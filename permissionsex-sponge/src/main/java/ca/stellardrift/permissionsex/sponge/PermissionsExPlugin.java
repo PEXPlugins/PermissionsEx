@@ -29,7 +29,6 @@ import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.*;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -56,6 +55,8 @@ import org.spongepowered.api.service.context.ContextCalculator;
 import org.spongepowered.api.service.permission.*;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -66,6 +67,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.sponge.SpongeTranslations.t;
 import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.string;
@@ -158,11 +160,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Listener
     public void cacheUserAsync(ClientConnectionEvent.Auth event) {
-        try {
-            getManager().getSubjects(PermissionsEx.SUBJECTS_USER).get(event.getProfile().getUniqueId().toString());
-        } catch (Exception e) {
-            logger.warn(SpongeTranslations.t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage()), e);
-        }
+            getManager().getSubjects(PermissionsEx.SUBJECTS_USER).get(event.getProfile().getUniqueId().toString()).subscribe(null, err -> {
+                logger.warn(SpongeTranslations.t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), err.getMessage()), err);
+            });
     }
 
     @Listener
@@ -177,7 +177,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Listener
     public void onReload(GameReloadEvent event) {
         if (this.manager != null) {
-            this.manager.reload();
+            this.manager.reload().subscribe();
         }
     }
 
@@ -185,17 +185,19 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     public void onPlayerJoin(final ClientConnectionEvent.Join event) {
         final String identifier = event.getTargetEntity().getIdentifier();
         final SubjectType cache = getManager().getSubjects(PermissionsEx.SUBJECTS_USER);
-        cache.isRegistered(identifier).thenAccept(registered -> {
+        cache.isRegistered(identifier).flatMap(registered -> {
            if (registered)  {
-               cache.persistentData().update(identifier, input -> {
+               return cache.persistentData().update(identifier, input -> {
                    if (event.getTargetEntity().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                        return input;
                    } else {
                        return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getTargetEntity().getName());
                    }
                });
+           } else {
+               return Mono.empty();
            }
-        });
+        }).subscribe();
     }
 
     @Listener
@@ -298,7 +300,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public CompletableFuture<Set<String>> getAllIdentifiers() {
-        return CompletableFuture.completedFuture(this.manager.getRegisteredSubjectTypes());
+        return this.manager.getRegisteredSubjectTypes().collect(Collectors.toSet()).toFuture();
     }
 
     @Override
@@ -324,13 +326,8 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         this.descriptions.put(description.getId(), description);
         final SubjectType coll = getManager().getSubjects(SUBJECTS_ROLE_TEMPLATE);
         for (final Map.Entry<String, Integer> rank : ranks.entrySet()) {
-            try {
-                coll.transientData().update(rank.getKey(),
-                        input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue())).get();
-            } catch (InterruptedException | ExecutionException e) {
-                Throwables.throwIfUnchecked(e);
-                throw new RuntimeException(e);
-            }
+            coll.transientData().update(rank.getKey(),
+                    input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.getId(), rank.getValue())).block();
         }
     }
 
@@ -398,11 +395,10 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
-        return game.getServer().getGameProfileManager().getAllByName(names, true).thenComposeAsync(profiles -> CompletableFuture.allOf(profiles.stream()
-                .map(profile -> action.apply(new SpongeMinecraftProfile(profile)))
-                .toArray(CompletableFuture[]::new))
-                .thenApply(it -> profiles.size()));
+    public Flux<MinecraftProfile> lookupMinecraftProfilesByName(Flux<String> names) {
+        return names.collectList().flatMapMany(nameList -> Mono.fromFuture(game.getServer().getGameProfileManager().getAllByName(nameList, true))
+                .flatMapIterable(Function.identity())
+                .map(SpongeMinecraftProfile::new));
     }
 
     @Override

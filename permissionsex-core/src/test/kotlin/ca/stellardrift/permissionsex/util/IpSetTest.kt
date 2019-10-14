@@ -26,6 +26,7 @@ private val testAddress = InetAddress.getByAddress(byteArrayOf(84, 127, 48, 22))
 private fun createAddress(addr: String): InetAddress {
     return InetAddress.getByName(addr)
 }
+
 class IpSetTest {
 
     @Test

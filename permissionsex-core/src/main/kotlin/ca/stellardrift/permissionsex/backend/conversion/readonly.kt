@@ -23,8 +23,8 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.Util
-import java.util.concurrent.CompletableFuture
+import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toMono
 import java.util.function.Function
 
 abstract class ReadOnlySubjectData : ImmutableSubjectData {
@@ -99,16 +99,16 @@ abstract class ReadOnlyDataStore protected constructor(factory: Factory) : Abstr
         type: String,
         identifier: String,
         data: ImmutableSubjectData
-    ): CompletableFuture<ImmutableSubjectData> {
-        return Util.failedFuture(UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!"))
+    ): Mono<ImmutableSubjectData> {
+        return UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!").toMono()
     }
 
-    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder): CompletableFuture<RankLadder> {
-        return Util.failedFuture(UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!"))
+    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder): Mono<RankLadder> {
+        return UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!").toMono()
     }
 
-    override fun setContextInheritanceInternal(contextInheritance: ContextInheritance): CompletableFuture<ContextInheritance> {
-        return Util.failedFuture(UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!"))
+    override fun setContextInheritanceInternal(contextInheritance: ContextInheritance): Mono<ContextInheritance> {
+        return UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!").toMono()
     }
 
     @Throws(Exception::class)

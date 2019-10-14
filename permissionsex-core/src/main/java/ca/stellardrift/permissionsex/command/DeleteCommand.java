@@ -41,7 +41,7 @@ public class DeleteCommand {
                         checkSubjectPermission(src, subject.getIdentifier(), "permissionsex.delete");
                         SubjectCache cache = args.hasAny("transient") ? subject.transientData().getCache() : subject.data().getCache();
                         messageSubjectOnFuture(cache.isRegistered(subject.getIdentifier().getValue())
-                                .thenCompose(registered -> {
+                                .flatMap(registered -> {
                                     if (!registered) {
                                         throw new RuntimeCommandException(t("Subject %s does not exist!", src.fmt().subject(subject)));
                                     }

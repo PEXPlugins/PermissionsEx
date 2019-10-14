@@ -21,6 +21,10 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import com.google.common.collect.ImmutableSet
+import reactor.core.publisher.Flux
+
+typealias ContextSet = Set<ContextValue<*>>
+typealias ContextFlux = Flux<ContextValue<*>>
 
 fun cSet(vararg contexts: ContextValue<*>): Set<ContextValue<*>> {
     return ImmutableSet.copyOf(contexts)

@@ -26,6 +26,7 @@ import com.velocitypowered.api.permission.PermissionFunction
 import com.velocitypowered.api.permission.PermissionSubject
 import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.proxy.Player
+import reactor.core.publisher.Mono
 import java.util.Optional
 import java.util.UUID
 
@@ -58,16 +59,19 @@ class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : Subje
     }
 }
 
-class PEXPermissionFunction(val plugin: PermissionsExPlugin, private val source: PermissionSubject) : PermissionFunction {
-    val subject: CalculatedSubject by lazy {
-        val ident = when (source) {
-            is Player -> Maps.immutableEntry(SUBJECTS_USER, source.gameProfile.id.toString())
+class PEXPermissionFunction(val plugin: PermissionsExPlugin, source: PermissionSubject) : PermissionFunction {
+
+    private val PermissionSubject.identifier: Map.Entry<String, String>
+        get() =
+        when (this) {
+            is Player -> Maps.immutableEntry(SUBJECTS_USER, this.gameProfile.id.toString())
             else -> IDENT_SERVER_CONSOLE
+
         }
-        plugin.manager.getSubjects(ident.key)[ident.value].join()
-    }
+
+    val subject: Mono<CalculatedSubject> = plugin.manager.getSubjects(source.identifier.key)[source.identifier.value].cache()
 
     override fun getPermissionValue(permission: String): Tristate {
-        return subject.getPermission(permission).asTristate()
+        return subject.block()!!.getPermission(permission).asTristate()
     }
 }

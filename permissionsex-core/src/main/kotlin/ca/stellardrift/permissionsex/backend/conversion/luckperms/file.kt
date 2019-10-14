@@ -26,7 +26,6 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.rank.AbstractRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.ThrowingSupplier
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig
 import ca.stellardrift.permissionsex.util.configurate.get
@@ -43,11 +42,14 @@ import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.yaml.snakeyaml.DumperOptions
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toFlux
+import reactor.kotlin.core.publisher.toMono
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
+import java.util.concurrent.Callable
 import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.math.absoluteValue
@@ -96,47 +98,46 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
     override fun close() {
     }
 
-    override fun getAllIdentifiers(type: String): Set<String> {
-        return this.subjectLayout.getIdentifiers(type)
+    override fun getAllIdentifiers(type: String): Flux<String> {
+        return this.subjectLayout.getIdentifiers(type).toFlux()
     }
 
-    override fun getRegisteredTypes(): Set<String> {
-        return subjectLayout.types
+    override fun getRegisteredTypes(): Flux<String> {
+        return subjectLayout.types.toFlux()
     }
 
-    override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {
+    override fun getDefinedContextKeys(): Flux<String> {
         TODO("not needed for import")
     }
 
-    override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
-        return this.registeredTypes.parallelStream()
-            .flatMap { type -> getAllIdentifiers(type).stream().map { ident -> Maps.immutableEntry(type, ident)} }
-            .map { key -> Maps.immutableEntry(key, getDataInternal(key.key, key.value).join()) }
-            .collect(toImmutableSet())
+    override fun getAll(): Flux<Pair<MutableMap.MutableEntry<String, String>, ImmutableSubjectData>> {
+        return this.registeredTypes.toFlux()
+            .flatMap { type -> getAllIdentifiers(type).map { ident -> Maps.immutableEntry(type, ident)} }
+            .flatMap { key -> getDataInternal(key.key, key.value).map { Pair(key, it) } }
     }
 
-    override fun getDataInternal(type: String, identifier: String): CompletableFuture<ImmutableSubjectData> {
-        return completedFuture(this.subjectLayout[type, identifier].toSubjectData())
+    override fun getDataInternal(type: String, identifier: String): Mono<ImmutableSubjectData> {
+        return this.subjectLayout[type, identifier].toSubjectData().toMono()
     }
 
     override fun setDataInternal(
         type: String?,
         identifier: String?,
         data: ImmutableSubjectData?
-    ): CompletableFuture<ImmutableSubjectData> {
+    ): Mono<ImmutableSubjectData> {
         TODO("read-only")
     }
 
-    override fun isRegistered(type: String, identifier: String): CompletableFuture<Boolean> {
-        return completedFuture(Pair(type, identifier) in subjectLayout)
+    override fun isRegistered(type: String, identifier: String): Mono<Boolean> {
+        return (Pair(type, identifier) in subjectLayout).toMono()
     }
 
-    override fun getContextInheritanceInternal(): CompletableFuture<ContextInheritance> {
-        return completedFuture(contextParentsFromConfig(lpConfig.node))
+    override fun getContextInheritanceInternal(): Mono<ContextInheritance> {
+        return contextParentsFromConfig(lpConfig.node).toMono()
     }
 
-    override fun setContextInheritanceInternal(contextInheritance: ContextInheritance?): CompletableFuture<ContextInheritance> {
-        return runAsync(ThrowingSupplier<ContextInheritance, Exception> {
+    override fun setContextInheritanceInternal(contextInheritance: ContextInheritance?): Mono<ContextInheritance> {
+        return runAsync(Callable<ContextInheritance> {
             val inherit = if (contextInheritance != null && contextInheritance !is LuckPermsContextInheritance) {
                 LuckPermsContextInheritance(contextInheritance.allParents)
             } else {
@@ -150,7 +151,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
                     inherit.writeToConfig(lpConfig.node)
                 }
             }
-            return@ThrowingSupplier inherit
+            return@Callable inherit
         })
     }
 
@@ -158,24 +159,22 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
         return function.apply(this)
     }
 
-    override fun getAllRankLadders(): Iterable<String> {
-        return this.subjectLayout.tracks.node.childrenMap.keys.map(Any::toString)
+    override fun getAllRankLadders(): Flux<String> {
+        return this.subjectLayout.tracks.node.childrenMap.keys.toFlux().map(Any::toString)
     }
 
-    override fun hasRankLadder(ladder: String): CompletableFuture<Boolean> {
-        return completedFuture(ladder in this.subjectLayout.tracks)
+    override fun hasRankLadder(ladder: String): Mono<Boolean> {
+        return (ladder in this.subjectLayout.tracks).toMono()
     }
 
-    override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
-        return completedFuture(
-            LuckPermsTrack(
+    override fun getRankLadderInternal(ladder: String): Mono<RankLadder> {
+        return LuckPermsTrack(
                 ladder,
                 this.subjectLayout.tracks[ladder, "groups"].getList({ it!!.toString() }, listOf())
-            )
-        )
+            ).toMono()
     }
 
-    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder?): CompletableFuture<RankLadder?> {
+    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder?): Mono<RankLadder> {
         val lpLadder: LuckPermsTrack? = when {
             newLadder is LuckPermsTrack -> newLadder
             newLadder != null -> LuckPermsTrack(
@@ -184,7 +183,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
             else -> null
         }
 
-        return runAsync(ThrowingSupplier<RankLadder?, Exception> {
+        return runAsync(Callable<RankLadder> {
             this.subjectLayout.tracks.update {
                 if (lpLadder == null) {
                     it[ladder] = null
@@ -192,7 +191,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
                     it[ladder, "groups"] = lpLadder.groups
                 }
             }
-            return@ThrowingSupplier lpLadder
+            return@Callable lpLadder
         })
     }
 

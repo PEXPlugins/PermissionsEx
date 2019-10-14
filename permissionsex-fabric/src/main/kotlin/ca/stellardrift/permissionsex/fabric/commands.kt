@@ -184,7 +184,7 @@ val EQUALS_SIGN: Text = LiteralText("=").formatted(Formatting.GRAY)
 class FabricMessageFormatter(private val cmd: FabricCommander, private val hlColor: Formatting =  Formatting.AQUA) : MessageFormatter<Text> {
 
     override fun subject(subject: Map.Entry<String, String>): Text {
-        val subj = PermissionsExMod.manager.getSubjects(subject.key)[subject.value].join()
+        val subj = PermissionsExMod.manager.getSubjects(subject.key)[subject.value].block()!!
 
         val name = subj.associatedObject.cast<Nameable>().map(Nameable::getName).orElseGet {
             val nameStr = subj.data().get().getOptions(GLOBAL_CONTEXT)["name"]

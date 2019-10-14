@@ -18,9 +18,9 @@
 package ca.stellardrift.permissionsex.sponge;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
-import com.github.benmanes.caffeine.cache.AsyncCacheLoader;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.ImmutableMap;
@@ -31,12 +31,12 @@ import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.util.Tristate;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -54,12 +54,7 @@ class PEXSubjectCollection implements SubjectCollection {
         this.identifier = identifier;
         this.plugin = plugin;
         this.collection = plugin.getManager().getSubjects(identifier);
-        this.subjectCache = Caffeine.newBuilder().executor(plugin.getAsyncExecutor()).buildAsync(new AsyncCacheLoader<String, PEXSubject>() {
-                @Override
-                public CompletableFuture<PEXSubject> asyncLoad(String key, Executor executor) {
-                    return PEXSubject.load(key, PEXSubjectCollection.this);
-                }
-            });
+        this.subjectCache = Caffeine.newBuilder().executor(plugin.getAsyncExecutor()).buildAsync((key, executor) -> PEXSubject.load(key, PEXSubjectCollection.this).toFuture());
     }
 
     public static CompletableFuture<PEXSubjectCollection> load(final String identifier, final PermissionsExPlugin plugin) {
@@ -98,7 +93,7 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public CompletableFuture<Boolean> hasSubject(String identifier) {
-        return this.collection.persistentData().isRegistered(identifier);
+        return this.collection.persistentData().isRegistered(identifier).toFuture();
     }
 
     @Override
@@ -126,7 +121,7 @@ class PEXSubjectCollection implements SubjectCollection {
 
     @Override
     public CompletableFuture<Set<String>> getAllIdentifiers() {
-        return CompletableFuture.completedFuture(collection.getAllIdentifiers());
+        return collection.getAllIdentifiers().collect(Collectors.toSet()).toFuture();
     }
 
     @Override
@@ -161,38 +156,22 @@ class PEXSubjectCollection implements SubjectCollection {
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(@Nullable Set<Context> contexts,
+    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(@Nullable Set<Context> spongeContexts,
             String permission) {
-        Set<String> raw = this.collection.getAllIdentifiers();
-        @SuppressWarnings("unchecked")
-        CompletableFuture<CalculatedSubject>[] futures = new CompletableFuture[raw.size()];
-        int i = 0;
-        for (String ident : raw) {
-            if (i >= futures.length) {
-                break; // TODO: acknowlege this error somehow?
-            }
-            futures[i++] = this.collection.get(ident);
-        }
 
-        return CompletableFuture.allOf(futures).thenApply(x -> {
-            return Arrays.stream(futures).map(f -> {
-                try {
-                    return f.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    return (CalculatedSubject) null;
-                }
-            }).map(subj -> {
-                final int perm = subj.getPermission(contexts == null ? subj.getActiveContexts() : PEXSubjectData.contextsSpongeToPex(contexts, this.plugin.getManager()), permission);
-                Boolean bPerm = null;
-                if (perm > 0) {
-                    bPerm = true;
-                } else if (perm < 0) {
-                    bPerm = false;
-                }
-                return Maps.immutableEntry((SubjectReference) subj.getIdentifier(), bPerm);
-            }).filter(ent -> ent.getValue() != null)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        });
+        final Set<ContextValue<?>> contexts = spongeContexts == null ? null : PEXSubjectData.contextsSpongeToPex(spongeContexts, plugin.getManager());
+
+        return collection.getAll().map(subj -> {
+            final int perm = subj.getPermission(contexts == null ? subj.getActiveContexts() : contexts, permission);
+            Boolean bPerm = null;
+            if (perm > 0) {
+                bPerm = true;
+            } else if (perm < 0) {
+                bPerm = false;
+            }
+            return Maps.<SubjectReference, Boolean>immutableEntry(PEXSubjectReference.of(subj.getIdentifier(), plugin), bPerm);
+        }).filter(it -> it.getValue() != null)
+            .collectMap(Map.Entry::getKey, Map.Entry::getValue).toFuture();
     }
 
     /**
@@ -205,7 +184,7 @@ class PEXSubjectCollection implements SubjectCollection {
         return this.defaults;
     }
 
-    public CompletableFuture<CalculatedSubject> getCalculatedSubject(String identifier) {
+    public Mono<CalculatedSubject> getCalculatedSubject(String identifier) {
             return this.collection.get(identifier);
     }
 

@@ -19,11 +19,11 @@ package ca.stellardrift.permissionsex.data;
 
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -73,18 +73,18 @@ public class SubjectDataReference implements Consumer<ImmutableSubjectData> {
      * @param modifierFunc The function that will be called to update the data
      * @return A future completing when data updates have been written to the data store
      */
-    public CompletableFuture<Change<ImmutableSubjectData>> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
+    public Mono<Change<ImmutableSubjectData>> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
         ImmutableSubjectData data, newData;
         do {
             data = get();
 
             newData = modifierFunc.apply(data);
             if (newData == data) {
-                return CompletableFuture.completedFuture(new Change<>(data, newData));
+                return Mono.just(new Change<>(data, newData));
             }
         } while (!this.data.compareAndSet(data, newData));
         final ImmutableSubjectData finalData = data;
-        return this.cache.set(this.identifier, newData).thenApply(finalNew -> new Change<>(finalData, finalNew));
+        return this.cache.set(this.identifier, newData).map(finalNew -> new Change<>(finalData, finalNew));
     }
 
     @Override

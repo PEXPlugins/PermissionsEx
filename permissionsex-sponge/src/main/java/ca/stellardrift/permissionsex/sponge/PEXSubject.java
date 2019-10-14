@@ -30,12 +30,12 @@ import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectReference;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Permissions subject implementation
@@ -94,8 +94,8 @@ class PEXSubject implements Subject {
         });
     }
 
-    static CompletableFuture<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
-        return collection.getCalculatedSubject(identifier).thenApply(baked -> {
+    static Mono<PEXSubject> load(String identifier, PEXSubjectCollection collection) {
+        return collection.getCalculatedSubject(identifier).map(baked -> {
             return new PEXSubject(baked, collection);
         });
     }

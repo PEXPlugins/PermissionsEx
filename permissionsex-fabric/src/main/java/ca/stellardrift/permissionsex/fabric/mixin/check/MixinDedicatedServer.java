@@ -46,7 +46,7 @@ public class MixinDedicatedServer {
     @Redirect(method = "isSpawnProtected",
             at = @At(value = "INVOKE", target = RedirectTargets.OPERATOR_LIST_IS_EMPTY))
     public boolean isSpawnProtectionIgnored(OperatorList ops) {
-        return !PermissionsExMod.INSTANCE.getManager().getRegisteredSubjectTypes().contains(SUBJECTS_USER);
+        return !PermissionsExMod.INSTANCE.getManager().getRegisteredSubjectTypes().hasElement(SUBJECTS_USER).blockOptional().orElse(true);
     }
 
     /**

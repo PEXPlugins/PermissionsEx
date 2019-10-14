@@ -53,7 +53,7 @@ public class MixinCommandBlockExecutor implements IPermissionCommandSource {
     @Override
     public CalculatedSubject asCalculatedSubject() {
         if (subj == null) {
-            return subj = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+            return subj = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).block();
         }
         return subj;
     }

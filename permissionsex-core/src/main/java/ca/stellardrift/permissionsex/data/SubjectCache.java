@@ -23,10 +23,11 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Maps;
 import org.jetbrains.annotations.Nullable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -65,10 +66,10 @@ public class SubjectCache {
         this.dataStore = newDataStore;
         AsyncLoadingCache<String, ImmutableSubjectData> oldCache = this.cache.getAndSet(Caffeine.newBuilder()
                         .maximumSize(512)
-                        .buildAsync(((key, executor) -> dataStore.getData(type, key, clearListener(key)))));
+                        .buildAsync(((key, executor) -> dataStore.getData(type, key, clearListener(key)).toFuture())));
         if (oldCache != null) {
             oldCache.synchronous().asMap().forEach((k, v) -> {
-                    getData(k, null).thenAccept(data -> listeners.call(k, data));
+                    getData(k, null).subscribe(data -> listeners.call(k, data));
                     // TODO: Not ignore this somehow? Add a listener in to the backend?
             });
         }
@@ -85,16 +86,15 @@ public class SubjectCache {
      * @param listener A callback that will be notified whenever a change is made to the data object
      * @return A future returning when the data is available
      */
-    public CompletableFuture<ImmutableSubjectData> getData(String identifier, Consumer<ImmutableSubjectData> listener) {
+    public Mono<ImmutableSubjectData> getData(String identifier, Consumer<ImmutableSubjectData> listener) {
         Objects.requireNonNull(identifier, "identifier");
 
-        CompletableFuture<ImmutableSubjectData> ret = cache.get().get(identifier);
-        ret.thenRun(() -> {
+        Mono<ImmutableSubjectData> ret = Mono.fromFuture(cache.get().get(identifier));
+        return ret.doOnSuccess(data -> {
             if (listener != null) {
                 listeners.addListener(identifier, listener);
             }
         });
-        return ret;
     }
 
     /**
@@ -104,7 +104,7 @@ public class SubjectCache {
      * @param identifier The identifier of the subject to get data for
      * @return A future returning with a full reference to the given subject's data.
      */
-    public CompletableFuture<SubjectDataReference> getReference(String identifier) {
+    public Mono<SubjectDataReference> getReference(String identifier) {
         return getReference(identifier, true);
     }
 
@@ -115,9 +115,9 @@ public class SubjectCache {
      * @param strongListeners Whether to hold listeners to this subject data even after they would be otherwise GC'd
      * @return A future completing with the subject data reference
      */
-    public CompletableFuture<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
+    public Mono<SubjectDataReference> getReference(String identifier, boolean strongListeners) {
         final SubjectDataReference ref = new SubjectDataReference(identifier, this, strongListeners);
-        return getData(identifier, ref).thenApply(data -> {
+        return getData(identifier, ref).map(data -> {
             ref.data.set(data);
             return ref;
         });
@@ -131,14 +131,14 @@ public class SubjectCache {
      * @param action A function taking an old subject data instance and returning an updated one
      * @return A future completing with the latest subject data after modifications are made
      */
-    public CompletableFuture<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
+    public Mono<ImmutableSubjectData> update(String identifier, Function<ImmutableSubjectData, ImmutableSubjectData> action) {
         return getData(identifier, null)
-                .thenCompose(data -> {
+                .flatMap(data -> {
                     ImmutableSubjectData newData = action.apply(data);
                     if (data != newData) {
                         return set(identifier, newData);
                     } else {
-                        return CompletableFuture.completedFuture(data);
+                        return Mono.just(data);
                     }
                 });
     }
@@ -171,9 +171,10 @@ public class SubjectCache {
      * Enter all subjects of this type into cache
      */
     public void cacheAll() {
-        for (String ident : dataStore.getAllIdentifiers(type)) {
-            cache.get().synchronous().refresh(ident);
-        }
+        dataStore.getAllIdentifiers(type)
+                .subscribe(ident -> {
+                    cache.get().synchronous().refresh(ident);
+                });
     }
 
     /**
@@ -183,7 +184,7 @@ public class SubjectCache {
      * @param identifier The identifier of the subject to check
      * @return A future returning whether the subject has data stored
      */
-    public CompletableFuture<Boolean> isRegistered(String identifier) {
+    public Mono<Boolean> isRegistered(String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.isRegistered(type, identifier);
@@ -195,11 +196,11 @@ public class SubjectCache {
      * @param identifier The identifier of the subject to remove
      * @return A future returning the previous subject data.
      */
-    public CompletableFuture<ImmutableSubjectData> remove(String identifier) {
+    public Mono<ImmutableSubjectData> remove(String identifier) {
         return set(identifier, null);
     }
 
-    CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
+    Mono<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
         Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.setData(type, identifier, newData);
@@ -248,7 +249,7 @@ public class SubjectCache {
      *
      * @return The set of identifiers
      */
-    public Set<String> getAllIdentifiers() {
+    public Flux<String> getAllIdentifiers() {
         return dataStore.getAllIdentifiers(type);
     }
 

@@ -18,24 +18,22 @@
 package ca.stellardrift.permissionsex;
 
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
+import ca.stellardrift.permissionsex.util.MinecraftProfileImpl;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableSet;
-import kotlin.text.Charsets;
 import org.h2.jdbcx.JdbcDataSource;
-import org.jetbrains.annotations.NotNull;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 public class TestImplementationInterface implements ImplementationInterface {
     private final Path baseDirectory;
@@ -96,34 +94,8 @@ public class TestImplementationInterface implements ImplementationInterface {
     }
 
     @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
-        final int[] count = new int[] {0};
-        return CompletableFuture.allOf(StreamSupport.stream(names.spliterator(), false)
-                .map(name -> {
-                    count[0]++;
-                    return action.apply(new TestProfile(name, UUID.nameUUIDFromBytes(name.getBytes(Charsets.UTF_8))));
-                })
-                .toArray(CompletableFuture[]::new)).thenApply(none -> count[0]);
+    public Flux<MinecraftProfile> lookupMinecraftProfilesByName(Flux<String> names) {
+        return names.map(name -> new MinecraftProfileImpl(name, UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8))));
     }
 }
 
-class TestProfile implements MinecraftProfile {
-    private final String name;
-    private final UUID uid;
-    TestProfile(String name, UUID uid) {
-        this.name = name;
-        this.uid = uid;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-    @NotNull
-    @Override
-    public UUID getUuid() {
-        return this.uid;
-    }
-}

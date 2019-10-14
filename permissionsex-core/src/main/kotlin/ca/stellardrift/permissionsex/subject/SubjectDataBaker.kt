@@ -15,22 +15,16 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.util;
+package ca.stellardrift.permissionsex.subject
 
-import java.util.function.Predicate;
+import ca.stellardrift.permissionsex.context.ContextSet
+import ca.stellardrift.permissionsex.util.NodeTree
+import reactor.core.publisher.Mono
 
-/**
- * A predicate that filters based on case-insensitive starts with
- */
-public class StartsWithPredicate implements Predicate<String> {
-    private final String test;
-
-    public StartsWithPredicate(String test) {
-        this.test = test;
-    }
-
-    @Override
-    public boolean test(String input) {
-        return input != null && input.toLowerCase().startsWith(test.toLowerCase());
-    }
+interface SubjectDataBaker {
+    fun bake(data: CalculatedSubject, contexts: ContextSet): Mono<BakedSubjectData>
 }
+
+fun defaultBaker(): SubjectDataBaker = InheritanceSubjectDataBaker
+
+data class BakedSubjectData(val permissions: NodeTree, val parents: List<Map.Entry<String, String>>, val options: Map<String, String>)

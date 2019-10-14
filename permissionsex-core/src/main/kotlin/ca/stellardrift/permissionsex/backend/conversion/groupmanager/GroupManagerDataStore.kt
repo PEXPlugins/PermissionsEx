@@ -36,12 +36,14 @@ import ninja.leaping.configurate.loader.ConfigurationLoader
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.yaml.snakeyaml.DumperOptions
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toFlux
+import reactor.kotlin.core.publisher.toMono
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
 
 /**
  * A pair of nodes representing a users and groups permissions file for a given world, resolved to the top-level `users`\`groups` key.
@@ -106,48 +108,47 @@ class GroupManagerDataStore internal constructor() : ReadOnlyDataStore(FACTORY) 
     private fun getDataGM(type: String, identifier: String): ImmutableSubjectData =
         GroupManagerSubjectData(identifier, this, EntityType.forTypeString(type))
 
-    override fun getDataInternal(type: String, identifier: String): CompletableFuture<ImmutableSubjectData> {
-        return completedFuture(getDataGM(type, identifier))
+    override fun getDataInternal(type: String, identifier: String): Mono<ImmutableSubjectData> {
+        return getDataGM(type, identifier).toMono()
     }
 
-    override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
-        return completedFuture(FixedRankLadder(ladder, emptyList())) // GM does not have a concept of rank ladders
+    override fun getRankLadderInternal(ladder: String): Mono<RankLadder> {
+        return FixedRankLadder(ladder, emptyList()).toMono() // GM does not have a concept of rank ladders
     }
 
-    override fun getContextInheritanceInternal(): CompletableFuture<ContextInheritance> {
-        return completedFuture(contextInheritance)
+    override fun getContextInheritanceInternal(): Mono<ContextInheritance> {
+        return contextInheritance.toMono()
     }
 
     override fun close() {}
 
-    override fun isRegistered(type: String, identifier: String): CompletableFuture<Boolean> {
+    override fun isRegistered(type: String, identifier: String): Mono<Boolean> {
         if (type == SUBJECTS_USER) {
             for ((_, value) in this.worldUserGroups) {
                 if (!value.user[identifier].isVirtual) {
-                    return completedFuture(true)
+                    return true.toMono()
                 }
             }
         } else if (type == SUBJECTS_GROUP) {
             if (!globalGroups["g:$identifier"].isVirtual) {
-                return completedFuture(true)
+                return true.toMono()
             }
             for ((_, value) in this.worldUserGroups) {
                 if (!value.group[identifier].isVirtual) {
-                    return completedFuture(true)
+                    return true.toMono()
                 }
             }
         }
-        return completedFuture(false)
+        return false.toMono()
     }
 
-    override fun getAllIdentifiers(type: String): Set<String> {
-        when (type) {
-            SUBJECTS_USER -> return this.worldUserGroups.values
-                .flatMap { it.user.childrenMap.keys }
+    override fun getAllIdentifiers(type: String): Flux<String> {
+        return when (type) {
+            SUBJECTS_USER -> return this.worldUserGroups.values.toFlux()
+                .flatMapIterable { it.user.childrenMap.keys }
                 .map(Any::toString)
-                .toSet()
             SUBJECTS_GROUP -> return (this.worldUserGroups.values
-                .flatMap { it.group.childrenMap.keys } + this.globalGroups.childrenMap.keys)
+                .flatMap { it.group.childrenMap.keys } + this.globalGroups.childrenMap.keys).toFlux()
                 .map {
                     if (it is String && it.startsWith("g:")) {
                         it.substring(2)
@@ -155,31 +156,30 @@ class GroupManagerDataStore internal constructor() : ReadOnlyDataStore(FACTORY) 
                         it.toString()
                     }
                 }
-                .toSet()
-            else -> return emptySet()
+            else -> Flux.empty<String>()
         }
     }
 
-    override fun getRegisteredTypes(): Set<String> {
-        return setOf(SUBJECTS_USER, SUBJECTS_GROUP)
+    override fun getRegisteredTypes(): Flux<String> {
+        return Flux.just(SUBJECTS_USER, SUBJECTS_GROUP)
     }
 
-    override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {
+    override fun getDefinedContextKeys(): Flux<String> {
         throw UnsupportedOperationException("Not necessary to perform conversion, so whatevs")
     }
 
-    override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
-        return (getAllIdentifiers(SUBJECTS_USER).map { Maps.immutableEntry(SUBJECTS_USER, it) } +
+    override fun getAll(): Flux<Pair<MutableMap.MutableEntry<String, String>, ImmutableSubjectData>> {
+        return getAllIdentifiers(SUBJECTS_USER).map { Maps.immutableEntry(SUBJECTS_USER, it) }.concatWith(
                 getAllIdentifiers(SUBJECTS_GROUP).map { Maps.immutableEntry(SUBJECTS_GROUP, it) })
-            .map { Maps.immutableEntry(it, getDataGM(it.key, it.value)) }
+            .map { Pair(it, getDataGM(it.key, it.value)) }.toFlux()
     }
 
-    override fun getAllRankLadders(): Iterable<String> {
-        return emptyList()
+    override fun getAllRankLadders(): Flux<String> {
+        return Flux.empty()
     }
 
-    override fun hasRankLadder(ladder: String): CompletableFuture<Boolean> {
-        return completedFuture(false)
+    override fun hasRankLadder(ladder: String): Mono<Boolean> {
+        return Mono.just(false)
     }
 
     companion object : ConversionProvider {

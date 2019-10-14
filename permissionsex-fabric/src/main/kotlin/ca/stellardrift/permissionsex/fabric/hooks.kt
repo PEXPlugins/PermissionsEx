@@ -21,6 +21,7 @@ package ca.stellardrift.permissionsex.fabric
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.builder.ArgumentBuilder
@@ -97,6 +98,10 @@ object MinecraftPermissions {
     }
 }
 
+interface PEXUserCache {
+    fun findByUsername(username: String, resolveOnline: Boolean = true): MinecraftProfile?
+}
+
 interface IVirtualHostHolder {
     /**
      * The hostname a client used to connect to this server
@@ -122,7 +127,7 @@ interface IPermissionCommandSource {
 
     @JvmDefault
     fun asCalculatedSubject(): CalculatedSubject {
-        return PermissionsExMod.manager.getSubjects(permType)[permIdentifier].join()
+        return PermissionsExMod.manager.getSubjects(permType)[permIdentifier].block()!!
     }
 
     @JvmDefault
@@ -168,9 +173,9 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
 fun GameProfile.hasPermission(perm: String): Boolean {
     if (this.id == null) {
         PermissionsExMod.logger.error(t("Tried to check permission for incomplete game profile %s", this.name))
-        return false;
+        return false
     }
-    return PermissionsExMod.manager.getSubjects(SUBJECTS_USER)[this.id.toString()].join().hasPermission(perm)
+    return PermissionsExMod.manager.getSubjects(SUBJECTS_USER)[this.id.toString()].block()!!.hasPermission(perm)
 }
 
 internal interface LocaleHolder {

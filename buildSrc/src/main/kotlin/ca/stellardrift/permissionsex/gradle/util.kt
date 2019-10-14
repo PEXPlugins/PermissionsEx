@@ -21,6 +21,7 @@ package ca.stellardrift.permissionsex.gradle
 import net.minecrell.gradle.licenser.LicenseExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
@@ -36,6 +37,7 @@ enum class Versions(val version: String) {
     CONFIGURATE("3.6"),
     SLF4J("1.7.26"),
     ANTLR("4.7.2"),
+    KOTLIN_COROUTINES("1.3.2"),
     JUNIT("5.5.2");
 
     override fun toString(): String {
@@ -45,6 +47,10 @@ enum class Versions(val version: String) {
 
 fun DependencyHandler.configurate(comp: String): String {
     return "org.spongepowered:configurate-$comp:${Versions.CONFIGURATE}"
+}
+
+fun DependencyHandler.kotlinx(comp: String, version: Versions? = null): String {
+    return "org.jetbrains.kotlinx:kotlinx-$comp${if (version != null) ":$version" else ""}"
 }
 
 fun RepositoryHandler.spongeRepo(): ArtifactRepository {
@@ -76,6 +82,10 @@ fun Project.applyCommonSettings() {
         mavenCentral()
         spongeRepo()
         sk89qRepo()
+        maven {
+            it.name = "spring-milestones"
+            it.url= URI("https://repo.spring.io/milestone")
+        }
     }
 
 

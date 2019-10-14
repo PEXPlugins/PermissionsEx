@@ -17,20 +17,21 @@
 
 package ca.stellardrift.permissionsex.backend.file;
 
-import ca.stellardrift.permissionsex.backend.*;
+import ca.stellardrift.permissionsex.backend.AbstractDataStore;
+import ca.stellardrift.permissionsex.backend.ConversionUtils;
+import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.GuavaCollectors;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig;
 import ca.stellardrift.permissionsex.util.configurate.WatchServiceListener;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -43,15 +44,14 @@ import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.util.MapFactories;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +59,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public final class FileDataStore extends AbstractDataStore {
     static final String KEY_RANK_LADDERS = "rank-ladders";
@@ -129,10 +128,10 @@ public final class FileDataStore extends AbstractDataStore {
         });
 
         this.rankLadderListeners.getAllKeys().forEach(key ->
-                this.rankLadderListeners.call(key, getRankLadderInternal(key).join()));
+                this.rankLadderListeners.call(key, getRankLadderInternal(key).block()));
 
         this.contextInheritanceListeners.getAllKeys().forEach(key ->
-                this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
+                this.contextInheritanceListeners.call(key, getContextInheritanceInternal().block()));
 
         getManager().getLogger().info(t("Automatically reloaded %s based on a change made outside of PEX", this.file));
 
@@ -192,8 +191,8 @@ public final class FileDataStore extends AbstractDataStore {
             if (endVersion > startVersion) {
                 getManager().getLogger().info(t("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion));
                 try {
-                    save().get();
-                } catch (InterruptedException | ExecutionException e) {
+                    save().block();
+                } catch (RuntimeException e) {
                     throw new PermissionsLoadingException(t("While performing version upgrade"), e);
                 }
             }
@@ -212,14 +211,18 @@ public final class FileDataStore extends AbstractDataStore {
         return this.permissionsConfig.get("subjects");
     }
 
-    private CompletableFuture<Void> save() {
+    private Mono<Void> save() {
         if (saveSuppressed.get() <= 0) {
-            return Util.asyncFailableFuture(() -> {
-                saveSync();
-                return null;
-            }, getManager().getAsyncExecutor());
+            return Mono.create(sink -> {
+                try {
+                    saveSync();
+                    sink.success();
+                } catch (Exception e) {
+                    sink.error(e);
+                }
+            }).subscribeOn(getManager().getScheduler()).then();
         } else {
-            return completedFuture(null);
+            return Mono.empty();
         }
     }
 
@@ -232,11 +235,11 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
+    public Mono<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         try {
-            return completedFuture(getDataSync(type, identifier));
+            return Mono.just(getDataSync(type, identifier));
         } catch (PermissionsLoadingException e) {
-            return Util.failedFuture(e);
+            return Mono.error(e);
         }
     }
 
@@ -249,12 +252,12 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, final ImmutableSubjectData data) {
+    protected Mono<ImmutableSubjectData> setDataInternal(String type, String identifier, final ImmutableSubjectData data) {
         try {
             if (data == null) {
                 getSubjectsNode().getNode(type, identifier).setValue(null);
                 dirty.set(true);
-                return save().thenApply(input -> null);
+                return save().map(it -> null);
             }
 
             final FileSubjectData fileData;
@@ -266,62 +269,44 @@ public final class FileDataStore extends AbstractDataStore {
             }
             fileData.serialize(getSubjectsNode().getNode(type, identifier));
             dirty.set(true);
-            return save().thenApply(none -> fileData);
+            return save().map(none -> fileData);
         } catch (ObjectMappingException e) {
-            return Util.failedFuture(e);
+            return Mono.error(e);
         }
     }
 
     @Override
-    public CompletableFuture<Boolean> isRegistered(String type, String identifier) {
-        return completedFuture(!getSubjectsNode().getNode(type, identifier).isVirtual());
+    public Mono<Boolean> isRegistered(String type, String identifier) {
+        return Mono.just(!getSubjectsNode().getNode(type, identifier).isVirtual());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Set<String> getAllIdentifiers(String type) {
-        return (Set) getSubjectsNode().getNode(type).getChildrenMap().keySet();
+    public Flux<String> getAllIdentifiers(String type) {
+        return Flux.fromIterable(getSubjectsNode().getNode(type).getChildrenMap().keySet())
+                .map(Object::toString);
     }
 
     @Override
-    public Set<String> getRegisteredTypes() {
-        return getSubjectsNode().getChildrenMap().entrySet().stream()
+    public Flux<String> getRegisteredTypes() {
+        return Flux.fromStream(getSubjectsNode().getChildrenMap().entrySet().stream()
                 .filter(ent -> ent.getValue().hasMapChildren())
                 .map(Map.Entry::getKey)
                 .map(Object::toString)
-                .distinct()
-                .collect(GuavaCollectors.toImmutableSet());
+                .distinct());
     }
 
     @Override
-    public CompletableFuture<Set<String>> getDefinedContextKeys() {
-        return CompletableFuture.completedFuture(getSubjectsNode().getChildrenMap().values().stream() // list of types
+    public Flux<String> getDefinedContextKeys() {
+        return Flux.fromStream(getSubjectsNode().getChildrenMap().values().stream() // list of types
                 .flatMap(typeNode -> typeNode.getChildrenMap().values().stream()) // list of subjects
                 .flatMap(subjectNode -> subjectNode.getChildrenList().stream()) // list of segments
                 .flatMap(segmentNode -> segmentNode.getNode(FileSubjectData.KEY_CONTEXTS).getChildrenMap().entrySet().stream()) // list of contexts
-                .map(ctx -> ctx.getKey().toString()) // of context objets
-                .collect(Collectors.toSet())); // to a list
+                .map(ctx -> ctx.getKey().toString())); // of context objets
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
-        /*return getSubjectsNode().getChildrenMap().keySet().stream()
-                .filter(i -> i != null)
-                .flatMap(type -> {
-                    final String typeStr = type.toString();
-                    return getAll(typeStr)
-                            .stream()
-                            .map(ent -> Maps.immutableEntry(Maps.immutableEntry(typeStr, ent.getKey()), ent.getValue()));
-                })
-                .collect(GuavaCollectors.toImmutableSet());*/
-        return Iterables.concat(Iterables.transform(getSubjectsNode().getChildrenMap().keySet(), type -> {
-            if (type == null) {
-                return null;
-            }
-            final String typeStr = type.toString();
-
-            return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
-        }));
+    public Flux<Pair<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
+        return getRegisteredTypes().flatMap(type -> getAll(type).map(it -> new Pair<>(Maps.immutableEntry(type, it.getFirst()), it.getSecond())));
     }
 
     private ConfigurationNode getRankLaddersNode() {
@@ -329,33 +314,34 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<String> getAllRankLadders() {
-        return Iterables.unmodifiableIterable(Iterables.transform(getRankLaddersNode().getChildrenMap().keySet(), Object::toString));
+    public Flux<String> getAllRankLadders() {
+        return Flux.fromIterable(getRankLaddersNode().getChildrenMap().keySet())
+                .map(Object::toString);
     }
 
     @Override
-    public CompletableFuture<RankLadder> getRankLadderInternal(String ladder) {
-        return completedFuture(new FixedRankLadder(ladder, getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList().stream()
+    public Mono<RankLadder> getRankLadderInternal(String ladder) {
+        return Mono.just(new FixedRankLadder(ladder, getRankLaddersNode().getNode(ladder.toLowerCase()).getChildrenList().stream()
                 .map(node -> Util.subjectFromString(Objects.requireNonNull(node.getString())))
                 .collect(Collectors.toList())));
     }
 
     @Override
-    public CompletableFuture<Boolean> hasRankLadder(String ladder) {
-        return completedFuture(!getRankLaddersNode().getNode(ladder.toLowerCase()).isVirtual());
+    public Mono<Boolean> hasRankLadder(String ladder) {
+        return Mono.just(!getRankLaddersNode().getNode(ladder.toLowerCase()).isVirtual());
     }
 
     @Override
-    public CompletableFuture<ContextInheritance> getContextInheritanceInternal() {
+    public Mono<ContextInheritance> getContextInheritanceInternal() {
         try {
-            return completedFuture(this.permissionsConfig.getNode().getValue(TypeToken.of(MemoryContextInheritance.class)));
+            return Mono.just(this.permissionsConfig.getNode().getValue(TypeToken.of(MemoryContextInheritance.class)));
         } catch (ObjectMappingException e) {
-            return Util.failedFuture(e);
+            return Mono.error(e);
         }
     }
 
     @Override
-    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
+    public Mono<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
         final MemoryContextInheritance realInheritance = MemoryContextInheritance.fromExistingContextInheritance(inheritance);
         try {
             this.permissionsConfig.getNode().setValue(TypeToken.of(MemoryContextInheritance.class), realInheritance);
@@ -363,11 +349,11 @@ public final class FileDataStore extends AbstractDataStore {
             throw new RuntimeException(e);
         }
         dirty.set(true);
-        return save().thenApply(none -> realInheritance);
+        return save().map(none -> realInheritance);
     }
 
     @Override
-    public CompletableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
+    public Mono<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
         ConfigurationNode childNode = getRankLaddersNode().getNode(identifier.toLowerCase());
         childNode.setValue(null);
         if (ladder != null) {
@@ -376,7 +362,7 @@ public final class FileDataStore extends AbstractDataStore {
             }
         }
         dirty.set(true);
-        return save().thenApply(none -> ladder);
+        return save().map(none -> ladder);
     }
 
     @Override

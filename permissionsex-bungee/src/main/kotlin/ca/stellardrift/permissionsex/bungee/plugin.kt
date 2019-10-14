@@ -30,6 +30,7 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandSpec
+import ca.stellardrift.permissionsex.util.resolveMinecraftProfile
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -45,12 +46,12 @@ import net.md_5.bungee.event.EventPriority
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.slf4j.impl.JDK14LoggerAdapter
 import org.yaml.snakeyaml.DumperOptions
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
-import java.util.function.Function
 import java.util.logging.Logger
 import javax.sql.DataSource
 
@@ -84,16 +85,21 @@ class PermissionsExPlugin : Plugin(), Listener {
 
 
         try {
-            this.manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), BungeeImplementationInterface(this))
+            this.manager = PermissionsEx(
+                FilePermissionsExConfiguration.fromLoader(configLoader),
+                BungeeImplementationInterface(this)
+            )
         } catch (e: Exception) {
             logger.error("Unable to load PermissionsEx!", e)
         }
         this.manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
         manager.getSubjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
             it.setDefaultValue(PermissionsEx.GLOBAL_CONTEXT, 1)
-        }
-        this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
-            LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
+        }.subscribe()
+        this.manager.registerContextDefinitions(
+            ProxyContextDefinition, RemoteIpContextDefinition,
+            LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton
+        )
 
         this.proxy.pluginManager.registerListener(this, this)
     }
@@ -107,7 +113,7 @@ class PermissionsExPlugin : Plugin(), Listener {
 
     @EventHandler
     fun onPermissionCheck(event: PermissionCheckEvent) {
-        event.setHasPermission(event.sender.toCalculatedSubject().hasPermission(event.permission))
+        event.setHasPermission(event.sender.toCalculatedSubject().map { it.hasPermission(event.permission) }.block()!!)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -115,7 +121,13 @@ class PermissionsExPlugin : Plugin(), Listener {
         try {
             manager.getSubjects(SUBJECTS_USER).load(event.connection.uniqueId.toString())
         } catch (e: Exception) {
-            logger.warn(t("Error loading information for user %s/%s during handshake", event.connection.name, event.connection.uniqueId), e)
+            logger.warn(
+                t(
+                    "Error loading information for user %s/%s during handshake",
+                    event.connection.name,
+                    event.connection.uniqueId
+                ), e
+            )
         }
     }
 
@@ -123,33 +135,35 @@ class PermissionsExPlugin : Plugin(), Listener {
     fun unloadPlayer(event: PlayerDisconnectEvent) {
         try {
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
-        } catch (e: Exception)  {
+        } catch (e: Exception) {
             logger.warn(t("Error unloading user %s/%s during disconnect", event.player.name, event.player.uniqueId))
         }
     }
 }
 
-fun CommandSender.toCalculatedSubject(): CalculatedSubject {
-    return (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin).manager.getSubjects(when (this) {
-        is ProxiedPlayer -> SUBJECTS_USER
-        else -> IDENT_SERVER_CONSOLE.key
-    })[when (this) {
+fun CommandSender.toCalculatedSubject(): Mono<CalculatedSubject> {
+    return (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin).manager.getSubjects(
+        when (this) {
+            is ProxiedPlayer -> SUBJECTS_USER
+            else -> IDENT_SERVER_CONSOLE.key
+        }
+    )[when (this) {
         is ProxiedPlayer -> uniqueId.toString()
         else -> IDENT_SERVER_CONSOLE.value
-    }].join()
+    }]
 }
 
 class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : ImplementationInterface {
     override fun lookupMinecraftProfilesByName(
-        names: Iterable<String>,
-        action: Function<MinecraftProfile, CompletableFuture<Void>>
-    ): CompletableFuture<Int> {
-        return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
+        names: Flux<String>
+    ): Flux<MinecraftProfile> {
+        return resolveMinecraftProfile(names)
     }
 
     private val exec = Executor { task ->
         plugin.proxy.scheduler.runAsync(plugin, task)
     }
+
     override fun getBaseDirectory(): Path {
         return plugin.dataPath
     }
@@ -179,7 +193,9 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
     }
 }
 
-class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission, *wrapped.aliases.drop(1).map {"/$it"}.toTypedArray()), TabExecutor {
+class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) :
+    Command("/${wrapped.aliases.first()}", wrapped.permission, *wrapped.aliases.drop(1).map { "/$it" }.toTypedArray()),
+    TabExecutor {
     override fun onTabComplete(sender: CommandSender, args: Array<out String>): MutableIterable<String> {
         return wrapped.tabComplete(BungeeCommander(pex.manager, sender), args.joinToString(" "))
     }

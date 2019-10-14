@@ -27,6 +27,7 @@
     "lifecycle.MixinPlayerManager",
     "lifecycle.MixinServerHandshakeNetworkHandler",
     "lifecycle.MixinServerPlayNetworkHandler",
+    "lifecycle.MixinUserCache",
 
     "source.MixinServerPlayerEntity",
     "source.MixinServerCommandSource",

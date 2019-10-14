@@ -8,6 +8,9 @@ cache:
   directories:
     - $HOME/.gradle # Gradle build cache
 
+env:
+  - ORG_GRADLE_PROJECT_buildExcludes=permissionsex-fabric
+
 before_install: chmod +x ./gradlew
 
 jobs:

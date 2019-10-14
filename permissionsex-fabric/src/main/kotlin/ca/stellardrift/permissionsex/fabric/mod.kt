@@ -29,11 +29,9 @@ import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.CommandSpec
-import com.google.common.collect.Iterables
-import com.mojang.authlib.Agent
-import com.mojang.authlib.GameProfile
-import com.mojang.authlib.ProfileLookupCallback
+import ca.stellardrift.permissionsex.util.resolveMinecraftProfile
 import com.mojang.brigadier.CommandDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.server.ServerStartCallback
 import net.fabricmc.fabric.api.event.server.ServerStopCallback
@@ -45,15 +43,12 @@ import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.LoggerFactory
+import reactor.core.publisher.Flux
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
-import java.util.function.Supplier
 import javax.sql.DataSource
 
 private const val MOD_ID: String = "permissionsex"
@@ -138,13 +133,13 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun handlePlayerJoin(player: ServerPlayerEntity) {
-        manager.getSubjects(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
+        manager.getSubjects(SUBJECTS_USER).get(player.uuidAsString).subscribe {
             // Update name option
-            it.data().cache.isRegistered(it.identifier.value).thenAccept {isReg ->
+            it.data().cache.isRegistered(it.identifier.value).subscribe { isReg ->
                 if (isReg) {
                     it.data().update {data ->
                         data.setOption(GLOBAL_CONTEXT, "name", player.name.asString())
-                    }
+                    }.subscribe()
                 }
             }
 
@@ -211,35 +206,10 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         return container.metadata.version.friendlyString
     }
 
-    override fun lookupMinecraftProfilesByName(
-        namesIter: Iterable<String>,
-        action: Function<MinecraftProfile, CompletableFuture<Void>>
-    ): CompletableFuture<Int> {
-        val futures = mutableListOf<CompletableFuture<Void>>()
-        return CompletableFuture.supplyAsync(Supplier {
-            val names = Iterables.toArray(namesIter, String::class.java)
-            val state = CountDownLatch(names.size)
-            val callback = PEXProfileLookupCallback(state, action, futures)
-            this.server.gameProfileRepo.findProfilesByNames(names, Agent.MINECRAFT, callback)
-            state.await()
-            futures.size
-        }, asyncExecutor).thenCombine(CompletableFuture.allOf(*futures.toTypedArray())) { count, _ -> count }
-    }
-
-}
-
-internal class PEXProfileLookupCallback(private val state: CountDownLatch, private val action: Function<MinecraftProfile, CompletableFuture<Void>>, val futures: MutableList<CompletableFuture<Void>>): ProfileLookupCallback {
-    override fun onProfileLookupSucceeded(profile: GameProfile) {
-        try {
-            futures.add(action.apply(profile as MinecraftProfile))
-        } finally {
-            state.countDown()
+    @ExperimentalCoroutinesApi
+    override fun lookupMinecraftProfilesByName(namesIter: Flux<String>): Flux<MinecraftProfile> {
+        return resolveMinecraftProfile(namesIter) {
+            (this.server.userCache as PEXUserCache).findByUsername(it, false)
         }
     }
-
-    override fun onProfileLookupFailed(profile: GameProfile, exception: java.lang.Exception) {
-        state.countDown()
-        PermissionsExMod.logger.error(t("Unable to resolve profile %s due to %s", profile, exception.message), exception)
-    }
-
 }

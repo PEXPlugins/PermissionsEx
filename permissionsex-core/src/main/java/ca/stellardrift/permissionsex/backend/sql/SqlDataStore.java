@@ -17,16 +17,12 @@
 
 package ca.stellardrift.permissionsex.backend.sql;
 
-import ca.stellardrift.permissionsex.backend.sql.dao.H2SqlDao;
-import ca.stellardrift.permissionsex.backend.sql.dao.MySqlDao;
-import ca.stellardrift.permissionsex.backend.sql.dao.SchemaMigration;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import ninja.leaping.configurate.objectmapping.Setting;
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.backend.sql.dao.H2SqlDao;
+import ca.stellardrift.permissionsex.backend.sql.dao.MySqlDao;
+import ca.stellardrift.permissionsex.backend.sql.dao.SchemaMigration;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
@@ -34,17 +30,17 @@ import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.ThrowingFunction;
 import ca.stellardrift.permissionsex.util.Util;
+import com.google.common.collect.ImmutableMap;
+import kotlin.Pair;
+import ninja.leaping.configurate.objectmapping.Setting;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -181,7 +177,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
+    protected Mono<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 Optional<SubjectRef> ref = dao.getSubjectRef(type, identifier);
@@ -208,7 +204,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
+    protected Mono<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
         // Cases: update data for sql (easy), update of another type (get SQL data, do update)
         SqlSubjectData sqlData;
         if (data instanceof SqlSubjectData) {
@@ -233,7 +229,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public CompletableFuture<Boolean> isRegistered(String type, String identifier) {
+    public Mono<Boolean> isRegistered(String type, String identifier) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 return dao.getSubjectRef(type, identifier).isPresent();
@@ -242,48 +238,59 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Set<String> getAllIdentifiers(String type) {
+    public Flux<String> getAllIdentifiers(String type) {
         try (SqlDao dao = getDao()) {
-            return dao.getAllIdentifiers(type);
+            return Flux.fromIterable(dao.getAllIdentifiers(type));
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Flux.error(e);
         }
     }
 
     @Override
-    public Set<String> getRegisteredTypes() {
+    public Flux<String> getRegisteredTypes() {
         try (SqlDao dao = getDao()) {
-            return dao.getRegisteredTypes();
+            return Flux.fromIterable(dao.getRegisteredTypes());
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Flux.error(e);
         }
 
     }
 
     @Override
-    public CompletableFuture<Set<String>> getDefinedContextKeys() {
+    public Flux<String> getDefinedContextKeys() {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 return dao.getUsedContextKeys();
+            }
+        }).flatMapIterable(it -> it);
+    }
+
+    @Override
+    public Flux<Pair<Entry<String, String>, ImmutableSubjectData>> getAll() {
+        return Flux.using(this::getDao, dao -> {
+            try {
+                return Flux.fromIterable(dao.getAllSubjectRefs())
+                        .flatMap(it -> {
+                            try {
+                                return Flux.just(new Pair<>(it, getDataForRef(dao, it)));
+                            } catch (SQLException e) {
+                                return Flux.error(e);
+                            }
+                        });
+            } catch (SQLException ex) {
+                return Flux.error(ex);
+            }
+        }, dao -> {
+            try {
+                dao.close();
+            } catch (SQLException ex) {
+                //throw new RuntimeException(ex);
             }
         });
     }
 
     @Override
-    public Iterable<Entry<Entry<String, String>, ImmutableSubjectData>> getAll() {
-        try (SqlDao dao = getDao()) {
-            ImmutableSet.Builder<Entry<Entry<String, String>, ImmutableSubjectData>> builder = ImmutableSet.builder();
-            for (SubjectRef ref : dao.getAllSubjectRefs()) {
-                builder.add(Maps.immutableEntry(ref, getDataForRef(dao, ref)));
-            }
-            return builder.build();
-        } catch (SQLException e) {
-            return ImmutableSet.of();
-        }
-    }
-
-    @Override
-    protected CompletableFuture<RankLadder> getRankLadderInternal(String ladder) {
+    protected Mono<RankLadder> getRankLadderInternal(String ladder) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 return dao.getRankLadder(ladder);
@@ -292,7 +299,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
+    protected Mono<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 dao.setRankLadder(ladder, newLadder);
@@ -302,16 +309,16 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public Iterable<String> getAllRankLadders() {
+    public Flux<String> getAllRankLadders() {
         try (SqlDao dao = getDao()) {
-            return dao.getAllRankLadderNames();
+            return Flux.fromIterable(dao.getAllRankLadderNames());
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Flux.error(e);
         }
     }
 
     @Override
-    public CompletableFuture<Boolean> hasRankLadder(String ladder) {
+    public Mono<Boolean> hasRankLadder(String ladder) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 return dao.hasEntriesForRankLadder(ladder);
@@ -320,7 +327,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public CompletableFuture<ContextInheritance> getContextInheritanceInternal() {
+    public Mono<ContextInheritance> getContextInheritanceInternal() {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 return dao.getContextInheritance();
@@ -329,7 +336,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
+    public Mono<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 SqlContextInheritance sqlInheritance;

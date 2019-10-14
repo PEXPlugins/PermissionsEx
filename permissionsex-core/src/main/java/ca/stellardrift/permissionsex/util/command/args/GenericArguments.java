@@ -1148,7 +1148,7 @@ public class GenericArguments {
         @Override
         public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
             return args.nextIfPresent()
-                    .map(arg -> keySupplier.get().stream().filter(new StartsWithPredicate(arg))
+                    .map(arg -> keySupplier.get().stream().filter(Utilities.caseInsensitiveStartsWith(arg))
                             .collect(GuavaCollectors.toImmutableList()))
                     .orElse(ImmutableList.of());
         }

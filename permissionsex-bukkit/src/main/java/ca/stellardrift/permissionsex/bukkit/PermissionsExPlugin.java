@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
-import ca.stellardrift.permissionsex.profile.ProfileKt;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
@@ -45,6 +44,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import org.slf4j.impl.JDK14LoggerAdapter;
 import org.yaml.snakeyaml.DumperOptions;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -53,11 +54,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Set;
-import java.util.concurrent.*;
-import java.util.function.Function;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static ca.stellardrift.permissionsex.bukkit.BukkitTranslations.t;
 import static ca.stellardrift.permissionsex.hikariconfig.HikariConfig.createHikariDataSource;
+import static ca.stellardrift.permissionsex.util.ProfileKt.resolveMinecraftProfile;
 
 /**
  * PermissionsEx plugin
@@ -162,9 +166,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     private void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
-        getUserSubjects().get(event.getUniqueId().toString()).exceptionally(e -> {
+        getUserSubjects().get(event.getUniqueId().toString()).subscribe(null, e -> {
             logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
-            return null;
         });
     }
 
@@ -172,18 +175,20 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     private void onPlayerLogin(final PlayerLoginEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
         getUserSubjects().transientData().update(identifier, subj ->
-                subj.setOption(PermissionsEx.GLOBAL_CONTEXT, "hostname", event.getHostname()));
-        getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
+                subj.setOption(PermissionsEx.GLOBAL_CONTEXT, "hostname", event.getHostname())).subscribe();
+        getUserSubjects().isRegistered(identifier).flatMap(registered -> {
             if (registered) {
-                getUserSubjects().persistentData().update(identifier, input -> {
+                return getUserSubjects().persistentData().update(identifier, input -> {
                     if (!event.getPlayer().getName().equals(input.getOptions(PermissionsEx.GLOBAL_CONTEXT).get("name"))) {
                         return input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.getPlayer().getName());
                     } else {
                         return input;
                     }
                 });
+            } else {
+                return Mono.empty();
             }
-        });
+        }).subscribe();
         injectPermissible(event.getPlayer());
     }
 
@@ -355,8 +360,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         }
 
         @Override
-        public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
-            return ProfileKt.lookupMinecraftProfilesByName(names, action::apply);
+        public Flux<MinecraftProfile> lookupMinecraftProfilesByName(Flux<String> names) {
+            return resolveMinecraftProfile(names, (name, x) -> null);
         }
     }
 }

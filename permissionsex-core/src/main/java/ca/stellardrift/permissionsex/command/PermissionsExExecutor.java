@@ -26,13 +26,12 @@ import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.util.command.CommandException;
 import ca.stellardrift.permissionsex.util.command.CommandExecutor;
 import ca.stellardrift.permissionsex.util.command.Commander;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
@@ -52,16 +51,16 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         try {
             if (args.hasAny("subject")) {
                 Map.Entry<String, String> ret = args.getOne("subject");
-                return pex.getSubjects(ret.getKey()).get(ret.getValue()).get();
+                return pex.getSubjects(ret.getKey()).get(ret.getValue()).block();
             } else {
                 Optional<Map.Entry<String, String>> ret = src.getSubjectIdentifier();
                 if (!ret.isPresent()) {
                     throw new CommandException(t("A subject must be provided for this command!"));
                 } else {
-                    return pex.getSubjects(ret.get().getKey()).get(ret.get().getValue()).get();
+                    return pex.getSubjects(ret.get().getKey()).get(ret.get().getValue()).block();
                 }
             }
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (RuntimeException e) {
             throw new CommandException(t("Unable to get subject"), e);
         }
     }
@@ -79,12 +78,12 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
         }
     }
 
-    protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Translatable message) {
+    protected <TextType> void messageSubjectOnFuture(Mono<?> future, final Commander<TextType> src, final Translatable message) {
         messageSubjectOnFuture(future, src, () -> message);
     }
 
-    protected <TextType> void messageSubjectOnFuture(CompletableFuture<?> future, final Commander<TextType> src, final Supplier<Translatable> message) {
-        future.thenRun(() -> src.msg(message.get())).exceptionally(err -> {
+    protected <TextType> void messageSubjectOnFuture(Mono<?> future, final Commander<TextType> src, final Supplier<Translatable> message) {
+        future.subscribe(null, err -> {
             if (err instanceof CompletionException && err.getCause() != null) {
                 err = err.getCause();
             }
@@ -95,8 +94,7 @@ public abstract class PermissionsExExecutor implements CommandExecutor {
                 src.error(t("Error (%s) occurred while performing command task! Please see console for details: %s", err.getClass().getSimpleName(), err.getMessage()));
                 pex.getLogger().error(t("Error occurred while executing command for user %s", src.getName()), err);
             }
-            return null;
-        });
+        }, () -> src.msg(message.get()));
     }
 
     static class RuntimeCommandException extends RuntimeException {

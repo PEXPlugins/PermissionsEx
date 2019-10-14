@@ -24,19 +24,20 @@ import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.ThrowingSupplier;
-import ca.stellardrift.permissionsex.util.Util;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Futures;
+import kotlin.Pair;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -45,6 +46,7 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
  */
+@NonNull
 public abstract class AbstractDataStore implements DataStore {
     private PermissionsEx manager;
     private final Factory factory;
@@ -73,40 +75,35 @@ public abstract class AbstractDataStore implements DataStore {
     protected abstract void initializeInternal() throws PermissionsLoadingException;
 
     @Override
-    public final CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, Consumer<ImmutableSubjectData> listener) {
+    public final Mono<ImmutableSubjectData> getData(String type, String identifier, Consumer<ImmutableSubjectData> listener) {
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(identifier, "identifier");
 
-        CompletableFuture<ImmutableSubjectData> ret = getDataInternal(type, identifier);
-        ret.thenRun(() -> {
+        Mono<ImmutableSubjectData> ret = getDataInternal(type, identifier);
+        return ret.doOnSuccess(data -> {
             if (listener != null) {
                 listeners.addListener(Maps.immutableEntry(type, identifier), listener);
             }
         });
-        return ret;
     }
 
     @Override
-    public final CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, ImmutableSubjectData data) {
+    public final Mono<ImmutableSubjectData> setData(String type, String identifier, ImmutableSubjectData data) {
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(identifier, "identifier");
 
         final Map.Entry<String, String> lookupKey = Maps.immutableEntry(type, identifier);
         return setDataInternal(type, identifier, data)
-                .thenApply(newData -> {
+                .doOnSuccess(newData -> {
                     if (newData != null) {
                         listeners.call(lookupKey, newData);
                     }
-                    return newData;
                 });
     }
 
-    protected <T> CompletableFuture<T> runAsync(ThrowingSupplier<T, ?> supplier) {
-        return Util.asyncFailableFuture(supplier, getManager().getAsyncExecutor());
-    }
-
-    protected CompletableFuture<Void> runAsync(Runnable run) {
-        return CompletableFuture.runAsync(run, getManager().getAsyncExecutor());
+    protected <T> Mono<T> runAsync(Callable<T> func) {
+        return Mono.fromCallable(func)
+                .subscribeOn(getManager().getScheduler());
     }
 
     /**
@@ -119,54 +116,55 @@ public abstract class AbstractDataStore implements DataStore {
      */
     protected final void applyDefaultData() {
         getData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, null)
-                .thenApply(data -> data.setDefaultValue(ImmutableSet.of(new ContextValue<>("localip", "127.0.0.1")), 1))
-                .thenCompose(data -> setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, data));
+                .subscribe(data -> setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS,
+                        data.setDefaultValue(ImmutableSet.of(new ContextValue<>("localip", "127.0.0.1")), 1)
+                        )).dispose();
     }
 
-    protected abstract CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier);
+    protected abstract Mono<ImmutableSubjectData> getDataInternal(String type, String identifier);
 
-    protected abstract CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data);
+    protected abstract Mono<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data);
 
     @Override
-    public final Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(final String type) {
+    public final Flux<Pair<String, ImmutableSubjectData>> getAll(final String type) {
         Objects.requireNonNull(type, "type");
-        return Iterables.transform(getAllIdentifiers(type),
-                input -> Maps.immutableEntry(input, Futures.getUnchecked(getData(type, input, null))));
+        return getAllIdentifiers(type).flatMap(ident -> {
+            return getData(type, ident, null).map(data -> new Pair<>(ident, data));
+        });
     }
 
     @Override
-    public final <T> CompletableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
-        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().getAsyncExecutor());
+    public final <T, P extends Publisher<T>> P performBulkOperation(final Function<DataStore, P> function) {
+        return function.apply(this);
+        // return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().getAsyncExecutor()); // TODO  fix this?
     }
 
     @Override
-    public final CompletableFuture<RankLadder> getRankLadder(String ladderName, Consumer<RankLadder> listener) {
+    public final Mono<RankLadder> getRankLadder(String ladderName, Consumer<RankLadder> listener) {
         Objects.requireNonNull(ladderName, "ladderName");
-        CompletableFuture<RankLadder> ladder = getRankLadderInternal(ladderName);
-        if (listener != null) {
+        Mono<RankLadder> ret = getRankLadderInternal(ladderName).cache();
+        return ret.doOnSuccess(ladder -> {
             rankLadderListeners.addListener(ladderName.toLowerCase(), listener);
-        }
-        return ladder;
+        });
     }
 
     @Override
-    public final CompletableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
-        return setRankLadderInternal(identifier, ladder)
-                .thenApply(newData -> {
-                    if (newData != null) {
-                        rankLadderListeners.call(identifier, newData);
-                    }
-                    return newData;
-                });
+    public final Mono<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
+        Mono<RankLadder> ret = setRankLadderInternal(identifier, ladder).cache();
+        return ret.doOnSuccess(newData -> {
+            if (newData != null) {
+                rankLadderListeners.call(identifier, newData);
+            }
+        });
     }
 
 
-    protected abstract CompletableFuture<RankLadder> getRankLadderInternal(String ladder);
-    protected abstract CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
+    protected abstract Mono<RankLadder> getRankLadderInternal(String ladder);
+    protected abstract Mono<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
 
     @Override
-    public final CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
-        CompletableFuture<ContextInheritance> inheritance = getContextInheritanceInternal();
+    public final Mono<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
+        Mono<ContextInheritance> inheritance = getContextInheritanceInternal().cache();
         if (listener != null) {
             contextInheritanceListeners.addListener(true, listener);
         }
@@ -175,18 +173,16 @@ public abstract class AbstractDataStore implements DataStore {
 
 
     @Override
-    public final CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance contextInheritance) {
-        return setContextInheritanceInternal(contextInheritance)
-                .thenApply(newData -> {
-                    if (newData != null) {
-                        contextInheritanceListeners.call(true, newData);
-                    }
-                    return newData;
-                });
+    public final Mono<ContextInheritance> setContextInheritance(ContextInheritance contextInheritance) {
+        return setContextInheritanceInternal(contextInheritance).doOnSuccess(newData -> {
+            if (newData != null) {
+                contextInheritanceListeners.call(true, newData);
+            }
+        });
     }
 
-    protected abstract CompletableFuture<ContextInheritance> getContextInheritanceInternal();
-    protected abstract CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
+    protected abstract Mono<ContextInheritance> getContextInheritanceInternal();
+    protected abstract Mono<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
 
     /**
      * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.

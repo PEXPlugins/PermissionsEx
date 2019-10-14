@@ -85,8 +85,8 @@ public class PEXPermissible extends PermissibleBase {
 
                 @Override
                 public Iterator<String> getValues(CalculatedSubject subj, Set<ContextValue<?>> contexts) {
-                    return Iterables.transform(subj.getOptions(contexts).entrySet(),
-                            ent -> "options." + ent.getKey() + "." + ent.getValue())
+                    return subj.getOptions(contexts).entrySet().stream()
+                            .map(ent -> "options." + ent.getKey() + "." + ent.getValue())
                             .iterator();
                 }
             },
@@ -138,7 +138,7 @@ public class PEXPermissible extends PermissibleBase {
         this.player = player;
         this.plugin = plugin;
         this.pex = plugin.getManager();
-        this.subj = pex.getSubjects(SUBJECTS_USER).get(player.getUniqueId().toString()).get();
+        this.subj = pex.getSubjects(SUBJECTS_USER).get(player.getUniqueId().toString()).block();
     }
 
     CalculatedSubject getPEXSubject() {
@@ -231,13 +231,13 @@ public class PEXPermissible extends PermissibleBase {
     public PermissionAttachment addAttachment(Plugin plugin) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
         this.subj.transientData().update(input -> input.addParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
-                .thenRun(() -> this.attachments.add(attach));
+                .subscribe(data -> this.attachments.add(attach));
         return attach;
     }
 
     public boolean removeAttachmentInternal(final PEXPermissionAttachment attach) {
         this.subj.transientData().update(input -> input.removeParent(PermissionsEx.GLOBAL_CONTEXT, PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
-                .thenRun(() -> {
+                .subscribe(data -> {
                     PermissionRemovedExecutor exec = attach.getRemovalCallback();
                     if (exec != null) {
                         exec.attachmentRemoved(attach);
@@ -280,11 +280,12 @@ public class PEXPermissible extends PermissibleBase {
     public PermissionAttachment addAttachment(Plugin plugin, int ticks) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
         this.subj.transientData().update(input -> input.addParent(ImmutableSet.of(BeforeTimeContextDefinition.INSTANCE.createValue(LocalDateTime.now().plus(ticks * 50, ChronoUnit.MILLIS))), PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
-                .thenRun(() -> this.attachments.add(attach));
+                .subscribe(data -> this.attachments.add(attach));
         return attach;
     }
 
     @Override
+    @NotNull
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
         ImmutableSet.Builder<PermissionAttachmentInfo> ret = ImmutableSet.builder();
         final Set<ContextValue<?>> activeContexts = subj.getActiveContexts();
