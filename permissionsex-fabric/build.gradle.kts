@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  */
 
 plugins {
-    id("fabric-loom") version "0.2.5-SNAPSHOT"
+    id("fabric-loom") version "0.2.6-SNAPSHOT"
     id("com.github.johnrengelman.shadow")
 }
 
