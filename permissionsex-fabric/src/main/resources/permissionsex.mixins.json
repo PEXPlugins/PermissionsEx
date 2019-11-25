@@ -14,6 +14,7 @@
     "check.MixinEntitySelector",
     "check.MixinEntityType",
     "check.MixinMessageArgumentType",
+    "check.MixinPlayerEntity",
     "check.MixinPlayerManager",
     "check.MixinServerCommandSource",
     "check.MixinServerPlayerEntity",

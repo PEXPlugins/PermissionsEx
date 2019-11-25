@@ -33,7 +33,8 @@
   "depends": {
     "fabricloader": ">=0.4.0",
     "fabric-language-kotlin": ">=1.3",
-    "fabric": "*"
+    "fabric": "*",
+    "minecraft": "1.15.x"
   },
   "suggests": {
     "worldedit": "*"

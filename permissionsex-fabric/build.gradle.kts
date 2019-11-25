@@ -31,6 +31,24 @@ plugins {
 applyCommonSettings()
 setupPublication()
 
+private data class MinecraftVersion(val srcRoot: String, val minecraftVersion: String, val fabricApiVersion: String, val yarnBuild: String)
+
+for (version in listOf(MinecraftVersion("mc1.14", "1.14.4", "0.4.1+build.245-1.14", "15"),
+    MinecraftVersion("mc1.15", "1.15-pre1", "0.4.13+build.264-1.15", "6"))) {
+        sourceSets {
+            create(version.srcRoot) {
+                java {
+                    srcDir("src/${version.srcRoot}/java")
+                }
+            }
+        }
+        java {
+            registerFeature(version.srcRoot) {
+                usingSourceSet(sourceSets[version.srcRoot])
+            }
+        }
+    }
+
 minecraft {
     refmapName = "${rootProject.name.toLowerCase()}-refmap.json"
 }
@@ -38,7 +56,7 @@ minecraft {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.14.4"
+val minecraftVersion = "1.15-pre1"
 dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
@@ -49,12 +67,12 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.13")
-    modCompile("net.fabricmc:fabric-loader:0.6.3+build.167")
-    modCompile("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.6:v2")
+    modCompile("net.fabricmc:fabric-loader:0.7.1+build.173")
+    modCompile("com.sk89q.worldedit:worldedit-fabric-mc1.14.4:7.1.0-SNAPSHOT")
 
-    listOf("net.fabricmc.fabric-api:fabric-api:0.4.0+build.240-1.14",
-            "net.fabricmc:fabric-language-kotlin:1.3.50+build.3").forEach {
+    listOf("net.fabricmc.fabric-api:fabric-api:0.4.9+build.258-1.15",
+            "net.fabricmc:fabric-language-kotlin:1.3.60+build.1").forEach {
         modCompile(it)
         include(it)
     }
