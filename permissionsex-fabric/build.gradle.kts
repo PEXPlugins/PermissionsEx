@@ -38,7 +38,7 @@ minecraft {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.14.4"
+val minecraftVersion = "1.15"
 dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
@@ -49,12 +49,12 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.13")
-    modCompile("net.fabricmc:fabric-loader:0.6.3+build.167")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.2")
+    modCompile("net.fabricmc:fabric-loader:0.7.2+build.174")
     modCompile("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT")
 
-    listOf("net.fabricmc.fabric-api:fabric-api:0.4.0+build.240-1.14",
-            "net.fabricmc:fabric-language-kotlin:1.3.50+build.3").forEach {
+    listOf("net.fabricmc.fabric-api:fabric-api:0.4.24+build.279-1.15",
+            "net.fabricmc:fabric-language-kotlin:1.3.61+build.1").forEach {
         modCompile(it)
         include(it)
     }

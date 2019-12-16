@@ -36,7 +36,8 @@ public class MixinEntitySelector {
      * @param permissionLevel Generally 2, unused
      * @return Permission result
      */
-    @Redirect(method = "check", at = @At(value = "INVOKE", target = RedirectTargets.SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL))
+    @Redirect(method = "checkSourcePermission",
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL))
     public boolean commandSourceHasPermission(ServerCommandSource src, int permissionLevel) {
         return PermissionsExHooks.hasPermission(src, MinecraftPermissions.USE_SELECTOR);
     }
