@@ -281,7 +281,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
             CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(),
                     input -> store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue())), CompletableFuture.class))
                     .thenCombine(expected.getContextInheritance(null).thenCompose(store::setContextInheritance), (v, a) -> null);
-            for (String ladder : store.getAllRankLadders()) {
+            for (String ladder : expected.getAllRankLadders()) {
                 ret = ret.thenCombine(expected.getRankLadder(ladder, null).thenCompose(ladderObj -> store.setRankLadder(ladder, ladderObj)), (v, a) -> null);
             }
             return ret;
