@@ -17,6 +17,8 @@
 
 package ca.stellardrift.permissionsex.backend.file;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -27,17 +29,11 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.transformation.TransformAction;
-import ca.stellardrift.permissionsex.backend.ConversionUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
 public class SchemaMigrations {
     public static final int LATEST_VERSION = 4;
@@ -123,7 +119,7 @@ public class SchemaMigrations {
                         }).build(),
                 tBuilder().addAction(new Object[0], (nodePath, configurationNode) -> {
                     for (Map.Entry<String, List<Map.Entry<String, Integer>>> ent : convertedRanks.entrySet()) {
-                        Collections.sort(ent.getValue(), (a, b) -> b.getValue().compareTo(a.getValue()));
+                        ent.getValue().sort((a, b) -> b.getValue().compareTo(a.getValue()));
                         ConfigurationNode ladderNode = configurationNode.getNode(FileDataStore.KEY_RANK_LADDERS, ent.getKey());
                         for (Map.Entry<String, Integer> grp : ent.getValue()) {
                             ladderNode.getAppendedNode().setValue("group:" + grp.getKey());
@@ -201,16 +197,19 @@ public class SchemaMigrations {
                             if (!defaultNode.isVirtual()) {
                                 if (defaultNode.getBoolean()) {
                                     ConfigurationNode addToNode = null;
-                                    final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("systems", "default");
+                                    final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("fallbacks", PermissionsEx.SUBJECTS_USER);
+                                    final Object contexts = valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS).getValue();
                                     for (ConfigurationNode node : defaultsParent.getChildrenList()) {
-                                        if (Objects.equal(node.getNode(FileSubjectData.KEY_CONTEXTS).getValue(), valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS).getValue())) {
+                                        if (Objects.equal(node.getNode(FileSubjectData.KEY_CONTEXTS).getValue(), contexts)) {
                                             addToNode = node;
                                             break;
                                         }
                                     }
                                     if (addToNode == null) {
                                         addToNode = defaultsParent.getAppendedNode();
+                                        addToNode.getNode(FileSubjectData.KEY_CONTEXTS).setValue(valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS));
                                     }
+
                                     addToNode.getNode("parents").getAppendedNode().setValue("group:" + valueAtPath.getParent().getKey());
                                 }
                                 defaultNode.setValue(null);

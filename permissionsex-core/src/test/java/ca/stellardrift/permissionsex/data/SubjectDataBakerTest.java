@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static ca.stellardrift.permissionsex.context.Context_definitionKt.cSet;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SubjectDataBakerTest extends PermissionsExTest {
 
@@ -66,6 +66,19 @@ public class SubjectDataBakerTest extends PermissionsExTest {
         assertEquals(1, childS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.child"));
         assertEquals(0, subjectS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
         assertEquals(1, subjectS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.child"));
+    }
+
+    @Test
+    public void testFallbackSubject() {
+        getManager().getSubjects(PermissionsEx.SUBJECTS_FALLBACK).transientData().update(PermissionsEx.SUBJECTS_USER, old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "messages.welcome", 1)).join();
+
+        CalculatedSubject subject = getManager().getSubjects(PermissionsEx.SUBJECTS_USER).get("test").join();
+
+        assertTrue(subject.hasPermission("messages.welcome")); // we are inheriting from fallback
+
+        subject.transientData().update(data -> data.addParent(PermissionsEx.GLOBAL_CONTEXT, PermissionsEx.SUBJECTS_GROUP, "member")).join();
+
+        assertFalse(subject.hasPermission("messages.welcome")); // now that we have data stored for the subject, we no longer inherit from fallback.
     }
 
     /**

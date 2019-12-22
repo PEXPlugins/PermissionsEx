@@ -100,6 +100,12 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
                     final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
                     CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
+
+                    if (state.parents.isEmpty() && state.combinedPermissions.isEmpty() && state.options.isEmpty() && state.defaultValue == 0 && !(subject.getKey().equals(PermissionsEx.SUBJECTS_FALLBACK)
+                            && subject.getValue().equals(PermissionsEx.SUBJECTS_FALLBACK))) { // If we have no data, include the fallback subject
+                        ret = ret.thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_FALLBACK, subject.getKey()), visitedSubjects, 0));
+                    }
+
                     Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
                     if (!subject.equals(defIdentifier)) {
                         ret = ret.thenCompose(none -> visitSubject(state, defIdentifier, visitedSubjects, 1))

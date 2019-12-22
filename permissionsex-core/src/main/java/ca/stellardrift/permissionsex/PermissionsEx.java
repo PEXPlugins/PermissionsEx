@@ -83,6 +83,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
+    public static final String SUBJECTS_FALLBACK = "fallback";
     public static final ImmutableSet<ContextValue<?>> GLOBAL_CONTEXT = ImmutableSet.of();
 
     private final TranslatableLogger logger;

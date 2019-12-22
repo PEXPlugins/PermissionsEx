@@ -96,8 +96,8 @@
       }
     ]
   },
-  "systems": {
-    "default": [
+  "fallbacks": {
+    "user": [
       {
         "parents": [
           "group:default"
