@@ -3,9 +3,10 @@
 PermissionsEx (PEX (not the pipe)) is a full-service permissions plugin giving in-depth control of permissions for a server. PEX is available for various server and proxy platforms:
 
 - [Bukkit/Spigot/Paper](https://dev.bukkit.org/projects/permissionsex) -- [source](permissionsex-bukkit)
-- [Sponge](https://ore.spongepowered.org/zml/PermissionsEx) -- [source](permissions-sponge)
-<!--- [BungeeCord/Waterfall]
-- [Velocity] -->
+- [Sponge](https://ore.spongepowered.org/zml/PermissionsEx) -- [source](permissionsex-sponge)
+- BungeeCord/Waterfall -- [source](permissionsex-bungee)
+- [Velocity] -- [source](permissionsex-velocity)
+- Fabric -- [source](permissionsex-fabric)
 
 
 💬 Having an issue setting up PEX? Check out our [Discord](https://discord.gg/PHpuzZS)
