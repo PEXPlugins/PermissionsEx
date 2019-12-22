@@ -50,7 +50,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
 
     private final AsyncLoadingCache<Set<ContextValue<?>>, BakedSubjectData> data;
     private final Set<Consumer<CalculatedSubject>> updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final CachingValue<Set<ContextValue<?>>> activeContexts;
+    private CachingValue<Set<ContextValue<?>>> activeContexts;
 
     CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) {
         this.baker = Preconditions.checkNotNull(baker, "baker");
@@ -61,6 +61,11 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
                 .expireAfterAccess(1, TimeUnit.MINUTES)
                 .executor(type.getManager().getAsyncExecutor())
                 .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubject.this, key)));
+    }
+
+    void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
+        this.ref = persistentRef;
+        this.transientRef = transientRef;
         this.activeContexts = CachingValues.cachedByTime(50L, () -> {
             Set<ContextValue<?>> acc = new HashSet<>();
             for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
@@ -68,11 +73,6 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
             }
             return acc;
         });
-    }
-
-    void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
-        this.ref = persistentRef;
-        this.transientRef = transientRef;
     }
 
     /**
@@ -174,6 +174,9 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     }
 
     public Set<ContextValue<?>> getActiveContexts() {
+        if (activeContexts == null) {
+            throw new IllegalStateException("This subject has not yet been initialized! This is normally done before the future provided by PEX completes.");
+        }
         return new HashSet<>(activeContexts.get());
     }
 
