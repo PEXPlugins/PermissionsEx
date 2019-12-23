@@ -17,12 +17,6 @@
 
 package ca.stellardrift.permissionsex.subject;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multiset;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
@@ -30,21 +24,14 @@ import ca.stellardrift.permissionsex.util.NodeTree;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.glob.GlobParseException;
 import ca.stellardrift.permissionsex.util.glob.Globs;
+import com.google.common.collect.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static java.util.Map.Entry;
 import static ca.stellardrift.permissionsex.util.Translations.t;
+import static java.util.Map.Entry;
 
 /**
  * Handles baking of subject data inheritance tree and context tree into a single data set
@@ -140,9 +127,10 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     }
 
     private List<Set<ContextValue<?>>> processContexts(Set<Set<ContextValue<?>>> possibilities, Set<Set<ContextValue<?>>> transientPossibilities, BakeState state) {
-        List<Set<ContextValue<?>>> ret = new ArrayList<>(possibilities.size());
-        processSingleDataContexts(ret, possibilities, state);
-        processSingleDataContexts(ret, transientPossibilities, state);
+        List<Set<ContextValue<?>>> ret = new LinkedList<>();
+        Set<Set<ContextValue<?>>> seen = new HashSet<>(possibilities.size());
+        processSingleDataContexts(ret, seen, possibilities, state);
+        processSingleDataContexts(ret, seen, transientPossibilities, state);
         ret.sort(Comparator.<Set<ContextValue<?>>>comparingInt(Set::size).reversed());
         return ret;
     }
@@ -153,10 +141,15 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
      *
      * @param accum Accumulator of context sets
      * @param possibilities The possible contexts provided by the subject data
-     * @param state The bake state rosna
+     * @param state The bake state
      */
-    private void processSingleDataContexts(List<Set<ContextValue<?>>> accum, Set<Set<ContextValue<?>>> possibilities, BakeState state) {
+    private void processSingleDataContexts(List<Set<ContextValue<?>>> accum, Set<Set<ContextValue<?>>> seen, Set<Set<ContextValue<?>>> possibilities, BakeState state) {
         nextSegment: for (Set<ContextValue<?>> segmentContexts : possibilities) {
+            if (seen.contains(segmentContexts)) {
+                continue;
+            }
+            seen.add(segmentContexts);
+
             for (ContextValue<?> value : segmentContexts) {
                 boolean matched = false;
                 for (ContextValue<?> possibility : state.activeContexts) {
