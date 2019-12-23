@@ -27,7 +27,7 @@ inline fun <reified T: Any> Optional<*>.castMap(operation: T.() -> Unit) {
     (this.orElse(null) as? T)?.apply(operation)
 }
 
-inline fun <reified T: Any, R> Optional<*>.castMap(operation: T.() -> R): R? {
+inline fun <reified T: Any, R> Optional<*>.castMap(operation: T.() -> R?): R? {
     return (this.orElse(null) as? T)?.run(operation)
 }
 

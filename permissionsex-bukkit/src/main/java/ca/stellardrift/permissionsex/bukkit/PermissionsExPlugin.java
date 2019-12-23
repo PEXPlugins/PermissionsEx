@@ -26,11 +26,10 @@ import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableSet;
-import net.milkbowl.vault.chat.Chat;
-import net.milkbowl.vault.permission.Permission;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -40,7 +39,6 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permissible;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import org.slf4j.impl.JDK14LoggerAdapter;
@@ -129,12 +127,8 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         subscriptionHandler = PEXPermissionSubscriptionMap.inject(this, this.getServer().getPluginManager());
         permsList = PermissionList.inject(this);
         injectAllPermissibles();
-        if (getServer().getPluginManager().isPluginEnabled("Vault")) {
-            final PEXVault vault = new PEXVault(this);
-            getServer().getServicesManager().register(Permission.class, vault, this, ServicePriority.High); // Hook into vault
-            getServer().getServicesManager().register(Chat.class, new PEXVaultChat(vault), this, ServicePriority.High);
-            logger.info(t("Hooked into Vault for Permission and Chat interfaces"));
-        }
+        PEXPluginIntegrations.detectWorldGuard(this);
+        PEXPluginIntegrations.detectVault(this);
     }
 
     @Override
@@ -171,8 +165,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     private void onPlayerLogin(final PlayerLoginEvent event) {
         final String identifier = event.getPlayer().getUniqueId().toString();
+
+        // Spigot doesn't seem to store virtual host names, so we have to do it ourselves.
+        // Hostnames are provided as <host>:<port>, and we don't need the port.
         getUserSubjects().transientData().update(identifier, subj ->
-                subj.setOption(PermissionsEx.GLOBAL_CONTEXT, "hostname", event.getHostname()));
+                subj.setOption(PermissionsEx.GLOBAL_CONTEXT, "hostname", StringUtils.substringBeforeLast(event.getHostname(), ":")));
         getUserSubjects().isRegistered(identifier).thenAccept(registered -> {
             if (registered) {
                 getUserSubjects().persistentData().update(identifier, input -> {
