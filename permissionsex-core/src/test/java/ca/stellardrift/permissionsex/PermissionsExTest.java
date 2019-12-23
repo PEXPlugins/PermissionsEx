@@ -35,14 +35,14 @@ import java.nio.file.Path;
 public abstract class PermissionsExTest {
     public Path tempFolder;
 
-    private PermissionsEx manager;
+    private PermissionsEx<?> manager;
     @BeforeEach
     public void setUp(TestInfo info, @TempDir Path tempFolder) throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
         this.tempFolder = tempFolder;
-        PermissionsExConfiguration config = populate();
+        PermissionsExConfiguration<?> config = populate();
         config.validate();
 
-        manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder.resolve(info.getDisplayName())));
+        manager = new PermissionsEx<>(config, new TestImplementationInterface(tempFolder.resolve(info.getDisplayName())));
     }
 
     @AfterEach
@@ -53,9 +53,9 @@ public abstract class PermissionsExTest {
         }
     }
 
-    protected PermissionsEx getManager() {
+    protected PermissionsEx<?> getManager() {
         return manager;
     }
 
-    protected abstract PermissionsExConfiguration populate();
+    protected abstract PermissionsExConfiguration<?> populate();
 }

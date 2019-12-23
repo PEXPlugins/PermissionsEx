@@ -38,9 +38,9 @@ import java.util.function.Supplier;
 import static ca.stellardrift.permissionsex.util.Translations.t;
 
 public abstract class PermissionsExExecutor implements CommandExecutor {
-    protected final PermissionsEx pex;
+    protected final PermissionsEx<?> pex;
 
-    protected PermissionsExExecutor(PermissionsEx pex) {
+    protected PermissionsExExecutor(PermissionsEx<?> pex) {
         this.pex = pex;
     }
 

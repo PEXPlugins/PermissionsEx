@@ -28,7 +28,7 @@ object LuckPermsConversionProvider : ConversionProvider {
 
     override val name = t("LuckPerms")
 
-    override fun listConversionOptions(pex: PermissionsEx): List<ConversionResult> {
+    override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
         val luckBaseDir = pex.baseDirectory.parent.resolve("LuckPerms")
         val result = mutableListOf<ConversionResult>()
         for (format in formatNames) {

@@ -38,7 +38,7 @@ object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
     override fun matches(ownVal: String, testVal: String): Boolean =
         ownVal == testVal
 
-    override fun update(config: PermissionsExConfiguration) {
+    override fun update(config: PermissionsExConfiguration<*>) {
         activeTags = config.serverTags
     }
 
@@ -50,7 +50,7 @@ object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
 
 open class TimeContextDefinition internal constructor(name: String) : PEXContextDefinition<LocalDateTime>(name) {
     private var currentTimeZone: ZoneId = ZoneId.systemDefault()
-    override fun update(config: PermissionsExConfiguration) {
+    override fun update(config: PermissionsExConfiguration<*>) {
         // TODO: implement timezone configuration option
     }
 

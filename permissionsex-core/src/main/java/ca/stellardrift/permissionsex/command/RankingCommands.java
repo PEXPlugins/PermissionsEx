@@ -48,7 +48,7 @@ import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.*
 
 public class RankingCommands {
 
-    public static CommandSpec getPromoteCommand(PermissionsEx pex) {
+    public static CommandSpec getPromoteCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("promote", "prom")
                 .setDescription(t("Promote a subject on the given ladder"))
@@ -74,7 +74,7 @@ public class RankingCommands {
                 .build();
     }
 
-    public static CommandSpec getDemoteCommand(PermissionsEx pex) {
+    public static CommandSpec getDemoteCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("demote", "dem")
                 .setDescription(t("Demote a subject on the given ladder"))
@@ -109,7 +109,7 @@ public class RankingCommands {
         return cmd.fmt().button(ButtonType.NEUTRAL, t("\u25b2"), t("Move this rank to a higher position in the ladder"), "/pex rank " + rank.getName() + " add -r 1 " + subject.getKey() + " " + subject.getValue(), true);
     }
 
-    public static CommandSpec getRankingCommand(PermissionsEx pex) {
+    public static CommandSpec getRankingCommand(PermissionsEx<?> pex) {
         final CommandElement arg = ChildCommands.args(getRankAddChildCommand(pex), getRankRemoveCommand(pex));
         return CommandSpec.builder()
                 .setAliases("ranking", "rank")
@@ -153,7 +153,7 @@ public class RankingCommands {
                 .build();
     }
 
-    private static CommandSpec getRankAddChildCommand(PermissionsEx pex) {
+    private static CommandSpec getRankAddChildCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("add", "+")
                 .setArguments(flags()
@@ -187,7 +187,7 @@ public class RankingCommands {
 
     }
 
-    private static CommandSpec getRankRemoveCommand(PermissionsEx pex) {
+    private static CommandSpec getRankRemoveCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("remove", "rem", "-")
                 .setArguments(subject(t("subject"), pex, PermissionsEx.SUBJECTS_GROUP))

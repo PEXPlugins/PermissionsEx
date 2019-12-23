@@ -71,7 +71,7 @@ class PEXSubjectData implements SubjectData {
         return val == null ? null : def.createValue(val);
     }
 
-    static Set<ContextValue<?>> contextsSpongeToPex(Set<Context> input, PermissionsEx manager) {
+    static Set<ContextValue<?>> contextsSpongeToPex(Set<Context> input, PermissionsEx<?> manager) {
        ImmutableSet.Builder<ContextValue<?>> builder = ImmutableSet.builder();
        for (Context ctx : input) {
            ContextDefinition<?> def = manager.getContextDefinition(ctx.getKey(), true);

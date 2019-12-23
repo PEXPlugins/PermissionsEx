@@ -35,7 +35,7 @@ import java.util.Set;
 import static ca.stellardrift.permissionsex.util.Translations.t;
 
 public class InfoCommand {
-    public static CommandSpec getInfoCommand(PermissionsEx pex) {
+    public static CommandSpec getInfoCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("info", "i", "who")
                 .setDescription(t("Provide information about a subject"))
@@ -49,7 +49,7 @@ public class InfoCommand {
         private static final String INDENT = "  ";
         private static final String DOUBLE_INDENT = INDENT + INDENT;
 
-        private SubjectInfoPrintingExecutor(PermissionsEx pex) {
+        private SubjectInfoPrintingExecutor(PermissionsEx<?> pex) {
             super(pex);
         }
 

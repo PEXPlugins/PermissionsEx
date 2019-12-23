@@ -114,7 +114,7 @@ class PEXSubject implements Subject {
         return Optional.empty();
     }
 
-    public PermissionsEx getManager() {
+    public PermissionsEx<?> getManager() {
         return this.collection.getPlugin().getManager();
     }
 

@@ -43,12 +43,13 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
  */
 @ConfigSerializable
-public class FilePermissionsExConfiguration implements PermissionsExConfiguration {
+public class FilePermissionsExConfiguration<T> implements PermissionsExConfiguration<T> {
     static {
         TypeSerializers.getDefaultSerializers()
                 .registerType(TypeToken.of(DataStore.class), new DataStoreSerializer())
                 .registerType(new TypeToken<Supplier<?>>() {}, SupplierSerializer.INSTANCE);
     }
+
 
     private final ConfigurationLoader<?> loader;
     private final ConfigurationNode node;
@@ -57,12 +58,20 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
     @Setting private boolean debug;
     @Setting("server-tags") private List<String> serverTags;
 
-    protected FilePermissionsExConfiguration(ConfigurationLoader<?> loader, ConfigurationNode node) {
+    private final Class<T> platformConfigClass;
+    private T platformConfig;
+
+    protected FilePermissionsExConfiguration(ConfigurationLoader<?> loader, ConfigurationNode node, Class<T> platformConfigClass) {
         this.loader = loader;
         this.node = node;
+        this.platformConfigClass = platformConfigClass;
     }
 
-    public static FilePermissionsExConfiguration fromLoader(ConfigurationLoader<?> loader) throws IOException {
+    public static FilePermissionsExConfiguration<?> fromLoader(ConfigurationLoader<?> loader) throws IOException {
+        return fromLoader(loader, EmptyPlatformConfiguration.class);
+    }
+
+    public static <T> FilePermissionsExConfiguration<T> fromLoader(ConfigurationLoader<?> loader, Class<T> platformConfigClass) throws IOException {
         ConfigurationNode node = loader.load();
         ConfigurationNode fallbackConfig;
         try {
@@ -83,7 +92,7 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
             }*/
         }
 
-        FilePermissionsExConfiguration config = new FilePermissionsExConfiguration(loader, node);
+        FilePermissionsExConfiguration<T> config = new FilePermissionsExConfiguration<>(loader, node, platformConfigClass);
         config.load();
         return config;
     }
@@ -91,6 +100,7 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
     private void load() throws IOException {
         try {
             ObjectMapper.forObject(this).populate(this.node);
+            this.platformConfig = ObjectMapper.forClass(this.platformConfigClass).bindToNew().populate(this.getPlatformConfigNode());
         } catch (ObjectMappingException e) {
             throw new IOException(e);
         }
@@ -101,10 +111,16 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
     public void save() throws IOException {
         try {
             ObjectMapper.forObject(this).serialize(this.node);
+            ObjectMapper.forClass(this.platformConfigClass).bind(this.platformConfig).serialize(getPlatformConfigNode());
         } catch (ObjectMappingException e) {
             throw new IOException(e);
         }
+
         this.loader.save(node);
+    }
+
+    private ConfigurationNode getPlatformConfigNode() {
+        return this.node.getNode("platform");
     }
 
     @Override
@@ -142,9 +158,14 @@ public class FilePermissionsExConfiguration implements PermissionsExConfiguratio
     }
 
     @Override
-    public PermissionsExConfiguration reload() throws IOException {
+    public T getPlatformConfig() {
+        return this.platformConfig;
+    }
+
+    @Override
+    public FilePermissionsExConfiguration<T> reload() throws IOException {
         ConfigurationNode node = this.loader.load();
-        FilePermissionsExConfiguration ret = new FilePermissionsExConfiguration(this.loader, node);
+        FilePermissionsExConfiguration<T> ret = new FilePermissionsExConfiguration<T>(this.loader, node, this.platformConfigClass);
         ret.load();
         return ret;
     }

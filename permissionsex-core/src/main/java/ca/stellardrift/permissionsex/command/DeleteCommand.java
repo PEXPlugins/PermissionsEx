@@ -31,7 +31,7 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  * Command that deletes all data for a subject
  */
 public class DeleteCommand {
-    public static CommandSpec getDeleteCommand(PermissionsEx pex) {
+    public static CommandSpec getDeleteCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("delete", "del", "remove", "rem")
                 .setExecutor(new PermissionsExExecutor(pex) {

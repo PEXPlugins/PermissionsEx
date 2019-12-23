@@ -68,7 +68,7 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
     }
 }
 
-class VelocityCommander(internal val pex: PermissionsEx, private val src: CommandSource) :
+class VelocityCommander(internal val pex: PermissionsEx<*>, private val src: CommandSource) :
     Commander<ComponentBuilder<*, *>> {
     private val formatter = VelocityMessageFormatter(this)
     override fun getName(): String {

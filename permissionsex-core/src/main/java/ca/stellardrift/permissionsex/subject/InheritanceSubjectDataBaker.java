@@ -52,7 +52,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
         // State objects
         private final CalculatedSubject base;
-        private final PermissionsEx pex;
+        private final PermissionsEx<?> pex;
         private final Set<ContextValue<?>> activeContexts;
 
         private BakeState(CalculatedSubject base, Set<ContextValue<?>> activeContexts) {
@@ -62,7 +62,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         }
     }
 
-    private static CompletableFuture<Set<ContextValue<?>>> processContexts(PermissionsEx pex, Set<ContextValue<?>> rawContexts) {
+    private static CompletableFuture<Set<ContextValue<?>>> processContexts(PermissionsEx<?> pex, Set<ContextValue<?>> rawContexts) {
         return pex.getContextInheritance(null).thenApply(inheritance -> {
             // Step one: calculate context inheritance
             Queue<ContextValue<?>> inProgressContexts = new LinkedList<>(rawContexts);
@@ -169,7 +169,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
 
     @SuppressWarnings("unchecked")
-    private <T> boolean checkSingleContextMatch(ContextValue<T> value, ContextValue<?> other, PermissionsEx pex) {
+    private <T> boolean checkSingleContextMatch(ContextValue<T> value, ContextValue<?> other, PermissionsEx<?> pex) {
         return value.getKey().equals(other.getKey()) && value.tryResolve(pex)
                 && value.getDefinition().matches(value, ((ContextValue<T>) other).getParsedValue(value.getDefinition()));
     }

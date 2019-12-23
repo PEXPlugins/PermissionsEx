@@ -38,7 +38,7 @@ import kotlin.collections.Map.Entry
 /**
  * Factory to create formatted elements of messages
  */
-abstract class BungeeMessageFormatter(protected val pex: PermissionsEx, private val hlColour: ChatColor = ChatColor.AQUA) :
+abstract class BungeeMessageFormatter(protected val pex: PermissionsEx<*>, private val hlColour: ChatColor = ChatColor.AQUA) :
     MessageFormatter<BaseComponent> {
     companion object {
         val EQUALS_SIGN: BaseComponent = TextComponent("=").apply {

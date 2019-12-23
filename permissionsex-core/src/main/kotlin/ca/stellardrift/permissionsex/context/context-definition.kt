@@ -134,7 +134,7 @@ open class SimpleContextDefinition(name: String) : ContextDefinition<String>(nam
 }
 
 abstract class PEXContextDefinition<T> internal constructor(name: String) : ContextDefinition<T>(name) {
-    abstract fun update(config: PermissionsExConfiguration)
+    abstract fun update(config: PermissionsExConfiguration<*>)
 }
 
 open class ContextValue<Type>(val key: String, val rawValue: String) {
@@ -154,7 +154,7 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
         this.parsedValue = value
     }
 
-    fun tryResolve(engine: PermissionsEx): Boolean {
+    fun tryResolve(engine: PermissionsEx<*>): Boolean {
         if (this.definition != null && this.definition !is FallbackContextDefinition) {
             return this.parsedValue != null
         }
@@ -183,7 +183,7 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
         return parsedValue
     }
 
-    fun getParsedValue(engine: PermissionsEx): Type {
+    fun getParsedValue(engine: PermissionsEx<*>): Type {
         var tempParsed = parsedValue
         if (tempParsed != null) {
             return tempParsed

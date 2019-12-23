@@ -85,7 +85,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
 
-    private PermissionsEx manager;
+    private PermissionsEx<?> manager;
 
     private Executor spongeExecutor = runnable -> scheduler
             .createTaskBuilder()
@@ -115,7 +115,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             convertFromBukkit();
             convertFromLegacySpongeName();
             Files.createDirectories(configDir);
-            this.manager = new PermissionsEx(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
+            this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
             throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
@@ -242,7 +242,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
 
-    PermissionsEx getManager() {
+    PermissionsEx<?> getManager() {
         return this.manager;
     }
 

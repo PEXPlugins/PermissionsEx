@@ -32,13 +32,13 @@ import java.nio.file.Path;
  * Abstract test for test classes wishing to test in cases requiring a permissions manager
  */
 public abstract class PermissionsExTest {
-    private PermissionsEx manager;
+    private PermissionsEx<?> manager;
     @BeforeEach
     public void setUp(@TempDir Path tempFolder) throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
-        PermissionsExConfiguration config = populate();
+        PermissionsExConfiguration<?> config = populate();
         config.validate();
 
-        manager = new PermissionsEx(config, new TestImplementationInterface(tempFolder));
+        manager = new PermissionsEx<>(config, new TestImplementationInterface(tempFolder));
     }
 
     @AfterEach
@@ -49,9 +49,9 @@ public abstract class PermissionsExTest {
         }
     }
 
-    protected PermissionsEx getManager() {
+    protected PermissionsEx<?> getManager() {
         return manager;
     }
 
-    protected abstract PermissionsExConfiguration populate();
+    protected abstract PermissionsExConfiguration<?> populate();
 }

@@ -58,7 +58,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     internal lateinit var logger: TranslatableLogger private set
     internal lateinit var dataPath: Path private set
 
-    lateinit var manager: PermissionsEx private set
+    lateinit var manager: PermissionsEx<*> private set
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...

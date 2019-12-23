@@ -59,7 +59,7 @@ import javax.sql.DataSource
 private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
 
-    val manager: PermissionsEx
+    val manager: PermissionsEx<*>
     get() {
         val temp = _manager
         if (temp != null) {
@@ -68,7 +68,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             throw IllegalStateException("PermissionsEx has not yet been initialized!")
         }
     }
-    private var _manager: PermissionsEx? = null
+    private var _manager: PermissionsEx<*>? = null
     private lateinit var container: ModContainer
     private lateinit var dataDir: Path
     lateinit var server: MinecraftServer private set

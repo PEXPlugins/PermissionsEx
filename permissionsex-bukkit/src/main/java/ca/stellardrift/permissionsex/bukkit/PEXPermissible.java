@@ -128,7 +128,7 @@ public class PEXPermissible extends PermissibleBase {
     }
     private final Player player;
     private final PermissionsExPlugin plugin;
-    private PermissionsEx pex;
+    private PermissionsEx<?> pex;
     private CalculatedSubject subj;
     private Permissible previousPermissible;
     private final Set<PEXPermissionAttachment> attachments = new HashSet<>();
@@ -145,7 +145,7 @@ public class PEXPermissible extends PermissibleBase {
         return this.subj;
     }
 
-    public PermissionsEx getManager() {
+    public PermissionsEx<?> getManager() {
         return this.pex;
     }
 

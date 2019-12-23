@@ -34,7 +34,7 @@ import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.*
 
 public class OptionCommands {
     private OptionCommands() {}
-    public static CommandSpec getOptionCommand(PermissionsEx pex) {
+    public static CommandSpec getOptionCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("options", "option", "opt", "o")
                 .setArguments(seq(option(t("key"), pex), optional(string(t("value")))))

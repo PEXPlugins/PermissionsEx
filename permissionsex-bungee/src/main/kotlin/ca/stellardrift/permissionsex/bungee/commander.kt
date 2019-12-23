@@ -33,7 +33,7 @@ import java.util.Locale
 import java.util.Optional
 
 
-class BungeeCommander(pex: PermissionsEx, private val src: CommandSender) : Commander<BaseComponent> {
+class BungeeCommander(pex: PermissionsEx<*>, private val src: CommandSender) : Commander<BaseComponent> {
     private val formatter = BungeePluginMessageFormatter(pex, src)
     override fun getName(): String {
         return src.name
@@ -85,7 +85,7 @@ class BungeeCommander(pex: PermissionsEx, private val src: CommandSender) : Comm
 
 }
 
-class BungeePluginMessageFormatter(pex: PermissionsEx, private val sender: CommandSender) : BungeeMessageFormatter(pex, hlColour = ChatColor.YELLOW) {
+class BungeePluginMessageFormatter(pex: PermissionsEx<*>, private val sender: CommandSender) : BungeeMessageFormatter(pex, hlColour = ChatColor.YELLOW) {
     override fun getLocale(): Locale {
         return (sender as? ProxiedPlayer)?.locale ?: Locale.getDefault()
     }

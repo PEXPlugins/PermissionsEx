@@ -45,14 +45,14 @@ public class GameArguments {
 
     }
 
-    public static CommandElement subjectType(Translatable key, PermissionsEx pex) {
+    public static CommandElement subjectType(Translatable key, PermissionsEx<?> pex) {
         return new SubjectTypeElement(key, pex);
     }
 
     private static class SubjectTypeElement extends CommandElement {
-        private final PermissionsEx pex;
+        private final PermissionsEx<?> pex;
 
-        protected SubjectTypeElement(Translatable key, PermissionsEx pex) {
+        protected SubjectTypeElement(Translatable key, PermissionsEx<?> pex) {
             super(key);
             this.pex = pex;
         }
@@ -84,19 +84,19 @@ public class GameArguments {
      * @param pex The PermissionsEx instance to fetch known subjects from
      * @return the element to match the input
      */
-    public static CommandElement subject(Translatable key, PermissionsEx pex) {
+    public static CommandElement subject(Translatable key, PermissionsEx<?> pex) {
         return new SubjectElement(key, pex, null);
     }
 
-    public static CommandElement subject(Translatable key, PermissionsEx pex, String group) {
+    public static CommandElement subject(Translatable key, PermissionsEx<?> pex, String group) {
         return new SubjectElement(key, pex, group);
     }
 
     private static class SubjectElement extends CommandElement {
-        private final PermissionsEx pex;
+        private final PermissionsEx<?> pex;
         private final String defaultType;
 
-        protected SubjectElement(Translatable key, PermissionsEx pex, String defaultType) {
+        protected SubjectElement(Translatable key, PermissionsEx<?> pex, String defaultType) {
             super(key);
             this.pex = pex;
             this.defaultType = defaultType;
@@ -167,14 +167,14 @@ public class GameArguments {
         }
     }
 
-    public static CommandElement context(Translatable key, PermissionsEx pex) {
+    public static CommandElement context(Translatable key, PermissionsEx<?> pex) {
         return new ContextCommandElement(key, pex);
     }
 
     private static class ContextCommandElement extends CommandElement {
-        private final PermissionsEx pex;
+        private final PermissionsEx<?> pex;
 
-        protected ContextCommandElement(Translatable key, PermissionsEx pex) {
+        protected ContextCommandElement(Translatable key, PermissionsEx<?> pex) {
             super(key);
             this.pex = pex;
         }
@@ -213,14 +213,14 @@ public class GameArguments {
         }
     }
 
-    public static CommandElement rankLadder(Translatable key, PermissionsEx pex) {
+    public static CommandElement rankLadder(Translatable key, PermissionsEx<?> pex) {
         return new RankLadderCommandElement(key, pex);
     }
 
     private static class RankLadderCommandElement extends CommandElement {
-        private final PermissionsEx pex;
+        private final PermissionsEx<?> pex;
 
-        protected RankLadderCommandElement(Translatable key, PermissionsEx pex) {
+        protected RankLadderCommandElement(Translatable key, PermissionsEx<?> pex) {
             super(key);
             this.pex = pex;
         }
@@ -236,11 +236,11 @@ public class GameArguments {
         }
     }
 
-    public static CommandElement permission(Translatable key, PermissionsEx pex) {
+    public static CommandElement permission(Translatable key, PermissionsEx<?> pex) {
         return GenericArguments.suggestibleString(key, () -> pex.getRecordingNotifier().getKnownPermissions());
     }
 
-    public static CommandElement option(Translatable key, PermissionsEx pex) {
+    public static CommandElement option(Translatable key, PermissionsEx<?> pex) {
         return GenericArguments.suggestibleString(key, () -> pex.getRecordingNotifier().getKnownOptions());
     }
 

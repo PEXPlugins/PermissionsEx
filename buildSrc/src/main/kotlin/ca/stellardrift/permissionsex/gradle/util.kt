@@ -95,6 +95,7 @@ fun Project.applyCommonSettings() {
 
     tasks.withType(JavaCompile::class.java) {
         it.options.encoding = "UTF-8"
+        it.options.compilerArgs.add("-Xlint:unchecked")
     }
 
     // Set up licensing

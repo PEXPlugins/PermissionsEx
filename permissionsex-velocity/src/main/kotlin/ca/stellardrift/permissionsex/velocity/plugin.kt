@@ -92,7 +92,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     private val logger = TranslatableLogger.forLogger(rawLogger)
 
-    lateinit var manager: PermissionsEx
+    lateinit var manager: PermissionsEx<*>
 
     @Subscribe
     fun onProxyInit(event: ProxyInitializeEvent) {

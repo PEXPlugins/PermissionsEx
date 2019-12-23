@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Configuration for PermissionsEx
  */
-public interface PermissionsExConfiguration {
+public interface PermissionsExConfiguration<PlatformType> {
     DataStore getDataStore(String name);
 
     DataStore getDefaultDataStore();
@@ -37,7 +37,14 @@ public interface PermissionsExConfiguration {
 
     void validate() throws PEBKACException;
 
-    PermissionsExConfiguration reload() throws IOException;
+    /**
+     * Get a configuration containing options only applicable to one implementation of PermissionsEx
+     *
+     * @return The configuration object
+     */
+    PlatformType getPlatformConfig();
+
+    PermissionsExConfiguration<PlatformType> reload() throws IOException;
 
     default void save() throws IOException {}
 }

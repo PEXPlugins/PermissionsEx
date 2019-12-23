@@ -17,11 +17,6 @@
 
 package ca.stellardrift.permissionsex.backend.memory;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import ninja.leaping.configurate.objectmapping.Setting;
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.context.ContextValue;
@@ -30,6 +25,11 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.GuavaCollectors;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import ninja.leaping.configurate.objectmapping.Setting;
 
 import java.util.Collection;
 import java.util.Map;
@@ -39,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * A data store backed entirely in memory
@@ -129,7 +128,7 @@ public class MemoryDataStore extends AbstractDataStore {
     @Override
     public CompletableFuture<Set<String>> getDefinedContextKeys() {
         return CompletableFuture.completedFuture(data.values().stream()
-                .flatMap(data -> StreamSupport.stream(data.getActiveContexts().spliterator(), false))
+                .flatMap(data -> data.getActiveContexts().stream())
                 .flatMap(Collection::stream)
                 .map(ContextValue::getKey)
                 .collect(Collectors.toSet()));

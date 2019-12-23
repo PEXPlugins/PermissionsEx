@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.PermissionsExTest;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
+import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.*;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
@@ -166,8 +167,8 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     }
 
     @Override
-    protected PermissionsExConfiguration populate() {
-        return new PermissionsExConfiguration() {
+    protected PermissionsExConfiguration<?> populate() {
+        return new PermissionsExConfiguration<EmptyPlatformConfiguration>() {
             @Override
             public DataStore getDataStore(String name) {
                 return null;
@@ -194,7 +195,12 @@ public class SubjectDataBakerTest extends PermissionsExTest {
             }
 
             @Override
-            public PermissionsExConfiguration reload() throws IOException {
+            public EmptyPlatformConfiguration getPlatformConfig() {
+                return new EmptyPlatformConfiguration();
+            }
+
+            @Override
+            public PermissionsExConfiguration<EmptyPlatformConfiguration> reload() throws IOException {
                 return this;
             }
         };

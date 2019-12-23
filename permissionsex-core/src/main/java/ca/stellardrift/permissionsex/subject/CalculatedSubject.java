@@ -93,7 +93,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
         return this.type;
     }
 
-    PermissionsEx getManager() {
+    PermissionsEx<?> getManager() {
         return this.type.getManager();
     }
 

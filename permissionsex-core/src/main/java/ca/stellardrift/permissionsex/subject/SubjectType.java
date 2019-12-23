@@ -33,12 +33,12 @@ import java.util.concurrent.CompletableFuture;
  * Collection providing a view of subjects of a given type within the PEX engine
  */
 public class SubjectType {
-    private final PermissionsEx pex;
+    private final PermissionsEx<?> pex;
     private SubjectTypeDefinition<?> type;
     private SubjectCache persistentData, transientData;
     private final AsyncLoadingCache<String, CalculatedSubject> cache;
 
-    public SubjectType(PermissionsEx pex, String type, SubjectCache persistentData, SubjectCache transientData) {
+    public SubjectType(PermissionsEx<?> pex, String type, SubjectCache persistentData, SubjectCache transientData) {
         this.pex = pex;
         this.type = SubjectTypeDefinition.defaultFor(type);
         this.persistentData = persistentData;

@@ -40,7 +40,7 @@ import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.*
  */
 public class PermissionsExCommands {
 
-    public static CommandSpec createRootCommand(final PermissionsEx pex) {
+    public static CommandSpec createRootCommand(final PermissionsEx<?> pex) {
         final Set<CommandSpec> childrenList = ImmutableSet.<CommandSpec>builder()
                 .addAll(pex.getImplementationCommands())
                 .add(getDebugToggleCommand(pex))
@@ -97,7 +97,7 @@ public class PermissionsExCommands {
                 .build();
     }
 
-    private static CommandSpec getDebugToggleCommand(final PermissionsEx pex) {
+    private static CommandSpec getDebugToggleCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("debug", "d")
                 .setDescription(t("Toggle debug mode"))
@@ -120,7 +120,7 @@ public class PermissionsExCommands {
                 .build();
     }
 
-    private static CommandSpec getImportCommand(final PermissionsEx pex) {
+    private static CommandSpec getImportCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("import")
                 .setDescription(t("Import data into the current backend from another"))
@@ -135,7 +135,7 @@ public class PermissionsExCommands {
                 .build();
     }
 
-    private static CommandSpec getReloadCommand(final PermissionsEx pex) {
+    private static CommandSpec getReloadCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("reload", "rel")
                 .setDescription(t("Reload the PermissionsEx configuration"))

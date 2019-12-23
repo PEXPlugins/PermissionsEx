@@ -46,7 +46,7 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  * Base implementation of a data store that provides common points for other data stores to hook into.
  */
 public abstract class AbstractDataStore implements DataStore {
-    private PermissionsEx manager;
+    private PermissionsEx<?> manager;
     private final Factory factory;
     protected final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
@@ -59,12 +59,12 @@ public abstract class AbstractDataStore implements DataStore {
         this.factory = factory;
     }
 
-    protected PermissionsEx getManager() {
+    protected PermissionsEx<?> getManager() {
         return this.manager;
     }
 
     @Override
-    public final boolean initialize(PermissionsEx core) throws PermissionsLoadingException {
+    public final boolean initialize(PermissionsEx<?> core) throws PermissionsLoadingException {
         this.manager = core;
         initializeInternal();
         return true;

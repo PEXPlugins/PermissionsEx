@@ -28,7 +28,7 @@ data class ConversionResult(val store: DataStore, val title: Translatable, val c
 
 interface ConversionProvider {
     val name: Translatable
-    fun listConversionOptions(pex: PermissionsEx): List<ConversionResult>
+    fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult>
 }
 
 object ConversionProviderRegistry {

@@ -42,7 +42,7 @@ public class PermissionsCommands {
         return firstParsing(integer(key), bool(key), choices(key, ImmutableMap.of("none", 0, "null", 0, "unset", 0)));
     }
 
-    public static CommandSpec getPermissionCommand(final PermissionsEx pex) {
+    public static CommandSpec getPermissionCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("permission", "permissions", "perm", "perms", "p")
                 .setArguments(seq(permission(t("key"), pex), permissionValue(t("value"))))
@@ -67,7 +67,7 @@ public class PermissionsCommands {
                 .build();
     }
 
-    public static CommandSpec getPermissionDefaultCommand(final PermissionsEx pex) {
+    public static CommandSpec getPermissionDefaultCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd", "default", "def")
                 .setArguments(permissionValue(t("value")))

@@ -79,7 +79,7 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
  * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
  */
-public class PermissionsEx implements ImplementationInterface, Consumer<ContextInheritance> {
+public class PermissionsEx<PlatformConfigType> implements ImplementationInterface, Consumer<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
@@ -93,24 +93,24 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
     private volatile PermissionCheckNotifier notifier = baseNotifier;
     private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
 
-    private final AtomicReference<State> state = new AtomicReference<>();
+    private final AtomicReference<State<PlatformConfigType>> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
     private RankLadderCache rankLadderCache;
     private volatile CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
 
-    private static class State {
-        private final PermissionsExConfiguration config;
+    private static class State<PlatformConfigType> {
+        private final PermissionsExConfiguration<PlatformConfigType> config;
         private final DataStore activeDataStore;
         private List<ConversionResult> availableConversions;
 
-        private State(PermissionsExConfiguration config, DataStore activeDataStore) {
+        private State(PermissionsExConfiguration<PlatformConfigType> config, DataStore activeDataStore) {
             this.config = config;
             this.activeDataStore = activeDataStore;
         }
     }
 
-    public PermissionsEx(final PermissionsExConfiguration config, ImplementationInterface impl) throws PermissionsLoadingException {
+    public PermissionsEx(final PermissionsExConfiguration<PlatformConfigType> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
         this.logger = TranslatableLogger.forLogger(impl.getLogger());
         this.transientData = new MemoryDataStore();
@@ -129,8 +129,8 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
         registerCommand(RankingCommands.getDemoteCommand(this));
     }
 
-    private State getState() throws IllegalStateException {
-        State ret = this.state.get();
+    private State<PlatformConfigType> getState() throws IllegalStateException {
+        State<PlatformConfigType> ret = this.state.get();
         if (ret == null) {
             throw new IllegalStateException("Manager has already been closed!");
         }
@@ -267,7 +267,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * @return A future that completes once the import operation is complete
      */
     public CompletableFuture<Void> importDataFrom(String dataStoreIdentifier) {
-        final State state = getState();
+        final State<PlatformConfigType> state = getState();
         final DataStore expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
@@ -356,7 +356,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      */
     private void reloadSync() throws PEBKACException, PermissionsLoadingException {
         try {
-            PermissionsExConfiguration config = getState().config.reload();
+            PermissionsExConfiguration<PlatformConfigType> config = getState().config.reload();
             config.validate();
             initialize(config);
             getSubjects(SUBJECTS_GROUP).cacheAll();
@@ -373,8 +373,8 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * @param config The configuration to use in this engine
      * @throws PermissionsLoadingException If an error occurs loading the backend
      */
-    private void initialize(PermissionsExConfiguration config) throws PermissionsLoadingException {
-        State newState = new State(config, config.getDefaultDataStore());
+    private void initialize(PermissionsExConfiguration<PlatformConfigType> config) throws PermissionsLoadingException {
+        State<PlatformConfigType> newState = new State<>(config, config.getDefaultDataStore());
         boolean existingData = newState.activeDataStore.initialize(this);
         try {
             newState.config.save();
@@ -396,7 +396,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
             }
         }
 
-        State oldState = this.state.getAndSet(newState);
+        State<PlatformConfigType> oldState = this.state.getAndSet(newState);
         if (oldState != null) {
             try {
                 oldState.activeDataStore.close();
@@ -439,7 +439,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      * until the engine is reinitialized with a fresh configuration.
      */
     public void close() {
-        State state = this.state.getAndSet(null);
+        State<PlatformConfigType> state = this.state.getAndSet(null);
         state.activeDataStore.close();
     }
 
@@ -506,7 +506,7 @@ public class PermissionsEx implements ImplementationInterface, Consumer<ContextI
      *
      * @return The current configuration object
      */
-    public PermissionsExConfiguration getConfig() {
+    public PermissionsExConfiguration<PlatformConfigType> getConfig() {
         return getState().config;
     }
 

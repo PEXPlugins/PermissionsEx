@@ -34,14 +34,14 @@ import static ca.stellardrift.permissionsex.util.command.args.GameArguments.subj
 
 public class ParentCommands {
     private ParentCommands() {}
-    public static CommandSpec getParentCommand(PermissionsEx pex) {
+    public static CommandSpec getParentCommand(PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("parents", "parent", "par", "p")
                 .setChildren(getAddParentCommand(pex), getRemoveParentCommand(pex), getSetParentsCommand(pex))
                 .build();
     }
 
-    private static CommandSpec getAddParentCommand(final PermissionsEx pex) {
+    private static CommandSpec getAddParentCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("add", "a", "+")
                 .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
@@ -59,7 +59,7 @@ public class ParentCommands {
                 .build();
     }
 
-    private static CommandSpec getRemoveParentCommand(final PermissionsEx pex) {
+    private static CommandSpec getRemoveParentCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("remove", "rem", "delete", "del", "-")
                 .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
@@ -77,7 +77,7 @@ public class ParentCommands {
                 .build();
     }
 
-    private static CommandSpec getSetParentsCommand(final PermissionsEx pex) {
+    private static CommandSpec getSetParentsCommand(final PermissionsEx<?> pex) {
         return CommandSpec.builder()
                 .setAliases("set", "replace", "=")
                 .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))

@@ -48,7 +48,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Mixin(ServerCommandSource.class)
-public abstract class MixinServerCommandSource implements IPermissionCommandSource {
+public abstract class MixinServerCommandSource implements IPermissionCommandSource, IServerCommandSource {
 
     @Shadow @Final
     private CommandOutput output;
@@ -85,6 +85,7 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     }
 
 
+    @SuppressWarnings("unchecked")
     private <T> void handleSingleCtx(CalculatedSubject subj, ContextDefinition<T> definition, Set<ContextValue<?>> accumulator) {
         final Function1<T, Unit> callback = key -> {
             accumulator.add(definition.createValue(key));
