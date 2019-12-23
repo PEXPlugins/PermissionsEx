@@ -140,7 +140,14 @@ class PEXVault extends Permission {
     @Override
     public boolean playerHas(String world, OfflinePlayer player, String permission) {
         CalculatedSubject subj = getSubject(player);
-        return subj.getPermission(contextsFrom(subj, world), permission) > 0;
+        int perm = subj.getPermission(contextsFrom(subj, world), permission);
+        if (perm > 0) {
+            return true;
+        } else if (perm < 0) {
+            return false;
+        } else {
+            return plugin.getManager().getConfig().getPlatformConfig().shouldFallbackOp() && player.isOp();
+        }
     }
 
     @Override

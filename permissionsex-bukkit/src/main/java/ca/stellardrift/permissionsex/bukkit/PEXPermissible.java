@@ -28,12 +28,7 @@ import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.Permissible;
-import org.bukkit.permissions.PermissibleBase;
-import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.bukkit.permissions.PermissionRemovedExecutor;
+import org.bukkit.permissions.*;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -128,7 +123,7 @@ public class PEXPermissible extends PermissibleBase {
     }
     private final Player player;
     private final PermissionsExPlugin plugin;
-    private PermissionsEx<?> pex;
+    private PermissionsEx<BukkitConfiguration> pex;
     private CalculatedSubject subj;
     private Permissible previousPermissible;
     private final Set<PEXPermissionAttachment> attachments = new HashSet<>();
@@ -145,7 +140,7 @@ public class PEXPermissible extends PermissibleBase {
         return this.subj;
     }
 
-    public PermissionsEx<?> getManager() {
+    public PermissionsEx<BukkitConfiguration> getManager() {
         return this.pex;
     }
 
@@ -175,6 +170,21 @@ public class PEXPermissible extends PermissibleBase {
                 if (match.matches() && mPerm.isMatch(match, subj, contexts)) {
                     ret = 1;
                 }
+            }
+        }
+
+        /*
+         * We may fall back to op value if no other data is set
+         * This only takes into account the permission directly being checked having a default set to FALSE or NOT_OP, and not any parents.
+         * I believe this is incorrect, but the real-world impacts are likely minor -zml
+         */
+        if (getManager().getConfig().getPlatformConfig().shouldFallbackOp()) {
+            Permission perm = plugin.getPermissionList().get(permission);
+            if (perm == null) {
+                ret = isOp() ? 1 : 0;
+
+            } else if (perm.getDefault() != PermissionDefault.FALSE) {
+                ret =  isOp() ^ perm.getDefault() == PermissionDefault.NOT_OP ? 1 : 0;
             }
         }
 

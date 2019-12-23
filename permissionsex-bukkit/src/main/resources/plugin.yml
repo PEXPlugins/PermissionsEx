@@ -21,7 +21,7 @@ description: "${project.ext.pexDescription}"
 main: ca.stellardrift.permissionsex.bukkit.PermissionsExPlugin
 api-version: "1.13"
 load: STARTUP
-softdepend: [Vault]
+softdepend: [Vault, WorldGuard]
 
 commands:
     permissionsex:

@@ -68,7 +68,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             new PermissibleInjector.ClassPresencePermissibleInjector(CraftBukkitInterface.getCBClassName("entity.CraftHumanEntity"), "perm", true),
     };
 
-    private PermissionsEx<?> manager;
+    private PermissionsEx<BukkitConfiguration> manager;
     private TranslatableLogger logger;
     // Injections into superperms
     private PermissionList permsList;
@@ -105,7 +105,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
         try {
             getDataFolder().mkdirs();
-            this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(configLoader), new BukkitImplementationInterface());
+            this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(configLoader, BukkitConfiguration.class), new BukkitImplementationInterface());
         /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -214,7 +214,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
      *
      * @return The engine
      */
-    public PermissionsEx<?> getManager() {
+    public PermissionsEx<BukkitConfiguration> getManager() {
         return this.manager;
     }
 
