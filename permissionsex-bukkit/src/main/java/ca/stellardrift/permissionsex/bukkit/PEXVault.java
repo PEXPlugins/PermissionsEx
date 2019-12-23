@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.bukkit;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.util.Util;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -30,6 +31,7 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -87,13 +89,41 @@ class PEXVault extends Permission {
         return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player")));
     }
 
-    private Set<ContextValue<?>> contextsFrom(@Nullable String world) {
+
+    Set<ContextValue<?>> contextsFrom(@Nullable String world) {
         return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createValue(world));
+    }
+
+    /**
+     * This will replace the world in the given subject's active contexts.
+     * Unfortunately, PEX's context system does not map perfectly onto Vault's idea of per-world permissions,
+     * so this may not perfectly match cases where the world being queried does not match an online player's current world.
+     *
+     * @param subject The subject to provide active contexts for
+     * @param worldOverride The world to override with, if any
+     * @return The appropriate context values
+     */
+    Set<ContextValue<?>> contextsFrom(CalculatedSubject subject, @Nullable String worldOverride) {
+        Set<ContextValue<?>> origContexts = subject.getActiveContexts();
+        if (worldOverride == null) {
+            return origContexts;
+        }
+
+        Optional<Player> checkPlayer = Util.castOptional(subject.getAssociatedObject(), Player.class);
+
+        if (checkPlayer.isPresent() && checkPlayer.get().getWorld().getName().equalsIgnoreCase(worldOverride)) {
+            return origContexts;
+        }
+
+        origContexts.removeIf(it -> it.getDefinition() == WorldContextDefinition.INSTANCE);
+        origContexts.add(WorldContextDefinition.INSTANCE.createValue(worldOverride));
+        return origContexts;
     }
 
     @Override
     public boolean groupHas(String world, String name, String permission) {
-        return getGroup(name).getPermission(contextsFrom(world), permission) > 0;
+        CalculatedSubject subj = getGroup(name);
+        return subj.getPermission(contextsFrom(subj, world), permission) > 0;
     }
 
     @Override
@@ -109,7 +139,8 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerHas(String world, OfflinePlayer player, String permission) {
-        return getSubject(player).getPermission(contextsFrom(world), permission) > 0;
+        CalculatedSubject subj = getSubject(player);
+        return subj.getPermission(contextsFrom(subj, world), permission) > 0;
     }
 
     @Override
@@ -154,7 +185,8 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerInGroup(String world, OfflinePlayer player, String group) {
-        return getSubject(player).getParents(contextsFrom(world)).contains(Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, group));
+        CalculatedSubject subj = getSubject(player);
+        return subj.getParents(contextsFrom(subj, world)).contains(Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, group));
     }
 
     @Override
@@ -169,7 +201,8 @@ class PEXVault extends Permission {
 
     @Override
     public String[] getPlayerGroups(String world, OfflinePlayer player) {
-        return getSubject(player).getParents(contextsFrom(world)).stream()
+        CalculatedSubject subj = getSubject(player);
+        return subj.getParents(contextsFrom(subj, world)).stream()
                 .filter(parent -> parent.getKey().equals(PermissionsEx.SUBJECTS_GROUP))
                 .map(Map.Entry::getValue)
                 .toArray(String[]::new);

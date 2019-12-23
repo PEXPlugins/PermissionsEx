@@ -17,14 +17,9 @@
 
 package ca.stellardrift.permissionsex.bukkit;
 
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.context.ContextValue;
-import com.google.common.collect.ImmutableSet;
+import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.OfflinePlayer;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.util.Set;
 
 class PEXVaultChat extends Chat {
     private final PermissionsExPlugin plugin;
@@ -45,29 +40,27 @@ class PEXVaultChat extends Chat {
         return this.plugin.isEnabled();
     }
 
-    private Set<ContextValue<?>> contextsFrom(@Nullable String world) {
-        return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createValue(world));
-    }
-
     @Override
     public String getGroupInfoString(final String world, String name, final String key, String defaultValue) {
-        return perms.getGroup(name).getOption(contextsFrom(world), key).orElse(defaultValue);
+        CalculatedSubject subj = perms.getGroup(name);
+        return subj.getOption(perms.contextsFrom(subj, world), key).orElse(defaultValue);
     }
 
     @Override
     public void setGroupInfoString(final String world, String name, final String key, final String value) {
-        perms.getSubject(name).data().update(input -> input.setOption(contextsFrom(world), key, value));
+        perms.getSubject(name).data().update(input -> input.setOption(perms.contextsFrom(world), key, value));
     }
 
 
     @Override
     public String getPlayerInfoString(String world, OfflinePlayer player, String node, String defaultValue) {
-        return perms.getSubject(player).getOption(contextsFrom(world), node).orElse(defaultValue);
+        CalculatedSubject subj = perms.getSubject(player);
+        return subj.getOption(perms.contextsFrom(subj, world), node).orElse(defaultValue);
     }
 
     @Override
     public void setPlayerInfoString(final String world, OfflinePlayer player, final String node, final String value) {
-        perms.getSubject(player).data().update(input -> input.setOption(contextsFrom(world), node, value));
+        perms.getSubject(player).data().update(input -> input.setOption(perms.contextsFrom(world), node, value));
     }
 
     // -- Passthrough methods

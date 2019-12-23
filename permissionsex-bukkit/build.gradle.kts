@@ -23,7 +23,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  *
  */
 
-val spigotVersion: String = "1.14.4-R0.1-SNAPSHOT"
+val spigotVersion: String = "1.15.1-R0.1-SNAPSHOT"
 
 plugins {
     id("com.github.johnrengelman.shadow")
@@ -72,6 +72,7 @@ dependencies {
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")
     shadow("net.milkbowl.vault:VaultAPI:1.7")
+    shadow("com.sk89q.worldguard:worldguard-bukkit:7.0.2-SNAPSHOT")
     shadow("com.h2database:h2:1.4.199")
 }
 
