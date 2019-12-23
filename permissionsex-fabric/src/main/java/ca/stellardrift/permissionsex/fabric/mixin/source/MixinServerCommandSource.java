@@ -48,7 +48,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Mixin(ServerCommandSource.class)
-public abstract class MixinServerCommandSource implements IPermissionCommandSource, IServerCommandSource {
+public abstract class MixinServerCommandSource implements IPermissionCommandSource {
 
     @Shadow @Final
     private CommandOutput output;
