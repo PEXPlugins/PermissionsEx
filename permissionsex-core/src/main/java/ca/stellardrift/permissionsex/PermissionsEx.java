@@ -455,6 +455,10 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         return impl.getBaseDirectory();
     }
 
+    @Override
+    public Path getBaseDirectory(BaseDirectoryScope scope) {
+        return impl.getBaseDirectory(scope);
+    }
 
     @Override
     public DataSource getDataSourceForURL(String url) throws SQLException {

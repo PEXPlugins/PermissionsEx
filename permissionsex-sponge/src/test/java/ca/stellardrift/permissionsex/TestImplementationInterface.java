@@ -45,7 +45,7 @@ public class TestImplementationInterface implements ImplementationInterface {
     }
 
     @Override
-    public Path getBaseDirectory() {
+    public Path getBaseDirectory(BaseDirectoryScope scope) {
         return baseDirectory;
     }
 

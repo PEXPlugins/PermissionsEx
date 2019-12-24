@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex.backend;
 
-import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsFileDataStore;
 import ca.stellardrift.permissionsex.backend.conversion.groupmanager.GroupManagerDataStore;
+import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsFileDataStore;
 import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsSqlDataStore;
 import ca.stellardrift.permissionsex.backend.file.FileDataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
@@ -32,15 +32,19 @@ public class DataStoreFactories {
     private static final Map<String, DataStoreFactory> REGISTRY = new ConcurrentHashMap<>();
 
     static {
-        register("file", FileDataStore.FACTORY);
-        register("memory", MemoryDataStore.FACTORY);
-        register("sql", SqlDataStore.FACTORY);
-        register("groupmanager", GroupManagerDataStore.FACTORY);
-        register("luckperms-file", LuckPermsFileDataStore.FACTORY);
-        register("luckperms-sql", LuckPermsSqlDataStore.FACTORY);
+        register(FileDataStore.FACTORY);
+        register(MemoryDataStore.FACTORY);
+        register(SqlDataStore.FACTORY);
+        register(GroupManagerDataStore.FACTORY);
+        register(LuckPermsFileDataStore.FACTORY);
+        register(LuckPermsSqlDataStore.FACTORY);
     }
 
     private DataStoreFactories() {
+    }
+
+    private static void register(AbstractDataStore.Factory factory) {
+        register(factory.getType(), factory);
     }
 
     public static void register(String type, DataStoreFactory factory) {

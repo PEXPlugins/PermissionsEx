@@ -134,6 +134,11 @@ interface IPermissionCommandSource {
     val permIdentifier: String
 }
 
+interface IServerCommandSource {
+    fun withPermissionOverride(override: IPermissionCommandSource?): ServerCommandSource
+    fun getPermissionOverride(): IPermissionCommandSource?
+}
+
 fun <T: Any> commandPermissionCheck(permission: String): Predicate<T> {
     return Predicate {
         if (it is IPermissionCommandSource) {

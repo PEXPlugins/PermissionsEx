@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.bungee
 
+import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
@@ -150,8 +151,13 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
     private val exec = Executor { task ->
         plugin.proxy.scheduler.runAsync(plugin, task)
     }
-    override fun getBaseDirectory(): Path {
-        return plugin.dataPath
+    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+        return when (scope) {
+            BaseDirectoryScope.CONFIG -> plugin.dataPath
+            BaseDirectoryScope.JAR -> plugin.proxy.pluginsFolder.toPath()
+            BaseDirectoryScope.SERVER -> plugin.proxy.pluginsFolder.parentFile.toPath()
+            BaseDirectoryScope.WORLDS -> plugin.proxy.pluginsFolder.parentFile.toPath() // proxies don't have worlds... so this will just be the server dir
+        }
     }
 
     override fun getLogger(): org.slf4j.Logger {

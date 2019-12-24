@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.fabric
 
+import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
@@ -161,8 +162,13 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 
-    override fun getBaseDirectory(): Path {
-        return dataDir
+    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+        return when (scope) {
+            BaseDirectoryScope.CONFIG -> dataDir
+            BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDirectory.toPath().resolve("mods")
+            BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDirectory.toPath()
+            BaseDirectoryScope.WORLDS -> server.levelStorage.savesDirectory
+        }
     }
 
     override fun getLogger(): TranslatableLogger {

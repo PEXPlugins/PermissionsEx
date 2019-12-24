@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.bukkit;
 
+import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
@@ -30,6 +31,7 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -307,8 +309,19 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     private class BukkitImplementationInterface implements ImplementationInterface {
         @Override
-        public Path getBaseDirectory() {
-            return dataPath;
+        public Path getBaseDirectory(BaseDirectoryScope scope) {
+            switch (scope) {
+                case CONFIG:
+                    return dataPath;
+                case JAR:
+                    return Bukkit.getUpdateFolderFile().toPath();
+                case SERVER:
+                    return dataPath.toAbsolutePath().getParent().getParent();
+                case WORLDS:
+                    return Bukkit.getWorldContainer().toPath();
+                default:
+                    throw new IllegalArgumentException("Unknown directory scope" + scope);
+            }
         }
 
         @Override

@@ -227,6 +227,10 @@ public abstract class AbstractDataStore implements DataStore {
             }
         }
 
+        public String getType() {
+            return this.type;
+        }
+
         @Override
         public DataStore createDataStore(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
             try {

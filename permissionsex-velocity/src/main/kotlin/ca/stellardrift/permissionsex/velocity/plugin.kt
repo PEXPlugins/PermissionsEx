@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.velocity
 
+import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
@@ -45,6 +46,7 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.Logger
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -53,12 +55,20 @@ import java.util.function.Function
 import javax.inject.Inject
 import javax.sql.DataSource
 
+private val SERVER_PATH = Paths.get(".")
+private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
+
 @Plugin(id = ProjectData.ARTIFACT_ID, name = ProjectData.NAME, version = ProjectData.VERSION, description = ProjectData.DESCRIPTION)
 class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val server: ProxyServer, @DataDirectory private val dataPath: Path) : ImplementationInterface {
 
     private val exec = Executors.newCachedThreadPool()
-    override fun getBaseDirectory(): Path {
-        return dataPath
+    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+        return when (scope) {
+            BaseDirectoryScope.CONFIG -> dataPath
+            BaseDirectoryScope.JAR -> PLUGINS_PATH
+            BaseDirectoryScope.SERVER -> SERVER_PATH
+            BaseDirectoryScope.WORLDS -> SERVER_PATH
+        }
     }
 
     override fun getDataSourceForURL(url: String): DataSource {

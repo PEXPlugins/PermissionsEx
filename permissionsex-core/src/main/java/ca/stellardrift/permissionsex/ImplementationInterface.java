@@ -36,15 +36,27 @@ import java.util.function.Function;
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
  */
 public interface ImplementationInterface {
+
     /**
      * Return the base directory to store any additional configuration files in.
      *
      * @return The base directory
      */
-    Path getBaseDirectory();
+    default Path getBaseDirectory() {
+        return getBaseDirectory(BaseDirectoryScope.CONFIG);
+    }
+
+    /**
+     * Return the base directory for storing various types of files, depending on the scope
+     *
+     * @param scope The scope to find the base directory for
+     * @return An appropriate path
+     */
+    Path getBaseDirectory(BaseDirectoryScope scope);
+
     /**
      * Gets the appropriate logger
-     * @return
+     * @return The base logger
      */
     Logger getLogger();
 

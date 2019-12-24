@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.sponge;
 
+import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
@@ -349,8 +350,19 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     @Override
-    public Path getBaseDirectory() {
-        return configDir;
+    public Path getBaseDirectory(BaseDirectoryScope scope) {
+        switch (scope) {
+            case CONFIG:
+                return configDir;
+            case JAR:
+                return game.getGameDirectory().resolve("mods");
+            case SERVER:
+                return game.getGameDirectory();
+            case WORLDS:
+                return game.getSavesDirectory();
+            default:
+                throw new IllegalArgumentException("Unknown directory scope" + scope);
+        }
     }
 
     @Override
