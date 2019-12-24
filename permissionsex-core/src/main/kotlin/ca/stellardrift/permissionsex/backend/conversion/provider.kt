@@ -24,7 +24,7 @@ import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsConve
 import ca.stellardrift.permissionsex.util.Translatable
 import java.util.concurrent.ConcurrentHashMap
 
-data class ConversionResult(val store: DataStore, val title: Translatable, val commandKey: String)
+data class ConversionResult(val store: DataStore, val title: Translatable)
 
 interface ConversionProvider {
     val name: Translatable
@@ -56,5 +56,6 @@ object ConversionProviderRegistry {
     init {
         register(GroupManagerDataStore)
         register(LuckPermsConversionProvider)
+        register(OpsDataStore)
     }
 }
