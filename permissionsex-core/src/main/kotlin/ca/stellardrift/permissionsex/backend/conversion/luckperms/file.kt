@@ -54,13 +54,13 @@ import kotlin.math.absoluteValue
 
 
 @ConfigSerializable
-class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
+class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<LuckPermsFileDataStore>(identifier, FACTORY) {
     companion object {
         @JvmField
-        val FACTORY = Factory("luckperms-file", LuckPermsFileDataStore::class.java)
+        val FACTORY = Factory("luckperms-file", LuckPermsFileDataStore::class.java, ::LuckPermsFileDataStore)
     }
 
-    constructor(format: ConfigFormat, combined: Boolean) : this() {
+    constructor(identifier: String, format: ConfigFormat, combined: Boolean) : this(identifier) {
         this.format = format
         this.combined = combined
     }
@@ -77,7 +77,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
     private lateinit var lpConfig: ReloadableConfig<ConfigurationNode>
     private lateinit var subjectLayout: SubjectLayout
 
-    override fun initializeInternal() {
+    override fun initializeInternal(): Boolean {
         val rootDir = manager.baseDirectory.parent.resolve(pluginDir)
         subjectLayout = (if (combined) {
             ::CombinedSubjectLayout
@@ -90,6 +90,7 @@ class LuckPermsFileDataStore constructor(): AbstractDataStore(FACTORY) {
                 .setPath(rootDir.resolve("config.yml"))
                 .build()
         )
+        return true
     }
 
 
@@ -291,7 +292,9 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
         return Files.list(rootDir.resolve("${type}s")).use { list ->
             list.map { x ->
                 val name = x.fileName.toString()
-                name.substring(0, (name.length - store.format.extension.length))
+                val shortened = name.substring(0, (name.length - store.format.extension.length) - 1)
+                println(shortened)
+                shortened
             }.collect(Collectors.toSet())
         }
     }

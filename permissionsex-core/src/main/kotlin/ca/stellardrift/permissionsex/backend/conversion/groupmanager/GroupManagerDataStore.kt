@@ -51,7 +51,7 @@ data class UserGroupPair(val user: ConfigurationNode, val group: ConfigurationNo
 /**
  * Backend implementing GroupManager data storage format
  */
-class GroupManagerDataStore internal constructor() : ReadOnlyDataStore(FACTORY) {
+class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyDataStore<GroupManagerDataStore>(identifier, FACTORY) {
 
     @Setting("group-manager-root")
     private val groupManagerRoot = "plugins/GroupManager"
@@ -77,7 +77,7 @@ class GroupManagerDataStore internal constructor() : ReadOnlyDataStore(FACTORY) 
     }
 
     @Throws(PermissionsLoadingException::class)
-    override fun initializeInternal() {
+    override fun initializeInternal(): Boolean {
         val rootFile = Paths.get(groupManagerRoot)
         if (!Files.isDirectory(rootFile)) {
             throw PermissionsLoadingException(t("GroupManager directory %s does not exist", rootFile))
@@ -100,7 +100,7 @@ class GroupManagerDataStore internal constructor() : ReadOnlyDataStore(FACTORY) 
         } catch (e: IOException) {
             throw PermissionsLoadingException(e)
         }
-
+        return true // read-only, no point in importing to us
     }
 
     private fun getDataGM(type: String, identifier: String): ImmutableSubjectData =
@@ -184,13 +184,13 @@ class GroupManagerDataStore internal constructor() : ReadOnlyDataStore(FACTORY) 
 
     companion object : ConversionProvider {
         @JvmField
-        val FACTORY = Factory("groupmanager", GroupManagerDataStore::class.java)
+        val FACTORY = Factory<GroupManagerDataStore>("groupmanager", GroupManagerDataStore::class.java, ::GroupManagerDataStore)
         override val name = t("GroupManager")
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
             val gmBaseDir = pex.baseDirectory.parent.resolve("GroupManager")
             return if (Files.exists(gmBaseDir.resolve("config.yml"))) { // we exist
-                listOf(ConversionResult(GroupManagerDataStore(), t("File store"), "gm-file"))
+                listOf(ConversionResult(GroupManagerDataStore("gm-file"), t("File store")))
             } else {
                 emptyList()
             }

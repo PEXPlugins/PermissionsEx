@@ -17,15 +17,18 @@
 
 package ca.stellardrift.permissionsex.backend;
 
+import ca.stellardrift.permissionsex.backend.conversion.OpsDataStore;
 import ca.stellardrift.permissionsex.backend.conversion.groupmanager.GroupManagerDataStore;
 import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsFileDataStore;
 import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsSqlDataStore;
 import ca.stellardrift.permissionsex.backend.file.FileDataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.backend.sql.SqlDataStore;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataStoreFactories {
@@ -38,12 +41,13 @@ public class DataStoreFactories {
         register(GroupManagerDataStore.FACTORY);
         register(LuckPermsFileDataStore.FACTORY);
         register(LuckPermsSqlDataStore.FACTORY);
+        register(OpsDataStore.FACTORY);
     }
 
     private DataStoreFactories() {
     }
 
-    private static void register(AbstractDataStore.Factory factory) {
+    private static void register(AbstractDataStore.Factory<?> factory) {
         register(factory.getType(), factory);
     }
 
@@ -53,6 +57,10 @@ public class DataStoreFactories {
 
     public static Optional<DataStoreFactory> get(String type) {
         return Optional.ofNullable(REGISTRY.get(type));
+    }
+
+    public static Set<String> getKnownTypes() {
+        return ImmutableSet.copyOf(REGISTRY.keySet());
     }
 
 }

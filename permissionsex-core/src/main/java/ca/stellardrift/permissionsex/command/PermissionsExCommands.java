@@ -17,7 +17,10 @@
 
 package ca.stellardrift.permissionsex.command;
 
+import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.backend.DataStoreFactories;
+import ca.stellardrift.permissionsex.backend.conversion.ConversionResult;
 import ca.stellardrift.permissionsex.data.SubjectCache;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Util;
@@ -29,6 +32,7 @@ import com.google.common.collect.Maps;
 
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.util.Translations.t;
 import static ca.stellardrift.permissionsex.util.command.args.GameArguments.subject;
@@ -47,6 +51,7 @@ public class PermissionsExCommands {
                 .add(RankingCommands.getRankingCommand(pex))
                 .add(getImportCommand(pex))
                 .add(getReloadCommand(pex))
+                .add(getVersionCommand(pex))
                 .build();
 
         final CommandElement children = ChildCommands.args(childrenList.toArray(new CommandSpec[childrenList.size()]));
@@ -124,12 +129,28 @@ public class PermissionsExCommands {
         return CommandSpec.builder()
                 .setAliases("import")
                 .setDescription(t("Import data into the current backend from another"))
-                .setArguments(string(t("backend")))
+                .setArguments(optional(string(t("backend"))))
                 .setPermission("permissionsex.import")
                 .setExecutor(new PermissionsExExecutor(pex) {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        messageSubjectOnFuture(pex.importDataFrom(args.<String>getOne("backend")), src, t("Successfully imported data from backend %s into current backend", args.<String>getOne("backend")));
+                        final String backendRequested = args.getOne("backend");
+                        if (backendRequested == null) { // We want to list available conversions
+                            src.msgPaginated(t("Available Conversions"), t("Any data from one of these sources can be imported with the command %s", src.fmt().hl(src.fmt().combined("/pex import [id]"))),
+                                    pex.getAvailableConversions().stream()
+                                            .map(conv -> src.fmt().tr(t("%s - /pex import %s", conv.getTitle(), conv.getStore().getName())))
+                                            .collect(Collectors.toList()));
+                        } else {
+                            for (ConversionResult result : pex.getAvailableConversions()) {
+                                if (result.getStore().getName().equalsIgnoreCase(backendRequested)) {
+                                    src.msg(t("Beginning import from %s... (this may take a while)", result.getTitle()));
+                                    messageSubjectOnFuture(pex.importDataFrom(result), src, t("Successfully imported data from %s into current data store", result.getTitle()));
+                                    return;
+                                }
+                            }
+                            src.msg(t("Beginning import from backend %s... (this may take a while)", backendRequested));
+                            messageSubjectOnFuture(pex.importDataFrom(backendRequested), src, t("Successfully imported data from backend %s into current backend", backendRequested));
+                        }
                     }
                 })
                 .build();
@@ -153,6 +174,34 @@ public class PermissionsExCommands {
                                     src.getName(), t.getLocalizedMessage()), t);
                             return null;
                         });
+                    }
+                })
+                .build();
+    }
+
+    private static CommandSpec getVersionCommand(final PermissionsEx<?> pex) {
+        return CommandSpec.builder()
+                .setAliases("version")
+                .setDescription(t("Get information about the currently running PermissionsEx instance"))
+                .setPermission("permissionsex.version")
+                .setArguments(flags().flag("-verbose", "v").buildWith(none()))
+                .setExecutor(new CommandExecutor() {
+                    @Override
+                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+                        Boolean verboseBoxed = args.<Boolean>getOne("verbose");
+                        boolean verbose = verboseBoxed == null ? false: verboseBoxed;
+
+                        src.msg(t("PermissionsEx v%s", src.fmt().hl(src.fmt().combined(pex.getVersion()))));
+                        src.msg(t("Active data store: %s", pex.getConfig().getDefaultDataStore().getName()));
+                        src.msg(t("Available data store types: %s", DataStoreFactories.getKnownTypes()));
+                        src.msg(t(""));
+                        if (verbose) {
+                            src.msg(src.fmt().header(src.fmt().tr(t("Configuration directories"))));
+                            src.msg(t("Config: %s", pex.getBaseDirectory(BaseDirectoryScope.CONFIG)));
+                            src.msg(t("Jar: %s", pex.getBaseDirectory(BaseDirectoryScope.JAR)));
+                            src.msg(t("Server: %s", pex.getBaseDirectory(BaseDirectoryScope.SERVER)));
+                            src.msg(t("Worlds: %s", pex.getBaseDirectory(BaseDirectoryScope.WORLDS)));
+                        }
                     }
                 })
                 .build();

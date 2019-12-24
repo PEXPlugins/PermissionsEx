@@ -65,7 +65,7 @@ public class SqlDaoTest extends PermissionsExTest {
         this.jdbcUrl = "jdbc:h2:file:{base}/test.db";
     }
 
-    private static final SqlDataStore sqlStore = new SqlDataStore();
+    private static final SqlDataStore sqlStore = new SqlDataStore("sql-dao");
     private final String jdbcUrl;
 
     @BeforeEach

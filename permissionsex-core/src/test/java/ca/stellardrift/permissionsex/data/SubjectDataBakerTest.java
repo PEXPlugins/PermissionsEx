@@ -176,7 +176,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
             @Override
             public DataStore getDefaultDataStore() {
-                return new MemoryDataStore();
+                return new MemoryDataStore("data-baker");
             }
 
             @Override

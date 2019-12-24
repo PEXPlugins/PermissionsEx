@@ -102,7 +102,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     private static class State<PlatformConfigType> {
         private final PermissionsExConfiguration<PlatformConfigType> config;
         private final DataStore activeDataStore;
-        private List<ConversionResult> availableConversions;
+        private List<ConversionResult> availableConversions = ImmutableList.of();
 
         private State(PermissionsExConfiguration<PlatformConfigType> config, DataStore activeDataStore) {
             this.config = config;
@@ -113,7 +113,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     public PermissionsEx(final PermissionsExConfiguration<PlatformConfigType> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
         this.logger = TranslatableLogger.forLogger(impl.getLogger());
-        this.transientData = new MemoryDataStore();
+        this.transientData = new MemoryDataStore("transient");
         this.transientData.initialize(this);
         setDebugMode(config.isDebugEnabled());
         registerContextDefinition(ServerTagContextDefinition.INSTANCE);
@@ -272,6 +272,15 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
+        return importDataFrom(expected);
+    }
+
+    public CompletableFuture<Void> importDataFrom(ConversionResult conversion) {
+        return importDataFrom(conversion.getStore());
+    }
+
+    private CompletableFuture<Void> importDataFrom(DataStore expected) {
+        final State<PlatformConfigType> state = getState();
         try {
             expected.initialize(this);
         } catch (PermissionsLoadingException e) {
@@ -375,26 +384,32 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      */
     private void initialize(PermissionsExConfiguration<PlatformConfigType> config) throws PermissionsLoadingException {
         State<PlatformConfigType> newState = new State<>(config, config.getDefaultDataStore());
-        boolean existingData = newState.activeDataStore.initialize(this);
+        boolean shouldAnnounceImports = !newState.activeDataStore.initialize(this);
         try {
             newState.config.save();
         } catch (IOException e) {
             throw new PermissionsLoadingException(t("Unable to write permissions configuration"), e);
         }
 
-        if (!existingData) {
-            getLogger().info(t("Welcome to PermissionsEx! We're creating some default data. If you have data from " +
+        if (shouldAnnounceImports) {
+            getLogger().warn(t("Welcome to PermissionsEx! We're creating some default data. If you have data from " +
                     "another plugin to import, it will be listed below now. Run the command /pex import [id] to import from one of those backends:"));
+        }
 
-            List<ConversionResult> allResults = new LinkedList<>();
-            for (ConversionProvider prov : ConversionProviderRegistry.INSTANCE.getAllProviders()) {
-                List<ConversionResult> res = prov.listConversionOptions(this);
-                if (!res.isEmpty()) {
-                    getLogger().info(t("Plugin %s has data in stores: %s", prov.getName(), res.toString()));
-                    allResults.addAll(res);
+        List<ConversionResult> allResults = new LinkedList<>();
+        for (ConversionProvider prov : ConversionProviderRegistry.INSTANCE.getAllProviders()) {
+            List<ConversionResult> res = prov.listConversionOptions(this);
+            if (!res.isEmpty()) {
+                if (shouldAnnounceImports) {
+                    getLogger().info(t("  Plugin %s has data in:", prov.getName()));
+                    for (ConversionResult result : res) {
+                        getLogger().info(t("    - %s: %s", result.getTitle(), result.getStore().getName()));
+                    }
                 }
+                allResults.addAll(res);
             }
         }
+        newState.availableConversions = ImmutableList.copyOf(allResults);
 
         State<PlatformConfigType> oldState = this.state.getAndSet(newState);
         if (oldState != null) {
@@ -441,6 +456,10 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     public void close() {
         State<PlatformConfigType> state = this.state.getAndSet(null);
         state.activeDataStore.close();
+    }
+
+    public List<ConversionResult> getAvailableConversions() {
+        return getState().availableConversions;
     }
 
     @Override

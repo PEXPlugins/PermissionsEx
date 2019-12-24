@@ -25,11 +25,11 @@ import ca.stellardrift.permissionsex.rank.RankLadder
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
-class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
+class LuckPermsSqlDataStore(identifier: String) : AbstractDataStore<LuckPermsSqlDataStore>(identifier, FACTORY) {
 
     companion object {
         @JvmField
-        val FACTORY = Factory("luckperms-sql", LuckPermsSqlDataStore::class.java)
+        val FACTORY = Factory("luckperms-sql", LuckPermsSqlDataStore::class.java, ::LuckPermsSqlDataStore)
     }
 
     override fun setDataInternal(type: String, identifier: String, data: ImmutableSubjectData?): CompletableFuture<ImmutableSubjectData> {
@@ -60,7 +60,7 @@ class LuckPermsSqlDataStore : AbstractDataStore(FACTORY) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun initializeInternal() {
+    override fun initializeInternal(): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

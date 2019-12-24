@@ -35,11 +35,11 @@ object LuckPermsConversionProvider : ConversionProvider {
             val configDir = luckBaseDir.resolve(format.storageDirName)
             if (Files.exists(configDir)) {
                 if (Files.isDirectory(configDir.resolve("groups"))) {
-                    result += ConversionResult(LuckPermsFileDataStore(format, false), t("LuckPerms %s separate", format.name), "lp-$name")
+                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}", format, false), t("LuckPerms %s separate", format.name))
                 }
 
                 if (Files.isRegularFile(configDir.resolve("groups.${format.extension}"))) {
-                    result += ConversionResult(LuckPermsFileDataStore(format, true), t("LuckPerms %s combined", format.name), "lp-$name-combined")
+                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}-combined", format, true), t("LuckPerms %s combined", format.name))
                 }
             }
         }

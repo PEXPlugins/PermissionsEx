@@ -73,7 +73,7 @@ public class SchemaMigrationsTest extends PermissionsExTest {
         this.jdbcUrl = jdbcUrl;
     }*/
 
-    private final SqlDataStore sqlStore = new SqlDataStore();
+    private final SqlDataStore sqlStore = new SqlDataStore("schema-migrations");
 
     @BeforeEach
     public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {

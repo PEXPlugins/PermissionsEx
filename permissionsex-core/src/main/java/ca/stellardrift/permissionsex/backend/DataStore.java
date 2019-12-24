@@ -39,6 +39,14 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
  * Data type abstraction for permissions data
  */
 public interface DataStore {
+
+    /**
+     * Get the identifier that refers to this instance of the data store uniquely. This is generally user-defined in the configuration.
+     *
+     * @return The name of the current data store instance.
+     */
+    String getName();
+
     /**
      * Activate this data store from the required data
      * @throws PermissionsLoadingException If the backing data cannot be loaded
@@ -197,6 +205,5 @@ public interface DataStore {
     CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> inheritance);
 
     CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
-
 }
 

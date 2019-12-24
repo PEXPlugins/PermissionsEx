@@ -56,13 +56,13 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
 /**
  * DataSource for SQL data
  */
-public final class SqlDataStore extends AbstractDataStore {
-    public static final Factory FACTORY = new Factory("sql", SqlDataStore.class);
+public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
+    public static final Factory<SqlDataStore> FACTORY = new Factory<>("sql", SqlDataStore.class, SqlDataStore::new);
     private static final Pattern BRACES_PATTERN = Pattern.compile("\\{\\}");
     private boolean autoInitialize = true;
 
-    protected SqlDataStore() {
-        super(FACTORY);
+    protected SqlDataStore(String identifier) {
+        super(identifier, FACTORY);
     }
 
     @Setting("url")
@@ -88,7 +88,7 @@ public final class SqlDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected void initializeInternal() throws PermissionsLoadingException {
+    protected boolean initializeInternal() throws PermissionsLoadingException {
         try {
             sql = getManager().getDataSourceForURL(connectionUrl);
             if (this.prefix != null && !this.prefix.isEmpty() && !this.prefix.endsWith("_")) {
@@ -122,14 +122,16 @@ public final class SqlDataStore extends AbstractDataStore {
 
         if (autoInitialize) {
             try {
-                initializeTables();
+                return initializeTables();
             } catch (SQLException e) {
                 throw new PermissionsLoadingException(t("Error initializing tables in SQL database!"), e);
             }
+        } else {
+            return true;
         }
     }
 
-    public void initializeTables() throws SQLException {
+    public boolean initializeTables() throws SQLException {
         List<SchemaMigration> migrations = SchemaMigrations.getMigrations();
         // Initialize data, perform migrations
         try (SqlDao dao = getDao()) {
@@ -137,6 +139,7 @@ public final class SqlDataStore extends AbstractDataStore {
             if (initialVersion == SqlConstants.VERSION_NOT_INITIALIZED) {
                 dao.initializeTables();
                 dao.setSchemaVersion(VERSION_LATEST);
+                return false;
             } else {
                 int finalVersion = dao.executeInTransaction(() -> {
                     int highestVersion = initialVersion;
@@ -150,6 +153,7 @@ public final class SqlDataStore extends AbstractDataStore {
                     dao.setSchemaVersion(finalVersion);
                     getManager().getLogger().info(t("Updated database schema from version %s to %s", initialVersion, finalVersion));
                 }
+                return true;
             }
         }
     }

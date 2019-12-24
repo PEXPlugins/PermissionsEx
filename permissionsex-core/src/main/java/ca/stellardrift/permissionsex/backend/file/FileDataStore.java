@@ -17,7 +17,9 @@
 
 package ca.stellardrift.permissionsex.backend.file;
 
-import ca.stellardrift.permissionsex.backend.*;
+import ca.stellardrift.permissionsex.backend.AbstractDataStore;
+import ca.stellardrift.permissionsex.backend.ConversionUtils;
+import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
@@ -61,9 +63,9 @@ import java.util.stream.Collectors;
 import static ca.stellardrift.permissionsex.util.Translations.t;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public final class FileDataStore extends AbstractDataStore {
+public final class FileDataStore extends AbstractDataStore<FileDataStore> {
     static final String KEY_RANK_LADDERS = "rank-ladders";
-    public static final Factory FACTORY = new Factory("file", FileDataStore.class);
+    public static final Factory<FileDataStore> FACTORY = new Factory<>("file", FileDataStore.class, FileDataStore::new);
 
     @Setting
     private String file;
@@ -77,8 +79,8 @@ public final class FileDataStore extends AbstractDataStore {
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();
 
-    public FileDataStore() {
-        super(FACTORY);
+    public FileDataStore(String identifier) {
+        super(identifier, FACTORY);
     }
 
 
@@ -154,7 +156,7 @@ public final class FileDataStore extends AbstractDataStore {
     }
 
     @Override
-    protected void initializeInternal() throws PermissionsLoadingException {
+    protected boolean initializeInternal() throws PermissionsLoadingException {
         if (autoReload) {
             reloadService = new WatchServiceListener(Executors.newCachedThreadPool(), getManager().getLogger());
         }
@@ -184,6 +186,7 @@ public final class FileDataStore extends AbstractDataStore {
             } catch (Exception e) {
                 throw new PermissionsLoadingException(t("Error creating initial data for file backend"), e);
             }
+            return false;
         } else {
             ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
             int startVersion = permissionsConfig.get("schema-version").getInt(-1);
@@ -197,6 +200,7 @@ public final class FileDataStore extends AbstractDataStore {
                     throw new PermissionsLoadingException(t("While performing version upgrade"), e);
                 }
             }
+            return true;
         }
     }
 

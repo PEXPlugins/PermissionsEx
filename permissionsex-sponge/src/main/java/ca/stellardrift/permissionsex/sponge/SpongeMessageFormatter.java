@@ -175,7 +175,7 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
             for (int i = 0; i < oldArgs.length; ++i) {
                 Object arg = oldArgs[i];
                 if (arg instanceof Translatable) {
-                    arg = tr(tr).build();
+                    arg = tr(((Translatable) arg)).build();
                 } else if (arg instanceof Text.Builder) {
                     arg = ((Text.Builder) arg).build();
                 }

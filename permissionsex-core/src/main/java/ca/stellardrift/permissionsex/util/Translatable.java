@@ -50,7 +50,7 @@ public abstract class Translatable {
         for (int i = 0; i < this.args.length; ++i) {
             Object arg = this.args[i];
             if (arg instanceof Translatable) {
-                arg = ((Translatable) arg).translate(locale);
+                arg = ((Translatable) arg).translateFormatted(locale);
             }
             translatedArgs[i] = arg;
         }

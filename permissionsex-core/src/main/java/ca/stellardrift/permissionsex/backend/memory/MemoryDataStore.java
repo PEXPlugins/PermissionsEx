@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
 /**
  * A data store backed entirely in memory
  */
-public class MemoryDataStore extends AbstractDataStore {
-    public static final Factory FACTORY = new Factory("memory", MemoryDataStore.class);
+public class MemoryDataStore extends AbstractDataStore<MemoryDataStore> {
+    public static final Factory<MemoryDataStore> FACTORY = new Factory<>("memory", MemoryDataStore.class, MemoryDataStore::new);
 
     @Setting(comment = "Whether or not this data store will store subjects being set") private boolean track = true;
 
@@ -52,12 +52,13 @@ public class MemoryDataStore extends AbstractDataStore {
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
-    public MemoryDataStore() {
-        super(FACTORY);
+    public MemoryDataStore(String identifier) {
+        super(identifier, FACTORY);
     }
 
     @Override
-    protected void initializeInternal() {
+    protected boolean initializeInternal() {
+        return false; // we never have any starting data
     }
 
     @Override

@@ -44,10 +44,14 @@ import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 
-class OpsDataStore() : ReadOnlyDataStore(FACTORY) {
+/**
+ * An extremely rudimentary data store that allows importing data from a server ops list
+ *
+ */
+class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identifier, FACTORY) {
     companion object : ConversionProvider {
         @JvmField
-        public val FACTORY = Factory("ops", OpsDataStore::class.java)
+        val FACTORY = Factory("ops", OpsDataStore::class.java, ::OpsDataStore)
         override val name: Translatable = t("Ops List")
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
@@ -55,8 +59,9 @@ class OpsDataStore() : ReadOnlyDataStore(FACTORY) {
             return if (Files.exists(opsFile)) {
                 listOf(ConversionResult(
                     OpsDataStore(
+                        "ops",
                         opsFile
-                    ), t("Server ops.json"), "ops"))
+                    ), t("Server ops.json")))
             } else {
                 listOf()
             }
@@ -72,12 +77,12 @@ class OpsDataStore() : ReadOnlyDataStore(FACTORY) {
     private lateinit var opsListNode: ReloadableConfig<ConfigurationNode>
     private var opsList = listOf<OpsListEntry>()
 
-    constructor(opsFile: Path): this() {
+    constructor(identifier: String, opsFile: Path): this(identifier) {
         this.file = opsFile
     }
 
 
-    override fun initializeInternal() {
+    override fun initializeInternal(): Boolean {
         if (!this::file.isInitialized) {
             file = manager.getBaseDirectory(BaseDirectoryScope.SERVER).resolve(fileName)
         }
@@ -102,6 +107,10 @@ class OpsDataStore() : ReadOnlyDataStore(FACTORY) {
         if (notify) {
             manager.getSubjects(SUBJECTS_USER).update(this)
         }
+        for (op in opsList) {
+            println(op)
+        }
+
     }
 
     override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {

@@ -45,18 +45,25 @@ import static ca.stellardrift.permissionsex.util.Translations.t;
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
  */
-public abstract class AbstractDataStore implements DataStore {
+public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implements DataStore {
     private PermissionsEx<?> manager;
-    private final Factory factory;
+    private final Factory<T> factory;
+    private final String identifier;
     protected final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
 
-    protected AbstractDataStore(Factory factory) {
+    protected AbstractDataStore(String identifier, Factory<T> factory) {
         if (!factory.expectedClazz.equals(getClass())) {
             throw new ExceptionInInitializerError("Data store factory for wrong class " + factory.expectedClazz + " provided to a " + getClass());
         }
+        this.identifier = identifier;
         this.factory = factory;
+    }
+
+    @Override
+    public String getName() {
+        return identifier;
     }
 
     protected PermissionsEx<?> getManager() {
@@ -66,11 +73,10 @@ public abstract class AbstractDataStore implements DataStore {
     @Override
     public final boolean initialize(PermissionsEx<?> core) throws PermissionsLoadingException {
         this.manager = core;
-        initializeInternal();
-        return true;
+        return initializeInternal();
     }
 
-    protected abstract void initializeInternal() throws PermissionsLoadingException;
+    protected abstract boolean initializeInternal() throws PermissionsLoadingException;
 
     @Override
     public final CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, Consumer<ImmutableSubjectData> listener) {
@@ -210,16 +216,21 @@ public abstract class AbstractDataStore implements DataStore {
         return factory.type;
     }
 
-    public static class Factory implements DataStoreFactory {
+    public static class Factory<T extends AbstractDataStore> implements DataStoreFactory {
         private final String type;
-        private final Class<? extends AbstractDataStore> expectedClazz;
-        private final ObjectMapper<? extends AbstractDataStore> mapper;
+        private final Class<T> expectedClazz;
+        private final ObjectMapper<T> mapper;
+        /**
+         * Function taking the name of a data store instance and creating the appropriate new object.
+         */
+        private final Function<String, T> newInstanceSupplier;
 
-        public Factory(final String type, Class<? extends AbstractDataStore> clazz) {
+        public Factory(final String type, Class<T> clazz, Function<String, T> newInstanceSupplier) {
             Objects.requireNonNull(type, "type");
             Objects.requireNonNull(clazz, "clazz");
             this.type = type;
             this.expectedClazz = clazz;
+            this.newInstanceSupplier = newInstanceSupplier;
             try {
                 mapper = ObjectMapper.forClass(clazz);
             } catch (ObjectMappingException e) {
@@ -234,7 +245,7 @@ public abstract class AbstractDataStore implements DataStore {
         @Override
         public DataStore createDataStore(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
             try {
-                return mapper.bindToNew().populate(config);
+                return mapper.bind(newInstanceSupplier.apply(identifier)).populate(config);
             } catch (ObjectMappingException e) {
                 throw new PermissionsLoadingException(t("Error while deserializing backend %s", identifier), e);
             }
