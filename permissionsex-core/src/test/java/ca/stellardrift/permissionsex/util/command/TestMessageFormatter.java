@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
 * Created by zml on 04.04.15.
@@ -60,6 +61,11 @@ class TestMessageFormatter implements MessageFormatter<String> {
     @Override
     public String option(String permission, String value) {
         return permission + "=" + value;
+    }
+
+    @Override
+    public String callback(Translatable title, Consumer<Commander<String>> callback) {
+        return tr(title);
     }
 
     @Override

@@ -929,6 +929,26 @@ public class GenericArguments {
         }
     }
 
+    public static CommandElement uuid(Translatable key) {
+        return new UUIDElement(key);
+    }
+
+    private static class UUIDElement extends KeyElement {
+        private UUIDElement(Translatable key) {
+            super(key);
+        }
+
+        @Override
+        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
+            final String input = args.next();
+            try {
+                return UUID.fromString(input);
+            } catch (IllegalArgumentException ex) {
+                throw args.createError(t("Expected input '%s' to be a UUID", input));
+            }
+        }
+    }
+
     private static final Map<String, Boolean> BOOLEAN_CHOICES = ImmutableMap.<String, Boolean>builder()
             .put("true", true)
             .put("t", true)

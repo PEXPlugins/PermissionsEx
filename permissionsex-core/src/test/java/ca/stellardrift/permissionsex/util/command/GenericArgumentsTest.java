@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -139,6 +141,17 @@ public class GenericArgumentsTest {
         assertEquals((Integer) 52, context.getOne("a value"));
 
         assertThrows(ArgumentParseException.class, () -> parseForInput("notanumber", GenericArguments.integer(Translations.untr("a value"))));
+    }
+
+    @Test
+    public void testUUID() throws ArgumentParseException {
+        final UUID subject = UUID.randomUUID();
+        CommandContext ctx = parseForInput(subject.toString(), GenericArguments.uuid(Translations.untr("a value")));
+        assertEquals(subject, ctx.getOne("a value"));
+
+
+        assertThrows(ArgumentParseException.class, () -> parseForInput("48459", GenericArguments.uuid(Translations.untr("a value"))));
+        assertThrows(ArgumentParseException.class, () -> parseForInput("words", GenericArguments.uuid(Translations.untr("a value"))));
     }
 
     @Test
