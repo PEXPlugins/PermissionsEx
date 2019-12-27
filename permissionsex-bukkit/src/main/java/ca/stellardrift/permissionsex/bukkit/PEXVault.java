@@ -89,9 +89,20 @@ class PEXVault extends Permission {
         return getUnchecked(this.plugin.getUserSubjects().get(Preconditions.checkNotNull(player, "player")));
     }
 
-
     Set<ContextValue<?>> contextsFrom(@Nullable String world) {
         return world == null ? PermissionsEx.GLOBAL_CONTEXT : ImmutableSet.of(WorldContextDefinition.INSTANCE.createValue(world));
+    }
+
+    /**
+     * Get an active world from an offline player if possible
+     *
+     * @param player The offline player object
+     * @return Maybe a world?
+     */
+    @Nullable
+    String getActiveWorld(OfflinePlayer player) {
+        Player ply = player.getPlayer();
+        return ply != null ? ply.getWorld().getName() : null;
     }
 
     /**
@@ -157,12 +168,12 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerAddTransient(OfflinePlayer player, String permission) {
-        return playerAddTransient(null, player, permission);
+        return playerAddTransient(getActiveWorld(player), player, permission);
     }
 
     @Override
     public boolean playerAddTransient(Player player, String permission) {
-        return playerAddTransient(null, player, permission);
+        return playerAddTransient(player.getWorld().getName(), player, permission);
     }
 
     @Override
@@ -182,12 +193,12 @@ class PEXVault extends Permission {
 
     @Override
     public boolean playerRemoveTransient(Player player, String permission) {
-        return playerRemoveTransient(null, player, permission);
+        return playerRemoveTransient(player.getWorld().getName(), player, permission);
     }
 
     @Override
     public boolean playerRemoveTransient(OfflinePlayer player, String permission) {
-        return playerRemoveTransient(null, player, permission);
+        return playerRemoveTransient(getActiveWorld(player), player, permission);
     }
 
     @Override
