@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
@@ -121,19 +122,19 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     public void testContextCalculation() throws ExecutionException, InterruptedException {
         ContextDefinition<String> worldCtx = WorldContextDefinition.INSTANCE,
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
-        ContextDefinition<LocalDateTime> beforeTimeCtx = BeforeTimeContextDefinition.INSTANCE;
+        ContextDefinition<ZonedDateTime> beforeTimeCtx = BeforeTimeContextDefinition.INSTANCE;
 
         CalculatedSubject subject = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP).get("a").get();
         subject.data().update(data -> {
             return data.setPermissions(cSet(worldCtx.createValue("nether")), ImmutableMap.of("some.perm", 1, "some.meme", -1))
-                    .setPermissions(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(LocalDateTime.now().plus(2, ChronoUnit.DAYS))), ImmutableMap.of("some.meme", 1, "some.cat", 1))
+                    .setPermissions(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(ZonedDateTime.now().plus(2, ChronoUnit.DAYS))), ImmutableMap.of("some.meme", 1, "some.cat", 1))
                     .setPermission(cSet(worldCtx.createValue("nether"), serverTypeCtx.createValue("bad")), "some.day", 1)
                     .setPermission(cSet(serverTypeCtx.createValue("good")), "some.year", 1)
                     .setPermission(PermissionsEx.GLOBAL_CONTEXT, "some.world", 1);
 
         }).join();
 
-        Set<ContextValue<?>> activeSetA = cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(LocalDateTime.now()), serverTypeCtx.createValue("good"));
+        Set<ContextValue<?>> activeSetA = cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(ZonedDateTime.now()), serverTypeCtx.createValue("good"));
         Set<ContextValue<?>> activeSetB = cSet(worldCtx.createValue("nether"));
         Set<ContextValue<?>> activeSetC = PermissionsEx.GLOBAL_CONTEXT;
         NodeTree permsA = subject.getPermissions(activeSetA);

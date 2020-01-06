@@ -19,7 +19,7 @@ Any subject can inherit from any other subject.
 
 Contexts are tags that can be applied to a segment that restrict the segment's applicability to a certain player state. Sponge provides several contexts and PermissionsEx applies a few more, but any plugin can add its own contexts (for example a region protection plugin could add a `region` context to allow for region-specific permissions). When PermissionsEx calculates permissions for a set of active contexts, any segment whose set of contexts is a subset of the subject's active contexts will be considered.
 
-**Sponge contexts**
+## Sponge contexts
 
 Context Key | Example Value              | Description
 ----------- | -------------------------- | -----------
@@ -30,7 +30,7 @@ Context Key | Example Value              | Description
 `localip`   | `[2607:f8b0:400a:801::200e]` | The ip (on the server) that is receiving the connection from a subject
 `localport` | `25565`                    | The port (on the server) that the client is connecting to
 
-**Paper/Spigot/Bukkit contexts**
+## Paper/Spigot/Bukkit contexts
 
 Context Key | Example Value              | Description
 ----------- | -------------------------- | -------------------
@@ -41,7 +41,7 @@ Context Key | Example Value              | Description
 `localip`   | `[2607:f8b0:400a:801::200e]` | The ip (on the server) that is receiving the connection from a subject
 `localport` | `25565`                    | The port (on the server) that the client is connecting to
 
-**PermissionsEx Contexts**
+## PermissionsEx Contexts
 
 Context Key   | Example Value         | Description
 ------------- | --------------------- | -----------
@@ -49,5 +49,40 @@ Context Key   | Example Value         | Description
 `before-time` | `2020-07-01T08:00:00` | Only active before this time
 `after-time`  | `2008-04-01T00:00:00` | Only active after the provided time
 
+### Time formats
 
+When using `before-time` and `after-time`, PermissionsEx supports a variety of formats:
+
++ ISO Date Time: `2011-12-03T10:15:30` or `2011-12-03T10:15:30+01:00` or `2011-12-03T10:15:30+01:00[Europe/Paris]`
++ ISO Time Relative to Today: `10:15` or `10:15:30` or `10:15:30+01:00`
++ ISO Date: `2011-12-03` `2011-12-03+01:00`
++ RFC 1123: `Tue, 3 Jun 2008 11:05:30 GMT`
++ PermissionsEx Relative Time Format: `+1d2h-3m` (more on this later)
++ Seconds since Epoch: `1578779386573`
+
+#### PermissionsEx Relative Time Format
+
+Times in PermissionsEx can be expressed in terms of the current time. The format is as follows:
+
++ A leading sign (`+` or `-`) 
++ Quantity (such as `2`)
++ Unit (such as `m` for minute)
+
+A relative time must always begin with a sign, however the same sign will be used until a new one is specified before a later quantity.
+
+Here is a table of the current supported units:
+
++ Seconds: `second`, `seconds`, `s`
++ Minutes: `minute`, `minutes`, `m`
++ Hours: `hour`, `hours`, `h`
++ Days: `day`, `days`, `d`
++ Weeks: `week`, `weeks`, `w`
++ Months: `month`, `months`
++ Years: `year`, `years`
+
+For example, to express 3 days from now, the following can be used: `+3d`
+
+2 days, 4 minutes less 16 seconds can be expressed in the following way: `+2d4m-16s`
+
+In this way, administrators will be able to easily specify times relative to the current time.
 
