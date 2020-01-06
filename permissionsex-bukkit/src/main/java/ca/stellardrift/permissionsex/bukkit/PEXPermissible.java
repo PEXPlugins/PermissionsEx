@@ -33,6 +33,7 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -289,7 +290,7 @@ public class PEXPermissible extends PermissibleBase {
     @Override
     public PermissionAttachment addAttachment(Plugin plugin, int ticks) {
         final PEXPermissionAttachment attach = new PEXPermissionAttachment(plugin, player, this);
-        this.subj.transientData().update(input -> input.addParent(ImmutableSet.of(BeforeTimeContextDefinition.INSTANCE.createValue(LocalDateTime.now().plus(ticks * 50, ChronoUnit.MILLIS))), PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
+        this.subj.transientData().update(input -> input.addParent(ImmutableSet.of(BeforeTimeContextDefinition.INSTANCE.createValue(ZonedDateTime.now().plus(ticks * 50, ChronoUnit.MILLIS))), PEXPermissionAttachment.ATTACHMENT_TYPE, attach.getIdentifier()))
                 .thenRun(() -> this.attachments.add(attach));
         return attach;
     }
