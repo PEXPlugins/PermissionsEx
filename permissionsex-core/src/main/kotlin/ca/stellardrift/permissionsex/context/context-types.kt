@@ -74,7 +74,7 @@ class EpochTimeContextParser(val z: ZoneId): TimeContextParser {
 
 class RelativeTimeContextParser(val z: ZoneId) : TimeContextParser {
     // TODO: This needs localized (somehow...)
-    private val relativeTimePartRegex = Regex.fromLiteral("^((?:\\+|-)?[0-9\\.]*[0-9])(seconds?|minutes?|hours?|days?|weeks?|months?|years?|s|m|h|d|w|y)")
+    private val relativeTimePartRegex = Regex.fromLiteral("^(((?:\\+|-)?)[0-9\\.]*[0-9])(seconds?|minutes?|hours?|days?|weeks?|months?|years?|s|m|h|d|w|y)")
 
     override fun parse(s: String): ZonedDateTime? {
         if (s.length < 3)
@@ -82,7 +82,7 @@ class RelativeTimeContextParser(val z: ZoneId) : TimeContextParser {
             return null
 
         // validate the expression begins with either + or -
-        when (s.get(0)) {
+        when (s[0]) {
             '+', '-' -> {/* ignored */}
             else -> return null
         }
@@ -90,16 +90,27 @@ class RelativeTimeContextParser(val z: ZoneId) : TimeContextParser {
         var working = ZonedDateTime.now(z)
         val match = relativeTimePartRegex.find(s) ?: return null
         var index = 0
+        var positive = true
         do {
-            val quantity = try {
-                match.groups[1]!!.value.toLong()
+            positive = when (match.groups[1]!!.value) {
+                "+" -> true
+                "-" -> false
+                else -> positive
+            }
+
+            var quantity = try {
+                match.groups[2]!!.value.toLong()
             } catch (ex: NumberFormatException) {
                 // its possible the user can enter an extremely large number not representable by a long - do _not_
                 // change this into an exception!
                 return null
             }
 
-            val unit = when (match.groups[2]!!.value) {
+            if (!positive) {
+                quantity = -quantity
+            }
+
+            val unit = when (match.groups[3]!!.value) {
                 "second", "seconds", "s" -> ChronoUnit.SECONDS
                 "minute", "minutes", "m" -> ChronoUnit.MINUTES
                 "hour", "hours", "h" -> ChronoUnit.HOURS
