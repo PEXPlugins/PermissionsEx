@@ -154,11 +154,7 @@ fun <T: ArgumentBuilder<ServerCommandSource, T>> T.requirePermission(permission:
 }
 
 fun ServerCommandSource.hasPermission(perm: String): Boolean {
-    return if (this is IPermissionCommandSource) {
-        hasPermission(perm)
-    } else {
-        hasPermissionLevel(minecraftServer.opPermissionLevel) // TODO: Warn abt this?
-    }
+    return this.asCommander().hasPermission(perm)
 }
 
 @JvmOverloads

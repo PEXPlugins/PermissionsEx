@@ -26,7 +26,6 @@ import ca.stellardrift.permissionsex.util.command.ButtonType
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import ca.stellardrift.permissionsex.util.command.Commander
 import ca.stellardrift.permissionsex.util.command.MessageFormatter
-import com.google.common.collect.Maps
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType.getString
@@ -44,8 +43,6 @@ import net.minecraft.text.Text
 import net.minecraft.text.TranslatableText
 import net.minecraft.util.Formatting
 import net.minecraft.util.Nameable
-import java.util.Locale
-import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -78,8 +75,8 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
         builder: SuggestionsBuilder
     ): CompletableFuture<Suggestions> {
         val argsSoFar = try {getString(context, "args") } catch (e: Exception) { "" }
-        val suggestionPrefix = argsSoFar.substringBeforeLast(' ')
-        this.spec.tabComplete(FabricCommander(context.source), argsSoFar).forEach {
+        val suggestionPrefix = argsSoFar.substringBeforeLast(' ', "")
+        this.spec.tabComplete(context.source.asCommander(), argsSoFar).forEach {
             if (suggestionPrefix.isEmpty()) {
                 builder.suggest(it)
             } else {
@@ -95,7 +92,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
     }
 
     override fun run(context: BrigadierCommandContext<ServerCommandSource>): Int {
-        val cmd = FabricCommander(context.source)
+        val cmd = context.source.asCommander()
         try {
             val args = getString(context, "args")
             this.spec.process(cmd, args)
@@ -109,7 +106,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
 
 class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
     override fun run(context: com.mojang.brigadier.context.CommandContext<ServerCommandSource>): Int {
-        val cmd = FabricCommander(context.source)
+        val cmd = context.source.asCommander()
         try {
             this.spec.process(cmd, "")
         } catch (e: Exception) {
@@ -123,66 +120,23 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCo
         context: com.mojang.brigadier.context.CommandContext<ServerCommandSource>,
         builder: SuggestionsBuilder
     ): CompletableFuture<Suggestions> {
-        this.spec.tabComplete(FabricCommander(context.source), "").forEach {
+        this.spec.tabComplete(context.source.asCommander(), "").forEach {
             builder.suggest(it)
         }
         return CompletableFuture.completedFuture(builder.build()) // todo actually run async? - for commands api refactor
     }
 }
 
-class FabricCommander(val sender: ServerCommandSource) : Commander<Text> {
-    private val formatter = FabricMessageFormatter(this)
-
-    override fun getName(): String {
-        return sender.name
-    }
-
-    override fun getLocale(): Locale {
-        return (sender as? LocaleHolder)?.locale ?: Locale.getDefault()
-    }
-
-    override fun getSubjectIdentifier(): Optional<Map.Entry<String, String>> {
-        return if (sender is IPermissionCommandSource) {
-            Optional.of(Maps.immutableEntry(sender.permType, sender.permIdentifier))
-        } else {
-            Optional.empty()
-        }
-    }
-
-    override fun hasPermission(permission: String): Boolean {
-        return sender.hasPermission(permission)
-    }
-
-    override fun fmt(): MessageFormatter<Text> {
-        return formatter
-    }
-
-    override fun msg(text: Text) {
-        sender.sendFeedback(text.formatted(Formatting.DARK_AQUA), false)
-    }
-
-    override fun debug(text: Text) {
-        sender.sendFeedback(text.formatted(Formatting.GRAY), false)
-    }
-
-    override fun error(text: Text) {
-        sender.sendError(text)
-    }
-
-    override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<Text>) {
-        msg(fmt().combined("# ", fmt().tr(title), " #"))
-        if (header != null) {
-            msg(fmt().tr(header))
-        }
-        text.forEach(this::msg)
-
-        msg(fmt().combined("#################################"))
-    }
-
+@Suppress("UNCHECKED_CAST")
+internal fun ServerCommandSource.asCommander(): Commander<Text> {
+    return this as Commander<Text>
 }
 
 val EQUALS_SIGN: Text = LiteralText("=").formatted(Formatting.GRAY)
-class FabricMessageFormatter(private val cmd: FabricCommander, private val hlColor: Formatting =  Formatting.AQUA) : MessageFormatter<Text> {
+class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCommandSource, private val hlColor: Formatting =  Formatting.AQUA) : MessageFormatter<Text> {
+
+    @Suppress("UNCHECKED_CAST")
+    private val cmd get() = src as Commander<Text>
 
     override fun subject(subject: Map.Entry<String, String>): Text {
         val subj = PermissionsExMod.manager.getSubjects(subject.key)[subject.value].join()
@@ -288,6 +242,7 @@ class FabricMessageFormatter(private val cmd: FabricCommander, private val hlCol
         return TranslatableText(tr.translate(cmd.locale), *tr.args.map {it.asText()}.toTypedArray())
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun callback(title: Translatable, callback: Consumer<Commander<Text>>): Text {
         val command = PermissionsExMod.callbackController.registerCallback(cmd) { callback.accept(it) }
         return tr(title).styled {

@@ -25,6 +25,7 @@
     "lifecycle.MixinGameProfile",
     "lifecycle.MixinHandshakeC2SPacket",
     "lifecycle.MixinPlayerManager",
+    "lifecycle.MixinServerCommandSource",
     "lifecycle.MixinServerHandshakeNetworkHandler",
     "lifecycle.MixinServerPlayNetworkHandler",
 
