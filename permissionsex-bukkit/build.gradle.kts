@@ -68,6 +68,7 @@ dependencies {
     implementation(project(":impl-blocks:permissionsex-bungee-text")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
+    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")
@@ -96,6 +97,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude("org.yaml:snakeyaml")
         exclude("org.checkerframework:.*:.*")
+    }
+    manifest {
+        attributes("Automatic-Module-Name" to project.name)
     }
 }
 

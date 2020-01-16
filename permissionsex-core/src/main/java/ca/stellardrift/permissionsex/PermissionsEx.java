@@ -124,9 +124,11 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.defaultFor(SUBJECTS_DEFAULTS, false));
         convertUuids();
 
-        registerCommand(PermissionsExCommands.createRootCommand(this));
-        registerCommand(RankingCommands.getPromoteCommand(this));
-        registerCommand(RankingCommands.getDemoteCommand(this));
+        registerCommands(() -> ImmutableSet.of(
+               PermissionsExCommands.createRootCommand(this),
+                RankingCommands.getPromoteCommand(this),
+                RankingCommands.getDemoteCommand(this)
+        ));
     }
 
     private State<PlatformConfigType> getState() throws IllegalStateException {
@@ -495,8 +497,8 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     }
 
     @Override
-    public void registerCommand(CommandSpec command) {
-        impl.registerCommand(command);
+    public void registerCommands(Supplier<Set<CommandSpec>> commandSupplier) {
+        impl.registerCommands(commandSupplier);
     }
 
     @Override

@@ -17,9 +17,11 @@
 
 package ca.stellardrift.permissionsex.bukkit;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.Commander;
 import ca.stellardrift.permissionsex.util.command.MessageFormatter;
+import com.google.common.collect.Maps;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.command.CommandSender;
@@ -39,7 +41,7 @@ public class BukkitCommander implements Commander<BaseComponent> {
 
     BukkitCommander(PermissionsExPlugin pex, CommandSender commandSource) {
         this.commandSource = commandSource;
-        this.formatter = new BukkitMessageFormatter(pex, commandSource);
+        this.formatter = new BukkitMessageFormatter(pex, this);
     }
 
     @Override
@@ -59,8 +61,10 @@ public class BukkitCommander implements Commander<BaseComponent> {
 
     @Override
     public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
+        if (commandSource instanceof Player) {
+            return Optional.of(Maps.immutableEntry(PermissionsEx.SUBJECTS_USER, ((Player) commandSource).getUniqueId().toString()));
+        }
         return Optional.empty();
-        //return Optional.of(Maps.immutableEntry(commandSource.getContainingCollection().getIdentifier(), commandSource.getIdentifier()));
     }
 
     @Override

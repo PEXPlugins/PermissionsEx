@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.bungeetext.BungeeMessageFormatter;
 import ca.stellardrift.permissionsex.util.Util;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +31,9 @@ import java.util.Map;
  * Factory to create formatted elements of messages
  */
 public class BukkitMessageFormatter extends BungeeMessageFormatter {
-    private final CommandSender sender;
 
-    BukkitMessageFormatter(PermissionsExPlugin pex, CommandSender sender) {
-        super(pex.getManager(), ChatColor.AQUA);
-        this.sender = sender;
+    BukkitMessageFormatter(PermissionsExPlugin pex, BukkitCommander sender) {
+        super(sender, pex.getManager(), ChatColor.AQUA, pex.getCallbackController());
     }
 
     /**
@@ -60,12 +57,6 @@ public class BukkitMessageFormatter extends BungeeMessageFormatter {
             default:
                 throw new IllegalArgumentException("Provided locale '" + mcLocaleString + "' was not in a valid format!");
         }
-    }
-
-    @NotNull
-    @Override
-    public Locale getLocale() {
-        return sender instanceof Player ? toLocale(((Player) sender).getLocale()) : Locale.getDefault();
     }
 
     @Nullable

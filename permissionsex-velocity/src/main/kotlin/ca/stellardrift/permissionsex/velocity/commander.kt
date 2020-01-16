@@ -17,7 +17,6 @@
 
 package ca.stellardrift.permissionsex.velocity
 
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.rank.RankLadder
@@ -44,23 +43,24 @@ import net.kyori.text.renderer.FriendlyComponentRenderer
 import java.text.MessageFormat
 import java.util.Locale
 import java.util.Optional
+import java.util.function.Consumer
 import java.util.regex.Pattern
 
 class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
 
     override fun execute(source: CommandSource, args: Array<out String>) {
-        val src = VelocityCommander(pex.manager, source)
+        val src = VelocityCommander(pex, source)
         cmd.process(src, args.joinToString(" "))
     }
 
     override fun suggest(source: CommandSource, currentArgs: Array<out String>): MutableList<String> {
-        val src = VelocityCommander(pex.manager, source)
+        val src = VelocityCommander(pex, source)
         return cmd.tabComplete(src, currentArgs.joinToString(" "))
     }
 
     override fun hasPermission(source: CommandSource, args: Array<out String>): Boolean {
         return try {
-            cmd.checkPermission(VelocityCommander(pex.manager, source))
+            cmd.checkPermission(VelocityCommander(pex, source))
             true
         } catch (e: CommandException) {
             false
@@ -68,7 +68,7 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
     }
 }
 
-class VelocityCommander(internal val pex: PermissionsEx<*>, private val src: CommandSource) :
+class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
     Commander<ComponentBuilder<*, *>> {
     private val formatter = VelocityMessageFormatter(this)
     override fun getName(): String {
@@ -142,7 +142,7 @@ private object FixedTranslationComponentRenderer : FriendlyComponentRenderer<Vel
 class VelocityMessageFormatter(private val cmd: VelocityCommander, private val hlColor: TextColor = TextColor.YELLOW) :
     MessageFormatter<ComponentBuilder<*, *>> {
     override fun subject(subject: Map.Entry<String, String>): ComponentBuilder<*, *> {
-        val name = cmd.pex.getSubjects(subject.key).get(subject.value).join().data().get().getOptions(setOf())["name"]
+        val name = cmd.pex.manager.getSubjects(subject.key).get(subject.value).join().data().get().getOptions(setOf())["name"]
         val nameText = if (name != null) {
             TextComponent.builder(subject.value, TextColor.GRAY).append("/").append(name).build()
         } else {
@@ -245,5 +245,16 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
     override fun tr(tr: Translatable): ComponentBuilder<*, *> {
         val args: List<Component> = tr.args.map { it.asComponent() }
         return TranslatableComponent.builder(tr.translate(cmd.locale)).args(args)
+    }
+
+    override fun callback(
+        title: Translatable,
+        callback: Consumer<Commander<ComponentBuilder<*, *>>>
+    ): ComponentBuilder<*, *> {
+        val command = cmd.pex.callbackController.registerCallback(cmd) { callback.accept(it) }
+        return tr(title)
+            .decoration(TextDecoration.UNDERLINED, true)
+            .color(hlColor)
+            .clickEvent(ClickEvent.runCommand(command))
     }
 }

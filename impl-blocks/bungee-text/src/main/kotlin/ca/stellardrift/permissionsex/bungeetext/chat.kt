@@ -19,10 +19,12 @@ package ca.stellardrift.permissionsex.bungeetext
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.rank.RankLadder
+import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.ButtonType
+import ca.stellardrift.permissionsex.util.command.Commander
 import ca.stellardrift.permissionsex.util.command.MessageFormatter
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.BaseComponent
@@ -31,14 +33,14 @@ import net.md_5.bungee.api.chat.HoverEvent
 import net.md_5.bungee.api.chat.HoverEvent.Action
 import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.api.chat.TranslatableComponent
-import java.util.Locale
 import java.util.concurrent.ExecutionException
+import java.util.function.Consumer
 import kotlin.collections.Map.Entry
 
 /**
  * Factory to create formatted elements of messages
  */
-abstract class BungeeMessageFormatter(protected val pex: PermissionsEx<*>, private val hlColour: ChatColor = ChatColor.AQUA) :
+abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent>, protected val pex: PermissionsEx<*>, private val hlColour: ChatColor = ChatColor.AQUA, private val callbacks: CallbackController) :
     MessageFormatter<BaseComponent> {
     companion object {
         val EQUALS_SIGN: BaseComponent = TextComponent("=").apply {
@@ -46,7 +48,6 @@ abstract class BungeeMessageFormatter(protected val pex: PermissionsEx<*>, priva
         }
     }
 
-    abstract fun getLocale(): Locale
     abstract fun getFriendlyName(subj: Entry<String, String>): String?
 
     override fun subject(subject: Entry<String, String>): BaseComponent {
@@ -129,6 +130,15 @@ abstract class BungeeMessageFormatter(protected val pex: PermissionsEx<*>, priva
         }
     }
 
+    override fun callback(title: Translatable, callback: Consumer<Commander<BaseComponent>>): BaseComponent {
+        val command = callbacks.registerCallback(source = cmd, func = {callback.accept(it)})
+        return tr(title).apply {
+            isUnderlined = true
+            color = hlColour
+            clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
+        }
+    }
+
     override fun permission(
         permission: String?,
         value: Int
@@ -189,6 +199,6 @@ abstract class BungeeMessageFormatter(protected val pex: PermissionsEx<*>, priva
 
     override fun tr(tr: Translatable): BaseComponent {
         val args = tr.args.map { componentFrom(it) }.toTypedArray()
-        return TranslatableComponent(tr.translate(getLocale()), *args)
+        return TranslatableComponent(tr.translate(cmd.locale), *args)
     }
 }

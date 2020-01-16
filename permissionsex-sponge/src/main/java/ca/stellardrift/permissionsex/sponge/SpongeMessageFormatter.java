@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.sponge;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.ButtonType;
+import ca.stellardrift.permissionsex.util.command.Commander;
 import ca.stellardrift.permissionsex.util.command.MessageFormatter;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.service.permission.SubjectData;
@@ -36,6 +37,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 import static ca.stellardrift.permissionsex.sponge.SpongeTranslations.t;
 import static ca.stellardrift.permissionsex.util.Util.castOptional;
@@ -134,6 +136,16 @@ class SpongeMessageFormatter implements MessageFormatter<Text.Builder> {
     @Override
     public Text.Builder option(String permission, String value) {
         return Text.builder(permission).append(EQUALS_SIGN, Text.of(value));
+    }
+
+    @Override
+    public Text.Builder callback(Translatable title, Consumer<Commander<Text.Builder>> callback) {
+        return tr(title)
+                .style(TextStyles.UNDERLINE)
+                .color(TextColors.AQUA)
+                .onClick(TextActions.executeCallback(src -> {
+                    callback.accept(new SpongeCommander(pex, src));
+                }));
     }
 
     @Override

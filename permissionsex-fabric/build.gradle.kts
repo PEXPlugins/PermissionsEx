@@ -45,6 +45,7 @@ dependencies {
     }
 
     shade(project(":impl-blocks:permissionsex-hikari-config"))
+    shade(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
@@ -86,6 +87,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "com.typesafe.config", "ninja.leaping.configurate", "org.slf4j",
         "org.antlr", "org.yaml", "org.apache.logging.slf4j").forEach {
         relocate(it, "$relocateRoot.$it")
+    }
+
+    manifest {
+        attributes("Automatic-Module-Name" to project.name)
     }
 }
 

@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Methods that are specific to a certain implementation of PermissionsEx (Sponge, Forge, etc)
@@ -76,11 +77,15 @@ public interface ImplementationInterface {
     Executor getAsyncExecutor();
 
     /**
-     * Register the given command to be executed on the implementation's interface
+     * Provide a supplier for commands, to be called once the implementation's backend
+     * is ready to accept command registrations.
      *
-     * @param command The command to execute
+     * This method may be called multiple times. If the commands are not registered immediately,
+     * the implementation must cache all values provided in each call.
+     *
+     * @param commandSupplier The function that will provide commands to register.
      */
-    void registerCommand(CommandSpec command);
+    void registerCommands(Supplier<Set<CommandSpec>> commandSupplier);
 
     /**
      * Get commands that the implementation wants to register as a child of the {@code /pex} command

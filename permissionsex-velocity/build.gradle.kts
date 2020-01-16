@@ -49,6 +49,7 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
+    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     shadow("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
     kapt("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
@@ -84,6 +85,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     dependencies {
         exclude("org.checkerframework:.*:.*")
+    }
+
+    manifest {
+        attributes("Automatic-Module-Name" to project.name)
     }
 }
 

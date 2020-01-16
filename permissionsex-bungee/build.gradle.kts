@@ -51,6 +51,7 @@ dependencies {
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
+    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     shadow("net.md-5:bungeecord-api:1.14-SNAPSHOT")
 }
@@ -72,6 +73,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     
     dependencies {
         exclude("org.checkerframework")
+    }
+    manifest {
+        attributes("Automatic-Module-Name" to project.name)
     }
 }
 

@@ -33,8 +33,8 @@ import java.util.Locale
 import java.util.Optional
 
 
-class BungeeCommander(pex: PermissionsEx<*>, private val src: CommandSender) : Commander<BaseComponent> {
-    private val formatter = BungeePluginMessageFormatter(pex, src)
+class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) : Commander<BaseComponent> {
+    private val formatter = BungeePluginMessageFormatter(pex, this)
     override fun getName(): String {
         return src.name
     }
@@ -85,10 +85,7 @@ class BungeeCommander(pex: PermissionsEx<*>, private val src: CommandSender) : C
 
 }
 
-class BungeePluginMessageFormatter(pex: PermissionsEx<*>, private val sender: CommandSender) : BungeeMessageFormatter(pex, hlColour = ChatColor.YELLOW) {
-    override fun getLocale(): Locale {
-        return (sender as? ProxiedPlayer)?.locale ?: Locale.getDefault()
-    }
+class BungeePluginMessageFormatter(pex: PermissionsExPlugin, sender: BungeeCommander) : BungeeMessageFormatter(sender, pex.manager, hlColour = ChatColor.YELLOW, callbacks = pex.callbackController) {
 
     override fun getFriendlyName(subj: Map.Entry<String, String>): String? {
         return pex.getSubjects(subj.key).typeInfo.getAssociatedObject(subj.value).castMap<CommandSender, String> { name }

@@ -47,6 +47,7 @@ import net.minecraft.util.Nameable
 import java.util.Locale
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 import java.util.function.Predicate
 import com.mojang.brigadier.context.CommandContext as BrigadierCommandContext
 
@@ -285,6 +286,15 @@ class FabricMessageFormatter(private val cmd: FabricCommander, private val hlCol
 
     override fun tr(tr: Translatable): Text {
         return TranslatableText(tr.translate(cmd.locale), *tr.args.map {it.asText()}.toTypedArray())
+    }
+
+    override fun callback(title: Translatable, callback: Consumer<Commander<Text>>): Text {
+        val command = PermissionsExMod.callbackController.registerCallback(cmd) { callback.accept(it) }
+        return tr(title).styled {
+            it.setUnderline(true)
+            it.color = hlColor
+            it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
+        }
     }
 
 }

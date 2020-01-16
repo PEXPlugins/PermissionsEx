@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 public class TestImplementationInterface implements ImplementationInterface {
@@ -82,7 +83,7 @@ public class TestImplementationInterface implements ImplementationInterface {
     }
 
     @Override
-    public void registerCommand(CommandSpec command) {
+    public void registerCommands(Supplier<Set<CommandSpec>> commandSupplier) {
     }
 
     @Override

@@ -26,6 +26,7 @@ import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.TranslatableLogger
+import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.castMap
@@ -60,6 +61,7 @@ import javax.sql.DataSource
 private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
 
+    val callbackController = CallbackController()
     val manager: PermissionsEx<*>
     get() {
         val temp = _manager
@@ -76,7 +78,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     private val _logger = TranslatableLogger.forLogger(LoggerFactory.getLogger(MOD_ID))
     private val exec = Executors.newCachedThreadPool()
-    private val commands = mutableListOf<CommandSpec>()
+    private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
 
     override fun onInitialize() {
@@ -109,6 +111,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             server.stop(false)
             return
         }
+        tryRegisterCommands()
 
         manager.registerContextDefinitions(WorldContextDefinition,
             DimensionContextDefinition,
@@ -120,6 +123,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         manager.getSubjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
+        tryRegisterCommands()
         logger.info(t("v%s successfully enabled! Welcome!", container.metadata.version))
     }
 
@@ -159,7 +163,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun handlePlayerQuit(player: ServerPlayerEntity) {
-            _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
+        callbackController.clearOwnedBy(player.uuid)
+        _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 
     override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
@@ -183,34 +188,33 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         return exec
     }
 
-    override fun registerCommand(command: CommandSpec) {
+    override fun registerCommands(commandSupplier: Supplier<Set<CommandSpec>>) {
         synchronized (commands) {
-            if (this::server.isInitialized) {
-                registerCommand(command, this.server.commandManager.dispatcher)
-            } else {
-                commands.add(command)
-            }
+                commands.add(commandSupplier)
+                tryRegisterCommands()
         }
     }
 
     private fun tryRegisterCommands(possibleDispatch: CommandDispatcher<ServerCommandSource>? = null) {
-        synchronized (commands) {
-            val dispatcher = if (possibleDispatch == null && this::server.isInitialized) {
-                server.commandManager.dispatcher
-            } else {
-                possibleDispatch
-            }
-            if (dispatcher != null) {
+        val dispatcher = if (possibleDispatch == null && this::server.isInitialized) {
+            server.commandManager.dispatcher
+        } else {
+            possibleDispatch
+        }
+        if (dispatcher != null && _manager != null) {
+            synchronized(commands) {
                 commands.forEach {
-                    registerCommand(it, dispatcher)
+                    it.get().forEach { cmd ->
+                        registerCommand(cmd, dispatcher)
+                    }
                 }
-                commands.clear()
+                commands.clear() // TODO: Remove if we stop re-creating the PEX instance
             }
         }
     }
 
     override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf()
+        return setOf(callbackController.createCommand(manager))
     }
 
     override fun getVersion(): String {

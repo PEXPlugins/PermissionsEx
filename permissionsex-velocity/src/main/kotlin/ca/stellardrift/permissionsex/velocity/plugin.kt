@@ -28,6 +28,7 @@ import ca.stellardrift.permissionsex.logging.TranslatableLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
+import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -48,10 +49,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
+import java.util.function.Supplier
 import javax.inject.Inject
 import javax.sql.DataSource
 
@@ -62,6 +65,9 @@ private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
 class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val server: ProxyServer, @DataDirectory private val dataPath: Path) : ImplementationInterface {
 
     private val exec = Executors.newCachedThreadPool()
+    internal val callbackController = CallbackController()
+    private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
+
     override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> dataPath
@@ -81,12 +87,31 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         return exec
     }
 
-    override fun registerCommand(command: CommandSpec) {
-        server.commandManager.register(VelocityCommand(this, command), *command.aliases.map {"/$it" }.toTypedArray())
+    private fun registerCommandsNow() {
+        if (!this::manager.isInitialized) {
+            return
+        }
+
+        var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
+        while (supply != null) {
+            registerCommandsNow(supply)
+            supply = cachedCommands.poll()
+        }
+    }
+
+    private fun registerCommandsNow(supplier: Supplier<Set<CommandSpec>>) {
+        supplier.get().forEach {
+            server.commandManager.register(VelocityCommand(this, it), *it.aliases.map {alias -> "/$alias" }.toTypedArray())
+        }
+    }
+
+    override fun registerCommands(command: Supplier<Set<CommandSpec>>) {
+        cachedCommands.add(command)
+        registerCommandsNow(command)
     }
 
     override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf()
+        return setOf(callbackController.createCommand(manager))
     }
 
     override fun getVersion(): String {
@@ -125,6 +150,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
+        registerCommandsNow()
         logger.info(t("Successfully enabled %s v%s", ProjectData.NAME, ProjectData.VERSION))
     }
 
@@ -161,6 +187,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     @Subscribe
     fun uncachePlayer(event: DisconnectEvent) {
+        callbackController.clearOwnedBy(event.player.uniqueId)
         manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
     }
 }

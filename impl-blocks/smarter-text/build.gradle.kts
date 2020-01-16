@@ -22,15 +22,6 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
 applyCommonSettings()
 setupPublication()
 
-repositories {
-    maven {
-        name = "bungeecord-repo"
-        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-    }
-}
-
 dependencies {
     api(project(":permissionsex-core"))
-    api("net.md-5:bungeecord-chat:1.14-SNAPSHOT")
-    api(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 }

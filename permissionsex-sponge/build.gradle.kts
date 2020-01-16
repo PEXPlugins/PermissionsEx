@@ -71,6 +71,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.jetbrains.annotations").forEach {
         relocate(it, "$relocateRoot.$it")
     }
+
+    manifest {
+        attributes("Automatic-Module-Name" to project.name)
+    }
 }
 
 tasks.assemble {

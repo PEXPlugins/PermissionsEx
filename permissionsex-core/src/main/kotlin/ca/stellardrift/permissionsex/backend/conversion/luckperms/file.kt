@@ -292,9 +292,7 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
         return Files.list(rootDir.resolve("${type}s")).use { list ->
             list.map { x ->
                 val name = x.fileName.toString()
-                val shortened = name.substring(0, (name.length - store.format.extension.length) - 1)
-                println(shortened)
-                shortened
+                getNameWithoutExtension(name)
             }.collect(Collectors.toSet())
         }
     }

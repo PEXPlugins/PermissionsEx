@@ -23,6 +23,7 @@ import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import ca.stellardrift.permissionsex.profile.ProfileKt;
+import ca.stellardrift.permissionsex.smartertext.CallbackController;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
@@ -52,12 +53,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static ca.stellardrift.permissionsex.bukkit.BukkitTranslations.t;
 import static ca.stellardrift.permissionsex.hikariconfig.HikariConfig.createHikariDataSource;
+import static java.util.Objects.requireNonNull;
 
 /**
  * PermissionsEx plugin
@@ -79,6 +83,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     // Location of plugin configuration data
     private Path dataPath;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private CallbackController callbackController = new CallbackController();
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -105,9 +110,12 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
                 .build();
 
+
         try {
+            BukkitImplementationInterface impl = new BukkitImplementationInterface();
             getDataFolder().mkdirs();
-            this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(configLoader, BukkitConfiguration.class), new BukkitImplementationInterface());
+            this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(configLoader, BukkitConfiguration.class), impl);
+            impl.registerCommandsNow();
         /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -204,6 +212,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     private void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
+        callbackController.clearOwnedBy(event.getPlayer().getUniqueId());
         getUserSubjects().uncache(event.getPlayer().getUniqueId().toString());
     }
 
@@ -307,7 +316,12 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         getServer().getOnlinePlayers().forEach(this::uninjectPermissible);
     }
 
+    public CallbackController getCallbackController() {
+        return callbackController;
+    }
+
     private class BukkitImplementationInterface implements ImplementationInterface {
+        private Queue<Supplier<Set<CommandSpec>>> stagedCommands = new ConcurrentLinkedQueue<>();
         @Override
         public Path getBaseDirectory(BaseDirectoryScope scope) {
             switch (scope) {
@@ -345,18 +359,38 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         }
 
         @Override
-        public void registerCommand(CommandSpec command) {
-            PluginCommand cmd = getCommand(command.getAliases().get(0));
-            if (cmd != null) {
-                PEXBukkitCommand bukkitCommand = new PEXBukkitCommand(command, PermissionsExPlugin.this);
-                cmd.setExecutor(bukkitCommand);
-                cmd.setTabCompleter(bukkitCommand);
+        public void registerCommands(Supplier<Set<CommandSpec>> commands) {
+            stagedCommands.add(commands);
+            registerCommandsNow(commands);
+        }
+
+        boolean registerCommandsNow() {
+            if (manager == null) {
+                return false;
+            }
+            Supplier<Set<CommandSpec>> supply;
+            while ((supply = stagedCommands.poll()) != null) {
+                registerCommandsNow(supply);
+            }
+
+            return true;
+        }
+
+        void registerCommandsNow(Supplier<Set<CommandSpec>> commandSupplier) {
+            requireNonNull(manager, "Manager must be initialized to register commands!");
+            for (CommandSpec command : commandSupplier.get()) {
+                PluginCommand cmd = getCommand(command.getAliases().get(0));
+                if (cmd != null) {
+                    PEXBukkitCommand bukkitCommand = new PEXBukkitCommand(command, PermissionsExPlugin.this);
+                    cmd.setExecutor(bukkitCommand);
+                    cmd.setTabCompleter(bukkitCommand);
+                }
             }
         }
 
         @Override
         public Set<CommandSpec> getImplementationCommands() {
-            return ImmutableSet.of();
+            return ImmutableSet.of(callbackController.createCommand(manager));
         }
 
         @Override

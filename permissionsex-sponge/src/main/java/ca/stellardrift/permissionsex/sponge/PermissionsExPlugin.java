@@ -40,6 +40,8 @@ import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.config.ConfigDir;
@@ -58,7 +60,6 @@ import org.spongepowered.api.service.permission.*;
 import org.spongepowered.api.service.sql.SqlService;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.*;
@@ -67,9 +68,11 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static ca.stellardrift.permissionsex.sponge.SpongeTranslations.t;
 import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.string;
+import static java.util.Objects.requireNonNull;
 
 /**
  * PermissionsEx plugin
@@ -85,7 +88,9 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Inject @ConfigDir(sharedRoot = false) private Path configDir;
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
+    private final Queue<Supplier<Set<CommandSpec>>> cachedCommands = new ConcurrentLinkedQueue<>();
 
+    @Nullable
     private PermissionsEx<?> manager;
 
     private Executor spongeExecutor = runnable -> scheduler
@@ -143,7 +148,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     private void registerFakeOpCommand(String alias, String permission) {
-        registerCommand(CommandSpec.builder()
+        registerCommands(() -> ImmutableSet.of(CommandSpec.builder()
                 .setAliases(alias)
                 .setPermission(permission)
                 .setDescription(SpongeTranslations.t("A dummy replacement for vanilla's operator commands"))
@@ -154,7 +159,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
                         throw new CommandException(SpongeTranslations.t("PermissionsEx replaces the server op/deop commands. Use PEX commands to manage permissions instead!"));
                     }
                 })
-                .build());
+                .build()));
     }
 
     @Listener
@@ -169,7 +174,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Listener
     public void disable(GameStoppedServerEvent event) {
         logger.debug(t("Disabling %s", PomData.NAME));
-        PermissionsEx manager = this.manager;
+        PermissionsEx<?> manager = this.manager;
         if (manager != null) {
             manager.close();
         }
@@ -243,7 +248,11 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
 
+    @NonNull
     PermissionsEx<?> getManager() {
+        if (this.manager == null) {
+            throw new IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!");
+        }
         return this.manager;
     }
 
@@ -394,9 +403,27 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         return this.spongeExecutor;
     }
 
+    private void tryRegisterCommands() {
+        if (this.manager != null) {
+            Supplier<Set<CommandSpec>> supply;
+
+            while ((supply = cachedCommands.poll()) != null) {
+                tryRegisterCommands(supply);
+            }
+        }
+    }
+
+    private void tryRegisterCommands(Supplier<Set<CommandSpec>> commandSupplier) {
+        requireNonNull(this.manager);
+        for (CommandSpec spec : commandSupplier.get()) {
+            game.getCommandManager().register(this, new PEXSpongeCommand(spec, this), spec.getAliases());
+        }
+    }
+
     @Override
-    public void registerCommand(CommandSpec command) {
-        game.getCommandManager().register(this, new PEXSpongeCommand(command, this), command.getAliases());
+    public void registerCommands(Supplier<Set<CommandSpec>> specSupplier) {
+        cachedCommands.add(specSupplier);
+        tryRegisterCommands();
     }
 
     @Override

@@ -27,6 +27,7 @@ import ca.stellardrift.permissionsex.logging.TranslatableLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
+import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Translations.t
@@ -50,16 +51,20 @@ import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.function.Function
+import java.util.function.Supplier
 import java.util.logging.Logger
 import javax.sql.DataSource
 
 class PermissionsExPlugin : Plugin(), Listener {
+    internal val callbackController = CallbackController()
+    internal val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
     internal lateinit var logger: TranslatableLogger private set
     internal lateinit var dataPath: Path private set
 
-    lateinit var manager: PermissionsEx<*> private set
+    lateinit var manager: PermissionsEx<*> internal set
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -96,6 +101,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
 
+        registerCommandsNow()
         this.proxy.pluginManager.registerListener(this, this)
     }
 
@@ -123,9 +129,33 @@ class PermissionsExPlugin : Plugin(), Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun unloadPlayer(event: PlayerDisconnectEvent) {
         try {
+            callbackController.clearOwnedBy(event.player.uniqueId)
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
         } catch (e: Exception)  {
             logger.warn(t("Error unloading user %s/%s during disconnect", event.player.name, event.player.uniqueId))
+        }
+    }
+
+    internal fun maybeRegisterCommands(supply: Supplier<Set<CommandSpec>>) {
+        cachedCommands.add(supply)
+        registerCommandsNow(supply)
+    }
+
+    private fun registerCommandsNow() {
+        if (!::manager.isInitialized) {
+            return
+        }
+
+        var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
+        while (supply != null) {
+            registerCommandsNow(supply)
+            supply =cachedCommands.poll()
+        }
+    }
+
+    private fun registerCommandsNow(supplier: Supplier<Set<CommandSpec>>) {
+        supplier.get().forEach {
+            proxy.pluginManager.registerCommand(this, PEXBungeeCommand(this, it))
         }
     }
 }
@@ -172,12 +202,13 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
         return exec
     }
 
-    override fun registerCommand(command: CommandSpec) {
-        plugin.proxy.pluginManager.registerCommand(plugin, PEXBungeeCommand(plugin, command))
+    override fun registerCommands(command: Supplier<Set<CommandSpec>>) {
+        plugin.maybeRegisterCommands(command)
     }
 
+
     override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf()
+        return setOf(plugin.callbackController.createCommand(plugin.manager))
     }
 
     override fun getVersion(): String {
@@ -187,10 +218,10 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
 
 class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission, *wrapped.aliases.drop(1).map {"/$it"}.toTypedArray()), TabExecutor {
     override fun onTabComplete(sender: CommandSender, args: Array<out String>): MutableIterable<String> {
-        return wrapped.tabComplete(BungeeCommander(pex.manager, sender), args.joinToString(" "))
+        return wrapped.tabComplete(BungeeCommander(pex, sender), args.joinToString(" "))
     }
 
     override fun execute(sender: CommandSender, args: Array<out String>) {
-        wrapped.process(BungeeCommander(pex.manager, sender), args.joinToString(" "))
+        wrapped.process(BungeeCommander(pex, sender), args.joinToString(" "))
     }
 }

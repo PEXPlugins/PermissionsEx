@@ -24,6 +24,7 @@ import ca.stellardrift.permissionsex.util.Translatable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Interface specifying code to get specific elements of commands
@@ -75,14 +76,24 @@ public interface MessageFormatter<TextType> {
     TextType option(String permission, String value);
 
     /**
+     * Execute a callback when the given text is clicked
+     *
+     * @param title The text to show. The text will be shown underlined in the highlight colour.
+     * @param callback The function to call
+     * @return The updated text
+     */
+    TextType callback(Translatable title, Consumer<Commander<TextType>> callback);
+
+    /**
      * Format the given line of text to be used in a header
-     * @param text
-     * @return
+     * @param text The text to create a formatted version of
+     * @return The input text with header formatting wrapping.
      */
     TextType header(TextType text);
 
     /**
      * Highlight the passed text
+     *
      * @param text The text to highlight
      * @return The highlighted text
      */

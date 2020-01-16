@@ -1,6 +1,3 @@
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
-import ca.stellardrift.permissionsex.gradle.setupPublication
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -16,21 +13,8 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-applyCommonSettings()
-setupPublication()
+package ca.stellardrift.permissionsex.smartertext
 
-repositories {
-    maven {
-        name = "bungeecord-repo"
-        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-    }
-}
-
-dependencies {
-    api(project(":permissionsex-core"))
-    api("net.md-5:bungeecord-chat:1.14-SNAPSHOT")
-    api(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
-}
+class PaginatedList()

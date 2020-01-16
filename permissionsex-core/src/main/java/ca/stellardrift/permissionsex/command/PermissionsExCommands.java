@@ -52,6 +52,7 @@ public class PermissionsExCommands {
                 .add(getImportCommand(pex))
                 .add(getReloadCommand(pex))
                 .add(getVersionCommand(pex))
+                //.add(getCallbackTestCommand())
                 .build();
 
         final CommandElement children = ChildCommands.args(childrenList.toArray(new CommandSpec[childrenList.size()]));
@@ -138,7 +139,11 @@ public class PermissionsExCommands {
                         if (backendRequested == null) { // We want to list available conversions
                             src.msgPaginated(t("Available Conversions"), t("Any data from one of these sources can be imported with the command %s", src.fmt().hl(src.fmt().combined("/pex import [id]"))),
                                     pex.getAvailableConversions().stream()
-                                            .map(conv -> src.fmt().tr(t("%s - /pex import %s", conv.getTitle(), conv.getStore().getName())))
+                                            .map(conv -> src.fmt().tr(t("%s - /pex import %s", conv.getTitle(), src.fmt().callback(t(conv.getStore().getName()), send -> {
+                                                src.msg(t("Beginning import from %s... (this may take a while)", conv.getTitle()));
+                                                messageSubjectOnFuture(pex.importDataFrom(conv), src, t("Successfully imported data from %s into current data store", conv.getTitle()));
+
+                                            }))))
                                             .collect(Collectors.toList()));
                         } else {
                             for (ConversionResult result : pex.getAvailableConversions()) {
@@ -148,8 +153,11 @@ public class PermissionsExCommands {
                                     return;
                                 }
                             }
-                            src.msg(t("Beginning import from backend %s... (this may take a while)", backendRequested));
-                            messageSubjectOnFuture(pex.importDataFrom(backendRequested), src, t("Successfully imported data from backend %s into current backend", backendRequested));
+                            if (pex.getConfig().getDataStore(backendRequested) == null) {
+                                throw new CommandException(t("Unknown data store %s specified", backendRequested));
+                            }
+                            src.msg(t("Beginning import from data store %s... (this may take a while)", backendRequested));
+                            messageSubjectOnFuture(pex.importDataFrom(backendRequested), src, t("Successfully imported data from data store %s into current backend", backendRequested));
                         }
                     }
                 })
@@ -177,6 +185,21 @@ public class PermissionsExCommands {
                     }
                 })
                 .build();
+    }
+
+    private static CommandSpec getCallbackTestCommand() {
+       return CommandSpec.builder()
+               .setAliases("cbtest", "test")
+               .setDescription(t("Test that callbacks are working"))
+               .setExecutor(new CommandExecutor() {
+                   @Override
+                   public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+                       src.msg(src.fmt().callback(t("Click me!"), send -> {
+                           send.msg(t("Callback executed successfully"));
+                       }));
+                   }
+               })
+               .build();
     }
 
     private static CommandSpec getVersionCommand(final PermissionsEx<?> pex) {
