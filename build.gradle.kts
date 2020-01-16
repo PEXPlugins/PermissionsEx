@@ -53,6 +53,7 @@ val collectImplementationArtifacts by tasks.registering(Copy::class) {
 
 tasks.register("build") {
     dependsOn(collectImplementationArtifacts)
+    group = "build"
 }
 
 

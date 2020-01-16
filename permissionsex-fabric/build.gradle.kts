@@ -50,8 +50,9 @@ dependencies {
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.6")
-    modCompile("net.fabricmc:fabric-loader:0.7.2+build.175")
-    modCompile("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT")
+    modImplementation("net.fabricmc:fabric-loader:0.7.2+build.175")
+    modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT") { isTransitive = false }
+    modImplementation("com.sk89q.worldedit:worldedit-core:7.1.0-SNAPSHOT") { isTransitive = false }
 
     listOf("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15",
             "net.fabricmc:fabric-language-kotlin:1.3.61+build.1").forEach {

@@ -89,6 +89,8 @@ public class ReloadableConfigurationTest {
         Files.write(testFile, Collections.singleton("version four"), StandardOpenOption.SYNC);
 
         assertEquals(2, callCount.get());
+
+        key.cancel();
     }
     
     @Test
