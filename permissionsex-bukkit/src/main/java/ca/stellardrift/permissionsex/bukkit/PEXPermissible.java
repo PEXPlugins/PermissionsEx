@@ -17,22 +17,21 @@
 
 package ca.stellardrift.permissionsex.bukkit;
 
+import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.BeforeTimeContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.*;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -179,7 +178,7 @@ public class PEXPermissible extends PermissibleBase {
          * This only takes into account the permission directly being checked having a default set to FALSE or NOT_OP, and not any parents.
          * I believe this is incorrect, but the real-world impacts are likely minor -zml
          */
-        if (getManager().getConfig().getPlatformConfig().shouldFallbackOp()) {
+        if (ret == 0 && getManager().getConfig().getPlatformConfig().shouldFallbackOp()) {
             Permission perm = plugin.getPermissionList().get(permission);
             if (perm == null) {
                 ret = isOp() ? 1 : 0;
