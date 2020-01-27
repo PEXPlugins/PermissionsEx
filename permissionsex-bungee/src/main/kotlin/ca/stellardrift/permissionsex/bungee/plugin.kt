@@ -138,7 +138,7 @@ class PermissionsExPlugin : Plugin(), Listener {
 
     internal fun maybeRegisterCommands(supply: Supplier<Set<CommandSpec>>) {
         cachedCommands.add(supply)
-        registerCommandsNow(supply)
+        registerCommandsNow()
     }
 
     private fun registerCommandsNow() {
@@ -149,7 +149,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
         while (supply != null) {
             registerCommandsNow(supply)
-            supply =cachedCommands.poll()
+            supply = cachedCommands.poll()
         }
     }
 

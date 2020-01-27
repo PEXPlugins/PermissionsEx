@@ -361,7 +361,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         @Override
         public void registerCommands(Supplier<Set<CommandSpec>> commands) {
             stagedCommands.add(commands);
-            registerCommandsNow(commands);
+            registerCommandsNow();
         }
 
         boolean registerCommandsNow() {

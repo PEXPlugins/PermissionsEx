@@ -107,7 +107,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     override fun registerCommands(command: Supplier<Set<CommandSpec>>) {
         cachedCommands.add(command)
-        registerCommandsNow(command)
+        registerCommandsNow()
     }
 
     override fun getImplementationCommands(): Set<CommandSpec> {
