@@ -1,0 +1,34 @@
+{
+  "embed": {
+    "description": "PermissionsEx 2 is the next generation of PermissionsEx. While development builds are available, PEX 2 still has no guarantees of stability and should be considered to be in a *pre-alpha* state",
+    "url": "https://github.com/PEXPlugins/PermissionsEx",
+    "color": 16098851,
+    "timestamp": "{TIMESTAMP_NOW}",
+    "footer": {
+      "text": "Requested by {USER}"
+    },
+    "thumbnail": {
+      "url": "https://raw.githubusercontent.com/PEXPlugins/PermissionsEx/master/etc/logos/200x200.png"
+    },
+
+    "author": {
+      "name": "PermissionsEx",
+      "url": "https://github.com/PEXPlugins/PermissionsEx",
+      "icon_url": "https://raw.githubusercontent.com/PEXPlugins/PermissionsEx/master/etc/logos/50x50.png"
+    },
+    "fields": [
+      {
+        "name": "Supported Platforms",
+        "value": "Sponge, Fabric, Paper/Spigot, Velocity, Waterfall/Bungee"
+      },
+      {
+        "name": "Documentation",
+        "value": " https://github.com/PEXPlugins/PermissionsEx/tree/master/doc"
+      },
+      {
+        "name": "Downloads",
+        "value": "https://ci.ender.zone/job/PermissionsEx/"
+      }
+    ]
+  }
+}
