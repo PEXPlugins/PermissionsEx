@@ -88,7 +88,7 @@ public class LegacyDao {
     }
 
     public String getOption(SqlDao dao, String name, LegacyMigration.Type type, String world, String option) throws SQLException {
-        try (PreparedStatement stmt = dao.prepareStatement(getSelectOptionQuery())) {
+        try (PreparedStatement stmt = prepareStatement(dao, getSelectOptionQuery())) {
             stmt.setString(1, name);
             stmt.setInt(2, type.ordinal());
             stmt.setString(3, option);
