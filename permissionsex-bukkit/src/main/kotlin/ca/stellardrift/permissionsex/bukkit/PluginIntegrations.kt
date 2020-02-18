@@ -65,6 +65,12 @@ class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleCont
 fun detectWorldGuard(plugin: PermissionsExPlugin) {
     val wgPlugin = plugin.server.pluginManager.getPlugin("WorldGuard")
     if (wgPlugin != null) {
+        try {
+            Class.forName("com.sk89q.worldguard.WorldGuard")
+        } catch (ex: ClassNotFoundException) {
+            return
+        }
+
         plugin.manager.registerContextDefinition(WorldGuardRegionContext(wgPlugin as WorldGuardPlugin))
         plugin.manager.logger.info(t("Successfully registered WorldGuard region context"))
     }
