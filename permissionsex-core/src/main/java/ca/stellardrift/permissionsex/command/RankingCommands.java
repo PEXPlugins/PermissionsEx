@@ -87,6 +87,7 @@ public class RankingCommands {
                         Set<ContextValue<?>> contexts = ImmutableSet.copyOf(args.getAll("context"));
                         final AtomicReference<RankLadder> ladderName = new AtomicReference<>();
                         messageSubjectOnFuture(ladderF.thenCompose(ladder -> {
+                            ladderName.set(ladder);
                             return ref.update(old -> ladder.demote(contexts, old));}).thenAccept(res -> {
                             if (res.getNew() == res.getOld()) {
                                 throw new RuntimeCommandException(t("%s was not on ladder %s", src.fmt().subject(ref), src.fmt().ladder(ladderName.get())));
