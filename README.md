@@ -13,7 +13,7 @@ PermissionsEx (PEX (not the pipe)) is a full-service permissions plugin giving i
 
 🐞 Found a bug? File a [bug report](/PEXPlugins/PermissionsEx/issues)
 
-⛏ [Development Builds](https://ci.ender.zone/job/PermissionsEx/lastSuccessfulBuild/)
+⛏ [Development Builds](https://jenkins.addstar.com.au/job/PermissionsEx/lastSuccessfulBuild/)
 
 
 # Development

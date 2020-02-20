@@ -23,11 +23,11 @@
       },
       {
         "name": "Documentation",
-        "value": " https://github.com/PEXPlugins/PermissionsEx/tree/master/doc"
+        "value": "https://github.com/PEXPlugins/PermissionsEx/tree/master/doc"
       },
       {
         "name": "Downloads",
-        "value": "https://ci.ender.zone/job/PermissionsEx/"
+        "value": "https://jenkins.addstar.com.au/job/PermissionsEx/lastSuccessfulBuild/"
       }
     ]
   }

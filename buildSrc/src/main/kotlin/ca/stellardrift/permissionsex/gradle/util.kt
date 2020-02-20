@@ -76,6 +76,10 @@ fun Project.applyCommonSettings() {
         mavenCentral()
         spongeRepo()
         sk89qRepo()
+        maven {
+            it.name = "jitpack"
+            it.url = URI("https://jitpack.io/")
+        }
     }
 
 

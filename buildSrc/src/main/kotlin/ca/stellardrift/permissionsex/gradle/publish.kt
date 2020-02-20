@@ -73,7 +73,7 @@ fun Project.setupPublication() {
 
                ciManagement(act {
                   system.set("Jenkins")
-                  url.set("https://ci.yawk.at/job/PermissionsEx")
+                  url.set("https://jenkins.addstar.com.au/job/PermissionsEx")
                })
             }
          })
