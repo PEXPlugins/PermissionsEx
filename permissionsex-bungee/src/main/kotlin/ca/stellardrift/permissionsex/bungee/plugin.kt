@@ -60,7 +60,7 @@ import javax.sql.DataSource
 
 class PermissionsExPlugin : Plugin(), Listener {
     internal val callbackController = CallbackController()
-    internal val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
+    private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
     internal lateinit var logger: TranslatableLogger private set
     internal lateinit var dataPath: Path private set
 

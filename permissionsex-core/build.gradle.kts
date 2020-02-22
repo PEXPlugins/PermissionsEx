@@ -5,6 +5,7 @@ import ca.stellardrift.permissionsex.gradle.configurate
 import ca.stellardrift.permissionsex.gradle.setupJavadocSourcesJars
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import ca.stellardrift.permissionsex.gradle.useJUnit5
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /*
  * PermissionsEx
@@ -47,6 +48,7 @@ dependencies {
         exclude("com.google.errorprone")
     }
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
+    api("com.github.TheFrontier.director:director-core:0.16.0")
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
@@ -60,4 +62,8 @@ tasks.generateGrammarSource {
     val grammarPackage = "${project.group}.util.glob.parser"
     arguments.addAll(listOf("-package", grammarPackage))
     outputDirectory = File("${buildDir}/generated-src/antlr/main/${grammarPackage.replace(".", "/")}")
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    freeCompilerArgs = listOf("-XXLanguage:+InlineClasses")
 }

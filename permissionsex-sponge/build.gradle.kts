@@ -39,6 +39,7 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
+    implementation("com.github.TheFrontier.director:director-sponge:0.16.0")
 
     kapt("org.spongepowered:spongeapi:${Versions.SPONGE}")
     testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
@@ -68,6 +69,7 @@ val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
     minimize()
     listOf("org.antlr",
+        "pw.dotdash.director",
         "org.jetbrains.annotations").forEach {
         relocate(it, "$relocateRoot.$it")
     }

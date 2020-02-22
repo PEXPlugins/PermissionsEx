@@ -1,0 +1,57 @@
+/*
+ * PermissionsEx
+ * Copyright (C) zml and PermissionsEx contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package ca.stellardrift.permissionsex.commands
+
+import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.util.Translations.t
+import ca.stellardrift.permissionsex.util.command.CommandContext
+import ca.stellardrift.permissionsex.util.command.CommandSpec
+
+/**
+ * Command that deletes all data for a subject
+ */
+internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
+    return CommandSpec.builder()
+        .setAliases("delete", "del", "remove", "rem")
+        .setExecutor(object : PermissionsExExecutor(pex) {
+            override fun <TextType> execute(
+                src: Commander<TextType>,
+                args: CommandContext
+            ) {
+                val subject = subjectOrSelf(src, args)
+                src.checkSubjectPermission(subject.identifier, "permissionsex.delete")
+                val cache =
+                    if (args.hasAny("transient")) subject.transientData().cache else subject.data().cache
+                cache.isRegistered(subject.identifier.value)
+                    .thenCompose { registered ->
+                        if (!registered) {
+                            throw RuntimeCommandException(
+                                t(
+                                    "Subject %s does not exist!",
+                                    src.formatter.subject(subject)
+                                )
+                            )
+                        }
+                        cache.remove(subject.identifier.value)
+                    }
+                    .thenMessageSubject(src) { -> t("Successfully deleted data for subject %s", -subject) }
+            }
+        })
+        .build()
+}

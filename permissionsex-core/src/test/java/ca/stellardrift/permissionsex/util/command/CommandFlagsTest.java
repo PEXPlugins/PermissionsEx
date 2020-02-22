@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.util.Translations;
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
 import org.junit.jupiter.api.Test;

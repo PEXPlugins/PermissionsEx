@@ -18,14 +18,14 @@
 package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
+import ca.stellardrift.permissionsex.commands.commander.ButtonType
+import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.cast
-import ca.stellardrift.permissionsex.util.command.ButtonType
 import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.Commander
-import ca.stellardrift.permissionsex.util.command.MessageFormatter
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType.getString
@@ -44,7 +44,6 @@ import net.minecraft.text.TranslatableText
 import net.minecraft.util.Formatting
 import net.minecraft.util.Nameable
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 import java.util.function.Predicate
 import com.mojang.brigadier.context.CommandContext as BrigadierCommandContext
 
@@ -133,7 +132,8 @@ internal fun ServerCommandSource.asCommander(): Commander<Text> {
 }
 
 val EQUALS_SIGN: Text = LiteralText("=").formatted(Formatting.GRAY)
-class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCommandSource, private val hlColor: Formatting =  Formatting.AQUA) : MessageFormatter<Text> {
+class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCommandSource, private val hlColor: Formatting =  Formatting.AQUA) :
+    MessageFormatter<Text> {
 
     @Suppress("UNCHECKED_CAST")
     private val cmd get() = src as Commander<Text>
@@ -158,7 +158,7 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
             append(nameText)
 
             styled {
-                it.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, tr(t("Click here to view more info")))
+                it.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, t("Click here to view more info").tr())
                 it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex ${subject.key} ${subject.value} info")
             }
         }
@@ -169,15 +169,15 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
         val ret = LiteralText(ladder.name)
         ret.style.apply {
             isBold = true
-            hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, tr(t("Click here to view more info")))
+            hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, t("Click here to view more info").tr())
             clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex rank ${ladder.name}")
         }
         return ret
     }
 
-    override fun booleanVal(flag: Boolean): Text {
-        return tr(if (flag) t("true") else t("false"))
-            .formatted(if (flag) Formatting.GREEN else Formatting.RED)
+    override fun booleanVal(value: Boolean): Text {
+        return (if (value) t("true") else t("false")).tr()
+            .formatted(if (value) Formatting.GREEN else Formatting.RED)
     }
 
     override fun button(
@@ -187,7 +187,7 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
         command: String,
         execute: Boolean
     ): Text {
-        val text = tr(label)
+        val text = label.tr()
         text.formatted(when (type) {
             ButtonType.POSITIVE -> Formatting.GREEN
             ButtonType.NEGATIVE -> Formatting.RED
@@ -195,7 +195,7 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
         })
 
         if (tooltip != null) {
-            text.style.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, tr(tooltip))
+            text.style.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip.tr())
         }
 
         text.style.clickEvent = ClickEvent(if (execute) ClickEvent.Action.RUN_COMMAND else ClickEvent.Action.SUGGEST_COMMAND, command)
@@ -214,12 +214,12 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
         return LiteralText(permission).append(EQUALS_SIGN).append(value)
     }
 
-    override fun header(text: Text): Text {
-        return text.styled { it.isBold = true }
+    override fun Text.header(): Text {
+        return styled { it.isBold = true }
     }
 
-    override fun hl(text: Text): Text {
-        return text.formatted(hlColor)
+    override fun Text.hl(): Text {
+        return formatted(hlColor)
     }
 
     override fun combined(vararg elements: Any): Text {
@@ -232,23 +232,41 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
 
     private fun Any.asText(): Text {
         return when (this) {
-            is Translatable -> tr(this)
+            is Translatable -> this.tr()
             is Text -> this
             else -> LiteralText(this.toString())
         }
     }
 
-    override fun tr(tr: Translatable): Text {
-        return TranslatableText(tr.translate(cmd.locale), *tr.args.map {it.asText()}.toTypedArray())
+    override fun Translatable.tr(): Text {
+        return TranslatableText(translate(cmd.locale), *args.map {it.asText()}.toTypedArray())
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun callback(title: Translatable, callback: Consumer<Commander<Text>>): Text {
-        val command = PermissionsExMod.callbackController.registerCallback(cmd) { callback.accept(it) }
-        return tr(title).styled {
+    override fun callback(title: Translatable, callback: (Commander<Text>) -> Unit): Text {
+        val command = PermissionsExMod.callbackController.registerCallback(cmd) { callback(it) }
+        return title.tr().styled {
             it.setUnderline(true)
             it.color = hlColor
             it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
+        }
+    }
+
+    override fun String.unaryMinus(): Text {
+        return LiteralText(this)
+    }
+
+    override fun Text.plus(other: Text): Text {
+        return LiteralText("").append(this).append(other)
+    }
+
+    override fun Collection<Text>.concat(separator: Text): Text {
+        return foldIndexed(LiteralText("")) { idx, acc, el ->
+            if (idx != 0) {
+                acc.append(separator)
+            }
+            acc.append(el)
+            acc
         }
     }
 

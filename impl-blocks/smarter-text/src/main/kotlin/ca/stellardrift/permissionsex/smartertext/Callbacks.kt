@@ -18,12 +18,12 @@
 package ca.stellardrift.permissionsex.smartertext
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandExecutor
 import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.Commander
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.uuid
 import java.util.Locale
 import java.util.UUID

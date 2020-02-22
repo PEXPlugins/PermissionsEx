@@ -19,11 +19,10 @@ package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bungeetext.BungeeMessageFormatter
+import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.castMap
-import ca.stellardrift.permissionsex.util.command.Commander
-import ca.stellardrift.permissionsex.util.command.MessageFormatter
 import com.google.common.collect.Maps.immutableEntry
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.CommandSender
@@ -33,30 +32,24 @@ import java.util.Locale
 import java.util.Optional
 
 
-class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) : Commander<BaseComponent> {
-    private val formatter = BungeePluginMessageFormatter(pex, this)
-    override fun getName(): String {
-        return src.name
-    }
+class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) :
+    Commander<BaseComponent> {
+    override val formatter = BungeePluginMessageFormatter(pex, this)
+    override val name: String get() = src.name
 
-    override fun getLocale(): Locale {
-        return (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
-    }
+    override val locale: Locale get() =
+        (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
 
-    override fun getSubjectIdentifier(): Optional<Map.Entry<String, String>> {
-        return Optional.ofNullable(when (src) {
+    override val subjectIdentifier: Optional<Map.Entry<String, String>>
+        get() = Optional.ofNullable(when (src) {
             is ProxiedPlayer -> immutableEntry(PermissionsEx.SUBJECTS_USER, src.uniqueId.toString())
             else -> IDENT_SERVER_CONSOLE
         })
-    }
 
-    override fun hasPermission(permission: String?): Boolean {
+    override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
     }
 
-    override fun fmt(): MessageFormatter<BaseComponent> {
-        return formatter
-    }
 
     override fun msg(text: BaseComponent) {
         text.color = ChatColor.GOLD
@@ -68,19 +61,20 @@ class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) 
         src.sendMessage(text)
     }
 
-    override fun error(text: BaseComponent) {
+    override fun error(text: BaseComponent, err: Throwable?) {
         text.color = ChatColor.RED
         src.sendMessage(text)
     }
 
     override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<BaseComponent>) {
-        msg(fmt().combined("# ", fmt().tr(title), " #"))
-        if (header != null) {
-            msg(fmt().tr(header))
+        msg { send ->
+            send(combined("# ", title, " #"))
+            if (header != null) {
+                send(-header)
+            }
+            text.forEach(send)
+            send(-"#############################")
         }
-        text.forEach(this::msg)
-
-        msg(fmt().combined("#################################"))
     }
 
 }

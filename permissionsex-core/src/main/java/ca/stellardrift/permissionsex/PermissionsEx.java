@@ -22,8 +22,6 @@ import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider;
 import ca.stellardrift.permissionsex.backend.conversion.ConversionProviderRegistry;
 import ca.stellardrift.permissionsex.backend.conversion.ConversionResult;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
-import ca.stellardrift.permissionsex.command.PermissionsExCommands;
-import ca.stellardrift.permissionsex.command.RankingCommands;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.*;
 import ca.stellardrift.permissionsex.data.*;
@@ -64,6 +62,9 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static ca.stellardrift.permissionsex.commands.PermissionsExCommandsKt.createRootCommand;
+import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getDemoteCommand;
+import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromoteCommand;
 import static ca.stellardrift.permissionsex.util.Translations.t;
 
 
@@ -125,9 +126,9 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         convertUuids();
 
         registerCommands(() -> ImmutableSet.of(
-               PermissionsExCommands.createRootCommand(this),
-                RankingCommands.getPromoteCommand(this),
-                RankingCommands.getDemoteCommand(this)
+               createRootCommand(this),
+                getPromoteCommand(this),
+                getDemoteCommand(this)
         ));
     }
 

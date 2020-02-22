@@ -18,14 +18,14 @@
 package ca.stellardrift.permissionsex.bungeetext
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.commander.ButtonType
+import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.Translations.t
-import ca.stellardrift.permissionsex.util.command.ButtonType
-import ca.stellardrift.permissionsex.util.command.Commander
-import ca.stellardrift.permissionsex.util.command.MessageFormatter
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.ClickEvent
@@ -34,7 +34,6 @@ import net.md_5.bungee.api.chat.HoverEvent.Action
 import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.api.chat.TranslatableComponent
 import java.util.concurrent.ExecutionException
-import java.util.function.Consumer
 import kotlin.collections.Map.Entry
 
 /**
@@ -46,6 +45,7 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
         val EQUALS_SIGN: BaseComponent = TextComponent("=").apply {
             color = ChatColor.GRAY
         }
+        val EMPTY: BaseComponent = TextComponent()
     }
 
     abstract fun getFriendlyName(subj: Entry<String, String>): String?
@@ -82,7 +82,7 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
             addExtra(typeComponent)
             addExtra(" ")
             addExtra(nameText)
-            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(tr(t("Click to view more info"))))
+            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(t("Click to view more info").tr()))
             clickEvent =
                 ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex " + subject.key + " " + subject.value + " info")
         }
@@ -91,14 +91,14 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
     override fun ladder(ladder: RankLadder): BaseComponent {
         return TextComponent(ladder.name).apply {
             isBold = true
-            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(tr(t("click here to view more info"))))
+            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(t("click here to view more info").tr()))
             clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex rank " + ladder.name)
         }
     }
 
-    override fun booleanVal(opt: Boolean): BaseComponent {
-        val ret = if (opt) tr(t("true")) else tr(t("false"))
-        ret.color = if (opt) ChatColor.GREEN else ChatColor.RED
+    override fun booleanVal(value: Boolean): BaseComponent {
+        val ret = if (value) t("true").tr() else t("false").tr()
+        ret.color = if (value) ChatColor.GREEN else ChatColor.RED
         return ret
     }
 
@@ -106,10 +106,10 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
         type: ButtonType,
         label: Translatable,
         tooltip: Translatable?,
-        command: String?,
+        command: String,
         execute: Boolean
     ): BaseComponent {
-        return tr(label).apply {
+        return label.tr().apply {
             color = when (type) {
                 ButtonType.POSITIVE -> ChatColor.GREEN
                 ButtonType.NEGATIVE -> ChatColor.RED
@@ -120,7 +120,7 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
             if (tooltip != null) {
                 hoverEvent = HoverEvent(
                     Action.SHOW_TEXT,
-                    arrayOf(tr(tooltip))
+                    arrayOf(tooltip.tr())
                 )
             }
             clickEvent = ClickEvent(
@@ -130,9 +130,9 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
         }
     }
 
-    override fun callback(title: Translatable, callback: Consumer<Commander<BaseComponent>>): BaseComponent {
-        val command = callbacks.registerCallback(source = cmd, func = {callback.accept(it)})
-        return tr(title).apply {
+    override fun callback(title: Translatable, callback: (Commander<BaseComponent>) -> Unit): BaseComponent {
+        val command = callbacks.registerCallback(source = cmd, func = {callback(it)})
+        return title.tr().apply {
             isUnderlined = true
             color = hlColour
             clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
@@ -140,7 +140,7 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
     }
 
     override fun permission(
-        permission: String?,
+        permission: String,
         value: Int
     ): BaseComponent {
         val valueColor = when {
@@ -158,8 +158,8 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
     }
 
     override fun option(
-        permission: String?,
-        value: String?
+        permission: String,
+        value: String
     ): BaseComponent {
         val ret: BaseComponent = TextComponent(permission)
         ret.addExtra(EQUALS_SIGN)
@@ -167,14 +167,14 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
         return ret
     }
 
-    override fun header(text: BaseComponent): BaseComponent {
-        text.isBold = true
-        return text
+    override fun BaseComponent.header(): BaseComponent {
+        this.isBold = true
+        return this
     }
 
-    override fun hl(text: BaseComponent): BaseComponent {
-        text.color = hlColour
-        return text
+    override fun BaseComponent.hl(): BaseComponent {
+        this.color = hlColour
+        return this
     }
 
     override fun combined(vararg elements: Any): BaseComponent {
@@ -191,14 +191,35 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
 
     private fun componentFrom(obj: Any): BaseComponent {
         return when (obj) {
-            is Translatable -> tr(obj)
+            is Translatable -> obj.tr()
             is BaseComponent -> obj
             else -> TextComponent(obj.toString())
         }
     }
 
-    override fun tr(tr: Translatable): BaseComponent {
-        val args = tr.args.map { componentFrom(it) }.toTypedArray()
-        return TranslatableComponent(tr.translate(cmd.locale), *args)
+    override fun Translatable.tr(): BaseComponent {
+        val args = args.map { componentFrom(it) }.toTypedArray()
+        return TranslatableComponent(translate(cmd.locale), *args)
+    }
+
+    override fun String.unaryMinus(): BaseComponent {
+        return TextComponent(this)
+    }
+
+    override fun BaseComponent.plus(other: BaseComponent): BaseComponent {
+        return TextComponent().also {
+            it.addExtra(this)
+            it.addExtra(other)
+        }
+    }
+
+    override fun Collection<BaseComponent>.concat(separator: BaseComponent): BaseComponent {
+        return this.foldIndexed(TextComponent()) { idx, acc, el ->
+            if (idx != 0) {
+                acc.addExtra(separator)
+            }
+            acc.addExtra(el)
+            acc
+        }
     }
 }

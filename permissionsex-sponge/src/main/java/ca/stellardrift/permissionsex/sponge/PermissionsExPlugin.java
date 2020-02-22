@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.sponge;
 import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;

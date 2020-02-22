@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.util.command;
 
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;

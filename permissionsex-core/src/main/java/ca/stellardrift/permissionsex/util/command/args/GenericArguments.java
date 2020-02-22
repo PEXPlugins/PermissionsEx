@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.util.command.args;
 
 import ca.stellardrift.permissionsex.util.*;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.Commander;
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -326,7 +326,7 @@ public class GenericArguments {
             if (childElement != null) {
                 builder.add(childElement.getUsage(src));
             }
-            return src.fmt().combined(builder.toArray());
+            return src.getFormatter().combined(builder.toArray());
         }
 
         @Override
@@ -513,7 +513,7 @@ public class GenericArguments {
                     ret.add(' ');
                 }
             }
-            return commander.fmt().combined(ret.toArray());
+            return commander.getFormatter().combined(ret.toArray());
         }
     }
 
@@ -577,9 +577,9 @@ public class GenericArguments {
                         args.add("|");
                     }
                 }
-                return commander.fmt().combined(args.toArray());
+                return commander.getFormatter().combined(args.toArray());
             } else {
-                return commander.fmt().tr(getKey());
+                return commander.getFormatter().tr(getKey());
             }
         }
     }
@@ -648,7 +648,7 @@ public class GenericArguments {
                     ret.add('|');
                 }
             }
-            return commander.fmt().combined(ret.toArray());
+            return commander.getFormatter().combined(ret.toArray());
         }
     }
 
@@ -752,7 +752,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
-            return src.fmt().combined("[", this.element.getUsage(src), "]");
+            return src.getFormatter().combined("[", this.element.getUsage(src), "]");
         }
     }
 
@@ -807,7 +807,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
-            return src.fmt().combined(times, '*', element.getUsage(src));
+            return src.getFormatter().combined(times, '*', element.getUsage(src));
         }
     }
 
@@ -859,7 +859,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> context) {
-            return context.fmt().combined(element.getUsage(context), '+');
+            return context.getFormatter().combined(element.getUsage(context), '+');
         }
     }
 
@@ -1071,7 +1071,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
-            return src.fmt().combined(super.getUsage(src), "...");
+            return src.getFormatter().combined(super.getUsage(src), "...");
         }
     }
 
@@ -1143,7 +1143,7 @@ public class GenericArguments {
 
         @Override
         public <TextType> TextType getUsage(Commander<TextType> src) {
-            return src.fmt().combined(Joiner.on(' ').join(this.expectedArgs));
+            return src.getFormatter().combined(Joiner.on(' ').join(this.expectedArgs));
         }
     }
 

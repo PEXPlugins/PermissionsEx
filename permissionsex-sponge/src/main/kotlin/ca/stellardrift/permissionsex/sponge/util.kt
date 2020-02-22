@@ -28,3 +28,4 @@ class SpongeMinecraftProfile(private val profile: GameProfile): MinecraftProfile
         get() = profile.uniqueId
 
 }
+

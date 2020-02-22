@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
 import ca.stellardrift.permissionsex.util.command.args.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
@@ -237,11 +238,11 @@ public class CommandSpec {
     }
 
     public <TextType> TextType getDescription(Commander<TextType> commander) {
-        return this.description == null ? null : commander.fmt().tr(this.description);
+        return this.description == null ? null : commander.getFormatter().tr(this.description);
     }
 
     public <TextType> TextType getUsage(Commander<TextType> commander) {
-        return commander.fmt().combined("/", getAliases().get(0), " ", args.getUsage(commander));
+        return commander.getFormatter().combined("/", getAliases().get(0), " ", args.getUsage(commander));
     }
 
     public <TextType> TextType getExtendedDescription(Commander<TextType> src) {
@@ -250,12 +251,12 @@ public class CommandSpec {
             if (this.extendedDescription == null) {
                 return getUsage(src);
             } else {
-                return src.fmt().combined(getUsage(src), '\n', src.fmt().tr(this.extendedDescription));
+                return src.getFormatter().combined(getUsage(src), '\n', src.getFormatter().tr(this.extendedDescription));
             }
         } else if (this.extendedDescription == null) {
-            return src.fmt().combined(desc, '\n', getUsage(src));
+            return src.getFormatter().combined(desc, '\n', getUsage(src));
         } else {
-            return src.fmt().combined(desc, '\n', getUsage(src), '\n', src.fmt().tr(this.extendedDescription));
+            return src.getFormatter().combined(desc, '\n', getUsage(src), '\n', src.getFormatter().tr(this.extendedDescription));
         }
     }
 }

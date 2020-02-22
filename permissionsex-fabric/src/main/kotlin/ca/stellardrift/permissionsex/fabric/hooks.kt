@@ -169,7 +169,7 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
 fun GameProfile.hasPermission(perm: String): Boolean {
     if (this.id == null) {
         PermissionsExMod.logger.error(t("Tried to check permission for incomplete game profile %s", this.name))
-        return false;
+        return false
     }
     return PermissionsExMod.manager.getSubjects(SUBJECTS_USER)[this.id.toString()].join().hasPermission(perm)
 }

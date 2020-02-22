@@ -17,18 +17,19 @@
 
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter;
 import ca.stellardrift.permissionsex.fabric.FabricMessageFormatter;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
 import ca.stellardrift.permissionsex.fabric.LocaleHolder;
 import ca.stellardrift.permissionsex.util.Translatable;
-import ca.stellardrift.permissionsex.util.command.Commander;
-import ca.stellardrift.permissionsex.util.command.MessageFormatter;
 import com.google.common.collect.Maps;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -64,16 +65,19 @@ public abstract class MixinServerCommandSource implements Commander<Text> {
     @Shadow
     public abstract void sendError(Text text);
 
+    @NotNull
     @Override
     public String getName() {
         return simpleName;
     }
 
+    @NotNull
     @Override
     public Locale getLocale() {
         return entity instanceof LocaleHolder ? ((LocaleHolder) entity).getLocale() : Locale.getDefault();
     }
 
+    @NotNull
     @Override
     public Optional<Map.Entry<String, String>> getSubjectIdentifier() {
         if (this instanceof IPermissionCommandSource) {
@@ -92,8 +96,9 @@ public abstract class MixinServerCommandSource implements Commander<Text> {
         }
     }*/
 
+    @NotNull
     @Override
-    public MessageFormatter<Text> fmt() {
+    public MessageFormatter<Text> getFormatter() {
         return fmt;
     }
 
@@ -108,19 +113,19 @@ public abstract class MixinServerCommandSource implements Commander<Text> {
     }
 
     @Override
-    public void error(Text text) {
+    public void error(Text text, Throwable err) {
         sendError(text);
     }
 
     @Override
-    public void msgPaginated(Translatable title, @Nullable Translatable header, Iterable<Text> text) {
-        msg(fmt().combined("# ", fmt().tr(title), " #"));
+    public void msgPaginated(@NotNull Translatable title, @Nullable Translatable header, @NotNull Iterable<? extends Text> text) {
+        msg(getFormatter().combined("# ", getFormatter().tr(title), " #"));
         if (header != null) {
-            msg(fmt().tr(header));
+            msg(getFormatter().tr(header));
         }
         text.forEach(this::msg);
 
-        msg(fmt().combined("#################################"));
-
+        msg(getFormatter().combined("#################################"));
     }
+
 }

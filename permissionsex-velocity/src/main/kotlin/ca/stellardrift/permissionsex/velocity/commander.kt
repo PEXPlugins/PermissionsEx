@@ -18,15 +18,15 @@
 package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.commands.commander.ButtonType
+import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.Translations.t
-import ca.stellardrift.permissionsex.util.command.ButtonType
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.Commander
-import ca.stellardrift.permissionsex.util.command.MessageFormatter
 import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
@@ -43,7 +43,6 @@ import net.kyori.text.renderer.FriendlyComponentRenderer
 import java.text.MessageFormat
 import java.util.Locale
 import java.util.Optional
-import java.util.function.Consumer
 import java.util.regex.Pattern
 
 class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
@@ -70,30 +69,23 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
 
 class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
     Commander<ComponentBuilder<*, *>> {
-    private val formatter = VelocityMessageFormatter(this)
-    override fun getName(): String {
-        return (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
-    }
+    override val formatter = VelocityMessageFormatter(this)
+    override val name: String get() =
+        (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
 
-    override fun getLocale(): Locale {
-        return (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
-    }
+    override val locale: Locale get() =
+        (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
 
-    override fun getSubjectIdentifier(): Optional<Map.Entry<String, String>> {
-        return Optional.of(
+    override val subjectIdentifier: Optional<Map.Entry<String, String>> get() =
+        Optional.of(
             when (src) {
                 is Player -> Maps.immutableEntry(SUBJECTS_USER, src.uniqueId.toString())
                 else -> IDENT_SERVER_CONSOLE
             }
         )
-    }
 
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
-    }
-
-    override fun fmt(): MessageFormatter<ComponentBuilder<*, *>> {
-        return formatter
     }
 
     override fun msg(text: ComponentBuilder<*, *>) {
@@ -104,18 +96,19 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
         src.sendMessage(FixedTranslationComponentRenderer.render(text.color(TextColor.GRAY).build(), this))
     }
 
-    override fun error(text: ComponentBuilder<*, *>) {
+    override fun error(text: ComponentBuilder<*, *>, err: Throwable?) {
         src.sendMessage(FixedTranslationComponentRenderer.render(text.color(TextColor.RED).build(), this))
     }
 
     override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<ComponentBuilder<*, *>>) {
-        msg(fmt().combined("# ", fmt().tr(title), " #"))
-        if (header != null) {
-            msg(fmt().tr(header))
+        msg { send ->
+            send(combined("# ", title, " #"))
+            if (header != null) {
+                send(-header)
+            }
+            text.forEach(send)
+            send(-"#############################")
         }
-        text.forEach(this::msg)
-
-        msg(fmt().combined("#################################"))
     }
 
 }
@@ -153,7 +146,7 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
             it.append(TextComponent.builder(subject.key).decoration(TextDecoration.BOLD, true).build())
             it.append(" ")
                 .append(nameText)
-                .hoverEvent(HoverEvent.showText(tr(t("Click to view more info")).build()))
+                .hoverEvent(HoverEvent.showText(t("Click to view more info").tr().build()))
                 .clickEvent(ClickEvent.runCommand("/pex ${subject.key} ${subject.value} info"))
 
         }
@@ -162,13 +155,13 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
     override fun ladder(ladder: RankLadder): ComponentBuilder<*, *> {
         return TextComponent.builder(ladder.name)
             .decoration(TextDecoration.BOLD, true)
-            .hoverEvent(HoverEvent.showText(tr(t("click here to view more info")).build()))
+            .hoverEvent(HoverEvent.showText(t("click here to view more info").tr().build()))
             .clickEvent(ClickEvent.runCommand("/pex rank ${ladder.name}"))
     }
 
-    override fun booleanVal(opt: Boolean): ComponentBuilder<*, *> {
-        return tr(if (opt) t("true") else t("false"))
-            .color(if (opt) TextColor.GREEN else TextColor.RED)
+    override fun booleanVal(value: Boolean): ComponentBuilder<*, *> {
+        return (if (value) t("true") else t("false")).tr()
+            .color(if (value) TextColor.GREEN else TextColor.RED)
     }
 
     override fun button(
@@ -178,7 +171,7 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
         command: String,
         execute: Boolean
     ): ComponentBuilder<*, *> {
-        val builder = tr(label)
+        val builder = label.tr()
         builder.color(
             when (type) {
                 ButtonType.POSITIVE -> TextColor.GREEN
@@ -188,7 +181,7 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
         )
 
         if (tooltip != null) {
-            builder.hoverEvent(HoverEvent.showText(tr(tooltip).build()))
+            builder.hoverEvent(HoverEvent.showText(tooltip.tr().build()))
         }
 
         builder.clickEvent(
@@ -217,12 +210,12 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
         return TextComponent.builder(permission).append(EQUALS_SIGN).append(TextComponent.of(value))
     }
 
-    override fun header(text: ComponentBuilder<*, *>): ComponentBuilder<*, *> {
-        return text.decoration(TextDecoration.BOLD, true)
+    override fun ComponentBuilder<*, *>.header(): ComponentBuilder<*, *> {
+        return decoration(TextDecoration.BOLD, true)
     }
 
-    override fun hl(text: ComponentBuilder<*, *>): ComponentBuilder<*, *> {
-        return text.color(hlColor)
+    override fun ComponentBuilder<*, *>.hl(): ComponentBuilder<*, *> {
+        return color(hlColor)
     }
 
     override fun combined(vararg elements: Any): ComponentBuilder<*, *> {
@@ -235,26 +228,45 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
 
     private fun Any.asComponent(): Component {
         return when (this) {
-            is Translatable -> tr(this).build()
+            is Translatable -> this.tr().build()
             is ComponentBuilder<*, *> -> this.build()
             is Component -> this
             else -> TextComponent.of(toString())
         }
     }
 
-    override fun tr(tr: Translatable): ComponentBuilder<*, *> {
-        val args: List<Component> = tr.args.map { it.asComponent() }
-        return TranslatableComponent.builder(tr.translate(cmd.locale)).args(args)
+    override fun Translatable.tr(): ComponentBuilder<*, *> {
+        val args: List<Component> = args.map { it.asComponent() }
+        return TranslatableComponent.builder(translate(cmd.locale)).args(args)
     }
 
     override fun callback(
         title: Translatable,
-        callback: Consumer<Commander<ComponentBuilder<*, *>>>
+        callback: (Commander<ComponentBuilder<*, *>>) -> Unit
     ): ComponentBuilder<*, *> {
-        val command = cmd.pex.callbackController.registerCallback(cmd) { callback.accept(it) }
-        return tr(title)
+        val command = cmd.pex.callbackController.registerCallback(cmd) { callback(it) }
+        return title.tr()
             .decoration(TextDecoration.UNDERLINED, true)
             .color(hlColor)
             .clickEvent(ClickEvent.runCommand(command))
+    }
+
+    override fun String.unaryMinus(): ComponentBuilder<*, *> {
+        return TextComponent.builder(this)
+    }
+
+    override fun ComponentBuilder<*, *>.plus(other: ComponentBuilder<*, *>): ComponentBuilder<*, *> {
+        return TextComponent.builder().append(this).append(other)
+    }
+
+    override fun Collection<ComponentBuilder<*, *>>.concat(separator: ComponentBuilder<*, *>): ComponentBuilder<*, *> {
+        val builtSep = separator.build()
+        return foldIndexed(TextComponent.builder()) { idx, acc, el ->
+            if (idx != 0) {
+                acc.append(builtSep)
+            }
+            acc.append(el)
+            acc
+        }
     }
 }

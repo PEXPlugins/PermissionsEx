@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 

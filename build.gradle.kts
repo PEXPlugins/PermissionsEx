@@ -23,11 +23,13 @@ subprojects {
 
     tasks.withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.freeCompilerArgs = listOf("-XXLanguage:+InlineClasses", "-Xjvm-default=enable")
     }
 
     dependencies {
         "implementation"(kotlin("stdlib-jdk8"))
     }
+
 }
 
 tasks.withType<Jar> { // disable

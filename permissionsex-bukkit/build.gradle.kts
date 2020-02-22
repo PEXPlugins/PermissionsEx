@@ -50,6 +50,7 @@ java {
 }
 
 tasks.processResources {
+
     expand("project" to project)
 }
 

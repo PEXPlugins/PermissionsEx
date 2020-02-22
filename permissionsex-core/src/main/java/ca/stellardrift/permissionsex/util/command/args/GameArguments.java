@@ -27,7 +27,7 @@ import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.Commander;
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;

@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
 import ca.stellardrift.permissionsex.util.command.args.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
@@ -128,7 +129,7 @@ public class ChildCommands {
                     args.add("|");
                 }
             }
-            return context.fmt().combined(args.toArray());
+            return context.getFormatter().combined(args.toArray());
         }
 
         private Iterable<String> filterCommands(final Commander<?> src) {

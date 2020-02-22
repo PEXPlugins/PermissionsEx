@@ -17,6 +17,8 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
+import ca.stellardrift.permissionsex.commands.commander.Commander;
+
 /**
  * Interface containing the method directing how a certain command will be executed
  */

@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.util.command.args;
 
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.util.command.Commander;
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 
 import java.util.List;
 
@@ -49,6 +49,6 @@ public abstract class CommandElement {
     public abstract <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context);
 
     public <TextType> TextType getUsage(Commander<TextType> src) {
-        return src.fmt().tr(getKey());
+        return src.getFormatter().tr(getKey());
     }
 }
