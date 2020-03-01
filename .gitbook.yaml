@@ -1,5 +1,5 @@
 root: ./doc/
 
 structure:
-  readme: 2.0-Home.md
+  readme: 2.0-home.md
   summary: SUMMARY.md
