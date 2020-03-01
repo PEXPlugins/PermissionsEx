@@ -27,6 +27,7 @@ val spigotVersion: String = "1.15.1-R0.1-SNAPSHOT"
 
 plugins {
     id("com.github.johnrengelman.shadow")
+    id("ca.stellardrift.localization")
 }
 
 applyCommonSettings()
@@ -47,6 +48,10 @@ java {
     registerFeature("h2dbSupport") {
         usingSourceSet(sourceSets["main"])
     }
+}
+
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
 tasks.processResources {

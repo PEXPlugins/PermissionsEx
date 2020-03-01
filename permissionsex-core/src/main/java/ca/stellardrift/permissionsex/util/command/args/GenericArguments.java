@@ -17,9 +17,12 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import ca.stellardrift.permissionsex.util.*;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.util.GuavaCollectors;
+import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
+import ca.stellardrift.permissionsex.util.StartsWithPredicate;
+import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.util.command.CommandContext;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.util.command.ArgumentKeys.*;
 
 /**
  * Class containing factory methods to combine single-value command elements
@@ -52,7 +55,7 @@ public class GenericArguments {
 
     private static class MarkTrueCommandElement extends CommandElement {
         public MarkTrueCommandElement(String flag) {
-            super(Translations.untr(flag));
+            super(Translatable.Companion.fixed(flag));
         }
 
         @Override
@@ -246,7 +249,7 @@ public class GenericArguments {
                 if (element == null) {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
-                            throw args.createError(t("Unknown long flag %s specified", args));
+                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.get(longFlag));
                         case ACCEPT_NONVALUE:
                             context.putArg(longFlag, value);
                             break;
@@ -262,7 +265,7 @@ public class GenericArguments {
                 if (element == null) {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
-                            throw args.createError(t("Unknown long flag %s specified", args));
+                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.get(longFlag));
                         case ACCEPT_NONVALUE:
                             context.putArg(longFlag, true);
                             break;
@@ -292,7 +295,7 @@ public class GenericArguments {
                                 return false;
                             } // fall-through
                         case ERROR:
-                            throw args.createError(t("Unknown short flag %s specified", flagChar));
+                            throw args.createError(FLAG_ERROR_UNKNOWNSHORT.get(flagChar));
                         case ACCEPT_NONVALUE:
                             context.putArg(flagChar, true);
                     }
@@ -556,7 +559,7 @@ public class GenericArguments {
         public Object parseValue(CommandArgs args) throws ArgumentParseException {
             Object value = choices.get(args.next());
             if (value == null) {
-                throw args.createError(t("Argument was not a valid choice. Valid choices: %s", choices.keySet().toString()));
+                throw args.createError(CHOICES_ERROR_INVALID.get(choices.keySet().toString()));
             }
             return value;
         }
@@ -924,7 +927,7 @@ public class GenericArguments {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException ex) {
-                throw args.createError(t("Expected an integer, but input '%s' was not", input));
+                throw args.createError(INTEGER_ERROR_FORMAT.get(input));
             }
         }
     }
@@ -944,7 +947,7 @@ public class GenericArguments {
             try {
                 return UUID.fromString(input);
             } catch (IllegalArgumentException ex) {
-                throw args.createError(t("Expected input '%s' to be a UUID", input));
+                throw args.createError(UUID_ERROR_FORMAT.get(input));
             }
         }
     }
@@ -1013,7 +1016,7 @@ public class GenericArguments {
             try {
                 return Enum.valueOf(type, value);
             } catch (IllegalArgumentException ex) {
-                throw args.createError(t("Enum value %s not valid", value));
+                throw args.createError(ENUM_ERROR_INVALID.get(value));
             }
         }
 
@@ -1116,7 +1119,7 @@ public class GenericArguments {
             for (String arg : this.expectedArgs) {
                 String current;
                 if (!(current = args.next()).equalsIgnoreCase(arg)) {
-                    throw args.createError(t("Argument %s did not match expected next argument %s", current, arg));
+                    throw args.createError(LITERAL_ERROR_INVALID.get(current, arg));
                 }
             }
             return this.putValue;

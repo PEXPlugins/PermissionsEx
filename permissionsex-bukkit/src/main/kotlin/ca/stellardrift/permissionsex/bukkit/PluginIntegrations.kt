@@ -19,7 +19,6 @@
 
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.bukkit.BukkitTranslations.t
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.castMap
@@ -72,7 +71,7 @@ fun detectWorldGuard(plugin: PermissionsExPlugin) {
         }
 
         plugin.manager.registerContextDefinition(WorldGuardRegionContext(wgPlugin as WorldGuardPlugin))
-        plugin.manager.logger.info(t("Successfully registered WorldGuard region context"))
+        plugin.manager.logger.info(Messages.INTEGRATIONS_WORLDGUARD_SUCCESS.get())
     }
 }
 
@@ -83,6 +82,6 @@ fun detectVault(plugin: PermissionsExPlugin) {
             register(Permission::class.java, vault, plugin, ServicePriority.High)
             register(Chat::class.java, PEXVaultChat(vault), plugin, ServicePriority.High)
         }
-        plugin.manager.logger.info(t("Successfully registered Vault's Permission and Chat interfaces"));
+        plugin.manager.logger.info(Messages.INTEGRATIONS_VAULT_SUCCESS.get());
     }
 }

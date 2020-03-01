@@ -18,10 +18,14 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT
+import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_ARG_KEY
+import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_ARG_PERMISSION_VALUE
+import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_DEFAULT_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -32,7 +36,6 @@ import ca.stellardrift.permissionsex.util.command.args.GenericArguments.choices
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.firstParsing
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.integer
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
-import com.google.common.collect.ImmutableSet
 
 private fun permissionValue(key: Translatable): CommandElement {
     return firstParsing(
@@ -53,56 +56,52 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>): CommandSpec {
         .setArguments(
             seq(
                 permission(
-                    t("key"),
+                    PERMISSION_ARG_KEY.get(),
                     pex
-                ), permissionValue(t("value"))
+                ), permissionValue(PERMISSION_ARG_PERMISSION_VALUE.get())
             )
         )
         .setExecutor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun <TextType> execute(
+            override fun <TextType: Any> execute(
                 src: Commander<TextType>,
                 args: CommandContext
             ) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set")
-                val contexts: Set<ContextValue<*>> =
-                    ImmutableSet.copyOf(
-                        args.getAll("context")
-                    )
-                val key = args.getOne<String>("key")
-                var value = args.getOne<Any>("value")
+                val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
+                val key = args.getOne<String>(PERMISSION_ARG_KEY)
+                var value = args.getOne<Any>(PERMISSION_ARG_PERMISSION_VALUE)
                 if (value is Boolean) {
                     value = if (value) 1 else -1
                 }
                 val intVal = value as Int
                 ref.update { old ->
                     old.setPermission(contexts, key, intVal)
-                }.thenMessageSubject(src) { ->
-                    t(
-                        "Set permission %s for %s in %s context",
+                }.thenMessageSubject(src) { send ->
+                    send(PERMISSION_SUCCESS(
                         permission(key, intVal),
                         subject(ref).hl(),
                         formatContexts(contexts)
-                    )
+                    ))
                 }
             }
         })
         .build()
 }
 
-internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>?): CommandSpec {
+internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>): CommandSpec {
     return CommandSpec.builder()
         .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd", "default", "def")
-        .setArguments(permissionValue(t("value")))
-        .setExecutor(object : PermissionsExExecutor(pex!!) {
+        .setArguments(permissionValue(PERMISSION_ARG_PERMISSION_VALUE.get()))
+        .setExecutor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun <TextType> execute(
+            override fun <TextType: Any> execute(
                 src: Commander<TextType>,
                 args: CommandContext
             ) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set-default")
-                val contexts = args.getAll<ContextValue<*>>("context").toSet()
-                var value = args.getOne<Any>("value")
+                val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
+                var value = args.getOne<Any>(PERMISSION_ARG_PERMISSION_VALUE)
                 if (value is Boolean) {
                     value = if (value) 1 else -1
                 }
@@ -112,13 +111,13 @@ internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>?): CommandSpec {
                         contexts,
                         intVal
                     )
-                }.thenMessageSubject(src) { ->
-                    t(
-                        "Set default permission to %s for %s in %s context",
-                        intVal,
+                }.thenMessageSubject(src) { send ->
+                    send(
+                        PERMISSION_DEFAULT_SUCCESS(
+                        -intVal.toString(),
                         subject(ref).hl(),
                         formatContexts(contexts)
-                    )
+                    ))
                 }
             }
         })

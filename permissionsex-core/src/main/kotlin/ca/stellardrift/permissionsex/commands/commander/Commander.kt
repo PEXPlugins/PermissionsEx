@@ -24,7 +24,7 @@ import java.util.Optional
 /**
  * Interface implemented by objects that can execute commands and receive command output
  */
-interface Commander<TextType> {
+interface Commander<TextType: Any> {
     val name: String
     val locale: Locale
     val subjectIdentifier: Optional<Map.Entry<String, String>>

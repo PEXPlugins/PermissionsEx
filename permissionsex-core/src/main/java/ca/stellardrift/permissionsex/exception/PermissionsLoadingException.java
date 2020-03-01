@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex.exception;
 
+import ca.stellardrift.permissionsex.Messages;
 import ca.stellardrift.permissionsex.util.Translatable;
-import ca.stellardrift.permissionsex.util.Translations;
 
 public class PermissionsLoadingException extends PermissionsException {
     private static final long serialVersionUID = -7821206470445564912L;
@@ -32,6 +32,6 @@ public class PermissionsLoadingException extends PermissionsException {
     }
 
     public PermissionsLoadingException(Throwable cause) {
-        super(Translations.t("Error while loading permissions"), cause);
+        super(Messages.ERROR_GENERAL_LOADING.get(), cause);
     }
 }

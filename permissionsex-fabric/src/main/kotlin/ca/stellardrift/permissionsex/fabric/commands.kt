@@ -23,7 +23,6 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.cast
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.mojang.brigadier.Command
@@ -96,8 +95,8 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
             val args = getString(context, "args")
             this.spec.process(cmd, args)
         } catch (e: Exception) {
-            PermissionsExMod.logger.error(t("Unable to execute command %s for sender %s due to an error", spec.aliases[0], context.source.name), e)
-            cmd.error(t("Error executing commands %s, see console for details", spec.aliases[0]))
+            PermissionsExMod.logger.error(Messages.COMMAND_ERROR_CONSOLE[spec.aliases[0], context.source.name], e)
+            cmd.error(Messages.COMMAND_ERROR_TO_SENDER[spec.aliases[0]])
         }
         return 1
     }
@@ -109,8 +108,8 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCo
         try {
             this.spec.process(cmd, "")
         } catch (e: Exception) {
-            PermissionsExMod.logger.error(t("Unable to execute command %s for sender %s due to an error", spec.aliases[0], context.source.name), e)
-            cmd.error(t("Error executing commands %s, see console for details", spec.aliases[0]))
+            PermissionsExMod.logger.error(Messages.COMMAND_ERROR_CONSOLE[spec.aliases[0], context.source.name], e)
+            cmd.error(Messages.COMMAND_ERROR_TO_SENDER[spec.aliases[0]])
         }
         return 1
     }
@@ -158,7 +157,7 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
             append(nameText)
 
             styled {
-                it.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, t("Click here to view more info").tr())
+                it.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Messages.COMMAND_FMT_HOVER_PROMPT())
                 it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex ${subject.key} ${subject.value} info")
             }
         }
@@ -169,14 +168,14 @@ class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCo
         val ret = LiteralText(ladder.name)
         ret.style.apply {
             isBold = true
-            hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, t("Click here to view more info").tr())
+            hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Messages.COMMAND_FMT_HOVER_PROMPT())
             clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex rank ${ladder.name}")
         }
         return ret
     }
 
     override fun booleanVal(value: Boolean): Text {
-        return (if (value) t("true") else t("false")).tr()
+        return (if (value) Messages.COMMAND_FMT_BOOLEAN_TRUE() else Messages.COMMAND_FMT_BOOLEAN_FALSE())
             .formatted(if (value) Formatting.GREEN else Formatting.RED)
     }
 

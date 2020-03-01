@@ -107,6 +107,9 @@ fun Project.applyCommonSettings() {
     extensions.configure(LicenseExtension::class.java) {
         it.header = rootProject.file("LICENSE_HEADER")
 
+        it.exclude {
+            it.file.startsWith(project.buildDir)
+        }
         it.exclude("**/*.yml") // Don't process yaml -- unnecessary, and causes test failures
         // Exclude unsupported file types to avoid warnings
         it.exclude("**/*.conf")

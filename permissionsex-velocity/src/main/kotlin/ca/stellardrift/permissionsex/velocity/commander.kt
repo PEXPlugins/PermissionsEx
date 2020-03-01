@@ -24,7 +24,6 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.google.common.collect.Maps
@@ -134,6 +133,12 @@ private object FixedTranslationComponentRenderer : FriendlyComponentRenderer<Vel
 
 class VelocityMessageFormatter(private val cmd: VelocityCommander, private val hlColor: TextColor = TextColor.YELLOW) :
     MessageFormatter<ComponentBuilder<*, *>> {
+
+    /**
+     * Given a command in standard format, correct it to refer to specifically the proxy format
+     */
+    private inline fun transformCommand(cmd: String) = "/$cmd"
+
     override fun subject(subject: Map.Entry<String, String>): ComponentBuilder<*, *> {
         val name = cmd.pex.manager.getSubjects(subject.key).get(subject.value).join().data().get().getOptions(setOf())["name"]
         val nameText = if (name != null) {
@@ -146,8 +151,8 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
             it.append(TextComponent.builder(subject.key).decoration(TextDecoration.BOLD, true).build())
             it.append(" ")
                 .append(nameText)
-                .hoverEvent(HoverEvent.showText(t("Click to view more info").tr().build()))
-                .clickEvent(ClickEvent.runCommand("/pex ${subject.key} ${subject.value} info"))
+                .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT().build()))
+                .clickEvent(ClickEvent.runCommand(transformCommand("/pex ${subject.key} ${subject.value} info")))
 
         }
     }
@@ -155,12 +160,12 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
     override fun ladder(ladder: RankLadder): ComponentBuilder<*, *> {
         return TextComponent.builder(ladder.name)
             .decoration(TextDecoration.BOLD, true)
-            .hoverEvent(HoverEvent.showText(t("click here to view more info").tr().build()))
-            .clickEvent(ClickEvent.runCommand("/pex rank ${ladder.name}"))
+            .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT().build()))
+            .clickEvent(ClickEvent.runCommand(transformCommand("/pex rank ${ladder.name}")))
     }
 
     override fun booleanVal(value: Boolean): ComponentBuilder<*, *> {
-        return (if (value) t("true") else t("false")).tr()
+        return (if (value) Messages.FORMATTER_BOOLEAN_TRUE() else Messages.FORMATTER_BOOLEAN_FALSE())
             .color(if (value) TextColor.GREEN else TextColor.RED)
     }
 
@@ -186,9 +191,9 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
 
         builder.clickEvent(
             if (execute) {
-                ClickEvent.runCommand(command)
+                ClickEvent.runCommand(transformCommand(command))
             } else {
-                ClickEvent.suggestCommand(command)
+                ClickEvent.suggestCommand(transformCommand(command))
             }
         )
         return builder
@@ -248,7 +253,7 @@ class VelocityMessageFormatter(private val cmd: VelocityCommander, private val h
         return title.tr()
             .decoration(TextDecoration.UNDERLINED, true)
             .color(hlColor)
-            .clickEvent(ClickEvent.runCommand(command))
+            .clickEvent(ClickEvent.runCommand(transformCommand(command)))
     }
 
     override fun String.unaryMinus(): ComponentBuilder<*, *> {

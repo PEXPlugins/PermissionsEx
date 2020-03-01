@@ -17,21 +17,20 @@
 
 package ca.stellardrift.permissionsex.util.glob;
 
+import ca.stellardrift.permissionsex.exception.PermissionsException;
+import ca.stellardrift.permissionsex.util.Translatable;
+
 /**
  * This error is thrown when invalid glob syntax is presented
  */
-public class GlobParseException extends Exception {
-    private static final long serialVersionUID = -1855597619477016702L;
+public class GlobParseException extends PermissionsException {
+    private static final long serialVersionUID = 1019525110836056128L;
 
-    GlobParseException(String s) {
-        super(s);
+    GlobParseException(Translatable trans) {
+        super(trans);
     }
 
-    GlobParseException(String s, Throwable throwable) {
-        super(s, throwable);
-    }
-
-    GlobParseException(Throwable throwable) {
-        super(throwable);
+    GlobParseException(Translatable msg, Throwable throwable) {
+        super(msg, throwable);
     }
 }

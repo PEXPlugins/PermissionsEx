@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.util.configurate
 
 import ca.stellardrift.permissionsex.logging.TranslatableLogger
-import ca.stellardrift.permissionsex.util.Translations.t
+import ca.stellardrift.permissionsex.util.Messages
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import org.slf4j.LoggerFactory
@@ -101,7 +101,7 @@ class WatchServiceListener @JvmOverloads constructor(
                                     }
                                 }
                             } catch (thr: Throwable) {
-                                this.logger.error(t("Error while running reload task for file %s", key.watchable()), thr)
+                                this.logger.error(Messages.WATCHSERVICE_ERROR_TASK.get(key.watchable()))
                             }
                         }
 

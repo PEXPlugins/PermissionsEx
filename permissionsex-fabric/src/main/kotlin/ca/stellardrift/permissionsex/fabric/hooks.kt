@@ -21,7 +21,6 @@ package ca.stellardrift.permissionsex.fabric
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.Translations.t
 import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.builder.ArgumentBuilder
 import net.minecraft.entity.player.PlayerEntity
@@ -168,7 +167,7 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
 
 fun GameProfile.hasPermission(perm: String): Boolean {
     if (this.id == null) {
-        PermissionsExMod.logger.error(t("Tried to check permission for incomplete game profile %s", this.name))
+        PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_INCOMPLETE[this.name])
         return false
     }
     return PermissionsExMod.manager.getSubjects(SUBJECTS_USER)[this.id.toString()].join().hasPermission(perm)

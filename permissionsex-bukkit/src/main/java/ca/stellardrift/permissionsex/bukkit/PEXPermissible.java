@@ -189,7 +189,7 @@ public class PEXPermissible extends PermissibleBase {
         }
 
         if (pex.hasDebugMode()) {
-            pex.getLogger().info(BukkitTranslations.t("Checked permission %s for player %s in contexts %s: %s", permission, player.getName(), contexts, ret));
+            pex.getLogger().info(Messages.SUPERPERMS_CHECK_NOTIFY.get(permission, player.getName(), contexts, ret));
         }
         return ret;
     }

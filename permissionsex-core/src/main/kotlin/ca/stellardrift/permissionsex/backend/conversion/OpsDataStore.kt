@@ -21,6 +21,9 @@ import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.backend.Messages.OPS_DESCRIPTION
+import ca.stellardrift.permissionsex.backend.Messages.OPS_ERROR_NO_FILE
+import ca.stellardrift.permissionsex.backend.Messages.OPS_NAME
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData
 import ca.stellardrift.permissionsex.context.ContextValue
@@ -29,7 +32,6 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig
 import ca.stellardrift.permissionsex.util.configurate.WatchServiceListener
 import com.google.common.collect.Maps.immutableEntry
@@ -52,7 +54,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
     companion object : ConversionProvider {
         @JvmField
         val FACTORY = Factory("ops", OpsDataStore::class.java, ::OpsDataStore)
-        override val name: Translatable = t("Ops List")
+        override val name: Translatable = OPS_NAME.get()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
             val opsFile = pex.getBaseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
@@ -61,7 +63,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
                     OpsDataStore(
                         "ops",
                         opsFile
-                    ), t("Server ops.json")))
+                    ), OPS_DESCRIPTION.get()))
             } else {
                 listOf()
             }
@@ -88,7 +90,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
         }
 
         if (!Files.exists(file)) {
-            manager.logger.warn(t("Ops file %s does not exist, so no ops will be available for import"))
+            manager.logger.warn(OPS_ERROR_NO_FILE.get())
         }
 
         this.configListener = WatchServiceListener(logger = manager.logger)

@@ -18,12 +18,11 @@
 package ca.stellardrift.permissionsex.util.command.args;
 
 import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.util.command.CommonMessages;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 /**
  * Parser for converting a quoted string into a list of arguments
@@ -81,14 +80,14 @@ public class QuotedStringParser {
 
     private int peek() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(t("Buffer overrun while parsing args"));
+            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.get());
         }
         return buffer.codePointAt(index + 1);
     }
 
     private int next() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(t("Buffer overrun while parsing args"));
+            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.get());
         }
         return buffer.codePointAt(++index);
     }
@@ -124,8 +123,7 @@ public class QuotedStringParser {
         // Consume the start quotation character
         int nextCodePoint = next();
         if (nextCodePoint != startQuotation) {
-            throw createException(t("Actual next character '%c' did not match expected quotation character '%c'",
-                    nextCodePoint, startQuotation));
+            throw createException(CommonMessages.ERROR_PARSE_NOTQUOTE.get(nextCodePoint, startQuotation));
         }
 
         while (true) {
@@ -133,7 +131,7 @@ public class QuotedStringParser {
                 if (lenient) {
                     return;
                 } else {
-                    throw createException(t("Unterminated quoted string found")); //, new StringBuilder(1).appendCodePoint(nextCodePoint).toString());
+                    throw createException(CommonMessages.ERROR_PARSE_UNTERMINATED_QUOTED.get());
                 }
             }
             nextCodePoint = next();

@@ -40,8 +40,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
-
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
  */
@@ -211,12 +209,12 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
         try {
             ((ObjectMapper) factory.mapper).bind(this).serialize(node);
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(t("Error while serializing backend %s", node.getKey()), e);
+            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.get(node.getKey()), e);
         }
         return factory.type;
     }
 
-    public static class Factory<T extends AbstractDataStore> implements DataStoreFactory {
+    public static class Factory<T extends AbstractDataStore<T>> implements DataStoreFactory {
         private final String type;
         private final Class<T> expectedClazz;
         private final ObjectMapper<T> mapper;
@@ -247,7 +245,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
             try {
                 return mapper.bind(newInstanceSupplier.apply(identifier)).populate(config);
             } catch (ObjectMappingException e) {
-                throw new PermissionsLoadingException(t("Error while deserializing backend %s", identifier), e);
+                throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.get(identifier), e);
             }
         }
     }

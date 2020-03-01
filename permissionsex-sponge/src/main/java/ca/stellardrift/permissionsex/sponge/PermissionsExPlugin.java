@@ -28,7 +28,10 @@ import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import ca.stellardrift.permissionsex.util.command.*;
+import ca.stellardrift.permissionsex.util.command.CommandContext;
+import ca.stellardrift.permissionsex.util.command.CommandException;
+import ca.stellardrift.permissionsex.util.command.CommandExecutor;
+import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Throwables;
@@ -71,7 +74,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static ca.stellardrift.permissionsex.sponge.SpongeTranslations.t;
 import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.string;
 import static java.util.Objects.requireNonNull;
 
@@ -114,7 +116,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Listener
     public void onPreInit(GamePreInitializationEvent event) throws PEBKACException, InterruptedException, ExecutionException {
         this.timings = new Timings(this);
-        logger.info(SpongeTranslations.t("Pre-init of %s v%s", PomData.NAME, PomData.VERSION));
+        logger.info(Messages.PLUGIN_INIT_BEGIN.get(PomData.NAME, PomData.VERSION));
         sql = services.provide(SqlService.class);
         scheduler = game.getScheduler();
 
@@ -124,7 +126,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             Files.createDirectories(configDir);
             this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
-            throw new RuntimeException(t("Error occurred while enabling %s", PomData.NAME).translateFormatted(logger.getLogLocale()), e);
+            throw new RuntimeException(Messages.PLUGIN_INIT_ERROR_GENERAL.get(PomData.NAME).translateFormatted(logger.getLogLocale()), e);
         }
 
         defaults = (PEXSubject) loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose(coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)).get();
@@ -144,7 +146,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             services.setProvider(this, PermissionService.class, this);
         } else {
             manager.close();
-            throw new PEBKACException(SpongeTranslations.t("Your appear to already be using a different permissions plugin!"));
+            throw new PEBKACException(Messages.PLUGIN_INIT_ERROR_OTHER_PROVIDER_INSTALLED.get());
         }
     }
 
@@ -152,12 +154,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         registerCommands(() -> ImmutableSet.of(CommandSpec.builder()
                 .setAliases(alias)
                 .setPermission(permission)
-                .setDescription(SpongeTranslations.t("A dummy replacement for vanilla's operator commands"))
-                .setArguments(string(SpongeTranslations.t("user")))
+                .setDescription(Messages.COMMANDS_FAKE_OP_DESCRIPTION.get())
+                .setArguments(string(Messages.COMMANDS_FAKE_OP_ARG_USER.get()))
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext ctx) throws CommandException {
-                        throw new CommandException(SpongeTranslations.t("PermissionsEx replaces the server op/deop commands. Use PEX commands to manage permissions instead!"));
+                        throw new CommandException(Messages.COMMANDS_FAKE_OP_ERROR.get());
                     }
                 })
                 .build()));
@@ -168,13 +170,13 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             getManager().getSubjects(PermissionsEx.SUBJECTS_USER).get(event.getProfile().getUniqueId().toString());
         } catch (Exception e) {
-            logger.warn(SpongeTranslations.t("Error while loading data for user %s/%s during prelogin: %s", event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage()), e);
+            logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.get(event.getProfile().getName(), event.getProfile().getUniqueId().toString(), e.getMessage()), e);
         }
     }
 
     @Listener
     public void disable(GameStoppedServerEvent event) {
-        logger.debug(t("Disabling %s", PomData.NAME));
+        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN.get(PomData.NAME));
         PermissionsEx<?> manager = this.manager;
         if (manager != null) {
             manager.close();
@@ -217,7 +219,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     private void convertFromBukkit() throws IOException {
         Path bukkitConfigPath = Paths.get("plugins/PermissionsEx");
         if (Files.isDirectory(bukkitConfigPath) && isDirectoryEmpty(configDir)) {
-            logger.info(SpongeTranslations.t("Migrating configuration data from Bukkit"));
+            logger.info(Messages.MIGRATION_BUKKIT_BEGIN.get());
             Files.move(bukkitConfigPath, configDir, StandardCopyOption.REPLACE_EXISTING);
         }
         Path bukkitConfigFile = configDir.resolve("config.yml");
@@ -235,7 +237,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         if (Files.exists(oldPath) && isDirectoryEmpty(configDir)) {
             Files.move(oldPath, configDir, StandardCopyOption.REPLACE_EXISTING);
             Files.move(configDir.resolve("ninja.leaping.permissionsex.conf"), configDir.resolve(PomData.ARTIFACT_ID + ".conf"));
-            logger.info(SpongeTranslations.t("Migrated legacy sponge config directory to new location. Configuration is now located in %s", configDir.toString()));
+            logger.info(Messages.MIGRATION_LEGACY_SPONGE_SUCCESS.get(configDir.toString()));
         }
     }
 
@@ -389,7 +391,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         try {
             return sql.get().getDataSource(this, url);
         } catch (SQLException e) {
-            logger.error(SpongeTranslations.t("Unable to get data source for jdbc url %s", url), e);
+            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR.get(url), e);
             return null;
         }
     }

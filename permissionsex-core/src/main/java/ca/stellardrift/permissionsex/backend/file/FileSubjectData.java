@@ -17,21 +17,20 @@
 
 package ca.stellardrift.permissionsex.backend.file;
 
+import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData;
+import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
@@ -41,7 +40,7 @@ public final class FileSubjectData extends MemorySubjectData {
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
                 if (!child.hasMapChildren()) {
-                    throw new PermissionsLoadingException(t("Each context section must be of map type! Check that no duplicate nesting has occurred."));
+                    throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.get());
                 }
                 Set<ContextValue<?>> contexts = contextsFrom(child);
                 DataEntry value = MAPPER.bindToNew().populate(child);

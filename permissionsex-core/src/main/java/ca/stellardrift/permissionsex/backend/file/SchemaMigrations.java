@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.backend.file;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
+import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.logging.TranslatableLogger;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -32,7 +33,6 @@ import ninja.leaping.configurate.transformation.TransformAction;
 
 import java.util.*;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
 import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
 
 public class SchemaMigrations {
@@ -167,7 +167,7 @@ public class SchemaMigrations {
                                 }
                                 permission = ConversionUtils.convertLegacyPermission(permission);
                                 if (permission.contains("*")) {
-                                    logger.warn(t("The permission at %s contains a now-illegal character '*'", Arrays.toString(configurationNode.getPath())));
+                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.get(Arrays.toString(configurationNode.getPath())));
                                 }
                                 configurationNode.getNode(permission).setValue(value);
                             }

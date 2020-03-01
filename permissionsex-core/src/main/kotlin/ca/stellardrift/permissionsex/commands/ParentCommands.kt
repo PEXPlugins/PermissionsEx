@@ -18,15 +18,18 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT
+import ca.stellardrift.permissionsex.commands.Messages.PARENT_ADD_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.PARENT_ARGS_PARENT
+import ca.stellardrift.permissionsex.commands.Messages.PARENT_REMOVE_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.PARENT_SET_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
-import com.google.common.collect.ImmutableSet
 
     internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
@@ -42,30 +45,29 @@ import com.google.common.collect.ImmutableSet
     private fun getAddParentCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("add", "a", "+")
-            .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(PARENT_ARGS_PARENT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     val ref = getDataRef(src, args, "permissionsex.parent.add")
-                    val contexts = args.getAll<ContextValue<*>>("context").toSet()
+                    val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val parent =
-                        args.getOne<Map.Entry<String, String>>("parent")
+                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)
                         ref.update { old: ImmutableSubjectData ->
                             old.addParent(
                                 contexts,
                                 parent.key,
                                 parent.value
                             )
-                        }.thenMessageSubject(src) { ->
-                            t(
-                                "Added parent %s for %s in %s context",
+                        }.thenMessageSubject(src) { send ->
+                                send(PARENT_ADD_SUCCESS(
                                 subject(parent),
                                 subject(ref).hl(),
                                 formatContexts(contexts)
-                            )
+                            ))
                         }
                 }
             })
@@ -75,33 +77,30 @@ import com.google.common.collect.ImmutableSet
     private fun getRemoveParentCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("remove", "rem", "delete", "del", "-")
-            .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(PARENT_ARGS_PARENT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     val ref = getDataRef(src, args, "permissionsex.parent.remove")
-                    val contexts: Set<ContextValue<*>> =
-                        ImmutableSet.copyOf(
-                            args.getAll("context")
-                        )
+                    val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val parent =
-                        args.getOne<Map.Entry<String, String>>("parent")
+                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)
                         ref.update { old: ImmutableSubjectData ->
                             old.removeParent(
                                 contexts,
                                 parent.key,
                                 parent.value
                             )
-                        }.thenMessageSubject(src) { ->
-                            t(
-                                "Removed parent %s for %s in %s context",
+                        }.thenMessageSubject(src) { send ->
+                            send(
+                                PARENT_REMOVE_SUCCESS(
                                 subject(parent),
                                 subject(ref).hl(),
                                 formatContexts(contexts)
-                            )
+                            ))
                         }
                 }
             })
@@ -111,31 +110,28 @@ import com.google.common.collect.ImmutableSet
     private fun getSetParentsCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("set", "replace", "=")
-            .setArguments(subject(t("parent"), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(PARENT_ARGS_PARENT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     val ref = getDataRef(src, args, "permissionsex.parent.set")
-                    val contexts: Set<ContextValue<*>> =
-                        ImmutableSet.copyOf(
-                            args.getAll("context")
-                        )
+                    val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val parent =
-                        args.getOne<Map.Entry<String, String>>("parent")
+                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)
                         ref.update { old: ImmutableSubjectData ->
                             old.clearParents(
                                 contexts
                             ).addParent(contexts, parent.key, parent.value)
-                        }.thenMessageSubject(src) { ->
-                            t(
-                                "Set parent for %s to %s in %s context",
+                        }.thenMessageSubject(src) { send ->
+                            send(
+                                PARENT_SET_SUCCESS(
                                 subject(ref).hl(),
                                 subject(parent),
                                 formatContexts(contexts)
-                            )
+                            ))
                         }
                 }
             })

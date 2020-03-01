@@ -20,6 +20,9 @@ package ca.stellardrift.permissionsex.backend.conversion.groupmanager
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_DESCRIPTION
+import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_ERROR_NO_DIR
+import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_NAME
 import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider
 import ca.stellardrift.permissionsex.backend.conversion.ConversionResult
 import ca.stellardrift.permissionsex.backend.conversion.ReadOnlyDataStore
@@ -28,7 +31,6 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.configurate.get
 import com.google.common.collect.Maps
 import ninja.leaping.configurate.ConfigurationNode
@@ -80,7 +82,7 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     override fun initializeInternal(): Boolean {
         val rootFile = Paths.get(groupManagerRoot)
         if (!Files.isDirectory(rootFile)) {
-            throw PermissionsLoadingException(t("GroupManager directory %s does not exist", rootFile))
+            throw PermissionsLoadingException(GROUPMANAGER_ERROR_NO_DIR[rootFile])
         }
         try {
             config = getLoader(rootFile.resolve("config.yml")).load()
@@ -185,12 +187,12 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     companion object : ConversionProvider {
         @JvmField
         val FACTORY = Factory<GroupManagerDataStore>("groupmanager", GroupManagerDataStore::class.java, ::GroupManagerDataStore)
-        override val name = t("GroupManager")
+        override val name = GROUPMANAGER_NAME.get()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
             val gmBaseDir = pex.baseDirectory.parent.resolve("GroupManager")
             return if (Files.exists(gmBaseDir.resolve("config.yml"))) { // we exist
-                listOf(ConversionResult(GroupManagerDataStore("gm-file"), t("File store")))
+                listOf(ConversionResult(GroupManagerDataStore("gm-file"), GROUPMANAGER_DESCRIPTION.get()))
             } else {
                 emptyList()
             }

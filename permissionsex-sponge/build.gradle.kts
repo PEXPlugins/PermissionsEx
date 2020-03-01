@@ -26,6 +26,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("com.github.johnrengelman.shadow")
     kotlin("kapt")
+    id("ca.stellardrift.localization")
 }
 
 applyCommonSettings()
@@ -39,7 +40,6 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
-    implementation("com.github.TheFrontier.director:director-sponge:0.16.0")
 
     kapt("org.spongepowered:spongeapi:${Versions.SPONGE}")
     testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
@@ -49,6 +49,9 @@ dependencies {
     testImplementation("org.mockito:mockito-core:3.0.0")
 }
 
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
+}
 
 // Expand tokens in source templates
 val generatedSourceRoot = "$buildDir/generated/java-templates"

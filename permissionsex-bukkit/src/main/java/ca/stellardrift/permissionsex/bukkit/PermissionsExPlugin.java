@@ -59,7 +59,6 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static ca.stellardrift.permissionsex.bukkit.BukkitTranslations.t;
 import static ca.stellardrift.permissionsex.hikariconfig.HikariConfig.createHikariDataSource;
 import static java.util.Objects.requireNonNull;
 
@@ -121,7 +120,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;*/
         } catch (Exception e) {
-            logger.error(t("Error occurred while enabling %s", getDescription().getName()), e);
+            logger.error(Messages.ERROR_ON_ENABLE.get(getDescription().getName()), e);
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -159,7 +158,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         try {
             this.executorService.awaitTermination(20, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            logger.error(t("Timeout while waiting for PEX tasks to finish!"));
+            logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT.get());
             this.executorService.shutdownNow();
         }
     }
@@ -167,7 +166,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler
     private void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
         getUserSubjects().get(event.getUniqueId().toString()).exceptionally(e -> {
-            logger.warn(t("Error while loading data for user %s/%s during prelogin: %s", event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
+            logger.warn(Messages.ERROR_LOAD_PRELOGIN.get(event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
             return null;
         });
     }
@@ -265,18 +264,18 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!found) {
-                logger.warn(t("No Permissible injector found for your server implementation!"));
+                logger.warn(Messages.SUPERPERMS_INJECT_NO_INJECTOR.get());
             } else if (!success) {
-                logger.warn(t("Unable to inject PEX's permissible for %s", player.getName()));
+                logger.warn(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.get(player.getName()));
             }
 
             permissible.recalculatePermissions();
 
             if (success && getManager().hasDebugMode()) {
-                logger.info(t("Permissions handler for %s successfully injected", player.getName()));
+                logger.info(Messages.SUPERPERMS_INJECT_SUCCESS.get());
             }
         } catch (Throwable e) {
-            logger.error(t("Unable to inject permissible for %s", player.getName()), e);
+            logger.error(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.get(player.getName()), e);
         }
     }
 
@@ -303,9 +302,9 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!success) {
-                logger.warn(t("No Permissible injector found for your server implementation (while uninjecting for %s)!", player.getName()));
+                logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR.get(player.getName()));
             } else if (getManager() != null && getManager().hasDebugMode()) {
-                logger.info(t("Permissions handler for %s successfully uninjected", player.getName()));
+                logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS.get(player.getName()));
             }
         } catch (Throwable e) {
             e.printStackTrace();

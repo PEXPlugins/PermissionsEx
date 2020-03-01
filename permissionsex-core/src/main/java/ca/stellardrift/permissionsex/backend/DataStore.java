@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.backend.Messages.*;
 
 /**
  * Data type abstraction for permissions data
@@ -96,7 +96,7 @@ public interface DataStore {
                         .thenCompose(newData -> setData(oldType, oldIdentifier, null))
                         .thenApply(inp -> (Void) null);
             } else {
-                return Util.<Void>failedFuture(new PermissionsException(t("Destination subject already existed or target subject did not!")));
+                return Util.<Void>failedFuture(new PermissionsException(DATASTORE_MOVE_ERROR.get()));
             }
 
         }).thenCompose(future -> future);

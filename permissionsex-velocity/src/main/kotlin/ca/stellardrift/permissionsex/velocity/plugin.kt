@@ -30,7 +30,6 @@ import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
@@ -140,7 +139,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         try {
             manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this)
         } catch (e: Exception) {
-            logger.error(t("Unable to load PermissionsEx engine"), e)
+            logger.error(Messages.PLUGIN_INIT_ERROR.get(), e)
             return
         }
         manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
@@ -151,7 +150,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
         registerCommandsNow()
-        logger.info(t("Successfully enabled %s v%s", ProjectData.NAME, ProjectData.VERSION))
+        logger.info(Messages.PLUGIN_INIT_SUCCESS[ProjectData.NAME, ProjectData.VERSION])
     }
 
     @Subscribe
@@ -163,10 +162,10 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: Exception) {
-            logger.error(t("Unable to close executor nicely, tasks did not finish in time!"))
+            logger.error(Messages.PLUGIN_DISABLE_TIMEOUT.get())
             exec.shutdownNow()
         }
-        logger.info(t("Successfully disabled %s v%s -- see you next time!", ProjectData.NAME, ProjectData.VERSION))
+        logger.info(Messages.PLUGIN_DISABLE_SUCCESS[ProjectData.NAME, ProjectData.VERSION])
     }
 
     @Subscribe

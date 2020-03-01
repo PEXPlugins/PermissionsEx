@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.smartertext
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandExecutor
@@ -30,7 +29,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-private class CachedCallback<TextType>(
+private class CachedCallback<TextType: Any>(
     val source: Commander<TextType>,
     val func: (Commander<TextType>) -> Unit,
     val oneUse: Boolean = false
@@ -46,7 +45,7 @@ class CallbackController {
     /**
      * Register a callback, returning the command string to send to execute the provided function.
      */
-    fun <TextType> registerCallback(source: Commander<TextType>, func: (Commander<TextType>) -> Unit): String {
+    fun <TextType: Any> registerCallback(source: Commander<TextType>, func: (Commander<TextType>) -> Unit): String {
         val id = UUID.randomUUID()
         knownCallbacks.computeIfAbsent(source.mapKey) { ConcurrentHashMap() }[id] = CachedCallback(source, func)
         return "/pex cb $id"
@@ -65,16 +64,16 @@ class CallbackController {
     fun createCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder().apply {
             setAliases("callback", "cb")
-            setArguments(uuid(t("callback")))
-            setDescription(t("Execute a callback. This command is usually not run manually."))
+            setArguments(uuid(Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID.get()))
+            setDescription(Messages.COMMAND_CALLBACK_DESCRIPTION.get())
             setExecutor(object : CommandExecutor {
-                override fun <TextType> execute(src: Commander<TextType>, args: CommandContext) {
-                    val callbackId = args.getOne<UUID>("callback")
+                override fun <TextType: Any> execute(src: Commander<TextType>, args: CommandContext) {
+                    val callbackId = args.getOne<UUID>(Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID)
                     val userCallbacks = knownCallbacks[src.mapKey]
                     val callback = userCallbacks?.get(callbackId)
                     when {
-                        callback == null -> throw CommandException(t("Unknown callback identifier %s", callbackId))
-                        callback.source.mapKey != src.mapKey -> throw CommandException(t("You can only activate your own callbacks!"))
+                        callback == null -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_UNKNOWN_ID[callbackId])
+                        callback.source.mapKey != src.mapKey -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_ONLY_OWN_ALLOWED.get())
                         else -> try {
                             callback()
                         } finally {

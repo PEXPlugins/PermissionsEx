@@ -17,15 +17,14 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import com.google.common.collect.Lists;
 import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.util.command.CommonMessages;
+import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 /**
  * Holder for command arguments
@@ -46,14 +45,14 @@ public class CommandArgs {
 
     public String peek() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(t("Not enough arguments"));
+            throw createError(CommonMessages.ERROR_ARGUMENTS_NOTENOUGH.get());
         }
         return args.get(index + 1).getValue();
     }
 
     public String next() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(t("Not enough arguments!"));
+            throw createError(CommonMessages.ERROR_ARGUMENTS_NOTENOUGH.get());
         }
         return args.get(++index).getValue();
     }

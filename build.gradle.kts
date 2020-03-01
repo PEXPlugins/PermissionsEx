@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("com.github.ben-manes.versions") version "0.25.0"
-    kotlin("jvm") version "1.3.61" apply false
     `maven-publish`
 }
 allprojects {

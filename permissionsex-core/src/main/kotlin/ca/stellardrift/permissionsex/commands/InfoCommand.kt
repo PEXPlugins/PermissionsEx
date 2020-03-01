@@ -18,10 +18,19 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.Messages.INFO_ACTIVE_CONTEXTS
+import ca.stellardrift.permissionsex.commands.Messages.INFO_ACTIVE_USED_CONTEXTS
+import ca.stellardrift.permissionsex.commands.Messages.INFO_ASSOCIATED_OBJECT
+import ca.stellardrift.permissionsex.commands.Messages.INFO_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER
+import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS
+import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS_TRANSIENT
+import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_PARENTS_TRANSIENT
+import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_PERMISSIONS
+import ca.stellardrift.permissionsex.commands.Messages.INFO_PERMISSIONS_DEFAULT
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -29,7 +38,7 @@ import ca.stellardrift.permissionsex.util.command.CommandSpec
     internal fun getInfoCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("info", "i", "who")
-            .setDescription(t("Provide information about a subject"))
+            .setDescription(INFO_DESCRIPTION.get())
             .setExecutor(SubjectInfoPrintingExecutor(pex))
             .build()
     }
@@ -37,7 +46,7 @@ import ca.stellardrift.permissionsex.util.command.CommandSpec
     // TODO: Pagination builder
     internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : PermissionsExExecutor(pex) {
         @Throws(CommandException::class)
-        override fun <TextType> execute(
+        override fun <TextType: Any> execute(
             src: Commander<TextType>,
             args: CommandContext
         ) {
@@ -46,58 +55,58 @@ import ca.stellardrift.permissionsex.util.command.CommandSpec
             val transientData = subject.transientData().get()
             val data = subject.data().get()
             src.msg { send ->
-                send(t("Information for %s", subject(subject)).tr().header())
+                send(INFO_HEADER(subject(subject)).header())
                 if (pex.hasDebugMode()) {
                     val associatedObject = subject.associatedObject
                     associatedObject.ifPresent { o ->
-                        send(t("Associated object: ").tr().hl() + -o.toString())
+                        send(INFO_ASSOCIATED_OBJECT().hl() + -o.toString())
                     }
                 }
-                send(t("Active Contexts: ").tr().hl() + -subject.activeContexts.toString())
-                send(t("Active 8 Used Contexts: ").tr().hl() + -subject.usedContextValues.join().toString())
+                send(INFO_ACTIVE_CONTEXTS().hl() + -subject.activeContexts.toString())
+                send(INFO_ACTIVE_USED_CONTEXTS().hl() + -subject.usedContextValues.join().toString())
 
                 if (data.allPermissions.isNotEmpty() || data.allDefaultValues.isNotEmpty()) {
-                    send(t("Permissions:").tr().hl())
+                    send(INFO_HEADER_PERMISSIONS().hl())
                     printPermissions(src, data)
                 }
                 if (transientData.allPermissions.isNotEmpty() || transientData.allDefaultValues.isNotEmpty()) {
-                    send(t("Transient permissions:").tr().hl())
+                    send(Messages.INFO_HEADER_PERMISSIONS_TRANSIENT().hl())
                     printPermissions(src, transientData)
                 }
                 if (data.allOptions.isNotEmpty()) {
-                    send(t("Options:").tr().hl())
+                    send(INFO_HEADER_OPTIONS().hl())
                     printOptions(src, data)
                 }
                 if (transientData.allOptions.isNotEmpty()) {
-                    send(t("Transient options:").tr().hl())
+                    send(INFO_HEADER_OPTIONS_TRANSIENT().hl())
                     printOptions(src, transientData)
                 }
                 if (data.allParents.isNotEmpty()) {
-                    send(t("Parents:").tr().hl())
+                    send(Messages.INFO_HEADER_PARENTS().hl())
                     printParents(src, data)
                 }
                 if (transientData.allParents.isNotEmpty()) {
-                    send(t("Transient parents:").tr().hl())
+                    send(INFO_HEADER_PARENTS_TRANSIENT().hl())
                     printParents(src, transientData)
                 }
             }
         }
 
-        private fun <Text> MessageFormatter<Text>.printPermissions(
+        private fun <Text: Any> MessageFormatter<Text>.printPermissions(
             src: Commander<Text>,
             data: ImmutableSubjectData
         ) {
             val targetContexts = data.allPermissions.keys + data.allDefaultValues.keys
             for (entry in targetContexts) {
                 src.msg(listOf(-INDENT, formatContexts(entry), -":").concat())
-                src.msg(-DOUBLE_INDENT + t("Default permission: %s", data.getDefaultValue(entry)).tr().hl())
+                src.msg(-DOUBLE_INDENT + INFO_PERMISSIONS_DEFAULT(-data.getDefaultValue(entry).toString()).hl())
                 data.getPermissions(entry).forEach { (k, v) ->
                     src.msg(-DOUBLE_INDENT + permission(k, v))
                 }
             }
         }
 
-        private fun <Text> MessageFormatter<Text>.printOptions(
+        private fun <Text: Any> MessageFormatter<Text>.printOptions(
             src: Commander<Text>,
             data: ImmutableSubjectData
         ) {
@@ -110,7 +119,7 @@ import ca.stellardrift.permissionsex.util.command.CommandSpec
             }
         }
 
-        private fun <TextType> MessageFormatter<TextType>.printParents(
+        private fun <TextType: Any> MessageFormatter<TextType>.printParents(
             src: Commander<TextType>,
             data: ImmutableSubjectData
         ) {

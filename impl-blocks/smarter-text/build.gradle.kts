@@ -22,6 +22,14 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
 applyCommonSettings()
 setupPublication()
 
+plugins {
+    id("ca.stellardrift.localization")
+}
+
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
+}
+
 dependencies {
     api(project(":permissionsex-core"))
 }

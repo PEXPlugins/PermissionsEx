@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.backend.sql;
 
+import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.backend.sql.dao.H2SqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.MySqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.SchemaMigration;
@@ -51,7 +52,6 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static ca.stellardrift.permissionsex.backend.sql.SchemaMigrations.VERSION_LATEST;
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 /**
  * DataSource for SQL data
@@ -104,11 +104,11 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
                 final String database = conn.getMetaData().getDatabaseProductName().toLowerCase();
                 this.daoFactory = daoImplementations.get(database);
                 if (this.daoFactory == null) {
-                    throw new PermissionsLoadingException(t("Database implementation %s is not supported!", database));
+                    throw new PermissionsLoadingException(Messages.SQL_DB_IMPL_NOT_SUPPORTED.get(database));
                 }
             }
         } catch (SQLException e) {
-            throw new PermissionsLoadingException(t("Could not connect to SQL database!"), e);
+            throw new PermissionsLoadingException(Messages.SQL_DB_CONNECTION_ERROR.get(), e);
         }
 
         /*try (SqlDao conn = getDao()) {
@@ -124,7 +124,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
             try {
                 return initializeTables();
             } catch (SQLException e) {
-                throw new PermissionsLoadingException(t("Error initializing tables in SQL database!"), e);
+                throw new PermissionsLoadingException(Messages.SQL_ERROR_INITIALIZE_TABLES.get(), e);
             }
         } else {
             return true;
@@ -151,7 +151,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
                 });
                 if (initialVersion != finalVersion) {
                     dao.setSchemaVersion(finalVersion);
-                    getManager().getLogger().info(t("Updated database schema from version %s to %s", initialVersion, finalVersion));
+                    getManager().getLogger().info(Messages.SQL_SCHEMA_UPDATE_SUCCESS.get(initialVersion, finalVersion));
                 }
                 return true;
             }
@@ -195,7 +195,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
                     return new SqlSubjectData(SubjectRef.unresolved(type, identifier));
                 }
             } catch (SQLException e) {
-                throw new PermissionsLoadingException(t("Error loading permissions for %s %s", type, identifier), e);
+                throw new PermissionsLoadingException(Messages.SQL_ERROR_LOADING.get(type, identifier));
             }
         });
     }

@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Translations.t
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.ClickEvent
@@ -49,6 +48,8 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
     }
 
     abstract fun getFriendlyName(subj: Entry<String, String>): String?
+
+    protected open fun transformCommand(cmd: String): String = cmd
 
     override fun subject(subject: Entry<String, String>): BaseComponent {
         val subjType: SubjectType = pex.getSubjects(subject.key)
@@ -82,22 +83,22 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
             addExtra(typeComponent)
             addExtra(" ")
             addExtra(nameText)
-            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(t("Click to view more info").tr()))
+            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(Messages.FORMATTER_BUTTON_INFO_PROMPT()))
             clickEvent =
-                ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex " + subject.key + " " + subject.value + " info")
+                ClickEvent(ClickEvent.Action.RUN_COMMAND, transformCommand("/pex " + subject.key + " " + subject.value + " info"))
         }
     }
 
     override fun ladder(ladder: RankLadder): BaseComponent {
         return TextComponent(ladder.name).apply {
             isBold = true
-            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(t("click here to view more info").tr()))
-            clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex rank " + ladder.name)
+            hoverEvent = HoverEvent(Action.SHOW_TEXT, arrayOf(Messages.FORMATTER_BUTTON_INFO_PROMPT()))
+            clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, transformCommand("/pex rank " + ladder.name))
         }
     }
 
     override fun booleanVal(value: Boolean): BaseComponent {
-        val ret = if (value) t("true").tr() else t("false").tr()
+        val ret = if (value) Messages.FORMATTER_BOOLEAN_TRUE() else Messages.FORMATTER_BOOLEAN_FALSE()
         ret.color = if (value) ChatColor.GREEN else ChatColor.RED
         return ret
     }
@@ -125,7 +126,7 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
             }
             clickEvent = ClickEvent(
                 if (execute) ClickEvent.Action.RUN_COMMAND else ClickEvent.Action.SUGGEST_COMMAND,
-                command
+                transformCommand(command)
             )
         }
     }
@@ -135,7 +136,7 @@ abstract class BungeeMessageFormatter(protected val cmd: Commander<BaseComponent
         return title.tr().apply {
             isUnderlined = true
             color = hlColour
-            clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
+            clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, transformCommand(command))
         }
     }
 

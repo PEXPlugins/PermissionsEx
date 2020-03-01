@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.commands.commander.ButtonType
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.sponge.SpongeTranslations.t
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.Util
 import org.spongepowered.api.command.CommandSource
@@ -31,15 +30,13 @@ import org.spongepowered.api.text.action.TextActions
 import org.spongepowered.api.text.format.TextColor
 import org.spongepowered.api.text.format.TextColors
 import org.spongepowered.api.text.format.TextStyles
-import org.spongepowered.api.text.translation.Translation
-import org.spongepowered.api.util.annotation.NonnullByDefault
-import java.util.Locale
+import org.spongepowered.api.text.translation.FixedTranslation
 import java.util.concurrent.ExecutionException
 
 /**
  * Factory to create formatted elements of messages
  */
-internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin) :
+internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin, private val cmd: SpongeCommander) :
     MessageFormatter<Text.Builder> {
     override fun subject(subject: Map.Entry<String, String>): Text.Builder {
         val source =
@@ -55,10 +52,10 @@ internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin) :
                             .subjectData
                             .getOptions(SubjectData.GLOBAL_CONTEXT)["name"]
                     } catch (e: InterruptedException) {
-                        pex.logger.error(t("Unable to get name for subject %s", subject), e)
+                        pex.logger.error(Messages.FORMATTER_ERROR_SUBJECT_NAME[subject], e)
                         null
                     } catch (e: ExecutionException) {
-                        pex.logger.error(t("Unable to get name for subject %s", subject), e)
+                        pex.logger.error(Messages.FORMATTER_ERROR_SUBJECT_NAME[subject], e)
                         null
                     }
                 }
@@ -78,19 +75,19 @@ internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin) :
             Text.of(" "),
             nameText
         )
-            .onHover(TextActions.showText(t("Click to view more info").tr().build()))
+            .onHover(TextActions.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT().build()))
             .onClick(TextActions.runCommand("/pex " + subject.key + " " + subject.value + " info"))
     }
 
     override fun ladder(ladder: RankLadder): Text.Builder {
         return Text.builder(ladder.name)
             .style(TextStyles.BOLD)
-            .onHover(TextActions.showText(t("Click here to view more info").tr().build()))
+            .onHover(TextActions.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT().build()))
             .onClick(TextActions.runCommand("/pex rank " + ladder.name))
     }
 
     override fun booleanVal(value: Boolean): Text.Builder {
-        return (if (value) t("true") else t("false")).tr().color(if (value) TextColors.GREEN else TextColors.RED)
+        return (if (value) Messages.FORMATTER_BOOLEAN_TRUE() else Messages.FORMATTER_BOOLEAN_FALSE()).color(if (value) TextColors.GREEN else TextColors.RED)
     }
 
     override fun button(
@@ -182,19 +179,15 @@ internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin) :
         }
         var args = args
         if (unwrapArgs) {
-            val oldArgs = args
-            args = arrayOfNulls(oldArgs.size)
-            for (i in oldArgs.indices) {
-                var arg = oldArgs[i]
-                if (arg is Translatable) {
-                    arg = arg.tr().build()
-                } else if (arg is Text.Builder) {
-                    arg = arg.build()
+            args = args.map {
+                when {
+                    it is Translatable -> it.tr().build()
+                    it is Text.Builder -> it.build()
+                    else -> it
                 }
-                args[i] = arg
-            }
+            }.toTypedArray()
         }
-        return Text.builder(PEXTranslation(this), *args)
+        return Text.builder(FixedTranslation(this.translate(cmd.locale)), *args)
     }
 
 
@@ -214,19 +207,3 @@ internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin) :
     }
 }
 
-@NonnullByDefault
-internal class PEXTranslation(private val translation: Translatable) :
-    Translation {
-    override fun getId(): String {
-        return translation.untranslated
-    }
-
-    override fun get(locale: Locale): String {
-        return translation.translate(locale)
-    }
-
-    override fun get(locale: Locale, vararg objects: Any): String {
-        return translation.translateFormatted(locale)
-    }
-
-}

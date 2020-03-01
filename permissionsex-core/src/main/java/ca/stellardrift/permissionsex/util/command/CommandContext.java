@@ -18,12 +18,11 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.util.TranslatableProvider;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import java.util.Collection;
-
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 /**
  * Context that a command is executed in
@@ -52,6 +51,10 @@ public class CommandContext {
         return (Collection) parsedArgs.get(key);
     }
 
+    public <T> Collection<T> getAll(TranslatableProvider key) {
+        return getAll(key.getKey());
+    }
+
     @SuppressWarnings("unchecked")
     public <T> T getOne(String key) {
         Collection<Object> values = parsedArgs.get(key);
@@ -60,6 +63,10 @@ public class CommandContext {
         } else {
             return (T) values.iterator().next();
         }
+    }
+
+    public <T> T getOne(TranslatableProvider key) {
+        return getOne(key.getKey());
     }
 
     public void putArg(String key, Object value) {
@@ -71,11 +78,15 @@ public class CommandContext {
 
     public void checkPermission(Commander<?> commander, String permission) throws CommandException {
         if (!commander.hasPermission(permission)) {
-            throw new CommandException(t("You do not have permission to use this command!"));
+            throw new CommandException(CommonMessages.ERROR_PERMISSION.get());
         }
     }
 
     public boolean hasAny(String key) {
         return parsedArgs.containsKey(key);
+    }
+
+    public boolean hasAny(TranslatableProvider key) {
+        return parsedArgs.containsKey(key.getKey());
     }
 }

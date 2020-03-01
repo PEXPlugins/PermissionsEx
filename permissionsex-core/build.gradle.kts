@@ -26,7 +26,9 @@ import ca.stellardrift.permissionsex.gradle.useJUnit5
 
 plugins {
     antlr
+    id("ca.stellardrift.localization")
 }
+
 
 applyCommonSettings()
 useJUnit5()
@@ -47,7 +49,6 @@ dependencies {
         exclude("com.google.errorprone")
     }
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
-    api("com.github.TheFrontier.director:director-core:0.16.0")
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
@@ -56,6 +57,65 @@ dependencies {
     testImplementation("org.mariadb.jdbc:mariadb-java-client:2.4.3")
     testImplementation("org.postgresql:postgresql:42.2.6")
 }
+
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
+}
+
+/*val messagesDir = "src/main/messages"
+val messagesTemplate = objects.fileProperty()
+val messagesDestination = "$buildDir/generated-src/messages"
+messagesTemplate.set(rootProject.file("etc/messages-template.kt.tmpl"))
+
+val generateLocalization by tasks.creating {
+    val templateEngine = groovy.text.StreamingTemplateEngine()
+    inputs.file(messagesTemplate)
+    inputs.dir(messagesDir)
+    outputs.dir(messagesDestination)
+
+    doLast {
+        val tree = objects.fileTree().from(project.file(messagesDir))
+        val template = templateEngine.createTemplate(messagesTemplate.get().asFile)
+
+        tree.matching {
+            include("**//*.properties")
+            exclude { it.name.contains('_') }
+        }.visit {
+            if (this.isDirectory) {
+                return@visit
+            }
+            val path = this.relativePath
+
+            val packageName = path.parent.segments.joinToString(".").toLowerCase(Locale.ROOT)
+            val className = path.lastName.split('.', limit = 2).first().capitalize()
+            val destinationPath = path.replaceLastName("$className.kt").getFile(project.file(messagesDestination))
+
+            val propertiesFile = Properties()
+            FileReader(this.file).use {
+                propertiesFile.load(it)
+            }
+
+
+            val templateData = mapOf(
+                "packageName" to packageName,
+                "className" to className,
+                "keys" to propertiesFile.keys
+            )
+
+            destinationPath.parentFile.mkdirs()
+            FileWriter(destinationPath).use {
+                template.make(templateData).writeTo(it)
+            }
+
+        }
+    }
+}
+
+extensions.getByType(org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetContainer::class).sourceSets["main"].apply {
+    kotlin.srcDir(file(messagesDestination))
+}
+sourceSets["main"].resources.srcDir(messagesDir)
+tasks.compileKotlin.get().dependsOn(generateLocalization)*/
 
 tasks.generateGrammarSource {
     val grammarPackage = "${project.group}.util.glob.parser"

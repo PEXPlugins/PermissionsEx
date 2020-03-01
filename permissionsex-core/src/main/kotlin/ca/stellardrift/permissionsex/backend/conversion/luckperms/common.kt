@@ -18,15 +18,17 @@
 package ca.stellardrift.permissionsex.backend.conversion.luckperms
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_DESCRIPTION_FILE_COMBINED
+import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_DESCRIPTION_FILE_SEPARATE
+import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_NAME
 import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider
 import ca.stellardrift.permissionsex.backend.conversion.ConversionResult
-import ca.stellardrift.permissionsex.util.Translations.t
 import java.nio.file.Files
 
 object LuckPermsConversionProvider : ConversionProvider {
     private val formatNames = enumValues<ConfigFormat>()
 
-    override val name = t("LuckPerms")
+    override val name = LUCKPERMS_NAME.get()
 
     override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
         val luckBaseDir = pex.baseDirectory.parent.resolve("LuckPerms")
@@ -35,11 +37,11 @@ object LuckPermsConversionProvider : ConversionProvider {
             val configDir = luckBaseDir.resolve(format.storageDirName)
             if (Files.exists(configDir)) {
                 if (Files.isDirectory(configDir.resolve("groups"))) {
-                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}", format, false), t("LuckPerms %s separate", format.name))
+                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}", format, false), LUCKPERMS_DESCRIPTION_FILE_SEPARATE[format.name])
                 }
 
                 if (Files.isRegularFile(configDir.resolve("groups.${format.extension}"))) {
-                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}-combined", format, true), t("LuckPerms %s combined", format.name))
+                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}-combined", format, true), LUCKPERMS_DESCRIPTION_FILE_COMBINED[format.name])
                 }
             }
         }

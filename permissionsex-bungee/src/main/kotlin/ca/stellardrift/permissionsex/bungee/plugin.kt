@@ -30,7 +30,6 @@ import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.ProxyServer
@@ -122,7 +121,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         try {
             manager.getSubjects(SUBJECTS_USER).load(event.connection.uniqueId.toString())
         } catch (e: Exception) {
-            logger.warn(t("Error loading information for user %s/%s during handshake", event.connection.name, event.connection.uniqueId), e)
+            logger.warn(Messages.ERROR_LOAD_LOGIN[event.connection.name, event.connection.uniqueId], e)
         }
     }
 
@@ -132,7 +131,7 @@ class PermissionsExPlugin : Plugin(), Listener {
             callbackController.clearOwnedBy(event.player.uniqueId)
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
         } catch (e: Exception)  {
-            logger.warn(t("Error unloading user %s/%s during disconnect", event.player.name, event.player.uniqueId))
+            logger.warn(Messages.ERROR_LOAD_LOGOUT[event.player.name, event.player.uniqueId])
         }
     }
 

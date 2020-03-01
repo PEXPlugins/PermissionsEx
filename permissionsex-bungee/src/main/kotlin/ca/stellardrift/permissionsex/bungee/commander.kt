@@ -85,4 +85,11 @@ class BungeePluginMessageFormatter(pex: PermissionsExPlugin, sender: BungeeComma
         return pex.getSubjects(subj.key).typeInfo.getAssociatedObject(subj.value).castMap<CommandSender, String> { name }
     }
 
+    /**
+     * On Bungee and other proxies, we have an extra `/` in front of commands -- this makes clickables work properly
+     */
+    override fun transformCommand(cmd: String): String {
+        return "/$cmd"
+    }
+
 }

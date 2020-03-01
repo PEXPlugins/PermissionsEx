@@ -17,7 +17,6 @@
 
 package ca.stellardrift.permissionsex.fabric
 
-import ca.stellardrift.permissionsex.util.Translations.t
 import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.event.platform.PlatformReadyEvent
 import com.sk89q.worldedit.fabric.FabricPermissionsProvider
@@ -37,7 +36,7 @@ class PEXWorldEditProvider : FabricPermissionsProvider {
     @Subscribe
     fun onPlatformReady(event: PlatformReadyEvent) {
         FabricWorldEdit.inst.permissionsProvider = this
-        PermissionsExMod.logger.info(t("Successfully registered %s permission resolver", "WorldEdit"))
+        PermissionsExMod.logger.info(Messages.INTEGRATION_REGISTER_SUCCESS["WorldEdit"])
     }
 }
 

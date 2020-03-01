@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.config;
 
 import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.exception.PEBKACException;
 import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -27,7 +28,6 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
-import ca.stellardrift.permissionsex.exception.PEBKACException;
 
 import java.io.IOException;
 import java.net.URL;
@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.Messages.*;
 
 /**
  * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
@@ -146,14 +146,14 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     @Override
     public void validate() throws PEBKACException {
         if (backends.isEmpty()) {
-            throw new PEBKACException(t("No backends defined!"));
+            throw new PEBKACException(CONFIG_ERROR_NO_BACKENDS.get());
         }
         if (defaultBackend == null) {
-            throw new PEBKACException(t("Default backend is not set!"));
+            throw new PEBKACException(CONFIG_ERROR_NO_DEFAULT.get());
         }
 
         if (!backends.containsKey(defaultBackend)) {
-            throw new PEBKACException(t("Default backend % is not an available backend! Choices are: %s", defaultBackend, backends.keySet()));
+            throw new PEBKACException(CONFIG_ERROR_INVALID_DEFAULT.get(defaultBackend, backends.keySet()));
         }
     }
 
@@ -173,7 +173,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     public static ConfigurationNode loadDefaultConfiguration() throws IOException {
         final URL defaultConfig = FilePermissionsExConfiguration.class.getResource("default.conf");
         if (defaultConfig == null) {
-            throw new Error(t("Default config file is not present in jar!").translate(Locale.getDefault()));
+            throw new Error(CONFIG_ERROR_DEFAULT_CONFIG.get().translate(Locale.getDefault()));
         }
         HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder().setURL(defaultConfig).build();
         return fallbackLoader.load();

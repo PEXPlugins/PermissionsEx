@@ -18,8 +18,10 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_TRANSIENT
+import ca.stellardrift.permissionsex.commands.Messages.DELETE_ERROR_DOES_NOT_EXIST
+import ca.stellardrift.permissionsex.commands.Messages.DELETE_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 
@@ -30,27 +32,24 @@ internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
     return CommandSpec.builder()
         .setAliases("delete", "del", "remove", "rem")
         .setExecutor(object : PermissionsExExecutor(pex) {
-            override fun <TextType> execute(
+            override fun <TextType: Any> execute(
                 src: Commander<TextType>,
                 args: CommandContext
             ) {
                 val subject = subjectOrSelf(src, args)
                 src.checkSubjectPermission(subject.identifier, "permissionsex.delete")
                 val cache =
-                    if (args.hasAny("transient")) subject.transientData().cache else subject.data().cache
+                    if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData().cache else subject.data().cache
                 cache.isRegistered(subject.identifier.value)
                     .thenCompose { registered ->
                         if (!registered) {
                             throw RuntimeCommandException(
-                                t(
-                                    "Subject %s does not exist!",
-                                    src.formatter.subject(subject)
-                                )
+                                DELETE_ERROR_DOES_NOT_EXIST[src.formatter.subject(subject)]
                             )
                         }
                         cache.remove(subject.identifier.value)
                     }
-                    .thenMessageSubject(src) { -> t("Successfully deleted data for subject %s", -subject) }
+                    .thenMessageSubject(src) { send -> send(DELETE_SUCCESS(-subject)) }
             }
         })
         .build()

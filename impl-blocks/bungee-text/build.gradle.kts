@@ -22,11 +22,19 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
 applyCommonSettings()
 setupPublication()
 
+plugins {
+    id("ca.stellardrift.localization")
+}
+
 repositories {
     maven {
         name = "bungeecord-repo"
         url = uri("https://oss.sonatype.org/content/repositories/snapshots")
     }
+}
+
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
 dependencies {

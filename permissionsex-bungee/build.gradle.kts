@@ -24,6 +24,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("com.github.johnrengelman.shadow")
+    id("ca.stellardrift.localization")
 }
 
 applyCommonSettings()
@@ -58,6 +59,10 @@ dependencies {
 
 tasks.processResources {
     expand("project" to project)
+}
+
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
 val relocateRoot = project.ext["pexRelocateRoot"]

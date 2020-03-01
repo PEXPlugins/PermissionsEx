@@ -17,14 +17,11 @@
 
 package ca.stellardrift.permissionsex.util.glob;
 
+import ca.stellardrift.permissionsex.util.globs.GlobMessages;
 import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.util.glob.parser.GlobLexer;
 import ca.stellardrift.permissionsex.util.glob.parser.GlobParser;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
@@ -64,7 +61,9 @@ public class Globs {
             walker.walk(listener, parser.rootGlob());
         } catch (ParseCancellationException e) {
             RecognitionException ex = ((RecognitionException) e.getCause());
-            throw new GlobParseException("Unable to parse glob: Error at token " + ex.getOffendingToken().getText() + " at position " +  ex.getOffendingToken().getLine() + ":" + ex.getOffendingToken().getCharPositionInLine(), ex);
+            Token errorToken = ex.getOffendingToken();
+            throw new GlobParseException(GlobMessages.ERROR_PARSE.get(errorToken.getText(),
+                    errorToken.getLine(), errorToken.getCharPositionInLine()), ex);
         }
 
         return listener.popNode();

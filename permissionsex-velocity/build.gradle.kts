@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 plugins {
     id("com.github.johnrengelman.shadow")
     kotlin("kapt")
+    id("ca.stellardrift.localization")
 }
 
 applyCommonSettings()
@@ -55,6 +56,9 @@ dependencies {
     kapt("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
 }
 
+localization {
+    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
+}
 
 // Expand tokens in source templates
 val generatedSourceRoot = "$buildDir/generated/kotlin-templates"

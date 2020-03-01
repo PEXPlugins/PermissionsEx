@@ -60,7 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.backend.Messages.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public final class FileDataStore extends AbstractDataStore<FileDataStore> {
@@ -108,7 +108,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
         }
 
         ret.setErrorCallback((e, state) -> {
-            getManager().getLogger().error(t("Error while %s permissions configuration: %s. Old configuration will continue to be used until the error is corrected.", state, e.getLocalizedMessage()), e);
+            getManager().getLogger().error(FILE_ERROR_AUTORELOAD.get(state, e.getLocalizedMessage()));
             return Unit.INSTANCE;
         });
 
@@ -126,7 +126,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
             try {
                 this.listeners.call(key, getDataSync(key.getKey(), key.getValue()));
             } catch (PermissionsLoadingException e) {
-                getManager().getLogger().error(t("During an automatic reload of the permissions storage, %s %s failed to load:", key.getKey(), key.getValue()), e);
+                getManager().getLogger().error(FILE_ERROR_SUBJECT_AUTORELOAD.get(key.getKey(), key.getValue()));
             }
         });
 
@@ -136,7 +136,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
         this.contextInheritanceListeners.getAllKeys().forEach(key ->
                 this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
 
-        getManager().getLogger().info(t("Automatically reloaded %s based on a change made outside of PEX", this.file));
+        getManager().getLogger().info(FILE_RELOAD_AUTO.get(this.file));
 
         return Unit.INSTANCE;
     }
@@ -150,7 +150,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
             permissionsConfig.save(legacyLoader.load());
             Files.move(legacyPermissionsFile, legacyPermissionsFile.resolveSibling(legacyPermissionsFile.getFileName().toString() + ".legacy-backup"));
         } catch (IOException e) {
-            throw new PermissionsLoadingException(t("While loading legacy %s permissions from %s", formatName, legacyPermissionsFile), e);
+            throw new PermissionsLoadingException(FILE_ERROR_LEGACY_MIGRATION.get(formatName, legacyPermissionsFile), e);
         }
         return permissionsFile;
     }
@@ -170,7 +170,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
             try {
                 permissionsConfig = createLoader(permissionsFile);
             } catch (IOException e) {
-                throw new PermissionsLoadingException(t("While loading permissions file from %s", permissionsFile), e);
+                throw new PermissionsLoadingException(FILE_ERROR_LOAD.get(permissionsFile), e);
             }
         }
 
@@ -184,7 +184,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
             } catch (PermissionsLoadingException e) {
                 throw e;
             } catch (Exception e) {
-                throw new PermissionsLoadingException(t("Error creating initial data for file backend"), e);
+                throw new PermissionsLoadingException(FILE_ERROR_INITIAL_DATA.get(), e);
             }
             return false;
         } else {
@@ -193,11 +193,11 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
             versionUpdater.apply(permissionsConfig.getNode());
             int endVersion = permissionsConfig.get("schema-version").getInt();
             if (endVersion > startVersion) {
-                getManager().getLogger().info(t("%s schema version updated from %s to %s", permissionsFile, startVersion, endVersion));
+                getManager().getLogger().info(FILE_SCHEMA_MIGRATION_SUCCESS.get(permissionsFile, startVersion, endVersion));
                 try {
                     save().get();
                 } catch (InterruptedException | ExecutionException e) {
-                    throw new PermissionsLoadingException(t("While performing version upgrade"), e);
+                    throw new PermissionsLoadingException(FILE_ERROR_SCHEMA_MIGRATION_SAVE.get(), e);
                 }
             }
             return true;
@@ -248,7 +248,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
         try {
             return FileSubjectData.fromNode(getSubjectsNode().getNode(type, identifier));
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(t("While deserializing subject data for %s:", identifier), e);
+            throw new PermissionsLoadingException(FILE_ERROR_DESERIALIZE_SUBJECT.get(), e);
         }
     }
 

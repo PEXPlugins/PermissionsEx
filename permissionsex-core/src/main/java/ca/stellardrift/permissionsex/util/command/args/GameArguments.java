@@ -17,17 +17,17 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
-import ca.stellardrift.permissionsex.commands.commander.Commander;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.util.command.ArgumentKeys.*;
 
 /**
  * Contains command elements for parts of the game
@@ -62,7 +62,7 @@ public class GameArguments {
             final String next = args.next();
             Set<String> subjectTypes = pex.getRegisteredSubjectTypes();
             if (!subjectTypes.contains(next)) {
-                throw args.createError(t("Subject type %s was not valid!", next));
+                throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.get(next));
             }
             return next;
         }
@@ -125,7 +125,7 @@ public class GameArguments {
             }
 
             if (!subjType.getTypeInfo().isNameValid(identifier)) {
-                throw args.createError(t("Name '%s' is invalid for subjects of type %s", identifier, type));
+                throw args.createError(SUBJECT_ERROR_NAMEINVALID.get(identifier, type));
             }
 
             return Maps.immutableEntry(type, identifier);
@@ -184,15 +184,15 @@ public class GameArguments {
             final String context = args.next(); // TODO: Allow multi-word contexts (<key> <value>)
             final String[] contextSplit = context.split("=", 2);
             if (contextSplit.length != 2) {
-                throw args.createError(t("Context must be of the form <key>=<value>!"));
+                throw args.createError(CONTEXT_ERROR_FORMAT.get());
             }
             ContextDefinition<?> def = pex.getContextDefinition(contextSplit[0]);
             if (def == null) {
-                throw args.createError(t("Unknown context type %s", contextSplit[0]));
+                throw args.createError(CONTEXT_ERROR_TYPE.get(contextSplit[0]));
             }
             ContextValue<?> ret = toCtxValue(def, contextSplit[1]);
             if (ret == null) {
-                throw args.createError(t("Unable to parse value for context " + context));
+                throw args.createError(CONTEXT_ERROR_VALUE.get(context));
             }
             return ret;
         }

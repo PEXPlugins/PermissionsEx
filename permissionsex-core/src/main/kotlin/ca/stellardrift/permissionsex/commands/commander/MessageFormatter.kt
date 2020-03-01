@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.Translatable
+import ca.stellardrift.permissionsex.util.TranslatableProvider
 import com.google.common.collect.Maps
 
 enum class ButtonType {
@@ -41,7 +42,7 @@ enum class ButtonType {
 /**
  * Interface specifying code to get specific elements of commands
  */
-interface MessageFormatter<TextType> {
+interface MessageFormatter<TextType: Any> {
     /**
      * Print the subject in a user-friendly manner. May link to the subject info printout
      *
@@ -162,6 +163,11 @@ interface MessageFormatter<TextType> {
 
     operator fun Translatable.unaryMinus(): TextType {
         return this.tr()
+    }
+
+    @JvmDefault
+    operator fun TranslatableProvider.invoke(vararg args: TextType): TextType {
+        return this.get(*args).tr()
     }
 
     /**

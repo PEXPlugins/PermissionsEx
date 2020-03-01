@@ -34,7 +34,7 @@ internal class SpongeCommander(
     private val pex: PermissionsExPlugin,
     private val commandSource: CommandSource
 ) : Commander<Text.Builder> {
-    override val formatter: SpongeMessageFormatter = SpongeMessageFormatter(pex)
+    override val formatter: SpongeMessageFormatter = SpongeMessageFormatter(pex, this)
     override val name: String
         get() = commandSource.name
 

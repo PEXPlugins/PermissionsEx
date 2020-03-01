@@ -35,7 +35,6 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import ca.stellardrift.permissionsex.util.Translations;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableList;
@@ -62,10 +61,10 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static ca.stellardrift.permissionsex.Messages.*;
 import static ca.stellardrift.permissionsex.commands.PermissionsExCommandsKt.createRootCommand;
 import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getDemoteCommand;
 import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromoteCommand;
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 
 /**
@@ -158,7 +157,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                             }
                         }).collect(Collectors.toSet());
                 if (!toConvert.isEmpty()) {
-                    getLogger().info(t("Trying to convert users stored by name to UUID"));
+                    getLogger().info(UUIDCONVERSION_BEGIN.get());
                 } else {
                     return CompletableFuture.completedFuture(0);
                 }
@@ -170,7 +169,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                             dataStore.isRegistered(SUBJECTS_USER, lookupName)
                                     .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
                                 if (newRegistered) {
-                                    getLogger().warn(t("Duplicate entry for %s found while converting to UUID", newIdentifier + "/" + profile.getName()));
+                                    getLogger().warn(UUIDCONVERSION_ERROR_DUPLICATE.get(newIdentifier));
                                     return false;
                                 } else if (!oldRegistered) {
                                     return false;
@@ -194,16 +193,14 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                 });
             }).thenAccept(result -> {
                     if (result != null && result > 0) {
-                        getLogger().info(Translations.tn("%s user successfully converted from name to UUID",
-                                "%s users successfully converted from name to UUID!",
-                                result, result));
+                        getLogger().info(UUIDCONVERSION_END.get(result));
                     }
                 }).exceptionally(t -> {
-                    getLogger().error(t("Error converting users to UUID"), t);
+                    getLogger().error(UUIDCONVERSION_ERROR_GENERAL.get(), t);
                     return null;
                 });
         } catch (UnknownHostException e) {
-            getLogger().warn(t("Unable to resolve Mojang API for UUID conversion. Do you have an internet connection? UUID conversion will not proceed (but may not be necessary)."));
+            getLogger().warn(UUIDCONVERSION_ERROR_DNS.get());
         }
 
     }
@@ -373,7 +370,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
             initialize(config);
             getSubjects(SUBJECTS_GROUP).cacheAll();
         } catch (IOException e) {
-            throw new PEBKACException(t("Error while loading configuration: %s", e.getLocalizedMessage()));
+            throw new PEBKACException(CONFIG_ERROR_LOAD.get(e.getLocalizedMessage()));
         }
     }
 
@@ -391,12 +388,11 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         try {
             newState.config.save();
         } catch (IOException e) {
-            throw new PermissionsLoadingException(t("Unable to write permissions configuration"), e);
+            throw new PermissionsLoadingException(CONFIG_ERROR_SAVE.get(), e);
         }
 
         if (shouldAnnounceImports) {
-            getLogger().warn(t("Welcome to PermissionsEx! We're creating some default data. If you have data from " +
-                    "another plugin to import, it will be listed below now. Run the command /pex import [id] to import from one of those backends:"));
+            getLogger().warn(CONVERSION_BANNER.get());
         }
 
         List<ConversionResult> allResults = new LinkedList<>();
@@ -404,9 +400,9 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
             List<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
-                    getLogger().info(t("  Plugin %s has data in:", prov.getName()));
+                    getLogger().info(CONVERSION_PLUGINHEADER.get(prov.getName()));
                     for (ConversionResult result : res) {
-                        getLogger().info(t("    - %s: %s", result.getTitle(), result.getStore().getName()));
+                        getLogger().info(CONVERSION_INSTANCE.get(result.getTitle(), result.getStore().getName()));
                     }
                 }
                 allResults.addAll(res);
@@ -436,7 +432,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
         // Migrate over legacy subject data
         newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
-            getLogger().info(t("Successfully migrated old-style default data to new location"));
+            getLogger().info(CONVERSION_RESULT_SUCCESS.get());
         });
     }
 

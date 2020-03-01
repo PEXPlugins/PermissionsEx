@@ -18,19 +18,13 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
-import ca.stellardrift.permissionsex.util.command.args.CommandArgs;
-import ca.stellardrift.permissionsex.util.command.args.CommandElement;
-import ca.stellardrift.permissionsex.util.command.args.GameArguments;
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
-import ca.stellardrift.permissionsex.util.command.args.QuotedStringParser;
-import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.util.command.args.*;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Collections;
 import java.util.List;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
 
 /**
  * Specification for how command arguments should be parsed
@@ -166,16 +160,16 @@ public class CommandSpec {
             executor.execute(commander, args);
         } catch (CommandException ex) {
             commander.error(ex.getTranslatableMessage());
-            commander.error(t("Usage: %s", getUsage(commander)));
+            commander.error(CommonMessages.USAGE.get(getUsage(commander)));
         } catch (Throwable t) {
-            commander.error(t("Error occurred while executing command: %s", String.valueOf(t.getMessage())));
+            commander.error(CommonMessages.ERROR_GENERAL.get(String.valueOf(t.getMessage())));
             t.printStackTrace();
         }
     }
 
     public <TextType> void checkPermission(Commander<TextType> commander) throws CommandException {
         if (this.permission != null && !commander.hasPermission(permission)) {
-            throw new CommandException(t("You do not have permission to use this command!"));
+            throw new CommandException(CommonMessages.ERROR_PERMISSION.get());
         }
     }
 
@@ -190,7 +184,7 @@ public class CommandSpec {
         this.args.parse(args, context);
         if (args.hasNext()) {
             args.next();
-            throw args.createError(t("Too many arguments!"));
+            throw args.createError(CommonMessages.ERROR_ARGUMENTS_TOOMANY.get());
         }
     }
 

@@ -28,7 +28,6 @@ import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.TranslatableLogger
 import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.google.common.collect.Iterables
@@ -87,7 +86,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger.prefix = "[${container.metadata.name}] "
 
-        logger.info(t("Loaded mod v%s", container.metadata.version.friendlyString))
+        logger.info(Messages.MOD_LOAD_SUCCESS[container.metadata.version.friendlyString])
         ServerStartCallback.EVENT.register(ServerStartCallback {init(it) })
         ServerStopCallback.EVENT.register(ServerStopCallback {  shutdown(it) })
         CommandRegistry.INSTANCE.register(true) {
@@ -107,7 +106,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             _manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(loader), this)
         } catch (e: Exception) {
-            logger.error(t("Unable to enable PEX"), e)
+            logger.error(Messages.MOD_ENABLE_ERROR.get(), e)
             server.stop(false)
             return
         }
@@ -124,7 +123,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
         tryRegisterCommands()
-        logger.info(t("v%s successfully enabled! Welcome!", container.metadata.version))
+        logger.info(Messages.MOD_ENABLE_SUCCESS[container.metadata.version])
     }
 
     private fun shutdown(server: MinecraftServer) {
@@ -137,7 +136,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
-            logger.error(t("Unable to shut down PermissionsEx executor in 10 seconds, remaining tasks will be killed"))
+            logger.error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.get())
             this.exec.shutdownNow()
         }
     }
@@ -249,7 +248,7 @@ internal class PEXProfileLookupCallback(private val state: CountDownLatch, priva
 
     override fun onProfileLookupFailed(profile: GameProfile, exception: java.lang.Exception) {
         state.countDown()
-        PermissionsExMod.logger.error(t("Unable to resolve profile %s due to %s", profile, exception.message), exception)
+        PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_LOOKUP[profile, exception.message.toString()], exception)
     }
 
 }

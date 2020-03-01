@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
 import static java.util.Map.Entry;
 
 /**
@@ -105,7 +104,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     private CompletableFuture<Void> visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
-            state.pex.getLogger().warn(t("Potential circular inheritance found while traversing inheritance for %s when visiting %s", state.base.getIdentifier(), subject));
+            state.pex.getLogger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.get(state.base.getIdentifier(), subject));
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);

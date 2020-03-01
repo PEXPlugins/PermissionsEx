@@ -18,10 +18,14 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT
+import ca.stellardrift.permissionsex.commands.Messages.OPTION_ARG_KEY
+import ca.stellardrift.permissionsex.commands.Messages.OPTION_ARG_VALUE
+import ca.stellardrift.permissionsex.commands.Messages.OPTION_SUCCESS_SET
+import ca.stellardrift.permissionsex.commands.Messages.OPTION_SUCCESS_UNSET
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -29,32 +33,30 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.option
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.optional
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.string
-import com.google.common.collect.ImmutableSet
 
 internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
     return CommandSpec.builder()
         .setAliases("options", "option", "opt", "o")
-        .setArguments(seq(option(t("key"), pex), optional(string(t("value")))))
+        .setArguments(seq(option(OPTION_ARG_KEY.get(), pex), optional(string(OPTION_ARG_VALUE.get()))))
         .setExecutor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun <TextType> execute(
+            override fun <TextType: Any> execute(
                 src: Commander<TextType>,
                 args: CommandContext
             ) {
                 val ref = getDataRef(src, args, "permissionsex.option.set")
-                val contexts: Set<ContextValue<*>> = ImmutableSet.copyOf(args.getAll("context"))
-                val key = args.getOne<String>("key")
-                val value = args.getOne<String>("value")
+                val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
+                val key = args.getOne<String>(OPTION_ARG_KEY)
+                val value = args.getOne<String>(OPTION_ARG_VALUE)
                 if (value == null) {
                     ref.update { old ->
                         old.setOption(contexts, key, null)
-                    }.thenMessageSubject(src) { ->
-                        t(
-                            "Unset option '%s' for %s in %s context",
-                            key,
+                    }.thenMessageSubject(src) { send ->
+                            send(OPTION_SUCCESS_UNSET(
+                            -key,
                             subject(ref).hl(),
                             formatContexts(contexts)
-                        )
+                        ))
                     }
                 } else {
                     ref.update { old: ImmutableSubjectData ->
@@ -63,13 +65,13 @@ internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
                             key,
                             value
                         )
-                    }.thenMessageSubject(src) { ->
-                        t(
-                            "Set option %s for %s in %s context",
+                    }.thenMessageSubject(src) { send ->
+                        send(
+                            OPTION_SUCCESS_SET(
                             option(key, value),
                             subject(ref).hl(),
                             formatContexts(contexts)
-                        )
+                        ))
                     }
                 }
             }

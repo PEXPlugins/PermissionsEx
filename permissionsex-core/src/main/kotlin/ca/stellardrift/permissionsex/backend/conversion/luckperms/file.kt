@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.backend.conversion.luckperms
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.backend.DataStore
+import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_ERROR_INVALID_TRACK
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
@@ -27,7 +28,6 @@ import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.rank.AbstractRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.ThrowingSupplier
-import ca.stellardrift.permissionsex.util.Translations.t
 import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig
 import ca.stellardrift.permissionsex.util.configurate.get
 import ca.stellardrift.permissionsex.util.configurate.set
@@ -364,13 +364,7 @@ class LuckPermsTrack internal constructor(name: String, val groups: List<String>
     override fun newWithRanks(ents: List<Map.Entry<String, String>>): LuckPermsTrack {
         return LuckPermsTrack(this.name, ents.map { (k, v) ->
             if (k != SUBJECTS_GROUP) {
-                throw PermissionsException(
-                    t(
-                        "LuckPerms backend only supports subject type group, but a subject with type %s was passed to rank ladder %s",
-                        k,
-                        this.name
-                    )
-                )
+                throw PermissionsException(LUCKPERMS_ERROR_INVALID_TRACK[k, this.name])
             }
             v
         })

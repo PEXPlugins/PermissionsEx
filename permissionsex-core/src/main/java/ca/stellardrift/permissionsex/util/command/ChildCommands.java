@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
 import ca.stellardrift.permissionsex.util.command.args.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
@@ -34,8 +35,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
-import static ca.stellardrift.permissionsex.util.Translations.untr;
 
 /**
  * Utility methods for handling child commands
@@ -73,7 +72,7 @@ public class ChildCommands {
         private final Map<String, CommandSpec> children;
 
         private ChildCommandElement(Map<String, CommandSpec> children) {
-            super(untr("child" + COUNTER.getAndIncrement()));
+            super(Translatable.Companion.fixed("child" + COUNTER.getAndIncrement()));
             this.children = ImmutableMap.copyOf(children);
         }
 
@@ -88,7 +87,7 @@ public class ChildCommands {
         protected Object parseValue(CommandArgs args) throws ArgumentParseException {
             final String key = args.next();
             if (!children.containsKey(key.toLowerCase())) {
-                throw args.createError(t("Input command %s was not a valid subcommand!", key));
+                throw args.createError(CommonMessages.ERROR_CHILDREN_UNKNOWN.get(key));
             }
 
             return children.get(key.toLowerCase());
@@ -170,7 +169,7 @@ public class ChildCommands {
                     fallbackExecutor.execute(src, args);
                     return;
                 } else {
-                    throw new CommandException(t("Invalid subcommand state -- only one command spec must be provided for child arg %s", key));
+                    throw new CommandException(CommonMessages.ERROR_CHILDREN_STATE.get(key));
                 }
             }
             spec.checkPermission(src);

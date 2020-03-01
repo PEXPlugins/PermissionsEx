@@ -25,7 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import static ca.stellardrift.permissionsex.util.Translations.t;
+import static ca.stellardrift.permissionsex.logging.Messages.CHECK_OPTION;
+import static ca.stellardrift.permissionsex.logging.Messages.CHECK_PERMISSION;
 
 /**
  * Log debug messages
@@ -52,7 +53,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     @Override
     public void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         if (this.filterPredicate.test(permission)) {
-            logger.info(t("Permission %s checked in %s for %s: %s", permission, contexts, stringIdentifier(subject), value));
+            logger.info(CHECK_PERMISSION.get(permission, contexts, stringIdentifier(subject), value));
         }
         delegate.onPermissionCheck(subject, contexts, permission, value);
     }
@@ -60,14 +61,14 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     @Override
     public void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value) {
         if (this.filterPredicate.test(option)) {
-            logger.info(t("Option %s checked in %s for %s: %s", option, contexts, stringIdentifier(subject), value));
+            logger.info(CHECK_OPTION.get(option, contexts, stringIdentifier(subject), value));
         }
         delegate.onOptionCheck(subject, contexts, option, value);
     }
 
     @Override
     public void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
-        logger.info(t("Parents checked in %s for %s: %s", contexts, stringIdentifier(subject), parents));
+        logger.info(Messages.CHECK_PARENT.get(contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }
 }

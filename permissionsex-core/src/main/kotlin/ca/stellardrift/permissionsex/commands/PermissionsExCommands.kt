@@ -20,8 +20,42 @@ package ca.stellardrift.permissionsex.commands
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.DataStoreFactories
+import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_CBTEXT
+import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_SUBJECT
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_SUBJECT_TYPE
+import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_TRANSIENT
+import ca.stellardrift.permissionsex.commands.Messages.DEBUG_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.DEBUG_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.DEBUG_SUCCESS_FILTER
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_ACTION_BEGINNING
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_ACTION_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_ARG_DATA_STORE
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_ERROR_UNKNOWN_STORE
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_LISTING_HEADER
+import ca.stellardrift.permissionsex.commands.Messages.IMPORT_LISTING_SUBTITLE
+import ca.stellardrift.permissionsex.commands.Messages.PEX_ARGS_FILTER
+import ca.stellardrift.permissionsex.commands.Messages.PEX_ARGS_LIST
+import ca.stellardrift.permissionsex.commands.Messages.PEX_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.PEX_LIST_HEADER
+import ca.stellardrift.permissionsex.commands.Messages.PEX_LIST_SUBTITLE
+import ca.stellardrift.permissionsex.commands.Messages.RELOAD_ACTION_BEGIN
+import ca.stellardrift.permissionsex.commands.Messages.RELOAD_ACTION_ERROR
+import ca.stellardrift.permissionsex.commands.Messages.RELOAD_ACTION_ERROR_CONSOLE
+import ca.stellardrift.permissionsex.commands.Messages.RELOAD_ACTION_SUCCESS
+import ca.stellardrift.permissionsex.commands.Messages.RELOAD_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_BASEDIRS_CONFIG
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_BASEDIRS_HEADER
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_BASEDIRS_JAR
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_BASEDIRS_SERVER
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_BASEDIRS_WORLDS
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_DESCRIPTION
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_RESPONSE_ACTIVE_DATA_STORE
+import ca.stellardrift.permissionsex.commands.Messages.VERSION_RESPONSE_AVAILABLE_DATA_STORES
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.Translations.t
+import ca.stellardrift.permissionsex.util.Translatable.Companion.fixed
 import ca.stellardrift.permissionsex.util.Util
 import ca.stellardrift.permissionsex.util.command.ChildCommands
 import ca.stellardrift.permissionsex.util.command.CommandContext
@@ -61,41 +95,42 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
 
         return CommandSpec.builder()
             .setAliases("pex", "permissionsex", "permissions")
-            .setDescription(t("Commands for PermissionsEx"))
+            .setDescription(PEX_DESCRIPTION.get())
             .setArguments(
                 optional(
                     firstParsing(children, Util.contextTransientFlags(pex)
                             .buildWith(
-                                seq(subject(t("subject"), pex), subjectChildren)
+                                seq(subject(COMMON_ARGS_SUBJECT.get(), pex), subjectChildren)
                             ), flags()
                             .flag("-transient")
                             .buildWith(
-                                seq(subjectType(t("subject-type"), pex), literal(t("list"), "list"), optional(string(t("filter"))))
+                                seq(subjectType(COMMON_ARGS_SUBJECT_TYPE.get(), pex), literal(PEX_ARGS_LIST.get(), "list"), optional(string(
+                                    PEX_ARGS_FILTER.get())))
                             ))
                 )
             )
             .setExecutor(object : CommandExecutor {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     when {
                         args.hasAny("list") -> {
-                            val subjectType = args.getOne<String>("subject-type")
+                            val subjectType = args.getOne<String>(COMMON_ARGS_SUBJECT_TYPE)
                             args.checkPermission(src, "permissionsex.command.list.$subjectType")
                             val cache =
-                                if (args.hasAny("transient")) pex.getSubjects(subjectType).transientData() else pex.getSubjects(
+                                if (args.hasAny(COMMON_ARGS_TRANSIENT)) pex.getSubjects(subjectType).transientData() else pex.getSubjects(
                                     subjectType
                                 ).persistentData()
                             var iter  = cache.allIdentifiers.asSequence()
-                            if (args.hasAny("filter")) {
-                                val filter = args.getOne<String>("filter")
+                            if (args.hasAny(PEX_ARGS_FILTER)) {
+                                val filter = args.getOne<String>(PEX_ARGS_FILTER)
                                 iter = iter.filter { it.startsWith(filter, ignoreCase = true) }
                             }
                             src.msgPaginated(
-                                t("%s subjects", subjectType),
-                                t("All subjects of type %s", subjectType),
+                                PEX_LIST_HEADER[subjectType],
+                                PEX_LIST_SUBTITLE[subjectType],
                                 iter.map { src.formatter.subject(subjectType to it) }.asIterable()
                             )
                         }
@@ -121,26 +156,26 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     private fun getDebugToggleCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("debug", "d")
-            .setDescription(t("Toggle debug mode"))
+            .setDescription(DEBUG_DESCRIPTION.get())
             .setPermission("permissionsex.debug")
-            .setArguments(optional(string(t("filter"))))
+            .setArguments(optional(string(PEX_ARGS_FILTER.get())))
             .setExecutor(object : CommandExecutor {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     val debugEnabled = !pex.hasDebugMode()
-                    val filter = args.getOne<String>("filter")
+                    val filter = args.getOne<String>(PEX_ARGS_FILTER)
                     src.msg {send ->
                         if (filter != null) {
                             pex.setDebugMode(debugEnabled, Pattern.compile(filter))
-                            send(t(
-                                    "Debug mode enabled: %s with filter %s", -debugEnabled, (-filter).hl()).tr()
+                            send(
+                                DEBUG_SUCCESS_FILTER(-debugEnabled, (-filter).hl())
                                 )
                         } else {
                             pex.setDebugMode(debugEnabled)
-                            send(t("Debug mode enabled: %s", -debugEnabled).tr())
+                            send(DEBUG_SUCCESS(-debugEnabled))
                         }
 
                     }
@@ -152,54 +187,50 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     private fun getImportCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("import")
-            .setDescription(t("Import data into the current backend from another"))
-            .setArguments(optional(string(t("backend"))))
+            .setDescription(IMPORT_DESCRIPTION.get())
+            .setArguments(optional(string(IMPORT_ARG_DATA_STORE.get())))
             .setPermission("permissionsex.import")
             .setExecutor(object : PermissionsExExecutor(pex) {
-                override fun <TextType> execute(src: Commander<TextType>, args: CommandContext) {
-                    val backendRequested = args.getOne<String?>("backend")
+                override fun <TextType: Any> execute(src: Commander<TextType>, args: CommandContext) {
+                    val backendRequested = args.getOne<String?>(IMPORT_ARG_DATA_STORE)
                         if (backendRequested == null) { // We want to list available conversions
                             src.formatter.apply {
-                                src.msgPaginated(t("Available Conversions"),
-                                    t(
-                                        "Any data from one of these sources can be imported with the command %s",
-                                        (-"/pex import [id]").hl()
-                                    ),
+                                src.msgPaginated(
+                                    IMPORT_LISTING_HEADER.get(),
+                                    IMPORT_LISTING_SUBTITLE[(-"/pex import [id]").hl()],
                                     pex.availableConversions
                                         .map { conv ->
-                                                t(
+                                                -fixed(
                                                     "%s - /pex import %s",
                                                     conv.title,
-                                                    src.formatter.callback(t(conv.store.name)) {
-                                                        it.msg(
-                                                            t(
-                                                                "Beginning import from %s... (this may take a while)",
-                                                                conv.title
-                                                            )
-                                                        )
-                                                        pex.importDataFrom(conv).thenMessageSubject(it) { ->
-                                                            t(
-                                                                "Successfully imported data from %s into current data store",
-                                                                conv.title
-                                                            )
+                                                    src.formatter.callback(fixed(conv.store.name)) {
+                                                        it.msg { send ->
+                                                            send(IMPORT_ACTION_BEGINNING(-conv.title))
+                                                        }
+                                                        pex.importDataFrom(conv).thenMessageSubject(it) { send ->
+                                                            send(IMPORT_ACTION_SUCCESS(-conv.title))
                                                         }
 
-                                                    }).tr()
+                                                    })
                                         })
                             }
                         } else {
                             for (result in pex.availableConversions) {
                                 if (result.store.name.equals(backendRequested, ignoreCase = true)) {
-                                    src.msg(t("Beginning import from %s... (this may take a while)", result.title))
-                                    pex.importDataFrom(result).thenMessageSubject(src) { ->  t("Successfully imported data from %s into current data store", result.title) }
+                                    src.msg { send ->
+                                        send(IMPORT_ACTION_BEGINNING(-result.title))
+                                    }
+                                    pex.importDataFrom(result).thenMessageSubject(src) { send ->  send(IMPORT_ACTION_SUCCESS(-result.title)) }
                                     return
                                 }
                             }
                             if (pex.config.getDataStore(backendRequested) == null) {
-                                throw CommandException(t("Unknown data store %s specified", backendRequested));
+                                throw CommandException(IMPORT_ERROR_UNKNOWN_STORE[backendRequested])
                             }
-                            src.msg(t("Beginning import from data store %s... (this may take a while)", backendRequested));
-                            pex.importDataFrom(backendRequested).thenMessageSubject(src) { -> t("Successfully imported data from data store %s into current backend", backendRequested)};
+                            src.msg { send ->
+                                send(IMPORT_ACTION_BEGINNING(-backendRequested))
+                            }
+                            pex.importDataFrom(backendRequested).thenMessageSubject(src) { send ->  send(IMPORT_ACTION_SUCCESS(-backendRequested)) }
                         }
                 }
             })
@@ -208,29 +239,20 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     private fun getReloadCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("reload", "rel")
-            .setDescription(t("Reload the PermissionsEx configuration"))
+            .setDescription(RELOAD_DESCRIPTION.get())
             .setPermission("permissionsex.reload")
             .setExecutor(object : CommandExecutor {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
-                    src.msg(t("Reloading PermissionsEx"))
-                    pex.reload().thenRun { src.msg(t("The reload was successful")) }
+                    src.msg(RELOAD_ACTION_BEGIN.get())
+                    pex.reload().thenRun { src.msg(RELOAD_ACTION_SUCCESS.get()) }
                         .exceptionally { t ->
                             src.error(
-                                t(
-                                    "An error occurred while reloading PEX: %s\n " +
-                                            "Please see the server console for details", t.localizedMessage
-                                )
-                            )
-                            pex.logger.error(
-                                t(
-                                    "An error occurred while reloading PEX (triggered by %s's command): %s",
-                                    src.name, t.localizedMessage
-                                ), t
-                            )
+                                RELOAD_ACTION_ERROR[t.localizedMessage])
+                            pex.logger.error(RELOAD_ACTION_ERROR_CONSOLE[src.name, t.localizedMessage], t)
                             null
                         }
                 }
@@ -241,18 +263,18 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     private fun getCallbackTestCommand(): CommandSpec {
         return CommandSpec.builder()
             .setAliases("cbtest", "test")
-            .setDescription(t("Test that callbacks are working"))
+            .setDescription(CALLBACKTEST_DESCRIPTION.get())
             .setExecutor(object : CommandExecutor {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     src.msg {send ->
                         send(callback(
-                            t("Click me!")
+                            CALLBACKTEST_CBTEXT.get()
                         ) { sender ->
-                            sender.msg(t("Callback executed successfully"))
+                            sender.msg(CALLBACKTEST_SUCCESS.get())
                         })
                     }
                 }
@@ -263,7 +285,7 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     private fun getVersionCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("version")
-            .setDescription(t("Get information about the currently running PermissionsEx instance"))
+            .setDescription(VERSION_DESCRIPTION.get())
             .setPermission("permissionsex.version")
             .setArguments(
                 flags().flag(
@@ -273,22 +295,22 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
             )
             .setExecutor(object : CommandExecutor {
                 @Throws(CommandException::class)
-                override fun <TextType> execute(
+                override fun <TextType: Any> execute(
                     src: Commander<TextType>,
                     args: CommandContext
                 ) {
                     val verbose = args.getOne<Boolean>("verbose")?: false
                     src.msg { send ->
-                        send(t("PermissionsEx v%s", (-pex.version).hl()).tr())
-                        send(t("Active data store: %s", pex.config.defaultDataStore.name).tr())
-                        send(t("Available data store types: %s", DataStoreFactories.getKnownTypes()).tr())
+                        send(fixed("PermissionsEx v%s", (-pex.version).hl()).tr())
+                        send(VERSION_RESPONSE_ACTIVE_DATA_STORE(-pex.config.defaultDataStore.name))
+                        send(VERSION_RESPONSE_AVAILABLE_DATA_STORES(-DataStoreFactories.getKnownTypes().toString()))
                         send(-"")
                         if (verbose) {
-                            send(t("Configuration directories").tr().header())
-                            send(t("Config: %s", pex.getBaseDirectory(BaseDirectoryScope.CONFIG)).tr())
-                            send(t("Jar: %s", pex.getBaseDirectory(BaseDirectoryScope.JAR)).tr())
-                            send(t("Server: %s", pex.getBaseDirectory(BaseDirectoryScope.SERVER)).tr())
-                            send(t("Worlds: %s", pex.getBaseDirectory(BaseDirectoryScope.WORLDS)).tr())
+                            send(VERSION_BASEDIRS_HEADER().header())
+                            send(VERSION_BASEDIRS_CONFIG(-pex.getBaseDirectory(BaseDirectoryScope.CONFIG).toString()))
+                            send(VERSION_BASEDIRS_JAR(-pex.getBaseDirectory(BaseDirectoryScope.JAR).toString()))
+                            send(VERSION_BASEDIRS_SERVER(-pex.getBaseDirectory(BaseDirectoryScope.SERVER).toString()))
+                            send(VERSION_BASEDIRS_WORLDS(-pex.getBaseDirectory(BaseDirectoryScope.WORLDS).toString()))
                         }
                     }
                 }

@@ -18,10 +18,10 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.util.Translations;
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
 import org.junit.jupiter.api.Test;
 
+import static ca.stellardrift.permissionsex.util.Translatable.fixed;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -34,7 +34,7 @@ public class CommandFlagsTest {
         CommandSpec command = CommandSpec.builder()
                 .setAliases("pex")
                 .setArguments(GenericArguments.flags()
-                        .flag("a").valueFlag(GenericArguments.integer(Translations.t("quot")), "q").buildWith(GenericArguments.string(Translations.t("key"))))
+                        .flag("a").valueFlag(GenericArguments.integer(fixed("quot")), "q").buildWith(GenericArguments.string(fixed("key"))))
                 .setExecutor(new CommandExecutor() {
                     @Override
                     public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
