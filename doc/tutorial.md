@@ -4,13 +4,13 @@ While PermissionsEx \(PEX\) is quite powerful, its flexibility means that for a 
 
 ## Installation
 
-Downloads of dev builds are available from [the CI server](https://ci.ender.zone/view/PermissionsEx/job/PermissionsEx/). There have not yet been any releases of the 2.x branch as several major features present in 1.x are still in development, so it is important to keep up to date with dev builds. On Sponge, the downloaded jar goes into the `mods/` folder, and on Spigot into the `plugins/` folder. On first launch, configurations will be created in the `config/permissionsex` folder for Sponge, Fabric, and Velocity, and `plugins/PermissionsEx` for Paper/Spigot/Bukkit and Bungee. 1.x configurations _will_ be automatically converted on first run, and users will be converted to UUID.
+Downloads of dev builds are available from [the CI server](https://jenkins.addstar.com.au/view/PermissionsEx/job/PermissionsEx/). There have not yet been any releases of the 2.x branch as several major features present in 1.x are still in development, so it is important to keep up to date with dev builds. On Sponge, the downloaded jar goes into the `mods/` folder, and on Spigot into the `plugins/` folder. On first launch, configurations will be created in the `config/permissionsex` folder for Sponge, Fabric, and Velocity, and `plugins/PermissionsEx` for Paper/Spigot/Bukkit and Bungee. 1.x configurations _will_ be automatically converted on first run, and users will be converted to UUID.
 
 ## First Run
 
 On PEX's first run, the necessary configuration files will be created. By default, no permissions are explicitly assigned to anybody. However, the default configuration gives all permissions to users connecting from the same host as the server \(so if you're running a local server you'll automatically be able to run anything from ingame\). On Sponge, PEX replaces the op system entirely, so setting op beforehand will not have any effect on permissions once PEX is installed.
 
-Currently, the default backend is the file backend, to be changed to H2 in the future once such a database is available. While the permissions database is human-readable, it is recommended to edit the PEX configuration using in-game commands. The SQL backend for MySQL and PostgreSQL is also available \(**TODO document this**\) for more complex server configurations.
+Currently, the default [data store](data-stores.md) is the file backend, to be changed to H2 in the future once such a database is available. While the permissions database is human-readable, it is recommended to edit the PEX configuration using in-game commands. The SQL backend for MySQL and PostgreSQL is also available \(**TODO document this**\) for more complex server configurations.
 
 ## Creating an admin group
 

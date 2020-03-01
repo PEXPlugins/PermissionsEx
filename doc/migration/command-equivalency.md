@@ -1,4 +1,4 @@
-# Command-Equivalency
+# Command Equivalency
 
 Since PermissionsEx 2.x has a new commands structure different from both PermissionsEx 1.x and GroupManager, this page exists to provide equivalent commands for many common operations. \(This page is currently a stub, zml needs to finish it\)
 

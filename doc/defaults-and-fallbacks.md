@@ -1,8 +1,4 @@
----
-title: Defaults and Fallbacks
----
-
-# Defaults-and-Fallbacks
+# Defaults and Fallbacks
 
 PermissionsEx has several solutions to apply data across a wide collection of subjects. While defaults and fallbacks are similar, they have a few key differences that are important to note. Fallbacks are most similar to how PEX v1's default group used to work, while defaults allow providing data that is actually applicable to every subject on the server. Defaults are also extremely useful for plugins that want to provide permissions that should not be granted with wildcards. For example, a vanish plugin might want to set the permission `vanish.autovanish.on-join` to false in the transient data of the default user subject. That woul make sure that admins are not automatically vanished on join, which is most likely not the intention of the server administrator.
 

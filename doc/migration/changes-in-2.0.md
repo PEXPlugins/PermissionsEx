@@ -1,4 +1,4 @@
-# Changes-In-2.0
+# Changes In 2.0
 
 This document details most of the major changes between the 1.x and 2.x versions of PermissionsEx. Many of these are fairly significant, and despite the fact that migration is automatic it would be useful to be familiar with this document.
 
@@ -6,7 +6,7 @@ This document details most of the major changes between the 1.x and 2.x versions
 
 ## Command System
 
-The commands system is fairly different. Take a look at the \[\[Command Equivalency\]\] for learning what has changed. The required permisions are different, and tab completion is now supported.
+The commands system is fairly different. Take a look at the [Command Equivalency](command-equivalency.md) for learning what has changed. The required permissions are different, and tab completion is now supported.
 
 ## Context system
 
@@ -36,8 +36,8 @@ Rather than using modified regexes, PEX 2.0 uses a simplifed shell glob with imp
 
 | Old | New |
 | :--- | :--- |
-| worldedit.navigation.\(jumpto\|thru\).tool | worldedit.navigation.{jumpto,thru}.tool |
-| commandbook.\* | commandbook |
+| `worldedit.navigation.(jumpto\|thru).tool` | `worldedit.navigation.{jumpto,thru}.tool` |
+| `commandbook.*` | `commandbook` |
 
 These changes make it easier to calculate permissions, and as a bonus mean that the listing order of nodes in the permissions file no longer matters.
 
