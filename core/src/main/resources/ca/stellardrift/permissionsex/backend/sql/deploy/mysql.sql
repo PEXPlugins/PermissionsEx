@@ -12,7 +12,7 @@
 CREATE TABLE `{}global` (
   `key` VARCHAR(255) PRIMARY KEY,
   `value` TEXT NOT NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `{}subjects` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
@@ -20,7 +20,7 @@ CREATE TABLE `{}subjects` (
   `identifier` varchar(255) NOT NULL,
   UNIQUE KEY `ident` (`type`, `identifier`),
   KEY `type_k` (`type`)
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `{}segments` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -28,7 +28,7 @@ CREATE TABLE `{}segments` (
   `perm_default` smallint DEFAULT NULL,
   KEY `subject_k` (`subject`),
   CONSTRAINT `subject_fk` FOREIGN KEY (`subject`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `{}permissions` (
   `segment` int(11) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE `{}permissions` (
   `value` smallint NOT NULL,
   UNIQUE KEY `perm_segment_k` (`segment`,`key`),
   CONSTRAINT `perm_segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
  CREATE TABLE `{}contexts` (
   `segment` int(11) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE `{}permissions` (
   UNIQUE KEY `context_k` (`segment`,`key`),
   UNIQUE KEY `context_kv` (`segment`,`key`,`value`),
   CONSTRAINT `context_segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `{}options` (
   `segment` int(11) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE `{}options` (
   `value` text,
   UNIQUE KEY `option_segment` (`segment`,`key`),
   CONSTRAINT `option_segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `{}inheritance` (
   `segment` int(11) NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE `{}inheritance` (
   KEY `parent` (`parent`),
   CONSTRAINT `inheritance_segment_fk` FOREIGN KEY (`segment`) REFERENCES `{}segments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `parent_fk` FOREIGN KEY (`parent`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
  CREATE TABLE `{}rank_ladders` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -71,7 +71,7 @@ CREATE TABLE `{}inheritance` (
   UNIQUE KEY `key` (`name`, `subject`),
   KEY `ident` (`name`),
   CONSTRAINT `rank_subject_fk` FOREIGN KEY (`subject`) REFERENCES `{}subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
  CREATE TABLE `{}context_inheritance` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -82,4 +82,4 @@ CREATE TABLE `{}inheritance` (
   UNIQUE KEY `both_key` (`child_key`,`child_value`,`parent_key`,`parent_value`),
   KEY `child_key` (`child_key`,`child_value`),
   KEY `parent_key` (`parent_key`,`parent_value`)
-) DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
