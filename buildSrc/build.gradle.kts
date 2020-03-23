@@ -38,7 +38,7 @@ gradlePlugin {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
     implementation("com.github.jengelman.gradle.plugins:shadow:5.2.0")
     implementation("gradle.plugin.net.minecrell:licenser:0.4.1")
 }

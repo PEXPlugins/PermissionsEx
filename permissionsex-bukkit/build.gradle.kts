@@ -70,8 +70,8 @@ dependencies {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
+    implementation("net.kyori:text-adapter-bukkit:${Versions.TEXT}")
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    implementation(project(":impl-blocks:permissionsex-bungee-text")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
@@ -96,7 +96,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "com.typesafe",
         "org.jetbrains.annotations",
         "org.slf4j",
-        "org.antlr"
+        "org.antlr",
+        "net.kyori.text"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }

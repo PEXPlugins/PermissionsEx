@@ -36,7 +36,9 @@ enum class Versions(val version: String) {
     CONFIGURATE("3.6"),
     SLF4J("1.7.26"),
     ANTLR("4.7.2"),
-    JUNIT("5.5.2");
+    JUNIT("5.5.2"),
+    KOTLINX_COROUTINES("1.3.5"),
+    TEXT("3.0.3");
 
     override fun toString(): String {
         return this.version

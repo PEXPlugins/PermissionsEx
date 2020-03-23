@@ -41,6 +41,8 @@ dependencies {
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
 
+    implementation("net.kyori:text-adapter-spongeapi:${Versions.TEXT}")
+
     kapt("org.spongepowered:spongeapi:${Versions.SPONGE}")
     testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
     shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")
@@ -72,7 +74,7 @@ val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
     minimize()
     listOf("org.antlr",
-        "pw.dotdash.director",
+        "net.kyori.text",
         "org.jetbrains.annotations").forEach {
         relocate(it, "$relocateRoot.$it")
     }

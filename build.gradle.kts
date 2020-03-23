@@ -1,3 +1,4 @@
+import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.spongeRepo
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -27,6 +28,7 @@ subprojects {
 
     dependencies {
         "implementation"(kotlin("stdlib-jdk8"))
+        "api"("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KOTLINX_COROUTINES}")
     }
 
 }

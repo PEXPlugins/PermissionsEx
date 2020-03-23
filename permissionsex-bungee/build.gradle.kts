@@ -47,8 +47,8 @@ dependencies {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
+    implementation("net.kyori:text-adapter-bungeecord:${Versions.TEXT}")
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    implementation(project(":impl-blocks:permissionsex-bungee-text")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
@@ -72,7 +72,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
         "ninja.leaping.configurate", "org.jetbrains.annotations",
-        "org.slf4j", "org.antlr.v4.runtime").forEach {
+        "org.slf4j", "org.antlr.v4.runtime", "net.kyori.text").forEach {
         relocate(it, "$relocateRoot.$it")
     }
     

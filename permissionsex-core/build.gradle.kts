@@ -48,8 +48,13 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:2.7.0") {
         exclude("com.google.errorprone")
     }
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.KOTLINX_COROUTINES}")
+
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
+    api("net.kyori:text-api:${Versions.TEXT}")
+    api("net.kyori:text-feature-pagination:${Versions.TEXT}")
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
+
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     testImplementation("org.mockito:mockito-core:3.0.0")

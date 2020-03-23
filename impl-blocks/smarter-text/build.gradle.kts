@@ -31,5 +31,7 @@ localization {
 }
 
 dependencies {
+    api("net.kyori:text-api:3.0.3")
+    api("net.kyori:text-feature-pagination:3.0.3")
     api(project(":permissionsex-core"))
 }
