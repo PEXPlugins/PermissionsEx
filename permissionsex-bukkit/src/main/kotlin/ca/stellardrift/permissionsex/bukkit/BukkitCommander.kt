@@ -18,15 +18,64 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.commander.AbstractMessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.commander.FixedTranslationComponentRenderer
 import ca.stellardrift.permissionsex.util.Translatable
+import ca.stellardrift.permissionsex.util.castMap
 import com.google.common.collect.Maps
-import net.md_5.bungee.api.ChatColor
-import net.md_5.bungee.api.chat.BaseComponent
+import net.kyori.text.Component
+import net.kyori.text.ComponentBuilder
+import net.kyori.text.adapter.bukkit.TextAdapter
+import net.kyori.text.event.ClickEvent
+import net.kyori.text.format.TextColor
+import net.kyori.text.format.TextDecoration
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.Locale
 import java.util.Optional
+
+fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
+fun Iterable<CommandSender>.sendActionBar(text: Component) = TextAdapter.sendActionBar(this, text)
+
+fun CommandSender.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
+fun CommandSender.sendActionBar(text: Component) = TextAdapter.sendActionBar(this, text)
+
+/**
+ * Take a locale string provided from a minecraft client and attempt to parse it as a locale.
+ * These are not strictly compliant with the iso standard, so we try to make things a bit more normalized.
+ *
+ * @param mcLocaleString The locale string, in the format provided by the Minecraft client
+ * @return A Locale object matching the provided locale string
+ */
+fun String.toLocale(): Locale {
+    val parts = this.split("_", limit = 3)
+    return when (parts.size) {
+        0 -> Locale.getDefault();
+        1 -> Locale(parts[0]);
+        2 -> Locale(parts[0], parts[1]);
+        3 -> Locale(parts[0], parts[1], parts[2]);
+        else -> throw IllegalArgumentException("Provided locale '$this' was not in a valid format!");
+    }
+}
+
+class BukkitMessageFormatter(val pex: PermissionsExPlugin,
+    bCmd: BukkitCommander): AbstractMessageFormatter(bCmd, pex.manager) {
+
+    override val Map.Entry<String, String>.friendlyName: String?
+        get() = pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
+
+    override fun callback(
+        title: Translatable,
+        callback: (Commander<ComponentBuilder<*, *>>) -> Unit
+    ): ComponentBuilder<*, *> {
+        val command = pex.callbackController.registerCallback(source = cmd, func = {callback(it)})
+        return title.tr()
+            .decoration(TextDecoration.UNDERLINED, true)
+            .color(hlColor)
+            .clickEvent(ClickEvent.runCommand(transformCommand(command)))
+    }
+}
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
@@ -34,7 +83,7 @@ import java.util.Optional
 class BukkitCommander internal constructor(
     pex: PermissionsExPlugin,
     private val commandSource: CommandSender
-) : Commander<BaseComponent> {
+) : Commander<ComponentBuilder<*, *>> {
     override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(pex, this)
     override val name: String
         get() = commandSource.name
@@ -42,7 +91,7 @@ class BukkitCommander internal constructor(
     override fun hasPermission(permission: String): Boolean = commandSource.hasPermission(permission)
 
     override val locale: Locale
-        get() = if (commandSource is Player) BukkitMessageFormatter.toLocale(commandSource.locale) else Locale.getDefault()
+        get() = if (commandSource is Player) commandSource.locale.toLocale() else Locale.getDefault()
 
     override val subjectIdentifier: Optional<Map.Entry<String, String>>
         get() = if (commandSource is Player) {
@@ -54,33 +103,26 @@ class BukkitCommander internal constructor(
             )
         } else Optional.empty()
 
-    private fun sendMessageInternal(formatted: BaseComponent) {
-        if (commandSource is Player) {
-            commandSource.spigot().sendMessage(formatted)
-        } else {
-            commandSource.sendMessage(formatted.toLegacyText())
-        }
+    private fun sendMessageInternal(formatted: ComponentBuilder<*, *>) {
+        commandSource.sendMessage(FixedTranslationComponentRenderer.render(formatted.build(), this))
     }
 
-    override fun msg(text: BaseComponent) {
-        text.color = ChatColor.DARK_AQUA
-        sendMessageInternal(text)
+    override fun msg(text: ComponentBuilder<*, *>) {
+        sendMessageInternal(text.color(TextColor.DARK_AQUA))
     }
 
-    override fun debug(text: BaseComponent) {
-        text.color = ChatColor.GRAY
-        sendMessageInternal(text)
+    override fun debug(text: ComponentBuilder<*, *>) {
+        sendMessageInternal(text.color(TextColor.GRAY))
     }
 
-    override fun error(text: BaseComponent, err: Throwable?) {
-        text.color = ChatColor.RED
-        sendMessageInternal(text)
+    override fun error(text: ComponentBuilder<*, *>, err: Throwable?) {
+        sendMessageInternal(text.color(TextColor.RED))
     }
 
     override fun msgPaginated(
         title: Translatable,
         header: Translatable?,
-        text: Iterable<BaseComponent>
+        text: Iterable<ComponentBuilder<*, *>>
     ) {
         msg { send ->
             send(combined("# ", title, " #"))

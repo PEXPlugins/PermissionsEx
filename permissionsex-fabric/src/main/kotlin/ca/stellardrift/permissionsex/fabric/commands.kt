@@ -17,13 +17,10 @@
 
 package ca.stellardrift.permissionsex.fabric
 
-import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
-import ca.stellardrift.permissionsex.commands.commander.ButtonType
+import ca.stellardrift.permissionsex.commands.commander.AbstractMessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.cast
+import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
@@ -32,15 +29,13 @@ import com.mojang.brigadier.arguments.StringArgumentType.greedyString
 import com.mojang.brigadier.suggestion.SuggestionProvider
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import net.kyori.text.ComponentBuilder
+import net.kyori.text.event.ClickEvent
+import net.kyori.text.format.TextDecoration
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.text.ClickEvent
-import net.minecraft.text.HoverEvent
-import net.minecraft.text.LiteralText
 import net.minecraft.text.Text
-import net.minecraft.text.TranslatableText
-import net.minecraft.util.Formatting
 import net.minecraft.util.Nameable
 import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
@@ -130,143 +125,19 @@ internal fun ServerCommandSource.asCommander(): Commander<Text> {
     return this as Commander<Text>
 }
 
-val EQUALS_SIGN: Text = LiteralText("=").formatted(Formatting.GRAY)
-class FabricMessageFormatter @JvmOverloads constructor(private val src: ServerCommandSource, private val hlColor: Formatting =  Formatting.AQUA) :
-    MessageFormatter<Text> {
+class FabricMessageFormatter constructor(src: ServerCommandSource) :
+    AbstractMessageFormatter(src as Commander<ComponentBuilder<*, *>>, PermissionsExMod.manager) {
+
+    override val Map.Entry<String, String>.friendlyName: String?
+        get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap< Nameable, String> { name.asString() }
 
     @Suppress("UNCHECKED_CAST")
-    private val cmd get() = src as Commander<Text>
-
-    override fun subject(subject: Map.Entry<String, String>): Text {
-        val subj = PermissionsExMod.manager.getSubjects(subject.key)[subject.value].join()
-
-        val name = subj.associatedObject.cast<Nameable>().map(Nameable::getName).orElseGet {
-            val nameStr = subj.data().get().getOptions(GLOBAL_CONTEXT)["name"]
-            if (nameStr != null) LiteralText(nameStr) else null
-        }
-
-        val nameText = if (name != null) {
-            LiteralText(subject.value).formatted(Formatting.GRAY).append("/").append(name)
-        } else {
-            LiteralText(subject.value)
-        }
-
-        return LiteralText("").apply {
-            append(LiteralText(subject.key).styled { it.isBold = true})
-            append(" ")
-            append(nameText)
-
-            styled {
-                it.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Messages.COMMAND_FMT_HOVER_PROMPT())
-                it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex ${subject.key} ${subject.value} info")
-            }
-        }
-
-    }
-
-    override fun ladder(ladder: RankLadder): Text {
-        val ret = LiteralText(ladder.name)
-        ret.style.apply {
-            isBold = true
-            hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Messages.COMMAND_FMT_HOVER_PROMPT())
-            clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pex rank ${ladder.name}")
-        }
-        return ret
-    }
-
-    override fun booleanVal(value: Boolean): Text {
-        return (if (value) Messages.COMMAND_FMT_BOOLEAN_TRUE() else Messages.COMMAND_FMT_BOOLEAN_FALSE())
-            .formatted(if (value) Formatting.GREEN else Formatting.RED)
-    }
-
-    override fun button(
-        type: ButtonType,
-        label: Translatable,
-        tooltip: Translatable?,
-        command: String,
-        execute: Boolean
-    ): Text {
-        val text = label.tr()
-        text.formatted(when (type) {
-            ButtonType.POSITIVE -> Formatting.GREEN
-            ButtonType.NEGATIVE -> Formatting.RED
-            ButtonType.NEUTRAL -> hlColor
-        })
-
-        if (tooltip != null) {
-            text.style.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip.tr())
-        }
-
-        text.style.clickEvent = ClickEvent(if (execute) ClickEvent.Action.RUN_COMMAND else ClickEvent.Action.SUGGEST_COMMAND, command)
-        return text
-    }
-
-    override fun permission(permission: String, value: Int): Text {
-        return combined(LiteralText(permission).formatted(when {
-            value > 0 -> Formatting.GREEN
-            value < 0 -> Formatting.RED
-            else -> Formatting.GRAY
-        }), EQUALS_SIGN, value.toString())
-    }
-
-    override fun option(permission: String, value: String): Text {
-        return LiteralText(permission).append(EQUALS_SIGN).append(value)
-    }
-
-    override fun Text.header(): Text {
-        return styled { it.isBold = true }
-    }
-
-    override fun Text.hl(): Text {
-        return formatted(hlColor)
-    }
-
-    override fun combined(vararg elements: Any): Text {
-        val comp = LiteralText("")
-        elements.forEach {
-            comp.append(it.asText())
-        }
-        return comp
-    }
-
-    private fun Any.asText(): Text {
-        return when (this) {
-            is Translatable -> this.tr()
-            is Text -> this
-            else -> LiteralText(this.toString())
-        }
-    }
-
-    override fun Translatable.tr(): Text {
-        return TranslatableText(translate(cmd.locale), *args.map {it.asText()}.toTypedArray())
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun callback(title: Translatable, callback: (Commander<Text>) -> Unit): Text {
+    override fun callback(title: Translatable, callback: (Commander<ComponentBuilder<*, *>>) -> Unit): ComponentBuilder<*, *> {
         val command = PermissionsExMod.callbackController.registerCallback(cmd) { callback(it) }
-        return title.tr().styled {
-            it.setUnderline(true)
-            it.color = hlColor
-            it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
-        }
+        return title.tr()
+            .decoration(TextDecoration.UNDERLINED, true)
+            .color(hlColor)
+            .clickEvent(ClickEvent.runCommand(command))
     }
-
-    override fun String.unaryMinus(): Text {
-        return LiteralText(this)
-    }
-
-    override fun Text.plus(other: Text): Text {
-        return LiteralText("").append(this).append(other)
-    }
-
-    override fun Collection<Text>.concat(separator: Text): Text {
-        return foldIndexed(LiteralText("")) { idx, acc, el ->
-            if (idx != 0) {
-                acc.append(separator)
-            }
-            acc.append(el)
-            acc
-        }
-    }
-
 }
+

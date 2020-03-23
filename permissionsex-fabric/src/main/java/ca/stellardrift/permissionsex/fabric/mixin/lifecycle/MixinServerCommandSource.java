@@ -18,17 +18,20 @@
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.commands.commander.FixedTranslationComponentRenderer;
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter;
-import ca.stellardrift.permissionsex.fabric.FabricMessageFormatter;
-import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
-import ca.stellardrift.permissionsex.fabric.LocaleHolder;
+import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.util.Translatable;
 import com.google.common.collect.Maps;
+import net.kyori.text.Component;
+import net.kyori.text.ComponentBuilder;
+import net.kyori.text.format.TextColor;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -40,7 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Mixin(ServerCommandSource.class)
-public abstract class MixinServerCommandSource implements Commander<Text> {
+public abstract class MixinServerCommandSource implements Commander<ComponentBuilder<?, ?>> {
     @SuppressWarnings("ConstantConditions")
     private final FabricMessageFormatter fmt = new FabricMessageFormatter((ServerCommandSource) (Object) this);
 
@@ -55,6 +58,14 @@ public abstract class MixinServerCommandSource implements Commander<Text> {
     @Shadow
     @Final
     private String simpleName;
+
+    @Shadow
+    @Final
+    private CommandOutput output;
+
+    @Shadow
+    @Final
+    private boolean silent;
 
     @Shadow
     public abstract boolean hasPermissionLevel(int level);
@@ -98,27 +109,49 @@ public abstract class MixinServerCommandSource implements Commander<Text> {
 
     @NotNull
     @Override
-    public MessageFormatter<Text> getFormatter() {
+    public MessageFormatter<ComponentBuilder<?, ?>> getFormatter() {
         return fmt;
     }
 
-    @Override
-    public void msg(Text text) {
-        sendFeedback(text.formatted(Formatting.DARK_AQUA), false);
+    private void sendFeedback(Component text) {
+        Component rendered = FixedTranslationComponentRenderer.INSTANCE.render(text, this);
+        if (this.output.sendCommandFeedback() && !silent) {
+            if (this.output instanceof ServerPlayerEntity) {
+                TextAdapter.sendPlayerMessage(((ServerPlayerEntity) this.output), rendered);
+            } else {
+                sendFeedback(TextAdapter.toMcText(rendered), false);
+            }
+        }
+    }
+
+    private void sendError(Component text) {
+        Component rendered = FixedTranslationComponentRenderer.INSTANCE.render(text, this);
+        if (this.output.shouldTrackOutput() && !silent) {
+            if (this.output instanceof ServerPlayerEntity) {
+                TextAdapter.sendPlayerMessage(((ServerPlayerEntity) this.output), rendered);
+            } else {
+                sendError(TextAdapter.toMcText(rendered));
+            }
+        }
     }
 
     @Override
-    public void debug(Text text) {
-        sendFeedback(text.formatted(Formatting.GRAY), false);
+    public void msg(ComponentBuilder<?, ?> text) {
+        sendFeedback(text.color(TextColor.DARK_AQUA).build());
     }
 
     @Override
-    public void error(Text text, Throwable err) {
-        sendError(text);
+    public void debug(ComponentBuilder<?, ?> text) {
+        sendFeedback(text.color(TextColor.GRAY).build());
     }
 
     @Override
-    public void msgPaginated(@NotNull Translatable title, @Nullable Translatable header, @NotNull Iterable<? extends Text> text) {
+    public void error(ComponentBuilder<?, ?> text, Throwable err) {
+        sendError(text.color(TextColor.RED).build());
+    }
+
+    @Override
+    public void msgPaginated(@NotNull Translatable title, @Nullable Translatable header, @NotNull Iterable<? extends ComponentBuilder<?, ?>> text) {
         msg(getFormatter().combined("# ", getFormatter().tr(title), " #"));
         if (header != null) {
             msg(getFormatter().tr(header));

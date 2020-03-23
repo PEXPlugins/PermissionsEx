@@ -24,6 +24,7 @@ import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandExecutor
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.uuid
+import net.kyori.text.ComponentBuilder
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -45,7 +46,7 @@ class CallbackController {
     /**
      * Register a callback, returning the command string to send to execute the provided function.
      */
-    fun <TextType: Any> registerCallback(source: Commander<TextType>, func: (Commander<TextType>) -> Unit): String {
+    fun registerCallback(source: Commander<ComponentBuilder<*, *>>, func: (Commander<ComponentBuilder<*, *>>) -> Unit): String {
         val id = UUID.randomUUID()
         knownCallbacks.computeIfAbsent(source.mapKey) { ConcurrentHashMap() }[id] = CachedCallback(source, func)
         return "/pex cb $id"

@@ -18,12 +18,19 @@
 package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.bungeetext.BungeeMessageFormatter
+import ca.stellardrift.permissionsex.commands.commander.AbstractMessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.commander.FixedTranslationComponentRenderer
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.castMap
 import com.google.common.collect.Maps.immutableEntry
+import net.kyori.text.Component
+import net.kyori.text.ComponentBuilder
+import net.kyori.text.adapter.bungeecord.TextAdapter
+import net.kyori.text.event.ClickEvent
+import net.kyori.text.format.TextColor
+import net.kyori.text.format.TextDecoration
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.chat.BaseComponent
@@ -31,9 +38,11 @@ import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.util.Locale
 import java.util.Optional
 
+fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
+fun CommandSender.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
 
 class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) :
-    Commander<BaseComponent> {
+    Commander<ComponentBuilder<*, *>> {
     override val formatter = BungeePluginMessageFormatter(pex, this)
     override val name: String get() = src.name
 
@@ -50,23 +59,23 @@ class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) 
         return src.hasPermission(permission)
     }
 
-
-    override fun msg(text: BaseComponent) {
-        text.color = ChatColor.GOLD
-        src.sendMessage(text)
+    private fun msgInternal(text: Component) {
+        src.sendMessage(FixedTranslationComponentRenderer.render(text, this))
     }
 
-    override fun debug(text: BaseComponent) {
-        text.color = ChatColor.GRAY
-        src.sendMessage(text)
+    override fun msg(text: ComponentBuilder<*, *>) {
+        msgInternal(text.color(TextColor.GOLD).build())
     }
 
-    override fun error(text: BaseComponent, err: Throwable?) {
-        text.color = ChatColor.RED
-        src.sendMessage(text)
+    override fun debug(text: ComponentBuilder<*, *>) {
+        msgInternal(text.color(TextColor.GRAY).build())
     }
 
-    override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<BaseComponent>) {
+    override fun error(text: ComponentBuilder<*, *>, err: Throwable?) {
+        msgInternal(text.color(TextColor.RED).build())
+    }
+
+    override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<ComponentBuilder<*, *>>) {
         msg { send ->
             send(combined("# ", title, " #"))
             if (header != null) {
@@ -79,10 +88,10 @@ class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) 
 
 }
 
-class BungeePluginMessageFormatter(pex: PermissionsExPlugin, sender: BungeeCommander) : BungeeMessageFormatter(sender, pex.manager, hlColour = ChatColor.YELLOW, callbacks = pex.callbackController) {
+class BungeePluginMessageFormatter(val pex: PermissionsExPlugin, sender: BungeeCommander) : AbstractMessageFormatter(sender, pex.manager, hlColor = TextColor.YELLOW) {
 
-    override fun getFriendlyName(subj: Map.Entry<String, String>): String? {
-        return pex.getSubjects(subj.key).typeInfo.getAssociatedObject(subj.value).castMap<CommandSender, String> { name }
+    override val Map.Entry<String, String>.friendlyName: String? get() {
+        return pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
     }
 
     /**
@@ -90,6 +99,17 @@ class BungeePluginMessageFormatter(pex: PermissionsExPlugin, sender: BungeeComma
      */
     override fun transformCommand(cmd: String): String {
         return "/$cmd"
+    }
+
+    override fun callback(
+        title: Translatable,
+        callback: (Commander<ComponentBuilder<*, *>>) -> Unit
+    ): ComponentBuilder<*, *> {
+        val command = pex.callbackController.registerCallback(cmd) { callback(it) }
+        return title.tr()
+            .decoration(TextDecoration.UNDERLINED, true)
+            .color(hlColor)
+            .clickEvent(ClickEvent.runCommand(transformCommand(command)))
     }
 
 }

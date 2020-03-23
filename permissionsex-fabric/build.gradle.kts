@@ -48,6 +48,7 @@ dependencies {
     shade(project(":impl-blocks:permissionsex-hikari-config"))
     shade(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
+    shade("net.kyori:text-serializer-gson:${ca.stellardrift.permissionsex.gradle.Versions.TEXT}") { isTransitive = false}
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.6")
