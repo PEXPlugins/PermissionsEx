@@ -18,22 +18,24 @@
 package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.commander.AbstractMessageFormatter
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.FixedTranslationComponentRenderer
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
-import ca.stellardrift.permissionsex.util.Translatable
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
+import ca.stellardrift.permissionsex.util.join
+import ca.stellardrift.permissionsex.util.unaryPlus
 import com.google.common.collect.Maps.immutableEntry
+import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
+import net.kyori.text.TextComponent
 import net.kyori.text.adapter.bungeecord.TextAdapter
 import net.kyori.text.event.ClickEvent
 import net.kyori.text.format.TextColor
 import net.kyori.text.format.TextDecoration
-import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.CommandSender
-import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.util.Locale
 import java.util.Optional
@@ -42,7 +44,7 @@ fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendCompo
 fun CommandSender.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
 
 class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) :
-    Commander<ComponentBuilder<*, *>> {
+    Commander {
     override val formatter = BungeePluginMessageFormatter(pex, this)
     override val name: String get() = src.name
 
@@ -60,35 +62,36 @@ class BungeeCommander(pex: PermissionsExPlugin, private val src: CommandSender) 
     }
 
     private fun msgInternal(text: Component) {
-        src.sendMessage(FixedTranslationComponentRenderer.render(text, this))
+        src.sendMessage(PEXComponentRenderer.render(text, locale))
     }
 
-    override fun msg(text: ComponentBuilder<*, *>) {
-        msgInternal(text.color(TextColor.GOLD).build())
+    override fun msg(text: Component) {
+        msgInternal(text coloredIfNecessary TextColor.GOLD)
     }
 
-    override fun debug(text: ComponentBuilder<*, *>) {
-        msgInternal(text.color(TextColor.GRAY).build())
+    override fun debug(text: Component) {
+        msgInternal(text coloredIfNecessary TextColor.GRAY)
     }
 
-    override fun error(text: ComponentBuilder<*, *>, err: Throwable?) {
-        msgInternal(text.color(TextColor.RED).build())
+    override fun error(text: Component, err: Throwable?) {
+        msgInternal(text coloredIfNecessary TextColor.RED)
     }
 
-    override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<ComponentBuilder<*, *>>) {
+    override fun msgPaginated(title: Component, header: Component?, text: Iterable<Component>) {
         msg { send ->
-            send(combined("# ", title, " #"))
+            val marker = +"#"
+            send(listOf(marker, title, marker).join(TextComponent.space()))
             if (header != null) {
-                send(-header)
+                send(header)
             }
             text.forEach(send)
-            send(-"#############################")
+            send(+"#############################")
         }
     }
 
 }
 
-class BungeePluginMessageFormatter(val pex: PermissionsExPlugin, sender: BungeeCommander) : AbstractMessageFormatter(sender, pex.manager, hlColor = TextColor.YELLOW) {
+class BungeePluginMessageFormatter(val pex: PermissionsExPlugin, sender: BungeeCommander) : MessageFormatter(sender, pex.manager, hlColor = TextColor.YELLOW) {
 
     override val Map.Entry<String, String>.friendlyName: String? get() {
         return pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
@@ -101,15 +104,13 @@ class BungeePluginMessageFormatter(val pex: PermissionsExPlugin, sender: BungeeC
         return "/$cmd"
     }
 
-    override fun callback(
-        title: Translatable,
-        callback: (Commander<ComponentBuilder<*, *>>) -> Unit
-    ): ComponentBuilder<*, *> {
-        val command = pex.callbackController.registerCallback(cmd) { callback(it) }
-        return title.tr()
-            .decoration(TextDecoration.UNDERLINED, true)
-            .color(hlColor)
-            .clickEvent(ClickEvent.runCommand(transformCommand(command)))
+    override fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
+        val command = pex.callbackController.registerCallback(cmd) { func(it) }
+
+        decoration(TextDecoration.UNDERLINED, true)
+        color(hlColor)
+        clickEvent(ClickEvent.runCommand(transformCommand(command)))
+        return this
     }
 
 }

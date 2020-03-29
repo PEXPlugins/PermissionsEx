@@ -18,17 +18,21 @@
 package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
-import ca.stellardrift.permissionsex.commands.commander.AbstractMessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.FixedTranslationComponentRenderer
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
-import ca.stellardrift.permissionsex.util.Translatable
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
+import ca.stellardrift.permissionsex.util.join
+import ca.stellardrift.permissionsex.util.unaryPlus
 import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
+import net.kyori.text.BuildableComponent
+import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
 import net.kyori.text.event.ClickEvent
 import net.kyori.text.format.TextColor
@@ -59,62 +63,64 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
 }
 
 class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
-    Commander<ComponentBuilder<*, *>> {
+    Commander {
     override val formatter =
         VelocityMessageFormatter(this)
-    override val name: String get() =
-        (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
+    override val name: String
+        get() =
+            (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
 
-    override val locale: Locale get() =
-        (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
+    override val locale: Locale
+        get() =
+            (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
 
-    override val subjectIdentifier: Optional<Map.Entry<String, String>> get() =
-        Optional.of(
-            when (src) {
-                is Player -> Maps.immutableEntry(SUBJECTS_USER, src.uniqueId.toString())
-                else -> IDENT_SERVER_CONSOLE
-            }
-        )
+    override val subjectIdentifier: Optional<Map.Entry<String, String>>
+        get() =
+            Optional.of(
+                when (src) {
+                    is Player -> Maps.immutableEntry(SUBJECTS_USER, src.uniqueId.toString())
+                    else -> IDENT_SERVER_CONSOLE
+                }
+            )
 
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
     }
 
-    override fun msg(text: ComponentBuilder<*, *>) {
-        src.sendMessage(FixedTranslationComponentRenderer.render(text.color(TextColor.GOLD).build(), this))
+    override fun msg(text: Component) {
+        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GOLD, locale))
     }
 
-    override fun debug(text: ComponentBuilder<*, *>) {
-        src.sendMessage(FixedTranslationComponentRenderer.render(text.color(TextColor.GRAY).build(), this))
+    override fun debug(text: Component) {
+        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GRAY, locale))
     }
 
-    override fun error(text: ComponentBuilder<*, *>, err: Throwable?) {
-        src.sendMessage(FixedTranslationComponentRenderer.render(text.color(TextColor.RED).build(), this))
+    override fun error(text: Component, err: Throwable?) {
+        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.RED, locale))
     }
 
-    override fun msgPaginated(title: Translatable, header: Translatable?, text: Iterable<ComponentBuilder<*, *>>) {
+    private val headerChar = +"#"
+    override fun msgPaginated(title: Component, header: Component?, text: Iterable<Component>) {
         msg { send ->
-            send(combined("# ", title, " #"))
+            send(listOf(headerChar, title, headerChar).join())
             if (header != null) {
-                send(-header)
+                send(header)
             }
             text.forEach(send)
-            send(-"#############################")
+            send(+"#############################")
         }
     }
 
 }
 
-class VelocityMessageFormatter(val vCmd: VelocityCommander): AbstractMessageFormatter(vCmd, vCmd.pex.manager, TextColor.YELLOW) {
-    override fun callback(
-        title: Translatable,
-        callback: (Commander<ComponentBuilder<*, *>>) -> Unit
-    ): ComponentBuilder<*, *> {
-        val command = vCmd.pex.callbackController.registerCallback(cmd) { callback(it) }
-        return title.tr()
-            .decoration(TextDecoration.UNDERLINED, true)
-            .color(hlColor)
-            .clickEvent(ClickEvent.runCommand(transformCommand(command)))
+class VelocityMessageFormatter(val vCmd: VelocityCommander) :
+    MessageFormatter(vCmd.pex.manager, TextColor.YELLOW) {
+    override fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
+        val command = vCmd.pex.callbackController.registerCallback(vCmd) { callback(it) }
+        decoration(TextDecoration.UNDERLINED, true)
+        color(hlColor)
+        clickEvent(ClickEvent.runCommand(transformCommand(command)))
+        return this
     }
 }
 

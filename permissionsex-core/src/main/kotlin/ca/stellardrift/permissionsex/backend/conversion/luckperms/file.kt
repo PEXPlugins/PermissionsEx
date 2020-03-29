@@ -364,7 +364,7 @@ class LuckPermsTrack internal constructor(name: String, val groups: List<String>
     override fun newWithRanks(ents: List<Map.Entry<String, String>>): LuckPermsTrack {
         return LuckPermsTrack(this.name, ents.map { (k, v) ->
             if (k != SUBJECTS_GROUP) {
-                throw PermissionsException(LUCKPERMS_ERROR_INVALID_TRACK[k, this.name])
+                throw PermissionsException(LUCKPERMS_ERROR_INVALID_TRACK(k, this.name))
             }
             v
         })

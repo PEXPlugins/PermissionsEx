@@ -18,19 +18,19 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.exception.PermissionsException;
-import ca.stellardrift.permissionsex.util.Translatable;
+import net.kyori.text.Component;
 
 /**
  * Exception relating to the execution of a command
  */
 public class CommandException extends PermissionsException {
-    private static final long serialVersionUID = 242536509476461379L;
+    private static final long serialVersionUID = -5529841181684157987L;
 
-    public CommandException(Translatable message) {
+    public CommandException(Component message) {
         super(message);
     }
 
-    public CommandException(Translatable message, Throwable cause) {
+    public CommandException(Component message, Throwable cause) {
         super(message, cause);
     }
 }

@@ -17,62 +17,45 @@
 
 package ca.stellardrift.permissionsex.commands.commander
 
-import ca.stellardrift.permissionsex.util.Translatable
+import net.kyori.text.Component
 import java.util.Locale
 import java.util.Optional
 
 /**
  * Interface implemented by objects that can execute commands and receive command output
  */
-interface Commander<TextType: Any> {
+interface Commander {
     val name: String
     val locale: Locale
     val subjectIdentifier: Optional<Map.Entry<String, String>>
 
     fun hasPermission(permission: String): Boolean
 
-    val formatter: MessageFormatter<TextType>
+    val formatter: MessageFormatter
 
     @JvmDefault
-    fun msg(text: Translatable) {
-        msg(formatter.run { text.tr() })
-    }
-
-
-    @JvmDefault
-    fun debug(text: Translatable) {
-        debug(formatter.run  {text.tr()})
-    }
-
-
-    @JvmDefault
-    fun error(text: Translatable) {
-        error(formatter.run { text.tr() })
+    fun msg(cb: MessageFormatter.(send: (Component) -> Unit) -> Unit) {
+        formatter.cb { msg(it) }
     }
 
     @JvmDefault
-    fun msg(cb: MessageFormatter<TextType>.(send: (TextType) -> Unit) -> Unit) {
-        formatter.cb(::msg)
+    fun debug(cb: MessageFormatter.(send: (Component) -> Unit) -> Unit) {
+        formatter.cb { debug(it) }
     }
 
     @JvmDefault
-    fun debug(cb: MessageFormatter<TextType>.(send: (TextType) -> Unit) -> Unit) {
-        formatter.cb(::debug)
-    }
-
-    @JvmDefault
-    fun error(err: Throwable? = null, cb: MessageFormatter<TextType>.(send: (TextType) -> Unit) -> Unit) {
+    fun error(err: Throwable? = null, cb: MessageFormatter.(send: (Component) -> Unit) -> Unit) {
         formatter.cb { error(it, err)} // TODO: Does this make the most sense
     }
 
-    fun msg(text: TextType)
-    fun debug(text: TextType)
+    fun msg(text: Component)
+    fun debug(text: Component)
 
-    fun error(text: TextType, err: Throwable? = null)
+    fun error(text: Component, err: Throwable? = null)
 
     fun msgPaginated(
-        title: Translatable,
-        header: Translatable? = null,
-        text: Iterable<TextType>
+        title: Component,
+        header: Component? = null,
+        text: Iterable<Component>
     )
 }

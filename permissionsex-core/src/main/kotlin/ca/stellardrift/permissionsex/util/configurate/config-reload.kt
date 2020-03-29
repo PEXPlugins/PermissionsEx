@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.util.configurate
 
-import ca.stellardrift.permissionsex.logging.TranslatableLogger
+import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.util.Messages
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
@@ -62,7 +62,7 @@ private data class DirectoryListenerRegistration(val key: WatchKey, val fileList
 
 class WatchServiceListener @JvmOverloads constructor(
     private val executor: ExecutorService = Executors.newCachedThreadPool(),
-    val logger: TranslatableLogger = TranslatableLogger.forLogger(LoggerFactory.getLogger(WatchServiceListener::class.java)),
+    val logger: FormattedLogger = FormattedLogger.forLogger(LoggerFactory.getLogger(WatchServiceListener::class.java), false),
     fileSystem: FileSystem = FileSystems.getDefault()
 ) : AutoCloseable {
     private val watchService = fileSystem.newWatchService()
@@ -101,7 +101,7 @@ class WatchServiceListener @JvmOverloads constructor(
                                     }
                                 }
                             } catch (thr: Throwable) {
-                                this.logger.error(Messages.WATCHSERVICE_ERROR_TASK.get(key.watchable()))
+                                this.logger.error(Messages.WATCHSERVICE_ERROR_TASK(key.watchable()))
                             }
                         }
 

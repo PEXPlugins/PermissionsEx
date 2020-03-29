@@ -17,20 +17,22 @@
 
 package ca.stellardrift.permissionsex.exception;
 
-import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
+import net.kyori.text.Component;
+import net.kyori.text.serializer.plain.PlainComponentSerializer;
 
 import java.util.Locale;
 
 public class PermissionsException extends Exception {
-    private static final long serialVersionUID = -1575675581442294748L;
-    
-    private final Translatable message;
+    private static final long serialVersionUID = 138001301588644173L;
 
-    public PermissionsException(Translatable message) {
+    private final Component message;
+
+    public PermissionsException(Component message) {
         this.message = message;
     }
 
-    public PermissionsException(Translatable message, Throwable cause) {
+    public PermissionsException(Component message, Throwable cause) {
         super(cause);
         this.message = message;
     }
@@ -45,11 +47,11 @@ public class PermissionsException extends Exception {
         return getLocalizedMessage(Locale.getDefault());
     }
 
-    public Translatable getTranslatableMessage() {
+    public Component getComponent() {
         return message;
     }
 
     public String getLocalizedMessage(Locale locale) {
-        return message.translateFormatted(locale);
+        return PlainComponentSerializer.INSTANCE.serialize(PEXComponentRenderer.INSTANCE.render(getComponent(), locale));
     }
 }

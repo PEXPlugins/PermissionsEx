@@ -31,11 +31,11 @@ import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig
 import ca.stellardrift.permissionsex.util.configurate.WatchServiceListener
 import com.google.common.collect.Maps.immutableEntry
 import com.google.common.reflect.TypeToken
+import net.kyori.text.Component
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
 import ninja.leaping.configurate.objectmapping.Setting
@@ -54,7 +54,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
     companion object : ConversionProvider {
         @JvmField
         val FACTORY = Factory("ops", OpsDataStore::class.java, ::OpsDataStore)
-        override val name: Translatable = OPS_NAME.get()
+        override val name: Component = OPS_NAME()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
             val opsFile = pex.getBaseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
@@ -90,7 +90,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
         }
 
         if (!Files.exists(file)) {
-            manager.logger.warn(OPS_ERROR_NO_FILE.get())
+            manager.logger.warn(OPS_ERROR_NO_FILE())
         }
 
         this.configListener = WatchServiceListener(logger = manager.logger)

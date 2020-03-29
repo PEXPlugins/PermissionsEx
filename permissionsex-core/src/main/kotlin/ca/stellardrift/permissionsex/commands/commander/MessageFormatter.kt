@@ -1,28 +1,28 @@
-/*
- * PermissionsEx
- * Copyright (C) zml and PermissionsEx contributors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package ca.stellardrift.permissionsex.commands.commander
 
+import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.Messages
+import ca.stellardrift.permissionsex.commands.parse.SubjectIdentifier
 import ca.stellardrift.permissionsex.data.SubjectDataReference
-import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.TranslatableProvider
+import ca.stellardrift.permissionsex.subject.SubjectType
+import ca.stellardrift.permissionsex.util.colored
+import ca.stellardrift.permissionsex.util.component
+import ca.stellardrift.permissionsex.util.decorated
+import ca.stellardrift.permissionsex.util.plusAssign
+import ca.stellardrift.permissionsex.util.unaryPlus
 import com.google.common.collect.Maps
+import net.kyori.text.BuildableComponent
+import net.kyori.text.Component
+import net.kyori.text.ComponentBuilder
+import net.kyori.text.TextComponent
+import net.kyori.text.TextComponent.space
+import net.kyori.text.event.ClickEvent
+import net.kyori.text.event.HoverEvent
+import net.kyori.text.format.Style
+import net.kyori.text.format.TextColor
+import net.kyori.text.format.TextDecoration
+import java.util.concurrent.ExecutionException
 
 enum class ButtonType {
     /**
@@ -39,143 +39,149 @@ enum class ButtonType {
     NEUTRAL
 }
 
-/**
- * Interface specifying code to get specific elements of commands
- */
-interface MessageFormatter<TextType: Any> {
+val EQUALS_SIGN = "=" colored TextColor.GRAY
+val SLASH = +"/"
+abstract class MessageFormatter(protected val pex: PermissionsEx<*>,
+                                val hlColor: TextColor = TextColor.AQUA) {
+
+    /**
+     * Given a command in standard format, correct it to refer to specifically the proxy format
+     */
+    protected open fun transformCommand(cmd: String) = cmd
+
+    protected open val SubjectIdentifier.friendlyName: String? get()= null
+
+    fun subject(subject: Pair<String, String>): Component {
+        return subject(Maps.immutableEntry(subject.first, subject.second))
+    }
+
+    operator fun SubjectIdentifier.unaryPlus() = subject(this)
+
+    fun subject(subject: CalculatedSubject) = subject(subject.identifier)
+
+    operator fun CalculatedSubject.unaryPlus() = subject(this)
+
+    fun subject(ref: SubjectDataReference) = subject(ref.identifier)
+
+    operator fun SubjectDataReference.unaryPlus() = subject(this)
+
     /**
      * Print the subject in a user-friendly manner. May link to the subject info printout
      *
      * @param subject The subject to show
      * @return the formatted value
      */
-    fun subject(subject: Map.Entry<String, String>): TextType
+    fun subject(subject: SubjectIdentifier): Component {
+        val subjType: SubjectType = pex.getSubjects(subject.key)
+        var name = subject.friendlyName
+        if (name == null) {
+            try {
+                name = subjType.persistentData().getData(subject.value, null).get()
+                    .getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]
+            } catch (e: ExecutionException) {
+                throw RuntimeException(e)
+            } catch (e: InterruptedException) {
+                throw RuntimeException(e)
+            }
+        }
 
-    fun subject(subject: Pair<String, String>): TextType {
-        return subject(Maps.immutableEntry(subject.first, subject.second))
-    }
+        val nameText = if (name != null) {
+            component {
+                append(subject.value colored TextColor.GRAY)
+                append(SLASH)
+                append(name)
+            }
+        } else {
+            +subject.value
+        }
 
-    operator fun Map.Entry<String, String>.unaryMinus(): TextType {
-        return subject(this)
-    }
-
-    fun subject(subject: CalculatedSubject): TextType {
-        return subject(subject.identifier)
-    }
-
-    operator fun CalculatedSubject.unaryMinus(): TextType {
-        return subject(this);
-    }
-
-    fun subject(ref: SubjectDataReference): TextType {
-        return subject(ref.identifier)
-    }
-
-    operator fun SubjectDataReference.unaryMinus(): TextType {
-        return subject(this)
+        return component {
+            this += subject.key decorated TextDecoration.BOLD
+            this += space()
+            this += nameText
+            hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT()))
+            clickEvent(ClickEvent.runCommand(transformCommand("/pex ${subject.key} ${subject.value} info")))
+        }
     }
 
     /**
-     * Print the rank ladder in a user-friendly manner. May link to the subject info printout
+     * Create a clickable button that will execute a command or suggest a command to be executed
      *
-     * @param ladder The ladder to show
-     * @return the formatted value
-     */
-    fun ladder(ladder: RankLadder): TextType
-
-    operator fun RankLadder.unaryMinus(): TextType {
-        return ladder(this)
-    }
-
-    /**
-     * Print the given boolean in a user-friendly manner.
-     * Generally this means green if true, or red if false
-     * @param value The value to print
-     * @return the formatted value
-     */
-    fun booleanVal(value: Boolean): TextType
-
-
-    operator fun Boolean.unaryMinus(): TextType {
-        return booleanVal(this)
-    }
-
-    /**
-     * Create a clickable button that will execute a command or
      * @param type The style of button to present
-     * @param label The label for the button
      * @param tooltip A tooltip to optionally show when hovering over a button
      * @param command The command to execute
      * @param execute Whether the command provided will be executed or only added to the user's input
      * @return the formatted text
      */
-    fun button(
+    fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.button(
         type: ButtonType,
-        label: Translatable,
-        tooltip: Translatable?,
+        tooltip: Component?,
         command: String,
         execute: Boolean
-    ): TextType
+    ): B {
+        color(
+            when (type) {
+                ButtonType.POSITIVE -> TextColor.GREEN
+                ButtonType.NEGATIVE -> TextColor.RED
+                ButtonType.NEUTRAL -> hlColor
+            }
+        )
 
-    fun permission(permission: String, value: Int): TextType
-    fun option(permission: String, value: String): TextType
+        if (tooltip != null) {
+            hoverEvent(HoverEvent.showText(tooltip))
+        }
+
+        clickEvent(
+            if (execute) {
+                ClickEvent.runCommand(transformCommand(command))
+            } else {
+                ClickEvent.suggestCommand(transformCommand(command))
+            }
+        )
+        return this
+    }
+
     /**
-     * Execute a callback when the given text is clicked
+     * Adds a click event to the provided component builder
      *
-     * @param title The text to show. The text will be shown underlined in the highlight colour.
-     * @param callback The function to call
+     * @param func The function to call
      * @return The updated text
      */
-    fun callback(
-        title: Translatable,
-        callback: (Commander<TextType>) -> Unit
-    ): TextType
+    abstract fun <C : BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B
 
-    /**
-     * Format the given line of text to be used in a header
-     *
-     * @return The input text with header formatting wrapping.
-     */
-    fun TextType.header(): TextType
-
-    /**
-     * Highlight the passed text
-     *
-     * @return The highlighted text
-     */
-    fun TextType.hl(): TextType
-
-    /**
-     * Combines an array containing elements of type [TextType] and [java.lang.String] into a single message
-     *
-     * @param elements The elements to combine
-     * @return A combined, formatted element
-     */
-    fun combined(vararg elements: Any): TextType
-
-    /**
-     * Return the internal representation of the given translatable text.
-     *
-     * @param tr The translatable text
-     * @return the formatted value
-     */
-    fun Translatable.tr(): TextType
-
-    operator fun Translatable.unaryMinus(): TextType {
-        return this.tr()
+    fun permission(permission: String, value: Int): Component {
+        return TextComponent.make {
+            it += permission colored when {
+                value > 0 -> TextColor.GREEN
+                value < 0 -> TextColor.RED
+                else -> TextColor.GRAY
+            }
+            it += EQUALS_SIGN
+            it += TextComponent.of(value)
+        }
     }
 
-    @JvmDefault
-    operator fun TranslatableProvider.invoke(vararg args: TextType): TextType {
-        return this.get(*args).tr()
+    fun option(permission: String, value: String): Component {
+        return TextComponent.make(permission) {
+            it += EQUALS_SIGN
+            it += +value
+        }
     }
 
-    /**
-     * Convert a plain string to formatted text
-     */
-    operator fun String.unaryMinus(): TextType
+    fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.header(): B {
+        return decoration(TextDecoration.BOLD, true)
+    }
 
-    operator fun TextType.plus(other: TextType): TextType
+    fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.hl(): B {
+        return color(hlColor)
+    }
 
-    fun Collection<TextType>.concat(separator: TextType = -""): TextType
+    fun Style.Builder.header(): Style.Builder {
+        return decoration(TextDecoration.BOLD, true)
+    }
+
+    fun Style.Builder.hl(): Style.Builder {
+        return color(hlColor)
+    }
 }
+

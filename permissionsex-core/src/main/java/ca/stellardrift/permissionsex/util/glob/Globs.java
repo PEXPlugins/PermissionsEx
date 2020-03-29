@@ -62,7 +62,7 @@ public class Globs {
         } catch (ParseCancellationException e) {
             RecognitionException ex = ((RecognitionException) e.getCause());
             Token errorToken = ex.getOffendingToken();
-            throw new GlobParseException(GlobMessages.ERROR_PARSE.get(errorToken.getText(),
+            throw new GlobParseException(GlobMessages.ERROR_PARSE.toComponent(errorToken.getText(),
                     errorToken.getLine(), errorToken.getCharPositionInLine()), ex);
         }
 

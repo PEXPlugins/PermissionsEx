@@ -42,6 +42,7 @@ dependencies {
     }
 
     implementation("net.kyori:text-adapter-spongeapi:${Versions.TEXT}")
+    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     kapt("org.spongepowered:spongeapi:${Versions.SPONGE}")
     testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")

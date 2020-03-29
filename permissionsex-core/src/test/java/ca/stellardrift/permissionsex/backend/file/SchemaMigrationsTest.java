@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.backend.file;
 
-import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import com.google.common.io.Resources;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
@@ -57,7 +57,7 @@ public class SchemaMigrationsTest {
                 .setPath(testFile)
                 .build();
         ConfigurationNode node = yamlLoader.load();
-        SchemaMigrations.oneTo2(TranslatableLogger.forLogger(LoggerFactory.getLogger(getClass()))).apply(node);
+        SchemaMigrations.oneTo2(FormattedLogger.forLogger(LoggerFactory.getLogger(getClass()))).apply(node);
         jsonSaver.save(node);
         assertEquals(Resources.readLines(getClass().getResource("test1to2.post.json"), UTF_8), Files.readAllLines(testFile, UTF_8));
 

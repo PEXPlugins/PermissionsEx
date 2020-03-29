@@ -18,8 +18,8 @@
 package ca.stellardrift.permissionsex.util.command.args;
 
 import com.google.common.base.Strings;
-import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandException;
+import net.kyori.text.Component;
 
 import java.util.Locale;
 
@@ -27,18 +27,18 @@ import java.util.Locale;
  * Exception thrown when arguments are parsed
  */
 public class ArgumentParseException extends CommandException {
-    private static final long serialVersionUID = 3406557653990427160L;
+    private static final long serialVersionUID = -8753442830556455069L;
     
     private final String source;
     private final int position;
 
-    public ArgumentParseException(Translatable message, String source, int position) {
+    public ArgumentParseException(Component message, String source, int position) {
         super(message);
         this.source = source;
         this.position = position;
     }
 
-    public ArgumentParseException(Translatable message, Throwable cause, String source, int position) {
+    public ArgumentParseException(Component message, Throwable cause, String source, int position) {
         super(message, cause);
         this.source = source;
         this.position = position;

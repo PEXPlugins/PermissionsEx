@@ -17,17 +17,19 @@
 
 package ca.stellardrift.permissionsex.logging;
 
-import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
+import net.kyori.text.Component;
+import net.kyori.text.serializer.ComponentSerializer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
 import java.util.Locale;
 
-public interface TranslatableLogger extends Logger {
+public interface FormattedLogger extends Logger {
 
-    static TranslatableLogger forLogger(Logger logger) {
-        return logger instanceof TranslatableLogger ? ((TranslatableLogger) logger) : new WrappingTranslatableLogger(logger);
+    static FormattedLogger forLogger(Logger logger, boolean supportsFormatting) {
+        return logger instanceof FormattedLogger ? ((FormattedLogger) logger) : new WrappingFormattedLogger(logger, supportsFormatting);
     }
 
     Locale getLogLocale();
@@ -39,15 +41,25 @@ public interface TranslatableLogger extends Logger {
 
     void setPrefix(@Nullable String prefix);
 
+    ComponentSerializer<Component, ?, String> getSerializer();
+
+    default String formatText(Component component) {
+        return formatText(component, null);
+    }
+
+    default String formatText(Component component, Marker marker) {
+        return getSerializer().serialize(PEXComponentRenderer.INSTANCE.render(component, getLogLocale(marker)));
+    }
+
     /**
      * Log a message at the TRACE level.
      *
      * @param msg the translatable message to be logged
      * @since 1.4
      */
-    default void trace(Translatable msg) {
+    default void trace(Component msg) {
         if (isTraceEnabled()) {
-            trace(msg.translateFormatted(getLogLocale()));
+            trace(formatText(msg));
         }
     }
 
@@ -59,9 +71,9 @@ public interface TranslatableLogger extends Logger {
      * @param t   the exception (throwable) to log
      * @since 1.4
      */
-    default void trace(Translatable msg, Throwable t) {
+    default void trace(Component msg, Throwable t) {
         if (isTraceEnabled()) {
-            trace(msg.translateFormatted(getLogLocale()), t);
+            trace(formatText(msg), t);
         }
 
     }
@@ -73,15 +85,15 @@ public interface TranslatableLogger extends Logger {
      * @param msg    the message string to be logged
      * @since 1.4
      */
-    default void trace(Marker marker, Translatable msg) {
+    default void trace(Marker marker, Component msg) {
         if (isTraceEnabled(marker)) {
-            trace(marker, msg.translateFormatted(getLogLocale(marker)));
+            trace(marker, formatText(msg, marker));
         }
 
     }
 
     /**
-     * This method is similar to {@link #trace(Translatable, Throwable)} method except that the
+     * This method is similar to {@link #trace(Component, Throwable)} method except that the
      * marker data is also taken into consideration.
      *
      * @param marker the marker data specific to this log statement
@@ -89,9 +101,9 @@ public interface TranslatableLogger extends Logger {
      * @param t      the exception (throwable) to log
      * @since 1.4
      */
-    default void trace(Marker marker, Translatable msg, Throwable t) {
+    default void trace(Marker marker, Component msg, Throwable t) {
         if (isTraceEnabled(marker)) {
-            trace(marker, msg.translateFormatted(getLogLocale(marker)), t);
+            trace(marker, formatText(msg, marker), t);
         }
 
     }
@@ -101,9 +113,9 @@ public interface TranslatableLogger extends Logger {
      *
      * @param msg the message string to be logged
      */
-    default void debug(Translatable msg) {
+    default void debug(Component msg) {
         if (isDebugEnabled()) {
-            debug(msg.translateFormatted(getLogLocale()));
+            debug(formatText(msg));
         }
     }
 
@@ -114,9 +126,9 @@ public interface TranslatableLogger extends Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    default void debug(Translatable msg, Throwable t) {
+    default void debug(Component msg, Throwable t) {
         if (isDebugEnabled()) {
-            debug(msg.translateFormatted(getLogLocale()), t);
+            debug(formatText(msg), t);
         }
 
     }
@@ -127,24 +139,24 @@ public interface TranslatableLogger extends Logger {
      * @param marker the marker data specific to this log statement
      * @param msg    the message string to be logged
      */
-    default void debug(Marker marker, Translatable msg) {
+    default void debug(Marker marker, Component msg) {
         if (isDebugEnabled(marker)) {
-            debug(marker, msg.translateFormatted(getLogLocale(marker)));
+            debug(marker, formatText(msg, marker));
         }
 
     }
 
     /**
-     * This method is similar to {@link #debug(Translatable, Throwable)} method except that the
+     * This method is similar to {@link #debug(Component, Throwable)} method except that the
      * marker data is also taken into consideration.
      *
      * @param marker the marker data specific to this log statement
      * @param msg    the message accompanying the exception
      * @param t      the exception (throwable) to log
      */
-    default void debug(Marker marker, Translatable msg, Throwable t) {
+    default void debug(Marker marker, Component msg, Throwable t) {
         if (isDebugEnabled(marker)) {
-            debug(marker, msg.translateFormatted(getLogLocale(marker)), t);
+            debug(marker, formatText(msg, marker), t);
         }
 
     }
@@ -154,9 +166,9 @@ public interface TranslatableLogger extends Logger {
      *
      * @param msg the message string to be logged
      */
-    default void info(Translatable msg) {
+    default void info(Component msg) {
         if (isInfoEnabled()) {
-            info(msg.translateFormatted(getLogLocale()));
+            info(formatText(msg));
         }
 
     }
@@ -168,9 +180,9 @@ public interface TranslatableLogger extends Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    default void info(Translatable msg, Throwable t) {
+    default void info(Component msg, Throwable t) {
         if (isInfoEnabled()) {
-            info(msg.translateFormatted(getLogLocale()), t);
+            info(formatText(msg), t);
         }
 
     }
@@ -181,24 +193,24 @@ public interface TranslatableLogger extends Logger {
      * @param marker The marker specific to this log statement
      * @param msg    the message string to be logged
      */
-    default void info(Marker marker, Translatable msg) {
+    default void info(Marker marker, Component msg) {
         if (isInfoEnabled(marker)) {
-            info(marker, msg.translateFormatted(getLogLocale(marker)));
+            info(marker, formatText(msg, marker));
         }
 
     }
 
     /**
-     * This method is similar to {@link #info(Translatable, Throwable)} method
+     * This method is similar to {@link #info(Component, Throwable)} method
      * except that the marker data is also taken into consideration.
      *
      * @param marker the marker data for this log statement
      * @param msg    the message accompanying the exception
      * @param t      the exception (throwable) to log
      */
-    default void info(Marker marker, Translatable msg, Throwable t) {
+    default void info(Marker marker, Component msg, Throwable t) {
         if (isInfoEnabled(marker)) {
-            info(marker, msg.translateFormatted(getLogLocale(marker)), t);
+            info(marker, formatText(msg, marker), t);
         }
 
     }
@@ -208,9 +220,9 @@ public interface TranslatableLogger extends Logger {
      *
      * @param msg the message string to be logged
      */
-    default void warn(Translatable msg) {
+    default void warn(Component msg) {
         if (isWarnEnabled()) {
-            warn(msg.translateFormatted(getLogLocale()));
+            warn(formatText(msg));
         }
 
     }
@@ -222,9 +234,9 @@ public interface TranslatableLogger extends Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    default void warn(Translatable msg, Throwable t) {
+    default void warn(Component msg, Throwable t) {
         if (isWarnEnabled()) {
-            warn(msg.translateFormatted(getLogLocale()), t);
+            warn(formatText(msg), t);
         }
 
     }
@@ -235,24 +247,24 @@ public interface TranslatableLogger extends Logger {
      * @param marker The marker specific to this log statement
      * @param msg    the message string to be logged
      */
-    default void warn(Marker marker, Translatable msg) {
+    default void warn(Marker marker, Component msg) {
         if (isWarnEnabled(marker)) {
-            warn(marker, msg.translateFormatted(getLogLocale(marker)));
+            warn(marker, formatText(msg, marker));
         }
 
     }
 
     /**
-     * This method is similar to {@link #warn(Translatable, Throwable)} method
+     * This method is similar to {@link #warn(Component, Throwable)} method
      * except that the marker data is also taken into consideration.
      *
      * @param marker the marker data for this log statement
      * @param msg    the message accompanying the exception
      * @param t      the exception (throwable) to log
      */
-    default void warn(Marker marker, Translatable msg, Throwable t) {
+    default void warn(Marker marker, Component msg, Throwable t) {
         if (isWarnEnabled(marker)) {
-            warn(marker, msg.translateFormatted(getLogLocale(marker)), t);
+            warn(marker, formatText(msg, marker), t);
         }
 
     }
@@ -262,9 +274,9 @@ public interface TranslatableLogger extends Logger {
      *
      * @param msg the message string to be logged
      */
-    default void error(Translatable msg) {
+    default void error(Component msg) {
         if (isErrorEnabled()) {
-            error(msg.translateFormatted(getLogLocale()));
+            error(formatText(msg));
         }
 
     }
@@ -276,9 +288,9 @@ public interface TranslatableLogger extends Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    default void error(Translatable msg, Throwable t) {
+    default void error(Component msg, Throwable t) {
         if (isErrorEnabled()) {
-            error(msg.translateFormatted(getLogLocale()), t);
+            error(formatText(msg), t);
         }
 
     }
@@ -289,15 +301,15 @@ public interface TranslatableLogger extends Logger {
      * @param marker The marker specific to this log statement
      * @param msg    the message string to be logged
      */
-    default void error(Marker marker, Translatable msg) {
+    default void error(Marker marker, Component msg) {
         if (isErrorEnabled(marker)) {
-            error(marker, msg.translateFormatted(getLogLocale(marker)));
+            error(marker, formatText(msg, marker));
         }
 
     }
 
     /**
-     * This method is similar to {@link #error(Translatable, Throwable)}
+     * This method is similar to {@link #error(Component, Throwable)}
      * method except that the marker data is also taken into
      * consideration.
      *
@@ -305,9 +317,9 @@ public interface TranslatableLogger extends Logger {
      * @param msg    the message accompanying the exception
      * @param t      the exception (throwable) to log
      */
-    default void error(Marker marker, Translatable msg, Throwable t) {
+    default void error(Marker marker, Component msg, Throwable t) {
         if (isErrorEnabled(marker)) {
-            error(marker, msg.translateFormatted(getLogLocale(marker)), t);
+            error(marker, formatText(msg, marker), t);
         }
 
     }

@@ -17,81 +17,13 @@
 
 package ca.stellardrift.permissionsex.util
 
-import java.util.Locale
-import java.util.ResourceBundle
+import net.kyori.text.TranslatableComponent
 
-class TranslatableProvider(val key: String, val resourceBundleName: String) {
-    operator fun get(vararg args: Any): Translatable = ResourceBundleTranslatable(key, resourceBundleName, args)
-    operator fun invoke(args: Array<out Any>): Translatable {
-        return get(*args)
-    }
+class TranslatableProvider(val key: String) {
+    @JvmName("toComponent")
+    operator fun invoke(vararg args: Any) = TranslatableComponent.of(key, args.map { it.toComponent() })
+
+    @JvmName("toComponentBuilder")
+    operator fun get(vararg args: Any) = TranslatableComponent.builder(key).args(args.map { it.toComponent() })
 }
 
-class ResourceBundleTranslatable internal constructor(
-    val key: String,
-    val resourceBundleName: String,
-    args: Array<out Any>
-) : Translatable(args) {
-    override val untranslated: String =
-        key
-
-    override fun translate(locale: Locale): String {
-        ResourceBundle.getBundle(resourceBundleName, locale).apply {
-            return if (containsKey(key)) {
-                getString(key)
-            } else {
-                key
-            }
-        }
-    }
-}
-
-class FixedTranslatable internal constructor(val contents: String, args: Array<out Any>): Translatable(args) {
-    override val untranslated: String
-        get() = contents
-
-    override fun translate(locale: Locale): String
-            = contents
-
-}
-
-sealed class Translatable(val args: Array<out Any>) {
-
-    abstract val untranslated: String
-    abstract fun translate(locale: Locale): String
-
-    fun translateFormatted(locale: Locale): String {
-        val translatedArgs = args.map {
-            if (it is Translatable) {
-                it.translateFormatted(locale)
-            } else {
-                it
-            }
-        }.toTypedArray()
-        return translate(locale).format(locale, *translatedArgs)
-    }
-
-    override fun toString(): String {
-        return "Translatable{" +
-                "untranslated=" + untranslated +
-                "args=" + args.contentToString() +
-                '}'
-    }
-
-    companion object {
-        // TODO: Does it make sense to have this?
-        private fun hasTranslatableArgs(vararg args: Any): Boolean {
-            for (arg in args) {
-                if (arg is Translatable) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        @JvmStatic
-        fun fixed(contents: String, vararg args: Any): Translatable {
-            return FixedTranslatable(contents, args)
-        }
-    }
-}

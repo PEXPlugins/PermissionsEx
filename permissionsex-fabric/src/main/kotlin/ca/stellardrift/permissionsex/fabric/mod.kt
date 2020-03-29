@@ -25,7 +25,7 @@ import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_DEFAULTS
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
-import ca.stellardrift.permissionsex.logging.TranslatableLogger
+import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.castMap
@@ -75,7 +75,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private lateinit var dataDir: Path
     lateinit var server: MinecraftServer private set
 
-    private val _logger = TranslatableLogger.forLogger(LoggerFactory.getLogger(MOD_ID))
+    private val _logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID))
     private val exec = Executors.newCachedThreadPool()
     private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
@@ -175,7 +175,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         }
     }
 
-    override fun getLogger(): TranslatableLogger {
+    override fun getLogger(): FormattedLogger {
         return _logger
     }
 

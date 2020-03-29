@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.util.glob;
 
 import ca.stellardrift.permissionsex.exception.PermissionsException;
-import ca.stellardrift.permissionsex.util.Translatable;
+import net.kyori.text.Component;
 
 /**
  * This error is thrown when invalid glob syntax is presented
@@ -26,11 +26,11 @@ import ca.stellardrift.permissionsex.util.Translatable;
 public class GlobParseException extends PermissionsException {
     private static final long serialVersionUID = 1019525110836056128L;
 
-    GlobParseException(Translatable trans) {
+    GlobParseException(Component trans) {
         super(trans);
     }
 
-    GlobParseException(Translatable msg, Throwable throwable) {
+    GlobParseException(Component msg, Throwable throwable) {
         super(msg, throwable);
     }
 }

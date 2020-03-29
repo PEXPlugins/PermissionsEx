@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.fabric
 
-import ca.stellardrift.permissionsex.commands.commander.AbstractMessageFormatter
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.castMap
@@ -126,7 +126,7 @@ internal fun ServerCommandSource.asCommander(): Commander<Text> {
 }
 
 class FabricMessageFormatter constructor(src: ServerCommandSource) :
-    AbstractMessageFormatter(src as Commander<ComponentBuilder<*, *>>, PermissionsExMod.manager) {
+    MessageFormatter(src as Commander<ComponentBuilder<*, *>>, PermissionsExMod.manager) {
 
     override val Map.Entry<String, String>.friendlyName: String?
         get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap< Nameable, String> { name.asString() }

@@ -209,7 +209,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
         try {
             ((ObjectMapper) factory.mapper).bind(this).serialize(node);
         } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.get(node.getKey()), e);
+            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.toComponent(node.getKey()), e);
         }
         return factory.type;
     }
@@ -245,7 +245,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
             try {
                 return mapper.bind(newInstanceSupplier.apply(identifier)).populate(config);
             } catch (ObjectMappingException e) {
-                throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.get(identifier), e);
+                throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.toComponent(identifier), e);
             }
         }
     }

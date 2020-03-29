@@ -17,7 +17,6 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommonMessages;
 import com.google.common.collect.Lists;
 
@@ -45,7 +44,7 @@ public class CommandArgs {
 
     public String peek() throws ArgumentParseException {
         if (!hasNext()) {
-            throw createError(CommonMessages.ERROR_ARGUMENTS_NOTENOUGH.get());
+            throw createError(CommonMessages.ERROR_ARGUMENTS_NOTENOUGH());
         }
         return args.get(index + 1).getValue();
     }

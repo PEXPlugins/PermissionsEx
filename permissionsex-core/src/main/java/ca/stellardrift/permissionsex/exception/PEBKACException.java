@@ -17,15 +17,16 @@
 
 package ca.stellardrift.permissionsex.exception;
 
-import ca.stellardrift.permissionsex.util.Translatable;
+
+import net.kyori.text.Component;
 
 /**
- * This exception is thrown when the server admin is a hunk of stupid between the keyboard and chair
+ * This exception is thrown when an error occurs that is due to misconfiguration of the plugin.
  */
 public class PEBKACException extends PermissionsException {
-    private static final long serialVersionUID = -3922462431218213878L;
+    private static final long serialVersionUID = -3841706491554528729L;
 
-    public PEBKACException(Translatable message) {
+    public PEBKACException(Component message) {
         super(message);
     }
 }

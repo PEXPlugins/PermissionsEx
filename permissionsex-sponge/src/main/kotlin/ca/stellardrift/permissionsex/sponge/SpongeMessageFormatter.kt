@@ -17,26 +17,11 @@
 
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.commands.commander.ButtonType
-import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.Translatable
-import ca.stellardrift.permissionsex.util.Util
-import org.spongepowered.api.command.CommandSource
-import org.spongepowered.api.service.permission.SubjectData
-import org.spongepowered.api.text.Text
-import org.spongepowered.api.text.action.TextActions
-import org.spongepowered.api.text.format.TextColor
-import org.spongepowered.api.text.format.TextColors
-import org.spongepowered.api.text.format.TextStyles
-import org.spongepowered.api.text.translation.FixedTranslation
-import java.util.concurrent.ExecutionException
 
 /**
  * Factory to create formatted elements of messages
  */
-internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin, private val cmd: SpongeCommander) :
+/*internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin, private val cmd: SpongeCommander) :
     MessageFormatter<Text.Builder> {
     override fun subject(subject: Map.Entry<String, String>): Text.Builder {
         val source =
@@ -205,5 +190,5 @@ internal class SpongeMessageFormatter(private val pex: PermissionsExPlugin, priv
     override fun Collection<Text.Builder>.concat(separator: Text.Builder): Text.Builder {
         return Text.joinWith(separator.build(), this.map { it.build() }).toBuilder()
     }
-}
+}*/
 

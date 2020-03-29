@@ -18,20 +18,20 @@
 package ca.stellardrift.permissionsex.exception;
 
 import ca.stellardrift.permissionsex.Messages;
-import ca.stellardrift.permissionsex.util.Translatable;
+import net.kyori.text.Component;
 
 public class PermissionsLoadingException extends PermissionsException {
-    private static final long serialVersionUID = -7821206470445564912L;
+    private static final long serialVersionUID = -3894757413277685930L;
 
-    public PermissionsLoadingException(Translatable message) {
+    public PermissionsLoadingException(Component message) {
         super(message);
     }
 
-    public PermissionsLoadingException(Translatable message, Throwable cause) {
+    public PermissionsLoadingException(Component message, Throwable cause) {
         super(message, cause);
     }
 
     public PermissionsLoadingException(Throwable cause) {
-        super(Messages.ERROR_GENERAL_LOADING.get(), cause);
+        super(Messages.ERROR_GENERAL_LOADING.toComponent(), cause);
     }
 }
