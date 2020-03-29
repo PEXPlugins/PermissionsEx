@@ -21,13 +21,15 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.DataStore
 import ca.stellardrift.permissionsex.backend.conversion.groupmanager.GroupManagerDataStore
 import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsConversionProvider
-import ca.stellardrift.permissionsex.util.Translatable
+import net.kyori.text.Component
+import net.kyori.text.serializer.plain.PlainComponentSerializer
 import java.util.concurrent.ConcurrentHashMap
 
-data class ConversionResult(val store: DataStore, val title: Translatable)
+data class ConversionResult(val store: DataStore, val title: Component)
 
 interface ConversionProvider {
-    val name: Translatable
+    val name: Component
+    val key get() = PlainComponentSerializer.INSTANCE.serialize(name)
     fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult>
 }
 
@@ -50,7 +52,7 @@ object ConversionProviderRegistry {
      * Register a single provider
      */
     fun register(provider: ConversionProvider): Boolean {
-        return providers.putIfAbsent(provider.name.untranslated, provider) == null
+        return providers.putIfAbsent(provider.key, provider) == null
     }
 
     init {

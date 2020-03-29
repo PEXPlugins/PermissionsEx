@@ -29,8 +29,7 @@ public interface CommandExecutor {
      *
      * @param src The commander who is executing this command
      * @param args The parsed command arguments for this command
-     * @param <TextType> The type of text this Commander wants
      * @throws CommandException If a user-facing error occurs while executing this command
      */
-    <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException;
+    void execute(Commander src, CommandContext args) throws CommandException;
 }

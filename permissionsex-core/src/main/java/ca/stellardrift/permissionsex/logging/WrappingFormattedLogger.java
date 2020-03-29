@@ -17,6 +17,10 @@
 
 package ca.stellardrift.permissionsex.logging;
 
+import net.kyori.text.Component;
+import net.kyori.text.serializer.ComponentSerializer;
+import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.text.serializer.plain.PlainComponentSerializer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
@@ -24,14 +28,16 @@ import org.slf4j.Marker;
 import java.util.Locale;
 
 /**
- * An implementation of {@link TranslatableLogger} that delegates to an existing logger
+ * An implementation of {@link FormattedLogger} that delegates to an existing logger
  */
-class WrappingTranslatableLogger implements TranslatableLogger {
+class WrappingFormattedLogger implements FormattedLogger {
     private final Logger wrapping;
     private String prefix;
+    private final boolean supportsFormatting;
 
-    public WrappingTranslatableLogger(Logger wrapping) {
+    public WrappingFormattedLogger(Logger wrapping, boolean supportsFormatting) {
         this.wrapping = wrapping;
+        this.supportsFormatting = supportsFormatting;
     }
 
     @Override
@@ -53,6 +59,15 @@ class WrappingTranslatableLogger implements TranslatableLogger {
     @Override
     public void setPrefix(@Nullable String prefix) {
         this.prefix = prefix;
+    }
+
+    @Override
+    public ComponentSerializer<Component, ?, String> getSerializer() {
+        if (supportsFormatting) {
+            return LegacyComponentSerializer.legacyLinking();
+        } else {
+            return PlainComponentSerializer.INSTANCE;
+        }
     }
 
     private String applyPrefix(String input) {

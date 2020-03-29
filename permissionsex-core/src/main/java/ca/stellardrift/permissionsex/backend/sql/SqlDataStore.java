@@ -104,11 +104,11 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
                 final String database = conn.getMetaData().getDatabaseProductName().toLowerCase();
                 this.daoFactory = daoImplementations.get(database);
                 if (this.daoFactory == null) {
-                    throw new PermissionsLoadingException(Messages.SQL_DB_IMPL_NOT_SUPPORTED.get(database));
+                    throw new PermissionsLoadingException(Messages.SQL_DB_IMPL_NOT_SUPPORTED.toComponent(database));
                 }
             }
         } catch (SQLException e) {
-            throw new PermissionsLoadingException(Messages.SQL_DB_CONNECTION_ERROR.get(), e);
+            throw new PermissionsLoadingException(Messages.SQL_DB_CONNECTION_ERROR.toComponent(), e);
         }
 
         /*try (SqlDao conn = getDao()) {
@@ -124,7 +124,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
             try {
                 return initializeTables();
             } catch (SQLException e) {
-                throw new PermissionsLoadingException(Messages.SQL_ERROR_INITIALIZE_TABLES.get(), e);
+                throw new PermissionsLoadingException(Messages.SQL_ERROR_INITIALIZE_TABLES.toComponent(), e);
             }
         } else {
             return true;
@@ -151,7 +151,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
                 });
                 if (initialVersion != finalVersion) {
                     dao.setSchemaVersion(finalVersion);
-                    getManager().getLogger().info(Messages.SQL_SCHEMA_UPDATE_SUCCESS.get(initialVersion, finalVersion));
+                    getManager().getLogger().info(Messages.SQL_SCHEMA_UPDATE_SUCCESS.toComponent(initialVersion, finalVersion));
                 }
                 return true;
             }
@@ -195,7 +195,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
                     return new SqlSubjectData(SubjectRef.unresolved(type, identifier));
                 }
             } catch (SQLException e) {
-                throw new PermissionsLoadingException(Messages.SQL_ERROR_LOADING.get(type, identifier));
+                throw new PermissionsLoadingException(Messages.SQL_ERROR_LOADING.toComponent(type, identifier));
             }
         });
     }

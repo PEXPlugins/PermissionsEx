@@ -32,11 +32,11 @@ import static ca.stellardrift.permissionsex.logging.Messages.CHECK_PERMISSION;
  * Log debug messages
  */
 public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
-    private final TranslatableLogger logger;
+    private final FormattedLogger logger;
     private final PermissionCheckNotifier delegate;
     private final Predicate<String> filterPredicate;
 
-    public DebugPermissionCheckNotifier(TranslatableLogger logger, PermissionCheckNotifier delegate, @Nullable Predicate<String> filterPredicate) {
+    public DebugPermissionCheckNotifier(FormattedLogger logger, PermissionCheckNotifier delegate, @Nullable Predicate<String> filterPredicate) {
         this.logger = logger;
         this.delegate = delegate;
         this.filterPredicate = filterPredicate == null ? x -> true : filterPredicate;
@@ -53,7 +53,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     @Override
     public void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         if (this.filterPredicate.test(permission)) {
-            logger.info(CHECK_PERMISSION.get(permission, contexts, stringIdentifier(subject), value));
+            logger.info(CHECK_PERMISSION.toComponent(permission, contexts, stringIdentifier(subject), value));
         }
         delegate.onPermissionCheck(subject, contexts, permission, value);
     }
@@ -61,14 +61,14 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     @Override
     public void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value) {
         if (this.filterPredicate.test(option)) {
-            logger.info(CHECK_OPTION.get(option, contexts, stringIdentifier(subject), value));
+            logger.info(CHECK_OPTION.toComponent(option, contexts, stringIdentifier(subject), value));
         }
         delegate.onOptionCheck(subject, contexts, option, value);
     }
 
     @Override
     public void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
-        logger.info(Messages.CHECK_PARENT.get(contexts, stringIdentifier(subject), parents));
+        logger.info(Messages.CHECK_PARENT.toComponent(contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }
 }

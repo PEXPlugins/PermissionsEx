@@ -189,7 +189,7 @@ public class PEXPermissible extends PermissibleBase {
         }
 
         if (pex.hasDebugMode()) {
-            pex.getLogger().info(Messages.SUPERPERMS_CHECK_NOTIFY.get(permission, player.getName(), contexts, ret));
+            pex.getLogger().info(Messages.SUPERPERMS_CHECK_NOTIFY.toComponent(permission, player.getName(), contexts, ret));
         }
         return ret;
     }

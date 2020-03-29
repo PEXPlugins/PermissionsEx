@@ -146,14 +146,14 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     @Override
     public void validate() throws PEBKACException {
         if (backends.isEmpty()) {
-            throw new PEBKACException(CONFIG_ERROR_NO_BACKENDS.get());
+            throw new PEBKACException(CONFIG_ERROR_NO_BACKENDS.toComponent());
         }
         if (defaultBackend == null) {
-            throw new PEBKACException(CONFIG_ERROR_NO_DEFAULT.get());
+            throw new PEBKACException(CONFIG_ERROR_NO_DEFAULT.toComponent());
         }
 
         if (!backends.containsKey(defaultBackend)) {
-            throw new PEBKACException(CONFIG_ERROR_INVALID_DEFAULT.get(defaultBackend, backends.keySet()));
+            throw new PEBKACException(CONFIG_ERROR_INVALID_DEFAULT.toComponent(defaultBackend, backends.keySet()));
         }
     }
 
@@ -173,7 +173,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     public static ConfigurationNode loadDefaultConfiguration() throws IOException {
         final URL defaultConfig = FilePermissionsExConfiguration.class.getResource("default.conf");
         if (defaultConfig == null) {
-            throw new Error(CONFIG_ERROR_DEFAULT_CONFIG.get().translate(Locale.getDefault()));
+            throw new Error(CONFIG_ERROR_DEFAULT_CONFIG.toComponent().translate(Locale.getDefault()));
         }
         HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder().setURL(defaultConfig).build();
         return fallbackLoader.load();

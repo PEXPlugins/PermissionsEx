@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
-import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.profile.ProfileKt;
 import ca.stellardrift.permissionsex.smartertext.CallbackController;
 import ca.stellardrift.permissionsex.subject.SubjectType;
@@ -74,7 +74,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     };
 
     private PermissionsEx<BukkitConfiguration> manager;
-    private TranslatableLogger logger;
+    private FormattedLogger logger;
     // Injections into superperms
     private PermissionList permsList;
     // Permissions subscriptions handling
@@ -89,11 +89,11 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
      *
      * @return Our wrapper of Bukkit's logger
      */
-    private TranslatableLogger createLogger() {
+    private FormattedLogger createLogger() {
         try {
             Constructor<JDK14LoggerAdapter> adapter = JDK14LoggerAdapter.class.getDeclaredConstructor(java.util.logging.Logger.class);
             adapter.setAccessible(true);
-            return TranslatableLogger.forLogger(adapter.newInstance(getLogger()));
+            return FormattedLogger.forLogger(adapter.newInstance(getLogger()), true);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             throw new ExceptionInInitializerError(e);
@@ -120,7 +120,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;*/
         } catch (Exception e) {
-            logger.error(Messages.ERROR_ON_ENABLE.get(getDescription().getName()), e);
+            logger.error(Messages.ERROR_ON_ENABLE.toComponent(getDescription().getName()), e);
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -158,7 +158,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         try {
             this.executorService.awaitTermination(20, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT.get());
+            logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT.toComponent());
             this.executorService.shutdownNow();
         }
     }
@@ -166,7 +166,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler
     private void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
         getUserSubjects().get(event.getUniqueId().toString()).exceptionally(e -> {
-            logger.warn(Messages.ERROR_LOAD_PRELOGIN.get(event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
+            logger.warn(Messages.ERROR_LOAD_PRELOGIN.toComponent(event.getName(), event.getUniqueId().toString(), e.getMessage()), e);
             return null;
         });
     }
@@ -264,18 +264,18 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!found) {
-                logger.warn(Messages.SUPERPERMS_INJECT_NO_INJECTOR.get());
+                logger.warn(Messages.SUPERPERMS_INJECT_NO_INJECTOR.toComponent());
             } else if (!success) {
-                logger.warn(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.get(player.getName()));
+                logger.warn(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.toComponent(player.getName()));
             }
 
             permissible.recalculatePermissions();
 
             if (success && getManager().hasDebugMode()) {
-                logger.info(Messages.SUPERPERMS_INJECT_SUCCESS.get());
+                logger.info(Messages.SUPERPERMS_INJECT_SUCCESS.toComponent());
             }
         } catch (Throwable e) {
-            logger.error(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.get(player.getName()), e);
+            logger.error(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.toComponent(player.getName()), e);
         }
     }
 
@@ -302,9 +302,9 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
 
             if (!success) {
-                logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR.get(player.getName()));
+                logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR.toComponent(player.getName()));
             } else if (getManager() != null && getManager().hasDebugMode()) {
-                logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS.get(player.getName()));
+                logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS.toComponent(player.getName()));
             }
         } catch (Throwable e) {
             e.printStackTrace();

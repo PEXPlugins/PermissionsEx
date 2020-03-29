@@ -23,7 +23,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
-import ca.stellardrift.permissionsex.logging.TranslatableLogger
+import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
@@ -60,7 +60,7 @@ import javax.sql.DataSource
 class PermissionsExPlugin : Plugin(), Listener {
     internal val callbackController = CallbackController()
     private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
-    internal lateinit var logger: TranslatableLogger private set
+    internal lateinit var logger: FormattedLogger private set
     internal lateinit var dataPath: Path private set
 
     lateinit var manager: PermissionsEx<*> internal set
@@ -70,11 +70,11 @@ class PermissionsExPlugin : Plugin(), Listener {
      *
      * @return Our wrapper of Bukkit's logger
      */
-    private fun createLogger(): TranslatableLogger {
+    private fun createLogger(): FormattedLogger {
         val adapter: Constructor<JDK14LoggerAdapter> =
             JDK14LoggerAdapter::class.java.getDeclaredConstructor(Logger::class.java)
         adapter.isAccessible = true
-        return TranslatableLogger.forLogger(adapter.newInstance(super.getLogger()))
+        return FormattedLogger.forLogger(adapter.newInstance(super.getLogger()), false)
     }
 
     override fun onEnable() {
@@ -121,7 +121,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         try {
             manager.getSubjects(SUBJECTS_USER).load(event.connection.uniqueId.toString())
         } catch (e: Exception) {
-            logger.warn(Messages.ERROR_LOAD_LOGIN[event.connection.name, event.connection.uniqueId], e)
+            logger.warn(Messages.ERROR_LOAD_LOGIN(event.connection.name, event.connection.uniqueId), e)
         }
     }
 
@@ -131,7 +131,7 @@ class PermissionsExPlugin : Plugin(), Listener {
             callbackController.clearOwnedBy(event.player.uniqueId)
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
         } catch (e: Exception)  {
-            logger.warn(Messages.ERROR_LOAD_LOGOUT[event.player.name, event.player.uniqueId])
+            logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
         }
     }
 

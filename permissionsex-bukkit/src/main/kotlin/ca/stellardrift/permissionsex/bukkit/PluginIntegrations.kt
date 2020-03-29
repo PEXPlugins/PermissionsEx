@@ -71,7 +71,7 @@ fun detectWorldGuard(plugin: PermissionsExPlugin) {
         }
 
         plugin.manager.registerContextDefinition(WorldGuardRegionContext(wgPlugin as WorldGuardPlugin))
-        plugin.manager.logger.info(Messages.INTEGRATIONS_WORLDGUARD_SUCCESS.get())
+        plugin.manager.logger.info(Messages.INTEGRATIONS_WORLDGUARD_SUCCESS())
     }
 }
 
@@ -82,6 +82,6 @@ fun detectVault(plugin: PermissionsExPlugin) {
             register(Permission::class.java, vault, plugin, ServicePriority.High)
             register(Chat::class.java, PEXVaultChat(vault), plugin, ServicePriority.High)
         }
-        plugin.manager.logger.info(Messages.INTEGRATIONS_VAULT_SUCCESS.get());
+        plugin.manager.logger.info(Messages.INTEGRATIONS_VAULT_SUCCESS())
     }
 }

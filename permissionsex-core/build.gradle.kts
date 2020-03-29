@@ -53,6 +53,8 @@ dependencies {
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
     api("net.kyori:text-api:${Versions.TEXT}")
     api("net.kyori:text-feature-pagination:${Versions.TEXT}")
+    implementation("net.kyori:text-serializer-plain:${Versions.TEXT}")
+    implementation("net.kyori:text-serializer-legacy:${Versions.TEXT}")
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
 
 

@@ -17,8 +17,14 @@
 
 package ca.stellardrift.permissionsex.rank;
 
+import ca.stellardrift.permissionsex.commands.Messages;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.event.ClickEvent;
+import net.kyori.text.event.HoverEvent;
+import net.kyori.text.format.TextDecoration;
 
 import java.util.List;
 import java.util.Map;
@@ -111,4 +117,12 @@ public interface RankLadder {
      * @return A list of ranks present in the ladder. This list is immutable.
      */
     List<? extends Map.Entry<String,String>> getRanks();
+
+    default Component toComponent() {
+        return TextComponent.make(getName(), build -> {
+            build.decoration(TextDecoration.BOLD, true);
+            build.hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.toComponent()));
+            build.clickEvent(ClickEvent.runCommand("/pex rank " + getName()));
+        });
+    }
 }

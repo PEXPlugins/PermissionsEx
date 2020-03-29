@@ -30,7 +30,7 @@ import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.logging.DebugPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
-import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
@@ -86,7 +86,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     public static final String SUBJECTS_FALLBACK = "fallback";
     public static final ImmutableSet<ContextValue<?>> GLOBAL_CONTEXT = ImmutableSet.of();
 
-    private final TranslatableLogger logger;
+    private final FormattedLogger logger;
     private final ImplementationInterface impl;
     private final MemoryDataStore transientData;
     private final RecordingPermissionCheckNotifier baseNotifier = new RecordingPermissionCheckNotifier();
@@ -112,7 +112,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
     public PermissionsEx(final PermissionsExConfiguration<PlatformConfigType> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
-        this.logger = TranslatableLogger.forLogger(impl.getLogger());
+        this.logger = FormattedLogger.forLogger(impl.getLogger());
         this.transientData = new MemoryDataStore("transient");
         this.transientData.initialize(this);
         setDebugMode(config.isDebugEnabled());
@@ -462,7 +462,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     }
 
     @Override
-    public TranslatableLogger getLogger() {
+    public FormattedLogger getLogger() {
         return this.logger;
     }
 

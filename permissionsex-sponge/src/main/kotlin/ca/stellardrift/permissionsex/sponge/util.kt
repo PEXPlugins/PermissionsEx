@@ -18,7 +18,11 @@
 package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.util.MinecraftProfile
+import net.kyori.text.Component
+import net.kyori.text.serializer.gson.GsonComponentSerializer
 import org.spongepowered.api.profile.GameProfile
+import org.spongepowered.api.text.Text
+import org.spongepowered.api.text.serializer.TextSerializers
 import java.util.UUID
 
 class SpongeMinecraftProfile(private val profile: GameProfile): MinecraftProfile {
@@ -27,5 +31,13 @@ class SpongeMinecraftProfile(private val profile: GameProfile): MinecraftProfile
     override val uuid: UUID
         get() = profile.uniqueId
 
+}
+
+fun Component.toSponge(): Text {
+    return TextSerializers.JSON.deserialize(GsonComponentSerializer.INSTANCE.serialize(this))
+}
+
+fun Text.toComponent(): Component {
+    return GsonComponentSerializer.INSTANCE.deserialize(TextSerializers.JSON.serialize(this))
 }
 

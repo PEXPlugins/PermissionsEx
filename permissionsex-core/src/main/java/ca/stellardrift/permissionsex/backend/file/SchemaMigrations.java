@@ -20,7 +20,7 @@ package ca.stellardrift.permissionsex.backend.file;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.backend.Messages;
-import ca.stellardrift.permissionsex.logging.TranslatableLogger;
+import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -45,7 +45,7 @@ public class SchemaMigrations {
     }
 
 
-    static ConfigurationTransformation versionedMigration(final TranslatableLogger logger) {
+    static ConfigurationTransformation versionedMigration(final FormattedLogger logger) {
         return ConfigurationTransformation.versionedBuilder()
                 .setVersionKey("schema-version")
                 .addVersion(LATEST_VERSION, threeToFour())
@@ -129,7 +129,7 @@ public class SchemaMigrations {
                 }).build());
     }
 
-    static ConfigurationTransformation oneTo2(final TranslatableLogger logger) {
+    static ConfigurationTransformation oneTo2(final FormattedLogger logger) {
         return ConfigurationTransformation.chain(
                 tBuilder()
                         .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, (nodePath, configurationNode) -> {

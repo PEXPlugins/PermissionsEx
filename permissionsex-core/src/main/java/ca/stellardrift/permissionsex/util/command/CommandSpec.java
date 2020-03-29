@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.args.*;
 import com.google.common.collect.ImmutableList;
+import net.kyori.text.Component;
 
 import java.util.Collections;
 import java.util.List;
@@ -149,7 +150,7 @@ public class CommandSpec {
         }
     }
 
-    public <TextType> void process(Commander<TextType> commander, String arguments) {
+    public void process(Commander commander, String arguments) {
         if (executor == null) {
             return;
         }
@@ -159,7 +160,7 @@ public class CommandSpec {
             CommandContext args = parse(arguments);
             executor.execute(commander, args);
         } catch (CommandException ex) {
-            commander.error(ex.getTranslatableMessage());
+            commander.error(ex.getComponent());
             commander.error(CommonMessages.USAGE.get(getUsage(commander)));
         } catch (Throwable t) {
             commander.error(CommonMessages.ERROR_GENERAL.get(String.valueOf(t.getMessage())));
@@ -167,7 +168,7 @@ public class CommandSpec {
         }
     }
 
-    public <TextType> void checkPermission(Commander<TextType> commander) throws CommandException {
+    public void checkPermission(Commander commander) throws CommandException {
         if (this.permission != null && !commander.hasPermission(permission)) {
             throw new CommandException(CommonMessages.ERROR_PERMISSION.get());
         }
@@ -188,7 +189,7 @@ public class CommandSpec {
         }
     }
 
-    public <TextType> List<String> tabComplete(Commander<TextType> src, String commandLine) {
+    public List<String> tabComplete(Commander src, String commandLine) {
         try {
             checkPermission(src);
         } catch (CommandException ex) {
@@ -199,13 +200,13 @@ public class CommandSpec {
             CommandContext context = new CommandContext(this, commandLine);
             return tabComplete(src, args, context);
         } catch (ArgumentParseException e) {
-            src.debug(e.getTranslatableMessage());
+            src.debug(e.getComponent());
             return Collections.emptyList();
         }
 
     }
 
-    <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+    <TextType> List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
         return this.args.tabComplete(src, args, context);
     }
 
@@ -231,11 +232,11 @@ public class CommandSpec {
         return this.permission;
     }
 
-    public <TextType> TextType getDescription(Commander<TextType> commander) {
+    public <TextType> TextType getDescription(Commander commander) {
         return this.description == null ? null : commander.getFormatter().tr(this.description);
     }
 
-    public <TextType> TextType getUsage(Commander<TextType> commander) {
+    public Component getUsage(Commander commander) {
         return commander.getFormatter().combined("/", getAliases().get(0), " ", args.getUsage(commander));
     }
 

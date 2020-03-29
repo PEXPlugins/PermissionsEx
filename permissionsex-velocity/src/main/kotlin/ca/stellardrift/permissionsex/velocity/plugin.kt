@@ -24,7 +24,7 @@ import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
-import ca.stellardrift.permissionsex.logging.TranslatableLogger
+import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
@@ -80,7 +80,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         return createHikariDataSource(url, dataPath)
     }
 
-    override fun getLogger(): TranslatableLogger = logger
+    override fun getLogger(): FormattedLogger = logger
 
     override fun getAsyncExecutor(): Executor {
         return exec
@@ -124,7 +124,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
     }
 
-    private val logger = TranslatableLogger.forLogger(rawLogger)
+    private val logger = FormattedLogger.forLogger(rawLogger)
 
     lateinit var manager: PermissionsEx<*>
 

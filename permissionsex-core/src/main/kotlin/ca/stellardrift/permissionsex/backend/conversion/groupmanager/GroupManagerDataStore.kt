@@ -82,7 +82,7 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     override fun initializeInternal(): Boolean {
         val rootFile = Paths.get(groupManagerRoot)
         if (!Files.isDirectory(rootFile)) {
-            throw PermissionsLoadingException(GROUPMANAGER_ERROR_NO_DIR[rootFile])
+            throw PermissionsLoadingException(GROUPMANAGER_ERROR_NO_DIR(rootFile))
         }
         try {
             config = getLoader(rootFile.resolve("config.yml")).load()
