@@ -22,8 +22,10 @@ import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_TRANSIENT
 import ca.stellardrift.permissionsex.commands.Messages.DELETE_ERROR_DOES_NOT_EXIST
 import ca.stellardrift.permissionsex.commands.Messages.DELETE_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.util.RuntimeCommandException
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandSpec
+import ca.stellardrift.permissionsex.util.thenMessageSubject
 
 /**
  * Command that deletes all data for a subject
@@ -32,8 +34,8 @@ internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
     return CommandSpec.builder()
         .setAliases("delete", "del", "remove", "rem")
         .setExecutor(object : PermissionsExExecutor(pex) {
-            override fun <TextType: Any> execute(
-                src: Commander<TextType>,
+            override fun execute(
+                src: Commander,
                 args: CommandContext
             ) {
                 val subject = subjectOrSelf(src, args)
@@ -44,12 +46,11 @@ internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
                     .thenCompose { registered ->
                         if (!registered) {
                             throw RuntimeCommandException(
-                                DELETE_ERROR_DOES_NOT_EXIST[src.formatter.subject(subject)]
+                                DELETE_ERROR_DOES_NOT_EXIST(src.formatter.subject(subject))
                             )
                         }
                         cache.remove(subject.identifier.value)
-                    }
-                    .thenMessageSubject(src) { send -> send(DELETE_SUCCESS(-subject)) }
+                    }.thenMessageSubject(src) { send -> send(DELETE_SUCCESS(+subject)) }
             }
         })
         .build()

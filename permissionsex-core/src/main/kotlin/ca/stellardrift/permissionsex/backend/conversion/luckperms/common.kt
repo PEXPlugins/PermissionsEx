@@ -28,7 +28,7 @@ import java.nio.file.Files
 object LuckPermsConversionProvider : ConversionProvider {
     private val formatNames = enumValues<ConfigFormat>()
 
-    override val name = LUCKPERMS_NAME.get()
+    override val name = LUCKPERMS_NAME()
 
     override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
         val luckBaseDir = pex.baseDirectory.parent.resolve("LuckPerms")
@@ -37,11 +37,11 @@ object LuckPermsConversionProvider : ConversionProvider {
             val configDir = luckBaseDir.resolve(format.storageDirName)
             if (Files.exists(configDir)) {
                 if (Files.isDirectory(configDir.resolve("groups"))) {
-                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}", format, false), LUCKPERMS_DESCRIPTION_FILE_SEPARATE[format.name])
+                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}", format, false), LUCKPERMS_DESCRIPTION_FILE_SEPARATE(format.name))
                 }
 
                 if (Files.isRegularFile(configDir.resolve("groups.${format.extension}"))) {
-                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}-combined", format, true), LUCKPERMS_DESCRIPTION_FILE_COMBINED[format.name])
+                    result += ConversionResult(LuckPermsFileDataStore("lp-${format.name.toLowerCase()}-combined", format, true), LUCKPERMS_DESCRIPTION_FILE_COMBINED(format.name))
                 }
             }
         }

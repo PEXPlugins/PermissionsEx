@@ -187,12 +187,12 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     companion object : ConversionProvider {
         @JvmField
         val FACTORY = Factory<GroupManagerDataStore>("groupmanager", GroupManagerDataStore::class.java, ::GroupManagerDataStore)
-        override val name = GROUPMANAGER_NAME.get()
+        override val name = GROUPMANAGER_NAME()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
             val gmBaseDir = pex.baseDirectory.parent.resolve("GroupManager")
             return if (Files.exists(gmBaseDir.resolve("config.yml"))) { // we exist
-                listOf(ConversionResult(GroupManagerDataStore("gm-file"), GROUPMANAGER_DESCRIPTION.get()))
+                listOf(ConversionResult(GroupManagerDataStore("gm-file"), GROUPMANAGER_DESCRIPTION()))
             } else {
                 emptyList()
             }

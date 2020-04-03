@@ -65,6 +65,8 @@ class CallbackController {
         knownCallbacks.remove(name.toString().toLowerCase(Locale.ROOT))
     }
 
+    fun callbackArg()
+
     fun createCommand(pex: PermissionsEx<*>): Command<Commander> {
         return command("callback", "cb") {
             description = Messages.COMMAND_CALLBACK_DESCRIPTION()

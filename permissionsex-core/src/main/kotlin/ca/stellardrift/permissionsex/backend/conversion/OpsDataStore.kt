@@ -63,7 +63,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
                     OpsDataStore(
                         "ops",
                         opsFile
-                    ), OPS_DESCRIPTION.get()))
+                    ), OPS_DESCRIPTION()))
             } else {
                 listOf()
             }

@@ -18,15 +18,17 @@
 package ca.stellardrift.permissionsex.util.command.args;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.GuavaCollectors;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.StartsWithPredicate;
-import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -55,7 +57,7 @@ public class GenericArguments {
 
     private static class MarkTrueCommandElement extends CommandElement {
         public MarkTrueCommandElement(String flag) {
-            super(Translatable.Companion.fixed(flag));
+            super(TextComponent.of(flag));
         }
 
         @Override
@@ -64,7 +66,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             return Collections.emptyList();
         }
     }
@@ -249,7 +251,7 @@ public class GenericArguments {
                 if (element == null) {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
-                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.get(longFlag));
+                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.toComponent(longFlag));
                         case ACCEPT_NONVALUE:
                             context.putArg(longFlag, value);
                             break;
@@ -265,7 +267,7 @@ public class GenericArguments {
                 if (element == null) {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
-                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.get(longFlag));
+                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.toComponent(longFlag));
                         case ACCEPT_NONVALUE:
                             context.putArg(longFlag, true);
                             break;
@@ -295,7 +297,7 @@ public class GenericArguments {
                                 return false;
                             } // fall-through
                         case ERROR:
-                            throw args.createError(FLAG_ERROR_UNKNOWNSHORT.get(flagChar));
+                            throw args.createError(FLAG_ERROR_UNKNOWNSHORT.toComponent(flagChar));
                         case ACCEPT_NONVALUE:
                             context.putArg(flagChar, true);
                     }
@@ -307,7 +309,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> src) {
+        public  Component getUsage(Commander src) {
             final List<Object> builder = new ArrayList<>();
             for (Map.Entry<List<String>, CommandElement> arg : usageFlags.entrySet()) {
                 builder.add("[");
@@ -338,21 +340,21 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             int startIdx = args.getPosition();
-            Optional<String> arg;
+            String arg;
             while (args.hasNext()) {
                 arg = args.nextIfPresent();
-                if (arg.get().startsWith("-")) {
+                if (arg.startsWith("-")) {
                     int flagStartIdx = args.getPosition();
-                    if (arg.get().startsWith("--")) { // Long flag
-                        String longFlag = arg.get().substring(2);
+                    if (arg.startsWith("--")) { // Long flag
+                        String longFlag = arg.substring(2);
                         List<String> ret = tabCompleteLongFlag(longFlag, src, args, context);
                         if (ret != null) {
                             return ret;
                         }
                     } else {
-                        final String argStr = arg.get().substring(1);
+                        final String argStr = arg.substring(1);
                         List<String> ret = tabCompleteShortFlags(argStr, src, args, context);
                         if (ret != null) {
                             return ret;
@@ -372,7 +374,7 @@ public class GenericArguments {
             }
         }
 
-        private <TextType> List<String> tabCompleteLongFlag(String longFlag, Commander<TextType> src, CommandArgs args, CommandContext context) {
+        private  List<String> tabCompleteLongFlag(String longFlag, Commander src, CommandArgs args, CommandContext context) {
             if (longFlag.isEmpty()) {
                 return null;
             }
@@ -423,7 +425,7 @@ public class GenericArguments {
             return null;
         }
 
-        private <TextType> List<String> tabCompleteShortFlags(String shortFlags, Commander<TextType> src, CommandArgs args, CommandContext context) {
+        private  List<String> tabCompleteShortFlags(String shortFlags, Commander src, CommandArgs args, CommandContext context) {
             if (shortFlags.isEmpty()) {
                 return null;
             }
@@ -477,7 +479,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext(); ) {
                 CommandElement element = it.next();
                 int startPos = args.getPosition();
@@ -508,7 +510,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> commander) {
+        public  Component getUsage(Commander commander) {
             final List<Object> ret = new ArrayList<>(Math.max(0, elements.size() * 2 - 1));
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                 ret.add(it.next().getUsage(commander));
@@ -523,13 +525,13 @@ public class GenericArguments {
     /**
      * Return an argument that allows selecting from a limited set of values.
      * If there are 5 or fewer choices available, the choices will be shown in the command usage. Otherwise, the usage
-     * will only display only the key. To override this behavior, see {@link #choices(Translatable, Map, boolean)}.
+     * will only display only the key. To override this behavior, see {@link #choices(Component, Map, boolean)}.
      *
      * @param key The key to store the resulting value under
      * @param choices The choices users can choose from
      * @return the element to match the input
      */
-    public static CommandElement choices(Translatable key, Map<String, ?> choices) {
+    public static CommandElement choices(Component key, Map<String, ?> choices) {
         return choices(key, choices, choices.size() <= 5);
     }
 
@@ -541,7 +543,7 @@ public class GenericArguments {
      * @param choices The choices users can choose from
      * @return the element to match the input
      */
-    public static CommandElement choices(Translatable key, Map<String, ?> choices, boolean choicesInUsage) {
+    public static CommandElement choices(Component key, Map<String, ?> choices, boolean choicesInUsage) {
         return new ChoicesCommandElement(key, ImmutableMap.copyOf(choices), choicesInUsage);
     }
 
@@ -549,7 +551,7 @@ public class GenericArguments {
         private final Map<String, Object> choices;
         private final boolean choicesInUsage;
 
-        private ChoicesCommandElement(Translatable key, Map<String, Object> choices, boolean choicesInUsage) {
+        private ChoicesCommandElement(Component key, Map<String, Object> choices, boolean choicesInUsage) {
             super(key);
             this.choices = choices;
             this.choicesInUsage = choicesInUsage;
@@ -565,13 +567,13 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             final String prefix = args.nextIfPresent().orElse("");
             return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new GuavaStartsWithPredicate(prefix)));
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> commander) {
+        public  Component getUsage(Commander commander) {
             if (choicesInUsage) {
                 final List<Object> args = new ArrayList<>(Math.max(0, choices.size() * 2 - 1));
                 for (Iterator<String> it = choices.keySet().iterator(); it.hasNext();) {
@@ -633,7 +635,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(final Commander<TextType> src, final CommandArgs args, final CommandContext context) {
+        public  List<String> tabComplete(final Commander src, final CommandArgs args, final CommandContext context) {
             return ImmutableList.copyOf(Iterables.concat(Iterables.transform(elements, input -> {
                     int startIndex = args.getPosition();
                     List<String> ret = input.tabComplete(src, args, context);
@@ -643,7 +645,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> commander) {
+        public  Component getUsage(Commander commander) {
             final List<Object> ret = new ArrayList<>(Math.max(0, elements.size() * 2 - 1));
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                 ret.add(it.next().getUsage(commander));
@@ -749,12 +751,12 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             return element.tabComplete(src, args, context);
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> src) {
+        public  Component getUsage(Commander src) {
             return src.getFormatter().combined("[", this.element.getUsage(src), "]");
         }
     }
@@ -795,7 +797,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             for (int i = 0; i < times; ++i) {
                 int startPos = args.getPosition();
                 try {
@@ -809,7 +811,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> src) {
+        public  Component getUsage(Commander src) {
             return src.getFormatter().combined(times, '*', element.getUsage(src));
         }
     }
@@ -847,7 +849,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             while (args.hasNext()) {
                 int startPos = args.getPosition();
                 try {
@@ -861,7 +863,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> context) {
+        public  Component getUsage(Commander context) {
             return context.getFormatter().combined(element.getUsage(context), '+');
         }
     }
@@ -872,12 +874,12 @@ public class GenericArguments {
      * Parent class that specifies elemenents as having no tab completions. Useful for inputs with a very large domain, like strings and integers
      */
     private static abstract class KeyElement extends CommandElement {
-        private KeyElement(Translatable key) {
+        private KeyElement(Component key) {
             super(key);
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             return Collections.emptyList();
         }
     }
@@ -888,13 +890,13 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement string(Translatable key) {
+    public static CommandElement string(Component key) {
         return new StringElement(key);
     }
 
     private static class StringElement extends KeyElement {
 
-        private StringElement(Translatable key) {
+        private StringElement(Component key) {
             super(key);
         }
 
@@ -911,13 +913,13 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement integer(Translatable key) {
+    public static CommandElement integer(Component key) {
         return new IntegerElement(key);
     }
 
     private static class IntegerElement extends KeyElement {
 
-        private IntegerElement(Translatable key) {
+        private IntegerElement(Component key) {
             super(key);
         }
 
@@ -932,12 +934,12 @@ public class GenericArguments {
         }
     }
 
-    public static CommandElement uuid(Translatable key) {
+    public static CommandElement uuid(Component key) {
         return new UUIDElement(key);
     }
 
     private static class UUIDElement extends KeyElement {
-        private UUIDElement(Translatable key) {
+        private UUIDElement(Component key) {
             super(key);
         }
 
@@ -947,7 +949,7 @@ public class GenericArguments {
             try {
                 return UUID.fromString(input);
             } catch (IllegalArgumentException ex) {
-                throw args.createError(UUID_ERROR_FORMAT.get(input));
+                throw args.createError(UUID_ERROR_FORMAT.toComponent(input));
             }
         }
     }
@@ -956,7 +958,7 @@ public class GenericArguments {
             .put("true", true)
             .put("t", true)
             .put("y", true)
-            .put("yes", true)
+            .put("yes",
             .put("verymuchso", true)
             .put("false", false)
             .put("f", false)
@@ -987,7 +989,7 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement bool(Translatable key) {
+    public static CommandElement bool(Component key) {
         return GenericArguments.choices(key, BOOLEAN_CHOICES);
     }
 
@@ -998,14 +1000,14 @@ public class GenericArguments {
      * @param <T> The type of enum
      * @return the element to match the input
      */
-    public static <T extends Enum<T>> CommandElement enumValue(Translatable key, Class<T> type) {
+    public static <T extends Enum<T>> CommandElement enumValue(Component key, Class<T> type) {
         return new EnumValueElement<>(key, type);
     }
 
     private static class EnumValueElement<T extends Enum<T>> extends CommandElement {
         private final Class<T> type;
 
-        private EnumValueElement(Translatable key, Class<T> type) {
+        private EnumValueElement(Component key, Class<T> type) {
             super(key);
             this.type = type;
         }
@@ -1016,12 +1018,12 @@ public class GenericArguments {
             try {
                 return Enum.valueOf(type, value);
             } catch (IllegalArgumentException ex) {
-                throw args.createError(ENUM_ERROR_INVALID.get(value));
+                throw args.createError(ENUM_ERROR_INVALID.toComponent(value));
             }
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             Iterable<String> validValues = Iterables.transform(Arrays.asList(type.getEnumConstants()), Enum::name);
 
             if (args.hasNext()) {
@@ -1041,14 +1043,14 @@ public class GenericArguments {
      * @param key The key to store the parsed argument under
      * @return the element to match the input
      */
-    public static CommandElement remainingJoinedStrings(Translatable key) {
+    public static CommandElement remainingJoinedStrings(Component key) {
         return new RemainingJoinedStringsCommandElement(key, false);
     }
 
     private static class RemainingJoinedStringsCommandElement extends KeyElement {
         private final boolean raw;
 
-        private RemainingJoinedStringsCommandElement(Translatable key, boolean raw) {
+        private RemainingJoinedStringsCommandElement(Component key, boolean raw) {
             super(key);
             this.raw = raw;
         }
@@ -1073,7 +1075,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> src) {
+        public  Component getUsage(Commander src) {
             return src.getFormatter().combined(super.getUsage(src), "...");
         }
     }
@@ -1086,7 +1088,7 @@ public class GenericArguments {
      * @param expectedArgs The sequence of arguments expected
      * @return the appropriate command element
      */
-    public static CommandElement literal(Translatable key, String... expectedArgs) {
+    public static CommandElement literal(Component key, String... expectedArgs) {
         return new LiteralCommandElement(key, ImmutableList.copyOf(expectedArgs), true);
     }
 
@@ -1099,7 +1101,7 @@ public class GenericArguments {
      * @param expectedArgs The sequence of arguments expected
      * @return the appropriate command element
      */
-    public static CommandElement literal(Translatable key, Object putValue, String... expectedArgs) {
+    public static CommandElement literal(Component key, Object putValue, String... expectedArgs) {
         return new LiteralCommandElement(key, ImmutableList.copyOf(expectedArgs), putValue);
     }
 
@@ -1107,7 +1109,7 @@ public class GenericArguments {
         private final List<String> expectedArgs;
         private final Object putValue;
 
-        protected LiteralCommandElement(@Nullable Translatable key, List<String> expectedArgs, Object putValue) {
+        protected LiteralCommandElement(@Nullable Component key, List<String> expectedArgs, Object putValue) {
             super(key);
             this.expectedArgs = ImmutableList.copyOf(expectedArgs);
             this.putValue = putValue;
@@ -1119,24 +1121,24 @@ public class GenericArguments {
             for (String arg : this.expectedArgs) {
                 String current;
                 if (!(current = args.next()).equalsIgnoreCase(arg)) {
-                    throw args.createError(LITERAL_ERROR_INVALID.get(current, arg));
+                    throw args.createError(LITERAL_ERROR_INVALID.toComponent(current, arg));
                 }
             }
             return this.putValue;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext ctx) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext ctx) {
             for (String arg : this.expectedArgs) {
-                final Optional<String> next = args.nextIfPresent();
-                if (!next.isPresent()) {
+                final String next = args.nextIfPresent();
+                if (next == null) {
                     break;
                 } else if (args.hasNext()) {
-                    if (!next.get().equalsIgnoreCase(arg)) {
+                    if (!next.equalsIgnoreCase(arg)) {
                         break;
                     }
                 } else {
-                    if (arg.toLowerCase().startsWith(next.get().toLowerCase())) { // Case-insensitive compare
+                    if (arg.toLowerCase().startsWith(next.toLowerCase())) { // Case-insensitive compare
                         return ImmutableList.of(arg); // TODO: Possibly complete all remaining args? Does that even work
                     }
                 }
@@ -1145,12 +1147,12 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> src) {
+        public Component getUsage(Commander src) {
             return src.getFormatter().combined(Joiner.on(' ').join(this.expectedArgs));
         }
     }
 
-    public static CommandElement suggestibleString(Translatable key, Supplier<Collection<String>> keySupplier) {
+    public static CommandElement suggestibleString(Component key, Supplier<Collection<String>> keySupplier) {
         return new SuggestibleStringCommandElement(key, keySupplier);
     }
 
@@ -1158,7 +1160,7 @@ public class GenericArguments {
 
         private final Supplier<Collection<String>> keySupplier;
 
-        public SuggestibleStringCommandElement(Translatable key, Supplier<Collection<String>> keySupplier) {
+        public SuggestibleStringCommandElement(Component key, Supplier<Collection<String>> keySupplier) {
             super(key);
             this.keySupplier = keySupplier;
         }
@@ -1169,7 +1171,7 @@ public class GenericArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             return args.nextIfPresent()
                     .map(arg -> keySupplier.get().stream().filter(new StartsWithPredicate(arg))
                             .collect(GuavaCollectors.toImmutableList()))

@@ -21,7 +21,8 @@ import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider
 import ca.stellardrift.permissionsex.backend.conversion.ConversionResult
-import java.awt.Component
+import ca.stellardrift.permissionsex.util.unaryPlus
+import net.kyori.text.Component
 import java.net.URL
 import java.nio.file.Files
 import java.util.UUID
@@ -34,10 +35,10 @@ data class GroupEntry(val name: String, val serverId: UUID, val priority: Int, v
 class UltraPermissionsDataStore {
     companion object : ConversionProvider {
         override val name: Component
-            get() = TODO()//t("Ultra Permissions")
+            get() = +"UltraPermissions"
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
-            val ultraPermsDir =pex.getBaseDirectory(BaseDirectoryScope.JAR).resolve("UltraPermissions")
+            val ultraPermsDir = pex.getBaseDirectory(BaseDirectoryScope.JAR).resolve("UltraPermissions")
             if (Files.exists(ultraPermsDir)) {
                 // TODO: prepare an instance of an UltraPerms configuration
             }

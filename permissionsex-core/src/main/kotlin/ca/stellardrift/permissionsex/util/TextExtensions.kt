@@ -74,11 +74,11 @@ fun Component.styled(init: Style.Builder.() -> Unit): Component {
     return this.style(build)
 }
 
-fun Iterable<Any>.join(separator: Component = space()): Component = component {
+fun Iterable<Any>.join(separator: Component? = space()): Component = component {
     val it = iterator()
     while (it.hasNext()) {
         append(it.next().toComponent())
-        if (it.hasNext()) {
+        if (separator != null && it.hasNext()) {
             append(separator)
         }
     }

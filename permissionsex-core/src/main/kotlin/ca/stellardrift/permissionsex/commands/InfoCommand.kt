@@ -27,27 +27,38 @@ import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS_TRANSIENT
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_PARENTS_TRANSIENT
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_PERMISSIONS
+import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_PERMISSIONS_TRANSIENT
 import ca.stellardrift.permissionsex.commands.Messages.INFO_PERMISSIONS_DEFAULT
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
+import ca.stellardrift.permissionsex.util.*
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
+import ca.stellardrift.permissionsex.util.command.CommandExecutor
 import ca.stellardrift.permissionsex.util.command.CommandSpec
+import net.kyori.text.BuildableComponent
+import net.kyori.text.Component
+import net.kyori.text.ComponentBuilder
 
-    internal fun getInfoCommand(pex: PermissionsEx<*>): CommandSpec {
+internal fun getInfoCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("info", "i", "who")
-            .setDescription(INFO_DESCRIPTION.get())
+            .setDescription(INFO_DESCRIPTION())
             .setExecutor(SubjectInfoPrintingExecutor(pex))
             .build()
+    }
+
+
+    fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> MessageFormatter.hlKeyVal(key: B, value: Component): Component {
+        return key.hl().build() + value
     }
 
     // TODO: Pagination builder
     internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : PermissionsExExecutor(pex) {
         @Throws(CommandException::class)
-        override fun <TextType: Any> execute(
-            src: Commander<TextType>,
+        override fun execute(
+            src: Commander,
             args: CommandContext
         ) {
             val subject = subjectOrSelf(src, args)
@@ -55,85 +66,89 @@ import ca.stellardrift.permissionsex.util.command.CommandSpec
             val transientData = subject.transientData().get()
             val data = subject.data().get()
             src.msg { send ->
-                send(INFO_HEADER(subject(subject)).header())
+                fun head(msg: TranslatableProvider) {
+                    send(msg.get().hl().build())
+                }
+                send(INFO_HEADER[subject(subject)].header().build())
                 if (pex.hasDebugMode()) {
                     val associatedObject = subject.associatedObject
                     associatedObject.ifPresent { o ->
-                        send(INFO_ASSOCIATED_OBJECT().hl() + -o.toString())
+                        send(INFO_ASSOCIATED_OBJECT.get().hl().append(o.toString()).build())
                     }
                 }
-                send(INFO_ACTIVE_CONTEXTS().hl() + -subject.activeContexts.toString())
-                send(INFO_ACTIVE_USED_CONTEXTS().hl() + -subject.usedContextValues.join().toString())
+                send(hlKeyVal(INFO_ACTIVE_CONTEXTS.get(), +subject.activeContexts.toString()))
+                send(hlKeyVal(INFO_ACTIVE_USED_CONTEXTS.get(), +subject.usedContextValues.join().toString()))
 
                 if (data.allPermissions.isNotEmpty() || data.allDefaultValues.isNotEmpty()) {
-                    send(INFO_HEADER_PERMISSIONS().hl())
+                    head(INFO_HEADER_PERMISSIONS)
                     printPermissions(src, data)
                 }
                 if (transientData.allPermissions.isNotEmpty() || transientData.allDefaultValues.isNotEmpty()) {
-                    send(Messages.INFO_HEADER_PERMISSIONS_TRANSIENT().hl())
+                    head(INFO_HEADER_PERMISSIONS_TRANSIENT)
                     printPermissions(src, transientData)
                 }
                 if (data.allOptions.isNotEmpty()) {
-                    send(INFO_HEADER_OPTIONS().hl())
+                    head(INFO_HEADER_OPTIONS)
                     printOptions(src, data)
                 }
                 if (transientData.allOptions.isNotEmpty()) {
-                    send(INFO_HEADER_OPTIONS_TRANSIENT().hl())
+                    head(INFO_HEADER_OPTIONS_TRANSIENT)
                     printOptions(src, transientData)
                 }
                 if (data.allParents.isNotEmpty()) {
-                    send(Messages.INFO_HEADER_PARENTS().hl())
+                    head(Messages.INFO_HEADER_PARENTS)
                     printParents(src, data)
                 }
                 if (transientData.allParents.isNotEmpty()) {
-                    send(INFO_HEADER_PARENTS_TRANSIENT().hl())
+                    head(INFO_HEADER_PARENTS_TRANSIENT)
                     printParents(src, transientData)
                 }
             }
         }
 
-        private fun <Text: Any> MessageFormatter<Text>.printPermissions(
-            src: Commander<Text>,
+        private fun MessageFormatter.printPermissions(
+            src: Commander,
             data: ImmutableSubjectData
         ) {
             val targetContexts = data.allPermissions.keys + data.allDefaultValues.keys
             for (entry in targetContexts) {
-                src.msg(listOf(-INDENT, formatContexts(entry), -":").concat())
-                src.msg(-DOUBLE_INDENT + INFO_PERMISSIONS_DEFAULT(-data.getDefaultValue(entry).toString()).hl())
+                src.msg(listOf(INDENT, entry.toComponent(), COLON).join(separator = null))
+                src.msg(DOUBLE_INDENT + INFO_PERMISSIONS_DEFAULT[data.getDefaultValue(entry).toComponent()].hl().build())
                 data.getPermissions(entry).forEach { (k, v) ->
-                    src.msg(-DOUBLE_INDENT + permission(k, v))
+                    src.msg(DOUBLE_INDENT + permission(k, v))
                 }
             }
         }
 
-        private fun <Text: Any> MessageFormatter<Text>.printOptions(
-            src: Commander<Text>,
+        private fun MessageFormatter.printOptions(
+            src: Commander,
             data: ImmutableSubjectData
         ) {
 
             for ((key, value) in data.allOptions) {
-                src.msg(listOf(-INDENT, formatContexts(key), -":").concat())
+                src.msg(listOf(INDENT, key.toComponent(), COLON).join(separator = null))
                 value.forEach { (k, v) ->
-                    src.msg(-DOUBLE_INDENT + option(k, v))
+                    src.msg(DOUBLE_INDENT + option(k, v))
                 }
             }
         }
 
-        private fun <TextType: Any> MessageFormatter<TextType>.printParents(
-            src: Commander<TextType>,
+        private fun MessageFormatter.printParents(
+            src: Commander,
             data: ImmutableSubjectData
         ) {
             for ((key, value) in data.allParents) {
-                src.msg(listOf(-INDENT, formatContexts(key), -":").concat())
+                src.msg(listOf(INDENT, key.toComponent(), COLON).join(separator = null))
                 for (parent in value) {
-                    src.msg(-DOUBLE_INDENT + subject(parent))
+                    src.msg(DOUBLE_INDENT + subject(parent))
                 }
             }
         }
 
         companion object {
-            private const val INDENT = "  "
-            private const val DOUBLE_INDENT =
-                INDENT + INDENT
+            private val NONE = +""
+            private val COLON = +":"
+            private val INDENT = +"  "
+            private val DOUBLE_INDENT = +"    "
         }
     }

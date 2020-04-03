@@ -30,8 +30,10 @@ import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
+import ca.stellardrift.permissionsex.util.styled
+import ca.stellardrift.permissionsex.util.thenMessageSubject
 
-    internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
+internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("parents", "parent", "par", "p")
             .setChildren(
@@ -45,11 +47,11 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
     private fun getAddParentCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("add", "a", "+")
-            .setArguments(subject(PARENT_ARGS_PARENT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(PARENT_ARGS_PARENT(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ref = getDataRef(src, args, "permissionsex.parent.add")
@@ -65,8 +67,8 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
                         }.thenMessageSubject(src) { send ->
                                 send(PARENT_ADD_SUCCESS(
                                 subject(parent),
-                                subject(ref).hl(),
-                                formatContexts(contexts)
+                                subject(ref).styled { hl() },
+                                contexts.toComponent()
                             ))
                         }
                 }
@@ -77,11 +79,11 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
     private fun getRemoveParentCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("remove", "rem", "delete", "del", "-")
-            .setArguments(subject(PARENT_ARGS_PARENT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(PARENT_ARGS_PARENT(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ref = getDataRef(src, args, "permissionsex.parent.remove")
@@ -98,8 +100,8 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
                             send(
                                 PARENT_REMOVE_SUCCESS(
                                 subject(parent),
-                                subject(ref).hl(),
-                                formatContexts(contexts)
+                                subject(ref).styled { hl()},
+                                contexts.toComponent()
                             ))
                         }
                 }
@@ -110,11 +112,11 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
     private fun getSetParentsCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("set", "replace", "=")
-            .setArguments(subject(PARENT_ARGS_PARENT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(PARENT_ARGS_PARENT(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ref = getDataRef(src, args, "permissionsex.parent.set")
@@ -128,9 +130,9 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
                         }.thenMessageSubject(src) { send ->
                             send(
                                 PARENT_SET_SUCCESS(
-                                subject(ref).hl(),
+                                subject(ref).styled { hl() },
                                 subject(parent),
-                                formatContexts(contexts)
+                                contexts.toComponent()
                             ))
                         }
                 }

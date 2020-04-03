@@ -19,15 +19,16 @@ package ca.stellardrift.permissionsex.util.command.args;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
-import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import net.kyori.text.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -45,14 +46,14 @@ public class GameArguments {
 
     }
 
-    public static CommandElement subjectType(Translatable key, PermissionsEx<?> pex) {
+    public static CommandElement subjectType(Component key, PermissionsEx<?> pex) {
         return new SubjectTypeElement(key, pex);
     }
 
     private static class SubjectTypeElement extends CommandElement {
         private final PermissionsEx<?> pex;
 
-        protected SubjectTypeElement(Translatable key, PermissionsEx<?> pex) {
+        protected SubjectTypeElement(Component key, PermissionsEx<?> pex) {
             super(key);
             this.pex = pex;
         }
@@ -62,14 +63,17 @@ public class GameArguments {
             final String next = args.next();
             Set<String> subjectTypes = pex.getRegisteredSubjectTypes();
             if (!subjectTypes.contains(next)) {
-                throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.get(next));
+                throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.toComponent(next));
             }
             return next;
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            String nextOpt = args.nextIfPresent().orElse("");
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+            String nextOpt = args.nextIfPresent();
+            if (nextOpt == null) {
+                nextOpt = "";
+            }
             return ImmutableList.copyOf(Iterables.filter(pex.getRegisteredSubjectTypes(), new GuavaStartsWithPredicate(nextOpt)));
         }
     }
@@ -84,11 +88,11 @@ public class GameArguments {
      * @param pex The PermissionsEx instance to fetch known subjects from
      * @return the element to match the input
      */
-    public static CommandElement subject(Translatable key, PermissionsEx<?> pex) {
+    public static CommandElement subject(Component key, PermissionsEx<?> pex) {
         return new SubjectElement(key, pex, null);
     }
 
-    public static CommandElement subject(Translatable key, PermissionsEx<?> pex, String group) {
+    public static CommandElement subject(Component key, PermissionsEx<?> pex, String group) {
         return new SubjectElement(key, pex, group);
     }
 
@@ -96,7 +100,7 @@ public class GameArguments {
         private final PermissionsEx<?> pex;
         private final String defaultType;
 
-        protected SubjectElement(Translatable key, PermissionsEx<?> pex, String defaultType) {
+        protected SubjectElement(Component key, PermissionsEx<?> pex, String defaultType) {
             super(key);
             this.pex = pex;
             this.defaultType = defaultType;
@@ -125,30 +129,29 @@ public class GameArguments {
             }
 
             if (!subjType.getTypeInfo().isNameValid(identifier)) {
-                throw args.createError(SUBJECT_ERROR_NAMEINVALID.get(identifier, type));
+                throw args.createError(SUBJECT_ERROR_NAMEINVALID.toComponent(identifier, type));
             }
 
             return Maps.immutableEntry(type, identifier);
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            final Optional<String> typeSegment = args.nextIfPresent();
-            if (!typeSegment.isPresent()) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+            String type = args.nextIfPresent();
+            if (type == null) {
                 return ImmutableList.copyOf(pex.getRegisteredSubjectTypes());
             }
 
-            String type = typeSegment.get();
-            Optional<String> identifierSegment = args.nextIfPresent();
-            if (!identifierSegment.isPresent()) { // TODO: Correct tab completion logic
+            String identifierSegment = args.nextIfPresent();
+            if (identifierSegment == null) { // TODO: Correct tab completion logic
                 if (type.contains(":")) {
                     final String[] argSplit = type.split(":", 2);
                     type = argSplit[0];
-                    identifierSegment = Optional.of(argSplit[1]);
+                    identifierSegment = argSplit[1];
                     final SubjectType typeObj = pex.getSubjects(type);
                     final Iterable<String> allIdents = typeObj.getAllIdentifiers();
                     final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, k -> typeObj.getTypeInfo().getAliasForName(k).orElse(k)), v -> v != null)),
-                            new GuavaStartsWithPredicate(identifierSegment.get())
+                            new GuavaStartsWithPredicate(identifierSegment)
                     );
 
                     return ImmutableList.copyOf(Iterables.transform(ret, input -> typeObj.getTypeInfo().getTypeName() + ":" + input));
@@ -160,21 +163,21 @@ public class GameArguments {
             final Iterable<String> allIdents = pex.getSubjects(type).getAllIdentifiers();
             final SubjectType typeObj = pex.getSubjects(type);
             final Iterable<String> ret = Iterables.filter(Iterables.concat(allIdents, Iterables.filter(Iterables.transform(allIdents, k -> typeObj.getTypeInfo().getAliasForName(k).orElse(k)), v -> v != null)),
-                    new GuavaStartsWithPredicate(identifierSegment.get())
+                    new GuavaStartsWithPredicate(identifierSegment)
             );
 
             return ImmutableList.copyOf(ret);
         }
     }
 
-    public static CommandElement context(Translatable key, PermissionsEx<?> pex) {
+    public static CommandElement context(Component key, PermissionsEx<?> pex) {
         return new ContextCommandElement(key, pex);
     }
 
     private static class ContextCommandElement extends CommandElement {
         private final PermissionsEx<?> pex;
 
-        protected ContextCommandElement(Translatable key, PermissionsEx<?> pex) {
+        protected ContextCommandElement(Component key, PermissionsEx<?> pex) {
             super(key);
             this.pex = pex;
         }
@@ -184,15 +187,15 @@ public class GameArguments {
             final String context = args.next(); // TODO: Allow multi-word contexts (<key> <value>)
             final String[] contextSplit = context.split("=", 2);
             if (contextSplit.length != 2) {
-                throw args.createError(CONTEXT_ERROR_FORMAT.get());
+                throw args.createError(CONTEXT_ERROR_FORMAT.toComponent());
             }
             ContextDefinition<?> def = pex.getContextDefinition(contextSplit[0]);
             if (def == null) {
-                throw args.createError(CONTEXT_ERROR_TYPE.get(contextSplit[0]));
+                throw args.createError(CONTEXT_ERROR_TYPE.toComponent(contextSplit[0]));
             }
             ContextValue<?> ret = toCtxValue(def, contextSplit[1]);
             if (ret == null) {
-                throw args.createError(CONTEXT_ERROR_VALUE.get(context));
+                throw args.createError(CONTEXT_ERROR_VALUE.toComponent(context));
             }
             return ret;
         }
@@ -208,19 +211,19 @@ public class GameArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             return Collections.emptyList();
         }
     }
 
-    public static CommandElement rankLadder(Translatable key, PermissionsEx<?> pex) {
+    public static CommandElement rankLadder(Component key, PermissionsEx<?> pex) {
         return new RankLadderCommandElement(key, pex);
     }
 
     private static class RankLadderCommandElement extends CommandElement {
         private final PermissionsEx<?> pex;
 
-        protected RankLadderCommandElement(Translatable key, PermissionsEx<?> pex) {
+        protected RankLadderCommandElement(Component key, PermissionsEx<?> pex) {
             super(key);
             this.pex = pex;
         }
@@ -231,16 +234,21 @@ public class GameArguments {
         }
 
         @Override
-        public <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context) {
-            return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new GuavaStartsWithPredicate(args.nextIfPresent().orElse(""))));
+        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+            String arg = args.nextIfPresent();
+            if (arg == null) {
+                return ImmutableList.copyOf(pex.getLadders().getAll());
+            } else {
+                return ImmutableList.copyOf(Iterables.filter(pex.getLadders().getAll(), new GuavaStartsWithPredicate(arg)));
+            }
         }
     }
 
-    public static CommandElement permission(Translatable key, PermissionsEx<?> pex) {
+    public static CommandElement permission(Component key, PermissionsEx<?> pex) {
         return GenericArguments.suggestibleString(key, () -> pex.getRecordingNotifier().getKnownPermissions());
     }
 
-    public static CommandElement option(Translatable key, PermissionsEx<?> pex) {
+    public static CommandElement option(Component key, PermissionsEx<?> pex) {
         return GenericArguments.suggestibleString(key, () -> pex.getRecordingNotifier().getKnownOptions());
     }
 

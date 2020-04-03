@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_DEFAULT_SUCCES
 import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.util.Translatable
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -36,8 +35,12 @@ import ca.stellardrift.permissionsex.util.command.args.GenericArguments.choices
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.firstParsing
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.integer
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
+import ca.stellardrift.permissionsex.util.styled
+import ca.stellardrift.permissionsex.util.thenMessageSubject
+import ca.stellardrift.permissionsex.util.toComponent
+import java.awt.Component
 
-private fun permissionValue(key: Translatable): CommandElement {
+private fun permissionValue(key: Component): CommandElement {
     return firstParsing(
         integer(
             key
@@ -56,15 +59,15 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>): CommandSpec {
         .setArguments(
             seq(
                 permission(
-                    PERMISSION_ARG_KEY.get(),
+                    PERMISSION_ARG_KEY(),
                     pex
-                ), permissionValue(PERMISSION_ARG_PERMISSION_VALUE.get())
+                ), permissionValue(PERMISSION_ARG_PERMISSION_VALUE())
             )
         )
         .setExecutor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun <TextType: Any> execute(
-                src: Commander<TextType>,
+            override fun execute(
+                src: Commander,
                 args: CommandContext
             ) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set")
@@ -80,8 +83,8 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>): CommandSpec {
                 }.thenMessageSubject(src) { send ->
                     send(PERMISSION_SUCCESS(
                         permission(key, intVal),
-                        subject(ref).hl(),
-                        formatContexts(contexts)
+                        subject(ref).styled { hl() },
+                        contexts.toComponent()
                     ))
                 }
             }
@@ -92,11 +95,11 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>): CommandSpec {
 internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>): CommandSpec {
     return CommandSpec.builder()
         .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd", "default", "def")
-        .setArguments(permissionValue(PERMISSION_ARG_PERMISSION_VALUE.get()))
+        .setArguments(permissionValue(PERMISSION_ARG_PERMISSION_VALUE()))
         .setExecutor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun <TextType: Any> execute(
-                src: Commander<TextType>,
+            override fun execute(
+                src: Commander,
                 args: CommandContext
             ) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set-default")
@@ -114,9 +117,9 @@ internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>): CommandSpec {
                 }.thenMessageSubject(src) { send ->
                     send(
                         PERMISSION_DEFAULT_SUCCESS(
-                        -intVal.toString(),
-                        subject(ref).hl(),
-                        formatContexts(contexts)
+                        intVal.toComponent(),
+                        subject(ref).styled {hl()},
+                        contexts.toComponent()
                     ))
                 }
             }

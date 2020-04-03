@@ -2,15 +2,10 @@ package ca.stellardrift.permissionsex.commands.commander
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
-import ca.stellardrift.permissionsex.commands.parse.SubjectIdentifier
 import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectType
-import ca.stellardrift.permissionsex.util.colored
-import ca.stellardrift.permissionsex.util.component
-import ca.stellardrift.permissionsex.util.decorated
-import ca.stellardrift.permissionsex.util.plusAssign
-import ca.stellardrift.permissionsex.util.unaryPlus
+import ca.stellardrift.permissionsex.util.*
 import com.google.common.collect.Maps
 import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
@@ -41,7 +36,7 @@ enum class ButtonType {
 
 val EQUALS_SIGN = "=" colored TextColor.GRAY
 val SLASH = +"/"
-abstract class MessageFormatter(protected val pex: PermissionsEx<*>,
+abstract class MessageFormatter(internal val cmd: Commander, internal val pex: PermissionsEx<*>,
                                 val hlColor: TextColor = TextColor.AQUA) {
 
     /**
@@ -147,7 +142,13 @@ abstract class MessageFormatter(protected val pex: PermissionsEx<*>,
      * @param func The function to call
      * @return The updated text
      */
-    abstract fun <C : BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B
+    fun <C : BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
+        val command = pex.callbackController.registerCallback(cmd, func)
+        decoration(TextDecoration.UNDERLINED, true)
+        color(hlColor)
+        clickEvent(ClickEvent.runCommand(transformCommand(command)))
+        return this
+    }
 
     fun permission(permission: String, value: Int): Component {
         return TextComponent.make {

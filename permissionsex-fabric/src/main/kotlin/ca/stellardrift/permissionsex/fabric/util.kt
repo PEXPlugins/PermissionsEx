@@ -18,7 +18,12 @@
 package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.util.CachingValue
+import ca.stellardrift.text.fabric.ComponentCommandOutput
+import ca.stellardrift.text.fabric.ComponentPlayer
+import net.kyori.text.Component
+import net.minecraft.network.MessageType
 import net.minecraft.server.MinecraftServer
+import net.minecraft.server.command.CommandOutput
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import java.util.Locale
@@ -50,4 +55,14 @@ fun <R> ServerCommandSource.ifPlayer(operation: (ServerPlayerEntity) -> R): R? {
         return operation(ent)
     }
     return null
+}
+
+@JvmName("sendPlayerMessage")
+@JvmOverloads
+fun ServerPlayerEntity.sendMessage(text: Component, type: MessageType = MessageType.SYSTEM) {
+    ComponentPlayer.of(this).sendMessage(text, type)
+}
+
+fun CommandOutput.sendMessage(text: Component) {
+    ComponentCommandOutput.of(this).sendMessage(text)
 }

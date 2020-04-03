@@ -17,9 +17,13 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.TranslatableComponent;
+import net.kyori.text.serializer.plain.PlainComponentSerializer;
 
 import java.util.List;
 
@@ -27,28 +31,38 @@ import java.util.List;
  * Represents a command argument element
  */
 public abstract class CommandElement {
-    private final Translatable key;
+    private final Component key;
 
-    protected CommandElement(Translatable key) {
+    protected CommandElement(Component key) {
         this.key = key;
     }
 
-    public Translatable getKey() {
+    public Component getKey() {
         return this.key;
     }
 
     public void parse(CommandArgs args, CommandContext context)  throws ArgumentParseException {
         Object val = parseValue(args);
         if (this.key != null && val != null) {
-            context.putArg(this.key.getUntranslated(), val);
+            context.putArg(toKey(this.key), val);
         }
     }
 
     protected abstract Object parseValue(CommandArgs args) throws ArgumentParseException;
 
-    public abstract <TextType> List<String> tabComplete(Commander<TextType> src, CommandArgs args, CommandContext context);
+    public abstract  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context);
 
-    public <TextType> TextType getUsage(Commander<TextType> src) {
-        return src.getFormatter().tr(getKey());
+    public Component getUsage(Commander src) {
+        return getKey();
+    }
+
+    protected String toKey(Component text) {
+        if (text instanceof TextComponent) {
+            return ((TextComponent) text).content();
+        } else if (text instanceof TranslatableComponent) {
+            return ((TranslatableComponent) text).key();
+        } else {
+            return PlainComponentSerializer.INSTANCE.serialize(text);
+        }
     }
 }

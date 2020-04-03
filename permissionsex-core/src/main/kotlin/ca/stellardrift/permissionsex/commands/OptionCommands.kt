@@ -33,15 +33,17 @@ import ca.stellardrift.permissionsex.util.command.args.GameArguments.option
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.optional
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.string
+import ca.stellardrift.permissionsex.util.styled
+import ca.stellardrift.permissionsex.util.thenMessageSubject
 
 internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
     return CommandSpec.builder()
         .setAliases("options", "option", "opt", "o")
-        .setArguments(seq(option(OPTION_ARG_KEY.get(), pex), optional(string(OPTION_ARG_VALUE.get()))))
+        .setArguments(seq(option(OPTION_ARG_KEY(), pex), optional(string(OPTION_ARG_VALUE()))))
         .setExecutor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun <TextType: Any> execute(
-                src: Commander<TextType>,
+            override fun execute(
+                src: Commander,
                 args: CommandContext
             ) {
                 val ref = getDataRef(src, args, "permissionsex.option.set")
@@ -53,9 +55,9 @@ internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
                         old.setOption(contexts, key, null)
                     }.thenMessageSubject(src) { send ->
                             send(OPTION_SUCCESS_UNSET(
-                            -key,
-                            subject(ref).hl(),
-                            formatContexts(contexts)
+                            key,
+                            subject(ref).styled { hl() },
+                            contexts.toComponent()
                         ))
                     }
                 } else {
@@ -69,8 +71,8 @@ internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
                         send(
                             OPTION_SUCCESS_SET(
                             option(key, value),
-                            subject(ref).hl(),
-                            formatContexts(contexts)
+                            subject(ref).styled { hl()},
+                            contexts.toComponent()
                         ))
                     }
                 }

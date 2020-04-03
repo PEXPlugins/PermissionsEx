@@ -38,10 +38,6 @@ repositories {
         name = "spigot-repo"
         url = uri("https://hub.spigotmc.org/nexus/content/groups/public/")
     }
-    maven {
-        name = "vault-repo"
-        url = uri("http://nexus.hc.to/content/repositories/pub_releases/")
-    }
 }
 
 java {
@@ -78,7 +74,7 @@ dependencies {
 
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")
-    shadow("net.milkbowl.vault:VaultAPI:1.7")
+    shadow("com.github.MilkBowl:VaultAPI:1.7")
     shadow("com.sk89q.worldguard:worldguard-bukkit:7.0.2-SNAPSHOT")
     shadow("com.h2database:h2:1.4.199")
 }
