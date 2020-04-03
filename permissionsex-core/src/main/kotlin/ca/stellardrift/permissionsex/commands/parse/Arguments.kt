@@ -17,47 +17,95 @@
 
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.util.command.args.CommandArgs
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import ca.stellardrift.permissionsex.util.command.ArgumentKeys
+import ca.stellardrift.permissionsex.util.command.CommandException
+import ca.stellardrift.permissionsex.util.unaryPlus
+import kotlinx.coroutines.flow.*
 import net.kyori.text.Component
-import java.util.UUID
+import net.kyori.text.TextComponent
+import net.kyori.text.TranslatableComponent
+import net.kyori.text.serializer.plain.PlainComponentSerializer
+import java.util.*
 
 
-fun <S: Any> string(description: Component): ArgumentParser<S, String> = StringParser(description)
+fun <S: Any> string(description: Component) = argument<S, String>(description) {
+    parse { s, a -> a.next()}
+}
 
-internal class StringParser<S: Any>(description: Component): ArgumentParser<S, String>(description) {
-    override suspend fun parse(src: S, args: CommandArgs): String {
-        return args.next()
+fun <S: Any> uuid(description: Component, mojangCompatibile: Boolean): ArgumentParser<S, UUID> = argument(description) {
+    if (mojangCompatibile) {
+        // TODO
+    } else {
+        parse { _, args ->
+            val inp = args.next()
+            try {
+                UUID.fromString(inp)
+            } catch (ex: IllegalArgumentException) {
+                throw args.createError(ArgumentKeys.UUID_ERROR_FORMAT(inp))
+            }
+        }
     }
 }
 
-fun <S: Any> uuid(description: Component): ArgumentParser<S, UUID> = UUIDParser(description)
-
-internal class UUIDParser<S: Any>(description: Component): ArgumentParser<S, UUID>(description) {
-    override suspend fun parse(src: S, args: CommandArgs): UUID {
-        TODO("Not yet implemented")
+inline fun <S: Any, reified E: Enum<E>> enum(description: Component = +"Members of ${E::class.simpleName}") = argument<S, E>(description) {
+    parse { _, args ->
+        enumValueOf(args.next())
     }
 
+    tabComplete { _, a ->
+        val ret = flowOf(*enumValues<E>())
+                .map { it.name }
+
+        if (a.hasNext()) {
+            val prefix  = a.next()
+            ret.filter { it.startsWith(prefix, ignoreCase = true)}
+        } else {
+            ret
+        }
+    }
 }
 
-/*fun <V: Any> argument(action: ArgumentParserBuilder<V>.() -> Unit): ArgumentParser<V> {
-    val builder = ArgumentParserBuilder<V>()
+fun <S: Any, V: Any> argument(description: Component, action: ArgumentParserBuilder<S, V>.() -> Unit): ArgumentParser<S, V> {
+    val builder = ArgumentParserBuilder<S, V>(description)
     builder.action()
     return builder.build()
 }
 
-class ArgumentParserBuilder<S: Any, V: Any> {
-    var parseFunction: (CommandArgs) -> V = TODO()
-    val tabCompletionFunc: (CommandArgs) -> List<String> = { listOf() }
+internal typealias ParseFunction<S, V> = suspend (S, CommandArgs) -> V
+internal typealias TabCompletionFunction<S> = (S, CommandArgs) -> Flow<String>
+
+class ArgumentParserBuilder<S: Any, V: Any>(val description: Component) {
+    private var parseFunction: ParseFunction<S, V>? = null
+    private var tabCompletionFunc: TabCompletionFunction<S> = { _, _ -> emptyFlow() }
+
+    fun parse(func: ParseFunction<S, V>) {
+        this.parseFunction = func;
+    }
+
+    fun tabComplete(func: TabCompletionFunction<S>) {
+        this.tabCompletionFunc = func
+    }
 
     fun build(): ArgumentParser<S, V> {
-        return ArgumentParser(parseFunction, tabCompletionFunc)
+        return ArgumentParser(description, parseFunction ?: throw CommandException(+"A parse function must be registered!"), tabCompletionFunc)
     }
-}*/
+}
 
-abstract class ArgumentParser<S: Any, V: Any>(val description: Component) {
-    abstract suspend fun parse(src: S, args: CommandArgs): V
-    fun tabComplete(src: S, args: CommandArgs): Flow<String> = emptyFlow()
+class ArgumentParser<S: Any, V: Any>(val description: Component, val parseF: ParseFunction<S, V>, val tabCompleteF: TabCompletionFunction<S>) {
+    suspend fun parse(src: S, args: CommandArgs): V {
+        return parseF(src, args)
+    }
+    fun tabComplete(src: S, args: CommandArgs): Flow<String> = tabCompleteF(src, args)
 
+}
+
+@JvmName("argKey")
+fun Component.toKey(): String {
+    return when (this) {
+        is TextComponent -> content()
+        is TranslatableComponent -> key()
+        else -> {
+            PlainComponentSerializer.INSTANCE.serialize(this)
+        }
+    }
 }

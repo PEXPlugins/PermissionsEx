@@ -19,8 +19,8 @@ package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
 
-typealias SubjectIdentifier = Map.Entry<String, String>
 private const val PERMISSIONSEX_BASE = "permissionsex"
 
 inline class Permission(val perm: String) {

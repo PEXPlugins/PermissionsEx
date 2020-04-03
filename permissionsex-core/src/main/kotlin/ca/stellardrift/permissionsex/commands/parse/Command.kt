@@ -17,17 +17,17 @@
 
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.unaryPlus
 import net.kyori.text.Component
 import net.kyori.text.TextComponent
-import kotlin.coroutines.SuspendFunction2
 
 @DslMarker
 annotation class CommandDsl
 
-class Command<Src>(
+class CommandContext()
+
+class Command<Src: Any>(
     val aliases: List<String>,
     val description: Component?,
     val extendedDescription: Component?,
@@ -37,7 +37,7 @@ class Command<Src>(
 ): CommandNode<Src>(next, executor) {
 
     suspend fun parse(src: Src, args: String): CommandContext {
-
+        return CommandContext(src, args)
     }
 
     suspend fun execute(src: Src, args: CommandContext) {
@@ -130,13 +130,13 @@ fun <Src> command(vararg aliases: String, init: Command.Builder<Src>.() -> Unit)
 /**
  * Represents the result of a command execution
  */
-sealed class CommandResult<Src>(val endingNode: CommandNode<Src>)
+sealed class CommandResult<Src: Any>(val endingNode: CommandNode<Src>)
 
 /**
  * A command that has executed successfully
  */
-class Success<Src>(endingNode: CommandNode<Src>, val affectedEntities: Int): CommandResult<Src>(endingNode)
-class Failure<Src>(endingNode: CommandNode<Src>, val message: Component?, val exception: Throwable?): CommandResult<Src>(endingNode)
+class Success<Src: Any>(endingNode: CommandNode<Src>, val affectedEntities: Int): CommandResult<Src>(endingNode)
+class Failure<Src: Any>(endingNode: CommandNode<Src>, val message: Component?, val exception: Throwable?): CommandResult<Src>(endingNode)
 
 data class BoundArgument<Src: Any, V: Any>(val arg: ArgumentParser<Src, V>, val key: Component)
 
