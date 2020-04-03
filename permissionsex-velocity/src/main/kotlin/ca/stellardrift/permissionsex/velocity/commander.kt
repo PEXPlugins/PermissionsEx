@@ -22,23 +22,17 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.join
-import ca.stellardrift.permissionsex.util.unaryPlus
 import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
-import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
-import net.kyori.text.ComponentBuilder
-import net.kyori.text.event.ClickEvent
 import net.kyori.text.format.TextColor
-import net.kyori.text.format.TextDecoration
-import java.util.Locale
-import java.util.Optional
+import java.util.*
 
 class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
 
@@ -64,8 +58,7 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
 
 class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
     Commander {
-    override val formatter =
-        VelocityMessageFormatter(this)
+    override val formatter = VelocityMessageFormatter(this)
     override val name: String
         get() =
             (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
@@ -74,14 +67,11 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
         get() =
             (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
 
-    override val subjectIdentifier: Optional<Map.Entry<String, String>>
-        get() =
-            Optional.of(
-                when (src) {
+    override val subjectIdentifier: SubjectIdentifier?
+        get() = when (src) {
                     is Player -> Maps.immutableEntry(SUBJECTS_USER, src.uniqueId.toString())
                     else -> IDENT_SERVER_CONSOLE
                 }
-            )
 
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
@@ -91,37 +81,11 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
         src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GOLD, locale))
     }
 
-    override fun debug(text: Component) {
-        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GRAY, locale))
-    }
-
-    override fun error(text: Component, err: Throwable?) {
-        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.RED, locale))
-    }
-
-    private val headerChar = +"#"
-    override fun msgPaginated(title: Component, header: Component?, text: Iterable<Component>) {
-        msg { send ->
-            send(listOf(headerChar, title, headerChar).join())
-            if (header != null) {
-                send(header)
-            }
-            text.forEach(send)
-            send(+"#############################")
-        }
-    }
-
 }
 
 class VelocityMessageFormatter(val vCmd: VelocityCommander) :
-    MessageFormatter(vCmd.pex.manager, TextColor.YELLOW) {
-    override fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
-        val command = vCmd.pex.callbackController.registerCallback(vCmd) { callback(it) }
-        decoration(TextDecoration.UNDERLINED, true)
-        color(hlColor)
-        clickEvent(ClickEvent.runCommand(transformCommand(command)))
-        return this
-    }
+    MessageFormatter(vCmd, vCmd.pex.manager, TextColor.YELLOW) {
+    override fun transformCommand(cmd: String) = "/$cmd"
 }
 
 

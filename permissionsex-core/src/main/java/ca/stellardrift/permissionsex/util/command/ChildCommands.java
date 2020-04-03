@@ -18,22 +18,24 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
-import ca.stellardrift.permissionsex.util.command.args.CommandArgs;
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.CommandElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static ca.stellardrift.permissionsex.commands.parse.ArgumentsKt.argKey;
 
 
 /**
@@ -72,14 +74,14 @@ public class ChildCommands {
         private final Map<String, CommandSpec> children;
 
         private ChildCommandElement(Map<String, CommandSpec> children) {
-            super(Translatable.Companion.fixed("child" + COUNTER.getAndIncrement()));
+            super(TextComponent.of("child" + COUNTER.getAndIncrement()));
             this.children = ImmutableMap.copyOf(children);
         }
 
         @Override
         public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             super.parse(args, context);
-            CommandSpec spec = context.getOne(getKey().getUntranslated());
+            CommandSpec spec = context.getOne(argKey(getKey()));
             spec.parse(args, context);
         }
 
@@ -87,18 +89,18 @@ public class ChildCommands {
         protected Object parseValue(CommandArgs args) throws ArgumentParseException {
             final String key = args.next();
             if (!children.containsKey(key.toLowerCase())) {
-                throw args.createError(CommonMessages.ERROR_CHILDREN_UNKNOWN.get(key));
+                throw args.createError(CommonMessages.ERROR_CHILDREN_UNKNOWN.toComponent(key));
             }
 
             return children.get(key.toLowerCase());
         }
 
         @Override
-        public <TextType> List<String> tabComplete(final Commander<TextType> src, CommandArgs args, CommandContext context) {
-            final Optional<String> commandComponent = args.nextIfPresent();
-                if (commandComponent.isPresent()) {
+        public List<String> tabComplete(final Commander src, CommandArgs args, CommandContext context) {
+            final String commandComponent = args.nextIfPresent();
+                if (commandComponent != null) {
                     if (args.hasNext()) {
-                        CommandSpec child = children.get(commandComponent.get());
+                        CommandSpec child = children.get(commandComponent);
                         if (child != null) {
                             try {
                                 child.checkPermission(src);
@@ -108,7 +110,7 @@ public class ChildCommands {
                         }
                         return ImmutableList.of();
                     } else {
-                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new GuavaStartsWithPredicate(commandComponent.get())));
+                        return ImmutableList.copyOf(Iterables.filter(filterCommands(src), new GuavaStartsWithPredicate(commandComponent)));
                     }
                 } else {
                     return ImmutableList.copyOf(children.keySet());
@@ -116,7 +118,7 @@ public class ChildCommands {
         }
 
         @Override
-        public <TextType> TextType getUsage(Commander<TextType> context) {
+        public Component getUsage(Commander context) {
             List<Object> args = new ArrayList<>(Math.max(0, children.size() * 2 - 1));
             Iterable<String> filteredCommands = Iterables.filter(filterCommands(context), input -> {
                 return children.get(input).getAliases().get(0).equals(input); // Restrict to primary aliases in usage
@@ -128,10 +130,14 @@ public class ChildCommands {
                     args.add("|");
                 }
             }
-            return context.getFormatter().combined(args.toArray());
+            return TextComponent.make(b -> {
+                for (Object arg : args) {
+                    b.append(arg.toString());
+                }
+            });
         }
 
-        private Iterable<String> filterCommands(final Commander<?> src) {
+        private Iterable<String> filterCommands(final Commander src) {
             return Iterables.filter(children.keySet(), input -> {
                 CommandSpec child = children.get(input);
                 try {
@@ -145,11 +151,11 @@ public class ChildCommands {
     }
 
     public static CommandExecutor executor(CommandElement arg) {
-        return new ChildCommandExecutor(arg.getKey().getUntranslated(), null);
+        return new ChildCommandExecutor(argKey(arg.getKey()), null);
     }
 
     public static CommandExecutor optionalExecutor(CommandElement arg, CommandExecutor fallbackExecutor) {
-        return new ChildCommandExecutor(arg.getKey().getUntranslated(), fallbackExecutor);
+        return new ChildCommandExecutor(argKey(arg.getKey()), fallbackExecutor);
     }
 
     private static class ChildCommandExecutor implements CommandExecutor {
@@ -162,14 +168,14 @@ public class ChildCommands {
         }
 
         @Override
-        public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
+        public void execute(Commander src, CommandContext args) throws CommandException {
             CommandSpec spec = args.getOne(key);
             if (spec == null) {
                 if (fallbackExecutor != null) {
                     fallbackExecutor.execute(src, args);
                     return;
                 } else {
-                    throw new CommandException(CommonMessages.ERROR_CHILDREN_STATE.get(key));
+                    throw new CommandException(CommonMessages.ERROR_CHILDREN_STATE.toComponent(key));
                 }
             }
             spec.checkPermission(src);

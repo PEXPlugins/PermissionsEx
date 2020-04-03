@@ -28,6 +28,10 @@ plugins {
     id("ca.stellardrift.localization")
 }
 
+repositories {
+    mavenLocal()
+}
+
 applyCommonSettings()
 //setupPublication() // publication is broken on fabric as of loom v0.2.6-SNAPSHOT
 
@@ -38,17 +42,22 @@ minecraft {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
+fun org.gradle.kotlin.dsl.DependencyHandlerScope.includedImplementation(spec: String, configure: ExternalModuleDependency.() -> Unit = {}) {
+    modImplementation(spec, configure)
+    include(spec, configure)
+}
+
 val minecraftVersion = "1.15.1"
 dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
+        exclude("net.kyori")
     }
 
     shade(project(":impl-blocks:permissionsex-hikari-config"))
     shade(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
-    shade("net.kyori:text-serializer-gson:${ca.stellardrift.permissionsex.gradle.Versions.TEXT}") { isTransitive = false}
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.6")
@@ -56,10 +65,10 @@ dependencies {
     modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT") { isTransitive = false }
     modImplementation("com.sk89q.worldedit:worldedit-core:7.1.0-SNAPSHOT") { isTransitive = false }
 
-    listOf("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15",
-            "net.fabricmc:fabric-language-kotlin:1.3.61+build.1").forEach {
-        modCompile(it)
-        include(it)
+    includedImplementation("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15")
+    includedImplementation("net.fabricmc:fabric-language-kotlin:1.3.61+build.1")
+    includedImplementation("ca.stellardrift:text-adapter-fabric:3.0.3-SNAPSHOT") {
+        exclude("com.google.code.gson")
     }
 }
 

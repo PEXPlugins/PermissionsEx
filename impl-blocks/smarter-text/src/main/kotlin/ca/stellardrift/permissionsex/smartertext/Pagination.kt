@@ -18,3 +18,4 @@
 package ca.stellardrift.permissionsex.smartertext
 
 class PaginatedList()
+

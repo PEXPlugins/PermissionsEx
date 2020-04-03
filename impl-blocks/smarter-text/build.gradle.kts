@@ -1,3 +1,4 @@
+import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.applyCommonSettings
 import ca.stellardrift.permissionsex.gradle.setupPublication
 
@@ -31,7 +32,7 @@ localization {
 }
 
 dependencies {
-    api("net.kyori:text-api:3.0.3")
-    api("net.kyori:text-feature-pagination:3.0.3")
+    api("net.kyori:text-api:${Versions.TEXT}")
+    api("net.kyori:text-feature-pagination:${Versions.TEXT}")
     api(project(":permissionsex-core"))
 }

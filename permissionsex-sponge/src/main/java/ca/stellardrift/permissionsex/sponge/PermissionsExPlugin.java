@@ -93,7 +93,6 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     @Inject @DefaultConfig(sharedRoot = false) private ConfigurationLoader<CommentedConfigurationNode> configLoader;
     @Inject private Game game;
     private final Queue<Supplier<Set<CommandSpec>>> cachedCommands = new ConcurrentLinkedQueue<>();
-    private final CallbackController callbackController = new CallbackController();
 
     @Nullable
     private PermissionsEx<?> manager;
@@ -128,7 +127,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             Files.createDirectories(configDir);
             this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
-            throw new RuntimeException(Messages.PLUGIN_INIT_ERROR_GENERAL.toComponent(PomData.NAME).translateFormatted(logger.getLogLocale()), e);
+            throw new RuntimeException(Messages.PLUGIN_INIT_ERROR_GENERAL.toComponent(PomData.NAME), e);
         }
 
         defaults = (PEXSubject) loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose(coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)).get();
@@ -152,16 +151,12 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         }
     }
 
-    CallbackController getCallbackController() {
-        return this.callbackController;
-    }
-
     private void registerFakeOpCommand(String alias, String permission) {
         registerCommands(() -> ImmutableSet.of(CommandSpec.builder()
                 .setAliases(alias)
                 .setPermission(permission)
-                .setDescription(Messages.COMMANDS_FAKE_OP_DESCRIPTION.get())
-                .setArguments(string(Messages.COMMANDS_FAKE_OP_ARG_USER.get()))
+                .setDescription(Messages.COMMANDS_FAKE_OP_DESCRIPTION.toComponent())
+                .setArguments(string(Messages.COMMANDS_FAKE_OP_ARG_USER.toComponent()))
                 .setExecutor((src, ctx) -> {
                     throw new CommandException(Messages.COMMANDS_FAKE_OP_ERROR.toComponent());
                 })
@@ -434,7 +429,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Override
     public Set<CommandSpec> getImplementationCommands() {
-        return ImmutableSet.of(callbackController.createCommand(manager));
+        return ImmutableSet.of();
     }
 
     @Override

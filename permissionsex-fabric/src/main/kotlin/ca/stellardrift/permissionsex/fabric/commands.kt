@@ -17,9 +17,9 @@
 
 package ca.stellardrift.permissionsex.fabric
 
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.Translatable
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.mojang.brigadier.Command
@@ -29,13 +29,9 @@ import com.mojang.brigadier.arguments.StringArgumentType.greedyString
 import com.mojang.brigadier.suggestion.SuggestionProvider
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import net.kyori.text.ComponentBuilder
-import net.kyori.text.event.ClickEvent
-import net.kyori.text.format.TextDecoration
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.text.Text
 import net.minecraft.util.Nameable
 import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
@@ -90,8 +86,8 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
             val args = getString(context, "args")
             this.spec.process(cmd, args)
         } catch (e: Exception) {
-            PermissionsExMod.logger.error(Messages.COMMAND_ERROR_CONSOLE[spec.aliases[0], context.source.name], e)
-            cmd.error(Messages.COMMAND_ERROR_TO_SENDER[spec.aliases[0]])
+            PermissionsExMod.logger.error(Messages.COMMAND_ERROR_CONSOLE(spec.aliases[0], context.source.name), e)
+            cmd.error(Messages.COMMAND_ERROR_TO_SENDER(spec.aliases[0]), e)
         }
         return 1
     }
@@ -103,8 +99,8 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCo
         try {
             this.spec.process(cmd, "")
         } catch (e: Exception) {
-            PermissionsExMod.logger.error(Messages.COMMAND_ERROR_CONSOLE[spec.aliases[0], context.source.name], e)
-            cmd.error(Messages.COMMAND_ERROR_TO_SENDER[spec.aliases[0]])
+            PermissionsExMod.logger.error(Messages.COMMAND_ERROR_CONSOLE(spec.aliases[0], context.source.name), e)
+            cmd.error(Messages.COMMAND_ERROR_TO_SENDER(spec.aliases[0]), e)
         }
         return 1
     }
@@ -121,23 +117,14 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCo
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun ServerCommandSource.asCommander(): Commander<Text> {
-    return this as Commander<Text>
+internal fun ServerCommandSource.asCommander(): Commander {
+    return this as Commander
 }
 
-class FabricMessageFormatter constructor(src: ServerCommandSource) :
-    MessageFormatter(src as Commander<ComponentBuilder<*, *>>, PermissionsExMod.manager) {
+class FabricMessageFormatter constructor(val src: ServerCommandSource) :
+    MessageFormatter(src.asCommander(), PermissionsExMod.manager) {
 
-    override val Map.Entry<String, String>.friendlyName: String?
+    override val SubjectIdentifier.friendlyName: String?
         get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap< Nameable, String> { name.asString() }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun callback(title: Translatable, callback: (Commander<ComponentBuilder<*, *>>) -> Unit): ComponentBuilder<*, *> {
-        val command = PermissionsExMod.callbackController.registerCallback(cmd) { callback(it) }
-        return title.tr()
-            .decoration(TextDecoration.UNDERLINED, true)
-            .color(hlColor)
-            .clickEvent(ClickEvent.runCommand(command))
-    }
 }
 

@@ -60,7 +60,6 @@ import javax.sql.DataSource
 private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
 
-    val callbackController = CallbackController()
     val manager: PermissionsEx<*>
     get() {
         val temp = _manager
@@ -75,7 +74,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private lateinit var dataDir: Path
     lateinit var server: MinecraftServer private set
 
-    private val _logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID))
+    private val _logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID), false)
     private val exec = Executors.newCachedThreadPool()
     private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
@@ -86,7 +85,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger.prefix = "[${container.metadata.name}] "
 
-        logger.info(Messages.MOD_LOAD_SUCCESS[container.metadata.version.friendlyString])
+        logger.info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
         ServerStartCallback.EVENT.register(ServerStartCallback {init(it) })
         ServerStopCallback.EVENT.register(ServerStopCallback {  shutdown(it) })
         CommandRegistry.INSTANCE.register(true) {
@@ -106,7 +105,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             _manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(loader), this)
         } catch (e: Exception) {
-            logger.error(Messages.MOD_ENABLE_ERROR.get(), e)
+            logger.error(Messages.MOD_ENABLE_ERROR(), e)
             server.stop(false)
             return
         }
@@ -123,7 +122,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
         tryRegisterCommands()
-        logger.info(Messages.MOD_ENABLE_SUCCESS[container.metadata.version])
+        logger.info(Messages.MOD_ENABLE_SUCCESS(container.metadata.version))
     }
 
     private fun shutdown(server: MinecraftServer) {
@@ -136,7 +135,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
-            logger.error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.get())
+            logger.error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT())
             this.exec.shutdownNow()
         }
     }
@@ -162,7 +161,6 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun handlePlayerQuit(player: ServerPlayerEntity) {
-        callbackController.clearOwnedBy(player.uuid)
         _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 
@@ -213,7 +211,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf(callbackController.createCommand(manager))
+        return emptySet()
     }
 
     override fun getVersion(): String {
@@ -248,7 +246,7 @@ internal class PEXProfileLookupCallback(private val state: CountDownLatch, priva
 
     override fun onProfileLookupFailed(profile: GameProfile, exception: java.lang.Exception) {
         state.countDown()
-        PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_LOOKUP[profile, exception.message.toString()], exception)
+        PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_LOOKUP(profile, exception.message.toString()), exception)
     }
 
 }

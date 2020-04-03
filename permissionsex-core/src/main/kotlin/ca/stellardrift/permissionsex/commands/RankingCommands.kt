@@ -49,8 +49,7 @@ import ca.stellardrift.permissionsex.data.Change
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.Translatable.Companion.fixed
-import ca.stellardrift.permissionsex.util.Util
+import ca.stellardrift.permissionsex.util.*
 import ca.stellardrift.permissionsex.util.command.ChildCommands
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
@@ -63,20 +62,21 @@ import ca.stellardrift.permissionsex.util.command.args.GenericArguments.flags
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.integer
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.optional
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
+import net.kyori.text.Component
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
     fun getPromoteCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("promote", "prom")
-            .setDescription(PROMOTE_DESCRIPTION.get())
+            .setDescription(PROMOTE_DESCRIPTION())
             .setArguments(
                 Util.contextTransientFlags(pex).buildWith(
                     seq(
-                        subject(COMMON_ARGS_SUBJECT.get(), pex),
+                        subject(COMMON_ARGS_SUBJECT(), pex),
                         optional(
                             rankLadder(
-                                COMMON_ARGS_RANK_LADDER.get(),
+                                COMMON_ARGS_RANK_LADDER(),
                                 pex
                             )
                         )
@@ -85,8 +85,8 @@ import java.util.concurrent.atomic.AtomicReference
             )
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ladderF =
@@ -113,11 +113,11 @@ import java.util.concurrent.atomic.AtomicReference
                         .thenAccept { res: Change<ImmutableSubjectData> ->
                             if (res.new === res.old) {
                                 throw RuntimeCommandException(
-                                    PROMOTE_ERROR_ALREADY_AT_TOP[src.formatter.subject(ref), src.formatter.ladder(ladderName.get())]
+                                    PROMOTE_ERROR_ALREADY_AT_TOP(src.formatter.subject(ref), ladderName.get().toComponent())
                                 )
                             }
                         }.thenMessageSubject(src) { send ->
-                            send(PROMOTE_SUCCESS(-ref, (-ladderName.get()).hl()))
+                            send(PROMOTE_SUCCESS(+ref, ladderName.get().toComponent().styled { hl()}))
                     }
                 }
             })
@@ -127,14 +127,14 @@ import java.util.concurrent.atomic.AtomicReference
     fun getDemoteCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("demote", "dem")
-            .setDescription(DEMOTE_DESCRIPTION.get())
+            .setDescription(DEMOTE_DESCRIPTION())
             .setArguments(
                 Util.contextTransientFlags(pex).buildWith(
                     seq(
-                        subject(COMMON_ARGS_SUBJECT.get(), pex),
+                        subject(COMMON_ARGS_SUBJECT(), pex),
                         optional(
                             rankLadder(
-                                COMMON_ARGS_RANK_LADDER.get(),
+                                COMMON_ARGS_RANK_LADDER(),
                                 pex
                             )
                         )
@@ -143,8 +143,8 @@ import java.util.concurrent.atomic.AtomicReference
             )
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ladderF =
@@ -166,54 +166,51 @@ import java.util.concurrent.atomic.AtomicReference
                         }.thenAccept { res: Change<ImmutableSubjectData> ->
                             if (res.new === res.old) {
                                 throw RuntimeCommandException(
-                                    DEMOTE_ERROR_NOT_ON_LADDER[src.formatter.subject(ref), src.formatter.ladder(ladderName.get())]
+                                    DEMOTE_ERROR_NOT_ON_LADDER(src.formatter.subject(ref), ladderName.get().toComponent())
                                 )
                             }
                         }.thenMessageSubject(src) { send ->
-                            send(DEMOTE_SUCCESS(-ref, ladder(ladderName.get()).hl()))
+                            send(DEMOTE_SUCCESS(+ref, ladderName.get().toComponent().hl()))
                     }
                 }
             })
             .build()
     }
 
-    private fun <TextType: Any> MessageFormatter<TextType>.deleteButton(
+    private fun MessageFormatter.deleteButton(
         rank: RankLadder,
         subject: Map.Entry<String, String>
-    ): TextType {
-        return button(
+    ): Component {
+        return (-"-").button(
             ButtonType.NEGATIVE,
-            fixed("-"),
-            RANKING_BUTTON_DELETE_DESCRIPTION.get(),
+            RANKING_BUTTON_DELETE_DESCRIPTION(),
             "/pex rank ${rank.name} remove ${subject.key} ${subject.value}",
             true
-        )
+        ).build()
     }
 
-    private fun <TextType: Any> MessageFormatter<TextType>.moveDownButton(
+    private fun MessageFormatter.moveDownButton(
         rank: RankLadder,
         subject: Map.Entry<String, String>
-    ): TextType {
-        return button(
+    ): Component {
+        return (-"▼").button(
             ButtonType.NEUTRAL,
-            fixed("▼"),
-            RANKING_BUTTON_MOVE_DOWN_DESCRIPTION.get(),
+            RANKING_BUTTON_MOVE_DOWN_DESCRIPTION(),
             "/pex rank ${rank.name} add -r -1 ${subject.key} ${subject.value}",
             true
-        )
+        ).build()
     }
 
-    private fun <TextType: Any> MessageFormatter<TextType>.moveUpButton(
+    private fun MessageFormatter.moveUpButton(
         rank: RankLadder,
         subject: Map.Entry<String, String>
-    ): TextType {
-        return button(
+    ): Component {
+        return (-"▲").button(
             ButtonType.NEUTRAL,
-            fixed("▲"),
-            RANKING_BUTTON_MOVE_UP_DESCRIPTION.get(),
+            RANKING_BUTTON_MOVE_UP_DESCRIPTION(),
             "/pex rank ${rank.name} add -r 1 ${subject.key} ${subject.value}",
             true
-        )
+        ).build()
     }
 
     internal fun getRankingCommand(pex: PermissionsEx<*>): CommandSpec {
@@ -221,73 +218,76 @@ import java.util.concurrent.atomic.AtomicReference
             ChildCommands.args(getRankAddChildCommand(pex), getRankRemoveCommand(pex))
         return CommandSpec.builder()
             .setAliases("ranking", "rank")
-            .setDescription(RANKING_DESCRIPTION.get())
-            .setArguments(seq(rankLadder(COMMON_ARGS_RANK_LADDER.get(), pex), optional(arg)))
+            .setDescription(RANKING_DESCRIPTION())
+            .setArguments(seq(rankLadder(COMMON_ARGS_RANK_LADDER(), pex), optional(arg)))
             .setExecutor(
                 ChildCommands.optionalExecutor(
                     arg,
                     object : CommandExecutor {
                         @Throws(CommandException::class)
-                        override fun <TextType: Any> execute(
-                            src: Commander<TextType>,
+                        override fun execute(
+                            src: Commander,
                             args: CommandContext
                         ) {
                             val ladder =
                                     args.getOne<CompletableFuture<RankLadder>>(
                                         COMMON_ARGS_RANK_LADDER).join()
-                            val ranksList = mutableListOf<TextType>()
+                            val ranksList = mutableListOf<Component>()
                             val rawRanks: List<Map.Entry<String, String>> = ladder.ranks.reversed()
                             src.formatter.apply {
-                                if (rawRanks.size == 1) {
-                                    ranksList.add(subject(rawRanks[0]) + deleteButton(ladder, rawRanks[0]))
-                                } else if (rawRanks.size == 0) {
-                                    throw CommandException(
-                                        RANKING_ERROR_EMPTY_LADDER[src.formatter.ladder(ladder)]
-                                    )
-                                } else {
-                                    rawRanks.forEachIndexed { i, rank ->
-                                        ranksList.add(
-                                            when (i) {
-                                                0 -> {
-                                                    listOf(
-                                                        -rank,
-                                                        moveDownButton(ladder, rank),
-                                                        deleteButton(ladder, rank)
-                                                    )
-                                                }
-                                                rawRanks.size - 1 -> {
-                                                    listOf(
-                                                        -rank,
-                                                        moveUpButton(ladder, rank),
-                                                        deleteButton(ladder, rank)
-                                                    )
-                                                }
-                                                else -> {
-                                                    listOf(
-                                                        -rank,
-                                                        moveDownButton(ladder, rank),
-                                                        moveUpButton(ladder, rank),
-                                                        deleteButton(ladder, rank)
-                                                    )
-                                                }
-                                            }.concat(-" ")
+                                when (rawRanks.size) {
+                                    1 -> {
+                                        ranksList.add(subject(rawRanks[0]) + deleteButton(ladder, rawRanks[0]))
+                                    }
+                                    0 -> {
+                                        throw CommandException(
+                                                RANKING_ERROR_EMPTY_LADDER(ladder.toComponent())
                                         )
+                                    }
+                                    else -> {
+                                        rawRanks.forEachIndexed { i, rank ->
+                                            ranksList.add(
+                                                    when (i) {
+                                                        0 -> {
+                                                            listOf(
+                                                                    rank.toComponent(),
+                                                                    moveDownButton(ladder, rank),
+                                                                    deleteButton(ladder, rank)
+                                                            )
+                                                        }
+                                                        rawRanks.size - 1 -> {
+                                                            listOf(
+                                                                    rank.toComponent(),
+                                                                    moveUpButton(ladder, rank),
+                                                                    deleteButton(ladder, rank)
+                                                            )
+                                                        }
+                                                        else -> {
+                                                            listOf(
+                                                                    rank.toComponent(),
+                                                                    moveDownButton(ladder, rank),
+                                                                    moveUpButton(ladder, rank),
+                                                                    deleteButton(ladder, rank)
+                                                            )
+                                                        }
+                                                    }.join()
+                                            )
+                                        }
                                     }
                                 }
                                 Unit
 
                             }
                             src.msgPaginated(
-                                RANKING_PAGINATION_HEADER[ladder.name,
-                                    src.formatter.button(
+                                RANKING_PAGINATION_HEADER(ladder.name,
+                                        (-"+").button(
                                         ButtonType.POSITIVE,
-                                        fixed("+"),
-                                        RANKING_BUTTON_ADD_DESCRIPTION.get(),
+                                        RANKING_BUTTON_ADD_DESCRIPTION(),
                                         "/pex rank ${ladder.name} add ",
                                         false
                                     )
-                                ],
-                                RANKING_PAGINATION_SUBTITLE.get(), ranksList
+                                ),
+                                RANKING_PAGINATION_SUBTITLE(), ranksList
                             )
                         }
                     })
@@ -304,14 +304,14 @@ import java.util.concurrent.atomic.AtomicReference
                     .setUnknownShortFlagBehavior(UnknownFlagBehavior.IGNORE)
                     .buildWith(
                         seq(optional(integer(
-                                    COMMON_ARGS_POSITION.get()
-                                )), subject(COMMON_ARGS_SUBJECT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
+                                    COMMON_ARGS_POSITION()
+                                )), subject(COMMON_ARGS_SUBJECT(), pex, PermissionsEx.SUBJECTS_GROUP))
                     )
             )
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ladder =
@@ -325,18 +325,18 @@ import java.util.concurrent.atomic.AtomicReference
                         if (args.hasAny("r")) {
                             val currentIndex = ladder.indexOfRank(toAdd)
                             if (currentIndex == -1) {
-                                throw CommandException(RANKING_ADD_ERROR_RELATIVE_ON_OUTSIDE_SUBJECT.get())
+                                throw CommandException(RANKING_ADD_ERROR_RELATIVE_ON_OUTSIDE_SUBJECT())
                             }
                             addPosition =
                                 if (currentIndex + addPosition > 1) addPosition + 1 else addPosition // If we are adding to later, we need to add after the next rank (otherwise we end up staying in the same place)
                         }
                             pex.ladders.set(ladder.name, ladder.addRankAt(toAdd, addPosition)).thenMessageSubject(src) { send ->
-                                send(RANKING_ADD_SUCCESS_POSITION(-toAdd, -ladder, -addPosition.toString()))
+                                send(RANKING_ADD_SUCCESS_POSITION(+toAdd, ladder.toComponent(), +addPosition.toString()))
                             }
                     } else {
                             pex.ladders.set(ladder.name, ladder.addRank(toAdd))
                                 .thenMessageSubject(src) { send ->
-                                    send(RANKING_ADD_SUCCESS(-toAdd, -ladder))
+                                    send(RANKING_ADD_SUCCESS(+toAdd, ladder.toComponent()))
                                 }
                     }
                 }
@@ -347,11 +347,11 @@ import java.util.concurrent.atomic.AtomicReference
     private fun getRankRemoveCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("remove", "rem", "-")
-            .setArguments(subject(COMMON_ARGS_SUBJECT.get(), pex, PermissionsEx.SUBJECTS_GROUP))
+            .setArguments(subject(COMMON_ARGS_SUBJECT(), pex, PermissionsEx.SUBJECTS_GROUP))
             .setExecutor(object : PermissionsExExecutor(pex) {
                 @Throws(CommandException::class)
-                override fun <TextType: Any> execute(
-                    src: Commander<TextType>,
+                override fun execute(
+                    src: Commander,
                     args: CommandContext
                 ) {
                     val ladder =
@@ -362,11 +362,11 @@ import java.util.concurrent.atomic.AtomicReference
                     val newLadder = ladder.removeRank(toRemove)
                     if (newLadder === ladder) {
                         throw CommandException(
-                            RANKING_REMOVE_ERROR_NOT_IN_LADDER[src.formatter.subject(toRemove), src.formatter.ladder(ladder)])
+                            RANKING_REMOVE_ERROR_NOT_IN_LADDER(src.formatter.subject(toRemove), ladder.toComponent()))
                     } else {
                             pex.ladders.set(ladder.name, newLadder)
                                 .thenMessageSubject(src) { send ->
-                                    send(RANKING_REMOVE_SUCCESS(-toRemove, -ladder))
+                                    send(RANKING_REMOVE_SUCCESS(+toRemove, ladder.toComponent()))
                                 }
                     }
                 }

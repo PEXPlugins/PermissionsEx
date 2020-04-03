@@ -17,6 +17,7 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommonMessages;
 

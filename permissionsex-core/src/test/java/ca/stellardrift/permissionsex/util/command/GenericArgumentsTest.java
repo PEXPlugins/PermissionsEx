@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

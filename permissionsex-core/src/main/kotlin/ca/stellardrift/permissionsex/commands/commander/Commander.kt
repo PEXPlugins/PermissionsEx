@@ -17,9 +17,14 @@
 
 package ca.stellardrift.permissionsex.commands.commander
 
+import ca.stellardrift.permissionsex.commands.Messages
+import ca.stellardrift.permissionsex.util.*
+import ca.stellardrift.permissionsex.util.command.CommandException
 import net.kyori.text.Component
+import net.kyori.text.TextComponent
+import net.kyori.text.event.HoverEvent
+import net.kyori.text.format.TextColor
 import java.util.Locale
-import java.util.Optional
 
 /**
  * Interface implemented by objects that can execute commands and receive command output
@@ -27,7 +32,7 @@ import java.util.Optional
 interface Commander {
     val name: String
     val locale: Locale
-    val subjectIdentifier: Optional<Map.Entry<String, String>>
+    val subjectIdentifier: SubjectIdentifier?
 
     fun hasPermission(permission: String): Boolean
 
@@ -48,14 +53,66 @@ interface Commander {
         formatter.cb { error(it, err)} // TODO: Does this make the most sense
     }
 
+    /**
+     * Send a message to this Commander. The message should be colored the appropriate output colour if it does not yet have a colour
+     */
     fun msg(text: Component)
-    fun debug(text: Component)
 
-    fun error(text: Component, err: Throwable? = null)
+    /**
+     * Send debug text
+     */
+    fun debug(text: Component) {
+        msg(text coloredIfNecessary TextColor.GRAY)
+    }
+
+    fun error(text: Component, err: Throwable? = null) {
+        val hoverText = when {
+            err == null -> null
+            !hasPermission("permissionsex.show-stacktrace-on-hover") -> null
+            else -> (-"The error that occurred was:") {
+                for (line in err.stackTrace) {
+                    append(TextComponent.newline())
+                    append(line.toString().replace("\t", "    "))
+                }
+            }
+        }
+
+        msg(if (hoverText == null) {
+            text coloredIfNecessary TextColor.RED
+        } else {
+            component {
+                append(text)
+                color(TextColor.RED)
+                hoverEvent(HoverEvent.showText(hoverText))
+            }
+        })
+    }
 
     fun msgPaginated(
         title: Component,
         header: Component? = null,
         text: Iterable<Component>
-    )
+    ) {
+        msg { send ->
+            val marker = +"#"
+            send(listOf(marker, title, marker).join(TextComponent.space()))
+            if (header != null) {
+                send(header)
+            }
+            text.forEach(send)
+            send(+"#############################")
+        }
+    }
+
+    @Throws(CommandException::class)
+    fun checkSubjectPermission(
+            subject: SubjectIdentifier,
+            basePermission: String
+    ) {
+        if (!hasPermission("$basePermission.${subject.key}.${subject.value}")
+                && (subject != subjectIdentifier || !hasPermission("$basePermission.own"))
+        ) {
+            throw CommandException(Messages.EXECUTOR_ERROR_NO_PERMISSION())
+        }
+    }
 }

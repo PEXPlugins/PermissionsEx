@@ -19,15 +19,8 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.commands.parse.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
-import ca.stellardrift.permissionsex.util.castMap
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
-import ca.stellardrift.permissionsex.util.styled
-import com.google.common.collect.Maps
-import net.kyori.text.BuildableComponent
+import ca.stellardrift.permissionsex.util.*
 import net.kyori.text.Component
-import net.kyori.text.ComponentBuilder
 import net.kyori.text.adapter.spongeapi.TextAdapter
 import net.kyori.text.format.TextColor
 import org.spongepowered.api.command.CommandSource
@@ -36,8 +29,7 @@ import org.spongepowered.api.text.channel.ChatTypeMessageReceiver
 import org.spongepowered.api.text.channel.MessageReceiver
 import org.spongepowered.api.text.chat.ChatType
 import org.spongepowered.api.text.chat.ChatTypes
-import java.util.Locale
-import java.util.Optional
+import java.util.*
 
 fun MessageReceiver.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
 fun Iterable<MessageReceiver>.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
@@ -63,29 +55,14 @@ internal class SpongeCommander(
     override val locale: Locale
         get() = commandSource.locale
 
-    override val subjectIdentifier: Optional<Map.Entry<String, String>>
-        get() = Optional.of(
-            Maps.immutableEntry(
+    override val subjectIdentifier: SubjectIdentifier?
+        get() = subjectIdentifier(
                 commandSource.containingCollection.identifier,
                 commandSource.identifier
             )
-        )
-
-    private fun sendPlain(text: Component) {
-        val translated = PEXComponentRenderer.render(text, locale)
-        commandSource.sendMessage(translated)
-    }
 
     override fun msg(text: Component) {
-        sendPlain(text coloredIfNecessary TextColor.DARK_AQUA)
-    }
-
-    override fun debug(text: Component) {
-        sendPlain(text coloredIfNecessary TextColor.GRAY)
-    }
-
-    override fun error(text: Component, err: Throwable?) {
-        commandSource.sendMessage(text.coloredIfNecessary(TextColor.RED))
+        commandSource.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.DARK_AQUA, locale))
     }
 
     override fun msgPaginated(
@@ -109,12 +86,8 @@ internal class SpongeCommander(
     }
 }
 
-internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd.pex.manager) {
+internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val SubjectIdentifier.friendlyName: String?
-        get() = pex.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSource, String> { name }
-
-    override fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
-        TODO("Not yet implemented")
-    }
+        get() = cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSource, String> { name }
 }

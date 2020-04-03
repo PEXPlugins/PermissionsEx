@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.util.Translatable;
+import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.*;
 import com.google.common.collect.ImmutableList;
 import net.kyori.text.Component;
@@ -34,12 +34,12 @@ public class CommandSpec {
     private final CommandElement args;
     private final CommandExecutor executor;
     private final List<String> aliases;
-    private final Translatable description;
-    private final Translatable extendedDescription;
+    private final Component description;
+    private final Component extendedDescription;
     private final String permission;
 
-    private CommandSpec(CommandElement args, CommandExecutor executor, List<String> aliases, Translatable description,
-                        Translatable extendedDescription, String permission) {
+    private CommandSpec(CommandElement args, CommandExecutor executor, List<String> aliases, Component description,
+                        Component extendedDescription, String permission) {
         this.args = args;
         this.executor = executor;
         this.permission = permission;
@@ -55,7 +55,7 @@ public class CommandSpec {
     public static final class Builder {
         private CommandElement args = GenericArguments.none();
         private List<String> aliases;
-        private Translatable description, extendedDescription;
+        private Component description, extendedDescription;
         private String permission;
         private CommandExecutor executor;
 
@@ -108,7 +108,7 @@ public class CommandSpec {
          * @param description The description to set
          * @return this
          */
-        public Builder setDescription(Translatable description) {
+        public Builder setDescription(Component description) {
             this.description = description;
             return this;
         }
@@ -121,7 +121,7 @@ public class CommandSpec {
          * @param extendedDescription The description to set
          * @return this
          */
-        public Builder setExtendedDescription(Translatable extendedDescription) {
+        public Builder setExtendedDescription(Component extendedDescription) {
             this.extendedDescription = extendedDescription;
             return this;
         }
@@ -160,17 +160,17 @@ public class CommandSpec {
             CommandContext args = parse(arguments);
             executor.execute(commander, args);
         } catch (CommandException ex) {
-            commander.error(ex.getComponent());
-            commander.error(CommonMessages.USAGE.get(getUsage(commander)));
+            commander.error(ex.getComponent(), null);
+            commander.error(CommonMessages.USAGE.toComponent(getUsage(commander)), null);
         } catch (Throwable t) {
-            commander.error(CommonMessages.ERROR_GENERAL.get(String.valueOf(t.getMessage())));
+            commander.error(CommonMessages.ERROR_GENERAL.toComponent(String.valueOf(t.getMessage())), t);
             t.printStackTrace();
         }
     }
 
     public void checkPermission(Commander commander) throws CommandException {
         if (this.permission != null && !commander.hasPermission(permission)) {
-            throw new CommandException(CommonMessages.ERROR_PERMISSION.get());
+            throw new CommandException(CommonMessages.ERROR_PERMISSION.toComponent());
         }
     }
 
@@ -185,7 +185,7 @@ public class CommandSpec {
         this.args.parse(args, context);
         if (args.hasNext()) {
             args.next();
-            throw args.createError(CommonMessages.ERROR_ARGUMENTS_TOOMANY.get());
+            throw args.createError(CommonMessages.ERROR_ARGUMENTS_TOOMANY.toComponent());
         }
     }
 
@@ -232,26 +232,26 @@ public class CommandSpec {
         return this.permission;
     }
 
-    public <TextType> TextType getDescription(Commander commander) {
-        return this.description == null ? null : commander.getFormatter().tr(this.description);
+    public Component getDescription(Commander commander) {
+        return this.description;
     }
 
     public Component getUsage(Commander commander) {
         return commander.getFormatter().combined("/", getAliases().get(0), " ", args.getUsage(commander));
     }
 
-    public <TextType> TextType getExtendedDescription(Commander<TextType> src) {
-        TextType desc = getDescription(src);
+    public Component getExtendedDescription(Commander src) {
+        Component desc = getDescription(src);
         if (desc == null) {
             if (this.extendedDescription == null) {
                 return getUsage(src);
             } else {
-                return src.getFormatter().combined(getUsage(src), '\n', src.getFormatter().tr(this.extendedDescription));
+                return src.getFormatter().combined(getUsage(src), '\n', this.extendedDescription);
             }
         } else if (this.extendedDescription == null) {
             return src.getFormatter().combined(desc, '\n', getUsage(src));
         } else {
-            return src.getFormatter().combined(desc, '\n', getUsage(src), '\n', src.getFormatter().tr(this.extendedDescription));
+            return src.getFormatter().combined(desc, '\n', getUsage(src), '\n', this.extendedDescription);
         }
     }
 }

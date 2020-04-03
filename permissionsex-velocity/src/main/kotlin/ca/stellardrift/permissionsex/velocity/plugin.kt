@@ -124,7 +124,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
     }
 
-    private val logger = FormattedLogger.forLogger(rawLogger)
+    private val logger = FormattedLogger.forLogger(rawLogger, true)
 
     lateinit var manager: PermissionsEx<*>
 
@@ -139,7 +139,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         try {
             manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this)
         } catch (e: Exception) {
-            logger.error(Messages.PLUGIN_INIT_ERROR.get(), e)
+            logger.error(Messages.PLUGIN_INIT_ERROR(), e)
             return
         }
         manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
@@ -150,7 +150,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
         registerCommandsNow()
-        logger.info(Messages.PLUGIN_INIT_SUCCESS[ProjectData.NAME, ProjectData.VERSION])
+        logger.info(Messages.PLUGIN_INIT_SUCCESS(ProjectData.NAME, ProjectData.VERSION))
     }
 
     @Subscribe
@@ -162,10 +162,10 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: Exception) {
-            logger.error(Messages.PLUGIN_DISABLE_TIMEOUT.get())
+            logger.error(Messages.PLUGIN_DISABLE_TIMEOUT())
             exec.shutdownNow()
         }
-        logger.info(Messages.PLUGIN_DISABLE_SUCCESS[ProjectData.NAME, ProjectData.VERSION])
+        logger.info(Messages.PLUGIN_DISABLE_SUCCESS(ProjectData.NAME, ProjectData.VERSION))
     }
 
     @Subscribe

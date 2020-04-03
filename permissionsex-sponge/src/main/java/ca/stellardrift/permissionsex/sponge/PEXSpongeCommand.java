@@ -60,17 +60,17 @@ class PEXSpongeCommand implements CommandCallable {
 
     @Override
     public Optional<Text> getShortDescription(CommandSource commandSource) {
-        return Optional.of(command.getDescription(new SpongeCommander(plugin, commandSource)).build());
+        return Optional.of(command.getDescription(new SpongeCommander(plugin, commandSource)));
     }
 
     @Override
     public Optional<Text> getHelp(CommandSource commandSource) {
-        return Optional.of(command.getExtendedDescription(new SpongeCommander(plugin, commandSource)).build());
+        return Optional.of(command.getExtendedDescription(new SpongeCommander(plugin, commandSource)));
     }
 
     @Override
     public Text getUsage(CommandSource commandSource) {
-        return command.getUsage(new SpongeCommander(plugin, commandSource)).build();
+        return command.getUsage(new SpongeCommander(plugin, commandSource));
     }
 
     @Override

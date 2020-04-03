@@ -20,18 +20,17 @@ package ca.stellardrift.permissionsex.bukkit
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
-import ca.stellardrift.permissionsex.util.castMap
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
-import ca.stellardrift.permissionsex.util.join
-import ca.stellardrift.permissionsex.util.unaryPlus
+import ca.stellardrift.permissionsex.util.*
 import com.google.common.collect.Maps
 import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
+import net.kyori.text.TextComponent
+import net.kyori.text.TextComponent.newline
 import net.kyori.text.TextComponent.space
 import net.kyori.text.adapter.bukkit.TextAdapter
 import net.kyori.text.event.ClickEvent
+import net.kyori.text.event.HoverEvent
 import net.kyori.text.format.TextColor
 import net.kyori.text.format.TextDecoration
 import org.bukkit.command.CommandSender
@@ -63,29 +62,21 @@ fun String.toLocale(): Locale {
     }
 }
 
-class BukkitMessageFormatter(val pex: PermissionsExPlugin,
-    bCmd: BukkitCommander): MessageFormatter(bCmd, pex.manager) {
+class BukkitMessageFormatter(private val cmd: BukkitCommander): MessageFormatter(cmd.pex.manager) {
 
     override val Map.Entry<String, String>.friendlyName: String?
-        get() = pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
+        get() = cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
 
-    override fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.callback(callback: (Commander) -> Unit): B {
-        val command = pex.callbackController.registerCallback(source = cmd, func = {callback(it)})
-        decoration(TextDecoration.UNDERLINED, true)
-        color(hlColor)
-        clickEvent(ClickEvent.runCommand(transformCommand(command)))
-        return this
-    }
 }
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
 class BukkitCommander internal constructor(
-    pex: PermissionsExPlugin,
+    internal val pex: PermissionsExPlugin,
     private val commandSource: CommandSender
 ) : Commander {
-    override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(pex, this)
+    override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(this)
     override val name: String
         get() = commandSource.name
 
@@ -94,48 +85,15 @@ class BukkitCommander internal constructor(
     override val locale: Locale
         get() = if (commandSource is Player) commandSource.locale.toLocale() else Locale.getDefault()
 
-    override val subjectIdentifier: Optional<Map.Entry<String, String>>
+    override val subjectIdentifier: SubjectIdentifier?
         get() = if (commandSource is Player) {
-            Optional.of(
-                Maps.immutableEntry(
+                subjectIdentifier(
                     PermissionsEx.SUBJECTS_USER,
                     commandSource.uniqueId.toString()
                 )
-            )
-        } else Optional.empty()
-
-    private fun sendMessageInternal(formatted: Component) {
-        commandSource.sendMessage(PEXComponentRenderer.render(formatted, locale))
-    }
+        } else null
 
     override fun msg(text: Component) {
-        sendMessageInternal(text coloredIfNecessary TextColor.DARK_AQUA)
+        commandSource.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.DARK_AQUA, locale))
     }
-
-
-    override fun debug(text: Component) {
-        sendMessageInternal(text coloredIfNecessary TextColor.GRAY)
-    }
-
-    override fun error(text: Component, err: Throwable?) {
-        sendMessageInternal(text coloredIfNecessary TextColor.RED)
-    }
-
-    override fun msgPaginated(
-        title: Component,
-        header: Component?,
-        text: Iterable<Component>
-    ) {
-        msg { send ->
-            val marker = +"#"
-            send(listOf(marker, title, marker).join(space()))
-            if (header != null) {
-                send(header)
-            }
-            text.forEach(send)
-            send(+"#############################")
-        }
-    }
-
-
 }
