@@ -1,8 +1,8 @@
 
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
+import ca.stellardrift.build.implementationInclude
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import net.fabricmc.loom.task.RemapSourcesJarTask
 
 /*
  * PermissionsEx
@@ -32,20 +32,13 @@ repositories {
     mavenLocal()
 }
 
-applyCommonSettings()
-//setupPublication() // publication is broken on fabric as of loom v0.2.6-SNAPSHOT
-
 minecraft {
     refmapName = "${rootProject.name.toLowerCase()}-refmap.json"
 }
 
+
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
-
-fun org.gradle.kotlin.dsl.DependencyHandlerScope.includedImplementation(spec: String, configure: ExternalModuleDependency.() -> Unit = {}) {
-    modImplementation(spec, configure)
-    include(spec, configure)
-}
 
 val minecraftVersion = "1.15.1"
 dependencies {
@@ -65,11 +58,12 @@ dependencies {
     modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT") { isTransitive = false }
     modImplementation("com.sk89q.worldedit:worldedit-core:7.1.0-SNAPSHOT") { isTransitive = false }
 
-    includedImplementation("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15")
-    includedImplementation("net.fabricmc:fabric-language-kotlin:1.3.61+build.1")
-    includedImplementation("ca.stellardrift:text-adapter-fabric:3.0.3-SNAPSHOT") {
+    implementationInclude("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15")
+    implementationInclude("net.fabricmc:fabric-language-kotlin:1.3.61+build.1")
+    implementationInclude("ca.stellardrift:text-adapter-fabric:3.0.3-SNAPSHOT") {
         exclude("com.google.code.gson")
     }
+    //includedImplementation("ca.stellardrift:confabricate:1.0-SNAPSHOT+3.6.1")
 }
 
 localization {
@@ -79,11 +73,6 @@ localization {
 tasks.processResources {
     expand("project" to project)
 }
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.freeCompilerArgs += arrayOf("-Xjvm-default=enable")
-}
-
 
 val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
@@ -117,12 +106,30 @@ val remapShadowJar = tasks.register<RemapJarTask>("remapShadowJar") {
     addNestedDependencies.set(true)
 }
 
-
-tasks.assemble {
+tasks.assemble.configure {
     dependsOn(shadowJar)
 }
 
-tasks.build {
-   dependsOn(remapShadowJar)
+tasks.build.configure {
+    dependsOn(remapShadowJar)
 }
+
+opinionated {
+    publication.apply {
+        val remapJar by tasks.getting(RemapJarTask::class)
+        val remapSourcesJar by tasks.getting(RemapSourcesJarTask::class)
+        suppressAllPomMetadataWarnings()
+
+        artifact(tasks.jar.get()) {
+            classifier = "dev"
+        }
+        artifact(remapJar)
+
+        artifact(tasks.getByName("sourcesJar")) {
+            builtBy(remapSourcesJar)
+        }
+        artifact(tasks.getByName("javadocJar"))
+    }
+}
+
 

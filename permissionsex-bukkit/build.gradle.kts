@@ -1,7 +1,8 @@
 
+import ca.stellardrift.build.configurate
+import ca.stellardrift.build.kyoriText
+import ca.stellardrift.build.spigot
 import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
-import ca.stellardrift.permissionsex.gradle.configurate
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -30,14 +31,10 @@ plugins {
     id("ca.stellardrift.localization")
 }
 
-applyCommonSettings()
 setupPublication()
 
 repositories {
-    maven {
-        name = "spigot-repo"
-        url = uri("https://hub.spigotmc.org/nexus/content/groups/public/")
-    }
+    spigot()
 }
 
 java {
@@ -62,11 +59,11 @@ dependencies {
         exclude("com.google.code.gson", "gson")
     }
 
-    implementation(configurate("yaml")) {
+    implementation(configurate("yaml", Versions.CONFIGURATE)) {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
-    implementation("net.kyori:text-adapter-bukkit:${Versions.TEXT}")
+    implementation(kyoriText("adapter-bukkit", Versions.TEXT))
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }

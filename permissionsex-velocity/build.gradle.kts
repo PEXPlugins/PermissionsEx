@@ -1,7 +1,8 @@
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
+
+import ca.stellardrift.build.kaptAnd
+import ca.stellardrift.build.velocity
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 /*
  * PermissionsEx
@@ -25,16 +26,13 @@ plugins {
     id("com.github.johnrengelman.shadow")
     kotlin("kapt")
     id("ca.stellardrift.localization")
+    id("ca.stellardrift.templating")
 }
 
-applyCommonSettings()
 setupPublication()
 
 repositories {
-    maven {
-        name = "velocity"
-        url = uri("https://repo.velocitypowered.com/snapshots/")
-    }
+    velocity()
 }
 
 dependencies {
@@ -52,29 +50,11 @@ dependencies {
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
-    shadow("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
-    kapt("com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
+    kaptAnd("shadow", "com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
 }
 
 localization {
     templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
-}
-
-// Expand tokens in source templates
-val generatedSourceRoot = "$buildDir/generated/kotlin-templates"
-val generateSource by tasks.registering(Copy::class) {
-    from("src/main/kotlin-templates") {
-        include("**/*.kt")
-    }
-    expand("project" to project)
-    into(generatedSourceRoot)
-}
-
-sourceSets["main"].withConvention(KotlinSourceSet::class) {
-    kotlin.srcDir(generatedSourceRoot)
-}
-tasks.compileKotlin {
-    dependsOn(generateSource)
 }
 
 val relocateRoot = project.ext["pexRelocateRoot"]
