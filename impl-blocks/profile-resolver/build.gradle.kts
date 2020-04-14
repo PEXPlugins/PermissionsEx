@@ -1,6 +1,4 @@
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
 import ca.stellardrift.permissionsex.gradle.setupPublication
-import ca.stellardrift.permissionsex.gradle.useJUnit5
 
 /*
  * PermissionsEx
@@ -20,11 +18,13 @@ import ca.stellardrift.permissionsex.gradle.useJUnit5
  *
  */
 
-applyCommonSettings()
 setupPublication()
-useJUnit5()
 
 dependencies {
     api(project(":permissionsex-core"))
     implementation("com.google.code.gson:gson:2.8.0")
+}
+
+opinionated {
+    useJUnit5()
 }

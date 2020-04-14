@@ -1,6 +1,7 @@
+
+import ca.stellardrift.build.configurate
+import ca.stellardrift.build.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
-import ca.stellardrift.permissionsex.gradle.configurate
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -27,7 +28,6 @@ plugins {
     id("ca.stellardrift.localization")
 }
 
-applyCommonSettings()
 setupPublication()
 
 repositories {
@@ -43,11 +43,11 @@ dependencies {
         exclude("org.yaml", "snakeyaml")
     }
 
-    implementation(configurate("yaml")) {
+    implementation(configurate("yaml", Versions.CONFIGURATE)) {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
-    implementation("net.kyori:text-adapter-bungeecord:${Versions.TEXT}")
+    implementation(kyoriText("adapter-bungeecord", Versions.TEXT))
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }

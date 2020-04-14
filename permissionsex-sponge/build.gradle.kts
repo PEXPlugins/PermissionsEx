@@ -1,8 +1,8 @@
 
+import ca.stellardrift.build.kaptAnd
+import ca.stellardrift.build.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
 import ca.stellardrift.permissionsex.gradle.setupPublication
-import ca.stellardrift.permissionsex.gradle.useJUnit5
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 /*
@@ -27,10 +27,9 @@ plugins {
     id("com.github.johnrengelman.shadow")
     kotlin("kapt")
     id("ca.stellardrift.localization")
+    id("ca.stellardrift.templating")
 }
 
-applyCommonSettings()
-useJUnit5()
 setupPublication()
 
 dependencies {
@@ -41,12 +40,11 @@ dependencies {
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
 
-    implementation("net.kyori:text-adapter-spongeapi:${Versions.TEXT}")
+    implementation(kyoriText("adapter-spongeapi", Versions.TEXT))
     implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
-    kapt("org.spongepowered:spongeapi:${Versions.SPONGE}")
+    kaptAnd("shadow", "org.spongepowered:spongeapi:${Versions.SPONGE}")
     testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
-    shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     testImplementation("org.mockito:mockito-core:3.0.0")
@@ -56,19 +54,8 @@ localization {
     templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
-// Expand tokens in source templates
-val generatedSourceRoot = "$buildDir/generated/java-templates"
-val generateSource by tasks.registering(Copy::class) {
-    from("src/main/java-templates") {
-        include("**/*.java")
-    }
-    expand("project" to project)
-    into(generatedSourceRoot)
-}
-
-sourceSets["main"].java.srcDir(generatedSourceRoot)
-tasks.compileKotlin {
-    dependsOn(generateSource)
+opinionated {
+    useJUnit5()
 }
 
 val relocateRoot = project.ext["pexRelocateRoot"]

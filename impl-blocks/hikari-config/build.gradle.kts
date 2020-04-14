@@ -1,4 +1,3 @@
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
 import ca.stellardrift.permissionsex.gradle.setupPublication
 
 /*
@@ -19,7 +18,6 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  *
  */
 
-applyCommonSettings()
 setupPublication()
 
 dependencies {

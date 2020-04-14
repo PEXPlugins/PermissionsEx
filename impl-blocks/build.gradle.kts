@@ -1,5 +1,3 @@
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -18,4 +16,3 @@ import ca.stellardrift.permissionsex.gradle.applyCommonSettings
  *
  */
 
-applyCommonSettings()

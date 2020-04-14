@@ -1,5 +1,4 @@
 import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.applyCommonSettings
 import ca.stellardrift.permissionsex.gradle.setupPublication
 
 /*
@@ -20,7 +19,6 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  *
  */
 
-applyCommonSettings()
 setupPublication()
 
 plugins {

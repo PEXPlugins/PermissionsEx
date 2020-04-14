@@ -1,44 +1,75 @@
-import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.spongeRepo
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import ca.stellardrift.build.jitpack
+import ca.stellardrift.build.sk89q
+import ca.stellardrift.build.sponge
+import net.minecrell.gradle.licenser.LicenseExtension
 
 plugins {
     id("com.github.ben-manes.versions") version "0.25.0"
     `maven-publish`
 }
-allprojects {
-    group = "ca.stellardrift.permissionsex"
-    version = "2.0-SNAPSHOT"
-}
+
 
 repositories {
     jcenter()
-    spongeRepo()
 }
+
+group = "ca.stellardrift.permissionsex"
+version = "2.0-SNAPSHOT"
+description = project.property("pexDescription") as String
 
 subprojects {
-    // TODO: Move this into buildSrc? Need to figure out how to get kotlin plugin
-    //  into buildSrc classpath so we can work with it directly :(
-    apply(plugin="kotlin")
+    apply(plugin="ca.stellardrift.opinionated.kotlin")
 
-    tasks.withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs = listOf("-XXLanguage:+InlineClasses", "-Xjvm-default=enable")
+    repositories {
+        mavenCentral()
+        sponge()
+        sk89q()
     }
 
-    dependencies {
-        "implementation"(kotlin("stdlib-jdk8"))
-        "api"("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KOTLINX_COROUTINES}")
+    extensions.getByType(ca.stellardrift.build.OpinionatedExtension::class).apply {
+        github("PEXPlugins", "PermissionsEx")
+        apache2()
+        publication.apply {
+            pom {
+                developers {
+                    developer {
+                        name.set("zml")
+                        email.set("zml [at] stellardrift [dot] ca")
+                    }
+                }
+                ciManagement {
+                    system.set("Jenkins")
+                    url.set("https://jenkins.addstar.com.au/job/PermissionsEx")
+                }
+            }
+        }
     }
 
+    extensions.getByType(LicenseExtension::class).apply {
+        header = rootProject.file("LICENSE_HEADER")
+    }
+
+    publishing {
+        repositories {
+            if (project.hasProperty("pexUsername") && project.hasProperty("pexPassword")) {
+                maven {
+                    name = "pex"
+                    url = java.net.URI("https://repo.glaremasters.me/repository/permissionsex")
+                    credentials {
+                        username = project.property("pexUsername").toString()
+                        password = project.property("pexPassword").toString()
+                    }
+                }
+            }
+        }
+    }
 }
 
-tasks.withType<Jar> { // disable
+tasks.withType(Jar::class).configureEach { // disable
     onlyIf { false }
 }
 
 val collectExcludes = ext["buildExcludes"].toString().split(',').toSet()
-
 
 val collectImplementationArtifacts by tasks.registering(Copy::class) {
     subprojects.forEach {

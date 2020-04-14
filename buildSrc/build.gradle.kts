@@ -18,27 +18,17 @@
 
 plugins {
     kotlin("jvm") version embeddedKotlinVersion
-    `java-gradle-plugin`
 }
 
 repositories {
     jcenter()
+    mavenLocal()
     gradlePluginPortal()
     mavenCentral()
 }
 
-gradlePlugin {
-    plugins {
-        create("localization") {
-            id = "ca.stellardrift.localization"
-            implementationClass = "ca.stellardrift.permissionsex.gradle.LocalizationPlugin"
-        }
-    }
-}
-
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
     implementation("com.github.jengelman.gradle.plugins:shadow:5.2.0")
-    implementation("gradle.plugin.net.minecrell:licenser:0.4.1")
+    implementation("ca.stellardrift:gradle-plugins:1.0.1")
 }
