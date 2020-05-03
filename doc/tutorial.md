@@ -1,4 +1,4 @@
-# Getting Started with PermissionsEx 2.x
+# Getting Started
 
 While PermissionsEx \(PEX\) is quite powerful, its flexibility means that for a beginner there isn't an obvious path to go down. This document aims to provide that path to a basic permissions configuration that most servers can work with or build on further. This guide is primarily targeted towards users new to PEX, and somewhat towards users only new to 2.0. More advanced users may want to navigate directly towards feature-specific information pages.
 
@@ -10,7 +10,7 @@ Downloads of dev builds are available from [the CI server](https://jenkins.addst
 
 On PEX's first run, the necessary configuration files will be created. By default, no permissions are explicitly assigned to anybody. However, the default configuration gives all permissions to users connecting from the same host as the server \(so if you're running a local server you'll automatically be able to run anything from ingame\). On Sponge, PEX replaces the op system entirely, so setting op beforehand will not have any effect on permissions once PEX is installed.
 
-Currently, the default [data store](data-stores.md) is the file backend, to be changed to H2 in the future once such a database is available. While the permissions database is human-readable, it is recommended to edit the PEX configuration using in-game commands. The SQL backend for MySQL and PostgreSQL is also available \(**TODO document this**\) for more complex server configurations.
+Currently, the default [data store](components-in-detail/data-stores.md) is the file backend, to be changed to H2 in the future once such a database is available. While the permissions database is human-readable, it is recommended to edit the PEX configuration using in-game commands. The SQL backend for MySQL and PostgreSQL is also available \(**TODO document this**\) for more complex server configurations.
 
 ## Creating an admin group
 

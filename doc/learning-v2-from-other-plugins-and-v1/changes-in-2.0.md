@@ -41,3 +41,7 @@ Rather than using modified regexes, PEX 2.0 uses a simplifed shell glob with imp
 
 These changes make it easier to calculate permissions, and as a bonus mean that the listing order of nodes in the permissions file no longer matters.
 
+### Creating groups
+
+While there used to be a`/pex group <name> create` command, in PEX 2.0 groups will automatically be created as soon as data is set on them
+

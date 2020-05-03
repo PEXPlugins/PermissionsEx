@@ -1,4 +1,4 @@
-# Implementation Notes
+# Implementations
 
 Because PermissionsEx can run in a variety of environments, different implementations of PEX behave somewhat differently.
 

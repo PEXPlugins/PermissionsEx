@@ -15,7 +15,7 @@ Since PermissionsEx 2.x has a new commands structure different from both Permiss
 | `/pex user zml  remove <permission>` | `/manudelp zml <permission>` | `/pex user zml permission <permission> none` | `/pex user zml perm <permission> none` |
 | `/pex user zml check <permission>` | `/manucheckp zml <permission>` | **TODO** | **TODO** |
 | `/pex user zml set <key> <value>` | `/manuaddv zml <key> <value>` | `/pex user zml option <key> <value>` | `/pex user zml opt <key> <value>` |
-| /pex user zml set  | `/manudelv zml <key>` | `/pex user zml option <key>` | `/pex user zml opt <key>` |
+| /pex user zml set | `/manudelv zml <key>` | `/pex user zml option <key>` | `/pex user zml opt <key>` |
 | _none_ | `/manucheckv zml <key>` | **TODO** | **TODO** |
 | _unnecessary_ | `/mangadd members` | _unnecessary_ | _unnecessary_ |
 | `/pex group members delete` | `/mangdel members` | `/pex group members delete` | `/pex group members del` |

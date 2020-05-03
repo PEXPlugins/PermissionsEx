@@ -1,4 +1,4 @@
-# Style Guide
+# Documentation Style Guide
 
 For PEX 2.0's documentation, it is important to have a consistent style so that the documentation is easy to follow for users.
 
