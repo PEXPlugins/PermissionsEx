@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
@@ -77,7 +78,7 @@ class BukkitCommander internal constructor(
     override fun hasPermission(permission: String): Boolean = commandSource.hasPermission(permission)
 
     override val locale: Locale
-        get() = if (commandSource is Player) commandSource.locale.toLocale() else Locale.getDefault()
+        get() = if (commandSource is Player) getLocale(commandSource) else Locale.getDefault()
 
     override val subjectIdentifier: SubjectIdentifier?
         get() = if (commandSource is Player) {
