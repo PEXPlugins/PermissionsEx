@@ -190,13 +190,14 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
         } else {
             ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
             int startVersion = permissionsConfig.get("schema-version").getInt(-1);
-            versionUpdater.apply(permissionsConfig.getNode());
+            ConfigurationNode node = permissionsConfig.getNode();
+            versionUpdater.apply(node);
             int endVersion = permissionsConfig.get("schema-version").getInt();
             if (endVersion > startVersion) {
                 getManager().getLogger().info(FILE_SCHEMA_MIGRATION_SUCCESS.toComponent(permissionsFile, startVersion, endVersion));
                 try {
-                    save().get();
-                } catch (InterruptedException | ExecutionException e) {
+                    permissionsConfig.save(node);
+                } catch (IOException e) {
                     throw new PermissionsLoadingException(FILE_ERROR_SCHEMA_MIGRATION_SAVE.toComponent(), e);
                 }
             }
