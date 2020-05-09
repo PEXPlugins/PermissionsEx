@@ -60,7 +60,7 @@ dependencies {
 
     implementationInclude("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15")
     implementationInclude("net.fabricmc:fabric-language-kotlin:1.3.61+build.1")
-    implementationInclude("ca.stellardrift:text-adapter-fabric:3.0.3-SNAPSHOT") {
+    implementationInclude("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
         exclude("com.google.code.gson")
     }
     //includedImplementation("ca.stellardrift:confabricate:1.0-SNAPSHOT+3.6.1")
@@ -114,8 +114,15 @@ tasks.build.configure {
     dependsOn(remapShadowJar)
 }
 
+tasks.withType(Javadoc::class).configureEach {
+    val options = this.options
+    if (options is StandardJavadocDocletOptions) {
+        options.tags = listOf("reason:m:Reason for overwrite:")
+    }
+}
+
 opinionated {
-    publication.apply {
+    publication?.apply {
         val remapJar by tasks.getting(RemapJarTask::class)
         val remapSourcesJar by tasks.getting(RemapSourcesJarTask::class)
         suppressAllPomMetadataWarnings()

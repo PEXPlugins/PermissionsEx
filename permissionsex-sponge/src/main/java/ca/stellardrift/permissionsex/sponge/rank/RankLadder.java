@@ -60,6 +60,8 @@ public interface RankLadder {
 
     /**
      * Get all ranks that are present on this ladder, in order from lowest rank to highest rank
+     *
+     * @return ladder ranks
      */
     List<Subject> getRanks();
 }

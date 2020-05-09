@@ -28,7 +28,6 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
-import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.velocitypowered.api.event.Subscribe
@@ -64,7 +63,6 @@ private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
 class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val server: ProxyServer, @DataDirectory private val dataPath: Path) : ImplementationInterface {
 
     private val exec = Executors.newCachedThreadPool()
-    internal val callbackController = CallbackController()
     private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
 
     override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
@@ -110,7 +108,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
     }
 
     override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf(callbackController.createCommand(manager))
+        return setOf()
     }
 
     override fun getVersion(): String {
@@ -186,7 +184,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     @Subscribe
     fun uncachePlayer(event: DisconnectEvent) {
-        callbackController.clearOwnedBy(event.player.uniqueId)
+        manager.callbackController.clearOwnedBy(event.player.uniqueId)
         manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
     }
 }

@@ -47,12 +47,14 @@ dependencies {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
-    implementation(kyoriText("adapter-bungeecord", Versions.TEXT))
+    implementation(kyoriText("adapter-bungeecord", Versions.TEXT_ADAPTER)) {
+        exclude("com.google.code.gson")
+    }
+    implementation(kyoriText("serializer-gson", Versions.TEXT)) { isTransitive = false }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
-    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     shadow("net.md-5:bungeecord-api:1.14-SNAPSHOT")
 }
@@ -72,13 +74,11 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
         "ninja.leaping.configurate", "org.jetbrains.annotations",
-        "org.slf4j", "org.antlr.v4.runtime", "net.kyori.text").forEach {
+        "org.slf4j", "org.antlr.v4.runtime", "net.kyori").forEach {
         relocate(it, "$relocateRoot.$it")
     }
     
-    dependencies {
-        exclude("org.checkerframework")
-    }
+    exclude("org/checkerframework/**")
     manifest {
         attributes("Automatic-Module-Name" to project.name)
     }

@@ -23,7 +23,7 @@ import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.profile.ProfileKt;
-import ca.stellardrift.permissionsex.smartertext.CallbackController;
+import ca.stellardrift.permissionsex.commands.CallbackController;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
@@ -82,7 +82,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     // Location of plugin configuration data
     private Path dataPath;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
-    private CallbackController callbackController = new CallbackController();
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -211,7 +210,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     private void onPlayerQuit(PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
-        callbackController.clearOwnedBy(event.getPlayer().getUniqueId());
+        getManager().getCallbackController().clearOwnedBy(event.getPlayer().getUniqueId());
         getUserSubjects().uncache(event.getPlayer().getUniqueId().toString());
     }
 
@@ -315,10 +314,6 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
         getServer().getOnlinePlayers().forEach(this::uninjectPermissible);
     }
 
-    public CallbackController getCallbackController() {
-        return callbackController;
-    }
-
     private class BukkitImplementationInterface implements ImplementationInterface {
         private Queue<Supplier<Set<CommandSpec>>> stagedCommands = new ConcurrentLinkedQueue<>();
         @Override
@@ -389,7 +384,7 @@ public class PermissionsExPlugin extends JavaPlugin implements Listener {
 
         @Override
         public Set<CommandSpec> getImplementationCommands() {
-            return ImmutableSet.of(callbackController.createCommand(manager));
+            return ImmutableSet.of();
         }
 
         @Override

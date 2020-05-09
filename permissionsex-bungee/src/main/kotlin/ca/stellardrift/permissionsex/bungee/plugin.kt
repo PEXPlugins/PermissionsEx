@@ -27,7 +27,6 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
-import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -58,7 +57,6 @@ import java.util.logging.Logger
 import javax.sql.DataSource
 
 class PermissionsExPlugin : Plugin(), Listener {
-    internal val callbackController = CallbackController()
     private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
     internal lateinit var logger: FormattedLogger private set
     internal lateinit var dataPath: Path private set
@@ -128,7 +126,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun unloadPlayer(event: PlayerDisconnectEvent) {
         try {
-            callbackController.clearOwnedBy(event.player.uniqueId)
+            manager.callbackController.clearOwnedBy(event.player.uniqueId)
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
         } catch (e: Exception)  {
             logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
@@ -207,7 +205,7 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
 
 
     override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf(plugin.callbackController.createCommand(plugin.manager))
+        return setOf()
     }
 
     override fun getVersion(): String {

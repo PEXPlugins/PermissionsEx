@@ -19,11 +19,13 @@ package ca.stellardrift.permissionsex.util
 
 import net.kyori.text.TranslatableComponent
 
-class TranslatableProvider(val key: String) {
+class TranslatableProvider(bundleName: String, key: String) {
+    val key = "$bundleName/$key"
+
     @JvmName("toComponent")
-    operator fun invoke(vararg args: Any) = TranslatableComponent.of(key, args.map { it.toComponent() })
+    operator fun invoke(vararg args: Any) = TranslatableComponent.of(this.key, args.map { it.toComponent() })
 
     @JvmName("toComponentBuilder")
-    operator fun get(vararg args: Any) = TranslatableComponent.builder(key).args(args.map { it.toComponent() })
+    operator fun get(vararg args: Any) = TranslatableComponent.builder(this.key).args(args.map { it.toComponent() })
 }
 

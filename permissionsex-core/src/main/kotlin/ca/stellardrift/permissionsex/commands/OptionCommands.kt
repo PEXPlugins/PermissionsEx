@@ -48,7 +48,7 @@ internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
             ) {
                 val ref = getDataRef(src, args, "permissionsex.option.set")
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                val key = args.getOne<String>(OPTION_ARG_KEY)
+                val key = args.getOne<String>(OPTION_ARG_KEY)!!
                 val value = args.getOne<String>(OPTION_ARG_VALUE)
                 if (value == null) {
                     ref.update { old ->

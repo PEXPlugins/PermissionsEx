@@ -1,4 +1,4 @@
-import ca.stellardrift.build.jitpack
+
 import ca.stellardrift.build.sk89q
 import ca.stellardrift.build.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
@@ -19,6 +19,7 @@ description = project.property("pexDescription") as String
 
 subprojects {
     apply(plugin="ca.stellardrift.opinionated.kotlin")
+    apply(plugin="ca.stellardrift.opinionated.publish")
 
     repositories {
         mavenCentral()
@@ -29,7 +30,7 @@ subprojects {
     extensions.getByType(ca.stellardrift.build.OpinionatedExtension::class).apply {
         github("PEXPlugins", "PermissionsEx")
         apache2()
-        publication.apply {
+        publication?.apply {
             pom {
                 developers {
                     developer {

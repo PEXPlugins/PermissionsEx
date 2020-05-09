@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.config;
 
 import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
+import ca.stellardrift.permissionsex.exception.PermissionsException;
 import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -33,7 +34,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -173,7 +173,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     public static ConfigurationNode loadDefaultConfiguration() throws IOException {
         final URL defaultConfig = FilePermissionsExConfiguration.class.getResource("default.conf");
         if (defaultConfig == null) {
-            throw new Error(CONFIG_ERROR_DEFAULT_CONFIG.toComponent().translate(Locale.getDefault()));
+            throw new Error(new PermissionsException(CONFIG_ERROR_DEFAULT_CONFIG.toComponent()));
         }
         HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder().setURL(defaultConfig).build();
         return fallbackLoader.load();

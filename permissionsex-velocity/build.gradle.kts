@@ -41,6 +41,7 @@ dependencies {
         exclude("com.google.code.gson")
         exclude("com.google.guava")
         exclude("org.spongepowered", "configurate-yaml")
+        exclude("net.kyori")
         //exclude("org.yaml", "snakeyaml")
     }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
@@ -50,7 +51,7 @@ dependencies {
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
-    kaptAnd("shadow", "com.velocitypowered:velocity-api:1.0.0-SNAPSHOT")
+    kaptAnd("shadow", "com.velocitypowered:velocity-api:1.0.8-SNAPSHOT")
 }
 
 localization {
@@ -67,9 +68,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.checkerframework", "org.antlr.v4").forEach {
         relocate(it, "$relocateRoot.$it")
     }
-    dependencies {
-        exclude("org.checkerframework:.*:.*")
-    }
+    exclude("org/checkerframework/**")
 
     manifest {
         attributes("Automatic-Module-Name" to project.name)

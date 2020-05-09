@@ -18,27 +18,23 @@
 package ca.stellardrift.permissionsex.util.command;
 
 
-import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.EmptyTestConfiguration;
+import ca.stellardrift.permissionsex.PermissionsExTest;
+import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-/**
- * Created by zml on 04.04.15.
- */
-public class CommandSpecTest {
+public class CommandSpecTest extends PermissionsExTest {
 
     @Test
     public void testNoArgsFunctional() {
         CommandSpec.builder()
                 .setAliases("something")
-                .setExecutor(new CommandExecutor() {
-                    @Override
-                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        // Run
-                    }
+                .setExecutor((src, args) -> {
+                    // Run
                 })
                 .build()
-                .process(new TestCommander(), "");
+                .process(new TestCommander(getManager()), "");
     }
 
     @Test
@@ -55,13 +51,15 @@ public class CommandSpecTest {
     public void testAliasesRequired() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             CommandSpec.builder()
-                    .setExecutor(new CommandExecutor() {
-                        @Override
-                        public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        }
+                    .setExecutor((src, args) -> {
                     })
                     .build();
         }, "A command may not have no aliases");
 
+    }
+
+    @Override
+    protected PermissionsExConfiguration<?> populate() {
+        return new EmptyTestConfiguration();
     }
 }

@@ -51,27 +51,17 @@ abstract class PermissionsExExecutor protected constructor(protected val pex: Pe
         args: CommandContext
     ): CalculatedSubject {
         return try {
-            if (args.hasAny(COMMON_ARGS_SUBJECT)) {
-                val ret = args.getOne<SubjectIdentifier>(COMMON_ARGS_SUBJECT)
-                pex.getSubjects(ret.key)[ret.value].get()
+            val argIdentifier = args.getOne<SubjectIdentifier>(COMMON_ARGS_SUBJECT)
+            if (argIdentifier != null) {
+                pex.getSubjects(argIdentifier.key)[argIdentifier.value].get()
             } else {
-                val ret = src.subjectIdentifier
-                if (!ret.isPresent) {
-                    throw CommandException(EXECUTOR_ERROR_SUBJECT_REQUIRED())
-                } else {
-                    pex.getSubjects(ret.get().key)[ret.get().value].get()
-                }
+                val ret = src.subjectIdentifier?: throw CommandException(EXECUTOR_ERROR_SUBJECT_REQUIRED())
+                pex.getSubjects(ret.key)[ret.value].get()
             }
         } catch (e: InterruptedException) {
-            throw CommandException(
-                EXECUTOR_ERROR_GETTING_SUBJECT(),
-                e
-            )
+            throw CommandException(EXECUTOR_ERROR_GETTING_SUBJECT(), e)
         } catch (e: ExecutionException) {
-            throw CommandException(
-                EXECUTOR_ERROR_GETTING_SUBJECT(),
-                e
-            )
+            throw CommandException(EXECUTOR_ERROR_GETTING_SUBJECT(), e)
         }
     }
 

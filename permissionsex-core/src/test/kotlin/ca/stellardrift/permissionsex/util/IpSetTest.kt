@@ -17,10 +17,10 @@
 
 package ca.stellardrift.permissionsex.util
 
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.net.InetAddress
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private val testAddress = InetAddress.getByAddress(byteArrayOf(84, 127, 48, 22))
 private fun createAddress(addr: String): InetAddress {

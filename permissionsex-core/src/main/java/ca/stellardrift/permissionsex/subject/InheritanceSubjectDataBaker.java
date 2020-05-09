@@ -104,7 +104,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     private CompletableFuture<Void> visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
-            state.pex.getLogger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.get(state.base.getIdentifier(), subject));
+            state.pex.getLogger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.toComponent(state.base.getIdentifier(), subject));
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);

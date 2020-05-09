@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.OfflinePlayer;
 
+@SuppressWarnings("deprecation")
 class PEXVaultChat extends Chat {
     private final PermissionsExPlugin plugin;
     private final PEXVault perms;

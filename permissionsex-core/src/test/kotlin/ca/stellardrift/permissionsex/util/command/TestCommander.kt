@@ -17,57 +17,60 @@
 
 package ca.stellardrift.permissionsex.util.command
 
+import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.util.Translatable
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import com.google.common.base.Strings
+import net.kyori.text.Component
+import net.kyori.text.serializer.plain.PlainComponentSerializer
 import java.util.Locale
-import java.util.Optional
 
-/**
- * Created by zml on 04.04.15.
- */
-class TestCommander :
-    Commander<String> {
+class TestCommander(internal val manager: PermissionsEx<*>) : Commander {
     override val name: String
         get() = "Test"
 
     override val locale: Locale
         get() = Locale.ROOT
 
-    override val subjectIdentifier: Optional<Map.Entry<String, String>>
-        get() = Optional.empty()
+    override val subjectIdentifier: SubjectIdentifier?
+        get() = null
 
     override fun hasPermission(permission: String): Boolean {
         return true
     }
 
-    override val formatter: MessageFormatter<String>
-        get() = TestMessageFormatter.INSTANCE
+    override val formatter: MessageFormatter = TestMessageFormatter(this)
 
-    override fun msg(text: String) {
-        println("msg: $text")
+    override fun msg(text: Component) {
+        println("msg: ${PlainComponentSerializer.INSTANCE.serialize(text)}")
     }
 
-    override fun debug(text: String) {
-        println("debug: $text")
+    override fun debug(text: Component) {
+        println("debug: ${PlainComponentSerializer.INSTANCE.serialize(text)}")
     }
 
-    override fun error(text: String, err: Throwable?) {
-        System.err.println("error: $text")
+    override fun error(text: Component, err: Throwable?) {
+        System.err.println("error: ${PlainComponentSerializer.INSTANCE.serialize(text)}")
+        err?.printStackTrace()
     }
 
     override fun msgPaginated(
-        title: Translatable,
-        header: Translatable?,
-        text: Iterable<String>
+        title: Component,
+        header: Component?,
+        text: Iterable<Component>
     ) {
-        val titleStr = title.translateFormatted(Locale.ROOT)
+        val titleStr = PlainComponentSerializer.INSTANCE.serialize(title)
         println(titleStr)
-        println(header!!.translateFormatted(Locale.ROOT))
+        if (header != null) {
+            println(PlainComponentSerializer.INSTANCE.serialize(header))
+        }
         println(Strings.repeat("=", titleStr.length))
         for (line in text) {
-            println(line)
+            println(PlainComponentSerializer.INSTANCE.serialize(line))
         }
     }
 }
+
+internal class TestMessageFormatter(commander: TestCommander) :
+    MessageFormatter(commander, commander.manager)

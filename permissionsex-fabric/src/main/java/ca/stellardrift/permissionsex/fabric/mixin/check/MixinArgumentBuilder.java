@@ -52,7 +52,6 @@ public abstract class MixinArgumentBuilder<S, T extends ArgumentBuilder<S, T>> {
      * with a permission check that attempts to be appropriate and take into account aliases
      * @author zml
      * @reason replace simple setter with more complex logic
-
      */
     @Overwrite
     @SuppressWarnings({"ConstantConditions"})

@@ -57,7 +57,7 @@ public class SchemaMigrationsTest {
                 .setPath(testFile)
                 .build();
         ConfigurationNode node = yamlLoader.load();
-        SchemaMigrations.oneTo2(FormattedLogger.forLogger(LoggerFactory.getLogger(getClass()))).apply(node);
+        SchemaMigrations.oneTo2(FormattedLogger.forLogger(LoggerFactory.getLogger(getClass()), false)).apply(node);
         jsonSaver.save(node);
         assertEquals(Resources.readLines(getClass().getResource("test1to2.post.json"), UTF_8), Files.readAllLines(testFile, UTF_8));
 

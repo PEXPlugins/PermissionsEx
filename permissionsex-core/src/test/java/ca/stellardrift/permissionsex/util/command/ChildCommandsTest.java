@@ -18,7 +18,11 @@
 package ca.stellardrift.permissionsex.util.command;
 
 
+import ca.stellardrift.permissionsex.EmptyTestConfiguration;
+import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.PermissionsExTest;
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests for child commands
  */
-public class ChildCommandsTest {
+public class ChildCommandsTest extends PermissionsExTest  {
     @Test
     public void testSimpleChildCommand() {
         final AtomicBoolean childExecuted = new AtomicBoolean();
@@ -36,16 +40,16 @@ public class ChildCommandsTest {
                 .setAliases("parent")
                 .setChildren(CommandSpec.builder()
                     .setAliases("child")
-                    .setExecutor(new CommandExecutor() {
-                        @Override
-                        public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                            childExecuted.set(true);
-                        }
-                    })
+                    .setExecutor((src, args) -> childExecuted.set(true))
                     .build())
                 .build()
-                .process(new TestCommander(), "child");
+                .process(new TestCommander(getManager()), "child");
 
         assertTrue(childExecuted.get());
+    }
+
+    @Override
+    protected PermissionsExConfiguration<?> populate() {
+        return new EmptyTestConfiguration();
     }
 }

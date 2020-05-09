@@ -17,13 +17,10 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.util.command.CommandContext;
+import ca.stellardrift.permissionsex.util.command.CommandContextKt;
 import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.TranslatableComponent;
-import net.kyori.text.serializer.plain.PlainComponentSerializer;
 
 import java.util.List;
 
@@ -44,25 +41,15 @@ public abstract class CommandElement {
     public void parse(CommandArgs args, CommandContext context)  throws ArgumentParseException {
         Object val = parseValue(args);
         if (this.key != null && val != null) {
-            context.putArg(toKey(this.key), val);
+            context.putArg(CommandContextKt.argKey(this.key), val);
         }
     }
 
     protected abstract Object parseValue(CommandArgs args) throws ArgumentParseException;
 
-    public abstract  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context);
+    public abstract List<String> tabComplete(Commander src, CommandArgs args, CommandContext context);
 
     public Component getUsage(Commander src) {
         return getKey();
-    }
-
-    protected String toKey(Component text) {
-        if (text instanceof TextComponent) {
-            return ((TextComponent) text).content();
-        } else if (text instanceof TranslatableComponent) {
-            return ((TranslatableComponent) text).key();
-        } else {
-            return PlainComponentSerializer.INSTANCE.serialize(text);
-        }
     }
 }

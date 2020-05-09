@@ -49,7 +49,8 @@ import ca.stellardrift.permissionsex.data.Change
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.*
+import ca.stellardrift.permissionsex.util.RuntimeCommandException
+import ca.stellardrift.permissionsex.util.Util
 import ca.stellardrift.permissionsex.util.command.ChildCommands
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
@@ -62,7 +63,15 @@ import ca.stellardrift.permissionsex.util.command.args.GenericArguments.flags
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.integer
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.optional
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
+import ca.stellardrift.permissionsex.util.join
+import ca.stellardrift.permissionsex.util.plus
+import ca.stellardrift.permissionsex.util.styled
+import ca.stellardrift.permissionsex.util.thenMessageSubject
+import ca.stellardrift.permissionsex.util.toComponent
+import ca.stellardrift.permissionsex.util.unaryMinus
+import ca.stellardrift.permissionsex.util.unaryPlus
 import net.kyori.text.Component
+import net.kyori.text.TextComponent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -92,7 +101,7 @@ import java.util.concurrent.atomic.AtomicReference
                     val ladderF =
                         if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                             COMMON_ARGS_RANK_LADDER
-                        ) else pex.ladders["default", null]
+                        )!! else pex.ladders["default", null]
                     val ref: SubjectDataReference = getDataRef(
                         src,
                         args,
@@ -150,7 +159,7 @@ import java.util.concurrent.atomic.AtomicReference
                     val ladderF =
                         if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                             COMMON_ARGS_RANK_LADDER
-                        ) else pex.ladders["default", null]
+                        )!! else pex.ladders["default", null]
                     val ref: SubjectDataReference = getDataRef(src, args, "permissionsex.demote") //." + ladder);
                     val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val ladderName =
@@ -170,7 +179,7 @@ import java.util.concurrent.atomic.AtomicReference
                                 )
                             }
                         }.thenMessageSubject(src) { send ->
-                            send(DEMOTE_SUCCESS(+ref, ladderName.get().toComponent().hl()))
+                            send(DEMOTE_SUCCESS(+ref, TextComponent.builder().append(ladderName.get().toComponent()).hl()))
                     }
                 }
             })
@@ -223,64 +232,57 @@ import java.util.concurrent.atomic.AtomicReference
             .setExecutor(
                 ChildCommands.optionalExecutor(
                     arg,
-                    object : CommandExecutor {
-                        @Throws(CommandException::class)
-                        override fun execute(
-                            src: Commander,
-                            args: CommandContext
-                        ) {
-                            val ladder =
-                                    args.getOne<CompletableFuture<RankLadder>>(
-                                        COMMON_ARGS_RANK_LADDER).join()
-                            val ranksList = mutableListOf<Component>()
-                            val rawRanks: List<Map.Entry<String, String>> = ladder.ranks.reversed()
-                            src.formatter.apply {
-                                when (rawRanks.size) {
-                                    1 -> {
-                                        ranksList.add(subject(rawRanks[0]) + deleteButton(ladder, rawRanks[0]))
-                                    }
-                                    0 -> {
-                                        throw CommandException(
-                                                RANKING_ERROR_EMPTY_LADDER(ladder.toComponent())
+                    CommandExecutor { src, args ->
+                        val ladder =
+                            args.getOne<CompletableFuture<RankLadder>>(
+                                COMMON_ARGS_RANK_LADDER)!!.join()
+                        val ranksList = mutableListOf<Component>()
+                        val rawRanks: List<Map.Entry<String, String>> = ladder.ranks.reversed()
+                        src.formatter.apply {
+                            when (rawRanks.size) {
+                                1 -> {
+                                    ranksList.add(subject(rawRanks[0]) + deleteButton(ladder, rawRanks[0]))
+                                }
+                                0 -> {
+                                    throw CommandException(
+                                        RANKING_ERROR_EMPTY_LADDER(ladder.toComponent())
+                                    )
+                                }
+                                else -> {
+                                    rawRanks.forEachIndexed { i, rank ->
+                                        ranksList.add(
+                                            when (i) {
+                                                0 -> {
+                                                    listOf(
+                                                        rank.toComponent(),
+                                                        moveDownButton(ladder, rank),
+                                                        deleteButton(ladder, rank)
+                                                    )
+                                                }
+                                                rawRanks.size - 1 -> {
+                                                    listOf(
+                                                        rank.toComponent(),
+                                                        moveUpButton(ladder, rank),
+                                                        deleteButton(ladder, rank)
+                                                    )
+                                                }
+                                                else -> {
+                                                    listOf(
+                                                        rank.toComponent(),
+                                                        moveDownButton(ladder, rank),
+                                                        moveUpButton(ladder, rank),
+                                                        deleteButton(ladder, rank)
+                                                    )
+                                                }
+                                            }.join()
                                         )
                                     }
-                                    else -> {
-                                        rawRanks.forEachIndexed { i, rank ->
-                                            ranksList.add(
-                                                    when (i) {
-                                                        0 -> {
-                                                            listOf(
-                                                                    rank.toComponent(),
-                                                                    moveDownButton(ladder, rank),
-                                                                    deleteButton(ladder, rank)
-                                                            )
-                                                        }
-                                                        rawRanks.size - 1 -> {
-                                                            listOf(
-                                                                    rank.toComponent(),
-                                                                    moveUpButton(ladder, rank),
-                                                                    deleteButton(ladder, rank)
-                                                            )
-                                                        }
-                                                        else -> {
-                                                            listOf(
-                                                                    rank.toComponent(),
-                                                                    moveDownButton(ladder, rank),
-                                                                    moveUpButton(ladder, rank),
-                                                                    deleteButton(ladder, rank)
-                                                            )
-                                                        }
-                                                    }.join()
-                                            )
-                                        }
-                                    }
                                 }
-                                Unit
-
                             }
+                            Unit
                             src.msgPaginated(
                                 RANKING_PAGINATION_HEADER(ladder.name,
-                                        (-"+").button(
+                                    (-"+").button(
                                         ButtonType.POSITIVE,
                                         RANKING_BUTTON_ADD_DESCRIPTION(),
                                         "/pex rank ${ladder.name} add ",
@@ -315,9 +317,9 @@ import java.util.concurrent.atomic.AtomicReference
                     args: CommandContext
                 ) {
                     val ladder =
-                            args.getOne<CompletableFuture<RankLadder>>(COMMON_ARGS_RANK_LADDER).join()
+                            args.getOne<CompletableFuture<RankLadder>>(COMMON_ARGS_RANK_LADDER)!!.join()
                     val toAdd =
-                        args.getOne<Map.Entry<String, String>>(COMMON_ARGS_SUBJECT)
+                        args.getOne<Map.Entry<String, String>>(COMMON_ARGS_SUBJECT)!!
                     src.checkSubjectPermission(toAdd, "permissionsex.rank.add.${ladder.name}")
                     val position = args.getOne<Int>("position")
                     if (position != null) {
@@ -355,9 +357,9 @@ import java.util.concurrent.atomic.AtomicReference
                     args: CommandContext
                 ) {
                     val ladder =
-                            args.getOne<CompletableFuture<RankLadder>>(COMMON_ARGS_RANK_LADDER).join()
+                            args.getOne<CompletableFuture<RankLadder>>(COMMON_ARGS_RANK_LADDER)!!.join()
                     val toRemove =
-                        args.getOne<Map.Entry<String, String>>(COMMON_ARGS_SUBJECT)
+                        args.getOne<Map.Entry<String, String>>(COMMON_ARGS_SUBJECT)!!
                     src.checkSubjectPermission(toRemove, "permissionsex.rank.remove." + ladder.name)
                     val newLadder = ladder.removeRank(toRemove)
                     if (newLadder === ladder) {

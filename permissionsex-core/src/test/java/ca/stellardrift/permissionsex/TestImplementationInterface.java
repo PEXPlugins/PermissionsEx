@@ -128,3 +128,4 @@ class TestProfile implements MinecraftProfile {
         return this.uid;
     }
 }
+

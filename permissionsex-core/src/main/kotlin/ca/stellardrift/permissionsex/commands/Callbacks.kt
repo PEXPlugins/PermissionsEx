@@ -15,19 +15,12 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.smartertext
+package ca.stellardrift.permissionsex.commands
 
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.parse.Command
-import ca.stellardrift.permissionsex.commands.parse.command
-import ca.stellardrift.permissionsex.commands.parse.uuid
-import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandExecutor
 import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.ComponentBuilder
+import ca.stellardrift.permissionsex.util.command.args.GenericArguments.uuid
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -51,11 +44,12 @@ class CallbackController {
      */
     fun registerCallback(source: Commander, func: (Commander) -> Unit): String {
         val id = UUID.randomUUID()
-        knownCallbacks.computeIfAbsent(source.mapKey) { ConcurrentHashMap() }[id] = CachedCallback(source, func)
+        knownCallbacks.computeIfAbsent(source.mapKey) { ConcurrentHashMap() }[id] =
+            CachedCallback(source, func)
         return "/pex cb $id"
     }
 
-    val Commander.mapKey: String get() = this.subjectIdentifier.orElse(null)?.value?.toLowerCase(Locale.ROOT) ?: name.toLowerCase(Locale.ROOT)
+    val Commander.mapKey: String get() = (this.subjectIdentifier?.value?: name ).toLowerCase(Locale.ROOT)
 
     fun clearOwnedBy(name: String) {
         knownCallbacks.remove(name)
@@ -65,16 +59,13 @@ class CallbackController {
         knownCallbacks.remove(name.toString().toLowerCase(Locale.ROOT))
     }
 
-    fun callbackArg()
-
-    fun createCommand(pex: PermissionsEx<*>): Command<Commander> {
-        return command("callback", "cb") {
-            description = Messages.COMMAND_CALLBACK_DESCRIPTION()
-            val uuid = uuid<Commander>(+"") key "hi"
-            Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID()
-
-            executor { src, args ->
-                val callbackId = args[uuid]
+    fun createCommand(): CommandSpec {
+        return CommandSpec.builder().apply {
+            setAliases("callback", "cb")
+            setArguments(uuid(Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID()))
+            setDescription(Messages.COMMAND_CALLBACK_DESCRIPTION())
+            setExecutor { src, args ->
+                val callbackId = args.getOne<UUID>(Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID)!!
                 val userCallbacks = knownCallbacks[src.mapKey]
                 val callback = userCallbacks?.get(callbackId)
                 when {
@@ -82,16 +73,14 @@ class CallbackController {
                     callback.source.mapKey != src.mapKey -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_ONLY_OWN_ALLOWED())
                     else -> try {
                         callback()
-                        args.success(1)
                     } finally {
                         if (callback.oneUse) {
                             userCallbacks.remove(callbackId)
                         }
                     }
-
                 }
             }
+        }.build()
 
-        }
     }
 }

@@ -164,7 +164,7 @@ class PEXSubjectCollection implements SubjectCollection {
     public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(@Nullable Set<Context> contexts,
             String permission) {
         Set<String> raw = this.collection.getAllIdentifiers();
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         CompletableFuture<CalculatedSubject>[] futures = new CompletableFuture[raw.size()];
         int i = 0;
         for (String ident : raw) {

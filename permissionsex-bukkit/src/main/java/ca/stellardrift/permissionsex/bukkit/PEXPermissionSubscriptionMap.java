@@ -51,9 +51,11 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
      * Inject a PEX permission subscription map into the provided plugin manager.
      * This allows some PEX functions to work with the plugin manager.
      *
+     * @param plugin plugin controlling
      * @param manager The manager to inject into
+     * @return the injected map, or existing map if present
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static PEXPermissionSubscriptionMap inject(PermissionsExPlugin plugin, PluginManager manager) {
         PEXPermissionSubscriptionMap map = INSTANCE.get();
         if (map != null) {

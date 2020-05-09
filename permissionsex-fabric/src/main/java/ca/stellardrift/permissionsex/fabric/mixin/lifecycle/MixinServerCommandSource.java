@@ -112,11 +112,7 @@ public abstract class MixinServerCommandSource implements Commander {
 
     @Override
     public void msg(Component text) {
-        if (text.color() != null) {
-            sendFeedback(text);
-        } else {
-            sendFeedback(text.color(TextColor.DARK_AQUA));
-        }
+        sendFeedback(text.colorIfAbsent(TextColor.DARK_AQUA));
     }
 
     private ComponentCommandSource out() {

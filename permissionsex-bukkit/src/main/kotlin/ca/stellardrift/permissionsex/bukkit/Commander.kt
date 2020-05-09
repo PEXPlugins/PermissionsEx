@@ -18,25 +18,19 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.*
-import com.google.common.collect.Maps
-import net.kyori.text.BuildableComponent
+import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
+import ca.stellardrift.permissionsex.util.subjectIdentifier
 import net.kyori.text.Component
-import net.kyori.text.ComponentBuilder
-import net.kyori.text.TextComponent
-import net.kyori.text.TextComponent.newline
-import net.kyori.text.TextComponent.space
 import net.kyori.text.adapter.bukkit.TextAdapter
-import net.kyori.text.event.ClickEvent
-import net.kyori.text.event.HoverEvent
 import net.kyori.text.format.TextColor
-import net.kyori.text.format.TextDecoration
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.Locale
-import java.util.Optional
 
 fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
 fun Iterable<CommandSender>.sendActionBar(text: Component) = TextAdapter.sendActionBar(this, text)
@@ -62,7 +56,7 @@ fun String.toLocale(): Locale {
     }
 }
 
-class BukkitMessageFormatter(private val cmd: BukkitCommander): MessageFormatter(cmd.pex.manager) {
+class BukkitMessageFormatter(private val cmd: BukkitCommander): MessageFormatter(cmd, cmd.pex.manager) {
 
     override val Map.Entry<String, String>.friendlyName: String?
         get() = cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }

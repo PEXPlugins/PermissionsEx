@@ -57,7 +57,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
                     val ref = getDataRef(src, args, "permissionsex.parent.add")
                     val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val parent =
-                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)
+                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)!!
                         ref.update { old: ImmutableSubjectData ->
                             old.addParent(
                                 contexts,
@@ -89,7 +89,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
                     val ref = getDataRef(src, args, "permissionsex.parent.remove")
                     val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val parent =
-                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)
+                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)!!
                         ref.update { old: ImmutableSubjectData ->
                             old.removeParent(
                                 contexts,
@@ -122,7 +122,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
                     val ref = getDataRef(src, args, "permissionsex.parent.set")
                     val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                     val parent =
-                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)
+                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)!!
                         ref.update { old: ImmutableSubjectData ->
                             old.clearParents(
                                 contexts

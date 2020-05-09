@@ -17,35 +17,40 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
-import ca.stellardrift.permissionsex.commands.commander.Commander;
+import ca.stellardrift.permissionsex.EmptyTestConfiguration;
+import ca.stellardrift.permissionsex.PermissionsExTest;
+import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
+import net.kyori.text.TextComponent;
 import org.junit.jupiter.api.Test;
 
-import static ca.stellardrift.permissionsex.util.Translatable.fixed;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test for command flags
  */
-public class CommandFlagsTest {
+public class CommandFlagsTest extends PermissionsExTest {
 
     @Test
     public void testFlaggedCommand() {
         CommandSpec command = CommandSpec.builder()
                 .setAliases("pex")
                 .setArguments(GenericArguments.flags()
-                        .flag("a").valueFlag(GenericArguments.integer(fixed("quot")), "q").buildWith(GenericArguments.string(fixed("key"))))
-                .setExecutor(new CommandExecutor() {
-                    @Override
-                    public <TextType> void execute(Commander<TextType> src, CommandContext args) throws CommandException {
-                        assertEquals(true, args.getOne("a"));
-                        assertEquals((Integer) 42, args.getOne("quot"));
-                        assertEquals("something", args.getOne("key"));
-                    }
+                        .flag("a").valueFlag(GenericArguments.integer(TextComponent.of("quot")), "q").buildWith(GenericArguments.string(TextComponent.of("key"))))
+                .setExecutor((src, args) -> {
+                    assertEquals(true, args.getOne("a"));
+                    assertEquals((Integer) 42, args.getOne("quot"));
+                    assertEquals("something", args.getOne("key"));
                 })
                 .build();
-        command.process(new TestCommander(), "-a -q 42 something");
-        command.process(new TestCommander(), "-aq 42 something");
-        command.process(new TestCommander(), "-a something -q 42");
+        final TestCommander cmd = new TestCommander(getManager());
+        command.process(cmd, "-a -q 42 something");
+        command.process(cmd, "-aq 42 something");
+        command.process(cmd, "-a something -q 42");
+    }
+
+    @Override
+    protected PermissionsExConfiguration<?> populate() {
+        return new EmptyTestConfiguration();
     }
 }

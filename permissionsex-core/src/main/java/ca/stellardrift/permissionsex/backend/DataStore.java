@@ -96,7 +96,7 @@ public interface DataStore {
                         .thenCompose(newData -> setData(oldType, oldIdentifier, null))
                         .thenApply(inp -> (Void) null);
             } else {
-                return Util.<Void>failedFuture(new PermissionsException(DATASTORE_MOVE_ERROR.get()));
+                return Util.<Void>failedFuture(new PermissionsException(DATASTORE_MOVE_ERROR.toComponent()));
             }
 
         }).thenCompose(future -> future);
@@ -160,7 +160,9 @@ public interface DataStore {
      *
      * Bulk operations may be executed asynchronously.
      *
+     * @param <T> return value type
      * @param function The function to call containing the operation.
+     * @return a future completing with the result of the operation or an error
      */
     <T> CompletableFuture<T> performBulkOperation(Function<DataStore, T> function);
 

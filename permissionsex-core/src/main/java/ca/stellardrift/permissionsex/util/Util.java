@@ -61,10 +61,10 @@ public class Util {
         return input.filter(clazz::isInstance).map(clazz::cast);
     }
 
-    public static GenericArguments.FlagCommandElementBuilder contextTransientFlags(PermissionsEx pex) {
+    public static GenericArguments.FlagCommandElementBuilder contextTransientFlags(PermissionsEx<?> pex) {
         return GenericArguments.flags()
                 .flag("-transient")
-                .valueFlag(GameArguments.context(Messages.COMMON_ARGS_CONTEXT.get(), pex), "-context", "-contexts", "c");
+                .valueFlag(GameArguments.context(Messages.COMMON_ARGS_CONTEXT.toComponent(), pex), "-context", "-contexts", "c");
     }
 
     public static <T> CompletableFuture<T> failedFuture(Throwable error) {

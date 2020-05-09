@@ -131,7 +131,7 @@ public class SubjectType {
         return persistentData;
     }
 
-    PermissionsEx getManager() {
+    PermissionsEx<?> getManager() {
         return pex;
     }
 

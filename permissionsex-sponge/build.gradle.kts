@@ -40,7 +40,12 @@ dependencies {
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
 
-    implementation(kyoriText("adapter-spongeapi", Versions.TEXT))
+    implementation(kyoriText("adapter-spongeapi", Versions.TEXT_ADAPTER)) {
+        exclude("com.google.code.gson")
+    }
+    implementation(kyoriText("serializer-gson", Versions.TEXT)) {
+        exclude("com.google.code.gson")
+    }
     implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     kaptAnd("shadow", "org.spongepowered:spongeapi:${Versions.SPONGE}")
@@ -62,10 +67,11 @@ val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
     minimize()
     listOf("org.antlr",
-        "net.kyori.text",
+        "net.kyori",
         "org.jetbrains.annotations").forEach {
         relocate(it, "$relocateRoot.$it")
     }
+    exclude("org/checkerframework/**")
 
     manifest {
         attributes("Automatic-Module-Name" to project.name)

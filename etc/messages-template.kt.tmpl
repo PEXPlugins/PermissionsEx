@@ -9,9 +9,6 @@ object ${className} {
     <%   def propPattern = ~/[.-]/ %><% for (prop in keys) { %>
     <% def propKey = propPattern.matcher(prop.toUpperCase()).replaceAll("_") %>
     @JvmField
-    val ${propKey} = TranslatableProvider("${prop}")
+    val ${propKey} = TranslatableProvider(BUNDLE_NAME, "${prop}")
     <% }  %>
-        fun getBundle(locale: Locale): ResourceBundle {
-            return ResourceBundle.getBundle(BUNDLE_NAME, locale)
-        }
 }

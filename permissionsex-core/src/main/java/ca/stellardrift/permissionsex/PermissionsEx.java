@@ -22,6 +22,7 @@ import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider;
 import ca.stellardrift.permissionsex.backend.conversion.ConversionProviderRegistry;
 import ca.stellardrift.permissionsex.backend.conversion.ConversionResult;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
+import ca.stellardrift.permissionsex.commands.CallbackController;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.*;
 import ca.stellardrift.permissionsex.data.*;
@@ -98,6 +99,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     private RankLadderCache rankLadderCache;
     private volatile CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
+    private final CallbackController callbackController;
 
     private static class State<PlatformConfigType> {
         private final PermissionsExConfiguration<PlatformConfigType> config;
@@ -112,9 +114,10 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
     public PermissionsEx(final PermissionsExConfiguration<PlatformConfigType> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
-        this.logger = FormattedLogger.forLogger(impl.getLogger());
+        this.logger = FormattedLogger.forLogger(impl.getLogger(), false);
         this.transientData = new MemoryDataStore("transient");
         this.transientData.initialize(this);
+        this.callbackController = new CallbackController();
         setDebugMode(config.isDebugEnabled());
         registerContextDefinition(ServerTagContextDefinition.INSTANCE);
         registerContextDefinition(BeforeTimeContextDefinition.INSTANCE);
@@ -157,7 +160,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                             }
                         }).collect(Collectors.toSet());
                 if (!toConvert.isEmpty()) {
-                    getLogger().info(UUIDCONVERSION_BEGIN.get());
+                    getLogger().info(UUIDCONVERSION_BEGIN.toComponent());
                 } else {
                     return CompletableFuture.completedFuture(0);
                 }
@@ -169,7 +172,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                             dataStore.isRegistered(SUBJECTS_USER, lookupName)
                                     .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
                                 if (newRegistered) {
-                                    getLogger().warn(UUIDCONVERSION_ERROR_DUPLICATE.get(newIdentifier));
+                                    getLogger().warn(UUIDCONVERSION_ERROR_DUPLICATE.toComponent(newIdentifier));
                                     return false;
                                 } else if (!oldRegistered) {
                                     return false;
@@ -193,14 +196,14 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                 });
             }).thenAccept(result -> {
                     if (result != null && result > 0) {
-                        getLogger().info(UUIDCONVERSION_END.get(result));
+                        getLogger().info(UUIDCONVERSION_END.toComponent(result));
                     }
                 }).exceptionally(t -> {
-                    getLogger().error(UUIDCONVERSION_ERROR_GENERAL.get(), t);
+                    getLogger().error(UUIDCONVERSION_ERROR_GENERAL.toComponent(), t);
                     return null;
                 });
         } catch (UnknownHostException e) {
-            getLogger().warn(UUIDCONVERSION_ERROR_DNS.get());
+            getLogger().warn(UUIDCONVERSION_ERROR_DNS.toComponent());
         }
 
     }
@@ -370,7 +373,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
             initialize(config);
             getSubjects(SUBJECTS_GROUP).cacheAll();
         } catch (IOException e) {
-            throw new PEBKACException(CONFIG_ERROR_LOAD.get(e.getLocalizedMessage()));
+            throw new PEBKACException(CONFIG_ERROR_LOAD.toComponent(e.getLocalizedMessage()));
         }
     }
 
@@ -388,11 +391,11 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         try {
             newState.config.save();
         } catch (IOException e) {
-            throw new PermissionsLoadingException(CONFIG_ERROR_SAVE.get(), e);
+            throw new PermissionsLoadingException(CONFIG_ERROR_SAVE.toComponent(), e);
         }
 
         if (shouldAnnounceImports) {
-            getLogger().warn(CONVERSION_BANNER.get());
+            getLogger().warn(CONVERSION_BANNER.toComponent());
         }
 
         List<ConversionResult> allResults = new LinkedList<>();
@@ -400,9 +403,9 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
             List<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
-                    getLogger().info(CONVERSION_PLUGINHEADER.get(prov.getName()));
+                    getLogger().info(CONVERSION_PLUGINHEADER.toComponent(prov.getName()));
                     for (ConversionResult result : res) {
-                        getLogger().info(CONVERSION_INSTANCE.get(result.getTitle(), result.getStore().getName()));
+                        getLogger().info(CONVERSION_INSTANCE.toComponent(result.getTitle(), result.getStore().getName()));
                     }
                 }
                 allResults.addAll(res);
@@ -432,7 +435,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
         // Migrate over legacy subject data
         newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
-            getLogger().info(CONVERSION_RESULT_SUCCESS.get());
+            getLogger().info(CONVERSION_RESULT_SUCCESS.toComponent());
         });
     }
 
@@ -459,6 +462,15 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
     public List<ConversionResult> getAvailableConversions() {
         return getState().availableConversions;
+    }
+
+    /**
+     * Get the command callback controller for this permissions instance
+     *
+     * @return The callback controller
+     */
+    public CallbackController getCallbackController() {
+        return this.callbackController;
     }
 
     @Override

@@ -26,7 +26,6 @@ import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
-import ca.stellardrift.permissionsex.smartertext.CallbackController
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.command.CommandSpec
@@ -161,6 +160,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun handlePlayerQuit(player: ServerPlayerEntity) {
+        _manager?.callbackController?.clearOwnedBy(player.uuidAsString)
         _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 

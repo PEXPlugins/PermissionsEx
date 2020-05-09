@@ -18,7 +18,6 @@
 package ca.stellardrift.permissionsex.util.command.args;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.GuavaCollectors;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import ca.stellardrift.permissionsex.util.StartsWithPredicate;
@@ -33,8 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.util.command.ArgumentKeys.*;
+import static net.kyori.text.TextComponent.space;
 
 /**
  * Class containing factory methods to combine single-value command elements
@@ -309,29 +310,29 @@ public class GenericArguments {
         }
 
         @Override
-        public  Component getUsage(Commander src) {
-            final List<Object> builder = new ArrayList<>();
-            for (Map.Entry<List<String>, CommandElement> arg : usageFlags.entrySet()) {
-                builder.add("[");
-                for (Iterator<String> it = arg.getKey().iterator(); it.hasNext();) {
-                    builder.add("-");
-                    builder.add(it.next());
-                    if (it.hasNext()) {
-                        builder.add("|");
+        public Component getUsage(Commander src) {
+            return TextComponent.make(builder -> {
+                for (Map.Entry<List<String>, CommandElement> arg : usageFlags.entrySet()) {
+                    builder.append("[");
+                    for (Iterator<String> it = arg.getKey().iterator(); it.hasNext();) {
+                        builder.append("-");
+                        builder.append(it.next());
+                        if (it.hasNext()) {
+                            builder.append("|");
+                        }
                     }
+                    if (!(arg.getValue() instanceof MarkTrueCommandElement)) { // true flag
+                        builder.append(" ");
+                        builder.append(arg.getValue().getUsage(src));
+                    }
+                    builder.append("]");
+                    builder.append(" ");
                 }
-                if (!(arg.getValue() instanceof MarkTrueCommandElement)) { // true flag
-                    builder.add(" ");
-                    builder.add(arg.getValue().getUsage(src));
-                }
-                builder.add("]");
-                builder.add(" ");
-            }
 
-            if (childElement != null) {
-                builder.add(childElement.getUsage(src));
-            }
-            return src.getFormatter().combined(builder.toArray());
+                if (childElement != null) {
+                    builder.append(childElement.getUsage(src));
+                }
+            });
         }
 
         @Override
@@ -511,14 +512,14 @@ public class GenericArguments {
 
         @Override
         public  Component getUsage(Commander commander) {
-            final List<Object> ret = new ArrayList<>(Math.max(0, elements.size() * 2 - 1));
-            for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
-                ret.add(it.next().getUsage(commander));
-                if (it.hasNext()) {
-                    ret.add(' ');
+            return TextComponent.make(builder -> {
+                for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
+                    builder.append(it.next().getUsage(commander));
+                    if (it.hasNext()) {
+                        builder.append(space());
+                    }
                 }
-            }
-            return commander.getFormatter().combined(ret.toArray());
+            });
         }
     }
 
@@ -561,30 +562,34 @@ public class GenericArguments {
         public Object parseValue(CommandArgs args) throws ArgumentParseException {
             Object value = choices.get(args.next());
             if (value == null) {
-                throw args.createError(CHOICES_ERROR_INVALID.get(choices.keySet().toString()));
+                throw args.createError(CHOICES_ERROR_INVALID.toComponent(choices.keySet().toString()));
             }
             return value;
         }
 
         @Override
         public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            final String prefix = args.nextIfPresent().orElse("");
+            String prefix = args.nextIfPresent();
+            if (prefix == null) {
+                prefix = "";
+            }
             return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new GuavaStartsWithPredicate(prefix)));
         }
 
         @Override
         public  Component getUsage(Commander commander) {
             if (choicesInUsage) {
-                final List<Object> args = new ArrayList<>(Math.max(0, choices.size() * 2 - 1));
-                for (Iterator<String> it = choices.keySet().iterator(); it.hasNext();) {
-                    args.add(it.next());
-                    if (it.hasNext()) {
-                        args.add("|");
+                return TextComponent.make(builder -> {
+                    for (Iterator<String> it = choices.keySet().iterator(); it.hasNext();) {
+                        builder.append(it.next());
+                        if (it.hasNext()) {
+                            builder.append("|");
+                        }
                     }
-                }
-                return commander.getFormatter().combined(args.toArray());
+
+                });
             } else {
-                return commander.getFormatter().tr(getKey());
+                return getKey();
             }
         }
     }
@@ -646,14 +651,14 @@ public class GenericArguments {
 
         @Override
         public  Component getUsage(Commander commander) {
-            final List<Object> ret = new ArrayList<>(Math.max(0, elements.size() * 2 - 1));
-            for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
-                ret.add(it.next().getUsage(commander));
-                if (it.hasNext()) {
-                    ret.add('|');
+            return TextComponent.make(builder -> {
+                for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
+                    builder.append(it.next().getUsage(commander));
+                    if (it.hasNext()) {
+                        builder.append("|");
+                    }
                 }
-            }
-            return commander.getFormatter().combined(ret.toArray());
+            });
         }
     }
 
@@ -726,7 +731,7 @@ public class GenericArguments {
         public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             if (!args.hasNext()) {
                 if (this.element.getKey() != null && this.value != null) {
-                    context.putArg(this.element.getKey().getUntranslated(), value);
+                    context.putArg(this.element.getKey(), value);
                 }
                 return;
             }
@@ -737,7 +742,7 @@ public class GenericArguments {
                 if (considerInvalidFormatEmpty || args.hasNext()) { // If there are more args, suppress. Otherwise, throw the error
                     args.setPosition(startPos);
                     if (this.element.getKey() != null && this.value != null) {
-                        context.putArg(this.element.getKey().getUntranslated(), value);
+                        context.putArg(this.element.getKey(), value);
                     }
                 } else {
                     throw ex;
@@ -757,7 +762,11 @@ public class GenericArguments {
 
         @Override
         public  Component getUsage(Commander src) {
-            return src.getFormatter().combined("[", this.element.getUsage(src), "]");
+            return TextComponent.make(builder -> {
+                builder.append("[");
+                builder.append(this.element.getUsage(src));
+                builder.append("]");
+            });
         }
     }
 
@@ -812,7 +821,7 @@ public class GenericArguments {
 
         @Override
         public  Component getUsage(Commander src) {
-            return src.getFormatter().combined(times, '*', element.getUsage(src));
+            return TextComponent.builder(String.valueOf(times)).append("*").append(element.getUsage(src)).build();
         }
     }
 
@@ -864,14 +873,14 @@ public class GenericArguments {
 
         @Override
         public  Component getUsage(Commander context) {
-            return context.getFormatter().combined(element.getUsage(context), '+');
+            return element.getUsage(context).append(TextComponent.of("+"));
         }
     }
 
     // -- Argument types for basic java types
 
     /**
-     * Parent class that specifies elemenents as having no tab completions. Useful for inputs with a very large domain, like strings and integers
+     * Parent class that specifies elements as having no tab completions. Useful for inputs with a very large domain, like strings and integers
      */
     private static abstract class KeyElement extends CommandElement {
         private KeyElement(Component key) {
@@ -929,7 +938,7 @@ public class GenericArguments {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException ex) {
-                throw args.createError(INTEGER_ERROR_FORMAT.get(input));
+                throw args.createError(INTEGER_ERROR_FORMAT.toComponent(input));
             }
         }
     }
@@ -958,7 +967,7 @@ public class GenericArguments {
             .put("true", true)
             .put("t", true)
             .put("y", true)
-            .put("yes",
+            .put("yes", true)
             .put("verymuchso", true)
             .put("false", false)
             .put("f", false)
@@ -1076,7 +1085,7 @@ public class GenericArguments {
 
         @Override
         public  Component getUsage(Commander src) {
-            return src.getFormatter().combined(super.getUsage(src), "...");
+            return super.getUsage(src).append(TextComponent.of("..."));
         }
     }
 
@@ -1148,7 +1157,7 @@ public class GenericArguments {
 
         @Override
         public Component getUsage(Commander src) {
-            return src.getFormatter().combined(Joiner.on(' ').join(this.expectedArgs));
+            return TextComponent.of(Joiner.on(' ').join(this.expectedArgs));
         }
     }
 
@@ -1172,10 +1181,12 @@ public class GenericArguments {
 
         @Override
         public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            return args.nextIfPresent()
-                    .map(arg -> keySupplier.get().stream().filter(new StartsWithPredicate(arg))
-                            .collect(GuavaCollectors.toImmutableList()))
-                    .orElse(ImmutableList.of());
+            final String arg = args.nextIfPresent();
+            if (arg == null) {
+                return ImmutableList.of();
+            } else {
+                return keySupplier.get().stream().filter(new StartsWithPredicate(arg)).collect(GuavaCollectors.toImmutableList());
+            }
         }
     }
 

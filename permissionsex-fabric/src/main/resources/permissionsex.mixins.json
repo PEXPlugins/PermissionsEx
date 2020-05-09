@@ -22,7 +22,6 @@
     "check.MixinStructureBlockBlockEntity",
 
     "lifecycle.MixinClientConnection",
-    "lifecycle.MixinChatMessageS2CPacket",
     "lifecycle.MixinGameProfile",
     "lifecycle.MixinHandshakeC2SPacket",
     "lifecycle.MixinPlayerManager",

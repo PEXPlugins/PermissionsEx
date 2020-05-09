@@ -17,9 +17,8 @@
 
 package ca.stellardrift.permissionsex.util.command.args;
 
-import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
-import ca.stellardrift.permissionsex.util.Translatable;
 import ca.stellardrift.permissionsex.util.command.CommonMessages;
+import net.kyori.text.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,19 +80,19 @@ public class QuotedStringParser {
 
     private int peek() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.get());
+            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.toComponent());
         }
         return buffer.codePointAt(index + 1);
     }
 
     private int next() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.get());
+            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.toComponent());
         }
         return buffer.codePointAt(++index);
     }
 
-    public ArgumentParseException createException(Translatable message) {
+    public ArgumentParseException createException(Component message) {
         return new ArgumentParseException(message, buffer, index);
     }
 
@@ -124,7 +123,7 @@ public class QuotedStringParser {
         // Consume the start quotation character
         int nextCodePoint = next();
         if (nextCodePoint != startQuotation) {
-            throw createException(CommonMessages.ERROR_PARSE_NOTQUOTE.get(nextCodePoint, startQuotation));
+            throw createException(CommonMessages.ERROR_PARSE_NOTQUOTE.toComponent(nextCodePoint, startQuotation));
         }
 
         while (true) {
@@ -132,7 +131,7 @@ public class QuotedStringParser {
                 if (lenient) {
                     return;
                 } else {
-                    throw createException(CommonMessages.ERROR_PARSE_UNTERMINATED_QUOTED.get());
+                    throw createException(CommonMessages.ERROR_PARSE_UNTERMINATED_QUOTED.toComponent());
                 }
             }
             nextCodePoint = next();

@@ -18,11 +18,14 @@
 package ca.stellardrift.permissionsex.sponge;
 
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
+import net.kyori.text.Component;
+import net.kyori.text.serializer.gson.GsonComponentSerializer;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -58,19 +61,23 @@ class PEXSpongeCommand implements CommandCallable {
         return true;
     }
 
+    private static Text toText(Component comp) {
+        return TextSerializers.JSON.deserialize(GsonComponentSerializer.INSTANCE.serialize(comp));
+    }
+
     @Override
     public Optional<Text> getShortDescription(CommandSource commandSource) {
-        return Optional.of(command.getDescription(new SpongeCommander(plugin, commandSource)));
+        return Optional.of(toText(command.getDescription(new SpongeCommander(plugin, commandSource))));
     }
 
     @Override
     public Optional<Text> getHelp(CommandSource commandSource) {
-        return Optional.of(command.getExtendedDescription(new SpongeCommander(plugin, commandSource)));
+        return Optional.of(toText(command.getExtendedDescription(new SpongeCommander(plugin, commandSource))));
     }
 
     @Override
     public Text getUsage(CommandSource commandSource) {
-        return command.getUsage(new SpongeCommander(plugin, commandSource));
+        return toText(command.getUsage(new SpongeCommander(plugin, commandSource)));
     }
 
     @Override

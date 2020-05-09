@@ -38,7 +38,7 @@ import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent
-import java.awt.Component
+import net.kyori.text.Component
 
 private fun permissionValue(key: Component): CommandElement {
     return firstParsing(
@@ -72,7 +72,7 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>): CommandSpec {
             ) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set")
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                val key = args.getOne<String>(PERMISSION_ARG_KEY)
+                val key = args.getOne<String>(PERMISSION_ARG_KEY)!!
                 var value = args.getOne<Any>(PERMISSION_ARG_PERMISSION_VALUE)
                 if (value is Boolean) {
                     value = if (value) 1 else -1

@@ -167,7 +167,7 @@ public class SchemaMigrations {
                                 }
                                 permission = ConversionUtils.convertLegacyPermission(permission);
                                 if (permission.contains("*")) {
-                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.get(Arrays.toString(configurationNode.getPath())));
+                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.toComponent(Arrays.toString(configurationNode.getPath())));
                                 }
                                 configurationNode.getNode(permission).setValue(value);
                             }

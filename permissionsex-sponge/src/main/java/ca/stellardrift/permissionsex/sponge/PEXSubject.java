@@ -33,6 +33,7 @@ import org.spongepowered.api.util.annotation.NonnullByDefault;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -239,5 +240,10 @@ class PEXSubject implements Subject {
 
         return this.ref.equals(otherSubj.ref)
                 && this.data.equals(otherSubj.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(data, ref);
     }
 }

@@ -20,18 +20,15 @@ package ca.stellardrift.permissionsex.sponge;
 import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
+import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
-import ca.stellardrift.permissionsex.smartertext.CallbackController;
 import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
 import ca.stellardrift.permissionsex.util.command.CommandException;
-import ca.stellardrift.permissionsex.util.command.CommandExecutor;
 import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -127,7 +124,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
             Files.createDirectories(configDir);
             this.manager = new PermissionsEx<>(FilePermissionsExConfiguration.fromLoader(this.configLoader), this);
         } catch (Exception e) {
-            throw new RuntimeException(Messages.PLUGIN_INIT_ERROR_GENERAL.toComponent(PomData.NAME), e);
+            throw new RuntimeException(new PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.toComponent(PomData.NAME), e));
         }
 
         defaults = (PEXSubject) loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose(coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)).get();
@@ -207,6 +204,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
 
     @Listener
     public void onPlayerQuit(ClientConnectionEvent.Disconnect event) {
+        getManager().getCallbackController().clearOwnedBy(event.getTargetEntity().getUniqueId());
         getUserSubjects().suggestUnload(event.getTargetEntity().getIdentifier());
     }
 

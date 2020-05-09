@@ -14,12 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ca.stellardrift.permissionsex.util.command
 
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.TranslatableProvider
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import net.kyori.text.Component
+import net.kyori.text.TextComponent
+import net.kyori.text.TranslatableComponent
+import net.kyori.text.serializer.plain.PlainComponentSerializer
 
 /**
  * Context that a command is executed in
@@ -27,12 +32,20 @@ import com.google.common.collect.Multimap
 class CommandContext(val spec: CommandSpec, val rawInput: String) {
     private val parsedArgs: Multimap<String, Any> = ArrayListMultimap.create()
 
-    fun <T> getAll(key: String?): Collection<T> {
+    fun <T> getAll(key: Component): Collection<T> {
+        return getAll(key.toContextKey())
+    }
+
+    fun <T> getAll(key: String): Collection<T> {
         return parsedArgs[key] as Collection<T>
     }
 
     fun <T> getAll(key: TranslatableProvider): Collection<T> {
         return getAll(key.key)
+    }
+
+    fun <T> getOne(key: Component): T? {
+         return getOne(key.toContextKey())
     }
 
     fun <T> getOne(key: String): T? {
@@ -48,10 +61,9 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
         return getOne(key.key)
     }
 
-    fun putArg(key: String?, value: Any?) {
-        if (value == null) {
-            throw NullPointerException("value")
-        }
+    fun putArg(key: Component, value: Any) = putArg(key.toContextKey(), value)
+
+    fun putArg(key: String, value: Any) {
         parsedArgs.put(key, value)
     }
 
@@ -62,11 +74,24 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
         }
     }
 
+    operator fun contains(key: Component): Boolean = parsedArgs.containsKey(key.toContextKey())
+    operator fun contains(key: String): Boolean = parsedArgs.containsKey(key)
+    operator fun contains(key: TranslatableProvider): Boolean = parsedArgs.containsKey(key.key)
+
     fun hasAny(key: String): Boolean {
         return parsedArgs.containsKey(key)
     }
 
     fun hasAny(key: TranslatableProvider): Boolean {
         return parsedArgs.containsKey(key.key)
+    }
+}
+
+@JvmName("argKey")
+fun Component.toContextKey(): String {
+    return when (this) {
+        is TextComponent -> content()
+        is TranslatableComponent -> key()
+        else -> PlainComponentSerializer.INSTANCE.serialize(this)
     }
 }

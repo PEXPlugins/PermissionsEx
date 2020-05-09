@@ -55,7 +55,7 @@ import ca.stellardrift.permissionsex.commands.Messages.VERSION_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.VERSION_RESPONSE_ACTIVE_DATA_STORE
 import ca.stellardrift.permissionsex.commands.Messages.VERSION_RESPONSE_AVAILABLE_DATA_STORES
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.*
+import ca.stellardrift.permissionsex.util.Util
 import ca.stellardrift.permissionsex.util.command.ChildCommands
 import ca.stellardrift.permissionsex.util.command.CommandContext
 import ca.stellardrift.permissionsex.util.command.CommandException
@@ -69,6 +69,12 @@ import ca.stellardrift.permissionsex.util.command.args.GenericArguments.none
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.optional
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
 import ca.stellardrift.permissionsex.util.command.args.GenericArguments.string
+import ca.stellardrift.permissionsex.util.component
+import ca.stellardrift.permissionsex.util.plus
+import ca.stellardrift.permissionsex.util.thenMessageSubject
+import ca.stellardrift.permissionsex.util.toComponent
+import ca.stellardrift.permissionsex.util.unaryMinus
+import ca.stellardrift.permissionsex.util.unaryPlus
 import net.kyori.text.TextComponent.make
 import java.util.regex.Pattern
 
@@ -78,7 +84,8 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
             getRankingCommand(pex),
             getImportCommand(pex),
             getReloadCommand(pex),
-            getVersionCommand(pex)
+            getVersionCommand(pex),
+            pex.callbackController.createCommand()
         ) + pex.implementationCommands
 
         val children =
@@ -111,7 +118,7 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
             .setExecutor { src, args ->
                 when {
                     args.hasAny("list") -> {
-                        val subjectType = args.getOne<String>(COMMON_ARGS_SUBJECT_TYPE)
+                        val subjectType = args.getOne<String>(COMMON_ARGS_SUBJECT_TYPE)!!
                         args.checkPermission(src, "permissionsex.command.list.$subjectType")
                         val cache =
                                 if (args.hasAny(COMMON_ARGS_TRANSIENT)) pex.getSubjects(subjectType).transientData() else pex.getSubjects(
@@ -119,7 +126,7 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                                 ).persistentData()
                         var iter  = cache.allIdentifiers.asSequence()
                         if (args.hasAny(PEX_ARGS_FILTER)) {
-                            val filter = args.getOne<String>(PEX_ARGS_FILTER)
+                            val filter = args.getOne<String>(PEX_ARGS_FILTER)!!
                             iter = iter.filter { it.startsWith(filter, ignoreCase = true) }
                         }
                         src.msgPaginated(
@@ -128,10 +135,10 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                                 iter.map { src.formatter.subject(subjectType to it) }.asIterable()
                         )
                     }
-                    args.hasAny(subjectChildren.key.untranslated) -> {
+                    subjectChildren.key in args -> {
                         ChildCommands.executor(subjectChildren).execute(src, args)
                     }
-                    args.hasAny(children.key.untranslated) -> {
+                    children.key in args -> {
                         ChildCommands.executor(children).execute(src, args)
                     }
                     else -> {
@@ -174,8 +181,8 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     private fun getImportCommand(pex: PermissionsEx<*>): CommandSpec {
         return CommandSpec.builder()
             .setAliases("import")
-            .setDescription(IMPORT_DESCRIPTION.get())
-            .setArguments(optional(string(IMPORT_ARG_DATA_STORE.get())))
+            .setDescription(IMPORT_DESCRIPTION())
+            .setArguments(optional(string(IMPORT_ARG_DATA_STORE())))
             .setPermission("permissionsex.import")
             .setExecutor(object : PermissionsExExecutor(pex) {
                 override fun execute(src: Commander, args: CommandContext) {
@@ -206,7 +213,7 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                                     src.msg { send ->
                                         send(IMPORT_ACTION_BEGINNING(result.title))
                                     }
-                                    pex.importDataFrom(result).thenMessageSubject(src) { send ->  send(IMPORT_ACTION_SUCCESS(-result.title)) }
+                                    pex.importDataFrom(result).thenMessageSubject(src) { send ->  send(IMPORT_ACTION_SUCCESS(result.title)) }
                                     return
                                 }
                             }

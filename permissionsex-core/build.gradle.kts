@@ -61,6 +61,10 @@ localization {
     templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
+opinionated {
+    useJUnit5()
+}
+
 tasks.generateGrammarSource {
     val grammarPackage = "${project.group}.util.glob.parser"
     arguments.addAll(listOf("-package", grammarPackage))

@@ -40,7 +40,7 @@ public final class FileSubjectData extends MemorySubjectData {
         if (node.hasListChildren()) {
             for (ConfigurationNode child : node.getChildrenList()) {
                 if (!child.hasMapChildren()) {
-                    throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.get());
+                    throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.toComponent());
                 }
                 Set<ContextValue<?>> contexts = contextsFrom(child);
                 DataEntry value = MAPPER.bindToNew().populate(child);

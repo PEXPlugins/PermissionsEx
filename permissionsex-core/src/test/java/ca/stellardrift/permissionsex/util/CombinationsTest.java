@@ -32,26 +32,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CombinationsTest {
 
-	private static <T> ImmutableSet<T> set(T... items) {
-		return ImmutableSet.copyOf(items);
-	}
+    private static <T> ImmutableSet<T> set(T... items) {
+        return ImmutableSet.copyOf(items);
+    }
 
-	@Test
-	public void testInitialCombinations() {
-		Set<Integer> combinations = ImmutableSet.of(1, 2, 3);
-		List<Set<Integer>> expectedResults = ImmutableList.<Set<Integer>>of(set(1, 2, 3), set(1, 2), set(1, 3), set(2, 3), set(1), set(2), set(3), ImmutableSet.<Integer>of()), actualResults = new ArrayList<>(expectedResults.size());
-		Iterators.addAll(actualResults, Combinations.of(combinations).iterator());
-		assertIterableEquals(expectedResults, actualResults);
-	}
+    @Test
+    public void testInitialCombinations() {
+        Set<Integer> combinations = ImmutableSet.of(1, 2, 3);
+        List<Set<Integer>> expectedResults = ImmutableList.<Set<Integer>>of(set(1, 2, 3), set(1, 2), set(1, 3), set(2, 3), set(1), set(2), set(3), ImmutableSet.<Integer>of()), actualResults = new ArrayList<>(expectedResults.size());
+        Iterators.addAll(actualResults, Combinations.of(combinations).iterator());
+        assertIterableEquals(expectedResults, actualResults);
+    }
 
-	@Test
-	public void testCombinationsOfEmpty() {
-		Combinations<String> test = Combinations.of(ImmutableSet.<String>of());
-		Iterator<Set<String>> testIt = test.iterator();
-		assertTrue(testIt.hasNext());
-		Set<String> emptyResult = testIt.next();
-		assertIterableEquals(ImmutableSet.of(), emptyResult);
-		assertFalse(testIt.hasNext());
-	}
+    @Test
+    public void testCombinationsOfEmpty() {
+        Combinations<String> test = Combinations.of(ImmutableSet.<String>of());
+        Iterator<Set<String>> testIt = test.iterator();
+        assertTrue(testIt.hasNext());
+        Set<String> emptyResult = testIt.next();
+        assertIterableEquals(ImmutableSet.of(), emptyResult);
+        assertFalse(testIt.hasNext());
+    }
 
 }

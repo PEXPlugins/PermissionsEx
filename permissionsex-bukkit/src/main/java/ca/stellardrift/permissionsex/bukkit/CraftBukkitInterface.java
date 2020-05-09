@@ -27,7 +27,7 @@ public class CraftBukkitInterface {
     private static final String VERSION;
 
     static {
-        Class serverClass = Bukkit.getServer().getClass();
+        Class<?> serverClass = Bukkit.getServer().getClass();
         if (!serverClass.getSimpleName().equals("CraftServer")) {
             VERSION = null;
         } else if (serverClass.getName().equals("org.bukkit.craftbukkit.CraftServer")) {
@@ -63,7 +63,7 @@ public class CraftBukkitInterface {
      * @param name The name of the class without the "org.bukkit.craftbukkit" prefix
      * @return The versioned class, or {@code null} if not CraftBukkit
      */
-    public static Class getCBClass(String name) {
+    public static Class<?> getCBClass(String name) {
         if (VERSION == null) {
             return null;
         }

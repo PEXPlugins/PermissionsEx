@@ -18,13 +18,16 @@
 package ca.stellardrift.permissionsex.util.command;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.commands.parse.CommandArgs;
 import ca.stellardrift.permissionsex.util.command.args.*;
 import com.google.common.collect.ImmutableList;
 import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+
+import static net.kyori.text.TextComponent.newline;
 
 
 /**
@@ -51,6 +54,7 @@ public class CommandSpec {
     public static Builder builder() {
         return new Builder();
     }
+
 
     public static final class Builder {
         private CommandElement args = GenericArguments.none();
@@ -169,9 +173,13 @@ public class CommandSpec {
     }
 
     public void checkPermission(Commander commander) throws CommandException {
-        if (this.permission != null && !commander.hasPermission(permission)) {
+        if (!hasPermission(commander)) {
             throw new CommandException(CommonMessages.ERROR_PERMISSION.toComponent());
         }
+    }
+
+    public boolean hasPermission(@NotNull Commander src) {
+        return this.permission == null || src.hasPermission(this.permission);
     }
 
     public CommandContext parse(String commandLine) throws ArgumentParseException {
@@ -237,7 +245,7 @@ public class CommandSpec {
     }
 
     public Component getUsage(Commander commander) {
-        return commander.getFormatter().combined("/", getAliases().get(0), " ", args.getUsage(commander));
+        return TextComponent.builder("/" + getAliases().get(0) + " ").append(args.getUsage(commander)).build();
     }
 
     public Component getExtendedDescription(Commander src) {
@@ -246,12 +254,12 @@ public class CommandSpec {
             if (this.extendedDescription == null) {
                 return getUsage(src);
             } else {
-                return src.getFormatter().combined(getUsage(src), '\n', this.extendedDescription);
+                return TextComponent.join(newline(), getUsage(src), this.extendedDescription);
             }
         } else if (this.extendedDescription == null) {
-            return src.getFormatter().combined(desc, '\n', getUsage(src));
+            return TextComponent.join(newline(), desc, getUsage(src));
         } else {
-            return src.getFormatter().combined(desc, '\n', getUsage(src), '\n', this.extendedDescription);
+            return TextComponent.join(newline(), desc, getUsage(src), this.extendedDescription);
         }
     }
 }

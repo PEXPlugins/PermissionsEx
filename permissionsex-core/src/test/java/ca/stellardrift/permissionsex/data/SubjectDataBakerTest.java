@@ -88,10 +88,10 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      *
      * Subjects:
      * user a:
-     *    in contexts world=nether -> some.perm=1 + some.meme=-1
-     *    in contexts world=nether, before-time=now+2 days -> some.meme=1, some.cat=1
-     *    in contexts world=nether, server-tag=bad -> some.day=1
-     *    in contexts server-tag=good -> some.year=1
+     *    in contexts world=nether -- some.perm=1 + some.meme=-1
+     *    in contexts world=nether, before-time=now+2 days -- some.meme=1, some.cat=1
+     *    in contexts world=nether, server-tag=bad -- some.day=1
+     *    in contexts server-tag=good -- some.year=1
      * Queries:
      *  given active contexts world=nether, before-time=now, server-tag=good:
      *  - some.perm=1

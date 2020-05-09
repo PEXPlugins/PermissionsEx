@@ -18,8 +18,14 @@
 package ca.stellardrift.permissionsex.commands.commander
 
 import ca.stellardrift.permissionsex.commands.Messages
-import ca.stellardrift.permissionsex.util.*
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.command.CommandException
+import ca.stellardrift.permissionsex.util.component
+import ca.stellardrift.permissionsex.util.invoke
+import ca.stellardrift.permissionsex.util.join
+import ca.stellardrift.permissionsex.util.unaryMinus
+import ca.stellardrift.permissionsex.util.unaryPlus
 import net.kyori.text.Component
 import net.kyori.text.TextComponent
 import net.kyori.text.event.HoverEvent
@@ -61,10 +67,12 @@ interface Commander {
     /**
      * Send debug text
      */
+    @JvmDefault
     fun debug(text: Component) {
         msg(text coloredIfNecessary TextColor.GRAY)
     }
 
+    @JvmDefault
     fun error(text: Component, err: Throwable? = null) {
         val hoverText = when {
             err == null -> null
@@ -88,6 +96,7 @@ interface Commander {
         })
     }
 
+    @JvmDefault
     fun msgPaginated(
         title: Component,
         header: Component? = null,
@@ -104,6 +113,7 @@ interface Commander {
         }
     }
 
+    @JvmDefault
     @Throws(CommandException::class)
     fun checkSubjectPermission(
             subject: SubjectIdentifier,

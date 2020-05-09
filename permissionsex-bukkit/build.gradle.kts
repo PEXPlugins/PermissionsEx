@@ -1,5 +1,6 @@
 
 import ca.stellardrift.build.configurate
+import ca.stellardrift.build.jitpack
 import ca.stellardrift.build.kyoriText
 import ca.stellardrift.build.spigot
 import ca.stellardrift.permissionsex.gradle.Versions
@@ -34,6 +35,7 @@ plugins {
 setupPublication()
 
 repositories {
+    jitpack()
     spigot()
 }
 
@@ -63,11 +65,16 @@ dependencies {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
-    implementation(kyoriText("adapter-bukkit", Versions.TEXT))
+    implementation(kyoriText("adapter-bukkit", Versions.TEXT_ADAPTER)) {
+        exclude("com.google.code.gson")
+    }
+    implementation(kyoriText("serializer-gson", Versions.TEXT)) {
+        exclude("com.google.code.gson")
+    }
+
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:permissionsex-hikari-config"))
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
-    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")
@@ -90,14 +97,14 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.jetbrains.annotations",
         "org.slf4j",
         "org.antlr",
-        "net.kyori.text"
+        "net.kyori"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }
     dependencies {
         exclude("org.yaml:snakeyaml")
-        exclude("org.checkerframework:.*:.*")
     }
+    exclude("org/checkerframework/**")
     manifest {
         attributes("Automatic-Module-Name" to project.name)
     }
