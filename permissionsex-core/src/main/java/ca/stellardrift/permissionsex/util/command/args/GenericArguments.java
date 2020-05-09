@@ -542,6 +542,7 @@ public class GenericArguments {
      *
      * @param key The key to store the resulting value under
      * @param choices The choices users can choose from
+     * @param choicesInUsage if true, list choices in usage, otherwise just use key
      * @return the element to match the input
      */
     public static CommandElement choices(Component key, Map<String, ?> choices, boolean choicesInUsage) {

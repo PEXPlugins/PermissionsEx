@@ -19,8 +19,8 @@ package ca.stellardrift.permissionsex.util;
 
 /**
  * An interface defining a function that may throw an exception
- * @param <I>
- * @param <O>
+ * @param <I> input
+ * @param <O> output
  */
 @FunctionalInterface
 public interface ThrowingFunction<I, O, E extends Exception> {

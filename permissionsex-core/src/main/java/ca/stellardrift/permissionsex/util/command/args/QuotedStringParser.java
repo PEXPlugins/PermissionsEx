@@ -45,6 +45,7 @@ public class QuotedStringParser {
     /**
      * Parse from a string of args
      * @param args The raw string of arguments to parse
+     * @param lenient Whether to allow unmatched quoted strings, as well as other ambiguous syntax
      * @return A list of argument strings parsed as specified in the pseudo-grammar in the class documentation
      * @throws ArgumentParseException if args are presented with invalid syntax
      */

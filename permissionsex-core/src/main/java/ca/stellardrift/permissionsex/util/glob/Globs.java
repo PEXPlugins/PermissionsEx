@@ -17,7 +17,6 @@
 
 package ca.stellardrift.permissionsex.util.glob;
 
-import ca.stellardrift.permissionsex.util.globs.GlobMessages;
 import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.util.glob.parser.GlobLexer;
 import ca.stellardrift.permissionsex.util.glob.parser.GlobParser;

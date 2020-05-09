@@ -36,8 +36,8 @@ public abstract class GlobNode implements Iterable<String> {
     /**
      * Check if the input matches this glob
      *
-     * @param input
-     * @return
+     * @param input text to validate
+     * @return whether we match
      */
     public boolean matches(String input) {
         Objects.requireNonNull(input, "input");

@@ -66,6 +66,7 @@ public interface ImplementationInterface {
      *
      * @param url The specifier to get a data source for
      * @return The appropriate data source, or null if not supported
+     * @throws SQLException If a connection to the provided database cannot be established
      */
     DataSource getDataSourceForURL(String url) throws SQLException;
 
@@ -103,7 +104,9 @@ public interface ImplementationInterface {
 
     /**
      * Return a function that supplies an implementation-dependent variant of a subject reference
-     * 
+     *
+     * @param collection subject collection
+     * @param ident specific identifier for a subject
      * @return The identifier for a certain subject
      */
      default Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
