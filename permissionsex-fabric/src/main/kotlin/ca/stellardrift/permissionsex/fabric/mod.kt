@@ -35,9 +35,9 @@ import com.mojang.authlib.GameProfile
 import com.mojang.authlib.ProfileLookupCallback
 import com.mojang.brigadier.CommandDispatcher
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.server.ServerStartCallback
 import net.fabricmc.fabric.api.event.server.ServerStopCallback
-import net.fabricmc.fabric.api.registry.CommandRegistry
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
 import net.minecraft.server.MinecraftServer
@@ -87,9 +87,9 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         logger.info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
         ServerStartCallback.EVENT.register(ServerStartCallback {init(it) })
         ServerStopCallback.EVENT.register(ServerStopCallback {  shutdown(it) })
-        CommandRegistry.INSTANCE.register(true) {
-            tryRegisterCommands(it)
-        }
+        CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
+            tryRegisterCommands(dispatcher)
+        })
         registerWorldEdit()
     }
 

@@ -23,13 +23,9 @@ import net.fabricmc.loom.task.RemapSourcesJarTask
  */
 
 plugins {
-    id("fabric-loom") version "0.2.6-SNAPSHOT"
+    id("fabric-loom") version "0.2.7-SNAPSHOT"
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
-}
-
-repositories {
-    mavenLocal()
 }
 
 minecraft {
@@ -40,11 +36,12 @@ minecraft {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.15.1"
+val minecraftVersion = "1.15.2"
 dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
+        exclude("ninja.leaping")
         exclude("net.kyori")
     }
 
@@ -53,17 +50,20 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.6")
-    modImplementation("net.fabricmc:fabric-loader:0.7.2+build.175")
-    modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.1.0-SNAPSHOT") { isTransitive = false }
-    modImplementation("com.sk89q.worldedit:worldedit-core:7.1.0-SNAPSHOT") { isTransitive = false }
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.15:v2")
+    modImplementation("net.fabricmc:fabric-loader:0.8.2+build.194")
+    modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
+    modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
 
-    implementationInclude("net.fabricmc.fabric-api:fabric-api:0.4.25+build.282-1.15")
-    implementationInclude("net.fabricmc:fabric-language-kotlin:1.3.61+build.1")
+    implementationInclude("net.fabricmc.fabric-api:fabric-api:0.10.7+build.309-1.15")
+    implementationInclude("net.fabricmc:fabric-language-kotlin:1.3.71+build.1")
     implementationInclude("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
         exclude("com.google.code.gson")
     }
-    //includedImplementation("ca.stellardrift:confabricate:1.0-SNAPSHOT+3.6.1")
+    implementationInclude("ca.stellardrift:confabricate:1.0+3.6.1") {
+        exclude("com.google.guava")
+        exclude("com.google.code.gson")
+    }
 }
 
 localization {
@@ -117,7 +117,7 @@ tasks.build.configure {
 tasks.withType(Javadoc::class).configureEach {
     val options = this.options
     if (options is StandardJavadocDocletOptions) {
-        options.tags = listOf("reason:m:Reason for overwrite:")
+        options.tags = listOf("reason:m:Reason for overwrite:") // Add Mixin @reason JD tag definition
     }
 }
 

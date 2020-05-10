@@ -32,6 +32,8 @@ public class MixinDedicatedPlayerManager {
     /**
      * Replace operator check with permission check for server player limit
      *
+     * @param profile game profile to check
+     * @return Whether the user represented by the given profile is permitted to bypass the server's player limit
      * @reason One-line method, so easiest to just overwrite
      * @author zml
      */

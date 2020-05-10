@@ -89,13 +89,13 @@ object DimensionContextDefinition : SimpleContextDefinition("dimension"), Comman
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip"), CommandSourceContextDefinition<IpSet> {
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: IpSet) -> Unit) {
-        source.ifPlayer { (it.networkHandler.client.address as? InetSocketAddress)
+        source.ifPlayer { (it.networkHandler.connection.address as? InetSocketAddress)
             ?.run { consumer(IpSet.fromAddrPrefix(address, address.maxPrefixLength)) }
         }
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<ServerPlayerEntity> { (networkHandler.client.address as? InetSocketAddress)?.run {
+        subject.associatedObject.castMap<ServerPlayerEntity> { (networkHandler.connection.address as? InetSocketAddress)?.run {
             consumer(IpSet.fromAddrPrefix(address, address.maxPrefixLength))
         } }
     }

@@ -39,9 +39,10 @@ public abstract class MixinPlayerManager {
     /**
      * Calculate the appropriate client permission level. Currently this is always 4.
      * This means the server is responsible for fine-grained control of permissions.
+     * <p>
+     * At some point it may make sense to return a more specific value.
      *
-     * At some point it may make sense to return a more specific value
-     *
+     * @param player Target to send a command tree to
      * @reason All logic in the original method needs to be replaced
      * @author zml
      */

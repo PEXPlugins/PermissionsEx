@@ -49,7 +49,7 @@ public class MixinDedicatedServer {
         return !PermissionsExMod.INSTANCE.getManager().getRegisteredSubjectTypes().contains(SUBJECTS_USER);
     }
 
-    /**
+    /*
      * Check if a specific player is allowed to bypass spawn protection
      */
     @Redirect(method = "isSpawnProtected",

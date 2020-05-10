@@ -20,8 +20,8 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import net.minecraft.block.entity.StructureBlockBlockEntity;
-import net.minecraft.client.network.packet.GuiCloseS2CPacket;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.s2c.play.CloseContainerS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,7 +33,7 @@ public class MixinStructureBlockBlockEntity {
     public boolean canViewStructureBlock(PlayerEntity player) {
         if (player instanceof ServerPlayerEntity
                 && !PermissionsExHooks.hasPermission(player, MinecraftPermissions.STRUCTURE_BLOCK_VIEW)) {
-            ((ServerPlayerEntity) player).networkHandler.sendPacket(new GuiCloseS2CPacket());
+            ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseContainerS2CPacket());
             return false;
         }
         return true;

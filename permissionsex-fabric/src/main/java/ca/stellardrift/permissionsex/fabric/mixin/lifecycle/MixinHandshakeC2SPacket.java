@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
 import ca.stellardrift.permissionsex.fabric.HandshakeC2SPacketAccess;
-import net.minecraft.server.network.packet.HandshakeC2SPacket;
+import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
