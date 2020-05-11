@@ -30,7 +30,7 @@ class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) : ContextIn
         for ((key, value) in mirrorsNode.childrenMap) {
             val worldContext = ContextValue<String>("world", key.toString())
             for (child in value.childrenMap.keys) {
-                val world = worlds.computeIfAbsent(child.toString()) { _ -> ArrayList() }
+                val world = worlds.computeIfAbsent(child.toString()) { ArrayList() }
                 world.add(worldContext)
             }
         }

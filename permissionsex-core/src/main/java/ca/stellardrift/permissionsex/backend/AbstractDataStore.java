@@ -24,7 +24,6 @@ import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.ThrowingSupplier;
 import ca.stellardrift.permissionsex.util.Util;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -33,6 +32,7 @@ import com.google.common.util.concurrent.Futures;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.configurate.util.CheckedSupplier;
 
 import java.util.Map;
 import java.util.Objects;
@@ -105,7 +105,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
                 });
     }
 
-    protected <T> CompletableFuture<T> runAsync(ThrowingSupplier<T, ?> supplier) {
+    protected <T> CompletableFuture<T> runAsync(CheckedSupplier<T, ?> supplier) {
         return Util.asyncFailableFuture(supplier, getManager().getAsyncExecutor());
     }
 
@@ -197,8 +197,8 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
      *
      * @param function The function to run
      * @param <T> The
-     * @return
-     * @throws Exception
+     * @return result of operation, after a save
+     * @throws Exception if thrown by operation
      */
     protected abstract <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception;
 

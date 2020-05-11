@@ -28,20 +28,17 @@ import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.GuavaCollectors;
 import ca.stellardrift.permissionsex.util.Util;
-import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig;
-import ca.stellardrift.permissionsex.util.configurate.WatchServiceListener;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
+import ninja.leaping.configurate.reference.ConfigurationReference;
+import ninja.leaping.configurate.reference.WatchServiceListener;
 import ninja.leaping.configurate.transformation.ConfigurationTransformation;
 import ninja.leaping.configurate.util.MapFactories;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
@@ -53,8 +50,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -75,7 +70,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
     private boolean autoReload = true;
 
     private WatchServiceListener reloadService;
-    private ReloadableConfig<ConfigurationNode> permissionsConfig;
+    private ConfigurationReference<ConfigurationNode> permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();
 
@@ -84,32 +79,31 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
     }
 
 
-    private ReloadableConfig<ConfigurationNode> createLoader(Path file) throws IOException {
-        ConfigurationOptions configOptions;
-
-        if (alphabetizeEntries) {
-            configOptions = ConfigurationOptions.defaults().setMapFactory(MapFactories.sortedNatural());
-        } else {
-            configOptions = ConfigurationOptions.defaults();
-        }
-
-        Function1<Path, ConfigurationLoader<ConfigurationNode>> loaderFunc = path -> GsonConfigurationLoader.builder()
-                .setDefaultOptions(configOptions)
+    private ConfigurationReference<ConfigurationNode> createLoader(Path file) throws IOException {
+        Function<Path, ConfigurationLoader<? extends ConfigurationNode>> loaderFunc = path -> GsonConfigurationLoader.builder()
+                .setDefaultOptions(o -> {
+                    if (alphabetizeEntries) {
+                        return o.withMapFactory(MapFactories.sortedNatural());
+                    } else {
+                        return o;
+                    }
+                })
                 .setPath(path)
                 .setIndent(4)
                 .setLenient(true)
                 .build();
 
-        ReloadableConfig<ConfigurationNode> ret;
+        ConfigurationReference<ConfigurationNode> ret;
         if (reloadService != null) {
-            ret = reloadService.createConfig(loaderFunc, file, this::refresh);
+            ret = reloadService.listenToConfiguration(loaderFunc, file);
         } else {
-            ret = new ReloadableConfig<>(loaderFunc.invoke(file));
+            ret = ConfigurationReference.createFixed(loaderFunc.apply(file));
         }
 
-        ret.setErrorCallback((e, state) -> {
-            getManager().getLogger().error(FILE_ERROR_AUTORELOAD.toComponent(state, e.getLocalizedMessage()));
-            return Unit.INSTANCE;
+        ret.updates().subscribe(this::refresh);
+
+        ret.errors().subscribe(e -> {
+            getManager().getLogger().error(FILE_ERROR_AUTORELOAD.toComponent(e.getKey(), e.getValue().getLocalizedMessage()));
         });
 
         return ret;
@@ -119,9 +113,8 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
      * Handle automatic reloads of the permissions storage
      *
      * @param newNode The updated node
-     * @return void
      */
-    private Unit refresh(ConfigurationNode newNode) {
+    private void refresh(ConfigurationNode newNode) {
         this.listeners.getAllKeys().forEach(key -> {
             try {
                 this.listeners.call(key, getDataSync(key.getKey(), key.getValue()));
@@ -137,8 +130,6 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
                 this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
 
         getManager().getLogger().info(FILE_RELOAD_AUTO.toComponent(this.file));
-
-        return Unit.INSTANCE;
     }
 
     private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> legacyLoader, String formatName) throws PermissionsLoadingException {
@@ -158,7 +149,11 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
     @Override
     protected boolean initializeInternal() throws PermissionsLoadingException {
         if (autoReload) {
-            reloadService = new WatchServiceListener(Executors.newCachedThreadPool(), getManager().getLogger());
+            try {
+                reloadService = WatchServiceListener.builder().setTaskExecutor(getManager().getAsyncExecutor()).build();
+            } catch (IOException e) {
+                throw new PermissionsLoadingException(e);
+            }
         }
 
         Path permissionsFile = getManager().getBaseDirectory().resolve(file);
@@ -178,7 +173,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
             try {
                 performBulkOperationSync(input -> {
                     applyDefaultData();
-                    permissionsConfig.set("schema-version", SchemaMigrations.LATEST_VERSION);
+                    permissionsConfig.get("schema-version").setValue(SchemaMigrations.LATEST_VERSION);
                     return null;
                 });
             } catch (PermissionsLoadingException e) {
@@ -208,7 +203,11 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
     @Override
     public void close() {
         if (this.reloadService != null) {
-            this.reloadService.close();
+            try {
+                this.reloadService.close();
+            } catch (IOException e) {
+                getManager().getLogger().error("Unable to shut down FileDataStore watch service", e);
+            }
             this.reloadService = null;
         }
     }
@@ -291,7 +290,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
     @Override
     public Set<String> getRegisteredTypes() {
         return getSubjectsNode().getChildrenMap().entrySet().stream()
-                .filter(ent -> ent.getValue().hasMapChildren())
+                .filter(ent -> ent.getValue().isMap())
                 .map(Map.Entry::getKey)
                 .map(Object::toString)
                 .distinct()
@@ -377,7 +376,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore> {
         childNode.setValue(null);
         if (ladder != null) {
             for (Map.Entry<String, String> rank : ladder.getRanks()) {
-                childNode.getAppendedNode().setValue(Util.subjectToString(rank));
+                childNode.appendListNode().setValue(Util.subjectToString(rank));
             }
         }
         dirty.set(true);

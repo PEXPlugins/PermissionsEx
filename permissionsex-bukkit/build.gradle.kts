@@ -50,7 +50,6 @@ localization {
 }
 
 tasks.processResources {
-
     expand("project" to project)
 }
 
@@ -61,7 +60,7 @@ dependencies {
         exclude("com.google.code.gson", "gson")
     }
 
-    implementation(configurate("yaml", Versions.CONFIGURATE)) {
+    implementation(configurate("yaml")) {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }

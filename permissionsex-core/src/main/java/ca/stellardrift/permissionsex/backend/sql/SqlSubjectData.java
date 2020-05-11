@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.util.ThrowingBiConsumer;
+import ca.stellardrift.permissionsex.util.CheckedBiConsumer;
 import ca.stellardrift.permissionsex.util.Util;
 
 import java.sql.SQLException;
@@ -42,24 +42,24 @@ import java.util.concurrent.atomic.AtomicReference;
 class SqlSubjectData implements ImmutableSubjectData {
     private final SubjectRef subject;
     private final Map<Set<ContextValue<?>>, Segment> segments;
-    private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<ImmutableList<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
 
     SqlSubjectData(SubjectRef subject) {
         this(subject, ImmutableMap.of(), null);
     }
 
-    SqlSubjectData(SubjectRef subject, Map<Set<ContextValue<?>>, Segment> segments, ImmutableList<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
+    SqlSubjectData(SubjectRef subject, Map<Set<ContextValue<?>>, Segment> segments, ImmutableList<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
         this.subject = subject;
         this.segments = segments;
         this.updatesToPerform.set(updates);
     }
 
-    protected final SqlSubjectData newWithUpdate(Map<Set<ContextValue<?>>, Segment> segments, ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
+    protected final SqlSubjectData newWithUpdate(Map<Set<ContextValue<?>>, Segment> segments, CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
         return new SqlSubjectData(subject, segments, Util.appendImmutable(this.updatesToPerform.get(), updateFunc));
     }
 
     protected final SqlSubjectData newWithUpdated(Set<ContextValue<?>> key, Segment val) {
-        ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc;
+        CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc;
         if (val.isEmpty()) { // then remove segment
             if (val.isUnallocated()) {
                 updateFunc = (dao, data) -> {};
@@ -143,7 +143,7 @@ class SqlSubjectData implements ImmutableSubjectData {
         return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
     }
 
-    private ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> createBulkUpdateFunc(Collection<Set<ContextValue<?>>> keys) {
+    private CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> createBulkUpdateFunc(Collection<Set<ContextValue<?>>> keys) {
         return (dao, data) -> {
             for (Set<ContextValue<?>> key : keys) {
                 Segment seg = data.segments.get(key);
@@ -289,9 +289,9 @@ class SqlSubjectData implements ImmutableSubjectData {
 
     public void doUpdates(SqlDao dao) throws SQLException {
         dao.executeInTransaction(() -> {
-            List<ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates = this.updatesToPerform.getAndSet(null);
+            List<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates = this.updatesToPerform.getAndSet(null);
             if (updates != null) {
-                for (ThrowingBiConsumer<SqlDao, SqlSubjectData, SQLException> func : updates) {
+                for (CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> func : updates) {
                     func.accept(dao, this);
                 }
             }

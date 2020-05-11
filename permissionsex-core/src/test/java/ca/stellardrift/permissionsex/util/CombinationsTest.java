@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CombinationsTest {
 
+    @SafeVarargs
     private static <T> ImmutableSet<T> set(T... items) {
         return ImmutableSet.copyOf(items);
     }

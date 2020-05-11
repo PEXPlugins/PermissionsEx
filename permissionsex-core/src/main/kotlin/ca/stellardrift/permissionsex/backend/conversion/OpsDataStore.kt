@@ -31,8 +31,6 @@ import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig
-import ca.stellardrift.permissionsex.util.configurate.WatchServiceListener
 import com.google.common.collect.Maps.immutableEntry
 import com.google.common.reflect.TypeToken
 import net.kyori.text.Component
@@ -40,6 +38,8 @@ import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
+import ninja.leaping.configurate.reference.ConfigurationReference
+import ninja.leaping.configurate.reference.WatchServiceListener
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -76,7 +76,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
 
     private lateinit var file: Path
     private lateinit var  configListener: WatchServiceListener
-    private lateinit var opsListNode: ReloadableConfig<ConfigurationNode>
+    private lateinit var opsListNode: ConfigurationReference<ConfigurationNode>
     private var opsList = listOf<OpsListEntry>()
 
     constructor(identifier: String, opsFile: Path): this(identifier) {
@@ -93,13 +93,17 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
             manager.logger.warn(OPS_ERROR_NO_FILE())
         }
 
-        this.configListener = WatchServiceListener(logger = manager.logger)
-        this.opsListNode = configListener.createConfig({GsonConfigurationLoader.builder()
+        this.configListener = WatchServiceListener.builder()
+            .setTaskExecutor(manager.asyncExecutor)
+            .build()
+        this.opsListNode = configListener.listenToConfiguration({GsonConfigurationLoader.builder()
             .setLenient(true)
             .setPath(it)
-            .build()}, file) {
+            .build()}, file)
+        this.opsListNode.updates().subscribe {
             reload(it)
         }
+
         reload(opsListNode.node, false)
         return true
     }
@@ -109,10 +113,6 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
         if (notify) {
             manager.getSubjects(SUBJECTS_USER).update(this)
         }
-        for (op in opsList) {
-            println(op)
-        }
-
     }
 
     override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {

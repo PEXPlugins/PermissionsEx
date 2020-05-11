@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.util.ThrowingBiConsumer;
+import ca.stellardrift.permissionsex.util.CheckedBiConsumer;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -41,9 +41,9 @@ class Segment {
     private final Map<String, String> options;
     private final List<SubjectRef> parents;
     private final Integer permissionDefault;
-    private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<ImmutableList<CheckedBiConsumer<SqlDao, Segment, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    Segment(int id, Set<ContextValue<?>> contexts, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, ImmutableList<ThrowingBiConsumer<SqlDao, Segment, SQLException>> updates) {
+    Segment(int id, Set<ContextValue<?>> contexts, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, ImmutableList<CheckedBiConsumer<SqlDao, Segment, SQLException>> updates) {
         this.id = id;
         this.contexts = ImmutableSet.copyOf(contexts);
         this.permissions = permissions;
@@ -61,7 +61,7 @@ class Segment {
         return new Segment(id, contexts, ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of(), null, null);
     }
 
-    private Segment newWithUpdate(Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, ThrowingBiConsumer<SqlDao, Segment, SQLException> updateFunc) {
+    private Segment newWithUpdate(Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, CheckedBiConsumer<SqlDao, Segment, SQLException> updateFunc) {
         return new Segment(this.id, this.contexts, permissions, options, parents, permissionDefault, appendImmutable(this.updatesToPerform.get(), updateFunc));
     }
 
@@ -190,14 +190,14 @@ class Segment {
         return newWithUpdate(permissions, options, null, permissionDefault, (dao, seg) -> dao.setParents(seg, null));
     }
 
-    List<ThrowingBiConsumer<SqlDao, Segment, SQLException>> popUpdates() {
+    List<CheckedBiConsumer<SqlDao, Segment, SQLException>> popUpdates() {
         return this.updatesToPerform.getAndSet(null);
     }
 
     void doUpdates(SqlDao dao) throws SQLException {
-        List<ThrowingBiConsumer<SqlDao, Segment, SQLException>> updateFuncs = popUpdates();
+        List<CheckedBiConsumer<SqlDao, Segment, SQLException>> updateFuncs = popUpdates();
         if (updateFuncs != null) {
-            for (ThrowingBiConsumer<SqlDao, Segment, SQLException> consumer : updateFuncs) {
+            for (CheckedBiConsumer<SqlDao, Segment, SQLException> consumer : updateFuncs) {
                 consumer.accept(dao, this);
             }
         }

@@ -31,9 +31,9 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.configurate.get
 import com.google.common.collect.Maps
 import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.kotlin.get
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
@@ -186,7 +186,7 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
 
     companion object : ConversionProvider {
         @JvmField
-        val FACTORY = Factory<GroupManagerDataStore>("groupmanager", GroupManagerDataStore::class.java, ::GroupManagerDataStore)
+        val FACTORY = Factory("groupmanager", GroupManagerDataStore::class.java, ::GroupManagerDataStore)
         override val name = GROUPMANAGER_NAME()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {

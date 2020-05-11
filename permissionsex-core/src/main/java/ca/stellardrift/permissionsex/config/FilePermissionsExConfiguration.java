@@ -28,7 +28,7 @@ import ninja.leaping.configurate.objectmapping.ObjectMapper;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
 
 import java.io.IOException;
 import java.net.URL;
@@ -44,11 +44,7 @@ import static ca.stellardrift.permissionsex.Messages.*;
  */
 @ConfigSerializable
 public class FilePermissionsExConfiguration<T> implements PermissionsExConfiguration<T> {
-    static {
-        TypeSerializers.getDefaultSerializers()
-                .registerType(TypeToken.of(DataStore.class), new DataStoreSerializer())
-                .registerType(new TypeToken<Supplier<?>>() {}, SupplierSerializer.INSTANCE);
-    }
+    private static final TypeSerializerCollection pexSerializers = populateSerializers(TypeSerializerCollection.defaults().newChild());
 
 
     private final ConfigurationLoader<?> loader;
@@ -71,8 +67,20 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
         return fromLoader(loader, EmptyPlatformConfiguration.class);
     }
 
+    /**
+     * Register PEX's type serializers with the provided collection
+     *
+     * @param coll The collection to add to
+     * @return provided collection
+     */
+    public static TypeSerializerCollection populateSerializers(TypeSerializerCollection coll) {
+        return coll
+                .register(TypeToken.of(DataStore.class), new DataStoreSerializer())
+                .register(new TypeToken<Supplier<?>>() {}, SupplierSerializer.INSTANCE);
+    }
+
     public static <T> FilePermissionsExConfiguration<T> fromLoader(ConfigurationLoader<?> loader, Class<T> platformConfigClass) throws IOException {
-        ConfigurationNode node = loader.load();
+        ConfigurationNode node = loader.load(loader.getDefaultOptions().withSerializers(pexSerializers));
         ConfigurationNode fallbackConfig;
         try {
             fallbackConfig = FilePermissionsExConfiguration.loadDefaultConfiguration();
@@ -175,7 +183,9 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
         if (defaultConfig == null) {
             throw new Error(new PermissionsException(CONFIG_ERROR_DEFAULT_CONFIG.toComponent()));
         }
-        HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder().setURL(defaultConfig).build();
+        HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder()
+                .setDefaultOptions(o -> o.withSerializers(pexSerializers))
+                .setURL(defaultConfig).build();
         return fallbackLoader.load();
 
     }

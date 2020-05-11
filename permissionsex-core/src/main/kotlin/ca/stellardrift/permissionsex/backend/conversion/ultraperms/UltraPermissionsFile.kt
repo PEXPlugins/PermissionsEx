@@ -17,10 +17,9 @@
 
 package ca.stellardrift.permissionsex.backend.conversion.ultraperms
 
-import ca.stellardrift.permissionsex.util.configurate.get
 import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.SimpleConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
+import ninja.leaping.configurate.kotlin.get
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import java.io.BufferedReader
@@ -50,7 +49,7 @@ class UltraPermissionsFile(val path: Path) {
     }
 
     private fun ConfigurationNode.getUnwrappedBase64Value(): ConfigurationNode {
-        if (hasListChildren() || hasMapChildren()) {
+        if (isList || isMap) {
             return this
         }
 
@@ -67,7 +66,7 @@ class UltraPermissionsFile(val path: Path) {
         } catch (e: IOException) {
             println("Failed to deserialize entry ${key}: ${e.message}")
             e.printStackTrace()
-            SimpleConfigurationNode.root().setValue(String(value, StandardCharsets.UTF_8))
+            ConfigurationNode.root().setValue(String(value, StandardCharsets.UTF_8))
         }
     }
 
@@ -90,7 +89,7 @@ class UltraPermissionsFile(val path: Path) {
     }
 
     fun unwrapFile() {
-        if (!node.hasMapChildren()) {
+        if (!node.isMap) {
             return
         }
 

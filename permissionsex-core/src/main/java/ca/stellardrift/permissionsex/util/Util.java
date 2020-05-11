@@ -24,6 +24,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.PermissionsEx;
+import ninja.leaping.configurate.util.CheckedFunction;
+import ninja.leaping.configurate.util.CheckedSupplier;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,26 +85,26 @@ public class Util {
         return (CompletableFuture) EMPTY_FUTURE;
     }
 
-    public static <I, T> CompletableFuture<T> failableFuture(I value, ThrowingFunction<I, T, ?> func) {
+    public static <I, T> CompletableFuture<T> failableFuture(I value, CheckedFunction<I, T, ?> func) {
         return failableFuture(() -> func.apply(value));
     }
 
-    public static <T> CompletableFuture<T> failableFuture(ThrowingSupplier<T, ?> func) {
+    public static <T> CompletableFuture<T> failableFuture(CheckedSupplier<T, ?> func) {
         CompletableFuture<T> ret = new CompletableFuture<>();
         try {
-            ret.complete(func.supply());
-        } catch (Exception e) {
+            ret.complete(func.get());
+        } catch (Throwable e) {
             ret.completeExceptionally(e);
         }
         return ret;
     }
 
-    public static <T> CompletableFuture<T> asyncFailableFuture(ThrowingSupplier<T, ?> supplier, Executor exec) {
+    public static <T> CompletableFuture<T> asyncFailableFuture(CheckedSupplier<T, ?> supplier, Executor exec) {
         CompletableFuture<T> ret = new CompletableFuture<>();
         exec.execute(() -> {
             try {
-                ret.complete(supplier.supply());
-            } catch (Exception e) {
+                ret.complete(supplier.get());
+            } catch (Throwable e) {
                 ret.completeExceptionally(e);
             }
 

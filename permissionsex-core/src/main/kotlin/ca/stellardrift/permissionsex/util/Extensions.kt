@@ -24,8 +24,11 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import com.google.common.reflect.TypeToken
 import net.kyori.text.Component
 import net.kyori.text.serializer.plain.PlainComponentSerializer
-import ninja.leaping.configurate.SimpleConfigurationNode
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers
+import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.kotlin.get
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection
+import ninja.leaping.configurate.reactive.Publisher
+import ninja.leaping.configurate.reactive.Subscriber
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -51,7 +54,7 @@ inline fun <reified T: Any> Optional<*>.cast(): Optional<T> {
 inline fun <reified T> CalculatedSubject.option(key: String): T? {
     val ret = getOption(key).orElse(null)
     val type = TypeToken.of(T::class.java)
-    return TypeSerializers.getDefaultSerializers().get(TypeToken.of(T::class.java)).deserialize(type, SimpleConfigurationNode.root().setValue(ret))
+    return TypeSerializerCollection.defaults().get<T>()?.deserialize(type, ConfigurationNode.root().setValue(ret))
 }
 
 fun CompletableFuture<*>.thenMessageSubject(
@@ -85,11 +88,24 @@ fun CompletableFuture<*>.thenMessageSubject(
             }
 }
 
+fun <V> Publisher<V>.toCompletableFuture(): CompletableFuture<V> {
+   val ret = CompletableFuture<V>()
+    subscribe(object : Subscriber<V> {
+        override fun submit(item: V) {
+            ret.complete(item)
+        }
+
+        override fun onError(e: Throwable) {
+            ret.completeExceptionally(e)
+        }
+    })
+    return ret
+}
+
 internal class RuntimeCommandException(val translatedMessage: Component) :
         RuntimeException(PlainComponentSerializer.INSTANCE.serialize(translatedMessage)) {
 
     companion object {
         private const val serialVersionUID = -7243817601651202895L
     }
-
 }

@@ -17,7 +17,13 @@
 
 package ca.stellardrift.permissionsex.util;
 
-@FunctionalInterface
-public interface ThrowingSupplier<V, E extends Exception> {
-    V supply() throws E;
+public interface CheckedBiConsumer<A, B, E extends Exception> {
+    /**
+     * Perform the action with the provided arguments
+     *
+     * @param a The first argument
+     * @param b The second argument
+     * @throws E The exception that may be thrown if an error occurs
+     */
+    void accept(A a, B b) throws E;
 }

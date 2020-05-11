@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.ThrowingSupplier;
+import ninja.leaping.configurate.util.CheckedSupplier;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -220,11 +220,11 @@ public abstract class SqlDao implements AutoCloseable {
         return conn.prepareStatement(this.ds.insertPrefix(query), params);
     }
 
-    protected <T> T executeInTransaction(ThrowingSupplier<T, SQLException> func) throws SQLException {
+    protected <T> T executeInTransaction(CheckedSupplier<T, SQLException> func) throws SQLException {
         transactionLevel++;
         conn.setAutoCommit(false);
         try {
-            T ret = func.supply();
+            T ret = func.get();
             if (--transactionLevel <= 0) {
                 conn.commit();
             }
@@ -836,7 +836,7 @@ public abstract class SqlDao implements AutoCloseable {
      * Get the schema version. Has to include backwards compatibility to correctly handle pre-2.x schema updates.
      *
      * @return The schema version,
-     * @throws SQLException
+     * @throws SQLException if unable to connect to database or perform query
      */
     public int getSchemaVersion() throws SQLException {
         if (hasTable("global")) { // Current

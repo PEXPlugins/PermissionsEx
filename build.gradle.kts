@@ -4,13 +4,10 @@ import ca.stellardrift.build.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
 
 plugins {
+    id("ca.stellardrift.opinionated") version "2.0.1" apply false
+    id("com.github.johnrengelman.shadow") version "5.2.0" apply false
     id("com.github.ben-manes.versions") version "0.25.0"
     `maven-publish`
-}
-
-
-repositories {
-    jcenter()
 }
 
 group = "ca.stellardrift.permissionsex"
@@ -22,7 +19,11 @@ subprojects {
     apply(plugin="ca.stellardrift.opinionated.publish")
 
     repositories {
-        mavenCentral()
+        mavenLocal()
+        jcenter()
+        /*maven(url  = "https://repo.glaremasters.me/repository/permissionsex") {
+            name = "pex"
+        }*/
         sponge()
         sk89q()
     }

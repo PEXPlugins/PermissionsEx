@@ -21,11 +21,10 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.ConversionUtils
 import ca.stellardrift.permissionsex.backend.conversion.ReadOnlySubjectData
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.util.configurate.get
 import com.google.common.collect.ImmutableSet
 import com.google.common.collect.Maps
-import com.google.common.reflect.TypeToken
 import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.kotlin.get
 import ninja.leaping.configurate.objectmapping.ObjectMappingException
 
 class GroupManagerSubjectData(
@@ -63,7 +62,7 @@ class GroupManagerSubjectData(
     override fun getOptions(contexts: Set<ContextValue<*>>): Map<String, String> {
         val specificNode = getNodeForContexts(contexts) ?: return emptyMap()
         return try {
-            specificNode["info"].getValue(TYPE_MAP_STRING_STRING, emptyMap())
+            specificNode["info"].get<Map<String, String>>(emptyMap())
         } catch (e: ObjectMappingException) {
             emptyMap()
         }
@@ -103,8 +102,8 @@ class GroupManagerSubjectData(
     override fun getParents(contexts: Set<ContextValue<*>>): List<Map.Entry<String, String>> {
         val specificNode = getNodeForContexts(contexts) ?: return emptyList()
 
-        try {
-            return specificNode[this.type.inheritanceKey].getList(TypeToken.of(String::class.java), emptyList())
+        return try {
+            specificNode[this.type.inheritanceKey].get<List<String>>(emptyList())
                 .map {
                     var name = it
                     if (name.startsWith("g:")) {
@@ -113,7 +112,7 @@ class GroupManagerSubjectData(
                     Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, name)
                 }
         } catch (e: ObjectMappingException) {
-            return emptyList()
+            emptyList()
         }
 
     }
@@ -149,10 +148,6 @@ class GroupManagerSubjectData(
     override fun getAllDefaultValues(): Map<Set<ContextValue<*>>, Int> {
         return activeContexts.associateWith { getDefaultValue(it) }
             .filterValues { it != 0 }
-    }
-
-    companion object {
-        private val TYPE_MAP_STRING_STRING = object : TypeToken<Map<String, String>>() {}
     }
 }
 

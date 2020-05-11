@@ -27,10 +27,7 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.rank.AbstractRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.util.ThrowingSupplier
-import ca.stellardrift.permissionsex.util.configurate.ReloadableConfig
-import ca.stellardrift.permissionsex.util.configurate.get
-import ca.stellardrift.permissionsex.util.configurate.set
+import ca.stellardrift.permissionsex.util.toCompletableFuture
 import com.google.common.collect.ImmutableSet.toImmutableSet
 import com.google.common.collect.Maps
 import com.google.common.io.Files.getNameWithoutExtension
@@ -38,9 +35,14 @@ import com.google.common.reflect.TypeToken
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
+import ninja.leaping.configurate.kotlin.contains
+import ninja.leaping.configurate.kotlin.get
+import ninja.leaping.configurate.kotlin.set
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
+import ninja.leaping.configurate.reference.ConfigurationReference
+import ninja.leaping.configurate.reference.WatchServiceListener
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.yaml.snakeyaml.DumperOptions
 import java.nio.file.Files
@@ -74,8 +76,9 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
     @Setting(comment = "The file format to attempt to load from")
     var format: ConfigFormat = ConfigFormat.YAML
 
-    private lateinit var lpConfig: ReloadableConfig<ConfigurationNode>
+    private lateinit var lpConfig: ConfigurationReference<ConfigurationNode>
     private lateinit var subjectLayout: SubjectLayout
+    internal lateinit var watcher: WatchServiceListener
 
     override fun initializeInternal(): Boolean {
         val rootDir = manager.baseDirectory.parent.resolve(pluginDir)
@@ -84,17 +87,20 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
         } else {
             ::SeparateSubjectLayout
         })(this, rootDir.resolve(this.format.storageDirName))
-        lpConfig = ReloadableConfig(
+        lpConfig =
             YAMLConfigurationLoader.builder()
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
                 .setPath(rootDir.resolve("config.yml"))
-                .build()
-        )
+                .build().loadToReference()
+        watcher = WatchServiceListener.builder()
+            .setTaskExecutor(manager.asyncExecutor)
+            .build()
         return true
     }
 
 
     override fun close() {
+        watcher.close()
     }
 
     override fun getAllIdentifiers(type: String): Set<String> {
@@ -137,22 +143,20 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
     }
 
     override fun setContextInheritanceInternal(contextInheritance: ContextInheritance?): CompletableFuture<ContextInheritance> {
-        return runAsync(ThrowingSupplier<ContextInheritance, Exception> {
             val inherit = if (contextInheritance != null && contextInheritance !is LuckPermsContextInheritance) {
                 LuckPermsContextInheritance(contextInheritance.allParents)
             } else {
                 contextInheritance as LuckPermsContextInheritance?
             }
 
-            lpConfig.update {
+            return lpConfig.updateAsync {
                 if (inherit == null) {
                     lpConfig["world-rewrite"] = emptyMap<String, String>()
                 } else {
                     inherit.writeToConfig(lpConfig.node)
                 }
-            }
-            return@ThrowingSupplier inherit
-        })
+                it
+            }.toCompletableFuture().thenApply { inherit }
     }
 
     override fun <T : Any?> performBulkOperationSync(function: Function<DataStore, T>): T {
@@ -164,14 +168,14 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
     }
 
     override fun hasRankLadder(ladder: String): CompletableFuture<Boolean> {
-        return completedFuture(ladder in this.subjectLayout.tracks)
+        return completedFuture(ladder in this.subjectLayout.tracks.node)
     }
 
     override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
         return completedFuture(
             LuckPermsTrack(
                 ladder,
-                this.subjectLayout.tracks[ladder, "groups"].getList({ it!!.toString() }, listOf())
+                this.subjectLayout.tracks[ladder, "groups"].getList({ it -> it!!.toString() }, listOf())
             )
         )
     }
@@ -185,25 +189,23 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
             else -> null
         }
 
-        return runAsync(ThrowingSupplier<RankLadder?, Exception> {
-            this.subjectLayout.tracks.update {
+        return this.subjectLayout.tracks.updateAsync {
                 if (lpLadder == null) {
                     it[ladder] = null
                 } else {
                     it[ladder, "groups"] = lpLadder.groups
                 }
-            }
-            return@ThrowingSupplier lpLadder
-        })
+                it
+            }.toCompletableFuture().thenApply { lpLadder }
     }
 
 }
 
 /** Configuration format to use -- gives format-specific paths/loaders **/
-enum class ConfigFormat(val loaderProvider: (Path) -> ConfigurationLoader<*>, val extension: String) {
-    YAML({ YAMLConfigurationLoader.builder().setPath(it).build() }, "yml"),
-    JSON({ GsonConfigurationLoader.builder().setPath(it).build() }, "json"),
-    HOCON({ HoconConfigurationLoader.builder().setPath(it).build() }, "conf");
+enum class ConfigFormat(val loaderProvider: Function<Path, ConfigurationLoader<*>>, val extension: String) {
+    YAML(Function { YAMLConfigurationLoader.builder().setPath(it).build() }, "yml"),
+    JSON(Function { GsonConfigurationLoader.builder().setPath(it).build() }, "json"),
+    HOCON(Function { HoconConfigurationLoader.builder().setPath(it).build() }, "conf");
 
     val storageDirName: String = "${this.name.toLowerCase(Locale.ROOT)}-storage"
 }
@@ -215,14 +217,14 @@ interface SubjectLayout {
     fun getIdentifiers(type: String): Set<String>
     val types: Set<String>
 
-    val tracks: ReloadableConfig<*>
+    val tracks: ConfigurationReference<ConfigurationNode>
 }
 
 class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private val rootDir: Path) : SubjectLayout {
-    private val files: MutableMap<String, ReloadableConfig<*>> = mutableMapOf()
+    private val files: MutableMap<String, ConfigurationReference<ConfigurationNode>> = mutableMapOf()
 
-    override val tracks: ReloadableConfig<*> =
-        ReloadableConfig(store.format.loaderProvider(rootDir.resolve("tracks.${store.format.extension}")))
+    override val tracks: ConfigurationReference<ConfigurationNode> =
+        store.watcher.listenToConfiguration(store.format.loaderProvider, rootDir.resolve("tracks.${store.format.extension}"))
 
     override val types: Set<String>
         get() {
@@ -236,14 +238,10 @@ class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private v
             }
         }
 
-    private fun getFileFor(type: String): ReloadableConfig<*> {
-        var rootNode = files[type]
-        if (rootNode == null) {
-            rootNode =
-                ReloadableConfig(store.format.loaderProvider(rootDir.resolve("${type}s.${store.format.extension}")))
-            files[type] = rootNode
+    private fun getFileFor(type: String): ConfigurationReference<ConfigurationNode> {
+        return files.computeIfAbsent(type) { key ->
+            store.watcher.listenToConfiguration(store.format.loaderProvider, rootDir.resolve("${key}s.${store.format.extension}"))
         }
-        return rootNode
     }
 
     override fun get(type: String, ident: String): ConfigurationNode {
@@ -266,8 +264,7 @@ class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private v
 
 class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private val rootDir: Path) : SubjectLayout {
 
-    override val tracks: ReloadableConfig<*> =
-        ReloadableConfig(store.format.loaderProvider(rootDir.resolve("tracks.${store.format.extension}")))
+    override val tracks: ConfigurationReference<ConfigurationNode> = store.watcher.listenToConfiguration(store.format.loaderProvider, rootDir.resolve("tracks.${store.format.extension}"))
 
     override val types: Set<String>
         get() {
@@ -284,7 +281,7 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
     }
 
     override fun get(type: String, ident: String): ConfigurationNode {
-        return store.format.loaderProvider(rootDir.resolve("${type}s").resolve("$ident.${store.format.extension}"))
+        return store.format.loaderProvider.apply(rootDir.resolve("${type}s").resolve("$ident.${store.format.extension}"))
             .load()
     }
 

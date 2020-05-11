@@ -79,7 +79,7 @@ public class SchemaMigrations {
         return ConfigurationTransformation.chain(
                 tBuilder()
                         .addAction(new Object[]{WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
-                            if (configurationNode.hasMapChildren()) {
+                            if (configurationNode.isMap()) {
                                 String lastPath = nodePath.get(0).toString();
                                 if (lastPath.endsWith("s")) {
                                     lastPath = lastPath.substring(0, lastPath.length() - 1);
@@ -100,11 +100,7 @@ public class SchemaMigrations {
                                     ConfigurationNode rank = optionsNode.getNode("rank");
                                     if (!rank.isVirtual()) {
                                         final String rankLadder = optionsNode.getNode("rank-ladder").getString("default");
-                                        List<Map.Entry<String, Integer>> tempVals = convertedRanks.get(rankLadder.toLowerCase());
-                                        if (tempVals == null) {
-                                            tempVals = new ArrayList<>();
-                                            convertedRanks.put(rankLadder.toLowerCase(), tempVals);
-                                        }
+                                        List<Map.Entry<String, Integer>> tempVals = convertedRanks.computeIfAbsent(rankLadder.toLowerCase(), k -> new ArrayList<>());
                                         tempVals.add(Maps.immutableEntry(configurationNode.getKey().toString(), rank.getInt()));
                                         rank.setValue(null);
                                         optionsNode.getNode("rank-ladder").setValue(null);
@@ -122,7 +118,7 @@ public class SchemaMigrations {
                         ent.getValue().sort((a, b) -> b.getValue().compareTo(a.getValue()));
                         ConfigurationNode ladderNode = configurationNode.getNode(FileDataStore.KEY_RANK_LADDERS, ent.getKey());
                         for (Map.Entry<String, Integer> grp : ent.getValue()) {
-                            ladderNode.getAppendedNode().setValue("group:" + grp.getKey());
+                            ladderNode.appendListNode().setValue("group:" + grp.getKey());
                         }
                     }
                     return null;
@@ -135,7 +131,7 @@ public class SchemaMigrations {
                         .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
                             Object value = configurationNode.getValue();
                             configurationNode.setValue(null);
-                            configurationNode.getAppendedNode().setValue(value);
+                            configurationNode.appendListNode().setValue(value);
                             return null;
                         })
                         .build(),
@@ -143,7 +139,7 @@ public class SchemaMigrations {
                         .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, 0, "worlds"}, (nodePath, configurationNode) -> {
                             ConfigurationNode entityNode = configurationNode.getParent().getParent();
                             for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
-                                entityNode.getAppendedNode().setValue(ent.getValue())
+                                entityNode.appendListNode().setValue(ent.getValue())
                                         .getNode(FileSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
 
                             }
@@ -206,11 +202,11 @@ public class SchemaMigrations {
                                         }
                                     }
                                     if (addToNode == null) {
-                                        addToNode = defaultsParent.getAppendedNode();
+                                        addToNode = defaultsParent.appendListNode();
                                         addToNode.getNode(FileSubjectData.KEY_CONTEXTS).setValue(valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS));
                                     }
 
-                                    addToNode.getNode("parents").getAppendedNode().setValue("group:" + valueAtPath.getParent().getKey());
+                                    addToNode.getNode("parents").appendListNode().setValue("group:" + valueAtPath.getParent().getKey());
                                 }
                                 defaultNode.setValue(null);
                                 final ConfigurationNode optionsNode = valueAtPath.getNode("options");

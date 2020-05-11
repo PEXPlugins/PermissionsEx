@@ -37,9 +37,9 @@ public final class FileSubjectData extends MemorySubjectData {
 
     static FileSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
         ImmutableMap.Builder<Set<ContextValue<?>>, DataEntry> map = ImmutableMap.builder();
-        if (node.hasListChildren()) {
+        if (node.isList()) {
             for (ConfigurationNode child : node.getChildrenList()) {
-                if (!child.hasMapChildren()) {
+                if (!child.isMap()) {
                     throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.toComponent());
                 }
                 Set<ContextValue<?>> contexts = contextsFrom(child);
@@ -66,7 +66,7 @@ public final class FileSubjectData extends MemorySubjectData {
     private static Set<ContextValue<?>> contextsFrom(ConfigurationNode node) {
         Set<ContextValue<?>> contexts = Collections.emptySet();
         ConfigurationNode contextsNode = node.getNode(KEY_CONTEXTS);
-        if (contextsNode.hasMapChildren()) {
+        if (contextsNode.isMap()) {
             contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.getChildrenMap().entrySet(), ent -> {
                     return new ContextValue<>(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
             }));
@@ -75,7 +75,7 @@ public final class FileSubjectData extends MemorySubjectData {
     }
 
     void serialize(ConfigurationNode node) throws ObjectMappingException {
-        if (!node.hasListChildren()) {
+        if (!node.isList()) {
             node.setValue(null);
         }
         Map<Set<ContextValue<?>>, ConfigurationNode> existingSections = new HashMap<>();
@@ -85,7 +85,7 @@ public final class FileSubjectData extends MemorySubjectData {
         for (Map.Entry<Set<ContextValue<?>>, DataEntry> ent : contexts.entrySet()) {
             ConfigurationNode contextSection = existingSections.remove(ent.getKey());
             if (contextSection == null) {
-                contextSection = node.getAppendedNode();
+                contextSection = node.appendListNode();
                 ConfigurationNode contextsNode = contextSection.getNode(KEY_CONTEXTS);
                 for (ContextValue<?> context : ent.getKey()) {
                     contextsNode.getNode(context.getKey()).setValue(context.getRawValue());

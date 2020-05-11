@@ -43,7 +43,7 @@ dependencies {
         exclude("org.yaml", "snakeyaml")
     }
 
-    implementation(configurate("yaml", Versions.CONFIGURATE)) {
+    implementation(configurate("yaml")) {
         exclude(group="com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }

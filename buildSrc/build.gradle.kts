@@ -29,6 +29,4 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-    implementation("com.github.jengelman.gradle.plugins:shadow:5.2.0")
-    implementation("ca.stellardrift:gradle-plugins:2.0")
 }

@@ -33,8 +33,8 @@ import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.ThrowingFunction;
 import ca.stellardrift.permissionsex.util.Util;
+import ninja.leaping.configurate.util.CheckedFunction;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -75,8 +75,8 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
 
     private final ConcurrentMap<String, String> queryPrefixCache = new ConcurrentHashMap<>();
     private final ThreadLocal<SqlDao> heldDao = new ThreadLocal<>();
-    private final Map<String, ThrowingFunction<SqlDataStore, SqlDao, SQLException>> daoImplementations = ImmutableMap.of("mysql", MySqlDao::new, "h2", H2SqlDao::new);
-    private ThrowingFunction<SqlDataStore, SqlDao, SQLException> daoFactory;
+    private final Map<String, CheckedFunction<SqlDataStore, SqlDao, SQLException>> daoImplementations = ImmutableMap.of("mysql", MySqlDao::new, "h2", H2SqlDao::new);
+    private CheckedFunction<SqlDataStore, SqlDao, SQLException> daoFactory;
     private DataSource sql;
 
     SqlDao getDao() throws SQLException {

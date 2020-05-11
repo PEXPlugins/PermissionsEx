@@ -302,7 +302,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     }
 
     /**
-     * Get the currently active notifier. This objet has callbacks triggered on every permission check
+     * Get the currently active notifier. This object has callbacks triggered on every permission check
      *
      * @return The active notifier
      */
@@ -312,7 +312,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
     /**
      * Get the base notifier that logs any permission checks that gave taken place.
-     * @return
+     * @return the notifier, even if not active
      */
     public RecordingPermissionCheckNotifier getRecordingNotifier() {
         return this.baseNotifier;

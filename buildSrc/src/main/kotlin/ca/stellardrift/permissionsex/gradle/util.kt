@@ -27,7 +27,7 @@ import org.gradle.api.tasks.testing.Test
 enum class Versions(val version: String) {
     SHADOW("5.1.0"),
     SPONGE("7.1.0"),
-    CONFIGURATE("3.6.1"),
+    CONFIGURATE("3.7-SNAPSHOT"),
     SLF4J("1.7.26"),
     ANTLR("4.7.2"),
     JUNIT("5.6.2"),

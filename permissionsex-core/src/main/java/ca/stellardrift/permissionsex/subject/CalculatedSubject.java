@@ -32,6 +32,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.SimpleConfigurationNode;
+import ninja.leaping.configurate.reference.ConfigurationReference;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -310,7 +311,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     public ConfigurationNode getOptionNode(Set<ContextValue<?>> contexts, String option) {
         String val = getOptions(contexts).get(Preconditions.checkNotNull(option, "option"));
         getManager().getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
-        return SimpleConfigurationNode.root().setValue(val);
+        return ConfigurationNode.root().setValue(val);
     }
 
     /**

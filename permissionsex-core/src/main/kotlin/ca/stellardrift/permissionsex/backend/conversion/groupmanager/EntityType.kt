@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex.backend.conversion.groupmanager
 
-import ca.stellardrift.permissionsex.util.configurate.get
 import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.kotlin.get
 
 enum class EntityType {
     USER {

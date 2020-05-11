@@ -20,7 +20,7 @@ package ca.stellardrift.permissionsex.backend.sql;
 import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.util.ThrowingBiConsumer;
+import ca.stellardrift.permissionsex.util.CheckedBiConsumer;
 import ca.stellardrift.permissionsex.util.Util;
 
 import java.sql.SQLException;
@@ -30,9 +30,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class SqlContextInheritance implements ContextInheritance {
     private final Map<ContextValue<?>, List<ContextValue<?>>> inheritance;
-    private final AtomicReference<ImmutableList<ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<ImmutableList<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    SqlContextInheritance(Map<ContextValue<?>, List<ContextValue<?>>> inheritance, List<ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
+    SqlContextInheritance(Map<ContextValue<?>, List<ContextValue<?>>> inheritance, List<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
         this.inheritance = inheritance;
         if (updates != null) {
             this.updatesToPerform.set(ImmutableList.copyOf(updates));
@@ -67,9 +67,9 @@ public class SqlContextInheritance implements ContextInheritance {
     }
 
     void doUpdate(SqlDao dao) throws SQLException {
-        List<ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates = updatesToPerform.getAndSet(null);
+        List<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates = updatesToPerform.getAndSet(null);
         if (updates != null) {
-            for (ThrowingBiConsumer<SqlDao, SqlContextInheritance, SQLException> action : updates) {
+            for (CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException> action : updates) {
                 action.accept(dao, this);
             }
         }

@@ -34,9 +34,11 @@ configurations.compile {
 dependencies {
     antlr("org.antlr:antlr4:${Versions.ANTLR}")
 
-    api(configurate("gson", Versions.CONFIGURATE))
-    api(configurate("hocon", Versions.CONFIGURATE))
-    implementation(configurate("yaml", Versions.CONFIGURATE))
+    api(platform(configurate("bom", Versions.CONFIGURATE)))
+    api(configurate("gson"))
+    api(configurate("hocon"))
+    implementation(configurate("yaml"))
+    implementation(configurate("ext-kotlin", Versions.CONFIGURATE))
     implementation("com.github.ben-manes.caffeine:caffeine:2.7.0") {
         exclude("com.google.errorprone")
     }

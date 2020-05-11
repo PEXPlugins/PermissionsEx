@@ -21,7 +21,7 @@ import java.util.Optional;
 
 /**
  * Provide metadata about a specific type of attachment
- * @param <AttachmentType>
+ * @param <AttachmentType> type of attached value
  */
 public abstract class SubjectTypeDefinition<AttachmentType> {
     private final String typeName;
