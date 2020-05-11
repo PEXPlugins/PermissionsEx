@@ -105,7 +105,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
                 });
     }
 
-    protected <T> CompletableFuture<T> runAsync(CheckedSupplier<T, ?> supplier) {
+    protected <V> CompletableFuture<V> runAsync(CheckedSupplier<V, ?> supplier) {
         return Util.asyncFailableFuture(supplier, getManager().getAsyncExecutor());
     }
 
