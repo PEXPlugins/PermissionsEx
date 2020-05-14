@@ -4,15 +4,15 @@
 
 PermissionsEx \(PEX \(not the pipe\)\) is a full-service permissions plugin giving in-depth control of permissions for a server. PEX is available for various server and proxy platforms:
 
-* [Bukkit/Spigot/Paper](https://dev.bukkit.org/projects/permissionsex) -- [source](https://github.com/PEXPlugins/PermissionsEx/tree/a49a017bb9108f556df1644084308c18bb150dbd/permissionsex-bukkit/README.md)
-* [Sponge](https://ore.spongepowered.org/zml/PermissionsEx) -- [source](https://github.com/PEXPlugins/PermissionsEx/tree/a49a017bb9108f556df1644084308c18bb150dbd/permissionsex-sponge/README.md)
-* BungeeCord/Waterfall -- [source](https://github.com/PEXPlugins/PermissionsEx/tree/a49a017bb9108f556df1644084308c18bb150dbd/permissionsex-bungee/README.md)
-* \[Velocity\] -- [source](https://github.com/PEXPlugins/PermissionsEx/tree/a49a017bb9108f556df1644084308c18bb150dbd/permissionsex-velocity/README.md)
-* Fabric -- [source](https://github.com/PEXPlugins/PermissionsEx/tree/a49a017bb9108f556df1644084308c18bb150dbd/permissionsex-fabric/README.md)
+* [Bukkit/Spigot/Paper](https://dev.bukkit.org/projects/permissionsex) -- [source](permissionsex-bukkit/)
+* [Sponge](https://ore.spongepowered.org/zml/PermissionsEx) -- [source](permissionsex-sponge/)
+* BungeeCord/Waterfall -- [source](permissionsex-bungee/)
+* Velocity -- [source](permissionsex-velocity/)
+* Fabric -- [source](permissionsex-fabric/)
 
 💬 Having an issue setting up PEX? Check out our [Discord](https://discord.gg/PHpuzZS)
 
-🐞 Found a bug? File a [bug report](https://github.com/PEXPlugins/PermissionsEx/tree/a49a017bb9108f556df1644084308c18bb150dbd/PEXPlugins/PermissionsEx/issues/README.md)
+🐞 Found a bug? File a [bug report](https://github.com/PEXPlugins/PermissionsEx/issues)
 
 ⛏ [Development Builds](https://jenkins.addstar.com.au/job/PermissionsEx/lastSuccessfulBuild/)
 
@@ -61,7 +61,7 @@ dependencies {
 
 ## Contributing
 
-PermissionsEx always appreciates well thought-out pull requests for code changes, documentation improvements, and translations. All contributions must be released under the terms of the Apache 2.0 license.
+PermissionsEx always appreciates well thought-out pull requests for code changes, documentation improvements, and translations. All contributions except those to the Bukkit implementation of PEX must be released under the terms of the Apache 2.0 license. All contributions to PermissionsEx for Bukkit/Spigot/Paper must be provided under the terms of the GNU General Public License, version 3 or later.
 
 We build with Gradle -- a wrapper is provided, to build the project simply run `./gradlew build`. Feel free to run ideas by me in the discord before spending time implementing something that doesn't match my vision for the plugin.
 

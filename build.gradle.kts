@@ -2,6 +2,8 @@
 import ca.stellardrift.build.sk89q
 import ca.stellardrift.build.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 plugins {
     id("ca.stellardrift.opinionated") version "2.0.1" apply false
@@ -49,6 +51,7 @@ subprojects {
 
     extensions.getByType(LicenseExtension::class).apply {
         header = rootProject.file("LICENSE_HEADER")
+        ext["year"] = LocalDate.now(ZoneOffset.UTC).year
     }
 
     publishing {

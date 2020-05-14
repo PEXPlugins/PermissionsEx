@@ -7,6 +7,9 @@ import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
+import java.time.LocalDate
+import java.time.ZoneOffset
+
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -43,6 +46,11 @@ java {
     registerFeature("h2dbSupport") {
         usingSourceSet(sourceSets["main"])
     }
+}
+
+license {
+    header = file("LICENSE_HEADER")
+    ext["year"] = LocalDate.now(ZoneOffset.UTC).year
 }
 
 localization {
