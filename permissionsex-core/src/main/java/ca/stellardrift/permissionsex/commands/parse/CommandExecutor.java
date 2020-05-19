@@ -15,22 +15,21 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.util.command;
+package ca.stellardrift.permissionsex.commands.parse;
 
-import ca.stellardrift.permissionsex.exception.PermissionsException;
-import net.kyori.text.Component;
+import ca.stellardrift.permissionsex.commands.commander.Commander;
 
 /**
- * Exception relating to the execution of a command
+ * Interface containing the method directing how a certain command will be executed
  */
-public class CommandException extends PermissionsException {
-    private static final long serialVersionUID = -5529841181684157987L;
-
-    public CommandException(Component message) {
-        super(message);
-    }
-
-    public CommandException(Component message, Throwable cause) {
-        super(message, cause);
-    }
+@FunctionalInterface
+public interface CommandExecutor {
+    /**
+     * Callback for the execution of a command
+     *
+     * @param src The commander who is executing this command
+     * @param args The parsed command arguments for this command
+     * @throws CommandException If a user-facing error occurs while executing this command
+     */
+    void execute(Commander src, CommandContext args) throws CommandException;
 }

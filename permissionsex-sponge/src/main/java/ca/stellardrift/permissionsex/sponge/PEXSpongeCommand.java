@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.sponge;
 
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
 import org.spongepowered.api.command.CommandCallable;
@@ -55,7 +55,7 @@ class PEXSpongeCommand implements CommandCallable {
     public boolean testPermission(CommandSource commandSource) {
         try {
             command.checkPermission(new SpongeCommander(plugin, commandSource));
-        } catch (ca.stellardrift.permissionsex.util.command.CommandException e) {
+        } catch (ca.stellardrift.permissionsex.commands.parse.CommandException e) {
             return false;
         }
         return true;
@@ -67,7 +67,11 @@ class PEXSpongeCommand implements CommandCallable {
 
     @Override
     public Optional<Text> getShortDescription(CommandSource commandSource) {
-        return Optional.of(toText(command.getDescription(new SpongeCommander(plugin, commandSource))));
+        @Nullable Component desc = command.getDescription();
+        if (desc == null) {
+            return Optional.empty();
+        }
+        return Optional.of(toText(desc));
     }
 
     @Override

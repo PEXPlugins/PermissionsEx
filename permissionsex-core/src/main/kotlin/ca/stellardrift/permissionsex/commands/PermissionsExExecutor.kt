@@ -18,38 +18,24 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT_GLOBAL
 import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_SUBJECT
 import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_TRANSIENT
 import ca.stellardrift.permissionsex.commands.Messages.EXECUTOR_ERROR_GETTING_SUBJECT
 import ca.stellardrift.permissionsex.commands.Messages.EXECUTOR_ERROR_SUBJECT_REQUIRED
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.context.ContextValue
+import ca.stellardrift.permissionsex.commands.parse.CommandContext
+import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.commands.parse.CommandExecutor
 import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.command.CommandContext
-import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandExecutor
-import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.Component
 import java.util.concurrent.ExecutionException
 
 abstract class PermissionsExExecutor protected constructor(protected val pex: PermissionsEx<*>) :
     CommandExecutor {
-    protected fun Set<ContextValue<*>>.toComponent(): Component {
-        return if (isEmpty()) {
-            COMMON_ARGS_CONTEXT_GLOBAL()
-        } else {
-            +toString()
-        }
-    }
 
     @Throws(CommandException::class)
-    protected fun subjectOrSelf(
-        src: Commander,
-        args: CommandContext
-    ): CalculatedSubject {
+    protected fun subjectOrSelf(src: Commander, args: CommandContext): CalculatedSubject {
         return try {
             val argIdentifier = args.getOne<SubjectIdentifier>(COMMON_ARGS_SUBJECT)
             if (argIdentifier != null) {
@@ -66,11 +52,7 @@ abstract class PermissionsExExecutor protected constructor(protected val pex: Pe
     }
 
     @Throws(CommandException::class)
-    protected fun getDataRef(
-        src: Commander,
-        args: CommandContext,
-        permission: String
-    ): SubjectDataReference {
+    protected fun getDataRef(src: Commander, args: CommandContext, permission: String): SubjectDataReference {
         val subject = subjectOrSelf(src, args)
         src.checkSubjectPermission(subject.identifier, permission)
         return if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData() else subject.data()

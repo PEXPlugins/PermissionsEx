@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter;
+import ca.stellardrift.permissionsex.commands.commander.Permission;
 import ca.stellardrift.permissionsex.fabric.FabricMessageFormatter;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
 import ca.stellardrift.permissionsex.fabric.LocaleHolder;
@@ -26,15 +27,12 @@ import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
 import ca.stellardrift.text.fabric.ComponentCommandSource;
 import com.google.common.collect.Maps;
 import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -70,6 +68,8 @@ public abstract class MixinServerCommandSource implements Commander {
     @Shadow
     public abstract boolean hasPermissionLevel(int level);
 
+    @Shadow @Final private int level;
+
     @NotNull
     @Override
     public String getName() {
@@ -99,6 +99,24 @@ public abstract class MixinServerCommandSource implements Commander {
             return hasPermissionLevel(minecraftServer.getOpPermissionLevel());
         }
     }*/
+
+    @Override
+    public boolean hasPermission(@NotNull Permission permission) {
+        int ret = 0;
+        if (this instanceof IPermissionCommandSource) {
+            ret = ((IPermissionCommandSource) this).asCalculatedSubject().getPermission(permission.getValue());
+        }
+
+        if (ret == 0) { // op status
+            ret = this.level;
+        }
+
+        if (ret == 0) { // permission def value
+            ret = permission.getDefault();
+        }
+
+        return ret > 0;
+    }
 
     @NotNull
     @Override

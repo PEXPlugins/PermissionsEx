@@ -17,14 +17,7 @@
 
 package ca.stellardrift.permissionsex.fabric
 
-import com.sk89q.worldedit.WorldEdit
-import com.sk89q.worldedit.event.platform.PlatformReadyEvent
-import com.sk89q.worldedit.fabric.FabricPermissionsProvider
-import com.sk89q.worldedit.fabric.FabricWorldEdit
-import com.sk89q.worldedit.util.eventbus.Subscribe
-import net.minecraft.server.network.ServerPlayerEntity
-
-class PEXWorldEditProvider : FabricPermissionsProvider {
+/*class PEXWorldEditProvider : FabricPermissionsProvider {
     override fun registerPermission(permission: String) {
         // no-op
     }
@@ -38,12 +31,12 @@ class PEXWorldEditProvider : FabricPermissionsProvider {
         FabricWorldEdit.inst.permissionsProvider = this
         PermissionsExMod.logger.info(Messages.INTEGRATION_REGISTER_SUCCESS("WorldEdit"))
     }
-}
+}*/
 
 fun registerWorldEdit(): Boolean {
     return try {
         Class.forName("com.sk89q.worldedit.fabric.FabricWorldEdit")
-        WorldEdit.getInstance().eventBus.register(PEXWorldEditProvider())
+        //WorldEdit.getInstance().eventBus.register(PEXWorldEditProvider())
         true
     } catch (ex: ClassNotFoundException) {
         false

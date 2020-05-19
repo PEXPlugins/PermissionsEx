@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
@@ -29,7 +30,6 @@ import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import ca.stellardrift.permissionsex.util.command.CommandSpec
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -213,8 +213,8 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
     }
 }
 
-class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission, *wrapped.aliases.drop(1).map {"/$it"}.toTypedArray()), TabExecutor {
-    override fun onTabComplete(sender: CommandSender, args: Array<out String>): MutableIterable<String> {
+class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission?.value, *wrapped.aliases.drop(1).map {"/$it"}.toTypedArray()), TabExecutor {
+    override fun onTabComplete(sender: CommandSender, args: Array<out String>): Iterable<String> {
         return wrapped.tabComplete(BungeeCommander(pex, sender), args.joinToString(" "))
     }
 

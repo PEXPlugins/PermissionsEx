@@ -21,19 +21,25 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
-import ca.stellardrift.permissionsex.util.*
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
+import ca.stellardrift.permissionsex.util.subjectIdentifier
 import net.kyori.text.Component
 import net.kyori.text.adapter.bungeecord.TextAdapter
 import net.kyori.text.format.TextColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
-import java.util.*
+import java.util.Locale
 
 fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
 fun CommandSender.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
 
 class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: CommandSender) :
     Commander {
+    override val manager: PermissionsEx<*>
+        get() = pex.manager
     override val formatter = BungeePluginMessageFormatter(this)
     override val name: String get() = src.name
 

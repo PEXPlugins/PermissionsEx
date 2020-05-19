@@ -18,7 +18,7 @@
 
 package ca.stellardrift.permissionsex.bukkit;
 
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import com.google.common.base.Joiner;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

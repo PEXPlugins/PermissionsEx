@@ -17,9 +17,15 @@
 
 package ca.stellardrift.permissionsex.sponge
 
+import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.util.*
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
+import ca.stellardrift.permissionsex.util.styled
+import ca.stellardrift.permissionsex.util.subjectIdentifier
 import net.kyori.text.Component
 import net.kyori.text.adapter.spongeapi.TextAdapter
 import net.kyori.text.format.TextColor
@@ -29,7 +35,7 @@ import org.spongepowered.api.text.channel.ChatTypeMessageReceiver
 import org.spongepowered.api.text.channel.MessageReceiver
 import org.spongepowered.api.text.chat.ChatType
 import org.spongepowered.api.text.chat.ChatTypes
-import java.util.*
+import java.util.Locale
 
 fun MessageReceiver.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
 fun Iterable<MessageReceiver>.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
@@ -44,6 +50,8 @@ internal class SpongeCommander(
     val pex: PermissionsExPlugin,
     private val commandSource: CommandSource
 ) : Commander {
+    override val manager: PermissionsEx<*>
+        get() = pex.manager
     override val formatter: SpongeMessageFormatter = SpongeMessageFormatter(this)
     override val name: String
         get() = commandSource.name

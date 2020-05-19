@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.util.command
+package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.TranslatableProvider
+import ca.stellardrift.permissionsex.commands.CommonMessages
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import net.kyori.text.Component
@@ -36,6 +37,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
         return getAll(key.toContextKey())
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> getAll(key: String): Collection<T> {
         return parsedArgs[key] as Collection<T>
     }
@@ -48,6 +50,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
          return getOne(key.toContextKey())
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> getOne(key: String): T? {
         val values = parsedArgs[key]
         return if (values.size != 1) {
@@ -55,6 +58,10 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
         } else {
             values.iterator().next() as T
         }
+    }
+
+    operator fun <T> get(arg: ValueElement<T>): T {
+        return parsedArgs[arg.key.toContextKey()].iterator().next() as T
     }
 
     fun <T> getOne(key: TranslatableProvider): T? {
@@ -70,7 +77,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     @Throws(CommandException::class)
     fun checkPermission(commander: Commander, permission: String) {
         if (!commander.hasPermission(permission)) {
-            throw CommandException(CommonMessages.ERROR_PERMISSION())
+            throw CommandException(CommonMessages.ERROR_PERMISSION.invoke())
         }
     }
 

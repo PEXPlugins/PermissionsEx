@@ -17,22 +17,23 @@
 
 package ca.stellardrift.permissionsex.velocity
 
+import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
-import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
 import net.kyori.text.Component
 import net.kyori.text.format.TextColor
-import java.util.*
+import java.util.Locale
 
 class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
 
@@ -41,7 +42,7 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
         cmd.process(src, args.joinToString(" "))
     }
 
-    override fun suggest(source: CommandSource, currentArgs: Array<out String>): MutableList<String> {
+    override fun suggest(source: CommandSource, currentArgs: Array<out String>): List<String> {
         val src = VelocityCommander(pex, source)
         return cmd.tabComplete(src, currentArgs.joinToString(" "))
     }
@@ -58,6 +59,8 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
 
 class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
     Commander {
+    override val manager: PermissionsEx<*>
+        get() = pex.manager
     override val formatter = VelocityMessageFormatter(this)
     override val name: String
         get() =

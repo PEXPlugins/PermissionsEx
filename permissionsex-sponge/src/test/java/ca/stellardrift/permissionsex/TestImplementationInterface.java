@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
 import com.google.common.collect.ImmutableSet;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NotNull;

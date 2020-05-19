@@ -17,9 +17,6 @@
 
 package ca.stellardrift.permissionsex.util;
 
-import ca.stellardrift.permissionsex.commands.Messages;
-import ca.stellardrift.permissionsex.util.command.args.GameArguments;
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -61,12 +58,6 @@ public class Util {
      */
     public static <T> Optional<T> castOptional(Optional<?> input, Class<T> clazz) {
         return input.filter(clazz::isInstance).map(clazz::cast);
-    }
-
-    public static GenericArguments.FlagCommandElementBuilder contextTransientFlags(PermissionsEx<?> pex) {
-        return GenericArguments.flags()
-                .flag("-transient")
-                .valueFlag(GameArguments.context(Messages.COMMON_ARGS_CONTEXT.toComponent(), pex), "-context", "-contexts", "c");
     }
 
     public static <T> CompletableFuture<T> failedFuture(Throwable error) {

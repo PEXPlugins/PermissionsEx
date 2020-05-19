@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.util
 
 import ca.stellardrift.permissionsex.commands.Messages
+import ca.stellardrift.permissionsex.context.ContextValue
 import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
@@ -102,6 +103,15 @@ fun Iterable<Any>.join(separator: Component? = space()): Component = component {
     }
 }
 
+fun Sequence<Component>.join(separator: Component? = space()) = component {
+    val it = iterator()
+    while (it.hasNext()) {
+        append(it.next())
+        if (separator != null && it.hasNext()) {
+            append(separator)
+        }
+    }}
+
 operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.plusAssign(other: Component) {
     this.append(other)
 }
@@ -112,6 +122,16 @@ operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.plusAssi
 
 operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.plusAssign(other: Iterable<Component>) {
     this.append(other)
+}
+
+// -- PEX-Specific
+
+fun Set<ContextValue<*>>.toComponent(): Component {
+    return if (isEmpty()) {
+        Messages.COMMON_ARGS_CONTEXT_GLOBAL()
+    } else {
+        +toString()
+    }
 }
 
 object PEXComponentRenderer : TranslatableComponentRenderer<Locale>() {

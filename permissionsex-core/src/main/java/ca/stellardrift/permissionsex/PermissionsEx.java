@@ -37,7 +37,7 @@ import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.Util;
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;

@@ -18,9 +18,10 @@
 package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.uuid
+import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.commands.parse.command
+import ca.stellardrift.permissionsex.commands.parse.uuid
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -49,7 +50,7 @@ class CallbackController {
         return "/pex cb $id"
     }
 
-    val Commander.mapKey: String get() = (this.subjectIdentifier?.value?: name ).toLowerCase(Locale.ROOT)
+    private val Commander.mapKey: String get() = (this.subjectIdentifier?.value?: name ).toLowerCase(Locale.ROOT)
 
     fun clearOwnedBy(name: String) {
         knownCallbacks.remove(name)
@@ -60,12 +61,12 @@ class CallbackController {
     }
 
     fun createCommand(): CommandSpec {
-        return CommandSpec.builder().apply {
-            setAliases("callback", "cb")
-            setArguments(uuid(Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID()))
-            setDescription(Messages.COMMAND_CALLBACK_DESCRIPTION())
-            setExecutor { src, args ->
-                val callbackId = args.getOne<UUID>(Messages.COMMAND_CALLBACK_ARG_CALLBACK_ID)!!
+        return command("callback", "cb") {
+            val uid = uuid() key Messages.COMMAND_ARG_TYPE_CALLBACK_ID()
+            args = uid
+            description = Messages.COMMAND_CALLBACK_DESCRIPTION()
+            executor { src, args ->
+                val callbackId = args[uid]
                 val userCallbacks = knownCallbacks[src.mapKey]
                 val callback = userCallbacks?.get(callbackId)
                 when {
@@ -80,7 +81,6 @@ class CallbackController {
                     }
                 }
             }
-        }.build()
-
+        }
     }
 }

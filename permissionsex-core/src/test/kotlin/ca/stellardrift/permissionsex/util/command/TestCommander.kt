@@ -26,7 +26,7 @@ import net.kyori.text.Component
 import net.kyori.text.serializer.plain.PlainComponentSerializer
 import java.util.Locale
 
-class TestCommander(internal val manager: PermissionsEx<*>) : Commander {
+class TestCommander(override val manager: PermissionsEx<*>) : Commander {
     override val name: String
         get() = "Test"
 

@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.util.command.args
+package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.util.command.CommonMessages
+import ca.stellardrift.permissionsex.commands.CommonMessages
 import com.google.common.collect.Lists
 import net.kyori.text.Component
-import java.util.function.Predicate
 
 /**
  * Holder for command arguments
@@ -67,7 +66,7 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
         }
     }
 
-    fun createError(message: Component?): ArgumentParseException {
+    fun createError(message: Component): ArgumentParseException {
         //System.out.println("Creating error: " + message.translateFormatted(Locale.getDefault()));
         //Thread.dumpStack();
         return ArgumentParseException(
@@ -82,12 +81,12 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
             args
         ) { obj: SingleArg? -> obj!!.value }
 
-    fun filterArgs(filter: Predicate<String?>) {
+    fun filterArgs(filter: (String) -> Boolean) {
         val currentArg =
             if (position == -1) null else _args[position]
         val newArgs: MutableList<SingleArg> = mutableListOf()
         for (arg in args) {
-            if (filter.test(arg.value)) {
+            if (filter(arg.value)) {
                 newArgs.add(arg)
             }
         }
@@ -97,7 +96,9 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
 
     fun insertArg(value: String) {
         val index = if (position < 0) 0 else args[position].endIdx
-        _args.add(index, SingleArg(value, index, index))
+        _args.add(index,
+            SingleArg(value, index, index)
+        )
     }
 
     fun removeArgs(startIdx: Int, endIdx: Int) {

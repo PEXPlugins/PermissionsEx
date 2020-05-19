@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.castMap
-import ca.stellardrift.permissionsex.util.command.CommandSpec
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType.getString
@@ -77,7 +77,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
 
     override fun test(t: ServerCommandSource): Boolean {
         val perm = spec.permission
-        return perm == null || t.hasPermission(perm)
+        return perm == null || t.hasPermission(perm.value)
     }
 
     override fun run(context: BrigadierCommandContext<ServerCommandSource>): Int {

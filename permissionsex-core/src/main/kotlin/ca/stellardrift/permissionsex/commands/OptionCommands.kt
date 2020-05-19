@@ -24,59 +24,54 @@ import ca.stellardrift.permissionsex.commands.Messages.OPTION_ARG_VALUE
 import ca.stellardrift.permissionsex.commands.Messages.OPTION_SUCCESS_SET
 import ca.stellardrift.permissionsex.commands.Messages.OPTION_SUCCESS_UNSET
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.parse.CommandContext
+import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.commands.parse.StructuralArguments.optional
+import ca.stellardrift.permissionsex.commands.parse.command
+import ca.stellardrift.permissionsex.commands.parse.option
+import ca.stellardrift.permissionsex.commands.parse.string
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.command.CommandContext
-import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.args.GameArguments.option
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.optional
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.string
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
+import ca.stellardrift.permissionsex.util.toComponent
 
-internal fun getOptionCommand(pex: PermissionsEx<*>): CommandSpec {
-    return CommandSpec.builder()
-        .setAliases("options", "option", "opt", "o")
-        .setArguments(seq(option(OPTION_ARG_KEY(), pex), optional(string(OPTION_ARG_VALUE()))))
-        .setExecutor(object : PermissionsExExecutor(pex) {
+internal fun getOptionCommand(pex: PermissionsEx<*>) =
+    command("option", "options", "opt", "o", "meta") {
+        val option = option(pex) key OPTION_ARG_KEY()
+        args(option, optional(string() key OPTION_ARG_VALUE()))
+        executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun execute(
-                src: Commander,
-                args: CommandContext
-            ) {
+            override fun execute(src: Commander, args: CommandContext) {
                 val ref = getDataRef(src, args, "permissionsex.option.set")
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                val key = args.getOne<String>(OPTION_ARG_KEY)!!
+                val key = args[option]
                 val value = args.getOne<String>(OPTION_ARG_VALUE)
                 if (value == null) {
                     ref.update { old ->
                         old.setOption(contexts, key, null)
                     }.thenMessageSubject(src) { send ->
-                            send(OPTION_SUCCESS_UNSET(
-                            key,
-                            subject(ref).styled { hl() },
-                            contexts.toComponent()
-                        ))
+                        send(
+                            OPTION_SUCCESS_UNSET(
+                                key,
+                                subject(ref).styled { hl() },
+                                contexts.toComponent()
+                            )
+                        )
                     }
                 } else {
                     ref.update { old: ImmutableSubjectData ->
-                        old.setOption(
-                            contexts,
-                            key,
-                            value
-                        )
+                        old.setOption(contexts, key, value)
                     }.thenMessageSubject(src) { send ->
                         send(
                             OPTION_SUCCESS_SET(
-                            option(key, value),
-                            subject(ref).styled { hl()},
-                            contexts.toComponent()
-                        ))
+                                option(key, value),
+                                subject(ref).styled { hl() },
+                                contexts.toComponent()
+                            )
+                        )
                     }
                 }
             }
         })
-        .build()
-}
+    }

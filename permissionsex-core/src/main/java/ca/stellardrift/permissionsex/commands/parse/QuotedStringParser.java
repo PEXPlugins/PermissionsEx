@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.util.command.args;
+package ca.stellardrift.permissionsex.commands.parse;
 
-import ca.stellardrift.permissionsex.util.command.CommonMessages;
+import ca.stellardrift.permissionsex.commands.CommonMessages;
 import net.kyori.text.Component;
 
 import java.util.ArrayList;

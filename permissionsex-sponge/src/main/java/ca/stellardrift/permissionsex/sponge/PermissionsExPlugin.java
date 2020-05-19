@@ -20,6 +20,9 @@ package ca.stellardrift.permissionsex.sponge;
 import ca.stellardrift.permissionsex.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.ImplementationInterface;
 import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.commands.commander.Permission;
+import ca.stellardrift.permissionsex.commands.parse.CommandException;
+import ca.stellardrift.permissionsex.commands.parse.CommandSpecKt;
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
@@ -28,8 +31,8 @@ import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import ca.stellardrift.permissionsex.util.command.CommandException;
-import ca.stellardrift.permissionsex.util.command.CommandSpec;
+import ca.stellardrift.permissionsex.commands.parse.CommandExecutor;
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Throwables;
@@ -37,6 +40,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
+import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
@@ -72,7 +76,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static ca.stellardrift.permissionsex.util.command.args.GenericArguments.string;
+import static ca.stellardrift.permissionsex.commands.parse.ValuesKt.string;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -149,15 +153,16 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
     }
 
     private void registerFakeOpCommand(String alias, String permission) {
-        registerCommands(() -> ImmutableSet.of(CommandSpec.builder()
-                .setAliases(alias)
-                .setPermission(permission)
-                .setDescription(Messages.COMMANDS_FAKE_OP_DESCRIPTION.toComponent())
-                .setArguments(string(Messages.COMMANDS_FAKE_OP_ARG_USER.toComponent()))
-                .setExecutor((src, ctx) -> {
-                    throw new CommandException(Messages.COMMANDS_FAKE_OP_ERROR.toComponent());
-                })
-                .build()));
+        registerCommands(() -> ImmutableSet.of(CommandSpecKt.command(new String[] {alias}, b -> {
+            b.setPermission(new Permission(permission, null, 0));
+            b.setDescription(Messages.COMMANDS_FAKE_OP_DESCRIPTION.toComponent());
+            b.setArgs(string().key(Messages.COMMANDS_FAKE_OP_ARG_USER.toComponent()));
+            b.executor((CommandExecutor) (src, ctx) -> {
+                throw new CommandException(Messages.COMMANDS_FAKE_OP_ERROR.toComponent());
+            });
+
+            return Unit.INSTANCE;
+        })));
     }
 
     @Listener

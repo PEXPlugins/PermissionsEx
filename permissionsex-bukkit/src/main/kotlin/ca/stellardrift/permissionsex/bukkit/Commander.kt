@@ -72,6 +72,8 @@ class BukkitCommander internal constructor(
     internal val pex: PermissionsExPlugin,
     private val commandSource: CommandSender
 ) : Commander {
+    override val manager: PermissionsEx<*>
+        get() = pex.manager
     override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(this)
     override val name: String
         get() = commandSource.name

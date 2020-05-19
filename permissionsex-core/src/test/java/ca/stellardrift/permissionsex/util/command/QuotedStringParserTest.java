@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex.util.command;
 
-import ca.stellardrift.permissionsex.util.command.args.ArgumentParseException;
-import ca.stellardrift.permissionsex.util.command.args.QuotedStringParser;
+import ca.stellardrift.permissionsex.commands.parse.ArgumentParseException;
+import ca.stellardrift.permissionsex.commands.parse.QuotedStringParser;
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
 

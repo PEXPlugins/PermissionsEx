@@ -20,10 +20,10 @@ package ca.stellardrift.permissionsex.util
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import com.google.common.reflect.TypeToken
 import net.kyori.text.Component
-import net.kyori.text.serializer.plain.PlainComponentSerializer
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.kotlin.get
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection
@@ -75,8 +75,8 @@ fun CompletableFuture<*>.thenMessageSubject(
                 if (err is CompletionException && cause != null) {
                     err = cause
                 }
-                if (err is RuntimeCommandException) {
-                    src.error(err.translatedMessage)
+                if (err is CommandException) {
+                    src.error(err.component)
                 } else {
                     src.error(err) { send ->
                         send(Messages.EXECUTOR_ERROR_ASYNC_TASK(err.javaClass.simpleName, err.message
@@ -102,10 +102,3 @@ fun <V> Publisher<V>.toCompletableFuture(): CompletableFuture<V> {
     return ret
 }
 
-internal class RuntimeCommandException(val translatedMessage: Component) :
-        RuntimeException(PlainComponentSerializer.INSTANCE.serialize(translatedMessage)) {
-
-    companion object {
-        private const val serialVersionUID = -7243817601651202895L
-    }
-}

@@ -17,10 +17,11 @@
 
 package ca.stellardrift.permissionsex.commands.commander
 
+import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
+import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
-import ca.stellardrift.permissionsex.util.command.CommandException
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.invoke
 import ca.stellardrift.permissionsex.util.join
@@ -36,11 +37,16 @@ import java.util.Locale
  * Interface implemented by objects that can execute commands and receive command output
  */
 interface Commander {
+    val manager: PermissionsEx<*>
     val name: String
     val locale: Locale
     val subjectIdentifier: SubjectIdentifier?
 
     fun hasPermission(permission: String): Boolean
+
+    fun hasPermission(permission: Permission): Boolean {
+        return hasPermission(permission.value)
+    }
 
     val formatter: MessageFormatter
 

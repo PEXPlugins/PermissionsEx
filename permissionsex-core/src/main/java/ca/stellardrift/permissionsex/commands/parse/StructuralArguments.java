@@ -15,65 +15,131 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.util.command.args;
+package ca.stellardrift.permissionsex.commands.parse;
 
 import ca.stellardrift.permissionsex.commands.commander.Commander;
-import ca.stellardrift.permissionsex.util.GuavaCollectors;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
-import ca.stellardrift.permissionsex.util.StartsWithPredicate;
-import ca.stellardrift.permissionsex.util.command.CommandContext;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import static ca.stellardrift.permissionsex.util.command.ArgumentKeys.*;
+import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNLONG;
+import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNSHORT;
 import static net.kyori.text.TextComponent.space;
 
-/**
- * Class containing factory methods to combine single-value command elements
- */
-public class GenericArguments {
-    private GenericArguments() {}
-
-    /**
-     * Expects no arguments
-     *
-     * @return An expectation of no arguments
-     */
-    public static CommandElement none() {
-        return new SequenceCommandElement(ImmutableList.<CommandElement>of());
-    }
-
+public class StructuralArguments {
     private static CommandElement markTrue(String flag) {
-        return new MarkTrueCommandElement(flag);
-    }
-
-    private static class MarkTrueCommandElement extends CommandElement {
-        public MarkTrueCommandElement(String flag) {
-            super(TextComponent.of(flag));
-        }
-
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return true;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            return Collections.emptyList();
-        }
+        return new MarkTrueCommandElement().key(flag);
     }
 
     public static FlagCommandElementBuilder flags() {
         return new FlagCommandElementBuilder();
+    }
+
+    /**
+     * Consumes a series of arguments. Usage is the elements concatenated
+     *
+     * @param elements The series of arguments to expect
+     * @return the element to match the input
+     */
+    public static CommandElement seq(CommandElement... elements) {
+        return new SequenceCommandElement(ImmutableList.copyOf(elements));
+    }
+
+    /**
+     * Returns a command element that matches the first of the provided elements that parses
+     * Tab completion matches from all options
+     *
+     * @param elements The elements to check against
+     * @return The command element matching the first passing of the elements provided
+     */
+    public static CommandElement firstParsing(CommandElement... elements) {
+        return new FirstParsingCommandElement(ImmutableList.copyOf(elements));
+    }
+
+    /**
+     * Make the provided command element optional
+     * This means the command element is not required. However, if the element is provided with invalid format and there
+     * are no more args specified, any errors will still be passed on.
+     *
+     * @param element The element to optionally require
+     * @return the element to match the input
+     */
+    public static CommandElement optional(CommandElement element) {
+        return new OptionalCommandElement(element, null, false);
+    }
+
+    /**
+     * Make the provided command element optional
+     * This means the command element is not required.
+     * If the argument is provided but of invalid format, it will be skipped.
+     *
+     * @param element The element to optionally require
+     * @return the element to match the input
+     */
+    public static CommandElement optionalWeak(CommandElement element) {
+        return new OptionalCommandElement(element, null, true);
+    }
+
+    /**
+     * Make the provided command element optional
+     * This means the command element is not required. However, if the element is provided with invalid format and there
+     * are no more args specified, any errors will still be passed on. If the given element's key and {@code value} are not
+     * null and this element is not provided the element's key will be set to the given value.
+     *
+     * @param element The element to optionally require
+     * @param value The default value to set
+     * @return the element to match the input
+     */
+    public static CommandElement optional(CommandElement element, Object value) {
+        return new OptionalCommandElement(element, value, false);
+    }
+
+    /**
+     * Make the provided command element optional
+     * This means the command element is not required.
+     * If the argument is provided but of invalid format, it will be skipped.
+     * If the given element's key and {@code value} are not null and this element is not provided the element's key will
+     * be set to the given value.
+     *
+     * @param element The element to optionally require
+     * @param value The default value to set
+     * @return the element to match the input
+     */
+    public static CommandElement optionalWeak(CommandElement element, Object value) {
+        return new OptionalCommandElement(element, value, true);
+    }
+
+    /**
+     * Require a given command element to be provided a certain number of times
+     * Command values will be stored under their provided keys in the CommandContext
+     *
+     * @param element The element to repeat
+     * @param times The number of times to repeat the element.
+     * @return the element to match the input
+     */
+    public static CommandElement repeated(CommandElement element, int times) {
+        return new RepeatedCommandElement(element, times);
+    }
+
+    /**
+     * Require all remaining args to match as many instances of CommandElement as will fit
+     * Command element values will be stored under their provided keys in the CommandContext.
+     *
+     * @param element The element to repeat
+     * @return the element to match the input
+     */
+    public static CommandElement allOf(CommandElement element) {
+        return new AllOfCommandElement(element);
     }
 
     public enum UnknownFlagBehavior {
@@ -94,6 +160,22 @@ public class GenericArguments {
          */
         IGNORE
 
+    }
+
+    private static class MarkTrueCommandElement extends Value<Boolean> {
+        static final MarkTrueCommandElement INSTANCE = new MarkTrueCommandElement();
+        private MarkTrueCommandElement() {
+            super(TextComponent.of("true"));
+        }
+
+        @Override
+        public Boolean parse(@NotNull CommandArgs args) throws ArgumentParseException {
+            return true;
+        }
+
+        public ValueElement<Boolean> key(String key) {
+            return this.key(TextComponent.of(key));
+        }
     }
 
     public static class FlagCommandElementBuilder {
@@ -198,7 +280,6 @@ public class GenericArguments {
         private final boolean anchorFlags;
 
         protected FlagCommandElement(CommandElement childElement, Map<List<String>, CommandElement> usageFlags, Map<String, CommandElement> shortFlags, Map<String, CommandElement> longFlags, UnknownFlagBehavior unknownShortFlagBehavior, UnknownFlagBehavior unknownLongFlagBehavior, boolean anchorFlags) {
-            super(null);
             this.childElement = childElement;
             this.usageFlags = usageFlags;
             this.shortFlags = shortFlags;
@@ -321,7 +402,8 @@ public class GenericArguments {
                             builder.append("|");
                         }
                     }
-                    if (!(arg.getValue() instanceof MarkTrueCommandElement)) { // true flag
+                    if (!(arg.getValue() instanceof ValueElement<?>)
+                            || !(((ValueElement<?>) arg.getValue()).getValue() instanceof MarkTrueCommandElement)) {
                         builder.append(" ");
                         builder.append(arg.getValue().getUsage(src));
                     }
@@ -336,12 +418,7 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return null;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+        public List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             int startIdx = args.getPosition();
             String arg;
             while (args.hasNext()) {
@@ -375,7 +452,7 @@ public class GenericArguments {
             }
         }
 
-        private  List<String> tabCompleteLongFlag(String longFlag, Commander src, CommandArgs args, CommandContext context) {
+        private List<String> tabCompleteLongFlag(String longFlag, Commander src, CommandArgs args, CommandContext context) {
             if (longFlag.isEmpty()) {
                 return null;
             }
@@ -426,7 +503,7 @@ public class GenericArguments {
             return null;
         }
 
-        private  List<String> tabCompleteShortFlags(String shortFlags, Commander src, CommandArgs args, CommandContext context) {
+        private List<String> tabCompleteShortFlags(String shortFlags, Commander src, CommandArgs args, CommandContext context) {
             if (shortFlags.isEmpty()) {
                 return null;
             }
@@ -449,21 +526,10 @@ public class GenericArguments {
         }
     }
 
-    /**
-     * Consumes a series of arguments. Usage is the elements concated
-     *
-     * @param elements The series of arguments to expect
-     * @return the element to match the input
-     */
-    public static CommandElement seq(CommandElement... elements) {
-        return new SequenceCommandElement(ImmutableList.copyOf(elements));
-    }
-
-    private static class SequenceCommandElement extends CommandElement {
+    static class SequenceCommandElement extends CommandElement {
         private final List<CommandElement> elements;
 
-        private SequenceCommandElement(List<CommandElement> elements) {
-            super(null);
+        SequenceCommandElement(List<CommandElement> elements) {
             this.elements = elements;
         }
 
@@ -475,12 +541,7 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return null;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+        public List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             for (Iterator<CommandElement> it = elements.iterator(); it.hasNext(); ) {
                 CommandElement element = it.next();
                 int startPos = args.getPosition();
@@ -511,7 +572,7 @@ public class GenericArguments {
         }
 
         @Override
-        public  Component getUsage(Commander commander) {
+        public Component getUsage(Commander commander) {
             return TextComponent.make(builder -> {
                 for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                     builder.append(it.next().getUsage(commander));
@@ -523,95 +584,10 @@ public class GenericArguments {
         }
     }
 
-    /**
-     * Return an argument that allows selecting from a limited set of values.
-     * If there are 5 or fewer choices available, the choices will be shown in the command usage. Otherwise, the usage
-     * will only display only the key. To override this behavior, see {@link #choices(Component, Map, boolean)}.
-     *
-     * @param key The key to store the resulting value under
-     * @param choices The choices users can choose from
-     * @return the element to match the input
-     */
-    public static CommandElement choices(Component key, Map<String, ?> choices) {
-        return choices(key, choices, choices.size() <= 5);
-    }
-
-    /**
-     * Return an argument that allows selecting from a limited set of values.
-     * Unless {@code choicesInUsage} is true, general command usage will only display the provided key
-     *
-     * @param key The key to store the resulting value under
-     * @param choices The choices users can choose from
-     * @param choicesInUsage if true, list choices in usage, otherwise just use key
-     * @return the element to match the input
-     */
-    public static CommandElement choices(Component key, Map<String, ?> choices, boolean choicesInUsage) {
-        return new ChoicesCommandElement(key, ImmutableMap.copyOf(choices), choicesInUsage);
-    }
-
-    private static class ChoicesCommandElement extends CommandElement {
-        private final Map<String, Object> choices;
-        private final boolean choicesInUsage;
-
-        private ChoicesCommandElement(Component key, Map<String, Object> choices, boolean choicesInUsage) {
-            super(key);
-            this.choices = choices;
-            this.choicesInUsage = choicesInUsage;
-        }
-
-        @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
-            Object value = choices.get(args.next());
-            if (value == null) {
-                throw args.createError(CHOICES_ERROR_INVALID.toComponent(choices.keySet().toString()));
-            }
-            return value;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            String prefix = args.nextIfPresent();
-            if (prefix == null) {
-                prefix = "";
-            }
-            return ImmutableList.copyOf(Iterables.filter(choices.keySet(), new GuavaStartsWithPredicate(prefix)));
-        }
-
-        @Override
-        public  Component getUsage(Commander commander) {
-            if (choicesInUsage) {
-                return TextComponent.make(builder -> {
-                    for (Iterator<String> it = choices.keySet().iterator(); it.hasNext();) {
-                        builder.append(it.next());
-                        if (it.hasNext()) {
-                            builder.append("|");
-                        }
-                    }
-
-                });
-            } else {
-                return getKey();
-            }
-        }
-    }
-
-
-    /**
-     * Returns a command element that matches the first of the provided elements that parses
-     * Tab completion matches from all options
-     *
-     * @param elements The elements to check against
-     * @return The command element matching the first passing of the elements provided
-     */
-    public static CommandElement firstParsing(CommandElement... elements) {
-        return new FirstParsingCommandElement(ImmutableList.copyOf(elements));
-    }
-
     private static class FirstParsingCommandElement extends CommandElement {
         private final List<CommandElement> elements;
 
         private FirstParsingCommandElement(List<CommandElement> elements) {
-            super(null);
             this.elements = elements;
         }
 
@@ -633,11 +609,6 @@ public class GenericArguments {
             if (firstException != null) {
                 throw firstException;
             }
-        }
-
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return null;
         }
 
         @Override
@@ -663,66 +634,12 @@ public class GenericArguments {
         }
     }
 
-    /**
-     * Make the provided command element optional
-     * This means the command element is not required. However, if the element is provided with invalid format and there
-     * are no more args specified, any errors will still be passed on.
-     *
-     * @param element The element to optionally require
-     * @return the element to match the input
-     */
-    public static CommandElement optional(CommandElement element) {
-        return new OptionalCommandElement(element, null, false);
-    }
-
-    /**
-     * Make the provided command element optional
-     * This means the command element is not required.
-     * If the argument is provided but of invalid format, it will be skipped.
-     *
-     * @param element The element to optionally require
-     * @return the element to match the input
-     */
-    public static CommandElement optionalWeak(CommandElement element) {
-        return new OptionalCommandElement(element, null, true);
-    }
-
-    /**
-     * Make the provided command element optional
-     * This means the command element is not required. However, if the element is provided with invalid format and there
-     * are no more args specified, any errors will still be passed on. If the given element's key and {@code value} are not
-     * null and this element is not provided the element's key will be set to the given value.
-     *
-     * @param element The element to optionally require
-     * @param value The default value to set
-     * @return the element to match the input
-     */
-    public static CommandElement optional(CommandElement element, Object value) {
-        return new OptionalCommandElement(element, value, false);
-    }
-
-    /**
-     * Make the provided command element optional
-     * This means the command element is not required.
-     * If the argument is provided but of invalid format, it will be skipped.
-     * If the given element's key and {@code value} are not null and this element is not provided the element's key will
-     * be set to the given value.
-     *
-     * @param element The element to optionally require
-     * @param value The default value to set
-     * @return the element to match the input
-     */
-    public static CommandElement optionalWeak(CommandElement element, Object value) {
-        return new OptionalCommandElement(element, value, true);
-    }
-
     private static class OptionalCommandElement extends CommandElement {
         private final CommandElement element;
         private final Object value;
         private final boolean considerInvalidFormatEmpty;
 
         private OptionalCommandElement(CommandElement element, Object value, boolean considerInvalidFormatEmpty) {
-            super(null);
             this.element = element;
             this.value = value;
             this.considerInvalidFormatEmpty = considerInvalidFormatEmpty;
@@ -731,9 +648,9 @@ public class GenericArguments {
         @Override
         public void parse(CommandArgs args, CommandContext context) throws ArgumentParseException {
             if (!args.hasNext()) {
-                if (this.element.getKey() != null && this.value != null) {
+                /*if (this.element.getKey() != null && this.value != null) { // TODO: Handle defaults using a better design
                     context.putArg(this.element.getKey(), value);
-                }
+                }*/
                 return;
             }
             int startPos = args.getPosition();
@@ -742,18 +659,13 @@ public class GenericArguments {
             } catch (ArgumentParseException ex) {
                 if (considerInvalidFormatEmpty || args.hasNext()) { // If there are more args, suppress. Otherwise, throw the error
                     args.setPosition(startPos);
-                    if (this.element.getKey() != null && this.value != null) {
+                    /*if (this.element.getKey() != null && this.value != null) {
                         context.putArg(this.element.getKey(), value);
-                    }
+                    }*/
                 } else {
                     throw ex;
                 }
             }
-        }
-
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return args.hasNext() ? null : element.parseValue(args);
         }
 
         @Override
@@ -771,25 +683,12 @@ public class GenericArguments {
         }
     }
 
-    /**
-     * Require a given command element to be provided a certain number of times
-     * Command values will be stored under their provided keys in the CommandContext
-     *
-     * @param element The element to repeat
-     * @param times The number of times to repeat the element.
-     * @return the element to match the input
-     */
-    public static CommandElement repeated(CommandElement element, int times) {
-        return new RepeatedCommandElement(element, times);
-    }
-
     private static class RepeatedCommandElement extends CommandElement {
         private final CommandElement element;
         private final int times;
 
 
         protected RepeatedCommandElement(CommandElement element, int times) {
-            super(null);
             this.element = element;
             this.times = times;
         }
@@ -802,12 +701,7 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return null;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+        public List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             for (int i = 0; i < times; ++i) {
                 int startPos = args.getPosition();
                 try {
@@ -821,20 +715,9 @@ public class GenericArguments {
         }
 
         @Override
-        public  Component getUsage(Commander src) {
+        public Component getUsage(Commander src) {
             return TextComponent.builder(String.valueOf(times)).append("*").append(element.getUsage(src)).build();
         }
-    }
-
-    /**
-     * Require all remaining args to match as many instances of CommandElement as will fit
-     * Command element values will be stored under their provided keys in the CommandContext.
-     *
-     * @param element The element to repeat
-     * @return the element to match the input
-     */
-    public static CommandElement allOf(CommandElement element) {
-        return new AllOfCommandElement(element);
     }
 
     private static class AllOfCommandElement extends CommandElement {
@@ -842,7 +725,6 @@ public class GenericArguments {
 
 
         protected AllOfCommandElement(CommandElement element) {
-            super(null);
             this.element = element;
         }
 
@@ -854,12 +736,7 @@ public class GenericArguments {
         }
 
         @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return null;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
+        public List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
             while (args.hasNext()) {
                 int startPos = args.getPosition();
                 try {
@@ -873,323 +750,8 @@ public class GenericArguments {
         }
 
         @Override
-        public  Component getUsage(Commander context) {
+        public Component getUsage(Commander context) {
             return element.getUsage(context).append(TextComponent.of("+"));
         }
     }
-
-    // -- Argument types for basic java types
-
-    /**
-     * Parent class that specifies elements as having no tab completions. Useful for inputs with a very large domain, like strings and integers
-     */
-    private static abstract class KeyElement extends CommandElement {
-        private KeyElement(Component key) {
-            super(key);
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            return Collections.emptyList();
-        }
-    }
-
-    /**
-     * Require an argument to be a string. Any provided argument will fit in under this argument
-     *
-     * @param key The key to store the parsed argument under
-     * @return the element to match the input
-     */
-    public static CommandElement string(Component key) {
-        return new StringElement(key);
-    }
-
-    private static class StringElement extends KeyElement {
-
-        private StringElement(Component key) {
-            super(key);
-        }
-
-        @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return args.next();
-        }
-    }
-
-
-    /**
-     * Require an argument to be an integer (base 10).
-     *
-     * @param key The key to store the parsed argument under
-     * @return the element to match the input
-     */
-    public static CommandElement integer(Component key) {
-        return new IntegerElement(key);
-    }
-
-    private static class IntegerElement extends KeyElement {
-
-        private IntegerElement(Component key) {
-            super(key);
-        }
-
-        @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
-            final String input = args.next();
-            try {
-                return Integer.parseInt(input);
-            } catch (NumberFormatException ex) {
-                throw args.createError(INTEGER_ERROR_FORMAT.toComponent(input));
-            }
-        }
-    }
-
-    public static CommandElement uuid(Component key) {
-        return new UUIDElement(key);
-    }
-
-    private static class UUIDElement extends KeyElement {
-        private UUIDElement(Component key) {
-            super(key);
-        }
-
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            final String input = args.next();
-            try {
-                return UUID.fromString(input);
-            } catch (IllegalArgumentException ex) {
-                throw args.createError(UUID_ERROR_FORMAT.toComponent(input));
-            }
-        }
-    }
-
-    private static final Map<String, Boolean> BOOLEAN_CHOICES = ImmutableMap.<String, Boolean>builder()
-            .put("true", true)
-            .put("t", true)
-            .put("y", true)
-            .put("yes", true)
-            .put("verymuchso", true)
-            .put("false", false)
-            .put("f", false)
-            .put("n", false)
-            .put("no", false)
-            .put("notatall", false)
-            .build();
-
-    /**
-     * Require an argument to be a boolean.
-     * The recognized true values are:
-     * <ul>
-     *     <li>true</li>
-     *     <li>t</li>
-     *     <li>yes</li>
-     *     <li>y</li>
-     *     <li>verymuchso</li>
-     * </ul>
-     * The recognized false values are:
-     * <ul>
-     *     <li>false</li>
-     *     <li>f</li>
-     *     <li>no</li>
-     *     <li>n</li>
-     *     <li>notatall</li>
-     * </ul>
-     *
-     * @param key The key to store the parsed argument under
-     * @return the element to match the input
-     */
-    public static CommandElement bool(Component key) {
-        return GenericArguments.choices(key, BOOLEAN_CHOICES);
-    }
-
-    /**
-     * Require the argument to be a key under the provided enum
-     * @param key The key to store the matched enum value under
-     * @param type The enum class to get enum constants from
-     * @param <T> The type of enum
-     * @return the element to match the input
-     */
-    public static <T extends Enum<T>> CommandElement enumValue(Component key, Class<T> type) {
-        return new EnumValueElement<>(key, type);
-    }
-
-    private static class EnumValueElement<T extends Enum<T>> extends CommandElement {
-        private final Class<T> type;
-
-        private EnumValueElement(Component key, Class<T> type) {
-            super(key);
-            this.type = type;
-        }
-
-        @Override
-        public Object parseValue(CommandArgs args) throws ArgumentParseException {
-            final String value = args.next().toUpperCase();
-            try {
-                return Enum.valueOf(type, value);
-            } catch (IllegalArgumentException ex) {
-                throw args.createError(ENUM_ERROR_INVALID.toComponent(value));
-            }
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            Iterable<String> validValues = Iterables.transform(Arrays.asList(type.getEnumConstants()), Enum::name);
-
-            if (args.hasNext()) {
-                try {
-                    final String prefix = args.next();
-                    validValues = Iterables.filter(validValues, new GuavaStartsWithPredicate(prefix));
-                } catch (ArgumentParseException ignore) {
-                }
-            }
-            return ImmutableList.copyOf(validValues);
-        }
-    }
-
-    /**
-     * Require one or more strings, which are combined into a single, space-separated string.
-     *
-     * @param key The key to store the parsed argument under
-     * @return the element to match the input
-     */
-    public static CommandElement remainingJoinedStrings(Component key) {
-        return new RemainingJoinedStringsCommandElement(key, false);
-    }
-
-    private static class RemainingJoinedStringsCommandElement extends KeyElement {
-        private final boolean raw;
-
-        private RemainingJoinedStringsCommandElement(Component key, boolean raw) {
-            super(key);
-            this.raw = raw;
-        }
-
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            if (raw) {
-                args.next();
-                ArgumentParseException ex = args.createError(null);
-                String ret = args.getRaw().substring(ex.getPosition());
-                while (args.hasNext()) {
-                    args.next();
-                }
-                return ret;
-            } else {
-                final StringBuilder ret = new StringBuilder(args.next());
-                while (args.hasNext()) {
-                    ret.append(' ').append(args.next());
-                }
-                return ret.toString();
-            }
-        }
-
-        @Override
-        public  Component getUsage(Commander src) {
-            return super.getUsage(src).append(TextComponent.of("..."));
-        }
-    }
-
-    /**
-     * Expect a literal sequence of arguments. This element matches the input against a predefined array of arguments expected to be present,
-     * case-insensitively.
-     *
-     * @param key The key to add to the context. Will be set to a value of true if this element matches
-     * @param expectedArgs The sequence of arguments expected
-     * @return the appropriate command element
-     */
-    public static CommandElement literal(Component key, String... expectedArgs) {
-        return new LiteralCommandElement(key, ImmutableList.copyOf(expectedArgs), true);
-    }
-
-    /**
-     * Expect a literal sequence of arguments. This element matches the input against a predefined array of arguments expected to be present,
-     * case-insensitively.
-     *
-     * @param key The key to store this argument as
-     * @param putValue The value to put at key if this argument matches. May be null
-     * @param expectedArgs The sequence of arguments expected
-     * @return the appropriate command element
-     */
-    public static CommandElement literal(Component key, Object putValue, String... expectedArgs) {
-        return new LiteralCommandElement(key, ImmutableList.copyOf(expectedArgs), putValue);
-    }
-
-    private static class LiteralCommandElement extends CommandElement {
-        private final List<String> expectedArgs;
-        private final Object putValue;
-
-        protected LiteralCommandElement(@Nullable Component key, List<String> expectedArgs, Object putValue) {
-            super(key);
-            this.expectedArgs = ImmutableList.copyOf(expectedArgs);
-            this.putValue = putValue;
-        }
-
-        @Nullable
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            for (String arg : this.expectedArgs) {
-                String current;
-                if (!(current = args.next()).equalsIgnoreCase(arg)) {
-                    throw args.createError(LITERAL_ERROR_INVALID.toComponent(current, arg));
-                }
-            }
-            return this.putValue;
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext ctx) {
-            for (String arg : this.expectedArgs) {
-                final String next = args.nextIfPresent();
-                if (next == null) {
-                    break;
-                } else if (args.hasNext()) {
-                    if (!next.equalsIgnoreCase(arg)) {
-                        break;
-                    }
-                } else {
-                    if (arg.toLowerCase().startsWith(next.toLowerCase())) { // Case-insensitive compare
-                        return ImmutableList.of(arg); // TODO: Possibly complete all remaining args? Does that even work
-                    }
-                }
-            }
-            return ImmutableList.of();
-        }
-
-        @Override
-        public Component getUsage(Commander src) {
-            return TextComponent.of(Joiner.on(' ').join(this.expectedArgs));
-        }
-    }
-
-    public static CommandElement suggestibleString(Component key, Supplier<Collection<String>> keySupplier) {
-        return new SuggestibleStringCommandElement(key, keySupplier);
-    }
-
-    private static class SuggestibleStringCommandElement extends CommandElement {
-
-        private final Supplier<Collection<String>> keySupplier;
-
-        public SuggestibleStringCommandElement(Component key, Supplier<Collection<String>> keySupplier) {
-            super(key);
-            this.keySupplier = keySupplier;
-        }
-
-        @Override
-        protected Object parseValue(CommandArgs args) throws ArgumentParseException {
-            return args.next();
-        }
-
-        @Override
-        public  List<String> tabComplete(Commander src, CommandArgs args, CommandContext context) {
-            final String arg = args.nextIfPresent();
-            if (arg == null) {
-                return ImmutableList.of();
-            } else {
-                return keySupplier.get().stream().filter(new StartsWithPredicate(arg)).collect(GuavaCollectors.toImmutableList());
-            }
-        }
-    }
-
-
 }

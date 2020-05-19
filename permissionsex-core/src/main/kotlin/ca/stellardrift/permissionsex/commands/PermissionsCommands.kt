@@ -24,105 +24,77 @@ import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_ARG_PERMISSION
 import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_DEFAULT_SUCCESS
 import ca.stellardrift.permissionsex.commands.Messages.PERMISSION_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.parse.CommandContext
+import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.commands.parse.command
+import ca.stellardrift.permissionsex.commands.parse.permission
+import ca.stellardrift.permissionsex.commands.parse.permissionValue
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.util.command.CommandContext
-import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.args.CommandElement
-import ca.stellardrift.permissionsex.util.command.args.GameArguments.permission
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.bool
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.choices
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.firstParsing
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.integer
-import ca.stellardrift.permissionsex.util.command.args.GenericArguments.seq
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent
-import net.kyori.text.Component
 
-private fun permissionValue(key: Component): CommandElement {
-    return firstParsing(
-        integer(
-            key
-        ),
-        bool(key),
-        choices(
-            key,
-            mapOf("none" to 0, "null" to 0, "unset" to 0)
-        )
-    )
-}
-
-internal fun getPermissionCommand(pex: PermissionsEx<*>): CommandSpec {
-    return CommandSpec.builder()
-        .setAliases("permission", "permissions", "perm", "perms", "p")
-        .setArguments(
-            seq(
-                permission(
-                    PERMISSION_ARG_KEY(),
-                    pex
-                ), permissionValue(PERMISSION_ARG_PERMISSION_VALUE())
-            )
-        )
-        .setExecutor(object : PermissionsExExecutor(pex) {
+internal fun getPermissionCommand(pex: PermissionsEx<*>) =
+    command(
+        "permission",
+        "permissions",
+        "perm",
+        "perms",
+        "p"
+    ) {
+        val permission = permission(pex) key PERMISSION_ARG_KEY()
+        val permissionValue = permissionValue() key PERMISSION_ARG_PERMISSION_VALUE()
+        args(permission, permissionValue)
+        executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun execute(
-                src: Commander,
-                args: CommandContext
-            ) {
+            override fun execute(src: Commander, args: CommandContext) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set")
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                val key = args.getOne<String>(PERMISSION_ARG_KEY)!!
-                var value = args.getOne<Any>(PERMISSION_ARG_PERMISSION_VALUE)
-                if (value is Boolean) {
-                    value = if (value) 1 else -1
-                }
-                val intVal = value as Int
-                ref.update { old ->
-                    old.setPermission(contexts, key, intVal)
-                }.thenMessageSubject(src) { send ->
-                    send(PERMISSION_SUCCESS(
-                        permission(key, intVal),
-                        subject(ref).styled { hl() },
-                        contexts.toComponent()
-                    ))
+                val key = args[permission]
+                val value = args[permissionValue]
+                ref.update { old -> old.setPermission(contexts, key, value) }
+                    .thenMessageSubject(src) { send ->
+                    send(
+                        PERMISSION_SUCCESS(
+                            permission(key, value),
+                            subject(ref).styled { hl() },
+                            contexts.toComponent()
+                        )
+                    )
                 }
             }
         })
-        .build()
-}
 
-internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>): CommandSpec {
-    return CommandSpec.builder()
-        .setAliases("permission-default", "perms-def", "permsdef", "pdef", "pd", "default", "def")
-        .setArguments(permissionValue(PERMISSION_ARG_PERMISSION_VALUE()))
-        .setExecutor(object : PermissionsExExecutor(pex) {
+    }
+
+internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>) =
+    command(
+        "permission-default",
+        "perms-def",
+        "permsdef",
+        "pdef",
+        "pd",
+        "default",
+        "def"
+    ) {
+        val permissionVal = permissionValue() key PERMISSION_ARG_PERMISSION_VALUE()
+        args = permissionVal
+        executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
-            override fun execute(
-                src: Commander,
-                args: CommandContext
-            ) {
+            override fun execute(src: Commander, args: CommandContext) {
                 val ref = getDataRef(src, args, "permissionsex.permission.set-default")
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                var value = args.getOne<Any>(PERMISSION_ARG_PERMISSION_VALUE)
-                if (value is Boolean) {
-                    value = if (value) 1 else -1
-                }
-                val intVal = value as Int
-                ref.update { old ->
-                    old.setDefaultValue(
-                        contexts,
-                        intVal
-                    )
-                }.thenMessageSubject(src) { send ->
-                    send(
-                        PERMISSION_DEFAULT_SUCCESS(
-                        intVal.toComponent(),
-                        subject(ref).styled {hl()},
-                        contexts.toComponent()
-                    ))
-                }
+                val value = args[permissionVal]
+                ref.update { old -> old.setDefaultValue(contexts, value) }
+                    .thenMessageSubject(src) { send ->
+                        send(
+                            PERMISSION_DEFAULT_SUCCESS(
+                                value.toComponent(),
+                                subject(ref).styled { hl() },
+                                contexts.toComponent()
+                            )
+                        )
+                    }
             }
         })
-        .build()
-}
+    }

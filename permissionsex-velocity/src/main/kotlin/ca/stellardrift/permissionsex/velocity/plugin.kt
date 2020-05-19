@@ -22,6 +22,7 @@ import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
@@ -29,7 +30,6 @@ import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import ca.stellardrift.permissionsex.util.command.CommandSpec
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent

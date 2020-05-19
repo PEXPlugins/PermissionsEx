@@ -21,121 +21,103 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT
 import ca.stellardrift.permissionsex.commands.Messages.PARENT_ADD_SUCCESS
 import ca.stellardrift.permissionsex.commands.Messages.PARENT_ARGS_PARENT
-import ca.stellardrift.permissionsex.commands.Messages.PARENT_REMOVE_SUCCESS
-import ca.stellardrift.permissionsex.commands.Messages.PARENT_SET_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.parse.CommandContext
+import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.commands.parse.command
+import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.command.CommandContext
-import ca.stellardrift.permissionsex.util.command.CommandException
-import ca.stellardrift.permissionsex.util.command.CommandSpec
-import ca.stellardrift.permissionsex.util.command.args.GameArguments.subject
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
+import ca.stellardrift.permissionsex.util.toComponent
 
-internal fun getParentCommand(pex: PermissionsEx<*>): CommandSpec {
-        return CommandSpec.builder()
-            .setAliases("parents", "parent", "par", "p")
-            .setChildren(
-                getAddParentCommand(pex),
-                getRemoveParentCommand(pex),
-                getSetParentsCommand(pex)
-            )
-            .build()
-    }
-
-    private fun getAddParentCommand(pex: PermissionsEx<*>): CommandSpec {
-        return CommandSpec.builder()
-            .setAliases("add", "a", "+")
-            .setArguments(subject(PARENT_ARGS_PARENT(), pex, PermissionsEx.SUBJECTS_GROUP))
-            .setExecutor(object : PermissionsExExecutor(pex) {
-                @Throws(CommandException::class)
-                override fun execute(
-                    src: Commander,
-                    args: CommandContext
-                ) {
-                    val ref = getDataRef(src, args, "permissionsex.parent.add")
-                    val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                    val parent =
-                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)!!
-                        ref.update { old: ImmutableSubjectData ->
-                            old.addParent(
-                                contexts,
-                                parent.key,
-                                parent.value
-                            )
-                        }.thenMessageSubject(src) { send ->
-                                send(PARENT_ADD_SUCCESS(
-                                subject(parent),
-                                subject(ref).styled { hl() },
-                                contexts.toComponent()
-                            ))
-                        }
-                }
-            })
-            .build()
-    }
-
-    private fun getRemoveParentCommand(pex: PermissionsEx<*>): CommandSpec {
-        return CommandSpec.builder()
-            .setAliases("remove", "rem", "delete", "del", "-")
-            .setArguments(subject(PARENT_ARGS_PARENT(), pex, PermissionsEx.SUBJECTS_GROUP))
-            .setExecutor(object : PermissionsExExecutor(pex) {
-                @Throws(CommandException::class)
-                override fun execute(
-                    src: Commander,
-                    args: CommandContext
-                ) {
-                    val ref = getDataRef(src, args, "permissionsex.parent.remove")
-                    val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                    val parent =
-                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)!!
-                        ref.update { old: ImmutableSubjectData ->
-                            old.removeParent(
-                                contexts,
-                                parent.key,
-                                parent.value
-                            )
+internal fun getParentCommand(pex: PermissionsEx<*>) =
+    command("parents", "parent", "par", "p") {
+        children {
+            /**
+             * Add a parent
+             */
+            child("add", "a", "+") {
+                val parent = subject(pex, PermissionsEx.SUBJECTS_GROUP) key PARENT_ARGS_PARENT()
+                args = parent
+                executor(object : PermissionsExExecutor(pex) {
+                    @Throws(CommandException::class)
+                    override fun execute(src: Commander, args: CommandContext) {
+                        val ref = getDataRef(src, args, "permissionsex.parent.add")
+                        val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
+                        val parent = args[parent]
+                        ref.update { old ->
+                            old.addParent(contexts, parent.key, parent.value)
                         }.thenMessageSubject(src) { send ->
                             send(
-                                PARENT_REMOVE_SUCCESS(
-                                subject(parent),
-                                subject(ref).styled { hl()},
-                                contexts.toComponent()
-                            ))
+                                PARENT_ADD_SUCCESS(
+                                    subject(parent),
+                                    subject(ref).styled { hl() }, contexts.toComponent()
+                                )
+                            )
                         }
-                }
-            })
-            .build()
-    }
+                    }
+                })
+            }
 
-    private fun getSetParentsCommand(pex: PermissionsEx<*>): CommandSpec {
-        return CommandSpec.builder()
-            .setAliases("set", "replace", "=")
-            .setArguments(subject(PARENT_ARGS_PARENT(), pex, PermissionsEx.SUBJECTS_GROUP))
-            .setExecutor(object : PermissionsExExecutor(pex) {
-                @Throws(CommandException::class)
-                override fun execute(
-                    src: Commander,
-                    args: CommandContext
-                ) {
-                    val ref = getDataRef(src, args, "permissionsex.parent.set")
-                    val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
-                    val parent =
-                        args.getOne<Map.Entry<String, String>>(PARENT_ARGS_PARENT)!!
-                        ref.update { old: ImmutableSubjectData ->
-                            old.clearParents(
-                                contexts
-                            ).addParent(contexts, parent.key, parent.value)
+            /**
+             * Remove a parent
+             */
+            child("remove", "rem", "delete", "del", "-") {
+                val parent = subject(pex, PermissionsEx.SUBJECTS_GROUP) key PARENT_ARGS_PARENT()
+                args = parent
+                executor(object : PermissionsExExecutor(pex) {
+                    @Throws(CommandException::class)
+                    override fun execute(
+                        src: Commander,
+                        args: CommandContext
+                    ) {
+                        val ref = getDataRef(src, args, "permissionsex.parent.remove")
+                        val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
+                        val parent = args[parent]
+                        ref.update { old -> old.removeParent(contexts, parent.key, parent.value) }
+                            .thenMessageSubject(src) { send ->
+                                send(
+                                    Messages.PARENT_REMOVE_SUCCESS(
+                                        subject(parent),
+                                        subject(ref).styled { hl() },
+                                        contexts.toComponent()
+                                    )
+                                )
+                            }
+                    }
+                })
+            }
+
+            /**
+             * Clear all parents from the provided context
+             */
+            child("set", "replace", "=") {
+                val parent = subject(pex, PermissionsEx.SUBJECTS_GROUP) key PARENT_ARGS_PARENT()
+                args = parent
+                executor(object : PermissionsExExecutor(pex) {
+                    @Throws(CommandException::class)
+                    override fun execute(
+                        src: Commander,
+                        args: CommandContext
+                    ) {
+                        val ref = getDataRef(src, args, "permissionsex.parent.set")
+                        val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
+                        val parent = args[parent]
+                        ref.update { old ->
+                            old.clearParents(contexts)
+                                .addParent(contexts, parent.key, parent.value)
                         }.thenMessageSubject(src) { send ->
                             send(
-                                PARENT_SET_SUCCESS(
-                                subject(ref).styled { hl() },
-                                subject(parent),
-                                contexts.toComponent()
-                            ))
+                                Messages.PARENT_SET_SUCCESS(
+                                    subject(ref).styled { hl() },
+                                    subject(parent),
+                                    contexts.toComponent()
+                                )
+                            )
                         }
-                }
-            })
-            .build()
+                    }
+                })
+            }
+        }
     }
