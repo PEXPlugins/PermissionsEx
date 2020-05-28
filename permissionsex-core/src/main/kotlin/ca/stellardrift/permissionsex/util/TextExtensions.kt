@@ -33,7 +33,7 @@ import java.util.Locale
 import java.util.ResourceBundle
 
 
-fun Any.toComponent(): Component {
+fun Any?.toComponent(): Component {
     return when (this) {
         is ComponentBuilder<*, *> -> this.build()
         is Component -> this
