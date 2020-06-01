@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.sponge;
+package ca.stellardrift.permissionsex.sponge
 
 object PomData {
     const val ARTIFACT_ID = "${project.rootProject.name.toLowerCase()}"

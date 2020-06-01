@@ -1,6 +1,5 @@
 
-import ca.stellardrift.build.kaptAnd
-import ca.stellardrift.build.kyoriText
+import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -46,9 +45,8 @@ dependencies {
     implementation(kyoriText("serializer-gson", Versions.TEXT)) {
         exclude("com.google.code.gson")
     }
-    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
-    kaptAnd("shadow", "org.spongepowered:spongeapi:${Versions.SPONGE}")
+    kapt(shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")!!)
     testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")

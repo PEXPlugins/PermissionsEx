@@ -17,10 +17,10 @@
 
 package ca.stellardrift.permissionsex.util
 
+import java.net.InetAddress
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.net.InetAddress
 
 private val testAddress = InetAddress.getByAddress(byteArrayOf(84, 127, 48, 22))
 private fun createAddress(addr: String): InetAddress {
@@ -47,7 +47,6 @@ class IpSetTest {
         assertTrue(createAddress("fcc0:c0b2:2a14:7afc:5216:1854:1a2f:2c13") in subject)
         val emptyPrefix = IpSet.fromCidr("::/0")
         assertTrue(createAddress("::dead:beef") in emptyPrefix)
-
     }
 
     @Test
@@ -76,9 +75,7 @@ class IpSetTest {
         assertTrue(IpSet.fromAddrPrefix(addr3, 16) in addr116Set)
         assertTrue(IpSet.fromAddrPrefix(addr3, 32) in addr116Set)
 
-
         assertFalse(IpSet.fromAddrPrefix(addr3, 8) in addr116Set)
         assertFalse(IpSet.fromAddrPrefix(addr3, 16) in IpSet.fromAddrPrefix(addr3, 32))
     }
-
 }

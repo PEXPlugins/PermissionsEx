@@ -22,9 +22,9 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import com.google.common.base.Strings
+import java.util.Locale
 import net.kyori.text.Component
 import net.kyori.text.serializer.plain.PlainComponentSerializer
-import java.util.Locale
 
 class TestCommander(override val manager: PermissionsEx<*>) : Commander {
     override val name: String

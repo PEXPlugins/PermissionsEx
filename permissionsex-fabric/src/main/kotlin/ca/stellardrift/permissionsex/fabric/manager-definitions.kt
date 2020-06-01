@@ -26,17 +26,16 @@ import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.maxPrefixLength
-import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.world.dimension.DimensionType
 import java.net.InetSocketAddress
 import java.util.Optional
 import java.util.UUID
+import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.world.dimension.DimensionType
 
 const val SUBJECTS_SYSTEM = "system"
 const val SUBJECTS_COMMAND_BLOCK = "commandblock"
 const val IDENTIFIER_RCON = "rcon"
-
 
 /**
  * An interface that can be implemented by context definitions that can draw from
@@ -113,7 +112,6 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSour
         consumer((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.address.run {
             IpSet.fromAddrPrefix(this, this.maxPrefixLength)
         })
-
 }
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost"), CommandSourceContextDefinition<String> {
@@ -140,7 +138,6 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport"), Command
 
     private fun accumulate(ply: ServerPlayerEntity, consumer: (value: Int) -> Unit) =
         consumer((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.port)
-
 }
 
 class UserSubjectTypeDefinition : SubjectTypeDefinition<ServerPlayerEntity>("user") {
@@ -170,5 +167,4 @@ class UserSubjectTypeDefinition : SubjectTypeDefinition<ServerPlayerEntity>("use
             Optional.empty()
         }
     }
-
 }

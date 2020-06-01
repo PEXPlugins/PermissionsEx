@@ -74,8 +74,8 @@ import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.unaryMinus
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.TextComponent.make
 import java.util.regex.Pattern
+import net.kyori.text.TextComponent.make
 
 fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     val (childrenKey, childrenArg, childrenExec) = ChildCommandBuilder().run {
@@ -163,7 +163,6 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
         }
     }
 }
-
 
 private fun getDebugToggleCommand(pex: PermissionsEx<*>) =
     command("debug", "d") {

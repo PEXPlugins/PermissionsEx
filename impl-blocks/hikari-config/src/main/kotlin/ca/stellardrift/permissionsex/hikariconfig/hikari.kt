@@ -19,13 +19,12 @@
 package ca.stellardrift.permissionsex.hikariconfig
 
 import com.zaxxer.hikari.HikariDataSource
-import org.h2.engine.ConnectionInfo
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Properties
 import java.util.function.BiFunction
 import java.util.regex.Pattern
-
+import org.h2.engine.ConnectionInfo
 
 private val JDBC_URL_REGEX: Pattern =
     Pattern.compile("(?:jdbc:)?([^:]+):(//)?(?:([^:]+)(?::([^@]+))?@)?(.*)")
@@ -34,7 +33,7 @@ private val JDBC_URL_REGEX: Pattern =
  * Map from protocol names to a function that transforms the given JDBC url
  */
 private val PATH_CANONICALIZERS: Map<String, BiFunction<Path, String, String>> = mapOf(
-    "h2" to BiFunction {baseDir, orig ->
+    "h2" to BiFunction { baseDir, orig ->
         // Bleh if only h2 had a better way of supplying a base directory... oh well...
         val h2Info = ConnectionInfo(orig)
         if (!h2Info.isPersistent || h2Info.isRemote) {

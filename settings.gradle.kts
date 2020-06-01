@@ -25,7 +25,7 @@ include("permissionsex-core",
     "permissionsex-sponge", "permissionsex-bukkit", "permissionsex-fabric",
     "permissionsex-bungee", "permissionsex-velocity")
 
-listOf("proxy-common", "hikari-config", "profile-resolver", "smarter-text").forEach {
+listOf("proxy-common", "hikari-config", "profile-resolver").forEach {
     include("impl-blocks:$it")
     findProject(":impl-blocks:$it")?.name = "permissionsex-$it"
 }

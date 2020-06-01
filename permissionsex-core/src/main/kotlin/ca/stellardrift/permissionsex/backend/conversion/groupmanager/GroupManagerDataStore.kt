@@ -32,18 +32,18 @@ import ca.stellardrift.permissionsex.exception.PermissionsLoadingException
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import com.google.common.collect.Maps
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.objectmapping.Setting
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
-import org.yaml.snakeyaml.DumperOptions
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.kotlin.get
+import ninja.leaping.configurate.loader.ConfigurationLoader
+import ninja.leaping.configurate.objectmapping.Setting
+import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
+import org.yaml.snakeyaml.DumperOptions
 
 /**
  * A pair of nodes representing a users and groups permissions file for a given world, resolved to the top-level `users`\`groups` key.

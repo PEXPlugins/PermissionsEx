@@ -23,17 +23,27 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_DEFAULTS
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.castMap
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import com.google.common.collect.Iterables
 import com.mojang.authlib.Agent
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.ProfileLookupCallback
 import com.mojang.brigadier.CommandDispatcher
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.function.Function
+import java.util.function.Supplier
+import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.server.ServerStartCallback
@@ -45,16 +55,6 @@ import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.LoggerFactory
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.function.Function
-import java.util.function.Supplier
-import javax.sql.DataSource
 
 private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
@@ -77,7 +77,6 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private val exec = Executors.newCachedThreadPool()
     private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
-
     override fun onInitialize() {
         this.dataDir = FabricLoader.getInstance().configDirectory.toPath().resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
@@ -85,8 +84,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         logger.prefix = "[${container.metadata.name}] "
 
         logger.info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
-        ServerStartCallback.EVENT.register(ServerStartCallback {init(it) })
-        ServerStopCallback.EVENT.register(ServerStopCallback {  shutdown(it) })
+        ServerStartCallback.EVENT.register(ServerStartCallback { init(it) })
+        ServerStopCallback.EVENT.register(ServerStopCallback { shutdown(it) })
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
             tryRegisterCommands(dispatcher)
         })
@@ -142,9 +141,9 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     fun handlePlayerJoin(player: ServerPlayerEntity) {
         manager.getSubjects(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
             // Update name option
-            it.data().cache.isRegistered(it.identifier.value).thenAccept {isReg ->
+            it.data().cache.isRegistered(it.identifier.value).thenAccept { isReg ->
                 if (isReg) {
-                    it.data().update {data ->
+                    it.data().update { data ->
                         data.setOption(GLOBAL_CONTEXT, "name", player.name.asString())
                     }
                 }
@@ -186,7 +185,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     override fun registerCommands(commandSupplier: Supplier<Set<CommandSpec>>) {
-        synchronized (commands) {
+        synchronized(commands) {
                 commands.add(commandSupplier)
                 tryRegisterCommands()
         }
@@ -232,10 +231,9 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             futures.size
         }, asyncExecutor).thenCombine(CompletableFuture.allOf(*futures.toTypedArray())) { count, _ -> count }
     }
-
 }
 
-internal class PEXProfileLookupCallback(private val state: CountDownLatch, private val action: Function<MinecraftProfile, CompletableFuture<Void>>, val futures: MutableList<CompletableFuture<Void>>): ProfileLookupCallback {
+internal class PEXProfileLookupCallback(private val state: CountDownLatch, private val action: Function<MinecraftProfile, CompletableFuture<Void>>, val futures: MutableList<CompletableFuture<Void>>) : ProfileLookupCallback {
     override fun onProfileLookupSucceeded(profile: GameProfile) {
         try {
             futures.add(action.apply(profile as MinecraftProfile))
@@ -248,5 +246,4 @@ internal class PEXProfileLookupCallback(private val state: CountDownLatch, priva
         state.countDown()
         PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_LOOKUP(profile, exception.message.toString()), exception)
     }
-
 }

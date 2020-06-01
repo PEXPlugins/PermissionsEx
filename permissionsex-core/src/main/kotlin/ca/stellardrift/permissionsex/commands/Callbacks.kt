@@ -50,7 +50,7 @@ class CallbackController {
         return "/pex cb $id"
     }
 
-    private val Commander.mapKey: String get() = (this.subjectIdentifier?.value?: name ).toLowerCase(Locale.ROOT)
+    private val Commander.mapKey: String get() = (this.subjectIdentifier?.value ?: name).toLowerCase(Locale.ROOT)
 
     fun clearOwnedBy(name: String) {
         knownCallbacks.remove(name)

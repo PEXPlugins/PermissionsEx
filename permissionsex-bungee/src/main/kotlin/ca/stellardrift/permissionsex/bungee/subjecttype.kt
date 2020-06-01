@@ -26,9 +26,9 @@ import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.maxPrefixLength
-import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.util.Optional
 import java.util.UUID
+import net.md_5.bungee.api.connection.ProxiedPlayer
 
 class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<ProxiedPlayer>(SUBJECTS_USER) {
     override fun isNameValid(name: String): Boolean {
@@ -74,7 +74,6 @@ object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
             pendingConnection.virtualHost?.hostName?.apply(consumer)
         }
     }
-
 }
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
@@ -85,7 +84,6 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip") {
             }?.apply(consumer)
         }
     }
-
 }
 
 object LocalPortContextDefiniiton : ContextDefinition<Int>("localport") {

@@ -21,9 +21,9 @@ import ca.stellardrift.permissionsex.EmptyTestConfiguration
 import ca.stellardrift.permissionsex.PermissionsExTest
 import ca.stellardrift.permissionsex.commands.parse.command
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
+import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Tests for child commands

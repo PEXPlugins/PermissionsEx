@@ -52,7 +52,7 @@ interface TimeContextParser {
     fun parse(s: String): ZonedDateTime?
 }
 
-class DateTimeFormatterParser(val d: DateTimeFormatter): TimeContextParser {
+class DateTimeFormatterParser(val d: DateTimeFormatter) : TimeContextParser {
     override fun parse(s: String): ZonedDateTime? {
         return try {
             ZonedDateTime.parse(s, d)
@@ -62,10 +62,10 @@ class DateTimeFormatterParser(val d: DateTimeFormatter): TimeContextParser {
     }
 }
 
-class EpochTimeContextParser(val z: ZoneId): TimeContextParser {
+class EpochTimeContextParser(val z: ZoneId) : TimeContextParser {
     override fun parse(s: String): ZonedDateTime? {
         return try {
-            ZonedDateTime.from(Instant.ofEpochSecond(s.toLong())).withZoneSameLocal(z);
+            ZonedDateTime.from(Instant.ofEpochSecond(s.toLong())).withZoneSameLocal(z)
         } catch (ex: NumberFormatException) {
             null
         }
@@ -83,7 +83,7 @@ class RelativeTimeContextParser(val z: ZoneId) : TimeContextParser {
 
         // validate the expression begins with either + or -
         when (s[0]) {
-            '+', '-' -> {/* ignored */}
+            '+', '-' -> { /* ignored */ }
             else -> return null
         }
 
@@ -124,7 +124,7 @@ class RelativeTimeContextParser(val z: ZoneId) : TimeContextParser {
 
             working = working.plus(quantity, unit)
             index += match.groups[0]!!.value.length
-        } while (index < s.length);
+        } while (index < s.length)
         return null
     }
 }

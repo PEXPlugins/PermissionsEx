@@ -20,13 +20,13 @@ package ca.stellardrift.permissionsex.fabric
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.text.fabric.ComponentCommandOutput
 import ca.stellardrift.text.fabric.ComponentPlayer
+import java.util.Locale
 import net.kyori.text.Component
 import net.minecraft.network.MessageType
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.CommandOutput
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
-import java.util.Locale
 
 /**
  * Take a locale string provided from a minecraft client and attempt to parse it as a locale.
@@ -46,7 +46,7 @@ fun String.asMCLocale(): Locale {
 }
 
 fun <Value> tickCachedValue(server: MinecraftServer, maxDelta: Long, update: () -> Value): CachingValue<Value> {
-    return CachingValue({server.ticks.toLong()}, maxDelta, update)
+    return CachingValue({ server.ticks.toLong() }, maxDelta, update)
 }
 
 fun <R> ServerCommandSource.ifPlayer(operation: (ServerPlayerEntity) -> R): R? {

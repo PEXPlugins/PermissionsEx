@@ -50,7 +50,6 @@ private val gson: Gson = GsonBuilder().apply {
             return UUID.fromString("${mojangId.substring(0, 8)}-${mojangId.substring(8, 12)}" +
                     "-${mojangId.substring(12, 16)}-${mojangId.substring(16, 20)}-${mojangId.substring(20, 32)}")
         }
-
     })
 }.create()
 
@@ -92,7 +91,7 @@ fun lookupMinecraftProfilesByName(names: Iterable<String>, action: (MinecraftPro
                 action(it)
             }
             .toArray { arrayOfNulls<CompletableFuture<Void>>(it) }).thenApply { count }
-    } catch (ex : Exception) {
+    } catch (ex: Exception) {
         return Util.failedFuture(ex)
     }
 }

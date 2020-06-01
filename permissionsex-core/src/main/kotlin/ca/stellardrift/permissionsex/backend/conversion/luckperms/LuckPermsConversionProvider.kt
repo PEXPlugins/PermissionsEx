@@ -48,5 +48,4 @@ object LuckPermsConversionProvider : ConversionProvider {
 
         return result
     }
-
 }

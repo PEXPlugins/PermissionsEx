@@ -1,14 +1,10 @@
 package $packageName
 
 import ca.stellardrift.permissionsex.util.TranslatableProvider
-import java.util.Locale
-import java.util.ResourceBundle
 
 object ${className} {
     private val BUNDLE_NAME = "${bundleName}"
-    <%   def propPattern = ~/[.-]/ %><% for (prop in keys) { %>
-    <% def propKey = propPattern.matcher(prop.toUpperCase()).replaceAll("_") %>
+<%   def propPattern = ~/[.-]/ %><% for (prop in keys) { %><% def propKey = propPattern.matcher(prop.toUpperCase()).replaceAll("_") %>
     @JvmField
-    val ${propKey} = TranslatableProvider(BUNDLE_NAME, "${prop}")
-    <% }  %>
+    val ${propKey} = TranslatableProvider(BUNDLE_NAME, "${prop}")<% }  %>
 }

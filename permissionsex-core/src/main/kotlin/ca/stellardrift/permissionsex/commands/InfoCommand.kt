@@ -50,7 +50,6 @@ internal fun getInfoCommand(pex: PermissionsEx<*>) =
         executor(SubjectInfoPrintingExecutor(pex))
     }
 
-
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> MessageFormatter.hlKeyVal(
     key: B,
     value: Component

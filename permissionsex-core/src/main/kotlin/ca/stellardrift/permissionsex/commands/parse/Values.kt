@@ -17,17 +17,17 @@
 
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.ArgumentKeys.CHOICES_ERROR_INVALID
 import ca.stellardrift.permissionsex.commands.ArgumentKeys.ENUM_ERROR_INVALID
 import ca.stellardrift.permissionsex.commands.ArgumentKeys.INTEGER_ERROR_FORMAT
 import ca.stellardrift.permissionsex.commands.ArgumentKeys.LITERAL_ERROR_INVALID
 import ca.stellardrift.permissionsex.commands.ArgumentKeys.UUID_ERROR_FORMAT
+import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryPlus
+import java.util.UUID
 import net.kyori.text.Component
 import net.kyori.text.TextComponent.empty
-import java.util.UUID
 
 internal val PIPE = +"|"
 internal val ELIPSES = +"…"
@@ -63,7 +63,6 @@ fun <T> choices(values: Map<String, T>, description: Component, valuesInUsage: B
             key
         }
     }
-
 }
 
 // TODO: Use Configurate ScalarSerializers wherever it makes sense (starting with 4.0)
@@ -139,8 +138,7 @@ private val BOOLEAN: Value<Boolean> = choices(
 
 fun boolean(): Value<Boolean> = BOOLEAN
 
-
-inline fun <reified T: Enum<T>> enum() = object : Value<T>(+"values of ${T::class.simpleName}") {
+inline fun <reified T : Enum<T>> enum() = object : Value<T>(+"values of ${T::class.simpleName}") {
     override fun parse(args: CommandArgs): T {
         val arg = args.next().toUpperCase()
         try {
@@ -173,7 +171,6 @@ private object RemainingJoinedStrings : Value<String>(+"the entire rest of the a
     }
 
     override fun usage(key: Component) = key.append(ELIPSES)
-
 }
 
 private object RawRemainingArguments : Value<String>(+"Raw input, including any quotes") {
@@ -229,8 +226,7 @@ fun suggestibleString(completions: () -> Sequence<String>, description: Componen
         src: Commander,
         args: CommandArgs
     ): Sequence<String> {
-        val next = args.nextIfPresent()?: return emptySequence()
+        val next = args.nextIfPresent() ?: return emptySequence()
         return completions().filter { it.startsWith(next, true) }
     }
-
 }

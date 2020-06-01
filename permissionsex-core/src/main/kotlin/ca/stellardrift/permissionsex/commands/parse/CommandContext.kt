@@ -17,9 +17,9 @@
 
 package ca.stellardrift.permissionsex.commands.parse
 
+import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.TranslatableProvider
-import ca.stellardrift.permissionsex.commands.CommonMessages
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import net.kyori.text.Component
@@ -47,7 +47,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     }
 
     fun <T> getOne(key: Component): T? {
-         return getOne(key.toContextKey())
+        return getOne(key.toContextKey())
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -1,6 +1,6 @@
 
-import ca.stellardrift.build.configurate
-import ca.stellardrift.build.kyoriText
+import ca.stellardrift.build.common.configurate
+import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -44,7 +44,7 @@ dependencies {
     }
 
     implementation(configurate("yaml")) {
-        exclude(group="com.google.guava")
+        exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
     implementation(kyoriText("adapter-bungeecord", Versions.TEXT_ADAPTER)) {
@@ -77,7 +77,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.slf4j", "org.antlr.v4.runtime", "net.kyori").forEach {
         relocate(it, "$relocateRoot.$it")
     }
-    
+
     exclude("org/checkerframework/**")
     manifest {
         attributes("Automatic-Module-Name" to project.name)

@@ -1,6 +1,6 @@
 
-import ca.stellardrift.build.configurate
-import ca.stellardrift.build.kyoriText
+import ca.stellardrift.build.common.configurate
+import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
 
 /*
@@ -25,7 +25,6 @@ plugins {
     antlr
     id("ca.stellardrift.localization")
 }
-
 
 configurations.compile {
     exclude("org.antlr", "antlr4")
@@ -70,5 +69,5 @@ opinionated {
 tasks.generateGrammarSource {
     val grammarPackage = "${project.group}.util.glob.parser"
     arguments.addAll(listOf("-package", grammarPackage))
-    outputDirectory = File("${buildDir}/generated-src/antlr/main/${grammarPackage.replace(".", "/")}")
+    outputDirectory = File("$buildDir/generated-src/antlr/main/${grammarPackage.replace(".", "/")}")
 }

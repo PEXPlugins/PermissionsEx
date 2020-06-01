@@ -33,12 +33,12 @@ import ca.stellardrift.permissionsex.commands.parse.remainingJoinedStrings
 import ca.stellardrift.permissionsex.commands.parse.string
 import ca.stellardrift.permissionsex.commands.parse.uuid
 import ca.stellardrift.permissionsex.util.unaryPlus
+import java.util.UUID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import java.util.UUID
 
 /**
  * Tests for all argument types contained in GenericArguments
@@ -97,9 +97,9 @@ class GenericArgumentsTest {
         var el = StructuralArguments.optional(string() key +"val")
         var context = parseForInput("", el)
         Assertions.assertNull(context.getOne("val"))
-        //el = StructuralArguments.optional(string() key +"val", "def") // TODO: add back after re-implementation
-        //context = parseForInput("", el)
-        //assertEquals("def", context.getOne("val"))
+        // el = StructuralArguments.optional(string() key +"val", "def") // TODO: add back after re-implementation
+        // context = parseForInput("", el)
+        // assertEquals("def", context.getOne("val"))
         el = StructuralArguments.seq(
             StructuralArguments.optionalWeak(int() key +"val"), string() key +"str"
         )

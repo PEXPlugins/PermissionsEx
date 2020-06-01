@@ -64,7 +64,6 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>) =
                 }
             }
         })
-
     }
 
 internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>) =

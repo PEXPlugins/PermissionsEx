@@ -35,7 +35,7 @@ interface PeekingIterator<T> : Iterator<T> {
     fun peek(): T?
 }
 
-private class WrappingPeekingIterator<T>(val wrap: Iterator<T>): PeekingIterator<T> {
+private class WrappingPeekingIterator<T>(val wrap: Iterator<T>) : PeekingIterator<T> {
     private var next: T? = null
 
     init {
@@ -43,9 +43,9 @@ private class WrappingPeekingIterator<T>(val wrap: Iterator<T>): PeekingIterator
     }
 
     private fun populate() {
-        next = null;
+        next = null
         if (wrap.hasNext()) {
-            next = wrap.next();
+            next = wrap.next()
         }
     }
 

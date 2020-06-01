@@ -36,7 +36,7 @@ package ca.stellardrift.permissionsex.fabric
 fun registerWorldEdit(): Boolean {
     return try {
         Class.forName("com.sk89q.worldedit.fabric.FabricWorldEdit")
-        //WorldEdit.getInstance().eventBus.register(PEXWorldEditProvider())
+        // WorldEdit.getInstance().eventBus.register(PEXWorldEditProvider())
         true
     } catch (ex: ClassNotFoundException) {
         false

@@ -23,25 +23,25 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import com.google.common.reflect.TypeToken
+import java.util.Optional
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import net.kyori.text.Component
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.kotlin.get
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection
 import ninja.leaping.configurate.reactive.Publisher
 import ninja.leaping.configurate.reactive.Subscriber
-import java.util.Optional
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 
-inline fun <reified T: Any> Optional<*>.castMap(operation: T.() -> Unit) {
+inline fun <reified T : Any> Optional<*>.castMap(operation: T.() -> Unit) {
     (this.orElse(null) as? T)?.apply(operation)
 }
 
-inline fun <reified T: Any, R> Optional<*>.castMap(operation: T.() -> R?): R? {
+inline fun <reified T : Any, R> Optional<*>.castMap(operation: T.() -> R?): R? {
     return (this.orElse(null) as? T)?.run(operation)
 }
 
-inline fun <reified T: Any> Optional<*>.cast(): Optional<T> {
+inline fun <reified T : Any> Optional<*>.cast(): Optional<T> {
     return this.map {
         if (it is T) {
             it
@@ -58,15 +58,15 @@ inline fun <reified T> CalculatedSubject.option(key: String): T? {
 }
 
 fun CompletableFuture<*>.thenMessageSubject(
-        src: Commander,
-        message: Component
+    src: Commander,
+    message: Component
 ): CompletableFuture<Void> {
     return thenMessageSubject(src) { send -> send(message) }
 }
 
 fun CompletableFuture<*>.thenMessageSubject(
-        src: Commander,
-        message: MessageFormatter.(send: (Component) -> Unit) -> Unit
+    src: Commander,
+    message: MessageFormatter.(send: (Component) -> Unit) -> Unit
 ): CompletableFuture<Void> {
     return thenRun { src.msg(message) }
             .exceptionally { orig: Throwable ->
@@ -89,7 +89,7 @@ fun CompletableFuture<*>.thenMessageSubject(
 }
 
 fun <V> Publisher<V>.toCompletableFuture(): CompletableFuture<V> {
-   val ret = CompletableFuture<V>()
+    val ret = CompletableFuture<V>()
     subscribe(object : Subscriber<V> {
         override fun submit(item: V) {
             ret.complete(item)
@@ -101,4 +101,3 @@ fun <V> Publisher<V>.toCompletableFuture(): CompletableFuture<V> {
     })
     return ret
 }
-

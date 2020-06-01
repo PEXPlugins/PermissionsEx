@@ -19,23 +19,23 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.castMap
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType.getString
 import com.mojang.brigadier.arguments.StringArgumentType.greedyString
+import com.mojang.brigadier.context.CommandContext as BrigadierCommandContext
 import com.mojang.brigadier.suggestion.SuggestionProvider
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import java.util.concurrent.CompletableFuture
+import java.util.function.Predicate
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.util.Nameable
-import java.util.concurrent.CompletableFuture
-import java.util.function.Predicate
-import com.mojang.brigadier.context.CommandContext as BrigadierCommandContext
 
 fun registerCommand(spec: CommandSpec, dispatch: CommandDispatcher<ServerCommandSource>) {
     val cmdCallbacks = PEXBrigadierCommand(spec)
@@ -57,13 +57,13 @@ fun registerCommand(spec: CommandSpec, dispatch: CommandDispatcher<ServerCommand
     }
 }
 
-class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerCommandSource>, Command<ServerCommandSource>,
+class PEXBrigadierCommand(private val spec: CommandSpec) : Predicate<ServerCommandSource>, Command<ServerCommandSource>,
     SuggestionProvider<ServerCommandSource> {
     override fun getSuggestions(
         context: BrigadierCommandContext<ServerCommandSource>,
         builder: SuggestionsBuilder
     ): CompletableFuture<Suggestions> {
-        val argsSoFar = try {getString(context, "args") } catch (e: Exception) { "" }
+        val argsSoFar = try { getString(context, "args") } catch (e: Exception) { "" }
         val suggestionPrefix = argsSoFar.substringBeforeLast(' ', "")
         this.spec.tabComplete(context.source.asCommander(), argsSoFar).forEach {
             if (suggestionPrefix.isEmpty()) {
@@ -93,7 +93,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec): Predicate<ServerComman
     }
 }
 
-class PEXNoArgsBrigadierCommand(private val spec: CommandSpec): Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
+class PEXNoArgsBrigadierCommand(private val spec: CommandSpec) : Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
     override fun run(context: com.mojang.brigadier.context.CommandContext<ServerCommandSource>): Int {
         val cmd = context.source.asCommander()
         try {
@@ -127,4 +127,3 @@ class FabricMessageFormatter constructor(val src: ServerCommandSource) :
     override val SubjectIdentifier.friendlyName: String?
         get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap< Nameable, String> { name.asString() }
 }
-

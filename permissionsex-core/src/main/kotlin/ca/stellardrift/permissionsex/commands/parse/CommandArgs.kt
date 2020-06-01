@@ -67,8 +67,8 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
     }
 
     fun createError(message: Component): ArgumentParseException {
-        //System.out.println("Creating error: " + message.translateFormatted(Locale.getDefault()));
-        //Thread.dumpStack();
+        // System.out.println("Creating error: " + message.translateFormatted(Locale.getDefault()));
+        // Thread.dumpStack();
         return ArgumentParseException(
             message,
             raw,

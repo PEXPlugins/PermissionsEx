@@ -1,5 +1,4 @@
 
-import ca.stellardrift.build.implementationInclude
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
 import net.fabricmc.loom.task.RemapSourcesJarTask
@@ -23,15 +22,10 @@ import net.fabricmc.loom.task.RemapSourcesJarTask
  */
 
 plugins {
-    id("fabric-loom") version "0.2.7-SNAPSHOT"
+    id("ca.stellardrift.opinionated.fabric") version "3.0"
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
 }
-
-minecraft {
-    refmapName = "${rootProject.name.toLowerCase()}-refmap.json"
-}
-
 
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
@@ -46,24 +40,23 @@ dependencies {
     }
 
     shade(project(":impl-blocks:permissionsex-hikari-config"))
-    shade(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
-    shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive=false }
+    shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.15:v2")
     modImplementation("net.fabricmc:fabric-loader:0.8.2+build.194")
-    //modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
-    //modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
+    // modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
+    // modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
 
-    implementationInclude("net.fabricmc.fabric-api:fabric-api:0.10.7+build.309-1.15")
-    implementationInclude("net.fabricmc:fabric-language-kotlin:1.3.71+build.1")
-    implementationInclude("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
+    modImplementation(include("net.fabricmc.fabric-api:fabric-api:0.10.7+build.309-1.15")!!)
+    modImplementation(include("net.fabricmc:fabric-language-kotlin:1.3.71+build.1")!!)
+    modImplementation(include("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
         exclude("com.google.code.gson")
-    }
-    implementationInclude("ca.stellardrift:confabricate:1.0+3.6.1") {
+    })
+    modImplementation(include("ca.stellardrift:confabricate:1.0+3.6.1") {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
-    }
+    })
 }
 
 localization {
@@ -114,10 +107,13 @@ tasks.build.configure {
     dependsOn(remapShadowJar)
 }
 
-tasks.withType(Javadoc::class).configureEach {
-    val options = this.options
-    if (options is StandardJavadocDocletOptions) {
-        options.tags = listOf("reason:m:Reason for overwrite:") // Add Mixin @reason JD tag definition
+afterEvaluate {
+    tasks.withType(Javadoc::class).configureEach {
+        val options = this.options
+        if (options is StandardJavadocDocletOptions) {
+            options.tags = listOf("reason:m:Reason for overwrite:") // Add Mixin @reason JD tag definition
+            options.links?.removeIf { it.contains("yarn") } // todo: remove after we go to 1.16, take out of afterEvaluate block
+        }
     }
 }
 
@@ -138,5 +134,3 @@ opinionated {
         artifact(tasks.getByName("javadocJar"))
     }
 }
-
-

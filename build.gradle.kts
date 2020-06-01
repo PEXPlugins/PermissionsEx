@@ -1,12 +1,16 @@
 
-import ca.stellardrift.build.sk89q
-import ca.stellardrift.build.sponge
+import ca.stellardrift.build.common.pex
+import ca.stellardrift.build.common.sk89q
+import ca.stellardrift.build.common.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
 import java.time.LocalDate
 import java.time.ZoneOffset
 
 plugins {
-    id("ca.stellardrift.opinionated") version "2.0.1" apply false
+    id("ca.stellardrift.opinionated.kotlin") version "3.0" apply false
+    id("ca.stellardrift.opinionated.publish") version "3.0" apply false
+    id("ca.stellardrift.localization") version "3.0" apply false
+    id("ca.stellardrift.templating") version "3.0" apply false
     id("com.github.johnrengelman.shadow") version "5.2.0" apply false
     id("com.github.ben-manes.versions") version "0.25.0"
     `maven-publish`
@@ -23,14 +27,12 @@ subprojects {
     repositories {
         mavenLocal()
         jcenter()
-        /*maven(url  = "https://repo.glaremasters.me/repository/permissionsex") {
-            name = "pex"
-        }*/
+        pex()
         sponge()
         sk89q()
     }
 
-    extensions.getByType(ca.stellardrift.build.OpinionatedExtension::class).apply {
+    extensions.getByType(ca.stellardrift.build.common.OpinionatedExtension::class).apply {
         github("PEXPlugins", "PermissionsEx")
         apache2()
         publication?.apply {
@@ -47,26 +49,18 @@ subprojects {
                 }
             }
         }
+        publishTo("pex", "https://repo.glaremasters.me/repository/permissionsex/")
+    }
+
+    extensions.getByType(org.jlleitschuh.gradle.ktlint.KtlintExtension::class).apply {
+        filter {
+            exclude("generated-src/**")
+        }
     }
 
     extensions.getByType(LicenseExtension::class).apply {
         header = rootProject.file("LICENSE_HEADER")
         ext["year"] = LocalDate.now(ZoneOffset.UTC).year
-    }
-
-    publishing {
-        repositories {
-            if (project.hasProperty("pexUsername") && project.hasProperty("pexPassword")) {
-                maven {
-                    name = "pex"
-                    url = java.net.URI("https://repo.glaremasters.me/repository/permissionsex")
-                    credentials {
-                        username = project.property("pexUsername").toString()
-                        password = project.property("pexPassword").toString()
-                    }
-                }
-            }
-        }
     }
 }
 

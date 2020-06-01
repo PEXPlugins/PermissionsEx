@@ -86,14 +86,12 @@ abstract class ReadOnlySubjectData : ImmutableSubjectData {
     override fun setDefaultValue(contexts: Set<ContextValue<*>>, defaultValue: Int): ImmutableSubjectData {
         return this
     }
-
-
 }
 
 /**
  * A specialization of AbstractDataStore that handles backends for a global data store
  */
-abstract class ReadOnlyDataStore<T: ReadOnlyDataStore<T>> protected constructor(identifier: String, factory: Factory<T>) : AbstractDataStore<T>(identifier, factory) {
+abstract class ReadOnlyDataStore<T : ReadOnlyDataStore<T>> protected constructor(identifier: String, factory: Factory<T>) : AbstractDataStore<T>(identifier, factory) {
 
     override fun setDataInternal(
         type: String,

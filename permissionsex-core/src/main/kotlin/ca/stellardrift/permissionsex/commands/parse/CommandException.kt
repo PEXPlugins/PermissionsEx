@@ -19,9 +19,9 @@ package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import com.google.common.base.Strings
-import net.kyori.text.Component
 import java.util.Locale
 import kotlin.math.min
+import net.kyori.text.Component
 
 /**
  * Exception relating to the execution of a command

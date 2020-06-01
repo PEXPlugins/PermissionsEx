@@ -18,6 +18,11 @@
 package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.commands.ArgumentKeys.CONTEXT_ERROR_FORMAT
+import ca.stellardrift.permissionsex.commands.ArgumentKeys.CONTEXT_ERROR_TYPE
+import ca.stellardrift.permissionsex.commands.ArgumentKeys.CONTEXT_ERROR_VALUE
+import ca.stellardrift.permissionsex.commands.ArgumentKeys.SUBJECTTYPE_ERROR_NOTATYPE
+import ca.stellardrift.permissionsex.commands.ArgumentKeys.SUBJECT_ERROR_NAMEINVALID
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.parse.StructuralArguments.FlagCommandElementBuilder
@@ -25,16 +30,10 @@ import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.CONTEXT_ERROR_FORMAT
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.CONTEXT_ERROR_TYPE
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.CONTEXT_ERROR_VALUE
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.SUBJECTTYPE_ERROR_NOTATYPE
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.SUBJECT_ERROR_NAMEINVALID
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.Component
 import java.util.concurrent.CompletableFuture
-
+import net.kyori.text.Component
 
 fun contextTransientFlags(pex: PermissionsEx<*>): FlagCommandElementBuilder {
     return StructuralArguments.flags()
@@ -60,10 +59,9 @@ class SubjectTypeValue(private val pex: PermissionsEx<*>) : Value<String>(+"") {
         args: CommandArgs
     ): Sequence<String> {
         val seq = pex.registeredSubjectTypes.asSequence()
-        val nextOpt = args.nextIfPresent()?: return seq
-        return seq.filter { it.startsWith(nextOpt, ignoreCase = true)}
+        val nextOpt = args.nextIfPresent() ?: return seq
+        return seq.filter { it.startsWith(nextOpt, ignoreCase = true) }
     }
-
 }
 
 /**
@@ -91,7 +89,7 @@ private class SubjectElement(
         var type = args.next()
         var identifier: String?
         if (type.contains(":")) {
-            val typeSplit = type.split(":", limit =2)
+            val typeSplit = type.split(":", limit = 2)
             type = typeSplit[0]
             identifier = typeSplit[1]
         } else if (!args.hasNext() && defaultType != null) {
@@ -127,9 +125,9 @@ private class SubjectElement(
                 val typeObj = pex.getSubjects(type)
                 val allIdents = typeObj.allIdentifiers.asSequence()
                 (allIdents +
-                        allIdents.map {typeObj.typeInfo.getAliasForName(it).orElse(null) }.filterNotNull())
-                    .filter { it.startsWith(identifierSegment, ignoreCase = true)}
-                    .map { "${typeObj.typeInfo.typeName}:$it"}
+                        allIdents.map { typeObj.typeInfo.getAliasForName(it).orElse(null) }.filterNotNull())
+                    .filter { it.startsWith(identifierSegment, ignoreCase = true) }
+                    .map { "${typeObj.typeInfo.typeName}:$it" }
             } else {
                 pex.registeredSubjectTypes.asSequence()
                     .filter { it.startsWith(type, ignoreCase = true) }
@@ -138,10 +136,9 @@ private class SubjectElement(
         val typeObj = pex.getSubjects(type)
         val allIdents = typeObj.allIdentifiers.asSequence()
         return (allIdents +
-                allIdents.map {typeObj.typeInfo.getAliasForName(it).orElse(null) }.filterNotNull())
-            .filter { it.startsWith(identifierSegment, ignoreCase = true)}
+                allIdents.map { typeObj.typeInfo.getAliasForName(it).orElse(null) }.filterNotNull())
+            .filter { it.startsWith(identifierSegment, ignoreCase = true) }
     }
-
 }
 
 fun context(pex: PermissionsEx<*>): Value<ContextValue<*>> = ContextCommandValue(pex)
@@ -176,14 +173,13 @@ private class ContextCommandValue(private val pex: PermissionsEx<*>) : Value<Con
     }
 
     override fun usage(key: Component) = +"<context-type>=<value>"
-
 }
 
 fun rankLadder(pex: PermissionsEx<*>): Value<CompletableFuture<RankLadder>> {
     return RankLadderValue(pex)
 }
 
-private class RankLadderValue(private val pex: PermissionsEx<*>): Value<CompletableFuture<RankLadder>>(+"the name of a rank ladder") {
+private class RankLadderValue(private val pex: PermissionsEx<*>) : Value<CompletableFuture<RankLadder>>(+"the name of a rank ladder") {
     override fun parse(args: CommandArgs): CompletableFuture<RankLadder> {
         return pex.ladders[args.next(), null]
     }
@@ -191,7 +187,7 @@ private class RankLadderValue(private val pex: PermissionsEx<*>): Value<Completa
     override fun tabComplete(src: Commander, args: CommandArgs): Sequence<String> {
         val arg = args.nextIfPresent() ?: return pex.ladders.all.asSequence()
         return pex.ladders.all.asSequence()
-            .filter {it.startsWith(arg, ignoreCase = true) }
+            .filter { it.startsWith(arg, ignoreCase = true) }
     }
 }
 

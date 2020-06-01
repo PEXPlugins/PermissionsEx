@@ -67,10 +67,10 @@ import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent
 import ca.stellardrift.permissionsex.util.unaryMinus
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.Component
-import net.kyori.text.TextComponent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
+import net.kyori.text.Component
+import net.kyori.text.TextComponent
 
 // Promotion and demotion along existing rank ladders
 
@@ -130,7 +130,7 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: SubjectDataReference = getDataRef(src, args, "permissionsex.demote") //." + ladder);
+                val ref: SubjectDataReference = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName =
                     AtomicReference<RankLadder>()

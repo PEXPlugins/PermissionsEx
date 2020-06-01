@@ -17,15 +17,9 @@
 
 package ca.stellardrift.permissionsex.util
 
-import net.kyori.text.TranslatableComponent
+import java.util.UUID
 
-class TranslatableProvider(bundleName: String, key: String) {
-    val key = "$bundleName/$key"
-
-    @JvmName("toComponent")
-    operator fun invoke(vararg args: Any) = TranslatableComponent.of(this.key, args.map { it.toComponent() })
-
-    @JvmName("toComponentBuilder")
-    operator fun get(vararg args: Any) = TranslatableComponent.builder(this.key).args(args.map { it.toComponent() })
+interface MinecraftProfile {
+    val name: String
+    val uuid: UUID
 }
-

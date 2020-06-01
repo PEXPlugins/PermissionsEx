@@ -35,7 +35,7 @@ abstract class CommandElement {
     abstract fun getUsage(src: Commander): Component
 }
 
-class ValueElement<T>(val key: Component, val value: Value<T>): CommandElement() {
+class ValueElement<T>(val key: Component, val value: Value<T>) : CommandElement() {
     @Throws(ArgumentParseException::class)
     override fun parse(
         args: CommandArgs,
@@ -58,7 +58,6 @@ class ValueElement<T>(val key: Component, val value: Value<T>): CommandElement()
      * Get a short usage string that can be placed in-line with other arguments
      */
     override fun getUsage(src: Commander): Component = value.usage(key)
-
 }
 
 /**
@@ -106,8 +105,8 @@ private class MappedValue<T, R>(private val mapper: (T) -> R, private val origin
     }
 }
 
-private class OrValue<T>(val a: Value<T>, val b : Value<T>)
-    : Value<T>(component { append(a.description).append(" OR ").append(b.description) }) {
+private class OrValue<T>(val a: Value<T>, val b: Value<T>) :
+    Value<T>(component { append(a.description).append(" OR ").append(b.description) }) {
     override fun parse(args: CommandArgs): T {
         return try {
             a.parse(args)
@@ -133,7 +132,6 @@ private class OrValue<T>(val a: Value<T>, val b : Value<T>)
         }
         return component { append(aUsage).append(PIPE).append(bUsage) }
     }
-
 }
 
 fun <T> Value<Iterable<T>>.onlyOne(): Value<T> = object : Value<T>(description) {
@@ -152,7 +150,6 @@ fun <T> Value<Iterable<T>>.onlyOne(): Value<T> = object : Value<T>(description) 
     override fun tabComplete(
         src: Commander,
         args: CommandArgs
-    ): Sequence<String>
-        = this@onlyOne.tabComplete(src, args)
-
+    ): Sequence<String> =
+        this@onlyOne.tabComplete(src, args)
 }

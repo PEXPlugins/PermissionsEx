@@ -33,6 +33,11 @@ import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import com.google.common.collect.Maps.immutableEntry
 import com.google.common.reflect.TypeToken
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.completedFuture
 import net.kyori.text.Component
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
@@ -40,11 +45,6 @@ import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 import ninja.leaping.configurate.reference.ConfigurationReference
 import ninja.leaping.configurate.reference.WatchServiceListener
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
 
 /**
  * An extremely rudimentary data store that allows importing data from a server ops list
@@ -68,21 +68,19 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
                 listOf()
             }
         }
-
     }
 
     @Setting("file-name")
     var fileName: String = "ops.json"
 
     private lateinit var file: Path
-    private lateinit var  configListener: WatchServiceListener
+    private lateinit var configListener: WatchServiceListener
     private lateinit var opsListNode: ConfigurationReference<ConfigurationNode>
     private var opsList = listOf<OpsListEntry>()
 
-    constructor(identifier: String, opsFile: Path): this(identifier) {
+    constructor(identifier: String, opsFile: Path) : this(identifier) {
         this.file = opsFile
     }
-
 
     override fun initializeInternal(): Boolean {
         if (!this::file.isInitialized) {
@@ -96,10 +94,10 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
         this.configListener = WatchServiceListener.builder()
             .setTaskExecutor(manager.asyncExecutor)
             .build()
-        this.opsListNode = configListener.listenToConfiguration({GsonConfigurationLoader.builder()
+        this.opsListNode = configListener.listenToConfiguration({ GsonConfigurationLoader.builder()
             .setLenient(true)
             .setPath(it)
-            .build()}, file)
+            .build() }, file)
         this.opsListNode.updates().subscribe {
             reload(it)
         }
@@ -181,7 +179,7 @@ private class BlankSubjectData : MemorySubjectData()
 private class BlankContextInheritance : MemoryContextInheritance()
 
 @ConfigSerializable
-internal data class OpsListEntry(@Setting val uuid: UUID, @Setting val name: String, @Setting val level: Int, @Setting val bypassesPlayerLimit: Boolean): OpsListSubjectData() {
+internal data class OpsListEntry(@Setting val uuid: UUID, @Setting val name: String, @Setting val level: Int, @Setting val bypassesPlayerLimit: Boolean) : OpsListSubjectData() {
     constructor() : this(UUID.randomUUID(), "unset", 4, false)
 
     override fun getDefaultValue(contexts: Set<ContextValue<*>>): Int {
@@ -200,7 +198,6 @@ internal data class OpsListEntry(@Setting val uuid: UUID, @Setting val name: Str
         }
     }
 
-
     override fun getActiveContexts(): Set<Set<ContextValue<*>>> {
         return if (level > 0) {
             setOf(setOf())
@@ -216,7 +213,6 @@ internal data class OpsListEntry(@Setting val uuid: UUID, @Setting val name: Str
             mapOf()
         }
     }
-
 }
 
 internal abstract class OpsListSubjectData : ReadOnlySubjectData() {

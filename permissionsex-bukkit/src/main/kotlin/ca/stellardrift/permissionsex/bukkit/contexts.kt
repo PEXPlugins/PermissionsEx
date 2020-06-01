@@ -62,7 +62,6 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
             }
         }
     }
-
 }
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {

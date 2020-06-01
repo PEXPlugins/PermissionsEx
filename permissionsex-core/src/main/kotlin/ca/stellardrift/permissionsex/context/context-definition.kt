@@ -26,7 +26,6 @@ fun cSet(vararg contexts: ContextValue<*>): Set<ContextValue<*>> {
     return ImmutableSet.copyOf(contexts)
 }
 
-
 /**
  * A specific type of context, for example world, server-tag, or until
  */
@@ -217,4 +216,3 @@ open class ContextValue<Type>(val key: String, val rawValue: String) {
         return "$key:$parsedValue (raw: $rawValue)"
     }
 }
-

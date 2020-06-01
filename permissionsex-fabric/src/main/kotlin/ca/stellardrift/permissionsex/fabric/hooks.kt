@@ -23,13 +23,13 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.builder.ArgumentBuilder
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.util.Identifier
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.Locale
 import java.util.function.Predicate
+import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.util.Identifier
 
 object RedirectTargets {
     const val SERVER_IS_CREATIVE_LEVEL_TWO_OP = "net.minecraft.server.network.ServerPlayerEntity.isCreativeLevelTwoOp()Z"
@@ -107,7 +107,6 @@ interface IVirtualHostHolder {
 @JvmField
 val LOCAL_HOST: InetSocketAddress = InetSocketAddress(InetAddress.getLocalHost(), 25565)
 
-
 interface HandshakeC2SPacketAccess {
     val address: String
     val port: Int
@@ -138,7 +137,7 @@ interface IServerCommandSource {
     fun getPermissionOverride(): IPermissionCommandSource?
 }
 
-fun <T: Any> commandPermissionCheck(permission: String): Predicate<T> {
+fun <T : Any> commandPermissionCheck(permission: String): Predicate<T> {
     return Predicate {
         if (it is IPermissionCommandSource) {
             it.hasPermission(permission)
@@ -148,7 +147,7 @@ fun <T: Any> commandPermissionCheck(permission: String): Predicate<T> {
     }
 }
 
-fun <T: ArgumentBuilder<ServerCommandSource, T>> T.requirePermission(permission: String): T {
+fun <T : ArgumentBuilder<ServerCommandSource, T>> T.requirePermission(permission: String): T {
     return requires(commandPermissionCheck(permission))
 }
 

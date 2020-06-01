@@ -27,11 +27,11 @@ import ca.stellardrift.permissionsex.util.invoke
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryMinus
 import ca.stellardrift.permissionsex.util.unaryPlus
+import java.util.Locale
 import net.kyori.text.Component
 import net.kyori.text.TextComponent
 import net.kyori.text.event.HoverEvent
 import net.kyori.text.format.TextColor
-import java.util.Locale
 
 /**
  * Interface implemented by objects that can execute commands and receive command output
@@ -62,7 +62,7 @@ interface Commander {
 
     @JvmDefault
     fun error(err: Throwable? = null, cb: MessageFormatter.(send: (Component) -> Unit) -> Unit) {
-        formatter.cb { error(it, err)} // TODO: Does this make the most sense
+        formatter.cb { error(it, err) } // TODO: Does this make the most sense
     }
 
     /**
@@ -122,11 +122,11 @@ interface Commander {
     @JvmDefault
     @Throws(CommandException::class)
     fun checkSubjectPermission(
-            subject: SubjectIdentifier,
-            basePermission: String
+        subject: SubjectIdentifier,
+        basePermission: String
     ) {
-        if (!hasPermission("$basePermission.${subject.key}.${subject.value}")
-                && (subject != subjectIdentifier || !hasPermission("$basePermission.own"))
+        if (!hasPermission("$basePermission.${subject.key}.${subject.value}") &&
+                (subject != subjectIdentifier || !hasPermission("$basePermission.own"))
         ) {
             throw CommandException(Messages.EXECUTOR_ERROR_NO_PERMISSION())
         }

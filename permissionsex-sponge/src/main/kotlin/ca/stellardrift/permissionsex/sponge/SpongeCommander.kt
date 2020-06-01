@@ -26,6 +26,7 @@ import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.subjectIdentifier
+import java.util.Locale
 import net.kyori.text.Component
 import net.kyori.text.adapter.spongeapi.TextAdapter
 import net.kyori.text.format.TextColor
@@ -35,13 +36,11 @@ import org.spongepowered.api.text.channel.ChatTypeMessageReceiver
 import org.spongepowered.api.text.channel.MessageReceiver
 import org.spongepowered.api.text.chat.ChatType
 import org.spongepowered.api.text.chat.ChatTypes
-import java.util.Locale
 
 fun MessageReceiver.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
 fun Iterable<MessageReceiver>.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
 fun ChatTypeMessageReceiver.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendComponent(this, message, type)
 fun Iterable<ChatTypeMessageReceiver>.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendComponent(this, message, type)
-
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
@@ -89,7 +88,6 @@ internal class SpongeCommander(
             }
             build.contents(text.map { it.color(TextColor.DARK_AQUA).toSponge() })
                 .sendTo(commandSource)
-
         }
     }
 }

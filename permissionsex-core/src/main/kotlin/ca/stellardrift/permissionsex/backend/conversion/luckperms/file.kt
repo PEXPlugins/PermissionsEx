@@ -32,6 +32,14 @@ import com.google.common.collect.ImmutableSet.toImmutableSet
 import com.google.common.collect.Maps
 import com.google.common.io.Files.getNameWithoutExtension
 import com.google.common.reflect.TypeToken
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.Locale
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.completedFuture
+import java.util.function.Function
+import java.util.stream.Collectors
+import kotlin.math.absoluteValue
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
@@ -45,18 +53,9 @@ import ninja.leaping.configurate.reference.ConfigurationReference
 import ninja.leaping.configurate.reference.WatchServiceListener
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.yaml.snakeyaml.DumperOptions
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.Locale
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
-import java.util.function.Function
-import java.util.stream.Collectors
-import kotlin.math.absoluteValue
-
 
 @ConfigSerializable
-class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<LuckPermsFileDataStore>(identifier, FACTORY) {
+class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore<LuckPermsFileDataStore>(identifier, FACTORY) {
     companion object {
         @JvmField
         val FACTORY = Factory("luckperms-file", LuckPermsFileDataStore::class.java, ::LuckPermsFileDataStore)
@@ -98,7 +97,6 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
         return true
     }
 
-
     override fun close() {
         watcher.close()
     }
@@ -117,7 +115,7 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
 
     override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
         return this.registeredTypes.parallelStream()
-            .flatMap { type -> getAllIdentifiers(type).stream().map { ident -> Maps.immutableEntry(type, ident)} }
+            .flatMap { type -> getAllIdentifiers(type).stream().map { ident -> Maps.immutableEntry(type, ident) } }
             .map { key -> Maps.immutableEntry(key, getDataInternal(key.key, key.value).join()) }
             .collect(toImmutableSet())
     }
@@ -198,7 +196,6 @@ class LuckPermsFileDataStore constructor(identifier: String): AbstractDataStore<
                 it
             }.toCompletableFuture().thenApply { lpLadder }
     }
-
 }
 
 /** Configuration format to use -- gives format-specific paths/loaders **/
@@ -228,13 +225,12 @@ class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private v
 
     override val types: Set<String>
         get() {
-            Files.list(rootDir).use {list ->
+            Files.list(rootDir).use { list ->
                 return list
                     .map { getNameWithoutExtension(it.fileName.toString()) }
                     .filter { it != "tracks" && it != "uuidcache" }
-                    .map {it.substring(0, it.length - 1)}
+                    .map { it.substring(0, it.length - 1) }
                     .collect(toImmutableSet())
-
             }
         }
 
@@ -366,7 +362,6 @@ class LuckPermsTrack internal constructor(name: String, val groups: List<String>
             v
         })
     }
-
 }
 
 private data class LuckPermsDefinition<ValueType>(
@@ -419,7 +414,7 @@ private fun ConfigurationNode.toSubjectData(): LuckPermsSubjectData {
             defListFromNode(this["suffixes"], { it.string!! }, keyOverride = "suffix", valueKey = "suffix")
     return LuckPermsSubjectData(defListFromNode(this["permissions"], ConfigurationNode::getBoolean),
         options,
-        defListFromNode(this["parents"], { Maps.immutableEntry("group", it.string!!)},
+        defListFromNode(this["parents"], { Maps.immutableEntry("group", it.string!!) },
             valueKey = "group", keyOverride = "group"))
 }
 
@@ -450,7 +445,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
     }
 
     override fun getAllPermissions(): Map<Set<ContextValue<*>>, Map<String, Int>> {
-        return permissions.groupBy({ it.contexts }, { it.key to if (it.value) { 1 } else { -1 }}).mapValues { (_, v) -> v.toMap() }
+        return permissions.groupBy({ it.contexts }, { it.key to if (it.value) { 1 } else { -1 } }).mapValues { (_, v) -> v.toMap() }
     }
 
     override fun getPermissions(contexts: Set<ContextValue<*>>): Map<String, Int> {
@@ -481,7 +476,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
     }
 
     override fun getAllParents(): Map<Set<ContextValue<*>>, List<Map.Entry<String, String>>> {
-        return parents.groupBy({ it.contexts }, { it.value})
+        return parents.groupBy({ it.contexts }, { it.value })
     }
 
     override fun getParents(contexts: Set<ContextValue<*>>): List<Map.Entry<String, String>> {
@@ -528,7 +523,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
     }
 
     override fun getAllDefaultValues(): Map<Set<ContextValue<*>>, Int> {
-        return permissions.filter { it.key == "*" }.groupBy({ it.contexts }, {it.value.asInteger()}).mapValues { (_, v) -> v.maxBy { it.absoluteValue } ?: 0 }
+        return permissions.filter { it.key == "*" }.groupBy({ it.contexts }, { it.value.asInteger() }).mapValues { (_, v) -> v.maxBy { it.absoluteValue } ?: 0 }
     }
 
     override fun getActiveContexts(): Set<Set<ContextValue<*>>> {

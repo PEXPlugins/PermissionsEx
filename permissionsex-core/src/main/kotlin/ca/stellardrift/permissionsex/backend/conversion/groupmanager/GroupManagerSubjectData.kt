@@ -66,7 +66,6 @@ class GroupManagerSubjectData(
         } catch (e: ObjectMappingException) {
             emptyMap()
         }
-
     }
 
     override fun getAllPermissions(): Map<Set<ContextValue<*>>, Map<String, Int>> {
@@ -114,7 +113,6 @@ class GroupManagerSubjectData(
         } catch (e: ObjectMappingException) {
             emptyList()
         }
-
     }
 
     override fun getDefaultValue(contexts: Set<ContextValue<*>>): Int {

@@ -27,12 +27,12 @@ import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.subjectIdentifier
+import java.util.Locale
 import net.kyori.text.Component
 import net.kyori.text.adapter.bukkit.TextAdapter
 import net.kyori.text.format.TextColor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.util.Locale
 
 fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
 fun Iterable<CommandSender>.sendActionBar(text: Component) = TextAdapter.sendActionBar(this, text)
@@ -50,19 +50,18 @@ fun CommandSender.sendActionBar(text: Component) = TextAdapter.sendActionBar(thi
 fun String.toLocale(): Locale {
     val parts = this.split("_", limit = 3)
     return when (parts.size) {
-        0 -> Locale.getDefault();
-        1 -> Locale(parts[0]);
-        2 -> Locale(parts[0], parts[1]);
-        3 -> Locale(parts[0], parts[1], parts[2]);
-        else -> throw IllegalArgumentException("Provided locale '$this' was not in a valid format!");
+        0 -> Locale.getDefault()
+        1 -> Locale(parts[0])
+        2 -> Locale(parts[0], parts[1])
+        3 -> Locale(parts[0], parts[1], parts[2])
+        else -> throw IllegalArgumentException("Provided locale '$this' was not in a valid format!")
     }
 }
 
-class BukkitMessageFormatter(private val cmd: BukkitCommander): MessageFormatter(cmd, cmd.pex.manager) {
+class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val Map.Entry<String, String>.friendlyName: String?
         get() = cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
-
 }
 
 /**

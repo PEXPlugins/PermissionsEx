@@ -62,7 +62,6 @@ enum class EntityType {
     open val inheritanceKey: String
         get() = "inheritance"
 
-
     abstract fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode?
     abstract fun getWorldNode(dataStore: GroupManagerDataStore, world: String): ConfigurationNode?
     abstract fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode?

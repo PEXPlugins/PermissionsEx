@@ -1,6 +1,5 @@
 
-import ca.stellardrift.build.kaptAnd
-import ca.stellardrift.build.velocity
+import ca.stellardrift.build.common.velocity
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -42,16 +41,15 @@ dependencies {
         exclude("com.google.guava")
         exclude("org.spongepowered", "configurate-yaml")
         exclude("net.kyori")
-        //exclude("org.yaml", "snakeyaml")
+        // exclude("org.yaml", "snakeyaml")
     }
     api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:permissionsex-hikari-config")) {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
-    implementation(project(":impl-blocks:permissionsex-smarter-text")) { isTransitive = false }
 
-    kaptAnd("shadow", "com.velocitypowered:velocity-api:1.0.8-SNAPSHOT")
+    kapt(shadow("com.velocitypowered:velocity-api:1.0.8-SNAPSHOT")!!)
 }
 
 localization {

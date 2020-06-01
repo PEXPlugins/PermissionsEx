@@ -49,7 +49,6 @@ class EmptyTestConfiguration : PermissionsExConfiguration<EmptyPlatformConfigura
     }
 
     override fun validate() {
-
     }
 
     override fun getPlatformConfig(): EmptyPlatformConfiguration {

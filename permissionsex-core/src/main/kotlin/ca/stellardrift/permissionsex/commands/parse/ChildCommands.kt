@@ -17,15 +17,15 @@
 
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.parse.StructuralArguments.optional
 import ca.stellardrift.permissionsex.commands.CommonMessages.ERROR_CHILDREN_STATE
 import ca.stellardrift.permissionsex.commands.CommonMessages.ERROR_CHILDREN_UNKNOWN
+import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.parse.StructuralArguments.optional
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.Component
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
+import net.kyori.text.Component
 
 /**
  * Build the children for a parent command
@@ -78,7 +78,7 @@ class ChildCommandBuilder {
         for (child in children) {
             val aliases = child.aliases
             if (aliases.isEmpty()) {
-                continue  // Unnamable command -- TODO maybe warn?
+                continue // Unnamable command -- TODO maybe warn?
             }
             mapping.putIfAbsent(aliases[0], child)
         }
@@ -93,7 +93,7 @@ class ChildCommandBuilder {
     private fun buildAction(arg: ChildCommandElement): CommandAction {
         val fallback = this.fallback
         val key = arg.key.toContextKey()
-        return outer@ { src, args ->
+        return outer@{ src, args ->
             val spec =
                 args.getOne<CommandSpec>(key)
                     ?: if (fallback != null) {
@@ -105,7 +105,6 @@ class ChildCommandBuilder {
             spec.checkPermission(src)
             spec.executor?.invoke(src, args)
         }
-
     }
 }
 
@@ -147,7 +146,7 @@ class ChildCommandElement internal constructor(private val children: Map<String,
     override fun getUsage(src: Commander): Component {
         return filterCommands(src)
             .filter { children[it]?.aliases?.get(0) == it }
-            .map { +it}
+            .map { +it }
             .join(PIPE)
     }
 
@@ -161,4 +160,3 @@ class ChildCommandElement internal constructor(private val children: Map<String,
         private val COUNTER = AtomicInteger()
     }
 }
-

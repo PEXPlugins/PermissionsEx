@@ -30,6 +30,16 @@ import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.MinecraftProfile
+import java.lang.reflect.Constructor
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executor
+import java.util.function.Function
+import java.util.function.Supplier
+import java.util.logging.Logger
+import javax.sql.DataSource
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -45,16 +55,6 @@ import net.md_5.bungee.event.EventPriority
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.slf4j.impl.JDK14LoggerAdapter
 import org.yaml.snakeyaml.DumperOptions
-import java.lang.reflect.Constructor
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executor
-import java.util.function.Function
-import java.util.function.Supplier
-import java.util.logging.Logger
-import javax.sql.DataSource
 
 class PermissionsExPlugin : Plugin(), Listener {
     private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
@@ -84,7 +84,6 @@ class PermissionsExPlugin : Plugin(), Listener {
             setPath(dataPath.resolve("config.yml"))
             setFlowStyle(DumperOptions.FlowStyle.BLOCK)
         }.build()
-
 
         try {
             this.manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), BungeeImplementationInterface(this))
@@ -128,7 +127,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         try {
             manager.callbackController.clearOwnedBy(event.player.uniqueId)
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
-        } catch (e: Exception)  {
+        } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
         }
     }
@@ -203,7 +202,6 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
         plugin.maybeRegisterCommands(command)
     }
 
-
     override fun getImplementationCommands(): Set<CommandSpec> {
         return setOf()
     }
@@ -213,7 +211,7 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
     }
 }
 
-class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission?.value, *wrapped.aliases.drop(1).map {"/$it"}.toTypedArray()), TabExecutor {
+class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission?.value, *wrapped.aliases.drop(1).map { "/$it" }.toTypedArray()), TabExecutor {
     override fun onTabComplete(sender: CommandSender, args: Array<out String>): Iterable<String> {
         return wrapped.tabComplete(BungeeCommander(pex, sender), args.joinToString(" "))
     }

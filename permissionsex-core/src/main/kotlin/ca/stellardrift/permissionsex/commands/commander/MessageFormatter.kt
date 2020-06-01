@@ -29,6 +29,7 @@ import ca.stellardrift.permissionsex.util.decorated
 import ca.stellardrift.permissionsex.util.plusAssign
 import ca.stellardrift.permissionsex.util.unaryPlus
 import com.google.common.collect.Maps
+import java.util.concurrent.ExecutionException
 import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
@@ -39,7 +40,6 @@ import net.kyori.text.event.HoverEvent
 import net.kyori.text.format.Style
 import net.kyori.text.format.TextColor
 import net.kyori.text.format.TextDecoration
-import java.util.concurrent.ExecutionException
 
 enum class ButtonType {
     /**
@@ -58,15 +58,18 @@ enum class ButtonType {
 
 val EQUALS_SIGN = "=" colored TextColor.GRAY
 val SLASH = +"/"
-abstract class MessageFormatter(internal val cmd: Commander, internal val pex: PermissionsEx<*>,
-                                val hlColor: TextColor = TextColor.AQUA) {
+abstract class MessageFormatter(
+    internal val cmd: Commander,
+    internal val pex: PermissionsEx<*>,
+    val hlColor: TextColor = TextColor.AQUA
+) {
 
     /**
      * Given a command in standard format, correct it to refer to specifically the proxy format
      */
     protected open fun transformCommand(cmd: String) = cmd
 
-    protected open val SubjectIdentifier.friendlyName: String? get()= null
+    protected open val SubjectIdentifier.friendlyName: String? get() = null
 
     fun subject(subject: Pair<String, String>): Component {
         return subject(Maps.immutableEntry(subject.first, subject.second))
@@ -164,7 +167,7 @@ abstract class MessageFormatter(internal val cmd: Commander, internal val pex: P
      * @param func The function to call
      * @return The updated text
      */
-    fun <C : BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
+    fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.callback(func: (Commander) -> Unit): B {
         val command = pex.callbackController.registerCallback(cmd, func)
         decoration(TextDecoration.UNDERLINED, true)
         color(hlColor)
@@ -207,4 +210,3 @@ abstract class MessageFormatter(internal val cmd: Commander, internal val pex: P
         return color(hlColor)
     }
 }
-

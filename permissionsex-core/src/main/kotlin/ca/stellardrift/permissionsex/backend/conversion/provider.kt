@@ -21,9 +21,9 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.DataStore
 import ca.stellardrift.permissionsex.backend.conversion.groupmanager.GroupManagerDataStore
 import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsConversionProvider
+import java.util.concurrent.ConcurrentHashMap
 import net.kyori.text.Component
 import net.kyori.text.serializer.plain.PlainComponentSerializer
-import java.util.concurrent.ConcurrentHashMap
 
 data class ConversionResult(val store: DataStore, val title: Component)
 

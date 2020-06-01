@@ -49,7 +49,6 @@ class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleCont
                         current = current.parent
                     }
                 }
-
             }
         }
     }

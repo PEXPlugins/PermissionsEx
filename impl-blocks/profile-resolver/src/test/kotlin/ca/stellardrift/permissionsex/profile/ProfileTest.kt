@@ -18,12 +18,12 @@
 package ca.stellardrift.permissionsex.profile
 
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 class ProfileTest {
     @Test

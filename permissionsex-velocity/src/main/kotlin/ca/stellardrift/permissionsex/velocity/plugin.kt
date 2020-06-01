@@ -41,8 +41,6 @@ import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader
-import org.slf4j.Logger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -55,6 +53,8 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.inject.Inject
 import javax.sql.DataSource
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader
+import org.slf4j.Logger
 
 private val SERVER_PATH = Paths.get(".")
 private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
@@ -98,7 +98,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     private fun registerCommandsNow(supplier: Supplier<Set<CommandSpec>>) {
         supplier.get().forEach {
-            server.commandManager.register(VelocityCommand(this, it), *it.aliases.map {alias -> "/$alias" }.toTypedArray())
+            server.commandManager.register(VelocityCommand(this, it), *it.aliases.map { alias -> "/$alias" }.toTypedArray())
         }
     }
 
@@ -196,4 +196,3 @@ fun Int.asTristate(): Tristate {
         else -> Tristate.UNDEFINED
     }
 }
-

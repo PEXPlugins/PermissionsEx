@@ -19,13 +19,13 @@ package ca.stellardrift.permissionsex.util
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import com.google.common.reflect.TypeToken
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.objectmapping.ObjectMappingException
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
+import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.objectmapping.ObjectMappingException
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer
 
 class IpSet private constructor(private val addr: InetAddress, private val prefixLen: Int) {
 
@@ -117,8 +117,6 @@ class IpSet private constructor(private val addr: InetAddress, private val prefi
             }
             return fromAddrPrefix(addr, prefixLen)
         }
-
-
     }
 }
 

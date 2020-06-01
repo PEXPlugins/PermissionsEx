@@ -20,8 +20,8 @@ package ca.stellardrift.permissionsex.backend.conversion.groupmanager
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ContextInheritance
-import ninja.leaping.configurate.ConfigurationNode
 import java.util.ArrayList
+import ninja.leaping.configurate.ConfigurationNode
 
 class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) : ContextInheritance {
     private val worlds: MutableMap<String, MutableList<ContextValue<*>>> = hashMapOf()

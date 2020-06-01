@@ -17,9 +17,9 @@
 
 package ca.stellardrift.permissionsex.commands.parse
 
+import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.Permission
-import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.util.unaryMinus
 import net.kyori.text.Component
 import net.kyori.text.TextComponent
@@ -144,7 +144,6 @@ data class CommandSpec internal constructor(
             )
         }
     }
-
 }
 
 /**
@@ -152,7 +151,6 @@ data class CommandSpec internal constructor(
  */
 @DslMarker
 annotation class CommandDsl
-
 
 @CommandDsl
 class CommandBuilder(val aliases: List<String>) {
@@ -197,9 +195,7 @@ class CommandBuilder(val aliases: List<String>) {
             permission
         )
     }
-
 }
-
 
 fun command(vararg aliases: String, init: CommandBuilder.() -> Unit): CommandSpec {
     val builder = CommandBuilder(aliases.toList())

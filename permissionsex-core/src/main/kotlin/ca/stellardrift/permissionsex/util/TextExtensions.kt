@@ -19,6 +19,9 @@ package ca.stellardrift.permissionsex.util
 
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.context.ContextValue
+import java.text.MessageFormat
+import java.util.Locale
+import java.util.ResourceBundle
 import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
@@ -29,10 +32,6 @@ import net.kyori.text.format.Style
 import net.kyori.text.format.TextColor
 import net.kyori.text.format.TextDecoration
 import net.kyori.text.renderer.TranslatableComponentRenderer
-import java.text.MessageFormat
-import java.util.Locale
-import java.util.ResourceBundle
-
 
 fun Any?.toComponent(): Component {
     return when (this) {
@@ -59,8 +58,8 @@ infix fun String.colored(color: TextColor) = TextComponent.of(this, color)
 infix fun String.decorated(decoration: TextDecoration) = TextComponent.of(this, Style.of(decoration))
 
 fun style(color: TextColor? = null, vararg decoration: TextDecoration = arrayOf()) = Style.of(color, *decoration)
-fun component(init: TextComponent.Builder.()-> Unit) = TextComponent.make(init)
-operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.invoke(init: B.() -> Unit): C {
+fun component(init: TextComponent.Builder.() -> Unit) = TextComponent.make(init)
+operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.invoke(init: B.() -> Unit): C {
     init()
     return build()
 }
@@ -79,7 +78,7 @@ infix fun Component.coloredIfNecessary(color: TextColor) =
         this
     }
 
-infix fun <C: ScopedComponent<C>> C.coloredIfNecessary(color: TextColor) =
+infix fun <C : ScopedComponent<C>> C.coloredIfNecessary(color: TextColor) =
     if (this.color() == null) {
         color(color)
     } else {
@@ -110,17 +109,17 @@ fun Sequence<Component>.join(separator: Component? = space()) = component {
         if (separator != null && it.hasNext()) {
             append(separator)
         }
-    }}
+    } }
 
-operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.plusAssign(other: Component) {
+operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.plusAssign(other: Component) {
     this.append(other)
 }
 
-operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.plusAssign(other: ComponentBuilder<*, *>) {
+operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.plusAssign(other: ComponentBuilder<*, *>) {
     this.append(other)
 }
 
-operator fun <C: BuildableComponent<C, B>, B: ComponentBuilder<C, B>> B.plusAssign(other: Iterable<Component>) {
+operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.plusAssign(other: Iterable<Component>) {
     this.append(other)
 }
 
@@ -153,5 +152,3 @@ object PEXComponentRenderer : TranslatableComponentRenderer<Locale>() {
         return MessageFormat(message)
     }
 }
-
-

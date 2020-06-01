@@ -22,10 +22,10 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider
 import ca.stellardrift.permissionsex.backend.conversion.ConversionResult
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.Component
 import java.net.URL
 import java.nio.file.Files
 import java.util.UUID
+import net.kyori.text.Component
 
 data class PermissionEntry(val holder: String, val permission: String, val positive: Boolean, val expiry: Long)
 data class ServerEntry(val name: String, val lastHeartbeat: Long)
@@ -44,7 +44,5 @@ class UltraPermissionsDataStore {
             }
             return listOf()
         }
-
     }
 }
-

@@ -31,9 +31,9 @@ import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
+import java.util.Locale
 import net.kyori.text.Component
 import net.kyori.text.format.TextColor
-import java.util.Locale
 
 class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
 
@@ -83,12 +83,9 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
     override fun msg(text: Component) {
         src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GOLD, locale))
     }
-
 }
 
 class VelocityMessageFormatter(val vCmd: VelocityCommander) :
     MessageFormatter(vCmd, vCmd.pex.manager, TextColor.YELLOW) {
     override fun transformCommand(cmd: String) = "/$cmd"
 }
-
-

@@ -1,12 +1,11 @@
 
-import ca.stellardrift.build.configurate
-import ca.stellardrift.build.jitpack
-import ca.stellardrift.build.kyoriText
-import ca.stellardrift.build.spigot
+import ca.stellardrift.build.common.configurate
+import ca.stellardrift.build.common.jitpack
+import ca.stellardrift.build.common.kyoriText
+import ca.stellardrift.build.common.spigot
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -63,13 +62,13 @@ tasks.processResources {
 
 dependencies {
     api(project(":permissionsex-core")) {
-        exclude(group="com.google.guava")
+        exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
         exclude("com.google.code.gson", "gson")
     }
 
     implementation(configurate("yaml")) {
-        exclude(group="com.google.guava")
+        exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
     implementation(kyoriText("adapter-bukkit", Versions.TEXT_ADAPTER)) {

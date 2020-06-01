@@ -17,11 +17,6 @@
 
 package ca.stellardrift.permissionsex.backend.conversion.ultraperms
 
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.gson.GsonConfigurationLoader
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.ByteArrayInputStream
@@ -34,6 +29,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Base64
 import java.util.concurrent.Callable
+import ninja.leaping.configurate.ConfigurationNode
+import ninja.leaping.configurate.gson.GsonConfigurationLoader
+import ninja.leaping.configurate.kotlin.get
+import ninja.leaping.configurate.loader.ConfigurationLoader
+import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 
 class UltraPermissionsFile(val path: Path) {
     val loader: ConfigurationLoader<ConfigurationNode> = YAMLConfigurationLoader.builder().setPath(path).build()
@@ -57,14 +57,13 @@ class UltraPermissionsFile(val path: Path) {
             Base64.getDecoder().decode(this)
         } ?: return this
 
-
         val jsonLoader = GsonConfigurationLoader.builder().apply {
             source = Callable { BufferedReader(InputStreamReader(ByteArrayInputStream(value), StandardCharsets.UTF_8)) }
         }.build()
         return try {
             jsonLoader.load()
         } catch (e: IOException) {
-            println("Failed to deserialize entry ${key}: ${e.message}")
+            println("Failed to deserialize entry $key: ${e.message}")
             e.printStackTrace()
             ConfigurationNode.root().setValue(String(value, StandardCharsets.UTF_8))
         }
@@ -100,13 +99,13 @@ class UltraPermissionsFile(val path: Path) {
 }
 
 fun main(args: Array<String>) {
-   val filename = if (args.isNotEmpty()) {
-       args[0]
-   } else {
-       println(Paths.get(".").toAbsolutePath())
-       print("File: ")
-       readLine()!!
-   }
+    val filename = if (args.isNotEmpty()) {
+        args[0]
+    } else {
+        println(Paths.get(".").toAbsolutePath())
+        print("File: ")
+        readLine()!!
+    }
 
     val path = Paths.get(filename)
     val upReader =
