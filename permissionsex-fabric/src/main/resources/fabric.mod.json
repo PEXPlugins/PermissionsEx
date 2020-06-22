@@ -17,7 +17,6 @@
 
   "license": "Apache v2.0",
 
-  "environment": "SERVER",
   "entrypoints": {
     "main": [
       {
@@ -33,6 +32,8 @@
   "depends": {
     "fabricloader": ">=0.4.0",
     "fabric-language-kotlin": ">=1.3",
+    "text-adapter-fabric": "^1.0",
+    "confabricate": "^1.0",
     "fabric": "*"
   },
   "suggests": {

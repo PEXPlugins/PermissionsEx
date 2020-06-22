@@ -19,16 +19,20 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
+import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.OperatorList;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.checkerframework.checker.units.qual.A;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerManager.class)
 public abstract class MixinPlayerManager {
@@ -54,5 +58,10 @@ public abstract class MixinPlayerManager {
     @Redirect(method = "isWhitelisted", at = @At(value = "INVOKE", target = RedirectTargets.OPERATOR_LIST_CONTAINS))
     protected boolean canBypassWhitelist(OperatorList list, Object profile) {
         return PermissionsExHooks.hasPermission((GameProfile) profile, MinecraftPermissions.BYPASS_WHITELIST);
+    }
+
+    @Inject(method = "isOperator", at = @At("HEAD"))
+    private void logOpCheck(final GameProfile profile, final CallbackInfoReturnable<Boolean> ci) {
+        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("PlayerManager#isOperator");
     }
 }

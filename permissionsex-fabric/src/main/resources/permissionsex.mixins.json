@@ -29,10 +29,10 @@
     "lifecycle.MixinServerHandshakeNetworkHandler",
     "lifecycle.MixinServerPlayNetworkHandler",
 
-    "source.MixinServerPlayerEntity",
-    "source.MixinServerCommandSource",
+    "source.MixinCommandBlockExecutor",
     "source.MixinServerCommandOutput",
-    "source.MixinCommandBlockExecutor"
+    "source.MixinServerCommandSource",
+    "source.MixinServerPlayerEntity"
   ],
   "injectors": {
     "defaultRequire": 1

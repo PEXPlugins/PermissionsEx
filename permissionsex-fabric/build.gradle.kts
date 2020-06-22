@@ -22,6 +22,7 @@ import net.fabricmc.loom.task.RemapSourcesJarTask
  */
 
 plugins {
+    id("fabric-loom") version "0.4.28"
     id("ca.stellardrift.opinionated.fabric") version "3.0"
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
@@ -35,7 +36,7 @@ dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
-        exclude("ninja.leaping")
+        exclude("org.spongepowered", "configurate-*")
         exclude("net.kyori")
     }
 
@@ -43,17 +44,17 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.15:v2")
-    modImplementation("net.fabricmc:fabric-loader:0.8.2+build.194")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.17:v2")
+    modImplementation("net.fabricmc:fabric-loader:0.8.8+build.202")
     // modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
     // modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
 
-    modImplementation(include("net.fabricmc.fabric-api:fabric-api:0.10.7+build.309-1.15")!!)
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.13.1+build.316-1.15")
     modImplementation(include("net.fabricmc:fabric-language-kotlin:1.3.71+build.1")!!)
     modImplementation(include("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
         exclude("com.google.code.gson")
     })
-    modImplementation(include("ca.stellardrift:confabricate:1.0+3.6.1") {
+    modImplementation(include("ca.stellardrift:confabricate:1.1+3.7") {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
     })
@@ -81,9 +82,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("org.checkerframework:checker-qual:.*"))
     }
 
-    listOf("com.zaxxer", "com.github.benmanes",
-        "com.typesafe.config", "ninja.leaping.configurate", "org.slf4j",
-        "org.antlr", "org.yaml", "org.apache.logging.slf4j").forEach {
+    listOf("com.zaxxer", "com.github.benmanes", "org.slf4j",
+        "org.antlr", "org.apache.logging.slf4j").forEach {
         relocate(it, "$relocateRoot.$it")
     }
 

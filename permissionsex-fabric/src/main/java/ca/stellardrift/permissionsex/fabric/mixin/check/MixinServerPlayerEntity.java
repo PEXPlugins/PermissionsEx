@@ -19,23 +19,20 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
+import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.JigsawBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.CloseContainerS2CPacket;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayerEntity.class)
 public abstract class MixinServerPlayerEntity extends PlayerEntity {
-    @Shadow
-    public ServerPlayNetworkHandler networkHandler;
 
     public MixinServerPlayerEntity(World world_1, GameProfile gameProfile_1) {
         super(world_1, gameProfile_1);
@@ -43,16 +40,30 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity {
 
     @Inject(method = "openCommandBlockScreen", at = @At("HEAD"), cancellable = true)
     public void onOpenCommandBlock(CallbackInfo ci) {
-        if (!PermissionsExHooks.hasPermission(networkHandler.player, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
-            networkHandler.sendPacket(new CloseContainerS2CPacket()); // Close command block gui
+        if (!PermissionsExHooks.hasPermission(this, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
+            ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseContainerS2CPacket()); // Close command block gui
             ci.cancel();
         }
     }
 
     @Override
     public void openJigsawScreen(JigsawBlockEntity jigsaw) {
-        if (!PermissionsExHooks.hasPermission(networkHandler.player, MinecraftPermissions.JIGSAW_BLOCK_VIEW)) {
-            networkHandler.sendPacket(new CloseContainerS2CPacket());
+        if (!PermissionsExHooks.hasPermission(this, MinecraftPermissions.JIGSAW_BLOCK_VIEW)) {
+            ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseContainerS2CPacket()); // Close command block gui
         }
+    }
+
+    // Validation checks, to make sure we're catching as many permissions requests as we can
+
+    @Override
+    public boolean isCreativeLevelTwoOp() {
+        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#isCreativeLevelTwoOp");
+        return super.isCreativeLevelTwoOp();
+    }
+
+    @Override
+    public boolean allowsPermissionLevel(int level) {
+        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#allowsPermissionLevel");
+        return super.allowsPermissionLevel(level);
     }
 }

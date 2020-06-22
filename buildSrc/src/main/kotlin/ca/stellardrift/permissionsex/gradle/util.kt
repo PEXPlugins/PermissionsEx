@@ -32,7 +32,7 @@ enum class Versions(val version: String) {
     JUNIT("5.6.2"),
     KOTLINX_COROUTINES("1.3.5"),
     TEXT("3.0.4"),
-    TEXT_ADAPTER("3.0.3");
+    TEXT_ADAPTER("3.0.5");
 
     override fun toString(): String {
         return this.version

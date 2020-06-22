@@ -231,6 +231,11 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             futures.size
         }, asyncExecutor).thenCombine(CompletableFuture.allOf(*futures.toTypedArray())) { count, _ -> count }
     }
+
+    fun logUnredirectedPermissionsCheck(method: String) {
+        logger.warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method))
+        logger.debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method), Exception("call chain"))
+    }
 }
 
 internal class PEXProfileLookupCallback(private val state: CountDownLatch, private val action: Function<MinecraftProfile, CompletableFuture<Void>>, val futures: MutableList<CompletableFuture<Void>>) : ProfileLookupCallback {
