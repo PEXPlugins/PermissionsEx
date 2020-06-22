@@ -41,6 +41,16 @@ public class Globs {
         return new UnitNode(value);
     }
 
+    /**
+     * Create a new glob node matching any code point in the provided string
+     *
+     * @param characters Characters to match
+     * @return new glob node
+     */
+    public static GlobNode chars(final String characters) {
+        return new CharsNode(characters);
+    }
+
     public static GlobNode parse(String input) throws GlobParseException {
         if (!(input.contains("{") || input.contains("["))) { // If no special characters, just return raw input
             return new UnitNode(input);
@@ -52,20 +62,17 @@ public class Globs {
         GlobLexer lexer = new GlobLexer(input);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         GlobParser parser = new GlobParser(tokenStream);
+        parser.getErrorListeners().clear();
         parser.setErrorHandler(new BailErrorStrategy());
-        ParseTreeWalker walker = new ParseTreeWalker();
-        GlobListener listener = new GlobListener();
 
         try {
-            walker.walk(listener, parser.rootGlob());
+            return GlobVisitor.INSTANCE.visit(parser.rootGlob());
         } catch (ParseCancellationException e) {
             RecognitionException ex = ((RecognitionException) e.getCause());
             Token errorToken = ex.getOffendingToken();
             throw new GlobParseException(GlobMessages.ERROR_PARSE.toComponent(errorToken.getText(),
                     errorToken.getLine(), errorToken.getCharPositionInLine()), ex);
         }
-
-        return listener.popNode();
     }
 
     private static List<GlobNode> parseValues(Object[] objs) {
@@ -79,4 +86,5 @@ public class Globs {
         }
         return vals.build();
     }
+
 }

@@ -67,7 +67,5 @@ opinionated {
 }
 
 tasks.generateGrammarSource {
-    val grammarPackage = "${project.group}.util.glob.parser"
-    arguments.addAll(listOf("-package", grammarPackage))
-    outputDirectory = File("$buildDir/generated-src/antlr/main/${grammarPackage.replace(".", "/")}")
+    this.arguments.addAll(listOf("-visitor", "-no-listener"))
 }

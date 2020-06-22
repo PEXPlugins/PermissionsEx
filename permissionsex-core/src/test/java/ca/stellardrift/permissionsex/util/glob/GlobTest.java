@@ -47,11 +47,20 @@ public class GlobTest {
     }
 
     @Test
+    public void testCharsParsing() throws GlobParseException {
+        assertEquals(Globs.chars("hbc"), Globs.parse("[hbc]"));
+    }
+
+    @Test
+    public void testCharsCombinations() throws GlobParseException {
+        assertIterableEquals(ImmutableList.of("hat", "bat", "cat"), Globs.parse("[hbc]at"));
+    }
+
+    @Test
     public void testUnterminatedOrFails() {
         assertThrows(GlobParseException.class, () -> Globs.parse("aoeu{xy,b"));
     }
 
-    @Disabled("Escape parsing is currently broken, but the rest works fine")
     @Test
     public void testEscapes() throws GlobParseException {
         assertEquals(Globs.seq("a{b", Globs.or("c", "d")), Globs.parse("a\\{b{c,d}"));
