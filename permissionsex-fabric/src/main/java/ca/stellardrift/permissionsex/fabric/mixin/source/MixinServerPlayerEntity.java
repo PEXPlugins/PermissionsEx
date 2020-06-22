@@ -25,12 +25,17 @@ import ca.stellardrift.permissionsex.fabric.UtilKt;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.c2s.play.ClientSettingsC2SPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,20 +43,19 @@ import java.util.concurrent.atomic.AtomicReference;
 @Mixin(ServerPlayerEntity.class)
 public abstract class MixinServerPlayerEntity extends PlayerEntity implements LocaleHolder, IPermissionCommandSource {
 
-    @Shadow
-    private String clientLanguage;
 
+    private Locale permissionsex$clientLocale = null;
 
     private final AtomicReference<CalculatedSubject> permSubject = new AtomicReference<>();
 
-    public MixinServerPlayerEntity(World world_1, GameProfile gameProfile_1) {
-        super(world_1, gameProfile_1);
+    public MixinServerPlayerEntity(World world, BlockPos pos, GameProfile gameProfile) {
+        super(world, pos,gameProfile);
     }
 
     @Nullable
     @Override
     public Locale getLocale() {
-        return clientLanguage != null ? UtilKt.asMCLocale(clientLanguage) : null;
+        return permissionsex$clientLocale;
     }
 
     @NotNull
@@ -76,5 +80,15 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
         CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
         permSubject.set(updated);
         return updated;
+    }
+
+    @Inject(method = "setClientSettings", at = @At("HEAD"))
+    private void handleSetClientSettings(final ClientSettingsC2SPacket packet, final CallbackInfo ci) {
+        final String language = ((AccessorClientSettingsC2SPacket) packet).getLanguage();
+        if (language == null) {
+            this.permissionsex$clientLocale = null;
+        } else {
+            this.permissionsex$clientLocale = UtilKt.asMCLocale(language);
+        }
     }
 }

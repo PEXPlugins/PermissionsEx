@@ -17,26 +17,11 @@
 
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.FabricDefinitions;
-import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
-import net.minecraft.server.dedicated.ServerCommandOutput;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.network.packet.c2s.play.ClientSettingsC2SPacket;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-/**
- * Class is misnamed in Fabric -- this is actually the command output for rcon connections
- */
-@Mixin(ServerCommandOutput.class)
-public class MixinServerCommandOutput implements IPermissionCommandSource {
-    @NotNull
-    @Override
-    public String getPermType() {
-        return FabricDefinitions.SUBJECTS_SYSTEM;
-    }
-
-    @NotNull
-    @Override
-    public String getPermIdentifier() {
-        return FabricDefinitions.IDENTIFIER_RCON;
-    }
+@Mixin(ClientSettingsC2SPacket.class)
+public interface AccessorClientSettingsC2SPacket {
+    @Accessor String getLanguage();
 }

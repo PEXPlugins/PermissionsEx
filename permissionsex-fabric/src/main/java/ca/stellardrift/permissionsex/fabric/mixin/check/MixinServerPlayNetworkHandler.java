@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.EntityType;
@@ -30,9 +29,7 @@ import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ServerPlayNetworkHandler.class)
 public class MixinServerPlayNetworkHandler {
@@ -41,31 +38,31 @@ public class MixinServerPlayNetworkHandler {
     public ServerPlayerEntity player;
 
     @Redirect(method = "onQueryEntityNbt",
-            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_ALLOWS_PERMISSION_LEVEL))
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_HAS_PERMISSION_LEVEL))
     public boolean canQueryEntityNbt(ServerPlayerEntity entity, int permLevel) {
         return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.QUERY_ENTITY_NBT, permLevel);
     }
 
     @Redirect(method = "onQueryBlockNbt",
-            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_ALLOWS_PERMISSION_LEVEL))
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_HAS_PERMISSION_LEVEL))
     public boolean canQueryBlockNbt(ServerPlayerEntity entity, int permLevel) {
         return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.QUERY_BLOCK_NBT, permLevel);
     }
 
     @Redirect(method = {"onUpdateDifficulty", "onUpdateDifficultyLock"},
-            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_ALLOWS_PERMISSION_LEVEL))
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_HAS_PERMISSION_LEVEL))
     public boolean canUpdateDifficulty(ServerPlayerEntity entity, int permLevel) {
         return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.UPDATE_DIFFICULTY, permLevel);
     }
 
-    @Redirect(method = "onChatMessage",
+    @Redirect(method = "onGameMessage",
             at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP))
     public boolean canBypassSpamLimit(PlayerManager manager, GameProfile profile) {
         return PermissionsExHooks.hasPermission(player, MinecraftPermissions.BYPASS_CHAT_SPAM);
     }
 
     @Redirect(method = "onVehicleMove",
-            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_NETWORK_HANDLER_IS_OWNER))
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_NETWORK_HANDLER_IS_HOST))
     public boolean canVehicleMoveTooFast(ServerPlayNetworkHandler self) {
         final Identifier vehicleIdent = EntityType.getId(self.player.getRootVehicle().getType());
         return PermissionsExHooks.hasPermission(self.player,
@@ -73,7 +70,7 @@ public class MixinServerPlayNetworkHandler {
     }
 
     @Redirect(method = "onPlayerMove",
-            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_NETWORK_HANDLER_IS_OWNER))
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_NETWORK_HANDLER_IS_HOST))
     public boolean canPlayerMoveTooFast(ServerPlayNetworkHandler self) {
         return PermissionsExHooks.hasPermission(self.player, MinecraftPermissions.BYPASS_MOVE_SPEED_PLAYER);
     }

@@ -23,8 +23,9 @@ import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.JigsawBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.packet.s2c.play.CloseContainerS2CPacket;
+import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,14 +35,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerPlayerEntity.class)
 public abstract class MixinServerPlayerEntity extends PlayerEntity {
 
-    public MixinServerPlayerEntity(World world_1, GameProfile gameProfile_1) {
-        super(world_1, gameProfile_1);
+    public MixinServerPlayerEntity(World world_1, BlockPos pos, GameProfile gameProfile_1) {
+        super(world_1, pos,gameProfile_1);
     }
 
     @Inject(method = "openCommandBlockScreen", at = @At("HEAD"), cancellable = true)
     public void onOpenCommandBlock(CallbackInfo ci) {
         if (!PermissionsExHooks.hasPermission(this, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
-            ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseContainerS2CPacket()); // Close command block gui
+            ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseScreenS2CPacket()); // Close command block gui
             ci.cancel();
         }
     }
@@ -49,7 +50,7 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity {
     @Override
     public void openJigsawScreen(JigsawBlockEntity jigsaw) {
         if (!PermissionsExHooks.hasPermission(this, MinecraftPermissions.JIGSAW_BLOCK_VIEW)) {
-            ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseContainerS2CPacket()); // Close command block gui
+            ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseScreenS2CPacket()); // Close command block gui
         }
     }
 
@@ -62,8 +63,8 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity {
     }
 
     @Override
-    public boolean allowsPermissionLevel(int level) {
-        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#allowsPermissionLevel");
-        return super.allowsPermissionLevel(level);
+    public boolean hasPermissionLevel(int level) {
+        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#hasPermissionLevel");
+        return super.hasPermissionLevel(level);
     }
 }

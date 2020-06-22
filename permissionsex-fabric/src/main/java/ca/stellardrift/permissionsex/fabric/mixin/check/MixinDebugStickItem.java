@@ -27,7 +27,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.IWorld;
+import net.minecraft.world.WorldAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -38,7 +38,7 @@ public class MixinDebugStickItem {
     @Redirect(method = "use", at = @At(value = "INVOKE",
             target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
     public boolean canUseDebugStick(PlayerEntity ply, PlayerEntity unused, BlockState block,
-                                    IWorld world, BlockPos pos, boolean isRightClick, ItemStack heldItem) {
+                                    WorldAccess world, BlockPos pos, boolean isRightClick, ItemStack heldItem) {
         Identifier usedBlock = Registry.BLOCK.getId(block.getBlock());
         return PermissionsExHooks.hasPermission(ply, MinecraftPermissions.makeSpecific(MinecraftPermissions.DEBUG_STICK_USE, usedBlock));
     }

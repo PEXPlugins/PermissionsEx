@@ -37,8 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PlayerManager.class)
 public abstract class MixinPlayerManager {
 
-    @Shadow
-    public abstract void sendCommandTree(ServerPlayerEntity player, int opLevel);
+    @Shadow protected abstract void sendCommandTree(ServerPlayerEntity player, int opLevel);
 
     /**
      * Calculate the appropriate client permission level. Currently this is always 4.

@@ -40,8 +40,8 @@ object RedirectTargets {
     const val OPERATOR_LIST_CONTAINS = "net.minecraft.server.OperatorList.contains(Ljava/lang/Object;)Z"
     const val COMMAND_SOURCE_HAS_PERM_LEVEL = "net.minecraft.server.command.CommandSource.hasPermissionLevel(I)Z"
     const val SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL = "net.minecraft.server.command.ServerCommandSource.hasPermissionLevel(I)Z"
-    const val SERVER_PLAYER_ALLOWS_PERMISSION_LEVEL = "net.minecraft.server.network.ServerPlayerEntity.allowsPermissionLevel(I)Z"
-    const val SERVER_NETWORK_HANDLER_IS_OWNER = "net.minecraft.server.network.ServerPlayNetworkHandler.isServerOwner()Z"
+    const val SERVER_PLAYER_HAS_PERMISSION_LEVEL = "net.minecraft.server.network.ServerPlayerEntity.hasPermissionLevel(I)Z"
+    const val SERVER_NETWORK_HANDLER_IS_HOST = "net.minecraft.server.network.ServerPlayNetworkHandler.isHost()Z"
 }
 
 object MinecraftPermissions {
@@ -160,7 +160,7 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
     return if (this is IPermissionCommandSource) {
         hasPermission(perm)
     } else {
-        allowsPermissionLevel(fallbackOpLevel)
+        hasPermissionLevel(fallbackOpLevel)
     }
 }
 

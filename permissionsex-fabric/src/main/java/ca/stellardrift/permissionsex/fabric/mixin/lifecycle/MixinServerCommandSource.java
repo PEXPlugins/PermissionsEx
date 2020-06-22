@@ -47,7 +47,7 @@ public abstract class MixinServerCommandSource implements Commander {
 
     @Shadow
     @Final
-    private MinecraftServer minecraftServer;
+    private MinecraftServer server;
 
     @Shadow
     @Final

@@ -50,11 +50,21 @@ import net.fabricmc.fabric.api.event.server.ServerStartCallback
 import net.fabricmc.fabric.api.event.server.ServerStopCallback
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
+import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.WorldSavePath
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.LoggerFactory
+
+class PreLaunchInjector : PreLaunchEntrypoint {
+    override fun onPreLaunch() {
+        PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message")
+        //PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.PermissionsEx")
+        // TODO: Why is Kyori-Text loading in app ClassLoader and not Knot
+    }
+}
 
 private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
@@ -168,7 +178,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             BaseDirectoryScope.CONFIG -> dataDir
             BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDirectory.toPath().resolve("mods")
             BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDirectory.toPath()
-            BaseDirectoryScope.WORLDS -> server.levelStorage.savesDirectory
+            BaseDirectoryScope.WORLDS -> server.getSavePath(WorldSavePath.ROOT)
         }
     }
 

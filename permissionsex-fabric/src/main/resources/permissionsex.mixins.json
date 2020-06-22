@@ -20,7 +20,7 @@
     "check.MixinServerPlayerInteractionManager",
     "check.MixinServerPlayNetworkHandler",
     "check.MixinStructureBlockBlockEntity",
-
+    "lifecycle.AccessorMinecraftServer",
     "lifecycle.MixinClientConnection",
     "lifecycle.MixinGameProfile",
     "lifecycle.MixinHandshakeC2SPacket",
@@ -28,9 +28,9 @@
     "lifecycle.MixinServerCommandSource",
     "lifecycle.MixinServerHandshakeNetworkHandler",
     "lifecycle.MixinServerPlayNetworkHandler",
-
+    "source.AccessorClientSettingsC2SPacket",
     "source.MixinCommandBlockExecutor",
-    "source.MixinServerCommandOutput",
+    "source.MixinRconCommandOutput",
     "source.MixinServerCommandSource",
     "source.MixinServerPlayerEntity"
   ],

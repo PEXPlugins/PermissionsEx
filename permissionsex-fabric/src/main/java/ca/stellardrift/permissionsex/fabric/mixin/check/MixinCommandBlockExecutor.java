@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.packet.s2c.play.CloseContainerS2CPacket;
+import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.CommandBlockExecutor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,7 +37,7 @@ public class MixinCommandBlockExecutor {
         }
 
         if (player instanceof ServerPlayerEntity && !PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
-            ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseContainerS2CPacket());
+            ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseScreenS2CPacket());
             return false;
         }
         return true;

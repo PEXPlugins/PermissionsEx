@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
+import ca.stellardrift.permissionsex.fabric.mixin.lifecycle.AccessorMinecraftServer
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet
@@ -29,9 +30,11 @@ import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.net.InetSocketAddress
 import java.util.Optional
 import java.util.UUID
+import net.minecraft.entity.Entity
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.world.dimension.DimensionType
+import net.minecraft.server.world.ServerWorld
+import net.minecraft.util.Identifier
 
 const val SUBJECTS_SYSTEM = "system"
 const val SUBJECTS_COMMAND_BLOCK = "commandblock"
@@ -45,44 +48,64 @@ interface CommandSourceContextDefinition<T> {
     fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: T) -> Unit)
 }
 
-object WorldContextDefinition : SimpleContextDefinition("world"), CommandSourceContextDefinition<String> {
-    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: String) -> Unit) {
-        val world = source.world
-        if (world != null) {
-            consumer(world.levelProperties.levelName)
-        }
+abstract class IdentifierContextDefinition(name: String) : ContextDefinition<Identifier>(name) {
+    override fun serialize(userValue: Identifier): String {
+        return userValue.toString()
     }
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        subject.associatedObject.castMap<ServerPlayerEntity> {
-            consumer(serverWorld.levelProperties.levelName)
-        }
+    override fun deserialize(canonicalValue: String): Identifier? {
+        return Identifier.tryParse(canonicalValue)
     }
 
-    override fun suggestValues(subject: CalculatedSubject): Set<String> {
-        return PermissionsExMod.server.worlds.map { it.levelProperties.levelName }.toSet()
+    override fun matches(ownVal: Identifier, testVal: Identifier): Boolean {
+        return ownVal == testVal
     }
 }
 
-object DimensionContextDefinition : SimpleContextDefinition("dimension"), CommandSourceContextDefinition<String> {
-    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: String) -> Unit) {
-        val dimension = DimensionType.getId(source.world?.dimension?.type)?.path
+object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSourceContextDefinition<Identifier> {
+    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: Identifier) -> Unit) {
+        val world = source.world
+        if (world != null) {
+            consumer(world.registryKey.value)
+        }
+    }
+
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Identifier) -> Unit) {
+        subject.associatedObject.castMap<ServerPlayerEntity> {
+            consumer(serverWorld.registryKey.value)
+        }
+    }
+
+    override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
+        return PermissionsExMod.server.worlds.map { it.registryKey.value }.toSet()
+    }
+}
+
+object DimensionContextDefinition : IdentifierContextDefinition("dimension"), CommandSourceContextDefinition<Identifier> {
+    override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: Identifier) -> Unit) {
+        val dimension = source.world.dimensionRegistryKey?.value
         if (dimension != null) {
             consumer(dimension)
         }
     }
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Identifier) -> Unit) {
         subject.associatedObject.castMap<ServerPlayerEntity> {
-            val key = DimensionType.getId(serverWorld.dimension.type)?.path
+            val key = world.dimensionRegistryKey?.value
             if (key != null) {
                 consumer(key)
             }
         }
     }
 
-    override fun suggestValues(subject: CalculatedSubject): Set<String> {
-        return DimensionType.getAll().mapNotNull { DimensionType.getId(it)?.path }.toSet()
+    override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
+        return subject.associatedObject.castMap<Entity, Set<Identifier>> {
+            if (entityWorld is ServerWorld) {
+                (entityWorld.server as? AccessorMinecraftServer)?.dimensionTracker?.dimensionTypeRegistry?.ids
+            } else {
+                null
+            }
+        } ?: emptySet()
     }
 }
 

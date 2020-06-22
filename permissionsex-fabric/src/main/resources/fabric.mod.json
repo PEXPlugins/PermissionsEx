@@ -18,6 +18,11 @@
   "license": "Apache v2.0",
 
   "entrypoints": {
+    "preLaunch": [
+      {
+        "value": "ca.stellardrift.permissionsex.fabric.PreLaunchInjector"
+      }
+    ],
     "main": [
       {
         "adapter": "kotlin",
