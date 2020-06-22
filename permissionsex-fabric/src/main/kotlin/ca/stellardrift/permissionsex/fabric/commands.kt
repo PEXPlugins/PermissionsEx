@@ -121,7 +121,7 @@ internal fun ServerCommandSource.asCommander(): Commander {
     return this as Commander
 }
 
-class FabricMessageFormatter constructor(val src: ServerCommandSource) :
+class FabricMessageFormatter constructor(src: ServerCommandSource) :
     MessageFormatter(src.asCommander(), PermissionsExMod.manager) {
 
     override val SubjectIdentifier.friendlyName: String?
