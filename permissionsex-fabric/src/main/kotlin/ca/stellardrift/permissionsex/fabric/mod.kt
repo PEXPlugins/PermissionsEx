@@ -61,7 +61,7 @@ import org.slf4j.LoggerFactory
 class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
         PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message")
-        //PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.PermissionsEx")
+        // PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.PermissionsEx")
         // TODO: Why is Kyori-Text loading in app ClassLoader and not Knot
     }
 }
