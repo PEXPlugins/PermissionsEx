@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
+package ca.stellardrift.permissionsex.fabric.mixin;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.registry.RegistryTracker;

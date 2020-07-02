@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "ca.stellardrift.permissionsex.fabric.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "permissionsex-accessor-refmap.json",
+  "mixins": [
+    "AccessorMinecraftServer"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -22,8 +22,7 @@ import net.fabricmc.loom.task.RemapSourcesJarTask
  */
 
 plugins {
-    id("fabric-loom") version "0.4.28"
-    id("ca.stellardrift.opinionated.fabric") version "3.0"
+    id("ca.stellardrift.opinionated.fabric") version "3.1"
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
 }
@@ -31,26 +30,27 @@ plugins {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.16-rc1"
+val minecraftVersion = "1.16.1"
 dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
         exclude("org.spongepowered", "configurate-*")
         exclude("net.kyori")
+        exclude("org.jetbrains.kotlin")
     }
 
     shade(project(":impl-blocks:permissionsex-hikari-config"))
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.12:v2")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.19:v2")
     modImplementation("net.fabricmc:fabric-loader:0.8.8+build.202")
-    // modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
-    // modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
+    modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
+    modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.13.1+build.370-1.16")
-    modImplementation(include("net.fabricmc:fabric-language-kotlin:1.3.71+build.1")!!)
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.14.1+build.372-1.16")
+    modImplementation(include("net.fabricmc:fabric-language-kotlin:1.3.72+build.1")!!)
     modImplementation(include("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
         exclude("com.google.code.gson")
     })

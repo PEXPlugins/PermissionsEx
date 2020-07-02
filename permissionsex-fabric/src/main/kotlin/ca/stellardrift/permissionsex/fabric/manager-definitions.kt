@@ -20,7 +20,7 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
-import ca.stellardrift.permissionsex.fabric.mixin.lifecycle.AccessorMinecraftServer
+import ca.stellardrift.permissionsex.fabric.mixin.AccessorMinecraftServer
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet

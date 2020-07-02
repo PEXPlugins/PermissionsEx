@@ -1,4 +1,5 @@
 
+import ca.stellardrift.build.common.OpinionatedExtension
 import ca.stellardrift.build.common.pex
 import ca.stellardrift.build.common.sk89q
 import ca.stellardrift.build.common.sponge
@@ -7,12 +8,12 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin") version "3.0" apply false
-    id("ca.stellardrift.opinionated.publish") version "3.0" apply false
-    id("ca.stellardrift.localization") version "3.0" apply false
-    id("ca.stellardrift.templating") version "3.0" apply false
-    id("com.github.johnrengelman.shadow") version "5.2.0" apply false
-    id("com.github.ben-manes.versions") version "0.25.0"
+    id("ca.stellardrift.opinionated.kotlin") version "3.1" apply false
+    id("ca.stellardrift.opinionated.publish") version "3.1" apply false
+    id("ca.stellardrift.localization") version "3.1" apply false
+    id("ca.stellardrift.templating") version "3.1" apply false
+    id("com.github.johnrengelman.shadow") version "6.0.0" apply false
+    id("com.github.ben-manes.versions") version "0.28.0"
     `maven-publish`
 }
 
@@ -32,7 +33,7 @@ subprojects {
         sk89q()
     }
 
-    extensions.getByType(ca.stellardrift.build.common.OpinionatedExtension::class).apply {
+    extensions.getByType(OpinionatedExtension::class).apply {
         github("PEXPlugins", "PermissionsEx")
         apache2()
         publication?.apply {
