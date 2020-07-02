@@ -107,11 +107,6 @@ interface IVirtualHostHolder {
 @JvmField
 val LOCAL_HOST: InetSocketAddress = InetSocketAddress(InetAddress.getLocalHost(), 25565)
 
-interface HandshakeC2SPacketAccess {
-    val address: String
-    val port: Int
-}
-
 interface IPermissionCommandSource {
     @JvmDefault
     fun hasPermission(perm: String): Boolean {

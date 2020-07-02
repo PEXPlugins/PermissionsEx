@@ -17,11 +17,18 @@
 
 package ca.stellardrift.permissionsex.fabric
 
+import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.fabric.mixin.AccessorServerCommandSource
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.castMap
+import ca.stellardrift.permissionsex.util.coloredIfNecessary
+import ca.stellardrift.text.fabric.ComponentCommandSource
+import com.google.common.collect.Maps
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType.getString
@@ -30,8 +37,11 @@ import com.mojang.brigadier.context.CommandContext as BrigadierCommandContext
 import com.mojang.brigadier.suggestion.SuggestionProvider
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
+import net.kyori.text.Component
+import net.kyori.text.format.TextColor
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
@@ -94,7 +104,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec) : Predicate<ServerComma
 }
 
 class PEXNoArgsBrigadierCommand(private val spec: CommandSpec) : Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
-    override fun run(context: com.mojang.brigadier.context.CommandContext<ServerCommandSource>): Int {
+    override fun run(context: BrigadierCommandContext<ServerCommandSource>): Int {
         val cmd = context.source.asCommander()
         try {
             this.spec.process(cmd, "")
@@ -106,24 +116,69 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec) : Command<ServerC
     }
 
     override fun getSuggestions(
-        context: com.mojang.brigadier.context.CommandContext<ServerCommandSource>,
+        context: BrigadierCommandContext<ServerCommandSource>,
         builder: SuggestionsBuilder
     ): CompletableFuture<Suggestions> {
         this.spec.tabComplete(context.source.asCommander(), "").forEach {
             builder.suggest(it)
         }
-        return CompletableFuture.completedFuture(builder.build()) // todo actually run async? - for commands api refactor
+        return builder.buildFuture() // todo actually run async? - for commands api refactor
     }
 }
 
 @Suppress("UNCHECKED_CAST")
 internal fun ServerCommandSource.asCommander(): Commander {
-    return this as Commander
+    return FabricCommander(this)
 }
 
-class FabricMessageFormatter constructor(src: ServerCommandSource) :
-    MessageFormatter(src.asCommander(), PermissionsExMod.manager) {
+class FabricCommander(private val src: ServerCommandSource) : Commander {
+    private val output = ComponentCommandSource.of(src)
+    override val manager: PermissionsEx<*> = PermissionsExMod.manager
+    override val name: String get() = src.name
+    override val locale: Locale get() {
+        return (output.output as? LocaleHolder)?.locale ?: Locale.getDefault()
+    }
+    override val subjectIdentifier: SubjectIdentifier?
+        get() {
+            return if (src is IPermissionCommandSource) {
+                Maps.immutableEntry(src.permType, src.permIdentifier)
+            } else {
+                null
+            }
+        }
+
+    override fun hasPermission(permission: String): Boolean {
+        return if (src is IPermissionCommandSource) {
+            src.hasPermission(permission)
+        } else {
+            src.hasPermissionLevel(src.minecraftServer.opPermissionLevel)
+        }
+    }
+
+    override fun hasPermission(permission: Permission): Boolean {
+        var ret = 0
+        if (src is IPermissionCommandSource) {
+            ret = (src as IPermissionCommandSource).asCalculatedSubject().getPermission(permission.value)
+        }
+        if (ret == 0) { // op status
+            ret = (src as AccessorServerCommandSource).level
+        }
+        if (ret == 0) { // permission def value
+            ret = permission.default
+        }
+        return ret > 0
+    }
+
+    override val formatter: MessageFormatter = FabricMessageFormatter(this)
+
+    override fun msg(text: Component) {
+        output.sendFeedback(PEXComponentRenderer.render(text coloredIfNecessary TextColor.AQUA, locale), false)
+    }
+}
+
+class FabricMessageFormatter constructor(src: FabricCommander) :
+    MessageFormatter(src, src.manager) {
 
     override val SubjectIdentifier.friendlyName: String?
-        get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap< Nameable, String> { name.asString() }
+        get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap<Nameable, String> { name.asString() }
 }

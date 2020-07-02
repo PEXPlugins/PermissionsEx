@@ -46,8 +46,7 @@ import java.util.function.Supplier
 import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback
-import net.fabricmc.fabric.api.event.server.ServerStartCallback
-import net.fabricmc.fabric.api.event.server.ServerStopCallback
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
@@ -83,19 +82,22 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private lateinit var dataDir: Path
     lateinit var server: MinecraftServer private set
 
-    private val _logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID), false)
+    val available get() = _manager != null
+
+    private lateinit var _logger: FormattedLogger
     private val exec = Executors.newCachedThreadPool()
     private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
     override fun onInitialize() {
+        this._logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID), false)
         this.dataDir = FabricLoader.getInstance().configDirectory.toPath().resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger.prefix = "[${container.metadata.name}] "
 
         logger.info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
-        ServerStartCallback.EVENT.register(ServerStartCallback { init(it) })
-        ServerStopCallback.EVENT.register(ServerStopCallback { shutdown(it) })
+        ServerLifecycleEvents.SERVER_STARTED.register(ServerLifecycleEvents.ServerStarted { init(it) })
+        ServerLifecycleEvents.SERVER_STOPPED.register(ServerLifecycleEvents.ServerStopped { shutdown() })
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
             tryRegisterCommands(dispatcher)
         })
@@ -133,7 +135,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         logger.info(Messages.MOD_ENABLE_SUCCESS(container.metadata.version))
     }
 
-    private fun shutdown(server: MinecraftServer) {
+    private fun shutdown() {
         val manager = _manager
         if (manager != null) {
             manager.close()

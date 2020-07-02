@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.HandshakeC2SPacketAccess;
 import ca.stellardrift.permissionsex.fabric.IVirtualHostHolder;
+import ca.stellardrift.permissionsex.fabric.mixin.AccessorHandshakeC2SPacket;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
 import net.minecraft.server.network.ServerHandshakeNetworkHandler;
@@ -39,8 +39,8 @@ public class MixinServerHandshakeNetworkHandler {
     @Inject(method = "onHandshake", at = @At("HEAD"))
     public void applyVirtualHostToConnection(HandshakeC2SPacket handshakePacket, CallbackInfo ci) {
         IVirtualHostHolder conn = (IVirtualHostHolder) connection;
-        HandshakeC2SPacketAccess packet = (HandshakeC2SPacketAccess) handshakePacket;
-        InetSocketAddress addr = new InetSocketAddress(packet.getAddress(), packet.getPort());
+        AccessorHandshakeC2SPacket packet = (AccessorHandshakeC2SPacket) handshakePacket;
+        InetSocketAddress addr = new InetSocketAddress(packet.address(), packet.port());
         conn.setVirtualHost(addr);
     }
 }

@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @Mixin(ServerPlayerEntity.class)
 public abstract class MixinServerPlayerEntity extends PlayerEntity implements LocaleHolder, IPermissionCommandSource {
 
-
     private Locale permissionsex$clientLocale = null;
 
     private final AtomicReference<CalculatedSubject> permSubject = new AtomicReference<>();

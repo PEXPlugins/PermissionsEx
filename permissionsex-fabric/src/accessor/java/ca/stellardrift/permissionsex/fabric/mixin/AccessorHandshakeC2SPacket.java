@@ -15,30 +15,18 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
+package ca.stellardrift.permissionsex.fabric.mixin;
 
-import ca.stellardrift.permissionsex.fabric.HandshakeC2SPacketAccess;
 import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(HandshakeC2SPacket.class)
-public class MixinHandshakeC2SPacket implements HandshakeC2SPacketAccess {
-    @Shadow
-    private String address;
+public interface AccessorHandshakeC2SPacket {
+    @Accessor("address")
+    String address();
 
-    @Shadow
-    private int port;
+    @Accessor("port")
+    int port();
 
-    @NotNull
-    @Override
-    public String getAddress() {
-        return this.address;
-    }
-
-    @Override
-    public int getPort() {
-        return this.port;
-    }
 }

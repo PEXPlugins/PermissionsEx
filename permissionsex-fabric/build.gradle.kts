@@ -75,6 +75,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
     archiveClassifier.set("dev-all")
+    from(sourceSets["accessor"].output)
+    from(sourceSets["mixin"].output)
 
     dependencies {
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))

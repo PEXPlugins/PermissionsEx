@@ -22,9 +22,11 @@ import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.util.CachingValue;
+import ca.stellardrift.permissionsex.util.CachingValues;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.brigadier.ResultConsumer;
 import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import net.minecraft.command.arguments.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
@@ -62,6 +64,7 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     @Shadow
     public abstract MinecraftServer getMinecraftServer();
 
+    @Shadow @Final private MinecraftServer server;
     private CachingValue<Set<ContextValue<?>>> activeContexts;
 
     @Inject(method = "<init>(Lnet/minecraft/server/command/CommandOutput;Lnet/minecraft/util/math/Vec3d;" +
@@ -74,14 +77,22 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
                                ResultConsumer<ServerCommandSource> resultConsumer_1,
                                EntityAnchorArgumentType.EntityAnchor entityAnchorArgumentType$EntityAnchor_1,
                                CallbackInfo ci) {
-        activeContexts = UtilKt.tickCachedValue(getMinecraftServer(), 1L, () -> {
+        final Function0<Set<ContextValue<?>>> updater = () -> {
+            if (!PermissionsExMod.INSTANCE.getAvailable()) {
+                return ImmutableSet.of();
+            }
             final Set<ContextValue<?>> accumulator = new HashSet<>();
             final CalculatedSubject subj = asCalculatedSubject();
             for (ContextDefinition<?> def : PermissionsExMod.INSTANCE.getManager().getRegisteredContextTypes()) {
                 handleSingleCtx(subj, def, accumulator);
             }
             return ImmutableSet.copyOf(accumulator);
-        });
+        };
+        if (server == null) {
+            activeContexts = CachingValues.cachedByTime(50L, updater);
+        } else {
+            activeContexts = UtilKt.tickCachedValue(minecraftServer_1, 1L, updater);
+        }
     }
 
 

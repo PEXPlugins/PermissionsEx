@@ -26,6 +26,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.OperatorList;
 import net.minecraft.server.dedicated.DedicatedPlayerManager;
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -54,7 +55,7 @@ public class MixinDedicatedServer {
      */
     @Redirect(method = "isSpawnProtected",
             at = @At(value = "INVOKE", target = RedirectTargets.DEDICATED_PLAYER_MANAGER_IS_OP))
-    public boolean isSpawnProtectionBypassed(DedicatedPlayerManager manager, GameProfile profile, World world, BlockPos buildPosition, PlayerEntity player) {
+    public boolean isSpawnProtectionBypassed(DedicatedPlayerManager manager, GameProfile profile, ServerWorld world, BlockPos buildPosition, PlayerEntity player) {
         return PermissionsExHooks.hasPermission(player, MinecraftPermissions.BYPASS_SPAWN_PROTECTION);
     }
 }
