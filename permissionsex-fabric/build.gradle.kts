@@ -49,7 +49,7 @@ dependencies {
     modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.14.1+build.372-1.16")
-    modImplementation(include("net.fabricmc:fabric-language-kotlin:1.3.72+build.1")!!)
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.3.72+build.1")
     modImplementation(include("ca.stellardrift:text-adapter-fabric:1.1+3.0.4") {
         exclude("com.google.code.gson")
     })
