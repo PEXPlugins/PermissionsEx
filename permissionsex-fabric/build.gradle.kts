@@ -1,7 +1,6 @@
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
-import net.fabricmc.loom.task.RemapSourcesJarTask
 
 /*
  * PermissionsEx
@@ -51,10 +50,10 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.14.1+build.372-1.16")
     modImplementation(include("net.fabricmc:fabric-language-kotlin:1.3.72+build.1")!!)
-    modImplementation(include("ca.stellardrift:text-adapter-fabric:1.0.1+3.0.4") {
+    modImplementation(include("ca.stellardrift:text-adapter-fabric:1.1+3.0.4") {
         exclude("com.google.code.gson")
     })
-    modImplementation(include("ca.stellardrift:confabricate:1.2-SNAPSHOT+3.7") {
+    modImplementation(include("ca.stellardrift:confabricate:1.2+3.7") {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
     })
@@ -107,32 +106,4 @@ tasks.assemble.configure {
 
 tasks.build.configure {
     dependsOn(remapShadowJar)
-}
-
-afterEvaluate {
-    tasks.withType(Javadoc::class).configureEach {
-        val options = this.options
-        if (options is StandardJavadocDocletOptions) {
-            options.tags = listOf("reason:m:Reason for overwrite:") // Add Mixin @reason JD tag definition
-            options.links?.removeIf { it.contains("yarn") } // todo: remove after we go to 1.16, take out of afterEvaluate block
-        }
-    }
-}
-
-opinionated {
-    publication?.apply {
-        val remapJar by tasks.getting(RemapJarTask::class)
-        val remapSourcesJar by tasks.getting(RemapSourcesJarTask::class)
-        suppressAllPomMetadataWarnings()
-
-        artifact(tasks.jar.get()) {
-            classifier = "dev"
-        }
-        artifact(remapJar)
-
-        artifact(tasks.getByName("sourcesJar")) {
-            builtBy(remapSourcesJar)
-        }
-        artifact(tasks.getByName("javadocJar"))
-    }
 }

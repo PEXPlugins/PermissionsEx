@@ -45,6 +45,7 @@ import net.kyori.text.format.TextColor
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.text.LiteralText
 import net.minecraft.util.Nameable
 
 fun registerCommand(spec: CommandSpec, dispatch: CommandDispatcher<ServerCommandSource>) {
@@ -172,7 +173,12 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     override val formatter: MessageFormatter = FabricMessageFormatter(this)
 
     override fun msg(text: Component) {
-        output.sendFeedback(PEXComponentRenderer.render(text coloredIfNecessary TextColor.AQUA, locale), false)
+        try {
+            output.sendFeedback(PEXComponentRenderer.render(text coloredIfNecessary TextColor.DARK_AQUA, locale), false)
+        } catch (t: Throwable) {
+            src.sendFeedback(LiteralText("Error occurred while sending feedback, see console for details"), false)
+            t.printStackTrace()
+        }
     }
 }
 
