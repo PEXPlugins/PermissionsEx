@@ -34,7 +34,7 @@ dependencies {
     shade(project(":permissionsex-core")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
-        exclude("org.spongepowered", "configurate-*")
+        exclude("org.spongepowered")
         exclude("net.kyori")
         exclude("org.jetbrains.kotlin")
     }
@@ -57,6 +57,7 @@ dependencies {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
     })
+    compileOnly("org.spongepowered:configurate-hocon:3.7")
 }
 
 localization {
