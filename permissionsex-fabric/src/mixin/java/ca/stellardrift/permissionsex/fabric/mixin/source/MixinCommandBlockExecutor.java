@@ -31,27 +31,23 @@ import static ca.stellardrift.permissionsex.fabric.FabricDefinitions.SUBJECTS_CO
 
 @Mixin(CommandBlockExecutor.class)
 public class MixinCommandBlockExecutor implements IPermissionCommandSource {
-    @Volatile
-    private CalculatedSubject subj;
+    private volatile CalculatedSubject subj;
 
     @Shadow
     private Text customName;
 
-    @NotNull
     @Override
-    public String getPermType() {
+    public @NotNull String getPermType() {
         return SUBJECTS_COMMAND_BLOCK;
     }
 
-    @NotNull
     @Override
-    public String getPermIdentifier() {
+    public @NotNull String getPermIdentifier() {
         return customName.asString();
     }
 
-    @NotNull
     @Override
-    public CalculatedSubject asCalculatedSubject() {
+    public @NotNull CalculatedSubject asCalculatedSubject() {
         if (subj == null) {
             return subj = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
         }
