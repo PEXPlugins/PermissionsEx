@@ -21,15 +21,15 @@ package ca.stellardrift.permissionsex.bukkit;
 import java.lang.reflect.Field;
 
 /**
- * @author zml2008
+ * A type-safe reference to a declared field in a class.
  */
-public class FieldReplacer<Instance, Type> {
-    private final Class<Type> requiredType;
+public class FieldReplacer<I, V> {
+    private final Class<V> requiredType;
     private final Field field;
 
-    public FieldReplacer(Class<? extends Instance> clazz, String fieldName, Class<Type> requiredType) {
+    public FieldReplacer(Class<? extends I> clazz, String fieldName, Class<V> requiredType) {
         this.requiredType = requiredType;
-        field = getField(clazz, fieldName);
+        field = field(clazz, fieldName);
         if (field == null) {
             throw new ExceptionInInitializerError("No such field " + fieldName + " in class " + clazz);
         }
@@ -40,7 +40,7 @@ public class FieldReplacer<Instance, Type> {
         }
     }
 
-    public Type get(Instance instance) {
+    public V get(I instance) {
         try {
             return this.requiredType.cast(field.get(instance));
         } catch (IllegalAccessException e) {
@@ -48,7 +48,7 @@ public class FieldReplacer<Instance, Type> {
         }
     }
 
-    public void set(Instance instance, Type newValue) {
+    public void set(I instance, V newValue) {
         try {
             field.set(instance, newValue);
         } catch (IllegalAccessException e) {
@@ -56,7 +56,7 @@ public class FieldReplacer<Instance, Type> {
         }
     }
 
-    private static Field getField(Class<?> clazz, String fieldName) {
+    private static Field field(Class<?> clazz, String fieldName) {
         while (clazz != null && clazz != Object.class) {
             try {
                 return clazz.getDeclaredField(fieldName);
