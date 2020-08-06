@@ -24,15 +24,13 @@ import org.gradle.api.publish.maven.MavenPublication
 
 // TODO: Replace this with bom subproject
 enum class Versions(val version: String) {
-    SHADOW("5.1.0"),
-    SPONGE("7.1.0"),
-    CONFIGURATE("3.7-SNAPSHOT"),
-    SLF4J("1.7.26"),
-    ANTLR("4.7.2"),
-    JUNIT("5.6.2"),
-    KOTLINX_COROUTINES("1.3.5"),
+    SPONGE("7.2.0"),
+    CONFIGURATE("3.7"),
+    SLF4J("1.7.30"),
+    ANTLR("4.8-1"),
+    KOTLINX_COROUTINES("1.3.8"),
     TEXT("3.0.4"),
-    TEXT_ADAPTER("3.0.5");
+    TEXT_ADAPTER("3.0.6");
 
     override fun toString(): String {
         return this.version
