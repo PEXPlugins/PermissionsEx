@@ -135,7 +135,8 @@ class PEXSubject implements Subject {
 
     @Override
     public Optional<CommandSource> getCommandSource() {
-        return this.baked.getAssociatedObject().filter(obj -> obj instanceof CommandSource).map(x -> (CommandSource) x);
+        final Object associated = this.baked.getAssociatedObject();
+        return associated instanceof CommandSource ? Optional.of((CommandSource) associated) : Optional.empty();
     }
 
     @Override
@@ -157,8 +158,8 @@ class PEXSubject implements Subject {
     public Optional<String> getOption(Set<Context> contexts, String key) {
         time().onGetOption().startTimingIfSync();
         try {
-            Preconditions.checkNotNull(contexts, "contexts");
-            Preconditions.checkNotNull(key, "key");
+            Objects.requireNonNull(contexts, "contexts");
+            Objects.requireNonNull(key, "key");
             return baked.getOption(PEXSubjectData.contextsSpongeToPex(contexts, getManager()), key);
         } finally {
             time().onGetOption().stopTimingIfSync();

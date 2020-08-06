@@ -25,10 +25,8 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.net.InetSocketAddress
-import java.util.Optional
 import java.util.UUID
 import net.minecraft.entity.Entity
 import net.minecraft.server.command.ServerCommandSource
@@ -71,7 +69,7 @@ object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSou
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Identifier) -> Unit) {
-        subject.associatedObject.castMap<ServerPlayerEntity> {
+        (subject.associatedObject as? ServerPlayerEntity)?.apply {
             consumer(serverWorld.registryKey.value)
         }
     }
@@ -90,7 +88,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Identifier) -> Unit) {
-        subject.associatedObject.castMap<ServerPlayerEntity> {
+        (subject.associatedObject as?ServerPlayerEntity)?.apply {
             val key = world.dimensionRegistryKey?.value
             if (key != null) {
                 consumer(key)
@@ -99,7 +97,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
-        return subject.associatedObject.castMap<Entity, Set<Identifier>> {
+        return (subject.associatedObject as? Entity)?.run {
             if (entityWorld is ServerWorld) {
                 (entityWorld.server as? AccessorMinecraftServer)?.dimensionTracker?.dimensionTypeRegistry?.ids
             } else {
@@ -117,15 +115,16 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip"), CommandSo
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<ServerPlayerEntity> { (networkHandler.connection.address as? InetSocketAddress)?.run {
+        ((subject.associatedObject as? ServerPlayerEntity)?.networkHandler?.connection?.address as? InetSocketAddress)?.run {
             consumer(IpSet.fromAddrPrefix(address, address.maxPrefixLength))
-        } }
+        }
     }
 }
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSourceContextDefinition<IpSet> {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) =
-        subject.associatedObject.castMap<ServerPlayerEntity> { accumulate(this, consumer) }
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+        (subject.associatedObject as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
+    }
 
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: IpSet) -> Unit) {
         source.ifPlayer { accumulate(it, consumer) }
@@ -138,8 +137,10 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSour
 }
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost"), CommandSourceContextDefinition<String> {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) =
-        subject.associatedObject.castMap<ServerPlayerEntity> { accumulate(this, consumer) }
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+        (subject.associatedObject as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
+    }
+
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: String) -> Unit) {
         source.ifPlayer { accumulate(it, consumer) }
     }
@@ -153,8 +154,10 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport"), Command
     override fun deserialize(canonicalValue: String): Int = canonicalValue.toInt()
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) =
-        subject.associatedObject.castMap<ServerPlayerEntity> { accumulate(this, consumer) }
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) {
+        (subject.associatedObject as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
+    }
+
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: Int) -> Unit) {
         source.ifPlayer { accumulate(it, consumer) }
     }
@@ -173,21 +176,21 @@ class UserSubjectTypeDefinition : SubjectTypeDefinition<ServerPlayerEntity>("use
         }
     }
 
-    override fun getAliasForName(name: String): Optional<String> {
+    override fun getAliasForName(name: String): String? {
         return try {
             UUID.fromString(name)
-            Optional.empty()
+            null
         } catch (e: IllegalArgumentException) {
-            Optional.ofNullable(PermissionsExMod.server.userCache.findByName(name)?.id?.toString())
+            PermissionsExMod.server.userCache.findByName(name)?.id?.toString()
         }
     }
 
-    override fun getAssociatedObject(identifier: String): Optional<ServerPlayerEntity> {
+    override fun getAssociatedObject(identifier: String): ServerPlayerEntity? {
         return try {
             val uid = UUID.fromString(identifier)
-            Optional.ofNullable(PermissionsExMod.server.playerManager.getPlayer(uid))
+            PermissionsExMod.server.playerManager.getPlayer(uid)
         } catch (e: IllegalArgumentException) {
-            Optional.empty()
+            null
         }
     }
 }

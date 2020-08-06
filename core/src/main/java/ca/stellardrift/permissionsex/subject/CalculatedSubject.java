@@ -31,10 +31,15 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.SimpleConfigurationNode;
-import ninja.leaping.configurate.reference.ConfigurationReference;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -332,7 +337,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
         return this.transientRef;
     }
 
-    public Optional<?> getAssociatedObject() {
+    public @Nullable Object getAssociatedObject() {
         return this.type.getTypeInfo().getAssociatedObject(this.identifier.getValue());
     }
 

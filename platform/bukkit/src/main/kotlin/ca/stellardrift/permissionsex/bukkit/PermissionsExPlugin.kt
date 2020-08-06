@@ -170,7 +170,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             LocalHostContextDefinition,
             LocalPortContextDefiniiton
         )
-        manager.getSubjects(PermissionsEx.SUBJECTS_USER).typeInfo = UserSubjectTypeDescription(
+        manager.getSubjects(PermissionsEx.SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(
             PermissionsEx.SUBJECTS_USER,
             this
         )
@@ -255,7 +255,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     private fun onPlayerQuit(event: PlayerQuitEvent) {
         uninjectPermissible(event.player)
-        manager?.callbackController.clearOwnedBy(event.player.uniqueId)
+        this._manager?.callbackController?.clearOwnedBy(event.player.uniqueId)
         userSubjects.uncache(event.player.uniqueId.toString())
     }
 

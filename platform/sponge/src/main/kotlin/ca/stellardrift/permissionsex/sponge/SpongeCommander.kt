@@ -22,7 +22,6 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.subjectIdentifier
@@ -95,5 +94,5 @@ internal class SpongeCommander(
 internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val SubjectIdentifier.friendlyName: String?
-        get() = cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSource, String> { name }
+        get() = (cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSource)?.name
 }

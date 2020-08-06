@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.fabric.mixin.AccessorServerCommandSource
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.text.fabric.ComponentCommandSource
 import com.google.common.collect.Maps
@@ -186,5 +185,5 @@ class FabricMessageFormatter constructor(src: FabricCommander) :
     MessageFormatter(src, src.manager) {
 
     override val SubjectIdentifier.friendlyName: String?
-        get() = PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject.castMap<Nameable, String> { name.asString() }
+        get() = (PermissionsExMod.manager.getSubjects(key)[value].join().associatedObject as? Nameable)?.name?.asString()
 }

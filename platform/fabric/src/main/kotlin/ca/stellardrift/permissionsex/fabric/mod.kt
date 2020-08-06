@@ -28,7 +28,6 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.util.MinecraftProfile
-import ca.stellardrift.permissionsex.util.castMap
 import com.google.common.collect.Iterables
 import com.mojang.authlib.Agent
 import com.mojang.authlib.GameProfile
@@ -163,7 +162,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
-                newSubj.associatedObject.castMap<ServerPlayerEntity> {
+                (newSubj.associatedObject as? ServerPlayerEntity)?.apply {
                     server.playerManager.sendCommandTree(this)
                 }
             }

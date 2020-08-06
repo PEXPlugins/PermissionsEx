@@ -19,14 +19,13 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
-import java.util.Optional
 import java.util.UUID
 import org.bukkit.entity.Player
 
 /**
  * Metadata for user types
  */
-class UserSubjectTypeDescription(typeName: String, private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(typeName) {
+class UserSubjectTypeDefinition(typeName: String, private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(typeName) {
     override fun isNameValid(name: String): Boolean {
         return try {
             UUID.fromString(name)
@@ -36,28 +35,28 @@ class UserSubjectTypeDescription(typeName: String, private val plugin: Permissio
         }
     }
 
-    override fun getAliasForName(input: String): Optional<String> {
+    override fun getAliasForName(name: String): String? {
         try {
-            UUID.fromString(input)
+            UUID.fromString(name)
         } catch (ex: IllegalArgumentException) {
-            val player = plugin.server.getPlayer(input)
+            val player = plugin.server.getPlayer(name)
             if (player != null) {
-                return Optional.of(player.uniqueId.toString())
+                return player.uniqueId.toString()
             } else {
-                val offline = plugin.server.getOfflinePlayer(input)
+                val offline = plugin.server.getOfflinePlayer(name)
                 if (offline != null && offline.uniqueId != null) {
-                    return Optional.of(offline.uniqueId.toString())
+                    return offline.uniqueId.toString()
                 }
             }
         }
-        return Optional.empty()
+        return null
     }
 
-    override fun getAssociatedObject(identifier: String): Optional<Player> {
+    override fun getAssociatedObject(identifier: String): Player? {
         return try {
-            Optional.ofNullable(plugin.server.getPlayer(UUID.fromString(identifier)))
+            plugin.server.getPlayer(UUID.fromString(identifier))
         } catch (ex: IllegalArgumentException) { // not a valid user ID
-            Optional.empty()
+            null
         }
     }
 }

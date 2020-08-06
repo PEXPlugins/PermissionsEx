@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
@@ -65,7 +64,7 @@ fun String.toLocale(): Locale {
 class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val Map.Entry<String, String>.friendlyName: String?
-        get() = cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
+        get() = (cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
 }
 
 /**

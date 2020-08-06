@@ -22,13 +22,12 @@ import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import com.velocitypowered.api.proxy.Player
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<Player> {
+        (subject.associatedObject as? Player)?.apply {
             consumer(IpSet.fromAddrPrefix(this.remoteAddress.address, this.remoteAddress.address.maxPrefixLength))
         }
     }
@@ -36,7 +35,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<Player> {
+        (subject.associatedObject as? Player)?.apply {
             virtualHost.ifPresent {
                 if (!it.isUnresolved) {
                     consumer(IpSet.fromAddrPrefix(it.address, it.address.maxPrefixLength))
@@ -48,7 +47,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip") {
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        subject.associatedObject.castMap<Player> {
+        (subject.associatedObject as? Player)?.apply {
             virtualHost.ifPresent {
                 consumer(it.hostString)
             }
@@ -60,8 +59,9 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport") {
     override fun serialize(userValue: Int): String = userValue.toString()
     override fun deserialize(canonicalValue: String): Int = canonicalValue.toInt()
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) =
-        subject.associatedObject.castMap<Player> {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) {
+        (subject.associatedObject as? Player)?.apply {
             virtualHost.ifPresent { consumer(it.port) }
         }
+    }
 }

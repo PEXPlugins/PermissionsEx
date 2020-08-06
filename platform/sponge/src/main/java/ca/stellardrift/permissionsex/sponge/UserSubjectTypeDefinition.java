@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.sponge;
 
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.profile.GameProfile;
 import org.spongepowered.api.profile.GameProfileCache;
@@ -28,10 +29,10 @@ import java.util.UUID;
 /**
  * Metadata for user types
  */
-public class UserSubjectTypeDescription extends SubjectTypeDefinition<Player> {
+public class UserSubjectTypeDefinition extends SubjectTypeDefinition<Player> {
     private final PermissionsExPlugin plugin;
 
-    public UserSubjectTypeDescription(String typeName, PermissionsExPlugin plugin) {
+    public UserSubjectTypeDefinition(String typeName, PermissionsExPlugin plugin) {
         super(typeName);
         this.plugin = plugin;
     }
@@ -47,31 +48,31 @@ public class UserSubjectTypeDescription extends SubjectTypeDefinition<Player> {
     }
 
     @Override
-    public Optional<String> getAliasForName(String input) {
+    public @Nullable String getAliasForName(String input) {
         try {
             UUID.fromString(input);
         } catch (IllegalArgumentException ex) {
             Optional<Player> player = plugin.getGame().getServer().getPlayer(input);
             if (player.isPresent()) {
-                return Optional.of(player.get().getUniqueId().toString());
+                return player.get().getUniqueId().toString();
             } else {
                 GameProfileCache res = plugin.getGame().getServer().getGameProfileManager().getCache();
                 for (GameProfile profile : res.match(input)) {
                     if (profile.getName().isPresent() && profile.getName().get().equalsIgnoreCase(input)) {
-                        return Optional.of(profile.getUniqueId().toString());
+                        return profile.getUniqueId().toString();
                     }
                 }
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     @Override
-    public Optional<Player> getAssociatedObject(String identifier) {
+    public @Nullable Player getAssociatedObject(String identifier) {
         try {
-            return plugin.getGame().getServer().getPlayer(UUID.fromString(identifier));
+            return plugin.getGame().getServer().getPlayer(UUID.fromString(identifier)).orElse(null);
         } catch (IllegalArgumentException ex) {
-            return Optional.empty();
+            return null;
         }
     }
 }

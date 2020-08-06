@@ -101,8 +101,8 @@ private class SubjectElement(
         val subjType = pex.getSubjects(type)
         if (!subjType.isRegistered(identifier).join()) { // TODO: Async command elements
             val newIdentifier = subjType.typeInfo.getAliasForName(identifier)
-            if (newIdentifier.isPresent) {
-                identifier = newIdentifier.get()
+            if (newIdentifier != null) {
+                identifier = newIdentifier
             }
         }
         if (!subjType.typeInfo.isNameValid(identifier)) {
@@ -125,7 +125,7 @@ private class SubjectElement(
                 val typeObj = pex.getSubjects(type)
                 val allIdents = typeObj.allIdentifiers.asSequence()
                 (allIdents +
-                        allIdents.map { typeObj.typeInfo.getAliasForName(it).orElse(null) }.filterNotNull())
+                        allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())
                     .filter { it.startsWith(identifierSegment, ignoreCase = true) }
                     .map { "${typeObj.typeInfo.typeName}:$it" }
             } else {
@@ -136,7 +136,7 @@ private class SubjectElement(
         val typeObj = pex.getSubjects(type)
         val allIdents = typeObj.allIdentifiers.asSequence()
         return (allIdents +
-                allIdents.map { typeObj.typeInfo.getAliasForName(it).orElse(null) }.filterNotNull())
+                allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())
             .filter { it.startsWith(identifierSegment, ignoreCase = true) }
     }
 }

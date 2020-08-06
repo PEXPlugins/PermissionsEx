@@ -40,7 +40,7 @@ public class SubjectType {
 
     public SubjectType(PermissionsEx<?> pex, String type, SubjectCache persistentData, SubjectCache transientData) {
         this.pex = pex;
-        this.type = SubjectTypeDefinition.defaultFor(type);
+        this.type = SubjectTypeDefinitionKt.subjectType(type);
         this.persistentData = persistentData;
         this.transientData = transientData; 
         cache = Caffeine.newBuilder().executor(pex.getAsyncExecutor()).buildAsync(((key, executor) -> {

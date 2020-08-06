@@ -26,7 +26,6 @@ import com.velocitypowered.api.permission.PermissionFunction
 import com.velocitypowered.api.permission.PermissionSubject
 import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.proxy.Player
-import java.util.Optional
 import java.util.UUID
 
 class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(SUBJECTS_USER) {
@@ -39,21 +38,21 @@ class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : Subje
         }
     }
 
-    override fun getAliasForName(name: String): Optional<String> {
+    override fun getAliasForName(name: String): String? {
         return try {
             UUID.fromString(name)
-            Optional.empty()
+            null
         } catch (e: Exception) {
-            plugin.server.getPlayer(name).map { it.uniqueId.toString() }
+            plugin.server.getPlayer(name).orElse(null)?.run { uniqueId.toString() }
         }
     }
 
-    override fun getAssociatedObject(identifier: String): Optional<Player> {
+    override fun getAssociatedObject(identifier: String): Player? {
         return try {
             val id = UUID.fromString(identifier)
-            plugin.server.getPlayer(id)
+            plugin.server.getPlayer(id).orElse(null)
         } catch (e: IllegalArgumentException) {
-            Optional.empty()
+            null
         }
     }
 }

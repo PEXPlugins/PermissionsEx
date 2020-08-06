@@ -35,6 +35,7 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
+import ca.stellardrift.permissionsex.subject.SubjectTypeDefinitionKt;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
@@ -124,7 +125,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         registerContextDefinition(AfterTimeContextDefinition.INSTANCE);
         initialize(config);
 
-        getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.defaultFor(SUBJECTS_DEFAULTS, false));
+        getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinitionKt.subjectType(SUBJECTS_DEFAULTS, false));
         convertUuids();
 
         registerCommands(() -> ImmutableSet.of(

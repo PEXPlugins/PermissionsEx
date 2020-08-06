@@ -21,7 +21,6 @@ package ca.stellardrift.permissionsex.bukkit
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -96,7 +95,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
         if (worldOverride == null) {
             return origContexts
         }
-        if (subject.associatedObject.castMap<Player, Boolean> { world.name.equals(worldOverride, ignoreCase = true) } == true) {
+        if ((subject.associatedObject as? Player)?.world?.name.equals(worldOverride, ignoreCase = true) == true) {
             return origContexts
         }
         origContexts.removeIf { it.definition === WorldContextDefinition }

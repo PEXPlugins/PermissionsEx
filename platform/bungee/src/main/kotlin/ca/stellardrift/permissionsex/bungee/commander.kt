@@ -23,7 +23,6 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
@@ -64,7 +63,7 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
 class BungeePluginMessageFormatter(val sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = TextColor.YELLOW) {
 
     override val SubjectIdentifier.friendlyName: String? get() {
-        return sender.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value).castMap<CommandSender, String> { name }
+        return (sender.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
     }
 
     /**

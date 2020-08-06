@@ -136,7 +136,7 @@ public class PermissionsExPlugin implements PermissionService, ImplementationInt
         getManager().getSubjects(SUBJECTS_SYSTEM).setTypeInfo(new FixedEntriesSubjectTypeDefinition<>(SUBJECTS_SYSTEM, ImmutableMap.of(
                 "Server", () -> game.getServer().getConsole(),
                 "RCON", () -> null)));
-        getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDescription(SUBJECTS_USER, this));
+        getManager().getSubjects(SUBJECTS_USER).setTypeInfo(new UserSubjectTypeDefinition(SUBJECTS_USER, this));
 
 
         registerFakeOpCommand("op", "minecraft.command.op");

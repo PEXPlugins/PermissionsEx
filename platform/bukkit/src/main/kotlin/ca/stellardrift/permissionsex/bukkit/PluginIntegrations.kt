@@ -22,7 +22,6 @@ package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.castMap
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin
@@ -35,7 +34,7 @@ import org.bukkit.plugin.ServicePriority
 // TODO: Make region parents work properly
 class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleContextDefinition("region") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        subject.associatedObject.castMap<Player> {
+        (subject.associatedObject as? Player)?.apply {
             val wgPlayer = plugin.wrapPlayer(this)
             val regionProvider = WorldGuard.getInstance().platform.regionContainer[wgPlayer.world]
             if (regionProvider != null) {
@@ -54,7 +53,7 @@ class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleCont
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<String> {
-        return subject.associatedObject.castMap<Player, Set<String>> {
+        return (subject.associatedObject as? Player)?.run {
             val wgPlayer = plugin.wrapPlayer(this)
             (WorldGuard.getInstance().platform.regionContainer[wgPlayer.world]?.regions?.keys)
         } ?: setOf()

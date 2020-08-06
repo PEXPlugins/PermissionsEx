@@ -24,9 +24,7 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.maxPrefixLength
-import java.util.Optional
 import java.util.UUID
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
@@ -40,21 +38,21 @@ class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : Subje
         }
     }
 
-    override fun getAliasForName(name: String): Optional<String> {
+    override fun getAliasForName(name: String): String? {
         return try {
             UUID.fromString(name)
-            Optional.empty()
+            null
         } catch (e: Exception) {
-            Optional.ofNullable(plugin.proxy.getPlayer(name)?.uniqueId?.toString())
+            plugin.proxy.getPlayer(name)?.uniqueId?.toString()
         }
     }
 
-    override fun getAssociatedObject(identifier: String): Optional<ProxiedPlayer> {
+    override fun getAssociatedObject(identifier: String): ProxiedPlayer? {
         return try {
             val id = UUID.fromString(identifier)
-            Optional.ofNullable(plugin.proxy.getPlayer(id))
+            plugin.proxy.getPlayer(id)
         } catch (e: IllegalArgumentException) {
-            Optional.empty()
+            null
         }
     }
 }
@@ -62,7 +60,7 @@ class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : Subje
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<ProxiedPlayer> {
+        (subject.associatedObject as? ProxiedPlayer)?.apply {
             consumer(IpSet.fromAddrPrefix(address.address, address.address.maxPrefixLength))
         }
     }
@@ -70,7 +68,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        subject.associatedObject.castMap<ProxiedPlayer> {
+        (subject.associatedObject as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.hostName?.apply(consumer)
         }
     }
@@ -78,7 +76,7 @@ object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<ProxiedPlayer> {
+        (subject.associatedObject as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.address?.run {
                 IpSet.fromAddrPrefix(this, this.maxPrefixLength)
             }?.apply(consumer)
@@ -92,7 +90,7 @@ object LocalPortContextDefiniiton : ContextDefinition<Int>("localport") {
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) {
-        subject.associatedObject.castMap<ProxiedPlayer> {
+        (subject.associatedObject as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.port?.apply(consumer)
         }
     }

@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.castMap
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import org.bukkit.Bukkit
 import org.bukkit.World
@@ -38,7 +37,7 @@ object WorldContextDefinition : ContextDefinition<String>("world") {
     override fun matches(ownVal: String, testVal: String): Boolean = ownVal.equals(testVal, ignoreCase = true)
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
-        subject.associatedObject.castMap<Player> { consumer(world.name) }
+        (subject.associatedObject as? Player)?.also { consumer(it.world.name) }
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<String> {
@@ -49,14 +48,14 @@ object WorldContextDefinition : ContextDefinition<String>("world") {
 object DimensionContextDefinition :
     EnumContextDefinition<World.Environment>("dimension", World.Environment::class.java) {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: World.Environment) -> Unit) {
-        subject.associatedObject.castMap<Player> { consumer(world.environment) }
+        (subject.associatedObject as? Player)?.also { consumer(it.world.environment) }
     }
 }
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
-        subject.associatedObject.castMap<Player> {
+        (subject.associatedObject as? Player)?.run {
             address?.address?.apply {
                 consumer(IpSet.fromAddrPrefix(this, this.maxPrefixLength))
             }
