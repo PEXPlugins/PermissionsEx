@@ -42,7 +42,7 @@ class ValueElement<T>(val key: Component, val value: Value<T>) : CommandElement(
         context: CommandContext
     ) {
         val value = value.parse(args)
-        if (value != null && value is Any) {
+        if (value is Any) {
             context.putArg(key.toContextKey(), value)
         }
     }

@@ -35,7 +35,7 @@ class ChildCommandsTest : PermissionsExTest() {
         command("parent") {
             children {
                 child("child") {
-                    executor { src, ctx -> childExecuted.set(true) }
+                    executor { _, _ -> childExecuted.set(true) }
                 }
             }
         }.process(TestCommander(manager), "child")

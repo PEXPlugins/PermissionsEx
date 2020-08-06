@@ -33,8 +33,8 @@ import net.kyori.text.format.TextColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
-fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
-fun CommandSender.sendMessage(text: Component) = TextAdapter.sendComponent(this, text)
+fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendMessage(this, text)
+fun CommandSender.sendMessage(text: Component) = TextAdapter.sendMessage(this, text)
 
 class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: CommandSender) :
     Commander {

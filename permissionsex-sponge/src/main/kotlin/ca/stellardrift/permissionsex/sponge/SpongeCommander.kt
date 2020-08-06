@@ -37,10 +37,10 @@ import org.spongepowered.api.text.channel.MessageReceiver
 import org.spongepowered.api.text.chat.ChatType
 import org.spongepowered.api.text.chat.ChatTypes
 
-fun MessageReceiver.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
-fun Iterable<MessageReceiver>.sendMessage(message: Component) = TextAdapter.sendComponent(this, message)
-fun ChatTypeMessageReceiver.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendComponent(this, message, type)
-fun Iterable<ChatTypeMessageReceiver>.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendComponent(this, message, type)
+fun MessageReceiver.sendMessage(message: Component) = TextAdapter.sendMessage(this, message)
+fun Iterable<MessageReceiver>.sendMessage(message: Component) = TextAdapter.sendMessage(this, message)
+fun ChatTypeMessageReceiver.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendMessage(this, message, type)
+fun Iterable<ChatTypeMessageReceiver>.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendMessage(this, message, type)
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization

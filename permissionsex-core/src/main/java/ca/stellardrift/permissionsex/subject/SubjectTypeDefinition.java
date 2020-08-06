@@ -109,7 +109,8 @@ public abstract class SubjectTypeDefinition<AttachmentType> {
 
     /**
      * The native object that may be held
-     *
+
+     * @param identifier type
      * @return A native object that has its permissions defined by this subject
      */
     public abstract Optional<AttachmentType> getAssociatedObject(String identifier);

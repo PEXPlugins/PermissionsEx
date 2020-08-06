@@ -49,6 +49,8 @@ public interface DataStore {
 
     /**
      * Activate this data store from the required data
+     *
+     * @param core manager the data store is attached to
      * @throws PermissionsLoadingException If the backing data cannot be loaded
      * @return true if there was pre-existing data to load, false if this is first run
      */
@@ -141,9 +143,11 @@ public interface DataStore {
     CompletableFuture<Set<String>> getDefinedContextKeys();
 
     /**
-     * Returns all subjects present in this data store
+     * Write this data store's configuration to the provided configuration node.
      *
-     * @return An iterable containing all subjects
+     * @param node rode to write to
+     * @return data store's type name
+     * @throws PermissionsLoadingException if unable to do so
      */
      String serialize(ConfigurationNode node) throws PermissionsLoadingException;
 
