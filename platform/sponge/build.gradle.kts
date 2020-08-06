@@ -1,5 +1,6 @@
 
-import ca.stellardrift.build.common.velocity
+import ca.stellardrift.build.common.kyoriText
+import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -30,40 +31,42 @@ plugins {
 
 setupPublication()
 
-repositories {
-    velocity()
-}
-
 dependencies {
-    api(project(":permissionsex-core")) {
+    api(project(":core")) {
+        exclude("org.spongepowered")
+        exclude("com.google.guava", "guava")
         exclude("org.slf4j", "slf4j-api")
-        exclude("com.google.code.gson")
-        exclude("com.google.guava")
-        exclude("org.spongepowered", "configurate-yaml")
-        exclude("net.kyori")
-        // exclude("org.yaml", "snakeyaml")
+        exclude("com.github.ben-manes.caffeine", "caffeine")
     }
-    api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
-    implementation(project(":impl-blocks:permissionsex-hikari-config")) {
-        exclude("org.slf4j", "slf4j-api")
-    }
-    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
 
-    kapt(shadow("com.velocitypowered:velocity-api:1.0.8-SNAPSHOT")!!)
+    implementation(kyoriText("adapter-spongeapi", Versions.TEXT_ADAPTER)) {
+        exclude("com.google.code.gson")
+    }
+    implementation(kyoriText("serializer-gson", Versions.TEXT)) {
+        exclude("com.google.code.gson")
+    }
+
+    kapt(shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")!!)
+    testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
+
+    testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
+    testImplementation("org.mockito:mockito-core:3.0.0")
 }
 
 localization {
     templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
+opinionated {
+    useJUnit5()
+}
+
 val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
-    minimize {
-        exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
-    }
-    listOf("com.zaxxer", "com.typesafe", "com.github.benmanes",
-        "ninja.leaping.configurate", "org.jetbrains",
-        "org.checkerframework", "org.antlr.v4").forEach {
+    minimize()
+    listOf("org.antlr",
+        "net.kyori",
+        "org.jetbrains.annotations").forEach {
         relocate(it, "$relocateRoot.$it")
     }
     exclude("org/checkerframework/**")

@@ -1,7 +1,5 @@
 
-import ca.stellardrift.build.common.configurate
-import ca.stellardrift.build.common.kyoriText
-import ca.stellardrift.permissionsex.gradle.Versions
+import ca.stellardrift.build.common.velocity
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -25,42 +23,33 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("com.github.johnrengelman.shadow")
+    kotlin("kapt")
     id("ca.stellardrift.localization")
+    id("ca.stellardrift.templating")
 }
 
 setupPublication()
 
 repositories {
-    maven {
-        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-    }
+    velocity()
 }
 
 dependencies {
-    api(project(":permissionsex-core")) {
+    api(project(":core")) {
+        exclude("org.slf4j", "slf4j-api")
         exclude("com.google.code.gson")
         exclude("com.google.guava")
-        exclude("org.yaml", "snakeyaml")
+        exclude("org.spongepowered", "configurate-yaml")
+        exclude("net.kyori")
+        // exclude("org.yaml", "snakeyaml")
     }
-
-    implementation(configurate("yaml")) {
-        exclude(group = "com.google.guava")
-        exclude("org.yaml", "snakeyaml")
+    api(project(":impl-blocks:proxy-common")) { isTransitive = false }
+    implementation(project(":impl-blocks:hikari-config")) {
+        exclude("org.slf4j", "slf4j-api")
     }
-    implementation(kyoriText("adapter-bungeecord", Versions.TEXT_ADAPTER)) {
-        exclude("com.google.code.gson")
-    }
-    implementation(kyoriText("serializer-gson", Versions.TEXT)) { isTransitive = false }
-    implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
-    api(project(":impl-blocks:permissionsex-proxy-common")) { isTransitive = false }
-    implementation(project(":impl-blocks:permissionsex-hikari-config"))
+    implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
 
-    shadow("net.md-5:bungeecord-api:1.14-SNAPSHOT")
-}
-
-tasks.processResources {
-    expand("project" to project)
+    kapt(shadow("com.velocitypowered:velocity-api:1.0.8-SNAPSHOT")!!)
 }
 
 localization {
@@ -72,13 +61,13 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
-    listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
-        "ninja.leaping.configurate", "org.jetbrains.annotations",
-        "org.slf4j", "org.antlr.v4.runtime", "net.kyori").forEach {
+    listOf("com.zaxxer", "com.typesafe", "com.github.benmanes",
+        "ninja.leaping.configurate", "org.jetbrains",
+        "org.checkerframework", "org.antlr.v4").forEach {
         relocate(it, "$relocateRoot.$it")
     }
-
     exclude("org/checkerframework/**")
+
     manifest {
         attributes("Automatic-Module-Name" to project.name)
     }

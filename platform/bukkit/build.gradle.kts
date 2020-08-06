@@ -61,7 +61,7 @@ tasks.processResources {
 }
 
 dependencies {
-    api(project(":permissionsex-core")) {
+    api(project(":core")) {
         exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
         exclude("com.google.code.gson", "gson")
@@ -79,8 +79,8 @@ dependencies {
     }
 
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    implementation(project(":impl-blocks:permissionsex-hikari-config"))
-    implementation(project(":impl-blocks:permissionsex-profile-resolver")) { isTransitive = false }
+    implementation(project(":impl-blocks:hikari-config"))
+    implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
 
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")

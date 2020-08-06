@@ -21,11 +21,11 @@ pluginManagement {
 
 rootProject.name = "PermissionsEx"
 
-include("permissionsex-core",
-    "permissionsex-sponge", "permissionsex-bukkit", "permissionsex-fabric",
-    "permissionsex-bungee", "permissionsex-velocity")
+include("core")
+listOf("sponge", "bukkit", "fabric", "bungee", "velocity").forEach {
+    include(":platform:$it")
+}
 
 listOf("proxy-common", "hikari-config", "profile-resolver").forEach {
     include("impl-blocks:$it")
-    findProject(":impl-blocks:$it")?.name = "permissionsex-$it"
 }

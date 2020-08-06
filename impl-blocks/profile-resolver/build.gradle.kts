@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
 setupPublication()
 
 dependencies {
-    api(project(":permissionsex-core"))
+    api(project(":core"))
     implementation("com.google.code.gson:gson:2.8.0")
 }
 

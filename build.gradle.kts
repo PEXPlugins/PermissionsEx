@@ -4,6 +4,7 @@ import ca.stellardrift.build.common.pex
 import ca.stellardrift.build.common.sk89q
 import ca.stellardrift.build.common.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -37,6 +38,7 @@ subprojects {
         github("PEXPlugins", "PermissionsEx")
         apache2()
         publication?.apply {
+            artifactId = "permissionsex-${project.name}"
             pom {
                 developers {
                     developer {
@@ -62,6 +64,10 @@ subprojects {
     extensions.getByType(LicenseExtension::class).apply {
         header = rootProject.file("LICENSE_HEADER")
         ext["year"] = LocalDate.now(ZoneOffset.UTC).year
+    }
+
+    tasks.withType(KotlinCompile::class).configureEach {
+        this.kotlinOptions.freeCompilerArgs += "-Xnew-inference"
     }
 }
 

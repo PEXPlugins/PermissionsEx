@@ -1,4 +1,5 @@
 
+import ca.stellardrift.build.common.configurate
 import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
@@ -24,53 +25,60 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("com.github.johnrengelman.shadow")
-    kotlin("kapt")
     id("ca.stellardrift.localization")
-    id("ca.stellardrift.templating")
 }
 
 setupPublication()
 
+repositories {
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
+
 dependencies {
-    api(project(":permissionsex-core")) {
-        exclude("org.spongepowered")
-        exclude("com.google.guava", "guava")
-        exclude("org.slf4j", "slf4j-api")
-        exclude("com.github.ben-manes.caffeine", "caffeine")
+    api(project(":core")) {
+        exclude("com.google.code.gson")
+        exclude("com.google.guava")
+        exclude("org.yaml", "snakeyaml")
     }
 
-    implementation(kyoriText("adapter-spongeapi", Versions.TEXT_ADAPTER)) {
+    implementation(configurate("yaml")) {
+        exclude(group = "com.google.guava")
+        exclude("org.yaml", "snakeyaml")
+    }
+    implementation(kyoriText("adapter-bungeecord", Versions.TEXT_ADAPTER)) {
         exclude("com.google.code.gson")
     }
-    implementation(kyoriText("serializer-gson", Versions.TEXT)) {
-        exclude("com.google.code.gson")
-    }
+    implementation(kyoriText("serializer-gson", Versions.TEXT)) { isTransitive = false }
+    implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
+    implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
+    api(project(":impl-blocks:proxy-common")) { isTransitive = false }
+    implementation(project(":impl-blocks:hikari-config"))
 
-    kapt(shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")!!)
-    testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
+    shadow("net.md-5:bungeecord-api:1.14-SNAPSHOT")
+}
 
-    testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    testImplementation("org.mockito:mockito-core:3.0.0")
+tasks.processResources {
+    expand("project" to project)
 }
 
 localization {
     templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
-opinionated {
-    useJUnit5()
-}
-
 val relocateRoot = project.ext["pexRelocateRoot"]
 val shadowJar by tasks.getting(ShadowJar::class) {
-    minimize()
-    listOf("org.antlr",
-        "net.kyori",
-        "org.jetbrains.annotations").forEach {
+    minimize {
+        exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
+    }
+    listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
+        "ninja.leaping.configurate", "org.jetbrains.annotations",
+        "org.slf4j", "org.antlr.v4.runtime", "net.kyori").forEach {
         relocate(it, "$relocateRoot.$it")
     }
-    exclude("org/checkerframework/**")
 
+    exclude("org/checkerframework/**")
     manifest {
         attributes("Automatic-Module-Name" to project.name)
     }

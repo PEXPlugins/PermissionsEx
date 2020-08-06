@@ -31,7 +31,7 @@ configurations.implementation.get().extendsFrom(shade)
 
 val minecraftVersion = "1.16.1"
 dependencies {
-    shade(project(":permissionsex-core")) {
+    shade(project(":core")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
         exclude("org.spongepowered")
@@ -39,7 +39,7 @@ dependencies {
         exclude("org.jetbrains.kotlin")
     }
 
-    shade(project(":impl-blocks:permissionsex-hikari-config"))
+    shade(project(":impl-blocks:hikari-config"))
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")

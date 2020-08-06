@@ -21,5 +21,5 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
 setupPublication()
 
 dependencies {
-    api(project(":permissionsex-core"))
+    api(project(":core"))
 }
