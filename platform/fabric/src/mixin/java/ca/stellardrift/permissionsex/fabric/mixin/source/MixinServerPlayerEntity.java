@@ -46,8 +46,8 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
 
     private final AtomicReference<CalculatedSubject> permSubject = new AtomicReference<>();
 
-    public MixinServerPlayerEntity(World world, BlockPos pos, GameProfile gameProfile) {
-        super(world, pos,gameProfile);
+    public MixinServerPlayerEntity(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
+        super(world, pos,yaw, gameProfile);
     }
 
     @Nullable

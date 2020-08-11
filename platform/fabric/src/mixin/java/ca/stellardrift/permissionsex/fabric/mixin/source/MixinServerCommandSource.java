@@ -28,7 +28,7 @@ import com.mojang.brigadier.ResultConsumer;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
-import net.minecraft.command.arguments.EntityAnchorArgumentType;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
@@ -70,7 +70,7 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     @Inject(method = "<init>(Lnet/minecraft/server/command/CommandOutput;Lnet/minecraft/util/math/Vec3d;" +
             "Lnet/minecraft/util/math/Vec2f;Lnet/minecraft/server/world/ServerWorld;ILjava/lang/String;" +
             "Lnet/minecraft/text/Text;Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/entity/Entity;Z" +
-            "Lcom/mojang/brigadier/ResultConsumer;Lnet/minecraft/command/arguments/EntityAnchorArgumentType$EntityAnchor;)V", at = @At("RETURN"))
+            "Lcom/mojang/brigadier/ResultConsumer;Lnet/minecraft/command/argument/EntityAnchorArgumentType$EntityAnchor;)V", at = @At("RETURN"))
     protected void constructor(CommandOutput commandOutput_1, Vec3d vec3d_1, Vec2f vec2f_1,
                                ServerWorld serverWorld_1, int int_1, String string_1, Text text_1,
                                MinecraftServer minecraftServer_1, @Nullable Entity entity_1, boolean boolean_1,

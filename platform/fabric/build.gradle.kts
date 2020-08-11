@@ -29,7 +29,7 @@ plugins {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.16.1"
+val minecraftVersion = "1.16.2"
 dependencies {
     shade(project(":core")) {
         exclude("com.google.guava")
@@ -43,21 +43,20 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.19:v2")
-    modImplementation("net.fabricmc:fabric-loader:0.8.8+build.202")
-    modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0-SNAPSHOT") { isTransitive = false }
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.1:v2")
+    modImplementation("net.fabricmc:fabric-loader:0.9.1+build.205")
+    modImplementation("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion-rc1:7.2.0-SNAPSHOT") { isTransitive = false }
     modImplementation("com.sk89q.worldedit:worldedit-core:7.2.0-SNAPSHOT") { isTransitive = false }
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.14.1+build.372-1.16")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.17.2+build.396-1.16")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.3.72+build.1")
     modImplementation(include("ca.stellardrift:text-adapter-fabric:1.1+3.0.4") {
         exclude("com.google.code.gson")
     })
-    modImplementation(include("ca.stellardrift:confabricate:1.2+3.7") {
+    modImplementation(include("ca.stellardrift:confabricate:1.3+3.7.1") {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
     })
-    compileOnly("org.spongepowered:configurate-hocon:3.7")
 }
 
 localization {

@@ -81,7 +81,7 @@ object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSou
 
 object DimensionContextDefinition : IdentifierContextDefinition("dimension"), CommandSourceContextDefinition<Identifier> {
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: (value: Identifier) -> Unit) {
-        val dimension = source.world.dimensionRegistryKey?.value
+        val dimension = source.world.registryManager.dimensionTypes.getId(source.world.dimension)
         if (dimension != null) {
             consumer(dimension)
         }
@@ -89,7 +89,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Identifier) -> Unit) {
         (subject.associatedObject as?ServerPlayerEntity)?.apply {
-            val key = world.dimensionRegistryKey?.value
+            val key = world.registryManager.dimensionTypes.getId(world.dimension)
             if (key != null) {
                 consumer(key)
             }
@@ -99,7 +99,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
         return (subject.associatedObject as? Entity)?.run {
             if (entityWorld is ServerWorld) {
-                (entityWorld.server as? AccessorMinecraftServer)?.dimensionTracker?.dimensionTypeRegistry?.ids
+                (entityWorld.server as? AccessorMinecraftServer)?.registryManager?.dimensionTypes?.ids
             } else {
                 null
             }

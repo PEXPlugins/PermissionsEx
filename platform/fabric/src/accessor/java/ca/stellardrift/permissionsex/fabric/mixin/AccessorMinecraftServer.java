@@ -18,12 +18,12 @@
 package ca.stellardrift.permissionsex.fabric.mixin;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.registry.RegistryTracker;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(MinecraftServer.class)
 public interface AccessorMinecraftServer {
     @Accessor
-    RegistryTracker.Modifiable getDimensionTracker();
+    DynamicRegistryManager.Impl getRegistryManager();
 }

@@ -35,8 +35,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerPlayerEntity.class)
 public abstract class MixinServerPlayerEntity extends PlayerEntity {
 
-    public MixinServerPlayerEntity(World world_1, BlockPos pos, GameProfile gameProfile_1) {
-        super(world_1, pos,gameProfile_1);
+    public MixinServerPlayerEntity(World world_1, BlockPos pos, float yaw, GameProfile gameProfile_1) {
+        super(world_1, pos,yaw, gameProfile_1);
     }
 
     @Inject(method = "openCommandBlockScreen", at = @At("HEAD"), cancellable = true)

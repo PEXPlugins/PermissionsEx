@@ -89,7 +89,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     override fun onInitialize() {
         this._logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID), false)
-        this.dataDir = FabricLoader.getInstance().configDirectory.toPath().resolve(MOD_ID)
+        this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger.prefix = "[${container.metadata.name}] "
@@ -177,8 +177,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> dataDir
-            BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDirectory.toPath().resolve("mods")
-            BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDirectory.toPath()
+            BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDir.resolve("mods")
+            BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDir
             BaseDirectoryScope.WORLDS -> server.getSavePath(WorldSavePath.ROOT)
         }
     }

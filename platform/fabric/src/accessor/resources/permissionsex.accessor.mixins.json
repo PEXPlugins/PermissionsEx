@@ -2,7 +2,7 @@
   "required": true,
   "package": "ca.stellardrift.permissionsex.fabric.mixin",
   "compatibilityLevel": "JAVA_8",
-  "refmap": "permissionsex-fabric-accessor-refmap.json",
+  "refmap": "fabric-accessor-refmap.json",
   "mixins": [
     "AccessorHandshakeC2SPacket",
     "AccessorMinecraftServer"
