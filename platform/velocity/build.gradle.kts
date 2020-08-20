@@ -1,5 +1,5 @@
 
-import ca.stellardrift.build.common.velocity
+import ca.stellardrift.build.common.velocityReleases
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -31,7 +31,7 @@ plugins {
 setupPublication()
 
 repositories {
-    velocity()
+    velocityReleases()
 }
 
 dependencies {
@@ -49,7 +49,7 @@ dependencies {
     }
     implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
 
-    kapt(shadow("com.velocitypowered:velocity-api:1.0.8-SNAPSHOT")!!)
+    kapt(shadow("com.velocitypowered:velocity-api:1.0.9")!!)
 }
 
 localization {
