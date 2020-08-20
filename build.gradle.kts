@@ -9,6 +9,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 plugins {
+    kotlin("jvm") version "1.4.0" apply false
     id("ca.stellardrift.opinionated.kotlin") version "3.1" apply false
     id("ca.stellardrift.opinionated.publish") version "3.1" apply false
     id("ca.stellardrift.localization") version "3.1" apply false

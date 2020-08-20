@@ -28,7 +28,7 @@ enum class Versions(val version: String) {
     CONFIGURATE("3.7.1"),
     SLF4J("1.7.30"),
     ANTLR("4.8-1"),
-    KOTLINX_COROUTINES("1.3.8"),
+    KOTLINX_COROUTINES("1.3.9"),
     TEXT("3.0.4"),
     TEXT_ADAPTER("3.0.6");
 

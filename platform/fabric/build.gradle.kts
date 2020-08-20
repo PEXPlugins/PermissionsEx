@@ -1,4 +1,6 @@
 
+import ca.stellardrift.build.transformations.ConfigFormats
+import ca.stellardrift.build.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
 
@@ -22,6 +24,7 @@ import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
     id("ca.stellardrift.opinionated.fabric") version "3.1"
+    id("ca.stellardrift.configurate-transformations") version "3.1"
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
 }
@@ -63,8 +66,12 @@ localization {
     templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
 }
 
-tasks.processResources {
-    expand("project" to project)
+tasks.withType(ProcessResources::class).configureEach {
+    filesMatching("*.yml") {
+        expand("project" to project)
+        convertFormat(ConfigFormats.YAML, ConfigFormats.GSON)
+        name = "${name.removeSuffix(".yml")}.json"
+    }
 }
 
 val relocateRoot = project.ext["pexRelocateRoot"]
