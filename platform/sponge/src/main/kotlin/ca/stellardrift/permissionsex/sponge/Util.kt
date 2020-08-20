@@ -17,11 +17,17 @@
 
 package ca.stellardrift.permissionsex.sponge
 
+import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.context.ContextDefinition
+import ca.stellardrift.permissionsex.context.ContextValue
+import ca.stellardrift.permissionsex.util.ContextSet
 import ca.stellardrift.permissionsex.util.MinecraftProfile
+import com.google.common.collect.ImmutableSet
 import java.util.UUID
 import net.kyori.text.Component
 import net.kyori.text.serializer.gson.GsonComponentSerializer
 import org.spongepowered.api.profile.GameProfile
+import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.serializer.TextSerializers
 
@@ -36,6 +42,28 @@ fun Component.toSponge(): Text {
     return TextSerializers.JSON.deserialize(GsonComponentSerializer.INSTANCE.serialize(this))
 }
 
-fun Text.toComponent(): Component {
+fun Text.toAdventure(): Component {
     return GsonComponentSerializer.INSTANCE.deserialize(TextSerializers.JSON.serialize(this))
+}
+
+fun ContextSet.toSponge(): MutableSet<Context> {
+    return mapTo(mutableSetOf()) { Context(it.key, it.rawValue) }
+}
+
+private fun <T> Context.toPex(def: ContextDefinition<T>): ContextValue<T>? {
+    val value = def.deserialize(this.value)
+    return if (value == null) null else def.createValue(value)
+}
+
+fun Set<Context>.toPex(manager: PermissionsEx<*>): ContextSet {
+    val builder = ImmutableSet.builder<ContextValue<*>>()
+    for (ctx in this) {
+        val def = manager.getContextDefinition(ctx.key, true)
+            ?: throw IllegalStateException("A fallback context value was expected!")
+        val ctxVal = ctx.toPex(def)
+        if (ctxVal != null) {
+            builder.add(ctxVal)
+        }
+    }
+    return builder.build()
 }

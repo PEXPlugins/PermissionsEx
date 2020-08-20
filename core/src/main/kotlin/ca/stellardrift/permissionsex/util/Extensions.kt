@@ -101,3 +101,5 @@ fun <V> Publisher<V>.toCompletableFuture(): CompletableFuture<V> {
     })
     return ret
 }
+
+fun <T> T?.optionally(): Optional<T> = Optional.ofNullable(this)

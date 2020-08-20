@@ -515,7 +515,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
     }
 
     override fun getDefaultValue(contexts: Set<ContextValue<*>>): Int {
-        return permissions.filter { it.contexts == contexts && it.key == "*" }.map { it.value.asInteger() }.maxBy { it.absoluteValue } ?: 0
+        return permissions.filter { it.contexts == contexts && it.key == "*" }.map { it.value.asInteger() }.maxByOrNull { it.absoluteValue } ?: 0
     }
 
     override fun setDefaultValue(contexts: Set<ContextValue<*>>, defaultValue: Int): ImmutableSubjectData {

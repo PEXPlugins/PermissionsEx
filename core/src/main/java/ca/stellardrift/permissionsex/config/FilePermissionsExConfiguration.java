@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
 import com.google.common.reflect.TypeToken;
+import kotlin.Unit;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
@@ -63,8 +64,8 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
         this.platformConfigClass = platformConfigClass;
     }
 
-    public static FilePermissionsExConfiguration<?> fromLoader(ConfigurationLoader<?> loader) throws IOException {
-        return fromLoader(loader, EmptyPlatformConfiguration.class);
+    public static FilePermissionsExConfiguration<Unit> fromLoader(ConfigurationLoader<?> loader) throws IOException {
+        return fromLoader(loader, Unit.class);
     }
 
     /**
@@ -105,10 +106,15 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
         return config;
     }
 
+    @SuppressWarnings("unchecked") // manual type checking
     private void load() throws IOException {
         try {
             ObjectMapper.forObject(this).populate(this.node);
-            this.platformConfig = ObjectMapper.forClass(this.platformConfigClass).bindToNew().populate(this.getPlatformConfigNode());
+            if (this.platformConfigClass == Unit.class) {
+                this.platformConfig = (T) Unit.INSTANCE;
+            } else {
+                this.platformConfig = ObjectMapper.forClass(this.platformConfigClass).bindToNew().populate(this.getPlatformConfigNode());
+            }
         } catch (ObjectMappingException e) {
             throw new IOException(e);
         }

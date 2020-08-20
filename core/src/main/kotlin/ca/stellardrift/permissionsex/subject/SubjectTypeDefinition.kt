@@ -61,7 +61,7 @@ abstract class SubjectTypeDefinition<A> @JvmOverloads constructor(
     abstract fun getAssociatedObject(identifier: String): A?
 }
 
-class FixedEntriesSubjectTypeDefinition<A> internal constructor(
+class FixedEntriesSubjectTypeDefinition<A>(
     typeName: String,
     private val validEntries: Map<String, () -> A>
 ) : SubjectTypeDefinition<A>(typeName) {

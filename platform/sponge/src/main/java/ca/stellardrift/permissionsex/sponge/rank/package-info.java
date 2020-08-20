@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-@NonnullByDefault
-package ca.stellardrift.permissionsex.sponge;
+@DefaultQualifier(NonNull.class)
+package ca.stellardrift.permissionsex.sponge.rank;
 
-import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
