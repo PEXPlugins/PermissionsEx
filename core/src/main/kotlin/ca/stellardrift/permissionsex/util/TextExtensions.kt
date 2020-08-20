@@ -35,6 +35,7 @@ import net.kyori.text.renderer.TranslatableComponentRenderer
 
 fun Any?.toComponent(): Component {
     return when (this) {
+        is Boolean -> +this
         is ComponentBuilder<*, *> -> this.build()
         is Component -> this
         else -> TextComponent.of(toString())
@@ -48,7 +49,7 @@ fun Boolean.toComponent(): Component {
         Messages.FORMATTER_BOOLEAN_FALSE.get().color(TextColor.RED)
     }.build()
 }
-fun Boolean.unaryPlus() = this.toComponent()
+operator fun Boolean.unaryPlus() = this.toComponent()
 
 fun String.toComponent() = TextComponent.of(this)
 operator fun String.unaryPlus() = TextComponent.of(this)
