@@ -70,6 +70,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         relocate(it, "$relocateRoot.$it")
     }
     exclude("org/checkerframework/**")
+    exclude("**/module-info.class")
 
     manifest {
         attributes("Automatic-Module-Name" to project.name)

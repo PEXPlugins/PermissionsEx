@@ -368,9 +368,10 @@ class PermissionsExPlugin @Inject internal constructor(
 
     private fun tryRegisterCommands() {
         if (_manager != null) {
-            var supply: Supplier<Set<CommandSpec>>
-            while (cachedCommands.poll().also { supply = it } != null) {
+            var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
+            while (supply != null) {
                 tryRegisterCommands(supply)
+                supply = cachedCommands.poll()
             }
         }
     }

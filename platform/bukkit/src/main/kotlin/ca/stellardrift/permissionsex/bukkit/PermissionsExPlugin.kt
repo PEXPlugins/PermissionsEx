@@ -40,7 +40,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.sql.DataSource
@@ -380,9 +379,10 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             if (_manager == null) {
                 return false
             }
-            var supply: Supplier<Set<CommandSpec>>
-            while (stagedCommands.poll().also { supply = it } != null) {
+            var supply: Supplier<Set<CommandSpec>>? = stagedCommands.poll()
+            while (supply != null) {
                 registerCommandsNow(supply)
+                supply = stagedCommands.poll()
             }
             return true
         }
@@ -415,7 +415,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             names: Iterable<String>,
             action: Function<MinecraftProfile, CompletableFuture<Void>>
         ): CompletableFuture<Int> {
-            return lookupMinecraftProfilesByName(names, Consumer { action.apply(it) })
+            return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
         }
     }
 }
