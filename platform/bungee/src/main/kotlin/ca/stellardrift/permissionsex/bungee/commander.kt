@@ -23,7 +23,6 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
 import net.kyori.text.Component
@@ -56,7 +55,7 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
     }
 
     override fun msg(text: Component) {
-        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GOLD, locale))
+        src.sendMessage(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.GOLD), locale))
     }
 }
 

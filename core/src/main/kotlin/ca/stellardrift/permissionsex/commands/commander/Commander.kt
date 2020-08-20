@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.invoke
 import ca.stellardrift.permissionsex.util.join
@@ -75,7 +74,7 @@ interface Commander {
      */
     @JvmDefault
     fun debug(text: Component) {
-        msg(text coloredIfNecessary TextColor.GRAY)
+        msg(text.colorIfAbsent(TextColor.GRAY))
     }
 
     @JvmDefault
@@ -92,7 +91,7 @@ interface Commander {
         }
 
         msg(if (hoverText == null) {
-            text coloredIfNecessary TextColor.RED
+            text.colorIfAbsent(TextColor.RED)
         } else {
             component {
                 append(text)

@@ -26,7 +26,6 @@ import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
@@ -81,7 +80,7 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
     }
 
     override fun msg(text: Component) {
-        src.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.GOLD, locale))
+        src.sendMessage(PEXComponentRenderer.render(text.run { if (color() == null) color(TextColor.GOLD) else this }, locale))
     }
 }
 

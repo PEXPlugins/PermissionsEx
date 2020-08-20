@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
 import net.kyori.text.Component
@@ -94,7 +93,7 @@ class BukkitCommander internal constructor(
         } else null
 
     override fun msg(text: Component) {
-        commandSource.sendMessage(PEXComponentRenderer.render(text coloredIfNecessary TextColor.DARK_AQUA, locale))
+        commandSource.sendMessage(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.DARK_AQUA), locale))
     }
 }
 

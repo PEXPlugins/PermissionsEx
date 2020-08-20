@@ -25,8 +25,8 @@ import java.util.ResourceBundle
 import net.kyori.text.BuildableComponent
 import net.kyori.text.Component
 import net.kyori.text.ComponentBuilder
-import net.kyori.text.ScopedComponent
 import net.kyori.text.TextComponent
+import net.kyori.text.TextComponent.empty
 import net.kyori.text.TextComponent.space
 import net.kyori.text.format.Style
 import net.kyori.text.format.TextColor
@@ -71,20 +71,6 @@ operator fun Component.plus(other: Component) = TextComponent.builder()
 
 operator fun Component.plus(other: ComponentBuilder<*, *>) = this + other.build()
 
-infix fun Component.coloredIfNecessary(color: TextColor) =
-    if (this.color() == null) {
-        color(color)
-    } else {
-        this
-    }
-
-infix fun <C : ScopedComponent<C>> C.coloredIfNecessary(color: TextColor) =
-    if (this.color() == null) {
-        color(color)
-    } else {
-        this
-    }
-
 fun Component.styled(init: Style.Builder.() -> Unit): Component {
     val build = Style.builder()
     build.merge(this.style())
@@ -92,24 +78,9 @@ fun Component.styled(init: Style.Builder.() -> Unit): Component {
     return this.style(build)
 }
 
-fun Iterable<Any>.join(separator: Component? = space()): Component = component {
-    val it = iterator()
-    while (it.hasNext()) {
-        append(it.next().toComponent())
-        if (separator != null && it.hasNext()) {
-            append(separator)
-        }
-    }
-}
+fun Iterable<Any>.join(separator: Component? = space()): Component = TextComponent.join(separator ?: empty(), this.map { it.toComponent() })
 
-fun Sequence<Component>.join(separator: Component? = space()) = component {
-    val it = iterator()
-    while (it.hasNext()) {
-        append(it.next())
-        if (separator != null && it.hasNext()) {
-            append(separator)
-        }
-    } }
+fun Sequence<Component>.join(separator: Component? = space()) = TextComponent.join(separator ?: empty(), Iterable { iterator() })
 
 operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.plusAssign(other: Component) {
     this.append(other)

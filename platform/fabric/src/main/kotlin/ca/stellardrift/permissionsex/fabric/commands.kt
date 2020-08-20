@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.fabric.mixin.AccessorServerCommandSource
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.coloredIfNecessary
 import ca.stellardrift.text.fabric.ComponentCommandSource
 import com.google.common.collect.Maps
 import com.mojang.brigadier.Command
@@ -173,7 +172,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
 
     override fun msg(text: Component) {
         try {
-            output.sendFeedback(PEXComponentRenderer.render(text coloredIfNecessary TextColor.DARK_AQUA, locale), false)
+            output.sendFeedback(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.DARK_AQUA), locale), false)
         } catch (t: Throwable) {
             src.sendFeedback(LiteralText("Error occurred while sending feedback, see console for details"), false)
             t.printStackTrace()
