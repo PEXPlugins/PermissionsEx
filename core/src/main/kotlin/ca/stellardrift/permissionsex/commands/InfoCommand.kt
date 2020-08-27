@@ -40,9 +40,9 @@ import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.toComponent
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.BuildableComponent
-import net.kyori.text.Component
-import net.kyori.text.ComponentBuilder
+import net.kyori.adventure.text.BuildableComponent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.ComponentBuilder
 
 internal fun getInfoCommand(pex: PermissionsEx<*>) =
     command("info", "i", "who") {

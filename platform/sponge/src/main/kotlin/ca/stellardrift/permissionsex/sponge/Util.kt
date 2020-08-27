@@ -24,8 +24,8 @@ import ca.stellardrift.permissionsex.util.ContextSet
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import com.google.common.collect.ImmutableSet
 import java.util.UUID
-import net.kyori.text.Component
-import net.kyori.text.serializer.gson.GsonComponentSerializer
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import org.spongepowered.api.profile.GameProfile
 import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.text.Text
@@ -39,11 +39,11 @@ class SpongeMinecraftProfile(private val profile: GameProfile) : MinecraftProfil
 }
 
 fun Component.toSponge(): Text {
-    return TextSerializers.JSON.deserialize(GsonComponentSerializer.INSTANCE.serialize(this))
+    return TextSerializers.JSON.deserialize(GsonComponentSerializer.colorDownsamplingGson().serialize(this))
 }
 
 fun Text.toAdventure(): Component {
-    return GsonComponentSerializer.INSTANCE.deserialize(TextSerializers.JSON.serialize(this))
+    return GsonComponentSerializer.gson().deserialize(TextSerializers.JSON.serialize(this))
 }
 
 fun ContextSet.toSponge(): MutableSet<Context> {

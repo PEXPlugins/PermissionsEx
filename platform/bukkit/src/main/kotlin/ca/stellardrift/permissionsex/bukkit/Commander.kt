@@ -23,24 +23,17 @@ import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
-import net.kyori.text.Component
-import net.kyori.text.adapter.bukkit.TextAdapter
-import net.kyori.text.format.TextColor
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabExecutor
 import org.bukkit.entity.Player
-
-fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendMessage(this, text)
-fun Iterable<CommandSender>.sendActionBar(text: Component) = TextAdapter.sendActionBar(this, text)
-
-fun CommandSender.sendMessage(text: Component) = TextAdapter.sendMessage(this, text)
-fun CommandSender.sendActionBar(text: Component) = TextAdapter.sendActionBar(this, text)
 
 /**
  * Take a locale string provided from a minecraft client and attempt to parse it as a locale.
@@ -78,6 +71,7 @@ class BukkitCommander internal constructor(
     override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(this)
     override val name: String
         get() = commandSource.name
+    override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun hasPermission(permission: String): Boolean = commandSource.hasPermission(permission)
 
@@ -92,8 +86,10 @@ class BukkitCommander internal constructor(
                 )
         } else null
 
-    override fun msg(text: Component) {
-        commandSource.sendMessage(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.DARK_AQUA), locale))
+    private val audience = this.pex.adventure.audience(this.commandSource)
+
+    override fun audience(): Audience {
+        return this.audience
     }
 }
 

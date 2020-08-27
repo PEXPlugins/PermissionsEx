@@ -20,11 +20,11 @@ package ca.stellardrift.permissionsex.rank;
 import ca.stellardrift.permissionsex.commands.Messages;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.event.HoverEvent;
-import net.kyori.text.format.TextDecoration;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.List;
 import java.util.Map;

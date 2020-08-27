@@ -25,7 +25,7 @@ import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 
 /**
  * Build the children for a parent command

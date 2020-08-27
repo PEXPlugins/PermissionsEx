@@ -53,6 +53,7 @@ import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.sql.DataSource
+import net.kyori.adventure.platform.spongeapi.SpongeAudiences
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
@@ -90,7 +91,8 @@ class PermissionsExPlugin @Inject internal constructor(
     val game: Game,
     private val services: ServiceManager,
     @ConfigDir(sharedRoot = false) private val configDir: Path,
-    @DefaultConfig(sharedRoot = false) private val configLoader: ConfigurationLoader<CommentedConfigurationNode>
+    @DefaultConfig(sharedRoot = false) private val configLoader: ConfigurationLoader<CommentedConfigurationNode>,
+    internal val adventure: SpongeAudiences
 ) : PermissionService, ImplementationInterface {
     private var sql: Optional<SqlService> = Optional.empty()
     private var scheduler: Scheduler = game.scheduler

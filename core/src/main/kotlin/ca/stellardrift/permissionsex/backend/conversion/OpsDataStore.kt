@@ -38,7 +38,7 @@ import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.gson.GsonConfigurationLoader
 import ninja.leaping.configurate.objectmapping.Setting

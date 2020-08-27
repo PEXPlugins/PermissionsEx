@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.commands.commander
 
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 
 /**
  * A representation of a permission.

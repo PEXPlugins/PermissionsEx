@@ -33,7 +33,7 @@ import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 
 fun contextTransientFlags(pex: PermissionsEx<*>): FlagCommandElementBuilder {
     return StructuralArguments.flags()

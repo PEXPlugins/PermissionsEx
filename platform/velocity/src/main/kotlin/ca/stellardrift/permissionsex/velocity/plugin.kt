@@ -98,7 +98,11 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     private fun registerCommandsNow(supplier: Supplier<Set<CommandSpec>>) {
         supplier.get().forEach {
-            server.commandManager.register(VelocityCommand(this, it), *it.aliases.map { alias -> "/$alias" }.toTypedArray())
+            val aliases = it.aliases.map { alias -> "/$alias" }
+            val meta = server.commandManager.metaBuilder(aliases.first())
+                .aliases(*aliases.subList(1, aliases.size).toTypedArray())
+                .build()
+            server.commandManager.register(meta, VelocityCommand(this, it))
         }
     }
 

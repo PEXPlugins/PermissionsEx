@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.commands.CommonMessages
 import com.google.common.collect.Lists
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 
 /**
  * Holder for command arguments

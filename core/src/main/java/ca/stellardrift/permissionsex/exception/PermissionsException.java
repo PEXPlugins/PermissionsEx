@@ -18,8 +18,8 @@
 package ca.stellardrift.permissionsex.exception;
 
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
-import net.kyori.text.Component;
-import net.kyori.text.serializer.plain.PlainComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 
 import java.util.Locale;
 
@@ -52,6 +52,6 @@ public class PermissionsException extends Exception {
     }
 
     public String getLocalizedMessage(Locale locale) {
-        return PlainComponentSerializer.INSTANCE.serialize(PEXComponentRenderer.INSTANCE.render(getComponent(), locale));
+        return PlainComponentSerializer.plain().serialize(PEXComponentRenderer.INSTANCE.render(getComponent(), locale));
     }
 }

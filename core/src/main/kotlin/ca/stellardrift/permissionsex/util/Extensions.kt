@@ -26,7 +26,7 @@ import com.google.common.reflect.TypeToken
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.kotlin.get
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection

@@ -23,9 +23,7 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.fabric.mixin.AccessorServerCommandSource
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.text.fabric.ComponentCommandSource
 import com.google.common.collect.Maps
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
@@ -38,12 +36,13 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
-import net.kyori.text.Component
-import net.kyori.text.format.TextColor
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.platform.fabric.AdventureCommandSourceStack
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.text.LiteralText
 import net.minecraft.util.Nameable
 
 fun registerCommand(spec: CommandSpec, dispatch: CommandDispatcher<ServerCommandSource>) {
@@ -131,11 +130,11 @@ internal fun ServerCommandSource.asCommander(): Commander {
 }
 
 class FabricCommander(private val src: ServerCommandSource) : Commander {
-    private val output = ComponentCommandSource.of(src)
+    private val output = src as AdventureCommandSourceStack
     override val manager: PermissionsEx<*> = PermissionsExMod.manager
     override val name: String get() = src.name
     override val locale: Locale get() {
-        return (output.output as? LocaleHolder)?.locale ?: Locale.getDefault()
+        return (output.audiences().first() as? LocaleHolder)?.locale ?: Locale.getDefault() // todo: audience()
     }
     override val subjectIdentifier: SubjectIdentifier?
         get() {
@@ -145,6 +144,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
                 null
             }
         }
+    override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun hasPermission(permission: String): Boolean {
         return if (src is IPermissionCommandSource) {
@@ -169,14 +169,8 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     }
 
     override val formatter: MessageFormatter = FabricMessageFormatter(this)
-
-    override fun msg(text: Component) {
-        try {
-            output.sendFeedback(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.DARK_AQUA), locale), false)
-        } catch (t: Throwable) {
-            src.sendFeedback(LiteralText("Error occurred while sending feedback, see console for details"), false)
-            t.printStackTrace()
-        }
+    override fun audience(): Audience {
+        return this.output
     }
 }
 

@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.exception;
 
 
-import net.kyori.text.Component;
+import net.kyori.adventure.text.Component;
 
 /**
  * This exception is thrown when an error occurs that is due to misconfiguration of the plugin.

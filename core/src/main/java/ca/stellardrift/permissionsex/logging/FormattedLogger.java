@@ -18,8 +18,8 @@
 package ca.stellardrift.permissionsex.logging;
 
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
-import net.kyori.text.Component;
-import net.kyori.text.serializer.ComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.ComponentSerializer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;

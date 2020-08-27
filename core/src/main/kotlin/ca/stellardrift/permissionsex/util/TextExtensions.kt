@@ -22,16 +22,17 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import java.text.MessageFormat
 import java.util.Locale
 import java.util.ResourceBundle
-import net.kyori.text.BuildableComponent
-import net.kyori.text.Component
-import net.kyori.text.ComponentBuilder
-import net.kyori.text.TextComponent
-import net.kyori.text.TextComponent.empty
-import net.kyori.text.TextComponent.space
-import net.kyori.text.format.Style
-import net.kyori.text.format.TextColor
-import net.kyori.text.format.TextDecoration
-import net.kyori.text.renderer.TranslatableComponentRenderer
+import net.kyori.adventure.text.BuildableComponent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.ComponentBuilder
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.TextComponent.empty
+import net.kyori.adventure.text.TextComponent.space
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.Style
+import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.renderer.TranslatableComponentRenderer
 
 fun Any?.toComponent(): Component {
     return when (this) {
@@ -44,9 +45,9 @@ fun Any?.toComponent(): Component {
 
 fun Boolean.toComponent(): Component {
     return if (this) {
-        Messages.FORMATTER_BOOLEAN_TRUE.get().color(TextColor.GREEN)
+        Messages.FORMATTER_BOOLEAN_TRUE.get().color(NamedTextColor.GREEN)
     } else {
-        Messages.FORMATTER_BOOLEAN_FALSE.get().color(TextColor.RED)
+        Messages.FORMATTER_BOOLEAN_FALSE.get().color(NamedTextColor.RED)
     }.build()
 }
 operator fun Boolean.unaryPlus() = this.toComponent()
@@ -106,7 +107,7 @@ fun Set<ContextValue<*>>.toComponent(): Component {
 }
 
 object PEXComponentRenderer : TranslatableComponentRenderer<Locale>() {
-    override fun translation(context: Locale, key: String): MessageFormat {
+    override fun translate(key: String, context: Locale): MessageFormat {
         val idx = key.indexOf("/")
         if (idx == -1) {
             return MessageFormat(key)

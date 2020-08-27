@@ -22,10 +22,10 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.TranslatableProvider
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
-import net.kyori.text.Component
-import net.kyori.text.TextComponent
-import net.kyori.text.TranslatableComponent
-import net.kyori.text.serializer.plain.PlainComponentSerializer
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.TranslatableComponent
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer
 
 /**
  * Context that a command is executed in
@@ -99,6 +99,6 @@ fun Component.toContextKey(): String {
     return when (this) {
         is TextComponent -> content()
         is TranslatableComponent -> key()
-        else -> PlainComponentSerializer.INSTANCE.serialize(this)
+        else -> PlainComponentSerializer.plain().serialize(this)
     }
 }

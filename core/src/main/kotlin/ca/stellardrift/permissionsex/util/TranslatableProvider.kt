@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.util
 
-import net.kyori.text.TranslatableComponent
+import net.kyori.adventure.text.TranslatableComponent
 
 class TranslatableProvider(bundleName: String, key: String) {
     val key = "$bundleName/$key"

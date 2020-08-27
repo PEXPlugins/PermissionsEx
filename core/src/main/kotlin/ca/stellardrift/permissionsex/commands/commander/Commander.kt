@@ -20,6 +20,7 @@ package ca.stellardrift.permissionsex.commands.commander
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.invoke
@@ -27,19 +28,22 @@ import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryMinus
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.Locale
-import net.kyori.text.Component
-import net.kyori.text.TextComponent
-import net.kyori.text.event.HoverEvent
-import net.kyori.text.format.TextColor
+import net.kyori.adventure.audience.ForwardingAudience
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.event.HoverEvent
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 
 /**
  * Interface implemented by objects that can execute commands and receive command output
  */
-interface Commander {
+interface Commander : ForwardingAudience.Single {
     val manager: PermissionsEx<*>
     val name: String
     val locale: Locale
     val subjectIdentifier: SubjectIdentifier?
+    val messageColor: TextColor
 
     fun hasPermission(permission: String): Boolean
 
@@ -67,14 +71,16 @@ interface Commander {
     /**
      * Send a message to this Commander. The message should be colored the appropriate output colour if it does not yet have a colour
      */
-    fun msg(text: Component)
+    fun msg(text: Component) {
+        sendMessage(PEXComponentRenderer.render(text.colorIfAbsent(messageColor), locale))
+    }
 
     /**
      * Send debug text
      */
     @JvmDefault
     fun debug(text: Component) {
-        msg(text.colorIfAbsent(TextColor.GRAY))
+        msg(text.colorIfAbsent(NamedTextColor.GRAY))
     }
 
     @JvmDefault
@@ -91,11 +97,11 @@ interface Commander {
         }
 
         msg(if (hoverText == null) {
-            text.colorIfAbsent(TextColor.RED)
+            text.colorIfAbsent(NamedTextColor.RED)
         } else {
             component {
                 append(text)
-                color(TextColor.RED)
+                color(NamedTextColor.RED)
                 hoverEvent(HoverEvent.showText(hoverText))
             }
         })

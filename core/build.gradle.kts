@@ -1,6 +1,6 @@
 
+import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
-import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
 
 /*
@@ -44,10 +44,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.KOTLINX_COROUTINES}")
 
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
-    api(kyoriText("api", Versions.TEXT))
-    api(kyoriText("feature-pagination", Versions.TEXT))
-    implementation(kyoriText("serializer-plain", Versions.TEXT))
-    implementation(kyoriText("serializer-legacy", Versions.TEXT))
+    api(adventure("api", Versions.TEXT))
+    implementation(adventure("text-serializer-plain", Versions.TEXT))
+    implementation(adventure("text-serializer-legacy", Versions.TEXT))
     implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KOTLINX_COROUTINES}")
 

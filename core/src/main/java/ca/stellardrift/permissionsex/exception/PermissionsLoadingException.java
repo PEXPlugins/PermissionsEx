@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.exception;
 
 import ca.stellardrift.permissionsex.Messages;
-import net.kyori.text.Component;
+import net.kyori.adventure.text.Component;
 
 public class PermissionsLoadingException extends PermissionsException {
     private static final long serialVersionUID = -3894757413277685930L;

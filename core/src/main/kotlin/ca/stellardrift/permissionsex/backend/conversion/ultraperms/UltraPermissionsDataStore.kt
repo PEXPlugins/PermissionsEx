@@ -25,7 +25,7 @@ import ca.stellardrift.permissionsex.util.unaryPlus
 import java.net.URL
 import java.nio.file.Files
 import java.util.UUID
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 
 data class PermissionEntry(val holder: String, val permission: String, val positive: Boolean, val expiry: Long)
 data class ServerEntry(val name: String, val lastHeartbeat: Long)

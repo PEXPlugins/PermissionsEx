@@ -1,5 +1,5 @@
 
-import ca.stellardrift.build.common.kyoriText
+import ca.stellardrift.build.common.adventure
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -39,10 +39,7 @@ dependencies {
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
 
-    implementation(kyoriText("adapter-spongeapi", Versions.TEXT_ADAPTER)) {
-        exclude("com.google.code.gson")
-    }
-    implementation(kyoriText("serializer-gson", Versions.TEXT)) {
+    implementation(adventure("platform-spongeapi", Versions.TEXT_ADAPTER)) {
         exclude("com.google.code.gson")
     }
 

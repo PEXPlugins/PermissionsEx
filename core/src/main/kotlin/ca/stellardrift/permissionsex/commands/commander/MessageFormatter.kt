@@ -30,16 +30,17 @@ import ca.stellardrift.permissionsex.util.plusAssign
 import ca.stellardrift.permissionsex.util.unaryPlus
 import com.google.common.collect.Maps
 import java.util.concurrent.ExecutionException
-import net.kyori.text.BuildableComponent
-import net.kyori.text.Component
-import net.kyori.text.ComponentBuilder
-import net.kyori.text.TextComponent
-import net.kyori.text.TextComponent.space
-import net.kyori.text.event.ClickEvent
-import net.kyori.text.event.HoverEvent
-import net.kyori.text.format.Style
-import net.kyori.text.format.TextColor
-import net.kyori.text.format.TextDecoration
+import net.kyori.adventure.text.BuildableComponent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.ComponentBuilder
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.TextComponent.space
+import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.event.HoverEvent
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.Style
+import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.TextDecoration
 
 enum class ButtonType {
     /**
@@ -56,12 +57,12 @@ enum class ButtonType {
     NEUTRAL
 }
 
-val EQUALS_SIGN = "=" colored TextColor.GRAY
+val EQUALS_SIGN = "=" colored NamedTextColor.GRAY
 val SLASH = +"/"
 abstract class MessageFormatter(
     internal val cmd: Commander,
     internal val pex: PermissionsEx<*>,
-    val hlColor: TextColor = TextColor.AQUA
+    val hlColor: TextColor = NamedTextColor.AQUA
 ) {
 
     /**
@@ -107,7 +108,7 @@ abstract class MessageFormatter(
 
         val nameText = if (name != null) {
             component {
-                append(subject.value colored TextColor.GRAY)
+                append(subject.value colored NamedTextColor.GRAY)
                 append(SLASH)
                 append(name)
             }
@@ -141,8 +142,8 @@ abstract class MessageFormatter(
     ): B {
         color(
             when (type) {
-                ButtonType.POSITIVE -> TextColor.GREEN
-                ButtonType.NEGATIVE -> TextColor.RED
+                ButtonType.POSITIVE -> NamedTextColor.GREEN
+                ButtonType.NEGATIVE -> NamedTextColor.RED
                 ButtonType.NEUTRAL -> hlColor
             }
         )
@@ -178,9 +179,9 @@ abstract class MessageFormatter(
     fun permission(permission: String, value: Int): Component {
         return TextComponent.make {
             it += permission colored when {
-                value > 0 -> TextColor.GREEN
-                value < 0 -> TextColor.RED
-                else -> TextColor.GRAY
+                value > 0 -> NamedTextColor.GREEN
+                value < 0 -> NamedTextColor.RED
+                else -> NamedTextColor.GRAY
             }
             it += EQUALS_SIGN
             it += TextComponent.of(value)

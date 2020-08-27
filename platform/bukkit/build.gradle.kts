@@ -1,7 +1,7 @@
 
+import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
 import ca.stellardrift.build.common.jitpack
-import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.build.common.spigot
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
@@ -71,10 +71,7 @@ dependencies {
         exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
-    implementation(kyoriText("adapter-bukkit", Versions.TEXT_ADAPTER)) {
-        exclude("com.google.code.gson")
-    }
-    implementation(kyoriText("serializer-gson", Versions.TEXT)) {
+    implementation(adventure("platform-bukkit", Versions.TEXT_ADAPTER)) {
         exclude("com.google.code.gson")
     }
 

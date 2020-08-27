@@ -22,14 +22,14 @@ import ca.stellardrift.permissionsex.backend.DataStore
 import ca.stellardrift.permissionsex.backend.conversion.groupmanager.GroupManagerDataStore
 import ca.stellardrift.permissionsex.backend.conversion.luckperms.LuckPermsConversionProvider
 import java.util.concurrent.ConcurrentHashMap
-import net.kyori.text.Component
-import net.kyori.text.serializer.plain.PlainComponentSerializer
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer
 
 data class ConversionResult(val store: DataStore, val title: Component)
 
 interface ConversionProvider {
     val name: Component
-    val key get() = PlainComponentSerializer.INSTANCE.serialize(name)
+    val key get() = PlainComponentSerializer.plain().serialize(name)
     fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult>
 }
 

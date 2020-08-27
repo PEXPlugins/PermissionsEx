@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.util.glob;
 
 import ca.stellardrift.permissionsex.exception.PermissionsException;
-import net.kyori.text.Component;
+import net.kyori.adventure.text.Component;
 
 /**
  * This error is thrown when invalid glob syntax is presented

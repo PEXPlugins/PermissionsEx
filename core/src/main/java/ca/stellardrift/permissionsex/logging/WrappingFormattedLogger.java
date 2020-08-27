@@ -17,10 +17,10 @@
 
 package ca.stellardrift.permissionsex.logging;
 
-import net.kyori.text.Component;
-import net.kyori.text.serializer.ComponentSerializer;
-import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.text.serializer.plain.PlainComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.ComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
@@ -64,9 +64,9 @@ class WrappingFormattedLogger implements FormattedLogger {
     @Override
     public ComponentSerializer<Component, ?, String> getSerializer() {
         if (supportsFormatting) {
-            return LegacyComponentSerializer.legacyLinking();
+            return LegacyComponentSerializer.legacySection();
         } else {
-            return PlainComponentSerializer.INSTANCE;
+            return PlainComponentSerializer.plain();
         }
     }
 

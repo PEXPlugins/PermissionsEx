@@ -40,6 +40,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import java.util.logging.Logger
 import javax.sql.DataSource
+import net.kyori.adventure.platform.bungeecord.BungeeAudiences
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -60,6 +61,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
     internal lateinit var logger: FormattedLogger private set
     internal lateinit var dataPath: Path private set
+    internal lateinit var adventure: BungeeAudiences
 
     lateinit var manager: PermissionsEx<*> internal set
 
@@ -78,6 +80,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     override fun onEnable() {
         this.logger = createLogger()
         this.dataPath = dataFolder.toPath()
+        this.adventure = BungeeAudiences.create(this)
 
         Files.createDirectories(this.dataPath)
         val configLoader = YAMLConfigurationLoader.builder().apply {
@@ -105,6 +108,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         if (this::manager.isInitialized) {
             this.manager.close()
         }
+        this.adventure.close()
         super.onDisable()
     }
 

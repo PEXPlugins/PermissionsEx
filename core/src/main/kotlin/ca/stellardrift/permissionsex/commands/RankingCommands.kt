@@ -69,8 +69,8 @@ import ca.stellardrift.permissionsex.util.unaryMinus
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
-import net.kyori.text.Component
-import net.kyori.text.TextComponent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 
 // Promotion and demotion along existing rank ladders
 

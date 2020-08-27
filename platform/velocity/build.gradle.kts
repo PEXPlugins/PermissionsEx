@@ -1,5 +1,5 @@
 
-import ca.stellardrift.build.common.velocityReleases
+import ca.stellardrift.build.common.velocitySnapshots
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
@@ -31,7 +31,8 @@ plugins {
 setupPublication()
 
 repositories {
-    velocityReleases()
+    maven("https://libraries.minecraft.net/")
+    velocitySnapshots()
 }
 
 dependencies {
@@ -39,9 +40,10 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.google.code.gson")
         exclude("com.google.guava")
-        exclude("org.spongepowered", "configurate-yaml")
+        exclude("org.spongepowered", "configurate-*")
         exclude("net.kyori")
         // exclude("org.yaml", "snakeyaml")
+        // exclude("com.typesafe")
     }
     api(project(":impl-blocks:proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:hikari-config")) {
@@ -49,7 +51,7 @@ dependencies {
     }
     implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
 
-    kapt(shadow("com.velocitypowered:velocity-api:1.0.9")!!)
+    kapt(shadow("com.velocitypowered:velocity-api:1.1.0-SNAPSHOT")!!)
 }
 
 localization {
@@ -61,9 +63,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
-    listOf("com.zaxxer", "com.typesafe", "com.github.benmanes",
-        "ninja.leaping.configurate", "org.jetbrains",
-        "org.checkerframework", "org.antlr.v4").forEach {
+    listOf("com.zaxxer", "com.github.benmanes",
+        "org.jetbrains", "org.checkerframework", "org.antlr.v4").forEach {
         relocate(it, "$relocateRoot.$it")
     }
     exclude("org/checkerframework/**")

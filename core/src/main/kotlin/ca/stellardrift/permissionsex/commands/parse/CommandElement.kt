@@ -20,7 +20,7 @@ package ca.stellardrift.permissionsex.commands.parse
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.unaryPlus
-import net.kyori.text.Component
+import net.kyori.adventure.text.Component
 
 /**
  * Represents a command argument element

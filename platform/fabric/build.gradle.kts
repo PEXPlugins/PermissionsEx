@@ -1,6 +1,7 @@
 
 import ca.stellardrift.build.transformations.ConfigFormats
 import ca.stellardrift.build.transformations.convertFormat
+import ca.stellardrift.permissionsex.gradle.Versions
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
 
@@ -53,7 +54,7 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.17.2+build.396-1.16")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.3.72+build.1")
-    modImplementation(include("ca.stellardrift:text-adapter-fabric:1.1+3.0.4") {
+    modImplementation(include("net.kyori:adventure-platform-fabric:${Versions.TEXT_ADAPTER}") {
         exclude("com.google.code.gson")
     })
     modImplementation(include("ca.stellardrift:confabricate:1.3+3.7.1") {

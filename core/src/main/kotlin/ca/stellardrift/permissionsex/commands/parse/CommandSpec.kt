@@ -21,8 +21,8 @@ import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.util.unaryMinus
-import net.kyori.text.Component
-import net.kyori.text.TextComponent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 
 typealias CommandAction = (Commander, CommandContext) -> Unit
 

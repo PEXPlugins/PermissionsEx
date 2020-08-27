@@ -18,11 +18,11 @@
 package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.util.CachingValue
-import ca.stellardrift.text.fabric.ComponentCommandOutput
-import ca.stellardrift.text.fabric.ComponentPlayer
 import java.util.Locale
-import net.kyori.text.Component
-import net.minecraft.network.MessageType
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.audience.MessageType
+import net.kyori.adventure.platform.fabric.CommandSourceAudience
+import net.kyori.adventure.text.Component
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.CommandOutput
 import net.minecraft.server.command.ServerCommandSource
@@ -60,9 +60,9 @@ fun <R> ServerCommandSource.ifPlayer(operation: (ServerPlayerEntity) -> R): R? {
 @JvmName("sendPlayerMessage")
 @JvmOverloads
 fun ServerPlayerEntity.sendMessage(text: Component, type: MessageType = MessageType.SYSTEM) {
-    ComponentPlayer.of(this).sendMessage(text, type)
+    (this as Audience).sendMessage(text, type)
 }
 
 fun CommandOutput.sendMessage(text: Component) {
-    ComponentCommandOutput.of(this).sendMessage(text)
+    CommandSourceAudience.of(this).sendMessage(text)
 }

@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.sql.DataSource
+import net.kyori.adventure.platform.bukkit.BukkitAudiences
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
@@ -111,6 +112,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
 
     // Location of plugin configuration data
     lateinit var dataPath: Path
+    internal lateinit var adventure: BukkitAudiences private set
     private val executorService = Executors.newCachedThreadPool()
 
     /**
@@ -138,6 +140,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     override fun onEnable() {
         this.dataPath = dataFolder.toPath()
         this.logger = createLogger()
+        this.adventure = BukkitAudiences.create(this)
         val configLoader = YAMLConfigurationLoader.builder()
                 .setFile(File(dataFolder, "config.yml"))
                 .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
@@ -202,6 +205,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT())
             executorService.shutdownNow()
         }
+        this.adventure.close()
     }
 
     @EventHandler

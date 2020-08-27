@@ -21,8 +21,8 @@ import ca.stellardrift.permissionsex.commands.commander.Commander;
 import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.Map;
 
 import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNLONG;
 import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNSHORT;
-import static net.kyori.text.TextComponent.space;
+import static net.kyori.adventure.text.TextComponent.space;
 
 public class StructuralArguments {
     private static CommandElement markTrue(String flag) {

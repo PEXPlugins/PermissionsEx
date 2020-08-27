@@ -20,25 +20,16 @@ package ca.stellardrift.permissionsex.sponge
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
-import net.kyori.text.Component
-import net.kyori.text.adapter.spongeapi.TextAdapter
-import net.kyori.text.format.TextColor
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import org.spongepowered.api.command.CommandSource
 import org.spongepowered.api.service.pagination.PaginationService
-import org.spongepowered.api.text.channel.ChatTypeMessageReceiver
-import org.spongepowered.api.text.channel.MessageReceiver
-import org.spongepowered.api.text.chat.ChatType
-import org.spongepowered.api.text.chat.ChatTypes
-
-fun MessageReceiver.sendMessage(message: Component) = TextAdapter.sendMessage(this, message)
-fun Iterable<MessageReceiver>.sendMessage(message: Component) = TextAdapter.sendMessage(this, message)
-fun ChatTypeMessageReceiver.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendMessage(this, message, type)
-fun Iterable<ChatTypeMessageReceiver>.sendMessage(message: Component, type: ChatType = ChatTypes.SYSTEM) = TextAdapter.sendMessage(this, message, type)
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
@@ -52,6 +43,7 @@ internal class SpongeCommander(
     override val formatter: SpongeMessageFormatter = SpongeMessageFormatter(this)
     override val name: String
         get() = commandSource.name
+    private val audience = pex.adventure.audience(commandSource)
 
     override fun hasPermission(permission: String): Boolean {
         return commandSource.hasPermission(permission)
@@ -65,10 +57,7 @@ internal class SpongeCommander(
                 commandSource.containingCollection.identifier,
                 commandSource.identifier
             )
-
-    override fun msg(text: Component) {
-        commandSource.sendMessage(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.DARK_AQUA), locale))
-    }
+    override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun msgPaginated(
         title: Component,
@@ -82,11 +71,15 @@ internal class SpongeCommander(
         formatter.apply {
             build.title(title.styled { header().hl() }.toSponge())
             if (header != null) {
-                build.header(header.color(TextColor.GRAY).toSponge())
+                build.header(header.color(NamedTextColor.GRAY).toSponge())
             }
-            build.contents(text.map { it.color(TextColor.DARK_AQUA).toSponge() })
+            build.contents(text.map { it.color(messageColor).toSponge() })
                 .sendTo(commandSource)
         }
+    }
+
+    override fun audience(): Audience {
+        return this.audience
     }
 }
 

@@ -21,45 +21,41 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
-import net.kyori.text.Component
-import net.kyori.text.adapter.bungeecord.TextAdapter
-import net.kyori.text.format.TextColor
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
-fun Iterable<CommandSender>.sendMessage(text: Component) = TextAdapter.sendMessage(this, text)
-fun CommandSender.sendMessage(text: Component) = TextAdapter.sendMessage(this, text)
-
 class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: CommandSender) :
     Commander {
+    override val messageColor: TextColor = NamedTextColor.GOLD
+    private val audience = pex.adventure.audience(src)
     override val manager: PermissionsEx<*>
         get() = pex.manager
     override val formatter = BungeePluginMessageFormatter(this)
     override val name: String get() = src.name
-
     override val locale: Locale get() =
         (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
-
     override val subjectIdentifier: SubjectIdentifier?
         get() = when (src) {
             is ProxiedPlayer -> subjectIdentifier(PermissionsEx.SUBJECTS_USER, src.uniqueId.toString())
             else -> IDENT_SERVER_CONSOLE
         }
 
+    override fun audience(): Audience {
+        return this.audience
+    }
+
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
     }
-
-    override fun msg(text: Component) {
-        src.sendMessage(PEXComponentRenderer.render(text.colorIfAbsent(TextColor.GOLD), locale))
-    }
 }
 
-class BungeePluginMessageFormatter(val sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = TextColor.YELLOW) {
+class BungeePluginMessageFormatter(val sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = NamedTextColor.YELLOW) {
 
     override val SubjectIdentifier.friendlyName: String? get() {
         return (sender.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name

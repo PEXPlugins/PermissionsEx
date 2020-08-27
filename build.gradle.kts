@@ -2,6 +2,7 @@
 import ca.stellardrift.build.common.OpinionatedExtension
 import ca.stellardrift.build.common.pex
 import ca.stellardrift.build.common.sk89q
+import ca.stellardrift.build.common.sonatypeOss
 import ca.stellardrift.build.common.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -30,6 +31,7 @@ subprojects {
     repositories {
         mavenLocal()
         jcenter()
+        sonatypeOss()
         pex()
         sponge()
         sk89q()

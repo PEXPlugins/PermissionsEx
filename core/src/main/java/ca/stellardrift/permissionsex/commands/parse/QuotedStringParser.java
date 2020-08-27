@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.commands.parse;
 
 import ca.stellardrift.permissionsex.commands.CommonMessages;
-import net.kyori.text.Component;
+import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;

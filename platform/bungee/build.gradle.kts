@@ -1,6 +1,6 @@
 
+import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
-import ca.stellardrift.build.common.kyoriText
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -47,10 +47,9 @@ dependencies {
         exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
-    implementation(kyoriText("adapter-bungeecord", Versions.TEXT_ADAPTER)) {
+    implementation(adventure("platform-bungeecord", Versions.TEXT_ADAPTER)) {
         exclude("com.google.code.gson")
     }
-    implementation(kyoriText("serializer-gson", Versions.TEXT)) { isTransitive = false }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
     api(project(":impl-blocks:proxy-common")) { isTransitive = false }

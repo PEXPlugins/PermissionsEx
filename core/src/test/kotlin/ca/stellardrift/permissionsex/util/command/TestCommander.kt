@@ -23,8 +23,11 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import com.google.common.base.Strings
 import java.util.Locale
-import net.kyori.text.Component
-import net.kyori.text.serializer.plain.PlainComponentSerializer
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer
 
 class TestCommander(override val manager: PermissionsEx<*>) : Commander {
     override val name: String
@@ -35,6 +38,8 @@ class TestCommander(override val manager: PermissionsEx<*>) : Commander {
 
     override val subjectIdentifier: SubjectIdentifier?
         get() = null
+    override val messageColor: TextColor
+        get() = NamedTextColor.DARK_GREEN
 
     override fun hasPermission(permission: String): Boolean {
         return true
@@ -43,15 +48,15 @@ class TestCommander(override val manager: PermissionsEx<*>) : Commander {
     override val formatter: MessageFormatter = TestMessageFormatter(this)
 
     override fun msg(text: Component) {
-        println("msg: ${PlainComponentSerializer.INSTANCE.serialize(text)}")
+        println("msg: ${PlainComponentSerializer.plain().serialize(text)}")
     }
 
     override fun debug(text: Component) {
-        println("debug: ${PlainComponentSerializer.INSTANCE.serialize(text)}")
+        println("debug: ${PlainComponentSerializer.plain().serialize(text)}")
     }
 
     override fun error(text: Component, err: Throwable?) {
-        System.err.println("error: ${PlainComponentSerializer.INSTANCE.serialize(text)}")
+        System.err.println("error: ${PlainComponentSerializer.plain().serialize(text)}")
         err?.printStackTrace()
     }
 
@@ -60,15 +65,19 @@ class TestCommander(override val manager: PermissionsEx<*>) : Commander {
         header: Component?,
         text: Iterable<Component>
     ) {
-        val titleStr = PlainComponentSerializer.INSTANCE.serialize(title)
+        val titleStr = PlainComponentSerializer.plain().serialize(title)
         println(titleStr)
         if (header != null) {
-            println(PlainComponentSerializer.INSTANCE.serialize(header))
+            println(PlainComponentSerializer.plain().serialize(header))
         }
         println(Strings.repeat("=", titleStr.length))
         for (line in text) {
-            println(PlainComponentSerializer.INSTANCE.serialize(line))
+            println(PlainComponentSerializer.plain().serialize(line))
         }
+    }
+
+    override fun audience(): Audience {
+        return Audience.empty() // TODO: is this needed?
     }
 }
 

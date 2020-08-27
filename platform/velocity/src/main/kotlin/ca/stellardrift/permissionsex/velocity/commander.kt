@@ -24,15 +24,15 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import com.google.common.collect.Maps
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
 import java.util.Locale
-import net.kyori.text.Component
-import net.kyori.text.format.TextColor
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 
 class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
 
@@ -61,6 +61,7 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
     override val manager: PermissionsEx<*>
         get() = pex.manager
     override val formatter = VelocityMessageFormatter(this)
+
     override val name: String
         get() =
             (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
@@ -74,17 +75,18 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
                     is Player -> Maps.immutableEntry(SUBJECTS_USER, src.uniqueId.toString())
                     else -> IDENT_SERVER_CONSOLE
                 }
+    override val messageColor: TextColor get() = NamedTextColor.GOLD
 
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
     }
 
-    override fun msg(text: Component) {
-        src.sendMessage(PEXComponentRenderer.render(text.run { if (color() == null) color(TextColor.GOLD) else this }, locale))
+    override fun audience(): Audience {
+        return this.src
     }
 }
 
-class VelocityMessageFormatter(val vCmd: VelocityCommander) :
-    MessageFormatter(vCmd, vCmd.pex.manager, TextColor.YELLOW) {
+class VelocityMessageFormatter(vCmd: VelocityCommander) :
+    MessageFormatter(vCmd, vCmd.pex.manager, NamedTextColor.YELLOW) {
     override fun transformCommand(cmd: String) = "/$cmd"
 }
