@@ -24,8 +24,9 @@ import net.fabricmc.loom.task.RemapJarTask
  */
 
 plugins {
+    id("fabric-loom") version "0.5-SNAPSHOT"
     id("ca.stellardrift.opinionated.fabric") version "3.1"
-    id("ca.stellardrift.configurate-transformations") version "3.1"
+    id("ca.stellardrift.configurate-transformations")
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
 }
