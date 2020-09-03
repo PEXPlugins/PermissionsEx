@@ -83,15 +83,6 @@ public class TestImplementationInterface implements ImplementationInterface {
     }
 
     @Override
-    public void registerCommands(Supplier<Set<CommandSpec>> commandSupplier) {
-    }
-
-    @Override
-    public Set<CommandSpec> getImplementationCommands() {
-        return ImmutableSet.of();
-    }
-
-    @Override
     public String getVersion() {
         return "test";
     }

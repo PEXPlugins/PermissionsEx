@@ -100,7 +100,9 @@ class PermissionsExPlugin : Plugin(), Listener {
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
 
-        registerCommandsNow()
+        this.manager.registerCommandsTo {
+            proxy.pluginManager.registerCommand(this, PEXBungeeCommand(this, it))
+        }
         this.proxy.pluginManager.registerListener(this, this)
     }
 
@@ -133,29 +135,6 @@ class PermissionsExPlugin : Plugin(), Listener {
             manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
         } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
-        }
-    }
-
-    internal fun maybeRegisterCommands(supply: Supplier<Set<CommandSpec>>) {
-        cachedCommands.add(supply)
-        registerCommandsNow()
-    }
-
-    private fun registerCommandsNow() {
-        if (!::manager.isInitialized) {
-            return
-        }
-
-        var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
-        while (supply != null) {
-            registerCommandsNow(supply)
-            supply = cachedCommands.poll()
-        }
-    }
-
-    private fun registerCommandsNow(supplier: Supplier<Set<CommandSpec>>) {
-        supplier.get().forEach {
-            proxy.pluginManager.registerCommand(this, PEXBungeeCommand(this, it))
         }
     }
 }
@@ -200,14 +179,6 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
 
     override fun getAsyncExecutor(): Executor {
         return exec
-    }
-
-    override fun registerCommands(command: Supplier<Set<CommandSpec>>) {
-        plugin.maybeRegisterCommands(command)
-    }
-
-    override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf()
     }
 
     override fun getVersion(): String {

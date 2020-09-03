@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -78,22 +79,13 @@ public interface ImplementationInterface {
     Executor getAsyncExecutor();
 
     /**
-     * Provide a supplier for commands, to be called once the implementation's backend
-     * is ready to accept command registrations.
-     *
-     * This method may be called multiple times. If the commands are not registered immediately,
-     * the implementation must cache all values provided in each call.
-     *
-     * @param commandSupplier The function that will provide commands to register.
-     */
-    void registerCommands(Supplier<Set<CommandSpec>> commandSupplier);
-
-    /**
      * Get commands that the implementation wants to register as a child of the {@code /pex} command
      *
      * @return The desired subcommands, or an empty set
      */
-    Set<CommandSpec> getImplementationCommands();
+    default Set<CommandSpec> getImplementationSubcommands() {
+        return Collections.emptySet();
+    }
 
     /**
      * Return the version number attached to this implementation of PEX

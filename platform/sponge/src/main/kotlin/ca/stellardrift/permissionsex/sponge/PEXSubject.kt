@@ -36,7 +36,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     private val data = PEXSubjectData(baked.data(), this)
     private val transientData = PEXSubjectData(baked.transientData(), this)
 
-    private val ref: SubjectReference = this.baked.identifier as SubjectReference
+    private val ref: SubjectReference = this.baked.identifier.asSponge(collection.service)
     private val activeContexts: CachingValue<ActiveContextsHolder>
 
     private data class ActiveContextsHolder(val spongeContexts: Set<Context>, val pexContexts: ContextSet)

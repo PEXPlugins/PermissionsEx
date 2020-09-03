@@ -32,7 +32,6 @@ import com.google.common.collect.Iterables
 import com.mojang.authlib.Agent
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.ProfileLookupCallback
-import com.mojang.brigadier.CommandDispatcher
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -50,7 +49,6 @@ import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import net.minecraft.server.MinecraftServer
-import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.WorldSavePath
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
@@ -60,7 +58,7 @@ class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
         PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message")
         // PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.PermissionsEx")
-        // TODO: Why is Kyori-Text loading in app ClassLoader and not Knot
+        // TODO: Why is Adventure loading in app ClassLoader and not Knot, can we fix this in Loom?
     }
 }
 
@@ -95,10 +93,16 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         logger.prefix = "[${container.metadata.name}] "
 
         logger.info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
-        ServerLifecycleEvents.SERVER_STARTED.register(ServerLifecycleEvents.ServerStarted { init(it) })
+        ServerLifecycleEvents.SERVER_STARTING.register(ServerLifecycleEvents.ServerStarting { init(it) })
         ServerLifecycleEvents.SERVER_STOPPED.register(ServerLifecycleEvents.ServerStopped { shutdown() })
+
+        // TODO: expose these commands earlier?
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
-            tryRegisterCommands(dispatcher)
+            if (this._manager != null) {
+                this._manager?.registerCommandsTo {
+                    registerCommand(it, dispatcher)
+                }
+            }
         })
         registerWorldEdit()
     }
@@ -118,7 +122,6 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             server.stop(false)
             return
         }
-        tryRegisterCommands()
 
         manager.registerContextDefinitions(WorldContextDefinition,
             DimensionContextDefinition,
@@ -130,7 +133,11 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         manager.getSubjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
-        tryRegisterCommands()
+
+        gameInstance.commandManager?.also {
+            manager.registerCommandsTo { cmd -> registerCommand(cmd, it.dispatcher) }
+        }
+
         logger.info(Messages.MOD_ENABLE_SUCCESS(container.metadata.version))
     }
 
@@ -195,32 +202,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         return exec
     }
 
-    override fun registerCommands(commandSupplier: Supplier<Set<CommandSpec>>) {
-        synchronized(commands) {
-                commands.add(commandSupplier)
-                tryRegisterCommands()
-        }
-    }
-
-    private fun tryRegisterCommands(possibleDispatch: CommandDispatcher<ServerCommandSource>? = null) {
-        val dispatcher = if (possibleDispatch == null && this::server.isInitialized) {
-            server.commandManager.dispatcher
-        } else {
-            possibleDispatch
-        }
-        if (dispatcher != null && _manager != null) {
-            synchronized(commands) {
-                commands.forEach {
-                    it.get().forEach { cmd ->
-                        registerCommand(cmd, dispatcher)
-                    }
-                }
-                commands.clear() // TODO: Remove if we stop re-creating the PEX instance
-            }
-        }
-    }
-
-    override fun getImplementationCommands(): Set<CommandSpec> {
+    override fun getImplementationSubcommands(): Set<CommandSpec> {
         return emptySet()
     }
 
@@ -233,7 +215,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         action: Function<MinecraftProfile, CompletableFuture<Void>>
     ): CompletableFuture<Int> {
         val futures = mutableListOf<CompletableFuture<Void>>()
-        return CompletableFuture.supplyAsync(Supplier {
+        return CompletableFuture.supplyAsync({
             val names = Iterables.toArray(namesIter, String::class.java)
             val state = CountDownLatch(names.size)
             val callback = PEXProfileLookupCallback(state, action, futures)

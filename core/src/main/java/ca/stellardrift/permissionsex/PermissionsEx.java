@@ -34,7 +34,6 @@ import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinitionKt;
 import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.Util;
@@ -127,12 +126,17 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
 
         getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinitionKt.subjectType(SUBJECTS_DEFAULTS, false));
         convertUuids();
+    }
 
-        registerCommands(() -> ImmutableSet.of(
-               createRootCommand(this),
-                getPromoteCommand(this),
-                getDemoteCommand(this)
-        ));
+    /**
+     * Pass all PermissionsEx commands to the provided consumer for registration.
+     *
+     * @param consumer Consumer to receive each command registration
+     */
+    public void registerCommandsTo(final Consumer<CommandSpec> consumer) {
+        consumer.accept(createRootCommand(this));
+        consumer.accept(getPromoteCommand(this));
+        consumer.accept(getDemoteCommand(this));
     }
 
     private State<PlatformConfigType> getState() throws IllegalStateException {
@@ -507,13 +511,8 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     }
 
     @Override
-    public void registerCommands(Supplier<Set<CommandSpec>> commandSupplier) {
-        impl.registerCommands(commandSupplier);
-    }
-
-    @Override
-    public Set<CommandSpec> getImplementationCommands() {
-        return impl.getImplementationCommands();
+    public Set<CommandSpec> getImplementationSubcommands() {
+        return impl.getImplementationSubcommands();
     }
 
     @Override

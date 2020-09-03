@@ -23,7 +23,6 @@ import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPermissibleInjector
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
@@ -34,14 +33,11 @@ import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 import java.sql.SQLException
-import java.util.Queue
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
-import java.util.function.Supplier
 import javax.sql.DataSource
 import net.kyori.adventure.platform.bukkit.BukkitAudiences
 import ninja.leaping.configurate.objectmapping.Setting
@@ -154,7 +150,6 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
                     BukkitConfiguration::class.java
                 ), impl
             )
-            impl.registerCommandsNow()
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -182,6 +177,15 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         injectAllPermissibles()
         detectWorldGuard(this)
         detectVault(this)
+
+        manager.registerCommandsTo {
+            val cmd = getCommand(it.aliases[0])
+            if (cmd != null) {
+                val bukkitCommand = PEXBukkitCommand(it, this@PermissionsExPlugin)
+                cmd.setExecutor(bukkitCommand)
+                cmd.tabCompleter = bukkitCommand
+            }
+        }
     }
 
     override fun onDisable() {
@@ -347,9 +351,6 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     }
 
     private inner class BukkitImplementationInterface : ImplementationInterface {
-        private val stagedCommands: Queue<Supplier<Set<CommandSpec>>> =
-            ConcurrentLinkedQueue()
-
         override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
             return when (scope) {
                 BaseDirectoryScope.CONFIG -> dataPath
@@ -372,39 +373,6 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
          */
         override fun getAsyncExecutor(): Executor {
             return executorService
-        }
-
-        override fun registerCommands(commands: Supplier<Set<CommandSpec>>) {
-            stagedCommands.add(commands)
-            registerCommandsNow()
-        }
-
-        fun registerCommandsNow(): Boolean {
-            if (_manager == null) {
-                return false
-            }
-            var supply: Supplier<Set<CommandSpec>>? = stagedCommands.poll()
-            while (supply != null) {
-                registerCommandsNow(supply)
-                supply = stagedCommands.poll()
-            }
-            return true
-        }
-
-        fun registerCommandsNow(commandSupplier: Supplier<Set<CommandSpec>>) {
-            requireNotNull(_manager) { "Manager must be initialized to register commands!" }
-            for (command in commandSupplier.get()) {
-                val cmd = getCommand(command.aliases[0])
-                if (cmd != null) {
-                    val bukkitCommand = PEXBukkitCommand(command, this@PermissionsExPlugin)
-                    cmd.setExecutor(bukkitCommand)
-                    cmd.tabCompleter = bukkitCommand
-                }
-            }
-        }
-
-        override fun getImplementationCommands(): Set<CommandSpec> {
-            return emptySet()
         }
 
         override fun getVersion(): String {

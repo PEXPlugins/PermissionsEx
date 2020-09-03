@@ -86,7 +86,7 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
         child(getVersionCommand(pex))
         child(pex.callbackController.createCommand())
 
-        pex.implementationCommands.forEach { child(it) }
+        pex.implementationSubcommands.forEach { child(it) }
         build()
     }
 

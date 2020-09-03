@@ -22,7 +22,6 @@ import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
@@ -45,12 +44,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
-import java.util.function.Supplier
 import javax.inject.Inject
 import javax.sql.DataSource
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader
@@ -63,7 +60,6 @@ private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
 class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val server: ProxyServer, @DataDirectory private val dataPath: Path) : ImplementationInterface {
 
     private val exec = Executors.newCachedThreadPool()
-    private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
 
     override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
@@ -82,37 +78,6 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     override fun getAsyncExecutor(): Executor {
         return exec
-    }
-
-    private fun registerCommandsNow() {
-        if (!this::manager.isInitialized) {
-            return
-        }
-
-        var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
-        while (supply != null) {
-            registerCommandsNow(supply)
-            supply = cachedCommands.poll()
-        }
-    }
-
-    private fun registerCommandsNow(supplier: Supplier<Set<CommandSpec>>) {
-        supplier.get().forEach {
-            val aliases = it.aliases.map { alias -> "/$alias" }
-            val meta = server.commandManager.metaBuilder(aliases.first())
-                .aliases(*aliases.subList(1, aliases.size).toTypedArray())
-                .build()
-            server.commandManager.register(meta, VelocityCommand(this, it))
-        }
-    }
-
-    override fun registerCommands(command: Supplier<Set<CommandSpec>>) {
-        cachedCommands.add(command)
-        registerCommandsNow()
-    }
-
-    override fun getImplementationCommands(): Set<CommandSpec> {
-        return setOf()
     }
 
     override fun getVersion(): String {
@@ -151,7 +116,14 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
         this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
-        registerCommandsNow()
+
+        this.manager.registerCommandsTo {
+            val aliases = it.aliases.map { alias -> "/$alias" }
+            val meta = server.commandManager.metaBuilder(aliases.first())
+                .aliases(*aliases.subList(1, aliases.size).toTypedArray())
+                .build()
+            server.commandManager.register(meta, VelocityCommand(this, it))
+        }
         logger.info(Messages.PLUGIN_INIT_SUCCESS(ProjectData.NAME, ProjectData.VERSION))
     }
 

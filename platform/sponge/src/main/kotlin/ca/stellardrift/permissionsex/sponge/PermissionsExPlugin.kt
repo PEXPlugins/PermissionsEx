@@ -52,7 +52,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.function.Supplier
 import javax.sql.DataSource
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
@@ -66,9 +65,11 @@ import org.spongepowered.api.Game
 import org.spongepowered.api.Server
 import org.spongepowered.api.config.ConfigDir
 import org.spongepowered.api.config.DefaultConfig
+import org.spongepowered.api.entity.living.player.server.ServerPlayer
+import org.spongepowered.api.event.GenericEvent
 import org.spongepowered.api.event.Listener
+import org.spongepowered.api.event.lifecycle.ConstructPluginEvent
 import org.spongepowered.api.event.lifecycle.LifecycleEvent
-import org.spongepowered.api.event.lifecycle.LoadedGameEvent
 import org.spongepowered.api.event.lifecycle.ProvideServiceEvent
 import org.spongepowered.api.event.lifecycle.RefreshGameEvent
 import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
@@ -106,18 +107,23 @@ class PermissionsExPlugin @Inject internal constructor(
     private val lifecycleLogger = LogManager.getLogger("Lifecycle")
 
     init {
+        // setup command registrar
         registerRegistrar(this)
     }
 
     @Listener
     fun onAnyLifecycle(event: LifecycleEvent) {
-        lifecycleLogger.info("Lifecycle :: ${event.javaClass.simpleName}")
+        lifecycleLogger.info(if (event is GenericEvent<*>) {
+            "Lifecycle :: ${event.javaClass.simpleName}<${event.genericType}>"
+        } else {
+            "Lifecycle :: ${event.javaClass.simpleName}"
+        })
     }
 
     @Listener
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
-    fun onPreInit(event: LoadedGameEvent) {
-        logger.debug("state :: LoadedGameEvent")
+    fun onPreInit(event: ConstructPluginEvent) {
+        logger.debug("state :: ConstructPluginEvent")
         logger.info(Messages.PLUGIN_INIT_BEGIN(ProjectData.NAME, ProjectData.VERSION))
         try {
             convertFromBukkit()
@@ -159,7 +165,9 @@ class PermissionsExPlugin @Inject internal constructor(
             })
         }
 
-        // TODO: register events
+        this.manager.registerCommandsTo {
+            event.register(this.container, it)
+        }
     }
 
     @Listener
@@ -172,7 +180,7 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    // TODO: This is not the right event for integrated server. is there another event for game end?
+    // TODO: re-scope permissions service
     @Listener
     fun disable(event: StoppingEngineEvent<Server>) {
         logger.debug("state :: StoppingEngineEvent<Server>")
@@ -190,14 +198,20 @@ class PermissionsExPlugin @Inject internal constructor(
     fun onPlayerJoin(event: ServerSideConnectionEvent.Join) {
         val identifier = event.player.identifier
         val cache = this.manager.getSubjects(PermissionsEx.SUBJECTS_USER)
-        cache.isRegistered(identifier).thenAccept { registered: Boolean ->
-            if (registered) {
-                cache.persistentData().update(identifier) { input ->
-                    if (event.player.name == input.getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]) {
-                        return@update input
-                    } else {
-                        return@update input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.player.name)
+        cache[identifier].thenAccept {
+            // Update name option
+            it.data().cache.isRegistered(it.identifier.value).thenAccept { isReg ->
+                if (isReg) {
+                    it.data().update { data ->
+                        data.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.player.name)
                     }
+                }
+            }
+
+            // Add listener to re-send command tree on a permission update
+            it.registerListener { newSubj ->
+                (newSubj.associatedObject as? ServerPlayer)?.apply {
+                    game.commandManager.updateCommandTreeForPlayer(this)
                 }
             }
         }
@@ -278,14 +292,6 @@ class PermissionsExPlugin @Inject internal constructor(
      */
     override fun getAsyncExecutor(): Executor {
         return this.scheduler
-    }
-
-    override fun registerCommands(specSupplier: Supplier<Set<CommandSpec>>) {
-        TODO("redesign")
-    }
-
-    override fun getImplementationCommands(): Set<CommandSpec> {
-        return emptySet()
     }
 
     override fun createSubjectIdentifier(collection: String, ident: String): SubjectIdentifier {
