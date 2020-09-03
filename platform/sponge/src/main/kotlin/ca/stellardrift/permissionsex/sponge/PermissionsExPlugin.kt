@@ -75,6 +75,7 @@ import org.spongepowered.api.event.lifecycle.RefreshGameEvent
 import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent
 import org.spongepowered.api.event.network.ServerSideConnectionEvent
+import org.spongepowered.api.scheduler.Task
 import org.spongepowered.api.service.context.ContextCalculator
 import org.spongepowered.api.service.permission.PermissionDescription
 import org.spongepowered.api.service.permission.PermissionService
@@ -135,8 +136,8 @@ class PermissionsExPlugin @Inject internal constructor(
         }
         manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = FixedEntriesSubjectTypeDefinition<Any?>(
             PermissionService.SUBJECTS_SYSTEM, mapOf(
-                "Server" to { event.game.systemSubject },
-                "RCON" to { null })
+                "console" to { event.game.systemSubject },
+                "Recon" to { null })
         )
         manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
             UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, event.game)
@@ -174,9 +175,12 @@ class PermissionsExPlugin @Inject internal constructor(
     fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {
         logger.debug("state :: ServerSideConnectionEvent.Auth")
         try {
-            manager.getSubjects(PermissionsEx.SUBJECTS_USER)[event.profile.uniqueId.toString()]
+            manager.getSubjects(PermissionsEx.SUBJECTS_USER)[event.profile.uniqueId.toString()].exceptionally {
+                logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, it.message ?: "<unknown>"), it)
+                null
+            }
         } catch (e: Exception) {
-            logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, e.message!!), e)
+            logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, e.message ?: "<unknown>"), e)
         }
     }
 
@@ -211,7 +215,11 @@ class PermissionsExPlugin @Inject internal constructor(
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
                 (newSubj.associatedObject as? ServerPlayer)?.apply {
-                    game.commandManager.updateCommandTreeForPlayer(this)
+                    world.engine.scheduler.submit(Task.builder()
+                        .plugin(container)
+                        .execute(Runnable {
+                            game.commandManager.updateCommandTreeForPlayer(this)
+                        }).build())
                 }
             }
         }
@@ -330,15 +338,13 @@ class PermissionsExService internal constructor(private val game: Game, private 
             PEXSubjectCollection.load(type, this)
         }
 
-    private var defaults: PEXSubject
-    private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
-    internal val timings = Timings(plugin.container)
-
-    init {
-        defaults = loadCollection(PermissionsEx.SUBJECTS_DEFAULTS)
+    private val _defaults: PEXSubject by lazy {
+        loadCollection(PermissionsEx.SUBJECTS_DEFAULTS)
             .thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
             .get() as PEXSubject
     }
+    private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
+    internal val timings = Timings(plugin.container)
 
     override fun getUserSubjects(): PEXSubjectCollection {
         // TODO: error handling
@@ -351,7 +357,7 @@ class PermissionsExService internal constructor(private val game: Game, private 
     }
 
     override fun getDefaults(): PEXSubject {
-        return defaults
+        return this._defaults
     }
 
     override fun loadCollection(identifier: String): CompletableFuture<SubjectCollection> {

@@ -170,7 +170,9 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
                 (newSubj.associatedObject as? ServerPlayerEntity)?.apply {
-                    server.playerManager.sendCommandTree(this)
+                    server.execute {
+                        server.playerManager.sendCommandTree(this)
+                    }
                 }
             }
         }
