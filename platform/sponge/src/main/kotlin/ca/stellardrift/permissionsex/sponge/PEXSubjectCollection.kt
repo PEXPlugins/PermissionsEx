@@ -38,28 +38,28 @@ import org.spongepowered.api.util.Tristate
 /**
  * Subject collection
  */
-class PEXSubjectCollection private constructor(private val identifier: String, val plugin: PermissionsExPlugin) :
+class PEXSubjectCollection private constructor(private val identifier: String, internal val service: PermissionsExService) :
     SubjectCollection {
-    val type: SubjectType = plugin.manager.getSubjects(identifier)
-    private var defaults: PEXSubject? = null
+    val type: SubjectType = service.manager.getSubjects(identifier)
+    private lateinit var defaults: PEXSubject
     private val subjectCache: AsyncLoadingCache<String, PEXSubject>
 
     init {
-        subjectCache = Caffeine.newBuilder().executor(plugin.asyncExecutor)
+        subjectCache = Caffeine.newBuilder().executor(service.manager.asyncExecutor)
             .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
     }
 
     companion object {
-        fun load(identifier: String, plugin: PermissionsExPlugin): CompletableFuture<PEXSubjectCollection> {
-            val ret = PEXSubjectCollection(identifier, plugin)
+        internal fun load(identifier: String, service: PermissionsExService): CompletableFuture<PEXSubjectCollection> {
+            val ret = PEXSubjectCollection(identifier, service)
             val defaultFuture =
                 if (identifier == PermissionsEx.SUBJECTS_DEFAULTS) {
                     ret.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)
                 } else {
-                    plugin.loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose { it.loadSubject(identifier) }
+                    service.loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose { it.loadSubject(identifier) }
                 }
             return defaultFuture.thenApply {
-                ret.defaults = it as PEXSubject?
+                ret.defaults = it as PEXSubject
                 ret
             }
         }
@@ -103,7 +103,7 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
     }
 
     override fun newSubjectReference(subjectIdentifier: String): SubjectReference {
-        return PEXSubjectReference(subjectIdentifier, identifier, plugin)
+        return PEXSubjectReference(subjectIdentifier, identifier, service)
     }
 
     override fun suggestUnload(identifier: String) {
@@ -153,7 +153,7 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
             futures.asSequence()
                 .map { it.join() }
                 .map {
-                    val perm = it.getPermission(contexts?.toPex(plugin.manager) ?: it.activeContexts, permission)
+                    val perm = it.getPermission(contexts?.toPex(service.manager) ?: it.activeContexts, permission)
                     var bPerm: Boolean? = null
                     if (perm > 0) {
                         bPerm = true
@@ -177,7 +177,7 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
      * @return The subject holding defaults
      */
     override fun getDefaults(): Subject {
-        return defaults!!
+        return defaults
     }
 
     fun getCalculatedSubject(identifier: String): CompletableFuture<CalculatedSubject> {

@@ -49,12 +49,7 @@ data class CommandSpec internal constructor(
             executor(commander, args)
         } catch (ex: CommandException) {
             commander.error(ex.component, null)
-            commander.error(
-                CommonMessages.USAGE(
-                    getUsage(
-                        commander
-                    )
-                ), null)
+            commander.error(CommonMessages.USAGE(getUsage(commander)), null)
         } catch (t: Throwable) {
             commander.error(CommonMessages.ERROR_GENERAL(t.message!!), t)
             t.printStackTrace()

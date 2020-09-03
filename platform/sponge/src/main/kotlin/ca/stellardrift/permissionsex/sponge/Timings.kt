@@ -19,8 +19,9 @@ package ca.stellardrift.permissionsex.sponge
 
 import co.aikar.timings.Timing
 import co.aikar.timings.Timings
+import org.spongepowered.plugin.PluginContainer
 
-class Timings(private val plugin: PermissionsExPlugin) {
+class Timings(private val plugin: PluginContainer) {
     val getSubject: Timing = timing("getSubject")
     val getActiveContexts: Timing = timing("getActiveContexts")
     val getPermission: Timing = timing("getPermission")

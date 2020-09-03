@@ -23,27 +23,19 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.util.ContextSet
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import com.google.common.collect.ImmutableSet
+import com.google.common.reflect.TypeToken
 import java.util.UUID
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
+import org.spongepowered.api.event.Event
+import org.spongepowered.api.event.EventManager
 import org.spongepowered.api.profile.GameProfile
 import org.spongepowered.api.service.context.Context
-import org.spongepowered.api.text.Text
-import org.spongepowered.api.text.serializer.TextSerializers
+import org.spongepowered.plugin.PluginContainer
 
 class SpongeMinecraftProfile(private val profile: GameProfile) : MinecraftProfile {
     override val name: String
         get() = profile.name.get()
     override val uuid: UUID
         get() = profile.uniqueId
-}
-
-fun Component.toSponge(): Text {
-    return TextSerializers.JSON.deserialize(GsonComponentSerializer.colorDownsamplingGson().serialize(this))
-}
-
-fun Text.toAdventure(): Component {
-    return GsonComponentSerializer.gson().deserialize(TextSerializers.JSON.serialize(this))
 }
 
 fun ContextSet.toSponge(): MutableSet<Context> {
@@ -66,4 +58,8 @@ fun Set<Context>.toPex(manager: PermissionsEx<*>): ContextSet {
         }
     }
     return builder.build()
+}
+
+inline fun <reified E : Event> EventManager.register(plugin: PluginContainer, crossinline listener: (E) -> Unit) {
+    registerListener(plugin, object : TypeToken<E>() {}) { listener(it) }
 }

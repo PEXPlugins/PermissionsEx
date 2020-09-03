@@ -30,11 +30,9 @@ subprojects {
     apply(plugin="ca.stellardrift.opinionated.publish")
 
     repositories {
-        mavenLocal()
         jcenter()
         sonatypeOss()
         pex()
-        sponge()
         sk89q()
     }
 
@@ -68,10 +66,6 @@ subprojects {
     extensions.getByType(LicenseExtension::class).apply {
         header = rootProject.file("LICENSE_HEADER")
         ext["year"] = LocalDate.now(ZoneOffset.UTC).year
-    }
-
-    tasks.withType(KotlinCompile::class).configureEach {
-        this.kotlinOptions.freeCompilerArgs += "-Xnew-inference"
     }
 }
 

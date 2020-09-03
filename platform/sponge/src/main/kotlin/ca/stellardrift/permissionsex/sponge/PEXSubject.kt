@@ -24,7 +24,6 @@ import ca.stellardrift.permissionsex.util.ContextSet
 import java.util.Objects
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-import org.spongepowered.api.command.CommandSource
 import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectReference
@@ -33,9 +32,9 @@ import org.spongepowered.api.util.Tristate
 /**
  * Permissions subject implementation
  */
-class PEXSubject(private val baked: CalculatedSubject, private val collection: PEXSubjectCollection) : Subject {
-    private val data = PEXSubjectData(baked.data(), collection.plugin)
-    private val transientData = PEXSubjectData(baked.transientData(), collection.plugin)
+class PEXSubject(private val baked: CalculatedSubject, internal val collection: PEXSubjectCollection) : Subject {
+    private val data = PEXSubjectData(baked.data(), this)
+    private val transientData = PEXSubjectData(baked.transientData(), this)
 
     private val ref: SubjectReference = this.baked.identifier as SubjectReference
     private val activeContexts: CachingValue<ActiveContextsHolder>
@@ -43,12 +42,12 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     private data class ActiveContextsHolder(val spongeContexts: Set<Context>, val pexContexts: ContextSet)
 
     init {
-        this.activeContexts = collection.plugin.tickBasedCachingValue(1L) {
+        this.activeContexts = collection.service.tickBasedCachingValue(1L) {
             time.getActiveContexts.time {
                 val pexContexts = baked.activeContexts
                 val spongeContexts: MutableSet<Context> = pexContexts.toSponge()
                 val spongeContextsAccum: MutableSet<Context> = mutableSetOf()
-                for (spongeCalc in this.collection.plugin.contextCalculators) {
+                for (spongeCalc in this.collection.service.contextCalculators) {
                     spongeCalc.accumulateContexts(this, spongeContextsAccum)
                 }
                 spongeContexts.addAll(spongeContextsAccum)
@@ -58,7 +57,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
         }
     }
 
-    private val time get() = collection.plugin.timings
+    private val time get() = collection.service.timings
 
     override fun getIdentifier(): String {
         return ref.subjectIdentifier
@@ -69,7 +68,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     val manager: PermissionsEx<*>
-        get() = collection.plugin.manager
+        get() = collection.service.manager
 
     override fun asSubjectReference(): SubjectReference {
         return ref
@@ -77,11 +76,6 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun isSubjectDataPersisted(): Boolean {
         return true
-    }
-
-    override fun getCommandSource(): Optional<CommandSource> {
-        val associated = this.baked.associatedObject
-        return if (associated is CommandSource) Optional.of(associated) else Optional.empty()
     }
 
     override fun getContainingCollection(): PEXSubjectCollection {
@@ -126,7 +120,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun isChildOf(parent: SubjectReference): Boolean {
-        return baked.parents.contains(PEXSubjectReference.of(parent, containingCollection.plugin))
+        return baked.parents.contains(parent.asPex(containingCollection.service))
     }
 
     override fun isChildOf(contexts: Set<Context>, parent: SubjectReference): Boolean {
@@ -134,7 +128,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents.map { PEXSubjectReference.of(it, containingCollection.plugin) }
+        return baked.parents.map { it.asSponge(containingCollection.service) }
     }
 
     val activePexContexts: ContextSet
@@ -146,7 +140,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
-            this.baked.getParents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(it, this.containingCollection.plugin) }
+            this.baked.getParents(contexts.toPex(this.manager)).map { it.asSponge(this.containingCollection.service) }
         }
     }
 

@@ -21,47 +21,47 @@ import ca.stellardrift.permissionsex.util.optionally
 import java.util.HashMap
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-import org.spongepowered.api.plugin.PluginContainer
+import net.kyori.adventure.text.Component
 import org.spongepowered.api.service.permission.PermissionDescription
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectReference
-import org.spongepowered.api.text.Text
+import org.spongepowered.plugin.PluginContainer
 
 /**
  * Implementation of a permission description
  */
-class PEXPermissionDescription(
-    private val plugin: PermissionsExPlugin,
+class PEXPermissionDescription private constructor(
+    private val service: PermissionsExService,
     private val permId: String,
-    description: Text?,
+    description: Component?,
     owner: PluginContainer?
 ) : PermissionDescription {
-    private val description: Optional<Text> = description.optionally()
+    private val description: Optional<Component> = description.optionally()
     private val owner: Optional<PluginContainer> = owner.optionally()
 
     override fun getId(): String {
         return this.permId
     }
 
-    override fun getDescription(): Optional<Text> {
+    override fun getDescription(): Optional<Component> {
         return this.description
     }
 
     override fun findAssignedSubjects(type: String): CompletableFuture<Map<SubjectReference, Boolean>> {
-        return this.plugin.loadCollection(type).thenCompose { it.getAllWithPermission(id) }
+        return this.service.loadCollection(type).thenCompose { it.getAllWithPermission(id) }
     }
 
     override fun getAssignedSubjects(collectionIdentifier: String): Map<Subject, Boolean> {
-        return this.plugin.getCollection(collectionIdentifier).map { it.getLoadedWithPermission(id) }.orElseGet { emptyMap() }
+        return this.service.getCollection(collectionIdentifier).map { it.getLoadedWithPermission(id) }.orElseGet { emptyMap() }
     }
 
     override fun getOwner(): Optional<PluginContainer> {
         return this.owner
     }
 
-    internal class Builder(private val owner: PluginContainer, private val plugin: PermissionsExPlugin) : PermissionDescription.Builder {
+    internal class Builder(private val owner: PluginContainer, private val service: PermissionsExService) : PermissionDescription.Builder {
         private var id: String? = null
-        private var description: Text? = null
+        private var description: Component? = null
         private val ranks: MutableMap<String, Int> = HashMap()
 
         override fun id(id: String): Builder {
@@ -69,7 +69,7 @@ class PEXPermissionDescription(
             return this
         }
 
-        override fun description(text: Text?): Builder {
+        override fun description(text: Component?): Builder {
             this.description = text
             return this
         }
@@ -85,8 +85,8 @@ class PEXPermissionDescription(
 
         @Throws(IllegalStateException::class)
         override fun register(): PEXPermissionDescription {
-            val ret = PEXPermissionDescription(this.plugin, this.id!!, this.description, this.owner)
-            this.plugin.registerDescription(ret, this.ranks)
+            val ret = PEXPermissionDescription(this.service, this.id!!, this.description, this.owner)
+            this.service.registerDescription(ret, this.ranks)
             return ret
         }
     }

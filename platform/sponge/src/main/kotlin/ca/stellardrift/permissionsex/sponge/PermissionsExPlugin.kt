@@ -29,9 +29,12 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.sponge.command.register
+import ca.stellardrift.permissionsex.sponge.command.registerRegistrar
 import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.MinecraftProfile
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
@@ -42,10 +45,8 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.sql.SQLException
 import java.util.Optional
-import java.util.Queue
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
@@ -53,156 +54,149 @@ import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.sql.DataSource
-import net.kyori.adventure.platform.spongeapi.SpongeAudiences
 import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
-import org.slf4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.spi.ExtendedLogger
+import org.apache.logging.slf4j.Log4jLogger
 import org.spongepowered.api.Game
+import org.spongepowered.api.Server
 import org.spongepowered.api.config.ConfigDir
 import org.spongepowered.api.config.DefaultConfig
 import org.spongepowered.api.event.Listener
-import org.spongepowered.api.event.game.GameReloadEvent
-import org.spongepowered.api.event.game.state.GamePreInitializationEvent
-import org.spongepowered.api.event.game.state.GameStoppedServerEvent
-import org.spongepowered.api.event.network.ClientConnectionEvent
-import org.spongepowered.api.event.network.ClientConnectionEvent.Auth
-import org.spongepowered.api.event.network.ClientConnectionEvent.Join
-import org.spongepowered.api.plugin.Plugin
-import org.spongepowered.api.scheduler.Scheduler
-import org.spongepowered.api.service.ServiceManager
+import org.spongepowered.api.event.lifecycle.LifecycleEvent
+import org.spongepowered.api.event.lifecycle.LoadedGameEvent
+import org.spongepowered.api.event.lifecycle.ProvideServiceEvent
+import org.spongepowered.api.event.lifecycle.RefreshGameEvent
+import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
+import org.spongepowered.api.event.lifecycle.StoppingEngineEvent
+import org.spongepowered.api.event.network.ServerSideConnectionEvent
 import org.spongepowered.api.service.context.ContextCalculator
 import org.spongepowered.api.service.permission.PermissionDescription
 import org.spongepowered.api.service.permission.PermissionService
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectCollection
 import org.spongepowered.api.service.permission.SubjectReference
-import org.spongepowered.api.service.sql.SqlService
-import org.spongepowered.api.util.annotation.NonnullByDefault
+import org.spongepowered.api.sql.SqlManager
+import org.spongepowered.plugin.PluginContainer
+import org.spongepowered.plugin.jvm.Plugin
 
 /**
  * PermissionsEx plugin
  */
-@NonnullByDefault
-@Plugin(id = PomData.ARTIFACT_ID, name = PomData.NAME, version = PomData.VERSION, description = PomData.DESCRIPTION)
+@Plugin(ProjectData.ARTIFACT_ID)
 class PermissionsExPlugin @Inject internal constructor(
     logger: Logger,
-    val game: Game,
-    private val services: ServiceManager,
+    internal val container: PluginContainer,
+    internal val game: Game,
+    private val sql: SqlManager,
     @ConfigDir(sharedRoot = false) private val configDir: Path,
-    @DefaultConfig(sharedRoot = false) private val configLoader: ConfigurationLoader<CommentedConfigurationNode>,
-    internal val adventure: SpongeAudiences
-) : PermissionService, ImplementationInterface {
-    private var sql: Optional<SqlService> = Optional.empty()
-    private var scheduler: Scheduler = game.scheduler
-    private val logger = FormattedLogger.forLogger(logger, true)
-    private val cachedCommands: Queue<Supplier<Set<CommandSpec>>> = ConcurrentLinkedQueue()
+    @DefaultConfig(sharedRoot = false) private val configLoader: ConfigurationLoader<CommentedConfigurationNode>
+) : ImplementationInterface {
+    internal val scheduler = game.asyncScheduler.createExecutor(container)
+    private val logger = FormattedLogger.forLogger(Log4jLogger(logger as ExtendedLogger, logger.name), true)
     private var _manager: PermissionsEx<*>? = null
     val manager: PermissionsEx<*> get() {
         return _manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
     }
-    private val spongeExecutor = Executor { runnable: Runnable ->
-        scheduler
-            .createTaskBuilder()
-            .async()
-            .execute(runnable)
-            .submit(this@PermissionsExPlugin)
-    }
-    internal val contextCalculators: MutableList<ContextCalculator<Subject>> = CopyOnWriteArrayList()
-    private val subjectCollections = Caffeine.newBuilder().executor(spongeExecutor)
-        .buildAsync<String, PEXSubjectCollection> { type, _ ->
-            PEXSubjectCollection.load(type, this)
-        }
+    private var service: PermissionsExService? = null
+    private val lifecycleLogger = LogManager.getLogger("Lifecycle")
 
-    private var defaults: PEXSubject? = null
-    private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
-    lateinit var timings: Timings
-        private set
+    init {
+        registerRegistrar(this)
+    }
+
+    @Listener
+    fun onAnyLifecycle(event: LifecycleEvent) {
+        lifecycleLogger.info("Lifecycle :: ${event.javaClass.simpleName}")
+    }
 
     @Listener
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
-    fun onPreInit(event: GamePreInitializationEvent) {
-        timings = Timings(this)
-        logger.info(Messages.PLUGIN_INIT_BEGIN(PomData.NAME, PomData.VERSION))
-        sql = services.provide(SqlService::class.java)
+    fun onPreInit(event: LoadedGameEvent) {
+        logger.debug("state :: LoadedGameEvent")
+        logger.info(Messages.PLUGIN_INIT_BEGIN(ProjectData.NAME, ProjectData.VERSION))
         try {
             convertFromBukkit()
             convertFromLegacySpongeName()
             Files.createDirectories(configDir)
             _manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this)
         } catch (e: Exception) {
-            throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(PomData.NAME), e))
+            throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(ProjectData.NAME), e))
         }
-        defaults = loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
-            .get() as PEXSubject
         manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = FixedEntriesSubjectTypeDefinition<Any?>(
             PermissionService.SUBJECTS_SYSTEM, mapOf(
-                "Server" to { game.server.console },
+                "Server" to { event.game.systemSubject },
                 "RCON" to { null })
         )
         manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
-            UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, this)
-        registerFakeOpCommand("op", "minecraft.command.op")
-        registerFakeOpCommand("deop", "minecraft.command.deop")
+            UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, event.game)
+    }
 
-        // Registering the PEX service *must* occur after the plugin has been completely initialized
-        if (!services.isRegistered(PermissionService::class.java)) {
-            services.setProvider(this, PermissionService::class.java, this)
-        } else {
-            _manager?.close()
-            throw PEBKACException(Messages.PLUGIN_INIT_ERROR_OTHER_PROVIDER_INSTALLED())
+    @Listener
+    fun registerPermissionService(event: ProvideServiceEvent<PermissionService>) {
+        logger.debug("state :: ProvideServiceEvent<PermissionService>")
+        event.suggest {
+            service = PermissionsExService(event.game, this)
+            service
         }
     }
 
-    private fun registerFakeOpCommand(alias: String, permission: String) {
-        registerCommands {
-            setOf(command(alias) {
-                this.permission = Permission(permission, null, 0)
+    @Listener
+    fun registerCommands(event: RegisterCommandEvent<CommandSpec>) {
+        logger.debug("state :: RegisterCommandEvent<CommandSpec>")
+        // fake op commands
+        mapOf("op" to "minecraft.command.op",
+            "deop" to "minecraft.command.deop").forEach { (alias, perm) ->
+            event.register(container, command(alias) {
+                permission = Permission(perm, null, 0)
                 description = Messages.COMMANDS_FAKE_OP_DESCRIPTION()
                 args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER())
                 executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR()) }
             })
         }
+
+        // TODO: register events
     }
 
     @Listener
-    fun cacheUserAsync(event: Auth) {
+    fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {
+        logger.debug("state :: ServerSideConnectionEvent.Auth")
         try {
             manager.getSubjects(PermissionsEx.SUBJECTS_USER)[event.profile.uniqueId.toString()]
         } catch (e: Exception) {
-            logger.warn(
-                Messages.EVENT_CLIENT_AUTH_ERROR.invoke(
-                    event.profile.name,
-                    event.profile.uniqueId,
-                    e.message!!
-                ), e
-            )
+            logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, e.message!!), e)
         }
     }
 
+    // TODO: This is not the right event for integrated server. is there another event for game end?
     @Listener
-    fun disable(event: GameStoppedServerEvent) {
-        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN(PomData.NAME))
+    fun disable(event: StoppingEngineEvent<Server>) {
+        logger.debug("state :: StoppingEngineEvent<Server>")
+        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN(ProjectData.NAME))
         this._manager?.close()
     }
 
     @Listener
-    fun onReload(event: GameReloadEvent) {
+    fun onReload(event: RefreshGameEvent) {
+        logger.debug("state :: RefreshGameEvent")
         this._manager?.reload()
     }
 
     @Listener
-    fun onPlayerJoin(event: Join) {
-        val identifier = event.targetEntity.identifier
+    fun onPlayerJoin(event: ServerSideConnectionEvent.Join) {
+        val identifier = event.player.identifier
         val cache = this.manager.getSubjects(PermissionsEx.SUBJECTS_USER)
         cache.isRegistered(identifier).thenAccept { registered: Boolean ->
             if (registered) {
                 cache.persistentData().update(identifier) { input ->
-                    if (event.targetEntity.name == input.getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]) {
+                    if (event.player.name == input.getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]) {
                         return@update input
                     } else {
-                        return@update input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.targetEntity.name)
+                        return@update input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.player.name)
                     }
                 }
             }
@@ -210,15 +204,15 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     @Listener
-    fun onPlayerQuit(event: ClientConnectionEvent.Disconnect) {
-        manager.callbackController.clearOwnedBy(event.targetEntity.uniqueId)
-        userSubjects.suggestUnload(event.targetEntity.identifier)
+    fun onPlayerQuit(event: ServerSideConnectionEvent.Disconnect) {
+        manager.callbackController.clearOwnedBy(event.player.uniqueId)
+        service?.userSubjects?.suggestUnload(event.player.identifier)
     }
 
     @Throws(IOException::class)
     private fun convertFromBukkit() {
         val bukkitConfigPath = Paths.get("plugins/PermissionsEx")
-        if (Files.isDirectory(bukkitConfigPath) && isDirectoryEmpty(configDir)) {
+        if (Files.isDirectory(bukkitConfigPath) && configDir.isEmptyDirectory()) {
             logger.info(Messages.MIGRATION_BUKKIT_BEGIN())
             Files.move(bukkitConfigPath, configDir, StandardCopyOption.REPLACE_EXISTING)
         }
@@ -235,46 +229,123 @@ class PermissionsExPlugin @Inject internal constructor(
     @Throws(IOException::class)
     private fun convertFromLegacySpongeName() {
         val oldPath = configDir.resolveSibling("ninja.leaping.permissionsex") // Old plugin ID
-        if (Files.exists(oldPath) && isDirectoryEmpty(configDir)) {
+        if (Files.exists(oldPath) && configDir.isEmptyDirectory()) {
             Files.move(oldPath, configDir, StandardCopyOption.REPLACE_EXISTING)
             Files.move(
                 configDir.resolve("ninja.leaping.permissionsex.conf"),
-                configDir.resolve("${PomData.ARTIFACT_ID}.conf")
+                configDir.resolve("${ProjectData.ARTIFACT_ID}.conf")
             )
             logger.info(Messages.MIGRATION_LEGACY_SPONGE_SUCCESS(configDir.toString()))
         }
     }
 
     @Throws(IOException::class)
-    private fun isDirectoryEmpty(dir: Path): Boolean {
-        if (Files.exists(dir)) {
+    private fun Path.isEmptyDirectory(): Boolean {
+        if (!Files.exists(this)) {
             return true
         }
-        Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
+        Files.newDirectoryStream(this).use { dirStream -> return !dirStream.iterator().hasNext() }
+    }
+
+    // ImplementationInterface
+
+    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+        return when (scope) {
+            BaseDirectoryScope.CONFIG -> configDir
+            BaseDirectoryScope.JAR -> game.gameDirectory.resolve("mods")
+            BaseDirectoryScope.SERVER -> game.gameDirectory
+            BaseDirectoryScope.WORLDS -> TODO("level container")
+        }
+    }
+
+    override fun getLogger(): FormattedLogger {
+        return logger
+    }
+
+    override fun getDataSourceForURL(url: String): DataSource? {
+        return try {
+            sql.getDataSource(container, url)
+        } catch (e: SQLException) {
+            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR(url), e)
+            null
+        }
+    }
+
+    /**
+     * Get an executor to run tasks asynchronously on.
+     *
+     * @return The async executor
+     */
+    override fun getAsyncExecutor(): Executor {
+        return this.scheduler
+    }
+
+    override fun registerCommands(specSupplier: Supplier<Set<CommandSpec>>) {
+        TODO("redesign")
+    }
+
+    override fun getImplementationCommands(): Set<CommandSpec> {
+        return emptySet()
+    }
+
+    override fun createSubjectIdentifier(collection: String, ident: String): SubjectIdentifier {
+        val service = this.service
+        return if (service != null) {
+            PEXSubjectReference(collection, ident, service)
+        } else {
+            super.createSubjectIdentifier(collection, ident)
+        }
+    }
+
+    override fun lookupMinecraftProfilesByName(
+        names: Iterable<String>,
+        action: Function<MinecraftProfile, CompletableFuture<Void>>
+    ): CompletableFuture<Int> {
+        return game.server.gameProfileManager.getAllByName(names, true)
+            .thenComposeAsync { profiles ->
+                CompletableFuture.allOf(*profiles.filterValues { it.isPresent }
+                    .map { action.apply(SpongeMinecraftProfile(it.value.get())) }
+                    .toTypedArray())
+                    .thenApply { profiles.size }
+            }
+    }
+
+    override fun getVersion(): String {
+        return ProjectData.VERSION
+    }
+}
+
+class PermissionsExService internal constructor(private val game: Game, private val plugin: PermissionsExPlugin) : PermissionService {
+    val manager get() = plugin.manager
+
+    internal val contextCalculators: MutableList<ContextCalculator<Subject>> = CopyOnWriteArrayList()
+    private val subjectCollections = Caffeine.newBuilder().executor(plugin.scheduler)
+        .buildAsync<String, PEXSubjectCollection> { type, _ ->
+            PEXSubjectCollection.load(type, this)
+        }
+
+    private var defaults: PEXSubject
+    private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
+    internal val timings = Timings(plugin.container)
+
+    init {
+        defaults = loadCollection(PermissionsEx.SUBJECTS_DEFAULTS)
+            .thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
+            .get() as PEXSubject
     }
 
     override fun getUserSubjects(): PEXSubjectCollection {
-        return try {
-            subjectCollections[PermissionService.SUBJECTS_USER].get()
-        } catch (e: ExecutionException) {
-            throw RuntimeException(e)
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        }
+        // TODO: error handling
+        return subjectCollections[PermissionService.SUBJECTS_USER].join()
     }
 
     override fun getGroupSubjects(): PEXSubjectCollection {
-        return try {
-            subjectCollections[PermissionService.SUBJECTS_GROUP].get()
-        } catch (e: ExecutionException) {
-            throw RuntimeException(e)
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        }
+        // TODO: error handling
+        return subjectCollections[PermissionService.SUBJECTS_GROUP].join()
     }
 
     override fun getDefaults(): PEXSubject {
-        return defaults!!
+        return defaults
     }
 
     override fun loadCollection(identifier: String): CompletableFuture<SubjectCollection> {
@@ -303,17 +374,15 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     override fun newSubjectReference(collectionIdentifier: String, subjectIdentifier: String): SubjectReference {
-        return createSubjectIdentifier(collectionIdentifier, subjectIdentifier)
+        return manager.createSubjectIdentifier(collectionIdentifier, subjectIdentifier).asSponge(this)
     }
 
     override fun registerContextCalculator(calculator: ContextCalculator<Subject>) {
         contextCalculators.add(calculator)
     }
 
-    override fun newDescriptionBuilder(instance: Any): PermissionDescription.Builder {
-        val container = game.pluginManager.fromInstance(instance)
-        require(container.isPresent) { "Provided plugin did not have an associated plugin instance. Are you sure it's your plugin instance?" }
-        return PEXPermissionDescription.Builder(container.get(), this)
+    override fun newDescriptionBuilder(container: PluginContainer): PermissionDescription.Builder {
+        return PEXPermissionDescription.Builder(container, this)
     }
 
     fun registerDescription(description: PEXPermissionDescription, ranks: Map<String, Int>) {
@@ -334,89 +403,16 @@ class PermissionsExPlugin @Inject internal constructor(
         return descriptions.values.toSet()
     }
 
-    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
-        return when (scope) {
-            BaseDirectoryScope.CONFIG -> configDir
-            BaseDirectoryScope.JAR -> game.gameDirectory.resolve("mods")
-            BaseDirectoryScope.SERVER -> game.gameDirectory
-            BaseDirectoryScope.WORLDS -> game.savesDirectory
-            else -> throw IllegalArgumentException("Unknown directory scope$scope")
-        }
-    }
-
-    override fun getLogger(): FormattedLogger {
-        return logger
-    }
-
-    override fun getDataSourceForURL(url: String): DataSource? {
-        return if (!sql.isPresent) {
-            null
-        } else try {
-            sql.get().getDataSource(this, url)
-        } catch (e: SQLException) {
-            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR(url), e)
-            null
-        }
-    }
-
-    /**
-     * Get an executor to run tasks asynchronously on.
-     *
-     * @return The async executor
-     */
-    override fun getAsyncExecutor(): Executor {
-        return spongeExecutor
-    }
-
-    private fun tryRegisterCommands() {
-        if (_manager != null) {
-            var supply: Supplier<Set<CommandSpec>>? = cachedCommands.poll()
-            while (supply != null) {
-                tryRegisterCommands(supply)
-                supply = cachedCommands.poll()
-            }
-        }
-    }
-
-    private fun tryRegisterCommands(commandSupplier: Supplier<Set<CommandSpec>>) {
-        checkNotNull(_manager)
-        for (spec in commandSupplier.get()) {
-            game.commandManager.register(this, PEXSpongeCommand(spec, this), spec.aliases)
-        }
-    }
-
-    override fun registerCommands(specSupplier: Supplier<Set<CommandSpec>>) {
-        cachedCommands.add(specSupplier)
-        tryRegisterCommands()
-    }
-
-    override fun getImplementationCommands(): Set<CommandSpec> {
-        return emptySet()
-    }
-
-    override fun createSubjectIdentifier(collection: String, ident: String): PEXSubjectReference {
-        return PEXSubjectReference(collection, ident, this)
-    }
-
-    override fun lookupMinecraftProfilesByName(
-        names: Iterable<String>,
-        action: Function<MinecraftProfile, CompletableFuture<Void>>
-    ): CompletableFuture<Int> {
-        return game.server.gameProfileManager.getAllByName(names, true)
-            .thenComposeAsync { profiles ->
-                CompletableFuture.allOf(*profiles.map { action.apply(SpongeMinecraftProfile(it)) }.toTypedArray())
-                    .thenApply { profiles.size }
-            }
-    }
-
-    override fun getVersion(): String {
-        return PomData.VERSION
-    }
-
     val allActiveSubjects: Iterable<PEXSubject>
         get() = subjectCollections.synchronous().asMap().values.flatMap { it.activeSubjects }
 
-    fun <V> tickBasedCachingValue(deltaTicks: Long, update: () -> V): CachingValue<V> {
-        return CachingValue({ game.server.runningTimeTicks.toLong() }, deltaTicks, update)
+    internal fun <V> tickBasedCachingValue(deltaTicks: Long, update: () -> V): CachingValue<V> {
+        return CachingValue({
+            if (game.isServerAvailable) {
+                game.server.runningTimeTicks.toLong()
+            } else {
+                -1L
+            }
+        }, deltaTicks, update)
     }
 }

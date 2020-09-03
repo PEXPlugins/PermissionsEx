@@ -1,0 +1,17 @@
+plugins:
+  - loader: java_plain
+    id: "${project.rootProject.name.toLowerCase()}"
+    name: "${project.rootProject.name}"
+    version: "${project.version}"
+    main-class: ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
+    description: "${project.description}"
+    links:
+      homepage: "${project.opinionated.scm.get().website}"
+      issues: "${project.opinionated.scm.get().issueTrackerURL}"
+      source: "${project.opinionated.scm.get().scmWeb}"
+    contributors:
+      - name: "zml"
+        description: "permission herder"
+    dependencies:
+      - id: spongeapi
+        version: 8.0.0

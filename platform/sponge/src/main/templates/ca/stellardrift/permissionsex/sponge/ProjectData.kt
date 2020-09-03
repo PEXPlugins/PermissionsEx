@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.sponge
 
-object PomData {
+object ProjectData {
     const val ARTIFACT_ID = "${project.rootProject.name.toLowerCase()}"
     const val NAME = "${project.rootProject.name}"
     const val VERSION = "${project.version}${project.ext.pexSuffix}"

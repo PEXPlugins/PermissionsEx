@@ -17,18 +17,43 @@
 
 package ca.stellardrift.permissionsex.sponge
 
+import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import java.util.concurrent.CompletableFuture
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectReference
 
+/**
+ * Convert an internal subject identifier into a Sponge-compatible representation.
+ *
+ * May return the same instance
+ */
+internal fun SubjectIdentifier.asSponge(service: PermissionsExService): PEXSubjectReference {
+    return if (this is PEXSubjectReference) {
+        this
+    } else {
+        PEXSubjectReference(this.key, this.value, service)
+    }
+}
+
+/**
+ * Get the pex-internal representation of a subject reference. May or may not return the same instance
+ */
+internal fun SubjectReference.asPex(service: PermissionsExService): PEXSubjectReference {
+    return if (this is PEXSubjectReference) {
+        this
+    } else {
+        PEXSubjectReference(this.collectionIdentifier, this.subjectIdentifier, service)
+    }
+}
+
 data class PEXSubjectReference internal constructor(
     override val key: String,
     override val value: String,
-    private val pex: PermissionsExPlugin
+    private val service: PermissionsExService
 ) : SubjectReference, MutableMap.MutableEntry<String, String> {
 
     init {
-        require(pex.manager.getSubjects(key).typeInfo.isNameValid(value)) { "Name '$value' was not a valid name for a subject in collection '$key'!" }
+        require(service.manager.getSubjects(key).typeInfo.isNameValid(value)) { "Name '$value' was not a valid name for a subject in collection '$key'!" }
     }
 
     override fun getCollectionIdentifier(): String {
@@ -40,25 +65,10 @@ data class PEXSubjectReference internal constructor(
     }
 
     override fun resolve(): CompletableFuture<Subject> {
-        return pex.loadCollection(key).thenCompose { it.loadSubject(value) }
+        return service.loadCollection(key).thenCompose { it.loadSubject(value) }
     }
 
     override fun setValue(newValue: String): String {
         throw UnsupportedOperationException("immutable")
-    }
-
-    companion object {
-        fun of(input: Map.Entry<String, String>, pex: PermissionsExPlugin): PEXSubjectReference {
-            return if (input is PEXSubjectReference) {
-                input
-            } else PEXSubjectReference(input.key, input.value, pex)
-        }
-
-        fun of(input: SubjectReference, pex: PermissionsExPlugin): PEXSubjectReference {
-            if (input is PEXSubjectReference) {
-                return input
-            }
-            return PEXSubjectReference(input.collectionIdentifier, input.subjectIdentifier, pex)
-        }
     }
 }

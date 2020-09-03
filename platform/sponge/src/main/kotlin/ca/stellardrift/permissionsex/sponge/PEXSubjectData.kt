@@ -24,8 +24,8 @@ import ca.stellardrift.permissionsex.util.ContextSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.function.Consumer
 import org.spongepowered.api.service.context.Context
+import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectData
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.util.Tristate
@@ -33,8 +33,12 @@ import org.spongepowered.api.util.Tristate
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-class PEXSubjectData(private val data: SubjectDataReference, private val plugin: PermissionsExPlugin) : SubjectData {
+class PEXSubjectData internal constructor(
+    private val data: SubjectDataReference,
+    private val subject: PEXSubject
+) : SubjectData {
     private val parentsCache: ConcurrentMap<ContextSet, List<SubjectReference>> = ConcurrentHashMap()
+    private val service: PermissionsExService = subject.collection.service
 
     init {
         data.onUpdate { clearCache() }
@@ -58,19 +62,27 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
     }
 
     override fun getOptions(contexts: Set<Context>): Map<String, String> {
-        return data.get().getOptions(contexts.toPex(plugin.manager))
+        return data.get().getOptions(contexts.toPex(service.manager))
     }
 
     override fun setOption(contexts: Set<Context>, key: String, value: String?): CompletableFuture<Boolean> {
-        return data.update { it.setOption(contexts.toPex(plugin.manager), key, value) }.boolSuccess()
+        return data.update { it.setOption(contexts.toPex(service.manager), key, value) }.boolSuccess()
     }
 
     override fun clearOptions(contexts: Set<Context>): CompletableFuture<Boolean> {
-        return data.update { it.clearOptions(contexts.toPex(plugin.manager)) }.boolSuccess()
+        return data.update { it.clearOptions(contexts.toPex(service.manager)) }.boolSuccess()
     }
 
     override fun clearOptions(): CompletableFuture<Boolean> {
         return data.update { obj: ImmutableSubjectData -> obj.clearOptions() }.boolSuccess()
+    }
+
+    override fun getSubject(): Subject {
+        return this.subject
+    }
+
+    override fun isTransient(): Boolean {
+        return this === this.subject.transientSubjectData
     }
 
     override fun getAllPermissions(): Map<Set<Context>, Map<String, Boolean>> {
@@ -80,7 +92,7 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
     }
 
     override fun getPermissions(contexts: Set<Context>): Map<String, Boolean> {
-        return data.get().getPermissions(contexts.toPex(plugin.manager))
+        return data.get().getPermissions(contexts.toPex(service.manager))
             .mapValues { (_, v) -> v > 0 }
     }
 
@@ -91,7 +103,7 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
             Tristate.UNDEFINED -> 0
             else -> throw IllegalStateException("Unknown tristate provided $state")
         }
-        return data.update { it.setPermission(contexts.toPex(plugin.manager), permission, value) }.thenApply { true }
+        return data.update { it.setPermission(contexts.toPex(service.manager), permission, value) }.thenApply { true }
     }
 
     override fun clearPermissions(): CompletableFuture<Boolean> {
@@ -99,18 +111,18 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
     }
 
     override fun clearPermissions(contexts: Set<Context>): CompletableFuture<Boolean> {
-        return data.update { it.clearPermissions(contexts.toPex(plugin.manager)) }.boolSuccess()
+        return data.update { it.clearPermissions(contexts.toPex(service.manager)) }.boolSuccess()
     }
 
     override fun getAllParents(): Map<Set<Context>, List<SubjectReference>> {
         synchronized(parentsCache) {
-            data.get().activeContexts.forEach(Consumer { getParentsInternal(it) })
+            data.get().activeContexts.forEach { getParentsInternal(it) }
             return parentsCache.keysToSponge()
         }
     }
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
-        return getParentsInternal(contexts.toPex(plugin.manager))
+        return getParentsInternal(contexts.toPex(service.manager))
     }
 
     private fun getParentsInternal(contexts: ContextSet): List<SubjectReference> {
@@ -124,7 +136,7 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
             parents = if (rawParents == null) {
                 emptyList()
             } else {
-                rawParents.map { (k, v) -> plugin.newSubjectReference(k, v) }
+                rawParents.map { (k, v) -> service.newSubjectReference(k, v) }
             }
             val existingParents = parentsCache.putIfAbsent(contexts, parents)
             if (existingParents != null) {
@@ -135,15 +147,15 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
     }
 
     override fun addParent(contexts: Set<Context>, subject: SubjectReference): CompletableFuture<Boolean> {
-        PEXSubjectReference.of(subject, plugin) // validate subject reference
+        subject.asPex(service) // validate subject reference
         return data.update {
-            it.addParent(contexts.toPex(plugin.manager), subject.collectionIdentifier, subject.subjectIdentifier)
+            it.addParent(contexts.toPex(service.manager), subject.collectionIdentifier, subject.subjectIdentifier)
         }.boolSuccess()
     }
 
     override fun removeParent(set: Set<Context>, subject: SubjectReference): CompletableFuture<Boolean> {
         return data.update {
-            it.removeParent(set.toPex(plugin.manager), subject.collectionIdentifier, subject.subjectIdentifier)
+            it.removeParent(set.toPex(service.manager), subject.collectionIdentifier, subject.subjectIdentifier)
         }.boolSuccess()
     }
 
@@ -152,7 +164,7 @@ class PEXSubjectData(private val data: SubjectDataReference, private val plugin:
     }
 
     override fun clearParents(set: Set<Context>): CompletableFuture<Boolean> {
-        return data.update { it.clearParents(set.toPex(plugin.manager)) }.boolSuccess()
+        return data.update { it.clearParents(set.toPex(service.manager)) }.boolSuccess()
     }
 }
 

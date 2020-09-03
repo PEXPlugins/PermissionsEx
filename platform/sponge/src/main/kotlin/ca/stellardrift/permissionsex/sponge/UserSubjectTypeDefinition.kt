@@ -20,12 +20,13 @@ package ca.stellardrift.permissionsex.sponge
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import java.lang.IllegalArgumentException
 import java.util.UUID
-import org.spongepowered.api.entity.living.player.Player
+import org.spongepowered.api.Game
+import org.spongepowered.api.entity.living.player.server.ServerPlayer
 
 /**
  * Metadata for user types
  */
-class UserSubjectTypeDefinition(typeName: String, private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(typeName) {
+internal class UserSubjectTypeDefinition(typeName: String, private val game: Game) : SubjectTypeDefinition<ServerPlayer>(typeName) {
     override fun isNameValid(name: String): Boolean {
         return try {
             UUID.fromString(name)
@@ -39,11 +40,11 @@ class UserSubjectTypeDefinition(typeName: String, private val plugin: Permission
         try {
             UUID.fromString(name)
         } catch (ex: IllegalArgumentException) {
-            val player = plugin.game.server.getPlayer(name)
+            val player = game.server.getPlayer(name)
             if (player.isPresent) {
                 return player.get().uniqueId.toString()
             } else {
-                val res = plugin.game.server.gameProfileManager.cache
+                val res = game.server.gameProfileManager.cache
                 for (profile in res.match(name)) {
                     if (profile.name.isPresent && profile.name.get().equals(name, ignoreCase = true)) {
                         return profile.uniqueId.toString()
@@ -54,9 +55,9 @@ class UserSubjectTypeDefinition(typeName: String, private val plugin: Permission
         return null
     }
 
-    override fun getAssociatedObject(identifier: String): Player? {
+    override fun getAssociatedObject(identifier: String): ServerPlayer? {
         return try {
-            plugin.game.server.getPlayer(UUID.fromString(identifier)).orElse(null)
+            game.server.getPlayer(UUID.fromString(identifier)).orElse(null)
         } catch (ex: IllegalArgumentException) {
             null
         }
