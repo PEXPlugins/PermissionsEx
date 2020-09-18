@@ -57,7 +57,6 @@ import ninja.leaping.configurate.ConfigurationNode
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.apache.logging.log4j.spi.ExtendedLogger
 import org.apache.logging.slf4j.Log4jLogger
@@ -66,10 +65,8 @@ import org.spongepowered.api.Server
 import org.spongepowered.api.config.ConfigDir
 import org.spongepowered.api.config.DefaultConfig
 import org.spongepowered.api.entity.living.player.server.ServerPlayer
-import org.spongepowered.api.event.GenericEvent
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.lifecycle.ConstructPluginEvent
-import org.spongepowered.api.event.lifecycle.LifecycleEvent
 import org.spongepowered.api.event.lifecycle.ProvideServiceEvent
 import org.spongepowered.api.event.lifecycle.RefreshGameEvent
 import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
@@ -105,7 +102,6 @@ class PermissionsExPlugin @Inject internal constructor(
         return _manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
     }
     private var service: PermissionsExService? = null
-    private val lifecycleLogger = LogManager.getLogger("Lifecycle")
 
     init {
         // setup command registrar
@@ -113,18 +109,8 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     @Listener
-    fun onAnyLifecycle(event: LifecycleEvent) {
-        lifecycleLogger.info(if (event is GenericEvent<*>) {
-            "Lifecycle :: ${event.javaClass.simpleName}<${event.genericType}>"
-        } else {
-            "Lifecycle :: ${event.javaClass.simpleName}"
-        })
-    }
-
-    @Listener
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
     fun onPreInit(event: ConstructPluginEvent) {
-        logger.debug("state :: ConstructPluginEvent")
         logger.info(Messages.PLUGIN_INIT_BEGIN(ProjectData.NAME, ProjectData.VERSION))
         try {
             convertFromBukkit()
@@ -144,17 +130,15 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     @Listener
-    fun registerPermissionService(event: ProvideServiceEvent<PermissionService>) {
-        logger.debug("state :: ProvideServiceEvent<PermissionService>")
+    fun registerPermissionService(event: ProvideServiceEvent.EngineScoped<PermissionService>) {
         event.suggest {
-            service = PermissionsExService(event.game, this)
+            service = PermissionsExService(event.engine as Server, this)
             service
         }
     }
 
     @Listener
     fun registerCommands(event: RegisterCommandEvent<CommandSpec>) {
-        logger.debug("state :: RegisterCommandEvent<CommandSpec>")
         // fake op commands
         mapOf("op" to "minecraft.command.op",
             "deop" to "minecraft.command.deop").forEach { (alias, perm) ->
@@ -173,7 +157,6 @@ class PermissionsExPlugin @Inject internal constructor(
 
     @Listener
     fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {
-        logger.debug("state :: ServerSideConnectionEvent.Auth")
         try {
             manager.getSubjects(PermissionsEx.SUBJECTS_USER)[event.profile.uniqueId.toString()].exceptionally {
                 logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, it.message ?: "<unknown>"), it)
@@ -187,14 +170,12 @@ class PermissionsExPlugin @Inject internal constructor(
     // TODO: re-scope permissions service
     @Listener
     fun disable(event: StoppingEngineEvent<Server>) {
-        logger.debug("state :: StoppingEngineEvent<Server>")
         logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN(ProjectData.NAME))
         this._manager?.close()
     }
 
     @Listener
     fun onReload(event: RefreshGameEvent) {
-        logger.debug("state :: RefreshGameEvent")
         this._manager?.reload()
     }
 
@@ -329,22 +310,21 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 }
 
-class PermissionsExService internal constructor(private val game: Game, private val plugin: PermissionsExPlugin) : PermissionService {
+class PermissionsExService internal constructor(private val server: Server, private val plugin: PermissionsExPlugin) : PermissionService {
     val manager get() = plugin.manager
 
+    internal val timings = Timings(plugin.container)
     internal val contextCalculators: MutableList<ContextCalculator<Subject>> = CopyOnWriteArrayList()
     private val subjectCollections = Caffeine.newBuilder().executor(plugin.scheduler)
         .buildAsync<String, PEXSubjectCollection> { type, _ ->
             PEXSubjectCollection.load(type, this)
         }
 
-    private val _defaults: PEXSubject by lazy {
+    private val _defaults: PEXSubject =
         loadCollection(PermissionsEx.SUBJECTS_DEFAULTS)
             .thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
             .get() as PEXSubject
-    }
     private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
-    internal val timings = Timings(plugin.container)
 
     override fun getUserSubjects(): PEXSubjectCollection {
         // TODO: error handling
@@ -420,11 +400,7 @@ class PermissionsExService internal constructor(private val game: Game, private 
 
     internal fun <V> tickBasedCachingValue(deltaTicks: Long, update: () -> V): CachingValue<V> {
         return CachingValue({
-            if (game.isServerAvailable) {
-                game.server.runningTimeTicks.toLong()
-            } else {
-                -1L
-            }
+                server.runningTimeTicks.toLong()
         }, deltaTicks, update)
     }
 }
