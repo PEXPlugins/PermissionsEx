@@ -26,7 +26,6 @@ import com.google.common.reflect.TypeToken
 import java.util.Optional
 import net.kyori.adventure.text.Component
 import org.spongepowered.api.ResourceKey
-import org.spongepowered.api.Sponge
 import org.spongepowered.api.command.CommandCause
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.exception.CommandException
@@ -40,7 +39,7 @@ import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
 import org.spongepowered.plugin.PluginContainer
 
 fun registerRegistrar(plugin: PermissionsExPlugin) {
-    Sponge.getEventManager().register<RegisterCatalogEvent<CommandRegistrar<*>>>(plugin.container) {
+    plugin.game.eventManager.register<RegisterCatalogEvent<CommandRegistrar<*>>>(plugin.container) {
         plugin.logger.debug("state :: RegisterCatalogEvent<CommandRegistrar<*>>")
         it.register(PEXCommandRegistrar(plugin, it.game.commandManager))
     }

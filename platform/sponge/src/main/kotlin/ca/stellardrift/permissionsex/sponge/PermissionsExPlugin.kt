@@ -99,7 +99,7 @@ class PermissionsExPlugin @Inject internal constructor(
     private val logger = FormattedLogger.forLogger(Log4jLogger(logger as ExtendedLogger, logger.name), true)
     private var _manager: PermissionsEx<*>? = null
     val manager: PermissionsEx<*> get() {
-        return _manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
+        return _manager ?: throw IllegalStateException("PermissionsEx Manager is not yet initialized, or there was an error loading the plugin!")
     }
     private var service: PermissionsExService? = null
 
@@ -167,10 +167,10 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    // TODO: re-scope permissions service
     @Listener
     fun disable(event: StoppingEngineEvent<Server>) {
         logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN(ProjectData.NAME))
+        this.service = null
         this._manager?.close()
     }
 
