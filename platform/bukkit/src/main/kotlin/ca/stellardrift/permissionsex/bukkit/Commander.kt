@@ -86,7 +86,7 @@ class BukkitCommander internal constructor(
                 )
         } else null
 
-    private val audience = this.pex.adventure.audience(this.commandSource)
+    private val audience = this.pex.adventure.sender(this.commandSource)
 
     override fun audience(): Audience {
         return this.audience

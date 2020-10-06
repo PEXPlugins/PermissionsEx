@@ -38,7 +38,7 @@ object RedirectTargets {
     const val PLAYER_MANAGER_IS_OP = "net.minecraft.server.PlayerManager.isOperator(Lcom/mojang/authlib/GameProfile;)Z"
     const val OPERATOR_LIST_IS_EMPTY = "net.minecraft.server.OperatorList.isEmpty()Z"
     const val OPERATOR_LIST_CONTAINS = "net.minecraft.server.OperatorList.contains(Ljava/lang/Object;)Z"
-    const val COMMAND_SOURCE_HAS_PERM_LEVEL = "net.minecraft.server.command.CommandSource.hasPermissionLevel(I)Z"
+    const val COMMAND_SOURCE_HAS_PERM_LEVEL = "net.minecraft.command.CommandSource.hasPermissionLevel(I)Z"
     const val SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL = "net.minecraft.server.command.ServerCommandSource.hasPermissionLevel(I)Z"
     const val SERVER_PLAYER_HAS_PERMISSION_LEVEL = "net.minecraft.server.network.ServerPlayerEntity.hasPermissionLevel(I)Z"
     const val SERVER_NETWORK_HANDLER_IS_HOST = "net.minecraft.server.network.ServerPlayNetworkHandler.isHost()Z"

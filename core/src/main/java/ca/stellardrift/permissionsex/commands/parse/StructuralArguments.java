@@ -34,7 +34,8 @@ import java.util.Map;
 
 import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNLONG;
 import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNSHORT;
-import static net.kyori.adventure.text.TextComponent.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.space;
 
 public class StructuralArguments {
     private static CommandElement markTrue(String flag) {
@@ -165,7 +166,7 @@ public class StructuralArguments {
     private static class MarkTrueCommandElement extends Value<Boolean> {
         static final MarkTrueCommandElement INSTANCE = new MarkTrueCommandElement();
         private MarkTrueCommandElement() {
-            super(TextComponent.of("true"));
+            super(text("true"));
         }
 
         @Override
@@ -174,7 +175,7 @@ public class StructuralArguments {
         }
 
         public ValueElement<Boolean> key(String key) {
-            return this.key(TextComponent.of(key));
+            return this.key(text(key));
         }
     }
 
@@ -392,23 +393,23 @@ public class StructuralArguments {
 
         @Override
         public Component getUsage(Commander src) {
-            return TextComponent.make(builder -> {
+            return Component.text(builder -> {
                 for (Map.Entry<List<String>, CommandElement> arg : usageFlags.entrySet()) {
-                    builder.append("[");
+                    builder.append(text("["));
                     for (Iterator<String> it = arg.getKey().iterator(); it.hasNext();) {
-                        builder.append("-");
-                        builder.append(it.next());
+                        builder.append(text("-"));
+                        builder.append(text(it.next()));
                         if (it.hasNext()) {
-                            builder.append("|");
+                            builder.append(text("|"));
                         }
                     }
                     if (!(arg.getValue() instanceof ValueElement<?>)
                             || !(((ValueElement<?>) arg.getValue()).getValue() instanceof MarkTrueCommandElement)) {
-                        builder.append(" ");
+                        builder.append(text(" "));
                         builder.append(arg.getValue().getUsage(src));
                     }
-                    builder.append("]");
-                    builder.append(" ");
+                    builder.append(text("]"));
+                    builder.append(text(" "));
                 }
 
                 if (childElement != null) {
@@ -573,7 +574,7 @@ public class StructuralArguments {
 
         @Override
         public Component getUsage(Commander commander) {
-            return TextComponent.make(builder -> {
+            return Component.text(builder -> {
                 for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                     builder.append(it.next().getUsage(commander));
                     if (it.hasNext()) {
@@ -623,11 +624,11 @@ public class StructuralArguments {
 
         @Override
         public  Component getUsage(Commander commander) {
-            return TextComponent.make(builder -> {
+            return Component.text(builder -> {
                 for (Iterator<CommandElement> it = elements.iterator(); it.hasNext();) {
                     builder.append(it.next().getUsage(commander));
                     if (it.hasNext()) {
-                        builder.append("|");
+                        builder.append(text("|"));
                     }
                 }
             });
@@ -675,10 +676,10 @@ public class StructuralArguments {
 
         @Override
         public  Component getUsage(Commander src) {
-            return TextComponent.make(builder -> {
-                builder.append("[");
+            return Component.text(builder -> {
+                builder.append(text("["));
                 builder.append(this.element.getUsage(src));
-                builder.append("]");
+                builder.append(text("]"));
             });
         }
     }
@@ -716,7 +717,7 @@ public class StructuralArguments {
 
         @Override
         public Component getUsage(Commander src) {
-            return TextComponent.builder(String.valueOf(times)).append("*").append(element.getUsage(src)).build();
+            return Component.text().content(String.valueOf(times)).append(text("*")).append(element.getUsage(src)).build();
         }
     }
 
@@ -751,7 +752,7 @@ public class StructuralArguments {
 
         @Override
         public Component getUsage(Commander context) {
-            return element.getUsage(context).append(TextComponent.of("+"));
+            return element.getUsage(context).append(text("+"));
         }
     }
 }

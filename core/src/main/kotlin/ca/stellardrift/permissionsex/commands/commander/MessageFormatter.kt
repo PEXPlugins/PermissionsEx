@@ -32,9 +32,8 @@ import com.google.common.collect.Maps
 import java.util.concurrent.ExecutionException
 import net.kyori.adventure.text.BuildableComponent
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.space
 import net.kyori.adventure.text.ComponentBuilder
-import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.TextComponent.space
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.NamedTextColor
@@ -110,7 +109,7 @@ abstract class MessageFormatter(
             component {
                 append(subject.value colored NamedTextColor.GRAY)
                 append(SLASH)
-                append(name)
+                append(+name)
             }
         } else {
             +subject.value
@@ -177,19 +176,20 @@ abstract class MessageFormatter(
     }
 
     fun permission(permission: String, value: Int): Component {
-        return TextComponent.make {
+        return Component.text {
             it += permission colored when {
                 value > 0 -> NamedTextColor.GREEN
                 value < 0 -> NamedTextColor.RED
                 else -> NamedTextColor.GRAY
             }
             it += EQUALS_SIGN
-            it += TextComponent.of(value)
+            it += Component.text(value)
         }
     }
 
     fun option(permission: String, value: String): Component {
-        return TextComponent.make(permission) {
+        return Component.text {
+            it.content(permission)
             it += EQUALS_SIGN
             it += +value
         }

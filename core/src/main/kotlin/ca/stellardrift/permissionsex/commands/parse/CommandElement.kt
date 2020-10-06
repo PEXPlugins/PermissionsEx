@@ -106,7 +106,7 @@ private class MappedValue<T, R>(private val mapper: (T) -> R, private val origin
 }
 
 private class OrValue<T>(val a: Value<T>, val b: Value<T>) :
-    Value<T>(component { append(a.description).append(" OR ").append(b.description) }) {
+    Value<T>(component { append(a.description).append(+" OR ").append(b.description) }) {
     override fun parse(args: CommandArgs): T {
         return try {
             a.parse(args)

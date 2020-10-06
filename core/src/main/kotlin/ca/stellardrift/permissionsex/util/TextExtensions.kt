@@ -24,12 +24,13 @@ import java.util.Locale
 import java.util.ResourceBundle
 import net.kyori.adventure.text.BuildableComponent
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.empty
+import net.kyori.adventure.text.Component.space
 import net.kyori.adventure.text.ComponentBuilder
 import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.TextComponent.empty
-import net.kyori.adventure.text.TextComponent.space
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.Style
+import net.kyori.adventure.text.format.Style.style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.renderer.TranslatableComponentRenderer
@@ -39,7 +40,7 @@ fun Any?.toComponent(): Component {
         is Boolean -> +this
         is ComponentBuilder<*, *> -> this.build()
         is Component -> this
-        else -> TextComponent.of(toString())
+        else -> Component.text(toString())
     }
 }
 
@@ -52,21 +53,20 @@ fun Boolean.toComponent(): Component {
 }
 operator fun Boolean.unaryPlus() = this.toComponent()
 
-fun String.toComponent() = TextComponent.of(this)
-operator fun String.unaryPlus() = TextComponent.of(this)
-operator fun String.unaryMinus() = TextComponent.builder(this)
+fun String.toComponent() = Component.text(this)
+operator fun String.unaryPlus() = Component.text(this)
+operator fun String.unaryMinus() = Component.text().content(this)
 
-infix fun String.colored(color: TextColor) = TextComponent.of(this, color)
-infix fun String.decorated(decoration: TextDecoration) = TextComponent.of(this, Style.of(decoration))
+infix fun String.colored(color: TextColor) = Component.text(this, color)
+infix fun String.decorated(decoration: TextDecoration) = Component.text(this, style(decoration))
 
-fun style(color: TextColor? = null, vararg decoration: TextDecoration = arrayOf()) = Style.of(color, *decoration)
-fun component(init: TextComponent.Builder.() -> Unit) = TextComponent.make(init)
+fun component(init: TextComponent.Builder.() -> Unit): TextComponent = Component.text().also(init).build()
 operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.invoke(init: B.() -> Unit): C {
     init()
     return build()
 }
 
-operator fun Component.plus(other: Component) = TextComponent.builder()
+operator fun Component.plus(other: Component) = Component.text()
     .append(this)
     .append(other)
     .build()
@@ -74,15 +74,15 @@ operator fun Component.plus(other: Component) = TextComponent.builder()
 operator fun Component.plus(other: ComponentBuilder<*, *>) = this + other.build()
 
 fun Component.styled(init: Style.Builder.() -> Unit): Component {
-    val build = Style.builder()
+    val build = Style.style()
     build.merge(this.style())
     build.init()
     return this.style(build)
 }
 
-fun Iterable<Any>.join(separator: Component? = space()): Component = TextComponent.join(separator ?: empty(), this.map { it.toComponent() })
+fun Iterable<Any>.join(separator: Component? = space()): Component = Component.join(separator ?: empty(), this.map { it.toComponent() })
 
-fun Sequence<Component>.join(separator: Component? = space()) = TextComponent.join(separator ?: empty(), Iterable { iterator() })
+fun Sequence<Component>.join(separator: Component? = space()) = Component.join(separator ?: empty(), Iterable { iterator() })
 
 operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.plusAssign(other: Component) {
     this.append(other)

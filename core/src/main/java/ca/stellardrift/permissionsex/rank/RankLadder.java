@@ -119,10 +119,9 @@ public interface RankLadder {
     List<? extends Map.Entry<String,String>> getRanks();
 
     default Component toComponent() {
-        return TextComponent.make(getName(), build -> {
-            build.decoration(TextDecoration.BOLD, true);
-            build.hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.toComponent()));
-            build.clickEvent(ClickEvent.runCommand("/pex rank " + getName()));
-        });
+        return Component.text(build -> build.content(getName())
+                .decoration(TextDecoration.BOLD, true)
+                .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.toComponent()))
+                .clickEvent(ClickEvent.runCommand("/pex rank " + getName())));
     }
 }

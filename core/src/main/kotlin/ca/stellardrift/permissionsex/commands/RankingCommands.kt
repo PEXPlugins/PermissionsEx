@@ -70,7 +70,7 @@ import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.Component.text
 
 // Promotion and demotion along existing rank ladders
 
@@ -144,7 +144,7 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                         )
                     }
                 }.thenMessageSubject(src) { send ->
-                    send(DEMOTE_SUCCESS(+ref, TextComponent.builder().append(ladderName.get().toComponent()).hl()))
+                    send(DEMOTE_SUCCESS(+ref, text().append(ladderName.get().toComponent()).hl()))
                 }
             }
         })

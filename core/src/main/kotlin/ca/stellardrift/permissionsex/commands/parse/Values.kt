@@ -27,7 +27,7 @@ import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.UUID
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent.empty
+import net.kyori.adventure.text.Component.empty
 
 internal val PIPE = +"|"
 internal val ELIPSES = +"…"

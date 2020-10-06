@@ -33,7 +33,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer
 class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: CommandSender) :
     Commander {
     override val messageColor: TextColor = NamedTextColor.GOLD
-    private val audience = pex.adventure.audience(src)
+    private val audience = pex.adventure.sender(src)
     override val manager: PermissionsEx<*>
         get() = pex.manager
     override val formatter = BungeePluginMessageFormatter(this)

@@ -73,7 +73,7 @@ internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : 
             if (pex.hasDebugMode()) {
                 val associatedObject = subject.associatedObject
                 if (associatedObject != null) {
-                    send(INFO_ASSOCIATED_OBJECT.get().hl().append(associatedObject.toString()).build())
+                    send(INFO_ASSOCIATED_OBJECT.get().hl().append(+associatedObject.toString()).build())
                 }
             }
             send(hlKeyVal(INFO_ACTIVE_CONTEXTS.get(), +subject.activeContexts.toString()))

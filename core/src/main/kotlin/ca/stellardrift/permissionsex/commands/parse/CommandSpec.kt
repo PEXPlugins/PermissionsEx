@@ -22,7 +22,6 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.util.unaryMinus
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
 
 typealias CommandAction = (Commander, CommandContext) -> Unit
 
@@ -122,17 +121,17 @@ data class CommandSpec internal constructor(
             if (extendedDescription == null) {
                 getUsage(src)
             } else {
-                TextComponent.join(
-                    TextComponent.newline(),
+                Component.join(
+                    Component.newline(),
                     getUsage(src),
                     extendedDescription
                 )
             }
         } else if (extendedDescription == null) {
-            TextComponent.join(TextComponent.newline(), this.description, getUsage(src))
+            Component.join(Component.newline(), this.description, getUsage(src))
         } else {
-            TextComponent.join(
-                TextComponent.newline(),
+            Component.join(
+                Component.newline(),
                 description,
                 getUsage(src),
                 extendedDescription

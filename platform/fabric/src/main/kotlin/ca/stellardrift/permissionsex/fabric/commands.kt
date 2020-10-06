@@ -134,7 +134,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     override val manager: PermissionsEx<*> = PermissionsExMod.manager
     override val name: String get() = src.name
     override val locale: Locale get() {
-        return (output.audiences().first() as? LocaleHolder)?.locale ?: Locale.getDefault() // todo: audience()
+        return (output.audience() as? LocaleHolder)?.locale ?: Locale.getDefault()
     }
     override val subjectIdentifier: SubjectIdentifier?
         get() {

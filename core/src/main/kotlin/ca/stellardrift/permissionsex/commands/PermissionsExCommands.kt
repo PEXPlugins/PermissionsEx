@@ -75,7 +75,7 @@ import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.unaryMinus
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.regex.Pattern
-import net.kyori.adventure.text.TextComponent.make
+import net.kyori.adventure.text.Component.text
 
 fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     val (childrenKey, childrenArg, childrenExec) = ChildCommandBuilder().run {
@@ -267,7 +267,8 @@ private fun getVersionCommand(pex: PermissionsEx<*>): CommandSpec {
         executor { src, args ->
             val verbose = args.getOne<Boolean>("verbose") ?: false
             src.msg { send ->
-                send(make("PermissionsEx v") {
+                send(text {
+                    it.content("PermissionsEx v")
                     it.append((-pex.version).hl())
                 })
                 send(VERSION_RESPONSE_ACTIVE_DATA_STORE(-pex.config.defaultDataStore.name))

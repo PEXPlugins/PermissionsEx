@@ -30,7 +30,6 @@ import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.Locale
 import net.kyori.adventure.audience.ForwardingAudience
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
@@ -90,8 +89,8 @@ interface Commander : ForwardingAudience.Single {
             !hasPermission("permissionsex.show-stacktrace-on-hover") -> null
             else -> (-"The error that occurred was:") {
                 for (line in err.stackTrace) {
-                    append(TextComponent.newline())
-                    append(line.toString().replace("\t", "    "))
+                    append(Component.newline())
+                    append(+line.toString().replace("\t", "    "))
                 }
             }
         }
@@ -115,7 +114,7 @@ interface Commander : ForwardingAudience.Single {
     ) {
         msg { send ->
             val marker = +"#"
-            send(listOf(marker, title, marker).join(TextComponent.space()))
+            send(listOf(marker, title, marker).join(Component.space()))
             if (header != null) {
                 send(header)
             }
