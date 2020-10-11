@@ -74,7 +74,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec) : Predicate<ServerComma
         val argsSoFar = try { getString(context, "args") } catch (e: Exception) { "" }
         val suggestionPrefix = argsSoFar.substringBeforeLast(' ', "")
         this.spec.tabComplete(context.source.asCommander(), argsSoFar).forEach {
-            if (suggestionPrefix.isEmpty()) {
+            if (suggestionPrefix.length == 0) {
                 builder.suggest(it)
             } else {
                 builder.suggest("$suggestionPrefix $it")

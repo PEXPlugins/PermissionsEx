@@ -193,4 +193,10 @@ class UserSubjectTypeDefinition : SubjectTypeDefinition<ServerPlayerEntity>("use
             null
         }
     }
+
+    override fun undefinedPermissionValue(identifier: String): Boolean {
+        val player = getAssociatedObject(identifier) ?: return false
+
+        return PermissionsExMod.server.playerManager.isOperator(player.gameProfile)
+    }
 }

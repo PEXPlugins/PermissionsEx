@@ -5,7 +5,8 @@
   "refmap": "fabric-accessor-refmap.json",
   "mixins": [
     "AccessorHandshakeC2SPacket",
-    "AccessorMinecraftServer"
+    "AccessorMinecraftServer",
+    "AccessorServerCommandSource"
   ],
   "injectors": {
     "defaultRequire": 1

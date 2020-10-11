@@ -243,7 +243,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      * @return Whether the subject has a true permissions value
      */
     public boolean hasPermission(String permission) {
-        return getPermission(permission) > 0;
+        return hasPermission(getActiveContexts(), permission);
     }
 
     /**
@@ -258,7 +258,12 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      * @return Whether the subject has a true permissions value
      */
     public boolean hasPermission(Set<ContextValue<?>> contexts, String permission) {
-        return getPermission(contexts, permission) > 0;
+        final int perm = getPermission(contexts, permission);
+        if (perm == 0) {
+            return getType().getTypeInfo().undefinedPermissionValue(this.identifier.getValue());
+        } else {
+            return perm > 0;
+        }
     }
 
     /**

@@ -31,7 +31,7 @@ import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.sponge.command.register
 import ca.stellardrift.permissionsex.sponge.command.registerRegistrar
-import ca.stellardrift.permissionsex.subject.FixedEntriesSubjectTypeDefinition
+import ca.stellardrift.permissionsex.subject.subjectType
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
@@ -120,10 +120,10 @@ class PermissionsExPlugin @Inject internal constructor(
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(ProjectData.NAME), e))
         }
-        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = FixedEntriesSubjectTypeDefinition<Any?>(
-            PermissionService.SUBJECTS_SYSTEM, mapOf(
-                "console" to { event.game.systemSubject },
-                "Recon" to { null })
+        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = subjectType(
+            PermissionService.SUBJECTS_SYSTEM,
+            "console" to { event.game.systemSubject },
+            "Recon" to { null }
         )
         manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
             UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, event.game)

@@ -59,11 +59,19 @@ abstract class SubjectTypeDefinition<A> @JvmOverloads constructor(
      * @return A native object that has its permissions defined by this subject
      */
     abstract fun getAssociatedObject(identifier: String): A?
+
+    /**
+     * The boolean value an undefined permission should have for this subject type
+     */
+    open fun undefinedPermissionValue(identifier: String): Boolean {
+        return false
+    }
 }
 
-class FixedEntriesSubjectTypeDefinition<A>(
+class FixedEntriesSubjectTypeDefinition<A> internal constructor(
     typeName: String,
-    private val validEntries: Map<String, () -> A>
+    private val validEntries: Map<String, () -> A>,
+    private val undefinedValueProvider: ((String) -> Boolean)?
 ) : SubjectTypeDefinition<A>(typeName) {
     override fun isNameValid(name: String): Boolean {
         return this.validEntries.containsKey(name)
@@ -73,6 +81,14 @@ class FixedEntriesSubjectTypeDefinition<A>(
 
     override fun getAssociatedObject(identifier: String): A? {
         return this.validEntries[identifier]?.invoke()
+    }
+
+    override fun undefinedPermissionValue(identifier: String): Boolean {
+        return if (this.undefinedValueProvider != null) {
+            this.undefinedValueProvider.invoke(identifier)
+        } else {
+            super.undefinedPermissionValue(identifier)
+        }
     }
 }
 
@@ -89,6 +105,6 @@ fun subjectType(type: String, transientHasPriority: Boolean = true): SubjectType
     return DefaultSubjectTypeDefinition(type, transientHasPriority)
 }
 
-fun <A> subjectType(type: String, vararg validEntries: Pair<String, () -> A>): SubjectTypeDefinition<A> {
-    return FixedEntriesSubjectTypeDefinition(type, mapOf(*validEntries))
+fun <A> subjectType(type: String, vararg validEntries: Pair<String, () -> A>, undefinedValueProvider: ((String) -> Boolean)? = null): SubjectTypeDefinition<A> {
+    return FixedEntriesSubjectTypeDefinition(type, mapOf(*validEntries), undefinedValueProvider)
 }

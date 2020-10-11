@@ -51,7 +51,6 @@ public class MixinServerCommandSource {
     @Inject(method = "hasPermissionLevel", at = @At("HEAD"))
     private void logUncheckedPermission(final int level, final CallbackInfoReturnable<Boolean> ci) {
         PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerCommandSource#hasPermissionLevel");
-        System.out.println("blah");
     }
 
 }

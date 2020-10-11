@@ -58,8 +58,4 @@ public abstract class MixinPlayerManager {
         return PermissionsExHooks.hasPermission((GameProfile) profile, MinecraftPermissions.BYPASS_WHITELIST);
     }
 
-    @Inject(method = "isOperator", at = @At("HEAD"))
-    private void logOpCheck(final GameProfile profile, final CallbackInfoReturnable<Boolean> ci) {
-        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("PlayerManager#isOperator");
-    }
 }
