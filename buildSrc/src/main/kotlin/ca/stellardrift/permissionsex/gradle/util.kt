@@ -29,7 +29,7 @@ enum class Versions(val version: String) {
     SLF4J("1.7.30"),
     ANTLR("4.8-1"),
     KOTLINX_COROUTINES("1.3.9"),
-    TEXT("4.0.0-SNAPSHOT"),
+    TEXT("4.1.1"),
     TEXT_ADAPTER("4.0.0-SNAPSHOT");
 
     override fun toString(): String {
