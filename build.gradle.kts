@@ -89,9 +89,15 @@ val collectImplementationArtifacts by tasks.registering(Copy::class) {
     config.isTransitive = false
 
     from(config)
-    rename("(.+)-all(.+)", "$1$2")
-
+    rename("(.+)-all(.+)", "PermissionsEx $1$2")
     into("$buildDir/libs")
+
+    doFirst {
+        if (destinationDir.exists()) {
+            destinationDir.deleteRecursively()
+        }
+    }
+
 }
 
 tasks.register("build") {
