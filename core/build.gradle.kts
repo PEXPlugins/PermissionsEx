@@ -38,7 +38,7 @@ dependencies {
     api(configurate("hocon"))
     implementation(configurate("yaml"))
     implementation(configurate("extra-kotlin"))
-    implementation("com.github.ben-manes.caffeine:caffeine:2.7.0") {
+    implementation("com.github.ben-manes.caffeine:caffeine:2.8.6") {
         exclude("com.google.errorprone")
     }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.KOTLINX_COROUTINES}")
@@ -52,10 +52,10 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KOTLINX_COROUTINES}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    testImplementation("org.mockito:mockito-core:3.0.0")
-    testImplementation("com.h2database:h2:1.4.199")
-    testImplementation("org.mariadb.jdbc:mariadb-java-client:2.4.3")
-    testImplementation("org.postgresql:postgresql:42.2.6")
+    testImplementation("org.mockito:mockito-core:3.6.0")
+    testImplementation("com.h2database:h2:1.4.200")
+    testImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.0")
+    testImplementation("org.postgresql:postgresql:42.2.18")
 }
 
 localization {

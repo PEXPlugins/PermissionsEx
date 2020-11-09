@@ -16,8 +16,8 @@ plugins {
     id("ca.stellardrift.localization") version "3.1" apply false
     id("ca.stellardrift.templating") version "3.1" apply false
     id("ca.stellardrift.configurate-transformations") version "3.1" apply false
-    id("com.github.johnrengelman.shadow") version "6.0.0" apply false
-    id("com.github.ben-manes.versions") version "0.33.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0" apply false
+    id("com.github.ben-manes.versions") version "0.36.0"
     `maven-publish`
 }
 

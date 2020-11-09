@@ -18,7 +18,7 @@ CREATE TABLE `{}subjects` (
   `id` int(11) NOT NULL IDENTITY,
   `type` varchar(255) NOT NULL,
   `identifier` varchar(255) NOT NULL,
-  UNIQUE (`type`,`identifier`),
+  UNIQUE (`type`,`identifier`)
 );
 CREATE INDEX ON `{}subjects` (`type`);
 
@@ -82,7 +82,7 @@ CREATE TABLE `{}context_inheritance` (
   `child_value` varchar(255) NOT NULL,
   `parent_key` varchar(255) NOT NULL,
   `parent_value` varchar(255) NOT NULL,
-  UNIQUE (`child_key`,`child_value`,`parent_key`,`parent_value`),
+  UNIQUE (`child_key`,`child_value`,`parent_key`,`parent_value`)
 );
 
 CREATE INDEX ON `{}context_inheritance` (`child_key`, `child_value`);

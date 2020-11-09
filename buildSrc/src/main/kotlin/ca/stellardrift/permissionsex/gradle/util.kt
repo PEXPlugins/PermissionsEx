@@ -24,7 +24,7 @@ import org.gradle.api.publish.maven.MavenPublication
 
 // TODO: Replace this with bom subproject
 enum class Versions(val version: String) {
-    SPONGE("7.2.0"),
+    SPONGE("7.3.0"),
     CONFIGURATE("4.0.0-SNAPSHOT"),
     SLF4J("1.7.30"),
     ANTLR("4.8-1"),
