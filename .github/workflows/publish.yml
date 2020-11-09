@@ -1,0 +1,32 @@
+# Making changes? https://github.com/nektos/act may help you test locally
+
+name: Publish
+
+on:
+  push:
+      branches: [master]
+      tags-ignore: ["*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+      - name: Setup JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Cache Gradle packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+      - name: Make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: Publish with Gradle
+        run: ./gradlew publish
+        env:
+          ORG_GRADLE_PROJECT_pexUsername: ${{ secrets.REPO_USERNAME }}
+          ORG_GRADLE_PROJECT_pexPassword: ${{ secrets.REPO_PASSWORD }}
