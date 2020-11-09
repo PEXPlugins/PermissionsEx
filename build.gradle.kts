@@ -3,10 +3,7 @@ import ca.stellardrift.build.common.OpinionatedExtension
 import ca.stellardrift.build.common.pex
 import ca.stellardrift.build.common.sk89q
 import ca.stellardrift.build.common.sonatypeOss
-import ca.stellardrift.build.common.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
-import org.gradle.kotlin.dsl.accessors.runtime.externalModuleDependencyFor
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -27,7 +24,12 @@ version = "2.0-SNAPSHOT"
 description = project.property("pexDescription") as String
 
 subprojects {
-    apply(plugin="ca.stellardrift.opinionated.kotlin")
+    if (name == "api") { // TODO: make this less hacky
+        apply(plugin="ca.stellardrift.opinionated")
+    } else {
+        apply(plugin = "ca.stellardrift.opinionated.kotlin")
+    }
+
     apply(plugin="ca.stellardrift.opinionated.publish")
 
     repositories {

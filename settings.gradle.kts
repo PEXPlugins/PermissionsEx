@@ -21,7 +21,9 @@ pluginManagement {
 
 rootProject.name = "PermissionsEx"
 
+include("api")
 include("core")
+
 listOf("sponge", "sponge7", "bukkit", "fabric", "bungee", "velocity").forEach {
     include(":platform:$it")
 }
