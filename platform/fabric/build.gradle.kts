@@ -34,7 +34,7 @@ plugins {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.16.3"
+val minecraftVersion = "1.16.4"
 dependencies {
     shade(project(":core")) {
         exclude("com.google.guava")
@@ -48,12 +48,12 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.17:v2")
-    modImplementation("net.fabricmc:fabric-loader:0.10.0+build.208")
-    modCompileOnly("com.sk89q.worldedit:worldedit-fabric-mc$minecraftVersion:7.2.0") { isTransitive = false }
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.6:v2")
+    modImplementation("net.fabricmc:fabric-loader:0.10.6+build.214")
+    modCompileOnly("com.sk89q.worldedit:worldedit-fabric-mc1.16.3:7.2.0") { isTransitive = false }
     modCompileOnly("com.sk89q.worldedit:worldedit-core:7.2.0") { isTransitive = false }
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.21.0+build.407-1.16")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.25.1+build.416-1.16")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.4.0+build.1")
     modImplementation(include("net.kyori:adventure-platform-fabric:${Versions.TEXT_ADAPTER}") {
         exclude("com.google.code.gson")

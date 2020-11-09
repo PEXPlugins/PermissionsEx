@@ -55,8 +55,8 @@ public class MixinServerPlayNetworkHandler {
         return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.UPDATE_DIFFICULTY, permLevel);
     }
 
-    @Redirect(method = "onGameMessage",
-            at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP))
+    @Redirect(method = {"onGameMessage", "method_31286"}, // 1.16.3, 1.16.4
+            at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP), allow = 1)
     public boolean canBypassSpamLimit(PlayerManager manager, GameProfile profile) {
         return PermissionsExHooks.hasPermission(player, MinecraftPermissions.BYPASS_CHAT_SPAM);
     }
