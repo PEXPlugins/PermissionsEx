@@ -5,6 +5,7 @@ import ca.stellardrift.build.common.sk89q
 import ca.stellardrift.build.common.sonatypeOss
 import ca.stellardrift.build.common.sponge
 import net.minecrell.gradle.licenser.LicenseExtension
+import org.gradle.kotlin.dsl.accessors.runtime.externalModuleDependencyFor
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -77,14 +78,15 @@ tasks.withType(Jar::class).configureEach { // disable
 val collectExcludes = ext["buildExcludes"].toString().split(',').toSet()
 
 val collectImplementationArtifacts by tasks.registering(Copy::class) {
-    subprojects.forEach {
-        if (it.name !in collectExcludes) {
-            val outTask = it.tasks.findByPath("remapShadowJar") ?: it.tasks.findByPath("shadowJar")
-            if (outTask != null) {
-                from(outTask)
-            }
-        }
-    }
+    val config = configurations.detachedConfiguration(
+        *subprojects
+            .filter { it.name !in collectExcludes && it.path.contains("platform:")}
+            .map { dependencies.project(it.path, configuration = "shadow") }
+            .toTypedArray()
+    )
+    config.isTransitive = false
+
+    from(config)
     rename("(.+)-all(.+)", "$1$2")
 
     into("$buildDir/libs")

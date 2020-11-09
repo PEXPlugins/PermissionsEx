@@ -116,3 +116,13 @@ tasks.assemble.configure {
 tasks.build.configure {
     dependsOn(remapShadowJar)
 }
+configurations {
+    sequenceOf(shadowRuntimeElements, shadow).forEach {
+        it.configure {
+            outgoing {
+                artifacts.clear()
+                artifact(remapShadowJar)
+            }
+        }
+    }
+}
