@@ -1,6 +1,5 @@
 
-import ca.stellardrift.build.transformations.ConfigFormats
-import ca.stellardrift.build.transformations.convertFormat
+import ca.stellardrift.build.common.adventure
 import ca.stellardrift.permissionsex.gradle.Versions
 import ca.stellardrift.permissionsex.gradle.setupPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -28,7 +27,6 @@ plugins {
     kotlin("kapt")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
-    id("ca.stellardrift.configurate-transformations")
 }
 
 setupPublication()
@@ -42,12 +40,16 @@ repositories {
 dependencies {
     api(project(":core")) {
         exclude("com.google.guava", "guava")
+        exclude("org.slf4j", "slf4j-api")
         exclude("com.github.ben-manes.caffeine", "caffeine")
-        exclude("net.kyori")
     }
 
-    testImplementation(compileOnly("org.spongepowered:spongeapi:8.0.0-SNAPSHOT")!!)
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3") { isTransitive = false }
+    implementation(adventure("platform-spongeapi", Versions.TEXT_ADAPTER)) {
+        exclude("com.google.code.gson")
+    }
+
+    kapt(shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")!!)
+    testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     testImplementation("org.mockito:mockito-core:3.0.0")
@@ -59,7 +61,6 @@ localization {
 
 opinionated {
     useJUnit5()
-    automaticModuleNames = true
 }
 
 val relocateRoot = project.ext["pexRelocateRoot"]
@@ -67,11 +68,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize()
     listOf(
         "org.antlr",
-        "org.slf4j",
+        "net.kyori",
         "org.jetbrains.annotations",
-        "org.apache.logging.slf4j",
-        "org.spongepowered.configurate",
-        "io.leangen.geantyref"
+        "io.leangen.geantyref",
+        "org.spongepowered.configurate"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }
@@ -85,18 +85,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
 
     manifest {
-        attributes(
-            "Loader" to "java_plain" // declare as a Sponge plugin
-        )
-    }
-}
-
-tasks.processResources {
-    inputs.property("version", project.version)
-    filesMatching("**/*.yml") {
-        expand("project" to project)
-        convertFormat(ConfigFormats.YAML, ConfigFormats.GSON)
-        name = name.substringBeforeLast('.') + ".json"
+        attributes("Automatic-Module-Name" to project.name)
     }
 }
 

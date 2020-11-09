@@ -22,7 +22,7 @@ pluginManagement {
 rootProject.name = "PermissionsEx"
 
 include("core")
-listOf("sponge", "bukkit", "fabric", "bungee", "velocity").forEach {
+listOf("sponge", "sponge7", "bukkit", "fabric", "bungee", "velocity").forEach {
     include(":platform:$it")
 }
 
