@@ -28,7 +28,6 @@ import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.decorated
 import ca.stellardrift.permissionsex.util.plusAssign
 import ca.stellardrift.permissionsex.util.unaryPlus
-import com.google.common.collect.Maps
 import java.util.concurrent.ExecutionException
 import net.kyori.adventure.text.BuildableComponent
 import net.kyori.adventure.text.Component
@@ -40,6 +39,7 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 enum class ButtonType {
     /**
@@ -72,7 +72,7 @@ abstract class MessageFormatter(
     protected open val SubjectIdentifier.friendlyName: String? get() = null
 
     fun subject(subject: Pair<String, String>): Component {
-        return subject(Maps.immutableEntry(subject.first, subject.second))
+        return subject(immutableMapEntry(subject.first, subject.second))
     }
 
     operator fun SubjectIdentifier.unaryPlus() = subject(this)

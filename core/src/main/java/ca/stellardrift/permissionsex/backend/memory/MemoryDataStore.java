@@ -29,7 +29,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import ninja.leaping.configurate.objectmapping.Setting;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Comment;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.Collection;
 import java.util.Map;
@@ -43,17 +45,27 @@ import java.util.stream.Collectors;
 /**
  * A data store backed entirely in memory
  */
-public class MemoryDataStore extends AbstractDataStore<MemoryDataStore> {
-    public static final Factory<MemoryDataStore> FACTORY = new Factory<>("memory", MemoryDataStore.class, MemoryDataStore::new);
+public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDataStore.Config> {
+    public static final Factory<MemoryDataStore, Config> FACTORY = new Factory<>("memory", Config.class, MemoryDataStore::new);
 
-    @Setting(comment = "Whether or not this data store will store subjects being set") private boolean track = true;
+    @ConfigSerializable
+    static class Config {
+        @Setting
+        @Comment("Whether or not this data store will store subjects being set")
+        boolean track = true;
+    }
+
 
     private final ConcurrentMap<Map.Entry<String, String>, ImmutableSubjectData> data = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
-    public MemoryDataStore(String identifier) {
-        super(identifier, FACTORY);
+    public MemoryDataStore(final String identifier) {
+        super(identifier, new Config(), FACTORY);
+    }
+
+    public MemoryDataStore(final String identifier, final Config config) {
+        super(identifier, config, FACTORY);
     }
 
     @Override
@@ -71,7 +83,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore> {
         ImmutableSubjectData ret = data.get(key);
         if (ret == null) {
             ret = new MemorySubjectData();
-            if (track) {
+            if (config().track) {
                 final ImmutableSubjectData existingData = data.putIfAbsent(key, ret);
                 if (existingData != null) {
                     ret = existingData;
@@ -83,7 +95,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore> {
 
     @Override
     public CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
-        if (track) {
+        if (config().track) {
             this.data.put(Maps.immutableEntry(type, identifier), data);
         }
         return completedFuture(data);

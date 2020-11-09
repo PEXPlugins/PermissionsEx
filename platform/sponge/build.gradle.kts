@@ -1,5 +1,4 @@
 
-import ca.stellardrift.build.common.sponge
 import ca.stellardrift.build.transformations.ConfigFormats
 import ca.stellardrift.build.transformations.convertFormat
 import ca.stellardrift.permissionsex.gradle.Versions
@@ -35,22 +34,20 @@ plugins {
 setupPublication()
 
 repositories {
-    maven("https://repo-new.spongepowered.org/repository/maven-snapshots") {
+    maven("https://repo-new.spongepowered.org/repository/maven-public") {
         name = "spongeSnapshots"
     }
-    sponge() // old repo for math and noise
 }
 
 dependencies {
     api(project(":core")) {
-        exclude("org.spongepowered")
         exclude("com.google.guava", "guava")
         exclude("com.github.ben-manes.caffeine", "caffeine")
         exclude("net.kyori")
     }
 
     testImplementation(compileOnly("org.spongepowered:spongeapi:8.0.0-SNAPSHOT")!!)
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3") { isTransitive = false }
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     testImplementation("org.mockito:mockito-core:3.0.0")
@@ -72,12 +69,20 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.antlr",
         "org.slf4j",
         "org.jetbrains.annotations",
-        "org.apache.logging.slf4j"
+        "org.apache.logging.slf4j",
+        "org.spongepowered.configurate",
+        "io.leangen.geantyref"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }
     exclude("org/checkerframework/**")
     exclude("**/module-info.class")
+
+    dependencies {
+        exclude(dependency("com.typesafe:config:.*"))
+        exclude(dependency("org.yaml:snakeyaml:.*"))
+        exclude(dependency("com.google.code.gson:gson:.*"))
+    }
 
     manifest {
         attributes(

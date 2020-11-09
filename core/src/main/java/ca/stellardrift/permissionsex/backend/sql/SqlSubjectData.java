@@ -42,13 +42,13 @@ import java.util.concurrent.atomic.AtomicReference;
 class SqlSubjectData implements ImmutableSubjectData {
     private final SubjectRef subject;
     private final Map<Set<ContextValue<?>>, Segment> segments;
-    private final AtomicReference<ImmutableList<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<List<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
 
     SqlSubjectData(SubjectRef subject) {
         this(subject, ImmutableMap.of(), null);
     }
 
-    SqlSubjectData(SubjectRef subject, Map<Set<ContextValue<?>>, Segment> segments, ImmutableList<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
+    SqlSubjectData(SubjectRef subject, Map<Set<ContextValue<?>>, Segment> segments, List<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
         this.subject = subject;
         this.segments = segments;
         this.updatesToPerform.set(updates);

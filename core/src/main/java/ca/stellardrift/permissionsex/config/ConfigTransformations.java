@@ -17,33 +17,34 @@
 
 package ca.stellardrift.permissionsex.config;
 
-import ninja.leaping.configurate.transformation.ConfigurationTransformation;
-import ninja.leaping.configurate.transformation.MoveStrategy;
-import ninja.leaping.configurate.transformation.TransformAction;
+import org.spongepowered.configurate.transformation.ConfigurationTransformation;
+import org.spongepowered.configurate.transformation.MoveStrategy;
+import org.spongepowered.configurate.transformation.TransformAction;
 
-import static ninja.leaping.configurate.transformation.ConfigurationTransformation.builder;
+import static org.spongepowered.configurate.transformation.ConfigurationTransformation.builder;
+import static org.spongepowered.configurate.transformation.NodePath.path;
 
-public class ConfigTransformations {
-    private static final TransformAction DELETE_ITEM = (inputPath, valueAtPath) -> {
-        valueAtPath.setValue(null);
-        return null;
-    };
+public final class ConfigTransformations {
+
+    private ConfigTransformations() {
+        throw new AssertionError();
+    }
 
     /**
-     * Creat a configuration transformation that converts the Bukkit/1.x global configuration structure to the new v2.x configuration structure.
+     * Create a configuration transformation that converts the Bukkit/1.x global configuration structure to the new v2.x configuration structure.
      * @return A transformation that converts a 1.x-style configuration to a 2.x-style configuration
      */
     private static ConfigurationTransformation initialToZero() {
         return builder()
-                        .setMoveStrategy(MoveStrategy.MERGE)
-                        .addAction(p("permissions"), (inputPath, valueAtPath) -> new Object[0])
-                        .addAction(p("permissions", "backend"), (inputPath, valueAtPath) -> p("default-backend"))
-                        .addAction(p("permissions", "allowOps"), DELETE_ITEM)
-                        .addAction(p("permissions", "basedir"), DELETE_ITEM)
-                        .addAction(p("updater"), (inputPath, valueAtPath) -> {
-                            valueAtPath.getNode("enabled").setValue(valueAtPath.getValue());
-                            valueAtPath.getNode("always-update").setValue(valueAtPath.getParent().getNode("alwaysUpdate"));
-                            valueAtPath.getParent().getNode("alwaysUpdate").setValue(null);
+                        .moveStrategy(MoveStrategy.MERGE)
+                        .addAction(path("permissions"), (inputPath, valueAtPath) -> new Object[0])
+                        .addAction(path("permissions", "backend"), (inputPath, valueAtPath) -> p("default-backend"))
+                        .addAction(path("permissions", "allowOps"), TransformAction.remove())
+                        .addAction(path("permissions", "basedir"), TransformAction.remove())
+                        .addAction(path("updater"), (inputPath, valueAtPath) -> {
+                            valueAtPath.node("enabled").set(valueAtPath.raw());
+                            valueAtPath.node("always-update").from(valueAtPath.parent().node("alwaysUpdate"));
+                            valueAtPath.parent().node("alwaysUpdate").set(null);
                             return null;
                         })
                         .build();

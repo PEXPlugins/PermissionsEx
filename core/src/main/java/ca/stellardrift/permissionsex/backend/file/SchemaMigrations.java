@@ -21,19 +21,17 @@ import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.transformation.ConfigurationTransformation;
-import ninja.leaping.configurate.transformation.TransformAction;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.ScopedConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.transformation.ConfigurationTransformation;
+import org.spongepowered.configurate.transformation.TransformAction;
 
 import java.util.*;
 
-import static ninja.leaping.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
+import static org.spongepowered.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
+import static org.spongepowered.configurate.transformation.NodePath.path;
+import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
 public class SchemaMigrations {
     public static final int LATEST_VERSION = 4;
@@ -44,10 +42,9 @@ public class SchemaMigrations {
         return ConfigurationTransformation.builder();
     }
 
-
-    static ConfigurationTransformation versionedMigration(final FormattedLogger logger) {
+    static <N extends ScopedConfigurationNode<N>> ConfigurationTransformation versionedMigration(final FormattedLogger logger) {
         return ConfigurationTransformation.versionedBuilder()
-                .setVersionKey("schema-version")
+                .versionKey("schema-version")
                 .addVersion(LATEST_VERSION, threeToFour())
                 .addVersion(3, twoTo3())
                 .addVersion(2, oneTo2(logger))
@@ -58,18 +55,22 @@ public class SchemaMigrations {
     static ConfigurationTransformation threeToFour() {
         return ConfigurationTransformation.chain(
                 tBuilder()
-                        .addAction(new Object[]{"worlds", WILDCARD_OBJECT, "inheritance"}, (inputPath, valueAtPath) -> {
+                        .addAction(path("worlds", WILDCARD_OBJECT, "inheritance"), (inputPath, valueAtPath) -> {
                             try {
-                                valueAtPath.setValue(Lists.transform(valueAtPath.getList(TypeToken.of(String.class)), input -> "world:" + input));
-                            } catch (ObjectMappingException e) {
+                                final List<String> items = valueAtPath.getList(String.class);
+                                valueAtPath.raw(null);
+                                items.stream()
+                                        .map(input -> "world:" + input)
+                                        .collect(valueAtPath.toListCollector(String.class));
+                            } catch (SerializationException e) {
                                 throw new RuntimeException(e);
                             }
 
                             return new Object[]{"context-inheritance", "world:" + inputPath.get(1)};
                         }).build(),
                 tBuilder()
-                        .addAction(new Object[]{"worlds"}, (inputPath, valueAtPath) -> {
-                            valueAtPath.setValue(null);
+                        .addAction(path("worlds"), (inputPath, valueAtPath) -> {
+                            valueAtPath.raw(null);
                             return null;
                         }).build());
     }
@@ -78,7 +79,7 @@ public class SchemaMigrations {
         final Map<String, List<Map.Entry<String, Integer>>> convertedRanks = new HashMap<>();
         return ConfigurationTransformation.chain(
                 tBuilder()
-                        .addAction(new Object[]{WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
+                        .addAction(path(WILDCARD_OBJECT), (nodePath, configurationNode) -> {
                             if (configurationNode.isMap()) {
                                 String lastPath = nodePath.get(0).toString();
                                 if (lastPath.endsWith("s")) {
@@ -90,22 +91,22 @@ public class SchemaMigrations {
                             }
                         }).build(),
                 tBuilder()
-                        .addAction(new Object[]{"subjects", "group", WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
-                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                if (child.getNode(FileSubjectData.KEY_CONTEXTS).isVirtual() || child.getNode(FileSubjectData.KEY_CONTEXTS).getChildrenMap().isEmpty()) {
-                                    ConfigurationNode optionsNode = child.getNode("options");
-                                    if (optionsNode.isVirtual()) {
+                        .addAction(path("subjects", "group", WILDCARD_OBJECT), (nodePath, configurationNode) -> {
+                            for (ConfigurationNode child : configurationNode.childrenList()) {
+                                if (child.node(FileSubjectData.KEY_CONTEXTS).virtual() || child.node(FileSubjectData.KEY_CONTEXTS).childrenMap().isEmpty()) {
+                                    ConfigurationNode optionsNode = child.node("options");
+                                    if (optionsNode.virtual()) {
                                         return null;
                                     }
-                                    ConfigurationNode rank = optionsNode.getNode("rank");
-                                    if (!rank.isVirtual()) {
-                                        final String rankLadder = optionsNode.getNode("rank-ladder").getString("default");
+                                    ConfigurationNode rank = optionsNode.node("rank");
+                                    if (!rank.virtual()) {
+                                        final String rankLadder = optionsNode.node("rank-ladder").getString("default");
                                         List<Map.Entry<String, Integer>> tempVals = convertedRanks.computeIfAbsent(rankLadder.toLowerCase(), k -> new ArrayList<>());
-                                        tempVals.add(Maps.immutableEntry(configurationNode.getKey().toString(), rank.getInt()));
-                                        rank.setValue(null);
-                                        optionsNode.getNode("rank-ladder").setValue(null);
-                                        if (optionsNode.getChildrenMap().isEmpty()) {
-                                            optionsNode.setValue(null);
+                                        tempVals.add(immutableMapEntry(configurationNode.key().toString(), rank.getInt()));
+                                        rank.raw(null);
+                                        optionsNode.node("rank-ladder").raw(null);
+                                        if (optionsNode.childrenMap().isEmpty()) {
+                                            optionsNode.raw(null);
                                         }
                                     }
 
@@ -113,12 +114,12 @@ public class SchemaMigrations {
                             }
                             return null;
                         }).build(),
-                tBuilder().addAction(new Object[0], (nodePath, configurationNode) -> {
+                tBuilder().addAction(path(), (nodePath, configurationNode) -> {
                     for (Map.Entry<String, List<Map.Entry<String, Integer>>> ent : convertedRanks.entrySet()) {
                         ent.getValue().sort((a, b) -> b.getValue().compareTo(a.getValue()));
-                        ConfigurationNode ladderNode = configurationNode.getNode(FileDataStore.KEY_RANK_LADDERS, ent.getKey());
+                        ConfigurationNode ladderNode = configurationNode.node(FileDataStore.KEY_RANK_LADDERS, ent.getKey());
                         for (Map.Entry<String, Integer> grp : ent.getValue()) {
-                            ladderNode.appendListNode().setValue("group:" + grp.getKey());
+                            ladderNode.appendListNode().set("group:" + grp.getKey());
                         }
                     }
                     return null;
@@ -128,29 +129,28 @@ public class SchemaMigrations {
     static ConfigurationTransformation oneTo2(final FormattedLogger logger) {
         return ConfigurationTransformation.chain(
                 tBuilder()
-                        .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, (nodePath, configurationNode) -> {
-                            Object value = configurationNode.getValue();
-                            configurationNode.setValue(null);
-                            configurationNode.appendListNode().setValue(value);
+                        .addAction(path(WILDCARD_OBJECT, WILDCARD_OBJECT), (nodePath, configurationNode) -> {
+                            final ConfigurationNode src = configurationNode.copy();
+                            configurationNode.appendListNode().from(src);
                             return null;
                         })
                         .build(),
                 tBuilder()
-                        .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, 0, "worlds"}, (nodePath, configurationNode) -> {
-                            ConfigurationNode entityNode = configurationNode.getParent().getParent();
-                            for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.getChildrenMap().entrySet()) {
-                                entityNode.appendListNode().setValue(ent.getValue())
-                                        .getNode(FileSubjectData.KEY_CONTEXTS, "world").setValue(ent.getKey());
+                        .addAction(path(WILDCARD_OBJECT, WILDCARD_OBJECT, 0, "worlds"), (nodePath, configurationNode) -> {
+                            ConfigurationNode entityNode = configurationNode.parent().parent();
+                            for (Map.Entry<Object, ? extends ConfigurationNode> ent : configurationNode.childrenMap().entrySet()) {
+                                entityNode.appendListNode().from(ent.getValue())
+                                        .node(FileSubjectData.KEY_CONTEXTS, "world").set(ent.getKey());
 
                             }
-                            configurationNode.setValue(null);
+                            configurationNode.raw(null);
                             return null;
                         }).build(),
                 tBuilder()
-                        .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, WILDCARD_OBJECT, "permissions"}, (nodePath, configurationNode) -> {
-                            List<String> existing = configurationNode.getList(Object::toString);
+                        .addAction(path(WILDCARD_OBJECT, WILDCARD_OBJECT, WILDCARD_OBJECT, "permissions"), (nodePath, configurationNode) -> {
+                            List<String> existing = configurationNode.getList(String.class, Collections.emptyList());
                             if (!existing.isEmpty()) {
-                                configurationNode.setValue(ImmutableMap.of());
+                                configurationNode.raw(Collections.emptyMap());
                             }
                             for (String permission : existing) {
                                 int value = permission.startsWith("-") ? -1 : 1;
@@ -158,60 +158,60 @@ public class SchemaMigrations {
                                     permission = permission.substring(1);
                                 }
                                 if (permission.equals("*")) {
-                                    configurationNode.getParent().getNode("permissions-default").setValue(value);
+                                    configurationNode.parent().node("permissions-default").set(value);
                                     continue;
                                 }
                                 permission = ConversionUtils.convertLegacyPermission(permission);
                                 if (permission.contains("*")) {
-                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.toComponent(Arrays.toString(configurationNode.getPath())));
+                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.toComponent(configurationNode.path()));
                                 }
-                                configurationNode.getNode(permission).setValue(value);
+                                configurationNode.node(permission).raw(value);
                             }
-                            if (configurationNode.getChildrenMap().isEmpty()) {
-                                configurationNode.setValue(null);
+                            if (configurationNode.empty()) {
+                                configurationNode.raw(null);
                             }
                             return null;
                         })
-                        .addAction(new Object[]{"users", WILDCARD_OBJECT, WILDCARD_OBJECT, "group"}, (nodePath, configurationNode) -> {
-                            Object[] retPath = nodePath.getArray();
+                        .addAction(path("users", WILDCARD_OBJECT, WILDCARD_OBJECT, "group"), (nodePath, configurationNode) -> {
+                            Object[] retPath = nodePath.array();
                             retPath[retPath.length - 1] = "parents";
-                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                child.setValue("group:" + child.getValue());
+                            for (ConfigurationNode child : configurationNode.childrenList()) {
+                                child.set("group:" + child.getString());
                             }
                             return retPath;
                         })
-                        .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT, "inheritance"}, (nodePath, configurationNode) -> {
-                            Object[] retPath = nodePath.getArray();
+                        .addAction(path("groups", WILDCARD_OBJECT, WILDCARD_OBJECT, "inheritance"), (nodePath, configurationNode) -> {
+                            Object[] retPath = nodePath.array();
                             retPath[retPath.length - 1] = "parents";
-                            for (ConfigurationNode child : configurationNode.getChildrenList()) {
-                                child.setValue("group:" + child.getValue());
+                            for (ConfigurationNode child : configurationNode.childrenList()) {
+                                child.set("group:" + child.getString());
                             }
                             return retPath;
                         })
-                        .addAction(new Object[]{"groups", WILDCARD_OBJECT, WILDCARD_OBJECT}, (inputPath, valueAtPath) -> {
-                            ConfigurationNode defaultNode = valueAtPath.getNode("options", "default");
-                            if (!defaultNode.isVirtual()) {
+                        .addAction(path("groups", WILDCARD_OBJECT, WILDCARD_OBJECT), (inputPath, valueAtPath) -> {
+                            final ConfigurationNode defaultNode = valueAtPath.node("options", "default");
+                            if (!defaultNode.virtual()) {
                                 if (defaultNode.getBoolean()) {
                                     ConfigurationNode addToNode = null;
-                                    final ConfigurationNode defaultsParent = valueAtPath.getParent().getParent().getParent().getNode("fallbacks", PermissionsEx.SUBJECTS_USER);
-                                    final Object contexts = valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS).getValue();
-                                    for (ConfigurationNode node : defaultsParent.getChildrenList()) {
-                                        if (Objects.equal(node.getNode(FileSubjectData.KEY_CONTEXTS).getValue(), contexts)) {
+                                    final ConfigurationNode defaultsParent = valueAtPath.parent().parent().parent().node("fallbacks", PermissionsEx.SUBJECTS_USER);
+                                    final Object contexts = valueAtPath.node(FileSubjectData.KEY_CONTEXTS).raw();
+                                    for (ConfigurationNode node : defaultsParent.childrenList()) {
+                                        if (Objects.equals(node.node(FileSubjectData.KEY_CONTEXTS).raw(), contexts)) {
                                             addToNode = node;
                                             break;
                                         }
                                     }
                                     if (addToNode == null) {
                                         addToNode = defaultsParent.appendListNode();
-                                        addToNode.getNode(FileSubjectData.KEY_CONTEXTS).setValue(valueAtPath.getNode(FileSubjectData.KEY_CONTEXTS));
+                                        addToNode.node(FileSubjectData.KEY_CONTEXTS).set(valueAtPath.node(FileSubjectData.KEY_CONTEXTS));
                                     }
 
-                                    addToNode.getNode("parents").appendListNode().setValue("group:" + valueAtPath.getParent().getKey());
+                                    addToNode.node("parents").appendListNode().set("group:" + valueAtPath.parent().key());
                                 }
-                                defaultNode.setValue(null);
-                                final ConfigurationNode optionsNode = valueAtPath.getNode("options");
-                                if (optionsNode.getChildrenMap().isEmpty()) {
-                                    optionsNode.setValue(null);
+                                defaultNode.raw(null);
+                                final ConfigurationNode optionsNode = valueAtPath.node("options");
+                                if (optionsNode.childrenMap().isEmpty()) {
+                                    optionsNode.raw(null);
                                 }
                             }
                             return null;
@@ -219,30 +219,30 @@ public class SchemaMigrations {
     }
 
     private static final TransformAction MOVE_PREFIX_SUFFIX_ACTION = (nodePath, configurationNode) -> {
-        final ConfigurationNode prefixNode = configurationNode.getNode("prefix");
-        if (!prefixNode.isVirtual()) {
-            configurationNode.getNode("options", "prefix").setValue(prefixNode);
-            prefixNode.setValue(null);
+        final ConfigurationNode prefixNode = configurationNode.node("prefix");
+        if (!prefixNode.virtual()) {
+            configurationNode.node("options", "prefix").from(prefixNode);
+            prefixNode.set(null);
         }
 
-        final ConfigurationNode suffixNode = configurationNode.getNode("suffix");
-        if (!suffixNode.isVirtual()) {
-            configurationNode.getNode("options", "suffix").setValue(suffixNode);
-            suffixNode.setValue(null);
+        final ConfigurationNode suffixNode = configurationNode.node("suffix");
+        if (!suffixNode.virtual()) {
+            configurationNode.node("options", "suffix").from(suffixNode);
+            suffixNode.raw(null);
         }
 
-        final ConfigurationNode defaultNode = configurationNode.getNode("default");
-        if (!defaultNode.isVirtual()) {
-            configurationNode.getNode("options", "default").setValue(defaultNode);
-            defaultNode.setValue(null);
+        final ConfigurationNode defaultNode = configurationNode.node("default");
+        if (!defaultNode.virtual()) {
+            configurationNode.node("options", "default").from(defaultNode);
+            defaultNode.raw(null);
         }
         return null;
     };
 
     static ConfigurationTransformation initialTo1() {
         return ConfigurationTransformation.builder()
-                .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT}, MOVE_PREFIX_SUFFIX_ACTION)
-                .addAction(new Object[]{WILDCARD_OBJECT, WILDCARD_OBJECT, "worlds", WILDCARD_OBJECT}, MOVE_PREFIX_SUFFIX_ACTION)
+                .addAction(path(WILDCARD_OBJECT, WILDCARD_OBJECT), MOVE_PREFIX_SUFFIX_ACTION)
+                .addAction(path(WILDCARD_OBJECT, WILDCARD_OBJECT, "worlds", WILDCARD_OBJECT), MOVE_PREFIX_SUFFIX_ACTION)
                 .build();
     }
 }

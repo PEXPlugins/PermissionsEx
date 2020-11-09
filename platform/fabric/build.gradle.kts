@@ -58,8 +58,7 @@ dependencies {
     modImplementation(include("net.kyori:adventure-platform-fabric:${Versions.TEXT_ADAPTER}") {
         exclude("com.google.code.gson")
     })
-    modImplementation(include("ca.stellardrift:confabricate:1.3+3.7.1") {
-        exclude("com.google.guava")
+    modImplementation(include("ca.stellardrift:confabricate:2.0-SNAPSHOT+4.0.0") {
         exclude("com.google.code.gson")
     })
 }

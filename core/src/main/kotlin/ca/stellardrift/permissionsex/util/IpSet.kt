@@ -18,14 +18,14 @@
 package ca.stellardrift.permissionsex.util
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
-import com.google.common.reflect.TypeToken
+import java.lang.reflect.Type
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.objectmapping.ObjectMappingException
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer
+import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.serialize.SerializationException
+import org.spongepowered.configurate.serialize.TypeSerializer
 
 class IpSet private constructor(private val addr: InetAddress, private val prefixLen: Int) {
 
@@ -61,27 +61,18 @@ class IpSet private constructor(private val addr: InetAddress, private val prefi
     }
 
     object IpSetSerializer : TypeSerializer<IpSet> {
-        @Throws(
-            ObjectMappingException::class
-        )
-        override fun deserialize(
-            type: TypeToken<*>,
-            value: ConfigurationNode
-        ): IpSet {
+        @Throws(SerializationException::class)
+        override fun deserialize(type: Type, value: ConfigurationNode): IpSet {
             try {
                 return fromCidr(value.string!!)
             } catch (e: IllegalArgumentException) {
-                throw ObjectMappingException(e)
+                throw SerializationException(e)
             }
         }
 
-        @Throws(ObjectMappingException::class)
-        override fun serialize(
-            type: TypeToken<*>,
-            obj: IpSet?,
-            value: ConfigurationNode
-        ) {
-            value.value = obj.toString()
+        @Throws(SerializationException::class)
+        override fun serialize(type: Type, obj: IpSet?, value: ConfigurationNode) {
+            value.raw(obj.toString())
         }
     }
 

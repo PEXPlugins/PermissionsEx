@@ -85,7 +85,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
     public static final String SUBJECTS_FALLBACK = "fallback";
-    public static final ImmutableSet<ContextValue<?>> GLOBAL_CONTEXT = ImmutableSet.of();
+    public static final Set<ContextValue<?>> GLOBAL_CONTEXT = Collections.emptySet();
 
     private final FormattedLogger logger;
     private final ImplementationInterface impl;
@@ -104,7 +104,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     private static class State<PlatformConfigType> {
         private final PermissionsExConfiguration<PlatformConfigType> config;
         private final DataStore activeDataStore;
-        private List<ConversionResult> availableConversions = ImmutableList.of();
+        private List<ConversionResult> availableConversions = Collections.emptyList();
 
         private State(PermissionsExConfiguration<PlatformConfigType> config, DataStore activeDataStore) {
             this.config = config;

@@ -53,17 +53,12 @@ import java.util.concurrent.Executor
 import java.util.function.Function
 import java.util.function.Predicate
 import javax.sql.DataSource
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.commented.CommentedConfigurationNode
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.apache.logging.log4j.Logger
 import org.apache.logging.log4j.spi.ExtendedLogger
 import org.apache.logging.slf4j.Log4jLogger
 import org.spongepowered.api.Game
 import org.spongepowered.api.Server
 import org.spongepowered.api.config.ConfigDir
-import org.spongepowered.api.config.DefaultConfig
 import org.spongepowered.api.entity.living.player.server.ServerPlayer
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.lifecycle.ConstructPluginEvent
@@ -80,6 +75,8 @@ import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectCollection
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.sql.SqlManager
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import org.spongepowered.plugin.PluginContainer
 import org.spongepowered.plugin.jvm.Plugin
 
@@ -92,8 +89,7 @@ class PermissionsExPlugin @Inject internal constructor(
     internal val container: PluginContainer,
     internal val game: Game,
     private val sql: SqlManager,
-    @ConfigDir(sharedRoot = false) private val configDir: Path,
-    @DefaultConfig(sharedRoot = false) private val configLoader: ConfigurationLoader<CommentedConfigurationNode>
+    @ConfigDir(sharedRoot = false) private val configDir: Path
 ) : ImplementationInterface {
     internal val scheduler = game.asyncScheduler.createExecutor(container)
     private val logger = FormattedLogger.forLogger(Log4jLogger(logger as ExtendedLogger, logger.name), true)
@@ -101,6 +97,10 @@ class PermissionsExPlugin @Inject internal constructor(
     val manager: PermissionsEx<*> get() {
         return _manager ?: throw IllegalStateException("PermissionsEx Manager is not yet initialized, or there was an error loading the plugin!")
     }
+    private val configLoader = HoconConfigurationLoader.builder()
+        .path(this.configDir.resolve("${container.metadata.id}.conf"))
+        .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
+        .build()
     private var service: PermissionsExService? = null
 
     init {
@@ -221,8 +221,7 @@ class PermissionsExPlugin @Inject internal constructor(
         }
         val bukkitConfigFile = configDir.resolve("config.yml")
         if (Files.exists(bukkitConfigFile)) {
-            val yamlReader: ConfigurationLoader<ConfigurationNode> =
-                YAMLConfigurationLoader.builder().setPath(bukkitConfigFile).build()
+            val yamlReader = YamlConfigurationLoader.builder().path(bukkitConfigFile).build()
             val bukkitConfig = yamlReader.load()
             configLoader.save(bukkitConfig)
             Files.move(bukkitConfigFile, configDir.resolve("config.yml.bukkit"))

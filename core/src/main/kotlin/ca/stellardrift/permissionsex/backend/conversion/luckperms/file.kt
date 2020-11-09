@@ -28,71 +28,76 @@ import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.rank.AbstractRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.toCompletableFuture
-import com.google.common.collect.ImmutableSet.toImmutableSet
-import com.google.common.collect.Maps
-import com.google.common.io.Files.getNameWithoutExtension
-import com.google.common.reflect.TypeToken
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.math.absoluteValue
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.gson.GsonConfigurationLoader
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader
-import ninja.leaping.configurate.kotlin.contains
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.kotlin.set
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.objectmapping.Setting
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
-import ninja.leaping.configurate.reference.ConfigurationReference
-import ninja.leaping.configurate.reference.WatchServiceListener
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
-import org.yaml.snakeyaml.DumperOptions
+import org.spongepowered.configurate.CommentedConfigurationNode
+import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.ScopedConfigurationNode
+import org.spongepowered.configurate.gson.GsonConfigurationLoader
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader
+import org.spongepowered.configurate.kotlin.extensions.contains
+import org.spongepowered.configurate.kotlin.extensions.get
+import org.spongepowered.configurate.loader.ConfigurationLoader
+import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import org.spongepowered.configurate.objectmapping.meta.Comment
+import org.spongepowered.configurate.reference.ConfigurationReference
+import org.spongepowered.configurate.reference.WatchServiceListener
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
+import org.spongepowered.configurate.yaml.NodeStyle
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
+
+val Path.nameWithoutExtension: String get() {
+    return fileName.toString().substringBeforeLast('.')
+}
 
 @ConfigSerializable
-class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore<LuckPermsFileDataStore>(identifier, FACTORY) {
+class LuckPermsFileDataStore constructor(identifier: String, config: Config) : AbstractDataStore<LuckPermsFileDataStore, LuckPermsFileDataStore.Config>(identifier, config, FACTORY) {
     companion object {
         @JvmField
-        val FACTORY = Factory("luckperms-file", LuckPermsFileDataStore::class.java, ::LuckPermsFileDataStore)
+        val FACTORY = Factory("luckperms-file", Config::class.java, ::LuckPermsFileDataStore)
     }
 
-    constructor(identifier: String, format: ConfigFormat, combined: Boolean) : this(identifier) {
-        this.format = format
-        this.combined = combined
-    }
+    constructor(identifier: String, format: ConfigFormat, combined: Boolean) : this(identifier, Config(combined = combined, format = format))
 
-    @Setting(comment = "The location of the luckperms base directory, relative to the server plugins folder")
-    var pluginDir: String = "LuckPerms"
+    @ConfigSerializable
+    data class Config(
+        @Comment("The location of the luckperms base directory, relative to the server plugins folder")
+        var pluginDir: String = "LuckPerms",
 
-    @Setting(comment = "Whether or not all files are stored as one, equivalent to putting the '-combined' suffix on a data storage option in LuckPerms")
-    var combined: Boolean = false
+        @Comment("Whether or not all files are stored as one, equivalent to putting the '-combined' suffix on a data storage option in LuckPerms")
+        var combined: Boolean = false,
 
-    @Setting(comment = "The file format to attempt to load from")
-    var format: ConfigFormat = ConfigFormat.YAML
+        @Comment("The file format to attempt to load from")
+        var format: ConfigFormat = ConfigFormat.YAML
+    )
 
-    private lateinit var lpConfig: ConfigurationReference<ConfigurationNode>
+    private lateinit var lpConfig: ConfigurationReference<CommentedConfigurationNode>
     private lateinit var subjectLayout: SubjectLayout
     internal lateinit var watcher: WatchServiceListener
 
+    internal val format get() = config().format
+
     override fun initializeInternal(): Boolean {
-        val rootDir = manager.baseDirectory.parent.resolve(pluginDir)
-        subjectLayout = (if (combined) {
+        val rootDir = manager.baseDirectory.parent.resolve(config().pluginDir)
+        subjectLayout = (if (config().combined) {
             ::CombinedSubjectLayout
         } else {
             ::SeparateSubjectLayout
-        })(this, rootDir.resolve(this.format.storageDirName))
+        })(this, rootDir.resolve(config().format.storageDirName))
         lpConfig =
-            YAMLConfigurationLoader.builder()
-                .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
-                .setPath(rootDir.resolve("config.yml"))
+            YamlConfigurationLoader.builder()
+                .nodeStyle(NodeStyle.BLOCK)
+                .path(rootDir.resolve("config.yml"))
                 .build().loadToReference()
         watcher = WatchServiceListener.builder()
-            .setTaskExecutor(manager.asyncExecutor)
+            .taskExecutor(manager.asyncExecutor)
             .build()
         return true
     }
@@ -114,10 +119,10 @@ class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore
     }
 
     override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
-        return this.registeredTypes.parallelStream()
-            .flatMap { type -> getAllIdentifiers(type).stream().map { ident -> Maps.immutableEntry(type, ident) } }
-            .map { key -> Maps.immutableEntry(key, getDataInternal(key.key, key.value).join()) }
-            .collect(toImmutableSet())
+        return Collections.unmodifiableSet(this.registeredTypes.parallelStream()
+            .flatMap { type -> getAllIdentifiers(type).stream().map { ident -> immutableMapEntry(type, ident) } }
+            .map { key -> immutableMapEntry(key, getDataInternal(key.key, key.value).join()) }
+            .collect(Collectors.toSet()))
     }
 
     override fun getDataInternal(type: String, identifier: String): CompletableFuture<ImmutableSubjectData> {
@@ -137,7 +142,7 @@ class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore
     }
 
     override fun getContextInheritanceInternal(): CompletableFuture<ContextInheritance> {
-        return completedFuture(contextParentsFromConfig(lpConfig.node))
+        return completedFuture(contextParentsFromConfig(lpConfig.node()))
     }
 
     override fun setContextInheritanceInternal(contextInheritance: ContextInheritance?): CompletableFuture<ContextInheritance> {
@@ -149,12 +154,12 @@ class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore
 
             return lpConfig.updateAsync {
                 if (inherit == null) {
-                    lpConfig["world-rewrite"] = emptyMap<String, String>()
+                    lpConfig["world-rewrite"].set(emptyMap<String, String>())
                 } else {
-                    inherit.writeToConfig(lpConfig.node)
+                    inherit.writeToConfig(lpConfig.node())
                 }
                 it
-            }.toCompletableFuture().thenApply { inherit }
+            }.toCompletableFuture<CommentedConfigurationNode>().thenApply { inherit }
     }
 
     override fun <T : Any?> performBulkOperationSync(function: Function<DataStore, T>): T {
@@ -162,18 +167,18 @@ class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore
     }
 
     override fun getAllRankLadders(): Iterable<String> {
-        return this.subjectLayout.tracks.node.childrenMap.keys.map(Any::toString)
+        return this.subjectLayout.tracks.node().childrenMap().keys.map(Any::toString)
     }
 
     override fun hasRankLadder(ladder: String): CompletableFuture<Boolean> {
-        return completedFuture(ladder in this.subjectLayout.tracks.node)
+        return completedFuture(ladder in this.subjectLayout.tracks.node())
     }
 
     override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
         return completedFuture(
             LuckPermsTrack(
                 ladder,
-                this.subjectLayout.tracks[ladder, "groups"].getList({ it -> it!!.toString() }, listOf())
+                this.subjectLayout.tracks[ladder, "groups"].getList(String::class.java, listOf())
             )
         )
     }
@@ -188,21 +193,26 @@ class LuckPermsFileDataStore constructor(identifier: String) : AbstractDataStore
         }
 
         return this.subjectLayout.tracks.updateAsync {
-                if (lpLadder == null) {
-                    it[ladder] = null
-                } else {
-                    it[ladder, "groups"] = lpLadder.groups
-                }
-                it
-            }.toCompletableFuture().thenApply { lpLadder }
+            if (lpLadder == null) {
+                it.node(ladder).raw(null)
+            } else {
+                it.node(ladder, "groups").set(lpLadder.groups)
+            }
+            it
+        }.toCompletableFuture().thenApply { lpLadder }
     }
 }
 
 /** Configuration format to use -- gives format-specific paths/loaders **/
-enum class ConfigFormat(val loaderProvider: Function<Path, ConfigurationLoader<*>>, val extension: String) {
-    YAML(Function { YAMLConfigurationLoader.builder().setPath(it).build() }, "yml"),
-    JSON(Function { GsonConfigurationLoader.builder().setPath(it).build() }, "json"),
-    HOCON(Function { HoconConfigurationLoader.builder().setPath(it).build() }, "conf");
+enum class ConfigFormat(val loaderProvider: Function<Path, ConfigurationLoader<out ScopedConfigurationNode<*>>>, val extension: String) {
+    YAML(Function { YamlConfigurationLoader.builder().path(it).build() }, "yml"),
+    JSON(Function { GsonConfigurationLoader.builder().path(it).build() }, "json"),
+    HOCON(Function { HoconConfigurationLoader.builder().path(it).build() }, "conf");
+
+    fun listen(listener: WatchServiceListener, target: Path): ConfigurationReference<ConfigurationNode> {
+        // TODO: Support auto-reloading here
+        return this.loaderProvider.apply(target).loadToReference() as ConfigurationReference<ConfigurationNode>
+    }
 
     val storageDirName: String = "${this.name.toLowerCase(Locale.ROOT)}-storage"
 }
@@ -220,23 +230,22 @@ interface SubjectLayout {
 class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private val rootDir: Path) : SubjectLayout {
     private val files: MutableMap<String, ConfigurationReference<ConfigurationNode>> = mutableMapOf()
 
-    override val tracks: ConfigurationReference<ConfigurationNode> =
-        store.watcher.listenToConfiguration(store.format.loaderProvider, rootDir.resolve("tracks.${store.format.extension}"))
+    override val tracks: ConfigurationReference<ConfigurationNode> = with(store) { format.listen(watcher, rootDir.resolve("tracks.${format.extension}")) }
 
     override val types: Set<String>
         get() {
             Files.list(rootDir).use { list ->
                 return list
-                    .map { getNameWithoutExtension(it.fileName.toString()) }
+                    .map { it.nameWithoutExtension }
                     .filter { it != "tracks" && it != "uuidcache" }
                     .map { it.substring(0, it.length - 1) }
-                    .collect(toImmutableSet())
+                    .collect(Collectors.toSet())
             }
         }
 
-    private fun getFileFor(type: String): ConfigurationReference<ConfigurationNode> {
+    private fun getFileFor(type: String): ConfigurationReference<out ConfigurationNode> {
         return files.computeIfAbsent(type) { key ->
-            store.watcher.listenToConfiguration(store.format.loaderProvider, rootDir.resolve("${key}s.${store.format.extension}"))
+            with(store) { format.listen(watcher, rootDir.resolve("${key}s.${format.extension}")) }
         }
     }
 
@@ -250,17 +259,17 @@ class CombinedSubjectLayout(private val store: LuckPermsFileDataStore, private v
             return false
         }
 
-        return !this[type, ident].isVirtual
+        return !this[type, ident].virtual()
     }
 
     override fun getIdentifiers(type: String): Set<String> {
-        return getFileFor(type).node.childrenMap.keys.map(Any::toString).toSet()
+        return getFileFor(type).node().childrenMap().keys.map(Any::toString).toSet()
     }
 }
 
 class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private val rootDir: Path) : SubjectLayout {
 
-    override val tracks: ConfigurationReference<ConfigurationNode> = store.watcher.listenToConfiguration(store.format.loaderProvider, rootDir.resolve("tracks.${store.format.extension}"))
+    override val tracks: ConfigurationReference<ConfigurationNode> = with(store) { format.listen(watcher, rootDir.resolve("tracks.${store.format.extension}")) }
 
     override val types: Set<String>
         get() {
@@ -268,7 +277,7 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
                 list.filter { Files.isDirectory(it) }
                 .map { val name = it.fileName.toString()
                     name.substring(0, name.length - 1) }
-                .collect(toImmutableSet())
+                .collect(Collectors.toSet())
             }
         }
 
@@ -284,15 +293,14 @@ class SeparateSubjectLayout(private val store: LuckPermsFileDataStore, private v
     override fun getIdentifiers(type: String): Set<String> {
         return Files.list(rootDir.resolve("${type}s")).use { list ->
             list.map { x ->
-                val name = x.fileName.toString()
-                getNameWithoutExtension(name)
+                x.nameWithoutExtension
             }.collect(Collectors.toSet())
         }
     }
 }
 
 fun contextParentsFromConfig(node: ConfigurationNode): LuckPermsContextInheritance {
-    val worldRewrite = node["world-rewrite"].getValue(object : TypeToken<Map<String, String>>() {}, mapOf())
+    val worldRewrite = node.node("world-rewrite").get<Map<String, String>>(mapOf())
     val ret = mutableMapOf<ContextValue<*>, List<ContextValue<*>>>()
     worldRewrite.forEach {
         ret[ContextValue<String>("world", it.key)] = listOf(ContextValue<String>("world", it.value))
@@ -330,10 +338,10 @@ class LuckPermsContextInheritance(private val contextParents: Map<ContextValue<*
     }
 
     fun writeToConfig(node: ConfigurationNode) {
-        val worldRewriteNode = node["world-rewrite"]
-        worldRewriteNode.value = null
+        val worldRewriteNode = node.node("world-rewrite")
+        worldRewriteNode.raw(null)
         this.contextParents.forEach { (k, v) ->
-            worldRewriteNode[k.rawValue] = v.first().rawValue
+            worldRewriteNode.node(k.rawValue).set(v.first().rawValue)
         }
     }
 }
@@ -351,7 +359,7 @@ class LuckPermsTrack internal constructor(name: String, val groups: List<String>
     constructor(name: String) : this(name, listOf())
 
     override fun getRanks(): List<Map.Entry<String, String>> {
-        return this.groups.map { Maps.immutableEntry(SUBJECTS_GROUP, it) }
+        return this.groups.map { immutableMapEntry(SUBJECTS_GROUP, it) }
     }
 
     override fun newWithRanks(ents: List<Map.Entry<String, String>>): LuckPermsTrack {
@@ -377,8 +385,8 @@ private fun addIfNotVirtual(
     values: MutableSet<ContextValue<*>>,
     keyAs: String = key
 ) {
-    val childNode = parentNode[key]
-    if (!childNode.isVirtual) {
+    val childNode = parentNode.node(key)
+    if (!childNode.virtual()) {
         values.add(ContextValue<String>(keyAs, childNode.string!!))
     }
 }
@@ -391,9 +399,9 @@ private fun <T> defListFromNode(
     keyPath: String = "permission"
 ): Set<LuckPermsDefinition<T>> {
     val ret = mutableSetOf<LuckPermsDefinition<T>>()
-    node.childrenList.forEach {
+    node.childrenList().forEach {
         val contexts = mutableSetOf<ContextValue<*>>()
-        it["context"].childrenMap.forEach { (k, v) -> contexts.add(ContextValue<String>(k.toString(), v.string!!)) }
+        it.node("context").childrenMap().forEach { (k, v) -> contexts.add(ContextValue<String>(k.toString(), v.string!!)) }
         addIfNotVirtual(it, "world", contexts)
         addIfNotVirtual(it, "server", contexts, "server-tag")
         addIfNotVirtual(it, "expiry", contexts, "before-time")
@@ -401,7 +409,7 @@ private fun <T> defListFromNode(
         ret.add(
             LuckPermsDefinition(
                 keyOverride
-                    ?: it[keyPath].string!!.replace(".*", ""), valueConverter(it[valueKey]), it["priority"].getInt(0), contexts
+                    ?: it.node(keyPath).string!!.replace(".*", ""), valueConverter(it.node(valueKey)), it.node("priority").getInt(0), contexts
             )
         )
     }
@@ -409,12 +417,12 @@ private fun <T> defListFromNode(
 }
 
 private fun ConfigurationNode.toSubjectData(): LuckPermsSubjectData {
-    val options: Set<LuckPermsDefinition<String>> = defListFromNode(this["meta"], { it.string!! }, keyPath = "key") +
-            defListFromNode(this["prefixes"], { it.string!! }, keyOverride = "prefix", valueKey = "prefix") +
-            defListFromNode(this["suffixes"], { it.string!! }, keyOverride = "suffix", valueKey = "suffix")
-    return LuckPermsSubjectData(defListFromNode(this["permissions"], ConfigurationNode::getBoolean),
+    val options: Set<LuckPermsDefinition<String>> = defListFromNode(this.node("meta"), { it.string!! }, keyPath = "key") +
+            defListFromNode(this.node("prefixes"), { it.string!! }, keyOverride = "prefix", valueKey = "prefix") +
+            defListFromNode(this.node("suffixes"), { it.string!! }, keyOverride = "suffix", valueKey = "suffix")
+    return LuckPermsSubjectData(defListFromNode(this.node("permissions"), ConfigurationNode::getBoolean),
         options,
-        defListFromNode(this["parents"], { Maps.immutableEntry("group", it.string!!) },
+        defListFromNode(this.node("parents"), { immutableMapEntry("group", it.string!!) },
             valueKey = "group", keyOverride = "group"))
 }
 
@@ -425,7 +433,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
     }
 
     override fun getOptions(contexts: Set<ContextValue<*>>?): Map<String, String> {
-        return options.filter { it.contexts.equals(contexts) }.associate { it.key to it.value }
+        return options.filter { it.contexts == contexts }.associate { it.key to it.value }
     }
 
     override fun setOption(contexts: Set<ContextValue<*>>, key: String, value: String?): ImmutableSubjectData {

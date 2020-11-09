@@ -17,11 +17,12 @@
 
 package ca.stellardrift.permissionsex.data;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
@@ -32,17 +33,17 @@ import java.util.function.Consumer;
  * @param <CacheType> The cache value type
  */
 public class CacheListenerHolder<Key, CacheType> {
-    private final ConcurrentMap<Key, Set<Consumer<CacheType>>> listeners = new MapMaker().concurrencyLevel(10).makeMap();
+    private final ConcurrentMap<Key, Set<Consumer<CacheType>>> listeners = new ConcurrentHashMap<>();
 
     private Set<Consumer<CacheType>> getListeners(Key key) {
-        Preconditions.checkNotNull(key, "key");
+        Objects.requireNonNull(key, "key");
 
         return listeners.computeIfAbsent(key, k -> Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).makeMap()));
     }
 
     public void call(Key key, CacheType newData) {
-        Preconditions.checkNotNull(key, "key");
-        Preconditions.checkNotNull(newData, "newData");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(newData, "newData");
 
         for (Consumer<CacheType> listener : getListeners(key)) {
             listener.accept(newData);
@@ -50,15 +51,15 @@ public class CacheListenerHolder<Key, CacheType> {
     }
 
     public void addListener(Key key, Consumer<CacheType> listener) {
-        Preconditions.checkNotNull(key, "key");
-        Preconditions.checkNotNull(listener, "listener");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(listener, "listener");
 
         getListeners(key).add(listener);
     }
 
     public void removeListener(Key key, Consumer<CacheType> listener) {
-        Preconditions.checkNotNull(key, "key");
-        Preconditions.checkNotNull(listener, "listener");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(listener, "listener");
 
         getListeners(key).remove(listener);
     }

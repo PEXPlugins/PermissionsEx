@@ -24,12 +24,16 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.RankLadder
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
+import org.spongepowered.configurate.objectmapping.ConfigSerializable
 
-class LuckPermsSqlDataStore(identifier: String) : AbstractDataStore<LuckPermsSqlDataStore>(identifier, FACTORY) {
+@ConfigSerializable
+class LuckPermsSqlConfig
+
+class LuckPermsSqlDataStore(identifier: String, config: LuckPermsSqlConfig) : AbstractDataStore<LuckPermsSqlDataStore, LuckPermsSqlConfig>(identifier, config, FACTORY) {
 
     companion object {
         @JvmField
-        val FACTORY = Factory("luckperms-sql", LuckPermsSqlDataStore::class.java, ::LuckPermsSqlDataStore)
+        val FACTORY = Factory("luckperms-sql", LuckPermsSqlConfig::class.java, ::LuckPermsSqlDataStore)
     }
 
     override fun setDataInternal(type: String, identifier: String, data: ImmutableSubjectData?): CompletableFuture<ImmutableSubjectData> {

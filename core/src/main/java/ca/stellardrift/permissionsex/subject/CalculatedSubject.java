@@ -28,10 +28,11 @@ import ca.stellardrift.permissionsex.util.CachingValues;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import ninja.leaping.configurate.ConfigurationNode;
+import org.spongepowered.configurate.BasicConfigurationNode;
+import org.spongepowered.configurate.ConfigurationNode;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -59,9 +60,9 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
     private CachingValue<Set<ContextValue<?>>> activeContexts;
 
     CalculatedSubject(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectType type) {
-        this.baker = Preconditions.checkNotNull(baker, "baker");
-        this.identifier = Preconditions.checkNotNull(identifier, "identifier");
-        this.type = Preconditions.checkNotNull(type, "type");
+        this.baker = Objects.requireNonNull(baker, "baker");
+        this.identifier = Objects.requireNonNull(identifier, "identifier");
+        this.type = Objects.requireNonNull(type, "type");
         this.data = Caffeine.newBuilder()
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
@@ -110,7 +111,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      * @return The baked subject data
      */
     private BakedSubjectData getData(Set<ContextValue<?>> contexts) {
-        Preconditions.checkNotNull(contexts, "contexts");
+        Objects.requireNonNull(contexts, "contexts");
         return data.synchronous().get(ImmutableSet.copyOf(contexts));
     }
 
@@ -213,7 +214,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      * @return The permission value. &lt;0 evaluates to false, 0 is undefined, and &gt;0 evaluates to true.
      */
     public int getPermission(Set<ContextValue<?>> contexts, String permission) {
-        int ret = getPermissions(contexts).get(Preconditions.checkNotNull(permission, "permission"));
+        int ret = getPermissions(contexts).get(Objects.requireNonNull(permission, "permission"));
         getManager().getNotifier().onPermissionCheck(getIdentifier(), contexts, permission, ret);
         return ret;
     }
@@ -290,7 +291,7 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      * @return The option, if set
      */
     public Optional<String> getOption(Set<ContextValue<?>> contexts, String option) {
-        String val = getOptions(contexts).get(Preconditions.checkNotNull(option, "option"));
+        String val = getOptions(contexts).get(Objects.requireNonNull(option, "option"));
         getManager().getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
         return Optional.ofNullable(val);
     }
@@ -319,9 +320,9 @@ public class CalculatedSubject implements Consumer<ImmutableSubjectData> {
      * @return The option, if set
      */
     public ConfigurationNode getOptionNode(Set<ContextValue<?>> contexts, String option) {
-        String val = getOptions(contexts).get(Preconditions.checkNotNull(option, "option"));
+        String val = getOptions(contexts).get(Objects.requireNonNull(option, "option"));
         getManager().getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
-        return ConfigurationNode.root().setValue(val);
+        return BasicConfigurationNode.root().raw(val);
     }
 
     /**

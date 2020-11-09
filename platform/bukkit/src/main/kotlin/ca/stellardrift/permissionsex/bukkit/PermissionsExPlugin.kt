@@ -40,9 +40,6 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.sql.DataSource
 import net.kyori.adventure.platform.bukkit.BukkitAudiences
-import ninja.leaping.configurate.objectmapping.Setting
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -54,7 +51,10 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.slf4j.Logger
 import org.slf4j.impl.JDK14LoggerAdapter
-import org.yaml.snakeyaml.DumperOptions
+import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import org.spongepowered.configurate.objectmapping.meta.Comment
+import org.spongepowered.configurate.yaml.NodeStyle
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 
 private val INJECTORS = arrayOf(
     ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
@@ -73,14 +73,9 @@ private val INJECTORS = arrayOf(
 )
 
 @ConfigSerializable
-class BukkitConfiguration {
-    @Setting(
-        value = "fallback-op",
-        comment = "Whether to fall back to checking op status when a permission is unset in PEX"
-    )
-    var fallbackOp = true
-        private set
-}
+data class BukkitConfiguration(
+    @Comment("Whether to fall back to checking op status when a permission is unset in PEX") val fallbackOp: Boolean = true
+)
 
 /**
  * PermissionsEx plugin
@@ -137,10 +132,12 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         this.dataPath = dataFolder.toPath()
         this.logger = createLogger()
         this.adventure = BukkitAudiences.create(this)
-        val configLoader = YAMLConfigurationLoader.builder()
-                .setFile(File(dataFolder, "config.yml"))
-                .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
-                .build()
+        val configLoader = YamlConfigurationLoader.builder()
+            .file(File(dataFolder, "config.yml"))
+            .nodeStyle(NodeStyle.BLOCK)
+            .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
+            .build()
+
         try {
             val impl = BukkitImplementationInterface()
             dataFolder.mkdirs()

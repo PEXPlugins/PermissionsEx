@@ -21,9 +21,9 @@ import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.base.Preconditions;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -35,7 +35,7 @@ import java.util.function.Function;
 public class RankLadderCache {
     private final DataStore dataStore;
     private final AsyncLoadingCache<String, RankLadder> cache;
-    private final Map<String, Consumer<RankLadder>> cacheHolders = new ConcurrentHashMap<String, java.util.function.Consumer<RankLadder>>();
+    private final Map<String, Consumer<RankLadder>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<String, RankLadder> listeners;
 
     public RankLadderCache(final DataStore dataStore) {
@@ -59,7 +59,7 @@ public class RankLadderCache {
 
 
     public CompletableFuture<RankLadder> get(String identifier, Consumer<RankLadder> listener) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         CompletableFuture<RankLadder> ret = cache.get(identifier);
         ret.thenRun(() -> {
@@ -83,12 +83,12 @@ public class RankLadderCache {
     }
 
     public void load(String identifier) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
         cache.synchronous().refresh(identifier);
     }
 
     public void invalidate(String identifier) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         cache.synchronous().invalidate(identifier);
         cacheHolders.remove(identifier);
@@ -96,7 +96,7 @@ public class RankLadderCache {
     }
 
     public CompletableFuture<Boolean> has(String identifier) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         if (cache.synchronous().getIfPresent(identifier) != null) {
             return CompletableFuture.completedFuture(true);
@@ -106,7 +106,7 @@ public class RankLadderCache {
     }
 
     public CompletableFuture<RankLadder> set(String identifier, RankLadder newData) {
-        Preconditions.checkNotNull(identifier, "identifier");
+        Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.setRankLadder(identifier, newData);
     }
@@ -121,8 +121,8 @@ public class RankLadderCache {
     }
 
     public void addListener(String identifier, Consumer<RankLadder> listener) {
-        Preconditions.checkNotNull(identifier, "identifier");
-        Preconditions.checkNotNull(listener, "listener");
+        Objects.requireNonNull(identifier, "identifier");
+        Objects.requireNonNull(listener, "listener");
 
         listeners.addListener(identifier, listener);
     }

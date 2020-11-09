@@ -21,11 +21,11 @@ import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.util.Util;
 import com.google.common.collect.*;
-import ninja.leaping.configurate.objectmapping.ObjectMapper;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.objectmapping.Setting;
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.ObjectMapper;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.*;
 
@@ -36,8 +36,8 @@ public class MemorySubjectData implements ImmutableSubjectData {
     protected static final ObjectMapper<DataEntry> MAPPER;
     static {
         try {
-            MAPPER = ObjectMapper.forClass(DataEntry.class);
-        } catch (ObjectMappingException e) {
+            MAPPER = ObjectMapper.factory().get(DataEntry.class);
+        } catch (SerializationException e) {
             throw new ExceptionInInitializerError(e); // This debug indicates a programming issue
         }
     }
@@ -45,7 +45,8 @@ public class MemorySubjectData implements ImmutableSubjectData {
     @ConfigSerializable
     protected static class DataEntry {
         @Nullable @Setting private Map<String, Integer> permissions;
-        @Nullable @Setting private Map<String, String> options;
+        @Nullable @Setting
+        private Map<String, String> options;
         @Nullable @Setting private List<String> parents;
         @Nullable @Setting("permissions-default") private Integer defaultValue;
 

@@ -17,21 +17,20 @@
 
 @file:JvmName("Utilities")
 package ca.stellardrift.permissionsex.util
+
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import com.google.common.reflect.TypeToken
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import net.kyori.adventure.text.Component
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection
-import ninja.leaping.configurate.reactive.Publisher
-import ninja.leaping.configurate.reactive.Subscriber
+import org.spongepowered.configurate.BasicConfigurationNode
+import org.spongepowered.configurate.reactive.Publisher
+import org.spongepowered.configurate.reactive.Subscriber
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
 
 inline fun <reified T : Any> Optional<*>.castMap(operation: T.() -> Unit) {
     (this.orElse(null) as? T)?.apply(operation)
@@ -53,8 +52,7 @@ inline fun <reified T : Any> Optional<*>.cast(): Optional<T> {
 
 inline fun <reified T> CalculatedSubject.option(key: String): T? {
     val ret = getOption(key).orElse(null)
-    val type = TypeToken.of(T::class.java)
-    return TypeSerializerCollection.defaults().get<T>()?.deserialize(type, ConfigurationNode.root().setValue(ret))
+    return TypeSerializerCollection.defaults().get(T::class.java)?.deserialize(T::class.java, BasicConfigurationNode.root().raw(ret))
 }
 
 fun CompletableFuture<*>.thenMessageSubject(

@@ -68,7 +68,6 @@ dependencies {
     }
 
     implementation(configurate("yaml")) {
-        exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
     implementation(adventure("platform-bukkit", Versions.TEXT_ADAPTER)) {
@@ -92,7 +91,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
     listOf(
-        "ninja.leaping.configurate",
+        "org.spongepowered.configurate",
         "com.zaxxer.hikari",
         "com.github.benmanes.caffeine",
         "com.google.errorprone",

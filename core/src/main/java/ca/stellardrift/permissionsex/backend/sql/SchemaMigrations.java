@@ -29,6 +29,7 @@ import ca.stellardrift.permissionsex.util.GuavaCollectors;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -114,7 +115,7 @@ public class SchemaMigrations {
                                     }
                                 }
                                 currentWorld = worldChecked;
-                                currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(new ContextValue<String>("world", currentWorld)));
+                                currentSeg = Segment.unallocated(currentWorld == null ? Collections.emptySet() : Collections.singleton(new ContextValue<String>("world", currentWorld)));
                                 dao.allocateSegment(ref, currentSeg);
                                 worldSegments.put(currentWorld, currentSeg);
                             }
@@ -209,7 +210,7 @@ public class SchemaMigrations {
                                 }
                             }
                             if (seg == null) {
-                                seg = Segment.unallocated(ent.getKey() == null ? ImmutableSet.of() : ImmutableSet.of(new ContextValue<String>("world", ent.getKey())));
+                                seg = Segment.unallocated(ent.getKey() == null ? Collections.emptySet() : Collections.singleton(new ContextValue<String>("world", ent.getKey())));
                                 dao.allocateSegment(defaultSubj, seg);
                                 segments.add(seg);
                             }
@@ -232,7 +233,7 @@ public class SchemaMigrations {
                                 currentWorld = inheritance.getString(3);
                                 currentSeg = worldSegments.get(currentWorld);
                                 if (currentSeg == null) {
-                                    currentSeg = Segment.unallocated(currentWorld == null ? ImmutableSet.of() : ImmutableSet.of(new ContextValue<String>("world", currentWorld)));
+                                    currentSeg = Segment.unallocated(currentWorld == null ? Collections.emptySet() : Collections.singleton(new ContextValue<String>("world", currentWorld)));
                                     dao.allocateSegment(ref, currentSeg);
                                     worldSegments.put(currentWorld, currentSeg);
                                 }

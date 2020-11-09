@@ -18,6 +18,8 @@
 package ca.stellardrift.permissionsex.rank;
 
 import com.google.common.collect.ImmutableList;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
+
 import java.util.List;
 
 import static java.util.Map.Entry;

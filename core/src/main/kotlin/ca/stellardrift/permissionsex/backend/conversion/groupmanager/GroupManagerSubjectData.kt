@@ -21,11 +21,10 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.ConversionUtils
 import ca.stellardrift.permissionsex.backend.conversion.ReadOnlySubjectData
 import ca.stellardrift.permissionsex.context.ContextValue
-import com.google.common.collect.ImmutableSet
-import com.google.common.collect.Maps
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.objectmapping.ObjectMappingException
+import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.kotlin.extensions.get
+import org.spongepowered.configurate.serialize.SerializationException
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 class GroupManagerSubjectData(
     private val identifier: String,
@@ -46,7 +45,7 @@ class GroupManagerSubjectData(
 
         if (rootNode != null) {
             val ret = this.type.getNodeForSubject(rootNode, this.identifier)
-            if (ret != null && !ret.isVirtual) {
+            if (ret != null && !ret.virtual()) {
                 return ret
             }
         }
@@ -62,8 +61,8 @@ class GroupManagerSubjectData(
     override fun getOptions(contexts: Set<ContextValue<*>>): Map<String, String> {
         val specificNode = getNodeForContexts(contexts) ?: return emptyMap()
         return try {
-            specificNode["info"].get<Map<String, String>>(emptyMap())
-        } catch (e: ObjectMappingException) {
+            specificNode.node("info").get<Map<String, String>>(emptyMap())
+        } catch (e: SerializationException) {
             emptyMap()
         }
     }
@@ -76,7 +75,7 @@ class GroupManagerSubjectData(
     override fun getPermissions(contexts: Set<ContextValue<*>>): Map<String, Int> {
         val specificNode = getNodeForContexts(contexts) ?: return emptyMap()
         val ret = hashMapOf<String, Int>()
-        for (node in specificNode["permissions"].childrenList) {
+        for (node in specificNode.node("permissions").childrenList()) {
             var perm: String = node.string ?: continue
             if (perm == "*") {
                 continue
@@ -102,22 +101,22 @@ class GroupManagerSubjectData(
         val specificNode = getNodeForContexts(contexts) ?: return emptyList()
 
         return try {
-            specificNode[this.type.inheritanceKey].get<List<String>>(emptyList())
+            specificNode.node(this.type.inheritanceKey).getList(String::class.java, emptyList())
                 .map {
                     var name = it
                     if (name.startsWith("g:")) {
                         name = name.substring(2)
                     }
-                    Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, name)
+                    immutableMapEntry(PermissionsEx.SUBJECTS_GROUP, name)
                 }
-        } catch (e: ObjectMappingException) {
+        } catch (e: SerializationException) {
             emptyList()
         }
     }
 
     override fun getDefaultValue(contexts: Set<ContextValue<*>>): Int {
         val specificNode = getNodeForContexts(contexts) ?: return 0
-        val values = specificNode["permissions"].getList { it }
+        val values = specificNode.node("permissions").getList(String::class.java, emptyList())
         if ("*" in values) {
             return 1
         } else if ("-*" in values) {
@@ -128,7 +127,7 @@ class GroupManagerSubjectData(
     }
 
     override fun getActiveContexts(): Set<Set<ContextValue<*>>> {
-        val activeContextsBuilder = ImmutableSet.builder<Set<ContextValue<*>>>()
+        val activeContextsBuilder = mutableSetOf<Set<ContextValue<*>>>()
         if (getNodeForContexts(PermissionsEx.GLOBAL_CONTEXT) != null) {
             activeContextsBuilder.add(PermissionsEx.GLOBAL_CONTEXT)
         }
@@ -140,7 +139,7 @@ class GroupManagerSubjectData(
             }
         }
 
-        return activeContextsBuilder.build()
+        return activeContextsBuilder
     }
 
     override fun getAllDefaultValues(): Map<Set<ContextValue<*>>, Int> {

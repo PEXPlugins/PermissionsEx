@@ -51,8 +51,8 @@ import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.WorldSavePath
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.LoggerFactory
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 
 class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
@@ -112,7 +112,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         Files.createDirectories(dataDir)
 
         val loader = HoconConfigurationLoader.builder()
-            .setPath(dataDir.resolve("$MOD_ID.conf"))
+            .path(dataDir.resolve("$MOD_ID.conf"))
+            .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
             .build()
 
         try {

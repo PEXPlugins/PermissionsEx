@@ -21,10 +21,6 @@ import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.backend.sql.dao.H2SqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.MySqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.SchemaMigration;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import ninja.leaping.configurate.objectmapping.Setting;
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.backend.DataStore;
@@ -34,12 +30,18 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
-import ninja.leaping.configurate.util.CheckedFunction;
+import com.google.common.collect.ImmutableMap;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.spongepowered.configurate.util.CheckedFunction;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,24 +56,40 @@ import java.util.regex.Pattern;
 import static ca.stellardrift.permissionsex.backend.sql.SchemaMigrations.VERSION_LATEST;
 
 /**
- * DataSource for SQL data
+ * DataSource for SQL data.
  */
-public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
-    public static final Factory<SqlDataStore> FACTORY = new Factory<>("sql", SqlDataStore.class, SqlDataStore::new);
+public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataStore.Config> {
+    public static final Factory<SqlDataStore, Config> FACTORY = new Factory<>("sql", Config.class, SqlDataStore::new);
     private static final Pattern BRACES_PATTERN = Pattern.compile("\\{\\}");
     private boolean autoInitialize = true;
 
-    protected SqlDataStore(String identifier) {
-        super(identifier, FACTORY);
+    SqlDataStore(final String identifier, final Config config) {
+        super(identifier, config, FACTORY);
     }
 
-    @Setting("url")
-    private String connectionUrl;
-    @Setting("prefix")
-    private String prefix = "pex";
-    private String realPrefix;
-    @Setting("aliases")
-    private Map<String, String> legacyAliases;
+    @ConfigSerializable
+    static class Config {
+        @Setting("url")
+        private String connectionUrl;
+        @Setting("prefix")
+        private String prefix = "pex";
+        private transient String realPrefix;
+        @Setting("aliases")
+        private Map<String, String> legacyAliases;
+
+        String prefix() {
+            if (this.realPrefix == null) {
+                if (this.prefix != null && !this.prefix.isEmpty() && !this.prefix.endsWith("_")) {
+                    this.realPrefix = this.prefix + "_";
+                } else if (this.prefix == null) {
+                    this.realPrefix = "";
+                } else {
+                    this.realPrefix = this.prefix;
+                }
+            }
+            return this.realPrefix;
+        }
+    }
 
     private final ConcurrentMap<String, String> queryPrefixCache = new ConcurrentHashMap<>();
     private final ThreadLocal<SqlDao> heldDao = new ThreadLocal<>();
@@ -90,14 +108,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
     @Override
     protected boolean initializeInternal() throws PermissionsLoadingException {
         try {
-            sql = getManager().getDataSourceForURL(connectionUrl);
-            if (this.prefix != null && !this.prefix.isEmpty() && !this.prefix.endsWith("_")) {
-                this.realPrefix = this.prefix + "_";
-            } else if (this.prefix == null) {
-                this.realPrefix = "";
-            } else {
-                this.realPrefix = this.prefix;
-            }
+            sql = getManager().getDataSourceForURL(config().connectionUrl);
 
             // Provide database-implementation specific DAO
             try (Connection conn = sql.getConnection()) {
@@ -159,7 +170,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
     }
 
     public void setConnectionUrl(String connectionUrl) {
-        this.connectionUrl = connectionUrl;
+        config().connectionUrl = connectionUrl;
     }
 
     DataSource getDataSource() {
@@ -171,17 +182,17 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
     }
 
     public String getTableName(String raw, boolean legacyOnly) {
-        if (this.legacyAliases != null && this.legacyAliases.containsKey(raw)) {
-            return this.legacyAliases.get(raw);
+        if (config().legacyAliases != null && config().legacyAliases.containsKey(raw)) {
+            return config().legacyAliases.get(raw);
         } else if (legacyOnly) {
             return raw;
         } else {
-            return this.realPrefix + raw;
+            return config().prefix() + raw;
         }
     }
 
     String insertPrefix(String query) {
-        return queryPrefixCache.computeIfAbsent(query, qu -> BRACES_PATTERN.matcher(qu).replaceAll(this.realPrefix));
+        return queryPrefixCache.computeIfAbsent(query, qu -> BRACES_PATTERN.matcher(qu).replaceAll(config().prefix()));
     }
 
     @Override
@@ -250,7 +261,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
         try (SqlDao dao = getDao()) {
             return dao.getAllIdentifiers(type);
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Collections.emptySet();
         }
     }
 
@@ -259,7 +270,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
         try (SqlDao dao = getDao()) {
             return dao.getRegisteredTypes();
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Collections.emptySet();
         }
 
     }
@@ -276,13 +287,13 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
     @Override
     public Iterable<Entry<Entry<String, String>, ImmutableSubjectData>> getAll() {
         try (SqlDao dao = getDao()) {
-            ImmutableSet.Builder<Entry<Entry<String, String>, ImmutableSubjectData>> builder = ImmutableSet.builder();
+            Set<Entry<Entry<String, String>, ImmutableSubjectData>> builder = new HashSet<>();
             for (SubjectRef ref : dao.getAllSubjectRefs()) {
-                builder.add(Maps.immutableEntry(ref, getDataForRef(dao, ref)));
+                builder.add(UnmodifiableCollections.immutableMapEntry(ref, getDataForRef(dao, ref)));
             }
-            return builder.build();
+            return Collections.unmodifiableSet(builder);
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Collections.emptySet();
         }
     }
 
@@ -310,7 +321,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
         try (SqlDao dao = getDao()) {
             return dao.getAllRankLadderNames();
         } catch (SQLException e) {
-            return ImmutableSet.of();
+            return Collections.emptySet();
         }
     }
 
@@ -363,7 +374,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
         } finally {
             if (dao != null) {
                 if (--dao.holdOpen == 0) {
-                    heldDao.set(null);
+                    this.heldDao.remove();
                 }
                 try {
                     dao.close();
@@ -379,7 +390,8 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore> {
     }
 
     public void setPrefix(String prefix) {
-        this.prefix = prefix;
+        config().prefix = prefix;
+        config().realPrefix = null;
     }
 
     public void setAutoInitialize(boolean autoInitialize) {

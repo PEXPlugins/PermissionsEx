@@ -20,8 +20,6 @@ package ca.stellardrift.permissionsex.commands.parse
 import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.TranslatableProvider
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.Multimap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.TranslatableComponent
@@ -31,7 +29,7 @@ import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer
  * Context that a command is executed in
  */
 class CommandContext(val spec: CommandSpec, val rawInput: String) {
-    private val parsedArgs: Multimap<String, Any> = ArrayListMultimap.create()
+    private val parsedArgs: MutableMap<String, MutableList<Any>> = mutableMapOf()
 
     fun <T> getAll(key: Component): Collection<T> {
         return getAll(key.toContextKey())
@@ -53,7 +51,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     @Suppress("UNCHECKED_CAST")
     fun <T> getOne(key: String): T? {
         val values = parsedArgs[key]
-        return if (values.size != 1) {
+        return if (values == null || values.size != 1) {
             null
         } else {
             values.iterator().next() as T
@@ -61,7 +59,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     }
 
     operator fun <T> get(arg: ValueElement<T>): T {
-        return parsedArgs[arg.key.toContextKey()].iterator().next() as T
+        return parsedArgs[arg.key.toContextKey()]!!.iterator().next() as T
     }
 
     fun <T> getOne(key: TranslatableProvider): T? {
@@ -71,7 +69,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     fun putArg(key: Component, value: Any) = putArg(key.toContextKey(), value)
 
     fun putArg(key: String, value: Any) {
-        parsedArgs.put(key, value)
+        parsedArgs.computeIfAbsent(key) { mutableListOf() }.add(value)
     }
 
     @Throws(CommandException::class)

@@ -20,10 +20,10 @@ package ca.stellardrift.permissionsex.backend.memory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import ninja.leaping.configurate.objectmapping.Setting;
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +50,7 @@ public class MemoryContextInheritance implements ContextInheritance {
     public List<ContextValue<?>> getParents(ContextValue<?> context) {
         final List<String> inheritance = contextInheritance.get(ctxToString(context));
         if (inheritance == null) {
-            return ImmutableList.of();
+            return Collections.emptyList();
         }
 
         return Collections.unmodifiableList(Lists.transform(inheritance, MemoryContextInheritance::ctxFromString));

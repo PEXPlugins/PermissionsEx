@@ -31,29 +31,29 @@ import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import com.google.common.collect.Maps.immutableEntry
-import com.google.common.reflect.TypeToken
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import net.kyori.adventure.text.Component
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.gson.GsonConfigurationLoader
-import ninja.leaping.configurate.objectmapping.Setting
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
-import ninja.leaping.configurate.reference.ConfigurationReference
-import ninja.leaping.configurate.reference.WatchServiceListener
+import org.spongepowered.configurate.BasicConfigurationNode
+import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.gson.GsonConfigurationLoader
+import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import org.spongepowered.configurate.objectmapping.meta.Setting
+import org.spongepowered.configurate.reference.ConfigurationReference
+import org.spongepowered.configurate.reference.WatchServiceListener
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 /**
  * An extremely rudimentary data store that allows importing data from a server ops list
  *
  */
-class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identifier, FACTORY) {
+class OpsDataStore(identifier: String, config: Config) : ReadOnlyDataStore<OpsDataStore, OpsDataStore.Config>(identifier, config, FACTORY) {
     companion object : ConversionProvider {
         @JvmField
-        val FACTORY = Factory("ops", OpsDataStore::class.java, ::OpsDataStore)
+        val FACTORY = Factory("ops", Config::class.java, ::OpsDataStore)
         override val name: Component = OPS_NAME()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
@@ -70,21 +70,21 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
         }
     }
 
-    @Setting("file-name")
-    var fileName: String = "ops.json"
+    @ConfigSerializable
+    data class Config(var fileName: String = "ops.json")
 
     private lateinit var file: Path
     private lateinit var configListener: WatchServiceListener
-    private lateinit var opsListNode: ConfigurationReference<ConfigurationNode>
+    private lateinit var opsListNode: ConfigurationReference<BasicConfigurationNode>
     private var opsList = listOf<OpsListEntry>()
 
-    constructor(identifier: String, opsFile: Path) : this(identifier) {
+    constructor(identifier: String, opsFile: Path) : this(identifier, Config(opsFile.fileName.toString())) {
         this.file = opsFile
     }
 
     override fun initializeInternal(): Boolean {
         if (!this::file.isInitialized) {
-            file = manager.getBaseDirectory(BaseDirectoryScope.SERVER).resolve(fileName)
+            file = manager.getBaseDirectory(BaseDirectoryScope.SERVER).resolve(config().fileName)
         }
 
         if (!Files.exists(file)) {
@@ -92,22 +92,22 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
         }
 
         this.configListener = WatchServiceListener.builder()
-            .setTaskExecutor(manager.asyncExecutor)
+            .taskExecutor(manager.asyncExecutor)
             .build()
         this.opsListNode = configListener.listenToConfiguration({ GsonConfigurationLoader.builder()
-            .setLenient(true)
-            .setPath(it)
+            .lenient(true)
+            .path(it)
             .build() }, file)
         this.opsListNode.updates().subscribe {
             reload(it)
         }
 
-        reload(opsListNode.node, false)
+        reload(opsListNode.node(), false)
         return true
     }
 
     private fun reload(node: ConfigurationNode, notify: Boolean = true) {
-        this.opsList = node.getList(TypeToken.of(OpsListEntry::class.java), listOf())
+        this.opsList = node.getList(OpsListEntry::class.java, listOf())
         if (notify) {
             manager.getSubjects(SUBJECTS_USER).update(this)
         }
@@ -123,7 +123,7 @@ class OpsDataStore(identifier: String) : ReadOnlyDataStore<OpsDataStore>(identif
 
     override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
         return opsList.map {
-            immutableEntry(immutableEntry(SUBJECTS_USER, it.uuid.toString()), it)
+            immutableMapEntry(immutableMapEntry(SUBJECTS_USER, it.uuid.toString()), it)
         }
     }
 
@@ -179,8 +179,12 @@ private class BlankSubjectData : MemorySubjectData()
 private class BlankContextInheritance : MemoryContextInheritance()
 
 @ConfigSerializable
-internal data class OpsListEntry(@Setting val uuid: UUID, @Setting val name: String, @Setting val level: Int, @Setting val bypassesPlayerLimit: Boolean) : OpsListSubjectData() {
-    constructor() : this(UUID.randomUUID(), "unset", 4, false)
+internal data class OpsListEntry(
+    val uuid: UUID = UUID.randomUUID(),
+    val name: String = "unset",
+    val level: Int = 4,
+    @Setting("bypassesPlayerLimit") val bypassesPlayerLimit: Boolean = false
+) : OpsListSubjectData() {
 
     override fun getDefaultValue(contexts: Set<ContextValue<*>>): Int {
         return if (filterContexts(contexts) && level == 4) {
@@ -192,7 +196,7 @@ internal data class OpsListEntry(@Setting val uuid: UUID, @Setting val name: Str
 
     override fun getParents(contexts: Set<ContextValue<*>>): List<Map.Entry<String, String>> {
         return if (level > 0 && filterContexts(contexts)) {
-            listOf(immutableEntry(SUBJECTS_GROUP, "op$level"))
+            listOf(immutableMapEntry(SUBJECTS_GROUP, "op$level"))
         } else {
             listOf()
         }

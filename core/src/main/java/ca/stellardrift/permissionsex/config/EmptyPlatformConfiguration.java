@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.config;
 
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 /**
  * A dummy object that provides an empty platform configuration for implementations of PermissionsEx with no platform-specific options

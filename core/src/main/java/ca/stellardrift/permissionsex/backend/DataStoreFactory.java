@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.backend;
 
-import ninja.leaping.configurate.ConfigurationNode;
+import org.spongepowered.configurate.ConfigurationNode;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 
 public interface DataStoreFactory {

@@ -47,7 +47,7 @@ public class DataStoreFactories {
     private DataStoreFactories() {
     }
 
-    private static void register(AbstractDataStore.Factory<?> factory) {
+    private static void register(AbstractDataStore.Factory<?, ?> factory) {
         register(factory.getType(), factory);
     }
 

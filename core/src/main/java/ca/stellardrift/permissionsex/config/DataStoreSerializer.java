@@ -20,35 +20,35 @@ package ca.stellardrift.permissionsex.config;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import ca.stellardrift.permissionsex.backend.DataStoreFactories;
 import ca.stellardrift.permissionsex.backend.DataStoreFactory;
-import com.google.common.reflect.TypeToken;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.serialize.TypeSerializer;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 
+import java.lang.reflect.Type;
 import java.util.Optional;
 
 public class DataStoreSerializer implements TypeSerializer<DataStore> {
     @Override
-    public DataStore deserialize(TypeToken<?> type, ConfigurationNode value) throws ObjectMappingException {
-        String dataStoreType = value.getNode("type").getString(value.getKey().toString());
+    public DataStore deserialize(Type type, ConfigurationNode value) throws SerializationException {
+        String dataStoreType = value.node("type").getString(value.key().toString());
         Optional<DataStoreFactory> factory = DataStoreFactories.get(dataStoreType);
         if (!factory.isPresent()) {
-            throw new ObjectMappingException("Unknown DataStore type " + dataStoreType);
+            throw new SerializationException("Unknown DataStore type " + dataStoreType);
         }
         try {
-            return factory.get().createDataStore(value.getKey().toString(), value);
+            return factory.get().createDataStore(value.key().toString(), value);
         } catch (PermissionsLoadingException e) {
-            throw new ObjectMappingException(e);
+            throw new SerializationException(e);
         }
     }
 
     @Override
-    public void serialize(TypeToken<?> type, DataStore obj, ConfigurationNode value) throws ObjectMappingException {
+    public void serialize(Type type, DataStore obj, ConfigurationNode value) throws SerializationException {
         try {
-            value.getNode("type").setValue(obj.serialize(value));
+            value.node("type").set(obj.serialize(value));
         } catch (PermissionsLoadingException e) {
-            throw new ObjectMappingException(e);
+            throw new SerializationException(e);
         }
 
     }

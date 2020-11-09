@@ -30,6 +30,7 @@ subprojects {
     apply(plugin="ca.stellardrift.opinionated.publish")
 
     repositories {
+        mavenLocal()
         mavenCentral()
         sonatypeOss()
         jcenter()

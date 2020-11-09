@@ -18,7 +18,7 @@
 @file:JvmName("ProxyCommon")
 package ca.stellardrift.permissionsex.proxycommon
 
-import com.google.common.collect.Maps
+import org.spongepowered.configurate.util.UnmodifiableCollections
 
 const val SUBJECTS_SYSTEM: String = "system"
-val IDENT_SERVER_CONSOLE = Maps.immutableEntry(SUBJECTS_SYSTEM, "Server")
+val IDENT_SERVER_CONSOLE = UnmodifiableCollections.immutableMapEntry(SUBJECTS_SYSTEM, "Server")

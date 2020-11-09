@@ -21,8 +21,8 @@ import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.backend.DataStore;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.collect.Maps;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +52,7 @@ public class SubjectCache {
     public SubjectCache(final String type, final DataStore dataStore) {
         this.type = type;
         update(dataStore);
-        this.defaultIdentifier = Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, type);
+        this.defaultIdentifier = UnmodifiableCollections.immutableMapEntry(PermissionsEx.SUBJECTS_DEFAULTS, type);
         this.listeners = new CacheListenerHolder<>();
     }
 

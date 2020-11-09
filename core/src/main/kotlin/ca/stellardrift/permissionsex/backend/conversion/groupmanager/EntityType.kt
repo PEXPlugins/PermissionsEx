@@ -17,8 +17,7 @@
 
 package ca.stellardrift.permissionsex.backend.conversion.groupmanager
 
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.kotlin.get
+import org.spongepowered.configurate.ConfigurationNode
 
 enum class EntityType {
     USER {
@@ -32,7 +31,7 @@ enum class EntityType {
             return worldPair.user
         }
 
-        override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode = root[name]
+        override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode = root.node(name)
     },
     GROUP {
         override fun getGlobalNode(dataStore: GroupManagerDataStore): ConfigurationNode = dataStore.globalGroups
@@ -43,10 +42,10 @@ enum class EntityType {
         }
 
         override fun getNodeForSubject(root: ConfigurationNode, name: String): ConfigurationNode {
-            val ret = root[name]
-            if (ret.isVirtual) {
-                val global = root["g:$name"]
-                if (!global.isVirtual) {
+            val ret = root.node(name)
+            if (ret.virtual()) {
+                val global = root.node("g:$name")
+                if (!global.virtual()) {
                     return global
                 }
             }

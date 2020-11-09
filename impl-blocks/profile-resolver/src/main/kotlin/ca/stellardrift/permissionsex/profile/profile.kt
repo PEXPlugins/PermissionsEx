@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.profile
 
 import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.Util
-import com.google.common.collect.Iterables
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
@@ -33,7 +32,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
-import java.util.stream.StreamSupport
 
 internal data class MinecraftProfileImpl(override val name: String, @SerializedName("id") override val uuid: UUID) : MinecraftProfile
 
@@ -55,11 +53,10 @@ private val gson: Gson = GsonBuilder().apply {
 
 fun lookupMinecraftProfilesByName(names: Iterable<String>, action: (MinecraftProfile) -> CompletableFuture<Void>): CompletableFuture<Int> {
     try {
+        var idx = 0
         var count = 0
-        return CompletableFuture.allOf(*StreamSupport.stream(
-            Iterables.partition(names, MAX_REQUEST_SIZE).spliterator(),
-            true
-        )
+        return CompletableFuture.allOf(*
+            names.groupBy { idx++ % MAX_REQUEST_SIZE }.values.parallelStream()
             .map {
                 val conn = PROFILE_QUERY_URL.openConnection()
                 check(conn is HttpURLConnection) { "Profile connection should be a HttpURLConnection but isn't" }

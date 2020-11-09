@@ -91,7 +91,7 @@ abstract class ReadOnlySubjectData : ImmutableSubjectData {
 /**
  * A specialization of AbstractDataStore that handles backends for a global data store
  */
-abstract class ReadOnlyDataStore<T : ReadOnlyDataStore<T>> protected constructor(identifier: String, factory: Factory<T>) : AbstractDataStore<T>(identifier, factory) {
+abstract class ReadOnlyDataStore<T : ReadOnlyDataStore<T, C>, C> protected constructor(identifier: String, config: C, factory: Factory<T, C>) : AbstractDataStore<T, C>(identifier, config, factory) {
 
     override fun setDataInternal(
         type: String,

@@ -31,19 +31,19 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
-import com.google.common.collect.Maps
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.objectmapping.Setting
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
-import org.yaml.snakeyaml.DumperOptions
+import org.spongepowered.configurate.CommentedConfigurationNode
+import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.loader.ConfigurationLoader
+import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
+import org.spongepowered.configurate.yaml.NodeStyle
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 
 /**
  * A pair of nodes representing a users and groups permissions file for a given world, resolved to the top-level `users`\`groups` key.
@@ -53,10 +53,10 @@ data class UserGroupPair(val user: ConfigurationNode, val group: ConfigurationNo
 /**
  * Backend implementing GroupManager data storage format
  */
-class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyDataStore<GroupManagerDataStore>(identifier, FACTORY) {
+class GroupManagerDataStore internal constructor(identifier: String, config: Config) : ReadOnlyDataStore<GroupManagerDataStore, GroupManagerDataStore.Config>(identifier, config, FACTORY) {
 
-    @Setting("group-manager-root")
-    private val groupManagerRoot = "plugins/GroupManager"
+    @ConfigSerializable
+    data class Config(val groupManagerRoot: Path = Paths.get("plugins/GroupManager"))
 
     private lateinit var config: ConfigurationNode
     internal lateinit var globalGroups: ConfigurationNode
@@ -67,10 +67,10 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     val knownWorlds: Collection<String>
         get() = this.worldUserGroups.keys
 
-    private fun getLoader(file: Path): ConfigurationLoader<ConfigurationNode> {
-        return YAMLConfigurationLoader.builder()
-            .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
-            .setPath(file)
+    private fun getLoader(file: Path): ConfigurationLoader<CommentedConfigurationNode> {
+        return YamlConfigurationLoader.builder()
+            .nodeStyle(NodeStyle.BLOCK)
+            .path(file)
             .build()
     }
 
@@ -80,13 +80,13 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
 
     @Throws(PermissionsLoadingException::class)
     override fun initializeInternal(): Boolean {
-        val rootFile = Paths.get(groupManagerRoot)
+        val rootFile = config().groupManagerRoot
         if (!Files.isDirectory(rootFile)) {
             throw PermissionsLoadingException(GROUPMANAGER_ERROR_NO_DIR(rootFile))
         }
         try {
             config = getLoader(rootFile.resolve("config.yml")).load()
-            globalGroups = getLoader(rootFile.resolve("globalgroups.yml")).load()["groups"]
+            globalGroups = getLoader(rootFile.resolve("globalgroups.yml")).load().node("groups")
             worldUserGroups = hashMapOf()
             Files.list(rootFile.resolve("worlds"))
                 .forEach { world ->
@@ -94,11 +94,11 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
                         return@forEach
                     }
                     worldUserGroups[world.fileName.toString()] = UserGroupPair(
-                        getLoader(world.resolve("users.yml")).load()["users"],
-                        getLoader(world.resolve("groups.yml")).load()["groups"]
+                        getLoader(world.resolve("users.yml")).load().node("users"),
+                        getLoader(world.resolve("groups.yml")).load().node("groups")
                     )
                 }
-            contextInheritance = GroupManagerContextInheritance(config["settings", "mirrors"])
+            contextInheritance = GroupManagerContextInheritance(config.node("settings", "mirrors"))
         } catch (e: IOException) {
             throw PermissionsLoadingException(e)
         }
@@ -125,16 +125,16 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     override fun isRegistered(type: String, identifier: String): CompletableFuture<Boolean> {
         if (type == SUBJECTS_USER) {
             for ((_, value) in this.worldUserGroups) {
-                if (!value.user[identifier].isVirtual) {
+                if (!value.user.node(identifier).virtual()) {
                     return completedFuture(true)
                 }
             }
         } else if (type == SUBJECTS_GROUP) {
-            if (!globalGroups["g:$identifier"].isVirtual) {
+            if (!globalGroups.node("g:$identifier").virtual()) {
                 return completedFuture(true)
             }
             for ((_, value) in this.worldUserGroups) {
-                if (!value.group[identifier].isVirtual) {
+                if (!value.group.node(identifier).virtual()) {
                     return completedFuture(true)
                 }
             }
@@ -145,11 +145,11 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     override fun getAllIdentifiers(type: String): Set<String> {
         when (type) {
             SUBJECTS_USER -> return this.worldUserGroups.values
-                .flatMap { it.user.childrenMap.keys }
+                .flatMap { it.user.childrenMap().keys }
                 .map(Any::toString)
                 .toSet()
             SUBJECTS_GROUP -> return (this.worldUserGroups.values
-                .flatMap { it.group.childrenMap.keys } + this.globalGroups.childrenMap.keys)
+                .flatMap { it.group.childrenMap().keys } + this.globalGroups.childrenMap().keys)
                 .map {
                     if (it is String && it.startsWith("g:")) {
                         it.substring(2)
@@ -171,9 +171,9 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
     }
 
     override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
-        return (getAllIdentifiers(SUBJECTS_USER).map { Maps.immutableEntry(SUBJECTS_USER, it) } +
-                getAllIdentifiers(SUBJECTS_GROUP).map { Maps.immutableEntry(SUBJECTS_GROUP, it) })
-            .map { Maps.immutableEntry(it, getDataGM(it.key, it.value)) }
+        return (getAllIdentifiers(SUBJECTS_USER).map { immutableMapEntry(SUBJECTS_USER, it) } +
+                getAllIdentifiers(SUBJECTS_GROUP).map { immutableMapEntry(SUBJECTS_GROUP, it) })
+            .map { immutableMapEntry(it, getDataGM(it.key, it.value)) }
     }
 
     override fun getAllRankLadders(): Iterable<String> {
@@ -186,13 +186,13 @@ class GroupManagerDataStore internal constructor(identifier: String) : ReadOnlyD
 
     companion object : ConversionProvider {
         @JvmField
-        val FACTORY = Factory("groupmanager", GroupManagerDataStore::class.java, ::GroupManagerDataStore)
+        val FACTORY = Factory("groupmanager", Config::class.java, ::GroupManagerDataStore)
         override val name = GROUPMANAGER_NAME()
 
         override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
             val gmBaseDir = pex.baseDirectory.parent.resolve("GroupManager")
             return if (Files.exists(gmBaseDir.resolve("config.yml"))) { // we exist
-                listOf(ConversionResult(GroupManagerDataStore("gm-file"), GROUPMANAGER_DESCRIPTION()))
+                listOf(ConversionResult(GroupManagerDataStore("gm-file", Config()), GROUPMANAGER_DESCRIPTION()))
             } else {
                 emptyList()
             }

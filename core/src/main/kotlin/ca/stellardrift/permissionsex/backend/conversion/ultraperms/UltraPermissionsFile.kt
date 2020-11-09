@@ -28,15 +28,15 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Base64
-import java.util.concurrent.Callable
-import ninja.leaping.configurate.ConfigurationNode
-import ninja.leaping.configurate.gson.GsonConfigurationLoader
-import ninja.leaping.configurate.kotlin.get
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
+import org.spongepowered.configurate.BasicConfigurationNode
+import org.spongepowered.configurate.CommentedConfigurationNode
+import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.gson.GsonConfigurationLoader
+import org.spongepowered.configurate.loader.ConfigurationLoader
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 
 class UltraPermissionsFile(val path: Path) {
-    val loader: ConfigurationLoader<ConfigurationNode> = YAMLConfigurationLoader.builder().setPath(path).build()
+    val loader: ConfigurationLoader<CommentedConfigurationNode> = YamlConfigurationLoader.builder().path(path).build()
 
     var node: ConfigurationNode = loader.load()
 
@@ -57,34 +57,34 @@ class UltraPermissionsFile(val path: Path) {
             Base64.getDecoder().decode(this)
         } ?: return this
 
-        val jsonLoader = GsonConfigurationLoader.builder().apply {
-            source = Callable { BufferedReader(InputStreamReader(ByteArrayInputStream(value), StandardCharsets.UTF_8)) }
+        val jsonLoader = GsonConfigurationLoader.builder().defaultOptions(options()).apply {
+            source { BufferedReader(InputStreamReader(ByteArrayInputStream(value), StandardCharsets.UTF_8)) }
         }.build()
         return try {
             jsonLoader.load()
         } catch (e: IOException) {
-            println("Failed to deserialize entry $key: ${e.message}")
+            println("Failed to deserialize entry ${key()}: ${e.message}")
             e.printStackTrace()
-            ConfigurationNode.root().setValue(String(value, StandardCharsets.UTF_8))
+            BasicConfigurationNode.root(options()).raw(String(value, StandardCharsets.UTF_8))
         }
     }
 
     private fun ConfigurationNode.setWrappedBase64Value(value: ConfigurationNode) {
         val out = ByteArrayOutputStream(128)
         val jsonLoader = GsonConfigurationLoader.builder().apply {
-            sink = Callable { BufferedWriter(OutputStreamWriter(out, StandardCharsets.UTF_8)) }
+            sink { BufferedWriter(OutputStreamWriter(out, StandardCharsets.UTF_8)) }
         }.build()
         jsonLoader.save(value)
 
-        this.value = Base64.getEncoder().encodeToString(out.toByteArray())
+        this.raw(Base64.getEncoder().encodeToString(out.toByteArray()))
     }
 
     operator fun get(key: String): ConfigurationNode {
-        return node[key].getUnwrappedBase64Value()
+        return node.node(key).getUnwrappedBase64Value()
     }
 
     operator fun set(key: String, value: ConfigurationNode) {
-        node[key].setWrappedBase64Value(value)
+        node.node(key).setWrappedBase64Value(value)
     }
 
     fun unwrapFile() {
@@ -92,8 +92,8 @@ class UltraPermissionsFile(val path: Path) {
             return
         }
 
-        node.childrenMap.forEach { (_, v) ->
-            v.value = v.getUnwrappedBase64Value()
+        node.childrenMap().forEach { (_, v) ->
+            v.from(v.getUnwrappedBase64Value())
         }
     }
 }

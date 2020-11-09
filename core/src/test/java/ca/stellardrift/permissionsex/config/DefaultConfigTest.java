@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.config;
 
 import org.junit.jupiter.api.Test;
+import org.spongepowered.configurate.ConfigurateException;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ public class DefaultConfigTest {
      * This is a sanity check that loads the config included in the jar at build time and makes sure it is syntactically valid
      */
     @Test
-    public void testDefaultConfigLoading() throws IOException {
+    void testDefaultConfigLoading() throws ConfigurateException {
         FilePermissionsExConfiguration.loadDefaultConfiguration();
     }
 }

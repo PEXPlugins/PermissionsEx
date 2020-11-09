@@ -41,9 +41,9 @@ class Segment {
     private final Map<String, String> options;
     private final List<SubjectRef> parents;
     private final Integer permissionDefault;
-    private final AtomicReference<ImmutableList<CheckedBiConsumer<SqlDao, Segment, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<List<CheckedBiConsumer<SqlDao, Segment, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    Segment(int id, Set<ContextValue<?>> contexts, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, ImmutableList<CheckedBiConsumer<SqlDao, Segment, SQLException>> updates) {
+    Segment(int id, Set<ContextValue<?>> contexts, Map<String, Integer> permissions, Map<String, String> options, List<SubjectRef> parents, Integer permissionDefault, List<CheckedBiConsumer<SqlDao, Segment, SQLException>> updates) {
         this.id = id;
         this.contexts = ImmutableSet.copyOf(contexts);
         this.permissions = permissions;

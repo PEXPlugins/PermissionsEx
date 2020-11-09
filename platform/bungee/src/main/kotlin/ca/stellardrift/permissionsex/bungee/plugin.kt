@@ -53,9 +53,9 @@ import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.api.plugin.TabExecutor
 import net.md_5.bungee.event.EventHandler
 import net.md_5.bungee.event.EventPriority
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
 import org.slf4j.impl.JDK14LoggerAdapter
-import org.yaml.snakeyaml.DumperOptions
+import org.spongepowered.configurate.yaml.NodeStyle
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 
 class PermissionsExPlugin : Plugin(), Listener {
     private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
@@ -83,9 +83,10 @@ class PermissionsExPlugin : Plugin(), Listener {
         this.adventure = BungeeAudiences.create(this)
 
         Files.createDirectories(this.dataPath)
-        val configLoader = YAMLConfigurationLoader.builder().apply {
-            setPath(dataPath.resolve("config.yml"))
-            setFlowStyle(DumperOptions.FlowStyle.BLOCK)
+        val configLoader = YamlConfigurationLoader.builder().apply {
+            path(dataPath.resolve("config.yml"))
+            defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
+            nodeStyle(NodeStyle.BLOCK)
         }.build()
 
         try {

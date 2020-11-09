@@ -24,7 +24,7 @@ import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
-import ninja.leaping.configurate.ConfigurationNode;
+import org.spongepowered.configurate.ConfigurationNode;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;

@@ -24,7 +24,7 @@ import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import com.google.common.collect.ImmutableList;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.spongepowered.configurate.serialize.SerializationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,10 +73,10 @@ public class SchemaMigrationsTest extends PermissionsExTest {
         this.jdbcUrl = jdbcUrl;
     }*/
 
-    private final SqlDataStore sqlStore = new SqlDataStore("schema-migrations");
+    private final SqlDataStore sqlStore = new SqlDataStore("schema-migrations", new SqlDataStore.Config());
 
     @BeforeEach
-    public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
+    public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {
         Path testDir = tempFolder.resolve("sql");
         String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));
         sqlStore.setConnectionUrl(jdbcUrl);

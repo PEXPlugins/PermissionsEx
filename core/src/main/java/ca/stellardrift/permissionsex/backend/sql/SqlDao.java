@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ninja.leaping.configurate.util.CheckedSupplier;
+import org.spongepowered.configurate.util.CheckedSupplier;
 
 import java.io.BufferedReader;
 import java.io.IOException;

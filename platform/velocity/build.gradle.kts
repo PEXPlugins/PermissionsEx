@@ -40,10 +40,10 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.google.code.gson")
         exclude("com.google.guava")
-        exclude("org.spongepowered", "configurate-*")
+        // exclude("org.spongepowered", "configurate-*")
         exclude("net.kyori")
-        // exclude("org.yaml", "snakeyaml")
-        // exclude("com.typesafe")
+        exclude("org.yaml", "snakeyaml")
+        exclude("com.typesafe")
     }
     api(project(":impl-blocks:proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:hikari-config")) {
@@ -63,7 +63,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
-    listOf("com.zaxxer", "com.github.benmanes",
+    listOf("com.zaxxer", "org.spongepowered.configurate", "com.github.benmanes",
         "org.jetbrains", "org.checkerframework", "org.antlr.v4").forEach {
         relocate(it, "$relocateRoot.$it")
     }

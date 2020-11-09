@@ -19,74 +19,84 @@ package ca.stellardrift.permissionsex.backend.file;
 
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import com.google.common.io.Resources;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.gson.GsonConfigurationLoader;
-import ninja.leaping.configurate.loader.ConfigurationLoader;
-import ninja.leaping.configurate.transformation.ConfigurationTransformation;
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+import org.spongepowered.configurate.BasicConfigurationNode;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.gson.GsonConfigurationLoader;
+import org.spongepowered.configurate.loader.ConfigurationLoader;
+import org.spongepowered.configurate.transformation.ConfigurationTransformation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.DumperOptions;
+import org.spongepowered.configurate.yaml.NodeStyle;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class SchemaMigrationsTest {
+
     @Test
-    public void testThreeToFour(@TempDir Path tempDir) throws IOException {
+    void testThreeToFour(@TempDir Path tempDir) throws IOException, ConfigurateException {
         doTest("test3to4.pre.json", "test3to4.post.json", tempDir, SchemaMigrations.threeToFour());
     }
 
     @Test
-    public void testTwoToThree(@TempDir Path tempDir) throws IOException {
+    void testTwoToThree(@TempDir Path tempDir) throws IOException, ConfigurateException {
         doTest("test2to3.pre.json", "test2to3.post.json", tempDir, SchemaMigrations.twoTo3());
     }
 
     @Test
-    public void testOneToTwo(@TempDir Path tempFolder) throws IOException {
+    void testOneToTwo(@TempDir Path tempFolder) throws ConfigurateException, IOException {
         final Path testFile = tempFolder.resolve("test1to2.json");
-        ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder()
-                .setURL(getClass().getResource("test1to2.pre.yml"))
+        final YamlConfigurationLoader yamlLoader = YamlConfigurationLoader.builder()
+                .url(getClass().getResource("test1to2.pre.yml"))
                 .build();
-        ConfigurationLoader<ConfigurationNode> jsonSaver = GsonConfigurationLoader.builder()
-                .setPath(testFile)
+        final GsonConfigurationLoader jsonSaver = GsonConfigurationLoader.builder()
+                .path(testFile)
                 .build();
-        ConfigurationNode node = yamlLoader.load();
+
+        final ConfigurationNode node = yamlLoader.load();
         SchemaMigrations.oneTo2(FormattedLogger.forLogger(LoggerFactory.getLogger(getClass()), false)).apply(node);
+
         jsonSaver.save(node);
-        assertEquals(Resources.readLines(getClass().getResource("test1to2.post.json"), UTF_8), Files.readAllLines(testFile, UTF_8));
+
+        assertLinesMatch(Resources.readLines(getClass().getResource("test1to2.post.json"), UTF_8), Files.readAllLines(testFile, UTF_8));
 
     }
 
     @Test
-    public void testInitialToOne(@TempDir Path tempFolder) throws IOException {
+    void testInitialToOne(final @TempDir Path tempFolder) throws ConfigurateException, IOException {
         final Path testFile = tempFolder.resolve("Test0to1.yml");
-        ConfigurationLoader<ConfigurationNode> yamlLoader = YAMLConfigurationLoader.builder()
-                .setPath(testFile)
-                .setURL(getClass().getResource("test0to1.pre.yml"))
-                .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
+        final ConfigurationLoader<CommentedConfigurationNode> yamlLoader = YamlConfigurationLoader.builder()
+                .path(testFile)
+                .url(getClass().getResource("test0to1.pre.yml"))
+                .nodeStyle(NodeStyle.BLOCK)
                 .build();
-        ConfigurationNode node = yamlLoader.load();
+
+        final ConfigurationNode node = yamlLoader.load();
         SchemaMigrations.initialTo1().apply(node);
         yamlLoader.save(node);
-        assertEquals(Resources.readLines(getClass().getResource("test0to1.post.yml"), UTF_8), Files.readAllLines(testFile, UTF_8));
+
+        assertLinesMatch(Resources.readLines(getClass().getResource("test0to1.post.yml"), UTF_8), Files.readAllLines(testFile, UTF_8));
     }
 
-    private void doTest(String preName, String postName, Path tempDir, ConfigurationTransformation xform) throws IOException {
+    private void doTest(final String preName, final String postName, final Path tempDir, final ConfigurationTransformation xform) throws ConfigurateException, IOException {
         final Path testFile = tempDir.resolve("test.json");
-        ConfigurationLoader<ConfigurationNode> jsonLoader = GsonConfigurationLoader.builder()
-                .setPath(testFile)
-                .setURL(getClass().getResource(preName))
+        final ConfigurationLoader<BasicConfigurationNode> jsonLoader = GsonConfigurationLoader.builder()
+                .path(testFile)
+                .url(getClass().getResource(preName))
                 .build();
         ConfigurationNode node = jsonLoader.load();
         xform.apply(node);
         jsonLoader.save(node);
-        assertEquals(Resources.readLines(getClass().getResource(postName), UTF_8), Files.readAllLines(testFile, UTF_8));
 
+        assertLinesMatch(Resources.readLines(getClass().getResource(postName), UTF_8), Files.readAllLines(testFile, UTF_8));
     }
+
 }

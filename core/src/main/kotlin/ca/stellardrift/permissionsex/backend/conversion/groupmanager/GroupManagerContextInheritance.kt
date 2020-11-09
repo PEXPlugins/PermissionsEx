@@ -21,15 +21,15 @@ import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import java.util.ArrayList
-import ninja.leaping.configurate.ConfigurationNode
+import org.spongepowered.configurate.ConfigurationNode
 
 class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) : ContextInheritance {
     private val worlds: MutableMap<String, MutableList<ContextValue<*>>> = hashMapOf()
 
     init {
-        for ((key, value) in mirrorsNode.childrenMap) {
+        for ((key, value) in mirrorsNode.childrenMap()) {
             val worldContext = ContextValue<String>("world", key.toString())
-            for (child in value.childrenMap.keys) {
+            for (child in value.childrenMap().keys) {
                 val world = worlds.computeIfAbsent(child.toString()) { ArrayList() }
                 world.add(worldContext)
             }

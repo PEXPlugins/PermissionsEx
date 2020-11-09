@@ -17,20 +17,22 @@
 
 package ca.stellardrift.permissionsex.backend.sql;
 
-import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.util.CheckedBiConsumer;
 import ca.stellardrift.permissionsex.util.Util;
+import com.google.common.collect.ImmutableList;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SqlContextInheritance implements ContextInheritance {
     private final Map<ContextValue<?>, List<ContextValue<?>>> inheritance;
-    private final AtomicReference<ImmutableList<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>>> updatesToPerform = new AtomicReference<>();
+    private final AtomicReference<List<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>>> updatesToPerform = new AtomicReference<>();
 
     SqlContextInheritance(Map<ContextValue<?>, List<ContextValue<?>>> inheritance, List<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
         this.inheritance = inheritance;
@@ -42,7 +44,7 @@ public class SqlContextInheritance implements ContextInheritance {
     @Override
     public List<ContextValue<?>> getParents(ContextValue<?> context) {
         List<ContextValue<?>> ret = inheritance.get(context);
-        return ret == null ? ImmutableList.of() : ret;
+        return ret == null ? Collections.emptyList() : ret;
     }
 
     @Override

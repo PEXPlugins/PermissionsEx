@@ -44,7 +44,6 @@ dependencies {
     }
 
     implementation(configurate("yaml")) {
-        exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
     }
     implementation(adventure("platform-bungeecord", Versions.TEXT_ADAPTER)) {
@@ -72,7 +71,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
     listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
-        "ninja.leaping.configurate", "org.jetbrains.annotations",
+        "ong.spongepowered.configurate", "org.jetbrains.annotations",
         "org.slf4j", "org.antlr.v4.runtime", "net.kyori").forEach {
         relocate(it, "$relocateRoot.$it")
     }

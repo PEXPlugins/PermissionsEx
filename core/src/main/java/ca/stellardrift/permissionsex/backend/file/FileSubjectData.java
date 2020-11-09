@@ -22,10 +22,9 @@ import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,26 +34,26 @@ import java.util.Set;
 public final class FileSubjectData extends MemorySubjectData {
     static final String KEY_CONTEXTS = "contexts";
 
-    static FileSubjectData fromNode(ConfigurationNode node) throws ObjectMappingException, PermissionsLoadingException {
-        ImmutableMap.Builder<Set<ContextValue<?>>, DataEntry> map = ImmutableMap.builder();
+    static FileSubjectData fromNode(ConfigurationNode node) throws SerializationException, PermissionsLoadingException {
+        Map<Set<ContextValue<?>>, DataEntry> map = new HashMap<>();
         if (node.isList()) {
-            for (ConfigurationNode child : node.getChildrenList()) {
+            for (ConfigurationNode child : node.childrenList()) {
                 if (!child.isMap()) {
                     throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.toComponent());
                 }
                 Set<ContextValue<?>> contexts = contextsFrom(child);
-                DataEntry value = MAPPER.bindToNew().populate(child);
+                DataEntry value = MAPPER.load(child);
                 map.put(contexts, value);
             }
         }
-        return new FileSubjectData(map.build());
+        return new FileSubjectData(Collections.unmodifiableMap(map));
     }
 
-    protected FileSubjectData() {
+    FileSubjectData() {
         super();
     }
 
-    protected FileSubjectData(Map<Set<ContextValue<?>>, DataEntry> contexts) {
+    FileSubjectData(Map<Set<ContextValue<?>>, DataEntry> contexts) {
         super(contexts);
     }
 
@@ -65,36 +64,36 @@ public final class FileSubjectData extends MemorySubjectData {
 
     private static Set<ContextValue<?>> contextsFrom(ConfigurationNode node) {
         Set<ContextValue<?>> contexts = Collections.emptySet();
-        ConfigurationNode contextsNode = node.getNode(KEY_CONTEXTS);
+        ConfigurationNode contextsNode = node.node(KEY_CONTEXTS);
         if (contextsNode.isMap()) {
-            contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.getChildrenMap().entrySet(), ent -> {
-                    return new ContextValue<>(ent.getKey().toString(), String.valueOf(ent.getValue().getValue()));
+            contexts = ImmutableSet.copyOf(Collections2.transform(contextsNode.childrenMap().entrySet(), ent -> {
+                    return new ContextValue<>(ent.getKey().toString(), ent.getValue().getString());
             }));
         }
         return contexts;
     }
 
-    void serialize(ConfigurationNode node) throws ObjectMappingException {
+    void serialize(ConfigurationNode node) throws SerializationException {
         if (!node.isList()) {
-            node.setValue(null);
+            node.raw(null);
         }
         Map<Set<ContextValue<?>>, ConfigurationNode> existingSections = new HashMap<>();
-        for (ConfigurationNode child : node.getChildrenList()) {
+        for (ConfigurationNode child : node.childrenList()) {
             existingSections.put(contextsFrom(child), child);
         }
         for (Map.Entry<Set<ContextValue<?>>, DataEntry> ent : contexts.entrySet()) {
             ConfigurationNode contextSection = existingSections.remove(ent.getKey());
             if (contextSection == null) {
                 contextSection = node.appendListNode();
-                ConfigurationNode contextsNode = contextSection.getNode(KEY_CONTEXTS);
+                ConfigurationNode contextsNode = contextSection.node(KEY_CONTEXTS);
                 for (ContextValue<?> context : ent.getKey()) {
-                    contextsNode.getNode(context.getKey()).setValue(context.getRawValue());
+                    contextsNode.node(context.getKey()).raw(context.getRawValue());
                 }
             }
-            MAPPER.bind(ent.getValue()).serialize(contextSection);
+            MAPPER.save(ent.getValue(), contextSection);
         }
         for (ConfigurationNode unused : existingSections.values()) {
-            unused.setValue(null);
+            unused.raw(null);
         }
     }
 

@@ -18,12 +18,12 @@
 package ca.stellardrift.permissionsex.util
 
 import ca.stellardrift.permissionsex.context.ContextValue
-import com.google.common.collect.Maps
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 typealias ContextSet = Set<ContextValue<*>>
 typealias SubjectIdentifier = Map.Entry<String, String>
 
-fun subjectIdentifier(type: String, name: String): SubjectIdentifier = Maps.immutableEntry(type, name)
+fun subjectIdentifier(type: String, name: String): SubjectIdentifier = immutableMapEntry(type, name)
 
 /**
  * An iterator with a single-element lookahead

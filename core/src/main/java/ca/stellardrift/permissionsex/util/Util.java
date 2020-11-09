@@ -17,13 +17,12 @@
 
 package ca.stellardrift.permissionsex.util;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.PermissionsEx;
-import ninja.leaping.configurate.util.CheckedFunction;
-import ninja.leaping.configurate.util.CheckedSupplier;
+import org.spongepowered.configurate.util.CheckedFunction;
+import org.spongepowered.configurate.util.CheckedSupplier;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,9 +35,9 @@ public class Util {
     public static Map.Entry<String, String> subjectFromString(String input) {
         String[] entries = input.split(":", 2);
         if (entries.length == 1) {
-            return Maps.immutableEntry(PermissionsEx.SUBJECTS_GROUP, entries[0]);
+            return UnmodifiableCollections.immutableMapEntry(PermissionsEx.SUBJECTS_GROUP, entries[0]);
         } else {
-            return Maps.immutableEntry(entries[0], entries[1]);
+            return UnmodifiableCollections.immutableMapEntry(entries[0], entries[1]);
         }
 
     }
@@ -105,7 +104,7 @@ public class Util {
 
     public static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
         if (input == null) {
-            return ImmutableMap.of(newKey, newVal);
+            return Collections.singletonMap(newKey, newVal);
         }
         Map<K, V> ret = new HashMap<>(input);
         if (newVal == null) {
@@ -116,13 +115,13 @@ public class Util {
         return Collections.unmodifiableMap(ret);
     }
 
-    public static <T> ImmutableList<T> appendImmutable(List<T> input, T entry) {
+    public static <T> List<T> appendImmutable(List<T> input, T entry) {
         if (input == null) {
-            return ImmutableList.of(entry);
+            return Collections.singletonList(entry);
         }
-        ImmutableList.Builder<T> ret = ImmutableList.builder();
+        final List<T> ret = new ArrayList<>(input.size() + 1);
         ret.addAll(input);
         ret.add(entry);
-        return ret.build();
+        return Collections.unmodifiableList(ret);
     }
 }

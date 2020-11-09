@@ -50,8 +50,8 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.inject.Inject
 import javax.sql.DataSource
-import ninja.leaping.configurate.hocon.HoconConfigurationLoader
 import org.slf4j.Logger
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 
 private val SERVER_PATH = Paths.get(".")
 private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
@@ -100,7 +100,8 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         Files.createDirectories(dataPath)
 
         val configLoader = HoconConfigurationLoader.builder()
-            .setPath(dataPath.resolve("permissionsex.conf"))
+            .path(dataPath.resolve("permissionsex.conf"))
+            .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
             .build()
 
         try {

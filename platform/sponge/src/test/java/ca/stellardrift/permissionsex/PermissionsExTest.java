@@ -20,10 +20,10 @@ package ca.stellardrift.permissionsex;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -34,7 +34,7 @@ import java.nio.file.Path;
 public abstract class PermissionsExTest {
     private PermissionsEx<?> manager;
     @BeforeEach
-    public void setUp(@TempDir Path tempFolder) throws PermissionsLoadingException, ObjectMappingException, IOException, PEBKACException {
+    public void setUp(@TempDir Path tempFolder) throws PermissionsLoadingException, SerializationException, IOException, PEBKACException {
         PermissionsExConfiguration<?> config = populate();
         config.validate();
 

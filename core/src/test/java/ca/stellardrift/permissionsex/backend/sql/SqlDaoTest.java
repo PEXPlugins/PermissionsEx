@@ -28,7 +28,7 @@ import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.spongepowered.configurate.serialize.SerializationException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,11 +65,11 @@ public class SqlDaoTest extends PermissionsExTest {
         this.jdbcUrl = "jdbc:h2:file:{base}/test.db";
     }
 
-    private static final SqlDataStore sqlStore = new SqlDataStore("sql-dao");
+    private static final SqlDataStore sqlStore = new SqlDataStore("sql-dao", new SqlDataStore.Config());
     private final String jdbcUrl;
 
     @BeforeEach
-    public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException, ObjectMappingException {
+    public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {
         Path testDir = tempDir.resolve(info.getDisplayName() + "-dao");
         final String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));
         sqlStore.setConnectionUrl(jdbcUrl);

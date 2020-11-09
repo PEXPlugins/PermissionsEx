@@ -18,7 +18,6 @@
 package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.commands.CommonMessages
-import com.google.common.collect.Lists
 import net.kyori.adventure.text.Component
 
 /**
@@ -77,9 +76,7 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
     }
 
     val all: List<String>
-        get() = Lists.transform(
-            args
-        ) { obj: SingleArg? -> obj!!.value }
+        get() = args.map { it.value }
 
     fun filterArgs(filter: (String) -> Boolean) {
         val currentArg =

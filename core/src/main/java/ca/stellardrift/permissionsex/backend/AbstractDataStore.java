@@ -29,33 +29,35 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
-import ninja.leaping.configurate.ConfigurationNode;
-import ninja.leaping.configurate.objectmapping.ObjectMapper;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.util.CheckedSupplier;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.util.CheckedSupplier;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
+ *
+ * @param <T> self type
+ * @param <C> config type
  */
-public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implements DataStore {
+public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> implements DataStore {
     private PermissionsEx<?> manager;
-    private final Factory<T> factory;
     private final String identifier;
+    private final C config;
+    private final Factory<T, C> factory;
     protected final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
 
-    protected AbstractDataStore(String identifier, Factory<T> factory) {
-        if (!factory.expectedClazz.equals(getClass())) {
-            throw new ExceptionInInitializerError("Data store factory for wrong class " + factory.expectedClazz + " provided to a " + getClass());
-        }
+    protected AbstractDataStore(String identifier, C configuration, Factory<T, C> factory) {
         this.identifier = identifier;
+        this.config = configuration;
         this.factory = factory;
     }
 
@@ -66,6 +68,10 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
 
     protected PermissionsEx<?> getManager() {
         return this.manager;
+    }
+
+    protected C config() {
+        return this.config;
     }
 
     @Override
@@ -207,33 +213,27 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
     public String serialize(ConfigurationNode node) throws PermissionsLoadingException {
         Objects.requireNonNull(node, "node");
         try {
-            ((ObjectMapper) factory.mapper).bind(this).serialize(node);
-        } catch (ObjectMappingException e) {
-            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.toComponent(node.getKey()), e);
+            node.set(factory.configType, this.config);
+        } catch (SerializationException e) {
+            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.toComponent(node.key()), e);
         }
         return factory.type;
     }
 
-    public static class Factory<T extends AbstractDataStore<T>> implements DataStoreFactory {
+    public static class Factory<T extends AbstractDataStore<T, C>, C> implements DataStoreFactory {
         private final String type;
-        private final Class<T> expectedClazz;
-        private final ObjectMapper<T> mapper;
+        private final Class<C> configType;
         /**
-         * Function taking the name of a data store instance and creating the appropriate new object.
+         * Function taking the name of a data store instance and its configuration, and creating the appropriate new object.
          */
-        private final Function<String, T> newInstanceSupplier;
+        private final BiFunction<String, C, T> newInstanceSupplier;
 
-        public Factory(final String type, Class<T> clazz, Function<String, T> newInstanceSupplier) {
+        public Factory(final String type, Class<C> clazz, BiFunction<String, C, T> newInstanceSupplier) {
             Objects.requireNonNull(type, "type");
             Objects.requireNonNull(clazz, "clazz");
             this.type = type;
-            this.expectedClazz = clazz;
+            this.configType = clazz;
             this.newInstanceSupplier = newInstanceSupplier;
-            try {
-                mapper = ObjectMapper.forClass(clazz);
-            } catch (ObjectMappingException e) {
-                throw new ExceptionInInitializerError(e);
-            }
         }
 
         public String getType() {
@@ -243,8 +243,9 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T>> implemen
         @Override
         public DataStore createDataStore(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
             try {
-                return mapper.bind(newInstanceSupplier.apply(identifier)).populate(config);
-            } catch (ObjectMappingException e) {
+                final C dataStoreConfig = config.get(this.configType);
+                return this.newInstanceSupplier.apply(identifier, dataStoreConfig);
+            } catch (SerializationException e) {
                 throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.toComponent(identifier), e);
             }
         }

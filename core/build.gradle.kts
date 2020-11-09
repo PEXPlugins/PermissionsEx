@@ -37,11 +37,12 @@ dependencies {
     api(configurate("gson"))
     api(configurate("hocon"))
     implementation(configurate("yaml"))
-    implementation(configurate("ext-kotlin", Versions.CONFIGURATE))
+    implementation(configurate("extra-kotlin"))
     implementation("com.github.ben-manes.caffeine:caffeine:2.7.0") {
         exclude("com.google.errorprone")
     }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.KOTLINX_COROUTINES}")
+    implementation("com.google.guava:guava:21.0")
 
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
     api(adventure("api", Versions.TEXT))
