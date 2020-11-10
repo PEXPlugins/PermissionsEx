@@ -72,6 +72,10 @@ subprojects {
             toolchain.languageVersion.set(JavaLanguageVersion.of(11))
         }
     }
+
+    tasks.withType(JavaCompile::class).configureEach {
+        options.release.set(8)
+    }
 }
 
 tasks.withType(Jar::class).configureEach { // disable
