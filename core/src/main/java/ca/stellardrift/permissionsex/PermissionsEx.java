@@ -17,10 +17,9 @@
 
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.backend.ConversionResult;
 import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider;
-import ca.stellardrift.permissionsex.backend.conversion.ConversionProviderRegistry;
-import ca.stellardrift.permissionsex.backend.conversion.ConversionResult;
+import ca.stellardrift.permissionsex.backend.DataStoreFactory;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.commands.CallbackController;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
@@ -42,6 +41,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.pcollections.PVector;
+import org.pcollections.TreePVector;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -99,7 +100,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     private static class State<P> {
         private final PermissionsExConfiguration<P> config;
         private final DataStore activeDataStore;
-        private List<ConversionResult> availableConversions = Collections.emptyList();
+        private PVector<ConversionResult> availableConversions = TreePVector.empty();
 
         private State(PermissionsExConfiguration<P> config, DataStore activeDataStore) {
             this.config = config;
@@ -211,7 +212,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     }
 
     public CompletableFuture<Void> importDataFrom(ConversionResult conversion) {
-        return importDataFrom(conversion.getStore());
+        return importDataFrom(conversion.store());
     }
 
     private CompletableFuture<Void> importDataFrom(DataStore expected) {
@@ -330,20 +331,25 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
             getLogger().warn(CONVERSION_BANNER.toComponent());
         }
 
-        List<ConversionResult> allResults = new LinkedList<>();
-        for (ConversionProvider prov : ConversionProviderRegistry.INSTANCE.getAllProviders()) {
-            List<ConversionResult> res = prov.listConversionOptions(this);
+        PVector<ConversionResult> allResults = TreePVector.empty();
+        for (final DataStoreFactory convertable : DataStoreFactory.all().values()) {
+            if (!(convertable instanceof DataStoreFactory.Convertable))  {
+                continue;
+            }
+            final DataStoreFactory.Convertable prov = ((DataStoreFactory.Convertable) convertable);
+
+            PVector<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
-                    getLogger().info(CONVERSION_PLUGINHEADER.toComponent(prov.getName()));
+                    getLogger().info(CONVERSION_PLUGINHEADER.toComponent(prov.friendlyName()));
                     for (ConversionResult result : res) {
-                        getLogger().info(CONVERSION_INSTANCE.toComponent(result.getTitle(), result.getStore().getName()));
+                        getLogger().info(CONVERSION_INSTANCE.toComponent(result.description(), result.store().getName()));
                     }
                 }
-                allResults.addAll(res);
+                allResults = allResults.plusAll(res);
             }
         }
-        newState.availableConversions = ImmutableList.copyOf(allResults);
+        newState.availableConversions = allResults;
 
         State<P> oldState = this.state.getAndSet(newState);
         if (oldState != null) {

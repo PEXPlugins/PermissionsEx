@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.groupmanager
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue

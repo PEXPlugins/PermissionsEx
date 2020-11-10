@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.luckperms
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.backend.DataStore
 import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_ERROR_INVALID_TRACK
+import ca.stellardrift.permissionsex.backend.StoreProperties
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
@@ -58,13 +59,7 @@ val Path.nameWithoutExtension: String get() {
 }
 
 @ConfigSerializable
-class LuckPermsFileDataStore constructor(identifier: String, config: Config) : AbstractDataStore<LuckPermsFileDataStore, LuckPermsFileDataStore.Config>(identifier, config, FACTORY) {
-    companion object {
-        @JvmField
-        val FACTORY = Factory("luckperms-file", Config::class.java, ::LuckPermsFileDataStore)
-    }
-
-    constructor(identifier: String, format: ConfigFormat, combined: Boolean) : this(identifier, Config(combined = combined, format = format))
+class LuckPermsFileDataStore constructor(properties: StoreProperties<Config>) : AbstractDataStore<LuckPermsFileDataStore, LuckPermsFileDataStore.Config>(properties) {
 
     @ConfigSerializable
     data class Config(
@@ -420,10 +415,12 @@ private fun ConfigurationNode.toSubjectData(): LuckPermsSubjectData {
     val options: Set<LuckPermsDefinition<String>> = defListFromNode(this.node("meta"), { it.string!! }, keyPath = "key") +
             defListFromNode(this.node("prefixes"), { it.string!! }, keyOverride = "prefix", valueKey = "prefix") +
             defListFromNode(this.node("suffixes"), { it.string!! }, keyOverride = "suffix", valueKey = "suffix")
-    return LuckPermsSubjectData(defListFromNode(this.node("permissions"), ConfigurationNode::getBoolean),
+    return LuckPermsSubjectData(
+        defListFromNode(this.node("permissions"), ConfigurationNode::getBoolean),
         options,
         defListFromNode(this.node("parents"), { immutableMapEntry("group", it.string!!) },
-            valueKey = "group", keyOverride = "group"))
+            valueKey = "group", keyOverride = "group")
+    )
 }
 
 private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Boolean>>, val options: Set<LuckPermsDefinition<String>>, val parents: Set<LuckPermsDefinition<Map.Entry<String, String>>>) : ImmutableSubjectData {

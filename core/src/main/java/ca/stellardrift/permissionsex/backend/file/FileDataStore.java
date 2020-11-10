@@ -20,6 +20,8 @@ package ca.stellardrift.permissionsex.backend.file;
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.backend.DataStoreFactory;
+import ca.stellardrift.permissionsex.backend.StoreProperties;
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
@@ -27,6 +29,7 @@ import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
+import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import org.spongepowered.configurate.BasicConfigurationNode;
@@ -63,7 +66,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDataStore.Config> {
     static final String KEY_RANK_LADDERS = "rank-ladders";
-    public static final Factory<FileDataStore, Config> FACTORY = new Factory<>("file", Config.class, FileDataStore::new);
 
     @ConfigSerializable
     static class Config {
@@ -83,10 +85,9 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();
 
-    public FileDataStore(String identifier, Config config) {
-        super(identifier, config, FACTORY);
+    public FileDataStore(final StoreProperties<Config> properties) {
+        super(properties);
     }
-
 
     private ConfigurationReference<BasicConfigurationNode> createLoader(Path file) throws ConfigurateException {
         Function<Path, ConfigurationLoader<? extends BasicConfigurationNode>> loaderFunc = path -> GsonConfigurationLoader.builder()
@@ -406,5 +407,12 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         }
         saveSync();
         return ret;
+    }
+
+    @AutoService(DataStoreFactory.class)
+    public static class Factory extends AbstractDataStore.Factory<FileDataStore, Config> {
+        Factory() {
+            super("file", Config.class, FileDataStore::new);
+        }
     }
 }

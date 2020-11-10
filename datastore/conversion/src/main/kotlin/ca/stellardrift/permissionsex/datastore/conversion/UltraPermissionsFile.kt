@@ -15,25 +15,25 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.ultraperms
+package ca.stellardrift.permissionsex.datastore.conversion
 
-import java.io.BufferedReader
-import java.io.BufferedWriter
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.Base64
 import org.spongepowered.configurate.BasicConfigurationNode
 import org.spongepowered.configurate.CommentedConfigurationNode
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.gson.GsonConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 
 class UltraPermissionsFile(val path: Path) {
     val loader: ConfigurationLoader<CommentedConfigurationNode> = YamlConfigurationLoader.builder().path(path).build()

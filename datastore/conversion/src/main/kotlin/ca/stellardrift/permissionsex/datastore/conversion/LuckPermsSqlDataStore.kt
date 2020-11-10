@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.luckperms
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.backend.DataStore
+import ca.stellardrift.permissionsex.backend.StoreProperties
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.rank.RankLadder
@@ -29,11 +30,11 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 @ConfigSerializable
 class LuckPermsSqlConfig
 
-class LuckPermsSqlDataStore(identifier: String, config: LuckPermsSqlConfig) : AbstractDataStore<LuckPermsSqlDataStore, LuckPermsSqlConfig>(identifier, config, FACTORY) {
+class LuckPermsSqlDataStore(props: StoreProperties<LuckPermsSqlConfig>) : AbstractDataStore<LuckPermsSqlDataStore, LuckPermsSqlConfig>(props) {
 
     companion object {
-        @JvmField
-        val FACTORY = Factory("luckperms-sql", LuckPermsSqlConfig::class.java, ::LuckPermsSqlDataStore)
+        // @JvmField
+        // val FACTORY = Factory("luckperms-sql", LuckPermsSqlConfig::class.java, ::LuckPermsSqlDataStore)
     }
 
     override fun setDataInternal(type: String, identifier: String, data: ImmutableSubjectData?): CompletableFuture<ImmutableSubjectData> {

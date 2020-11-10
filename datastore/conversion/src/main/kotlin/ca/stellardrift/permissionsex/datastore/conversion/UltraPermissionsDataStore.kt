@@ -15,24 +15,17 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.ultraperms
+package ca.stellardrift.permissionsex.datastore.conversion
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider
-import ca.stellardrift.permissionsex.backend.conversion.ConversionResult
-import ca.stellardrift.permissionsex.util.unaryPlus
 import java.net.URL
-import java.nio.file.Files
 import java.util.UUID
-import net.kyori.adventure.text.Component
 
 data class PermissionEntry(val holder: String, val permission: String, val positive: Boolean, val expiry: Long)
 data class ServerEntry(val name: String, val lastHeartbeat: Long)
 data class UserEntry(val name: String, val superadmin: Boolean, val groups: Map<String, Int>, val prefix: String, val suffix: String, val skull: URL)
 data class GroupEntry(val name: String, val serverId: UUID, val priority: Int, val default: Boolean, val icon: String /* Material */)
 
-class UltraPermissionsDataStore {
+/*class UltraPermissionsDataStore {
     companion object : ConversionProvider {
         override val name: Component
             get() = +"UltraPermissions"
@@ -45,4 +38,4 @@ class UltraPermissionsDataStore {
             return listOf()
         }
     }
-}
+}*/

@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.DataStoreFactories
+import ca.stellardrift.permissionsex.backend.DataStoreFactory
 import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_CBTEXT
 import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_SUCCESS
@@ -202,23 +202,23 @@ private fun getImportCommand(pex: PermissionsEx<*>) =
                             pex.availableConversions
                                 .map { conv ->
                                     component {
-                                        append(conv.title)
+                                        append(conv.description())
                                         append(+" - /pex import ")
-                                        append((-conv.store.name).callback {
-                                            it.msg(IMPORT_ACTION_BEGINNING(conv.title))
+                                        append((-conv.store().name).callback {
+                                            it.msg(IMPORT_ACTION_BEGINNING(conv.description()))
                                             pex.importDataFrom(conv)
-                                                .thenMessageSubject(it, IMPORT_ACTION_SUCCESS(conv.title))
+                                                .thenMessageSubject(it, IMPORT_ACTION_SUCCESS(conv.description()))
                                         })
                                     }
                                 })
                     }
                 } else {
                     for (result in pex.availableConversions) {
-                        if (result.store.name.equals(backendRequested, ignoreCase = true)) {
+                        if (result.store().name.equals(backendRequested, ignoreCase = true)) {
                             src.msg { send ->
-                                send(IMPORT_ACTION_BEGINNING(result.title))
+                                send(IMPORT_ACTION_BEGINNING(result.description()))
                             }
-                            pex.importDataFrom(result).thenMessageSubject(src, IMPORT_ACTION_SUCCESS(result.title))
+                            pex.importDataFrom(result).thenMessageSubject(src, IMPORT_ACTION_SUCCESS(result.description()))
                             return
                         }
                     }
@@ -272,7 +272,7 @@ private fun getVersionCommand(pex: PermissionsEx<*>): CommandSpec {
                     it.append((-pex.version).hl())
                 })
                 send(VERSION_RESPONSE_ACTIVE_DATA_STORE(-pex.config.defaultDataStore.name))
-                send(VERSION_RESPONSE_AVAILABLE_DATA_STORES(-DataStoreFactories.getKnownTypes().toString()))
+                send(VERSION_RESPONSE_AVAILABLE_DATA_STORES(-DataStoreFactory.all().keys.toString()))
                 send(+"")
                 if (verbose) {
                     send(VERSION_BASEDIRS_HEADER.get().header().build())

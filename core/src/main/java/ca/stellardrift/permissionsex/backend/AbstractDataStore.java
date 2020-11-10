@@ -29,16 +29,19 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
+import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.util.CheckedSupplier;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Base implementation of a data store that provides common points for other data stores to hook into.
@@ -47,23 +50,19 @@ import java.util.function.Function;
  * @param <C> config type
  */
 public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> implements DataStore {
-    private PermissionsEx<?> manager;
-    private final String identifier;
-    private final C config;
-    private final Factory<T, C> factory;
+    private @MonotonicNonNull PermissionsEx<?> manager;
+    private final StoreProperties<C> properties;
     protected final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
 
-    protected AbstractDataStore(String identifier, C configuration, Factory<T, C> factory) {
-        this.identifier = identifier;
-        this.config = configuration;
-        this.factory = factory;
+    protected AbstractDataStore(final StoreProperties<C> props) {
+        this.properties = props;
     }
 
     @Override
     public String getName() {
-        return identifier;
+        return this.properties.identifier();
     }
 
     protected PermissionsEx<?> getManager() {
@@ -71,7 +70,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     protected C config() {
-        return this.config;
+        return this.properties.config();
     }
 
     @Override
@@ -83,9 +82,9 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     protected abstract boolean initializeInternal() throws PermissionsLoadingException;
 
     @Override
-    public final CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, Consumer<ImmutableSubjectData> listener) {
-        Objects.requireNonNull(type, "type");
-        Objects.requireNonNull(identifier, "identifier");
+    public final CompletableFuture<ImmutableSubjectData> getData(final String type, final String identifier, final Consumer<ImmutableSubjectData> listener) {
+        requireNonNull(type, "type");
+        requireNonNull(identifier, "identifier");
 
         CompletableFuture<ImmutableSubjectData> ret = getDataInternal(type, identifier);
         ret.thenRun(() -> {
@@ -98,8 +97,8 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
 
     @Override
     public final CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, ImmutableSubjectData data) {
-        Objects.requireNonNull(type, "type");
-        Objects.requireNonNull(identifier, "identifier");
+        requireNonNull(type, "type");
+        requireNonNull(identifier, "identifier");
 
         final Map.Entry<String, String> lookupKey = Maps.immutableEntry(type, identifier);
         return setDataInternal(type, identifier, data)
@@ -139,7 +138,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
 
     @Override
     public final Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(final String type) {
-        Objects.requireNonNull(type, "type");
+        requireNonNull(type, "type");
         return Iterables.transform(getAllIdentifiers(type),
                 input -> Maps.immutableEntry(input, Futures.getUnchecked(getData(type, input, null))));
     }
@@ -151,7 +150,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
 
     @Override
     public final CompletableFuture<RankLadder> getRankLadder(String ladderName, Consumer<RankLadder> listener) {
-        Objects.requireNonNull(ladderName, "ladderName");
+        requireNonNull(ladderName, "ladderName");
         CompletableFuture<RankLadder> ladder = getRankLadderInternal(ladderName);
         if (listener != null) {
             rankLadderListeners.addListener(ladderName.toLowerCase(), listener);
@@ -209,42 +208,49 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     protected abstract <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception;
 
     @Override
-    @SuppressWarnings("unchecked") // Correct types are verified in the constructor
     public String serialize(ConfigurationNode node) throws PermissionsLoadingException {
-        Objects.requireNonNull(node, "node");
+        requireNonNull(node, "node");
         try {
-            node.set(factory.configType, this.config);
+            node.set(this.properties.config());
         } catch (SerializationException e) {
             throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.toComponent(node.key()), e);
         }
-        return factory.type;
+        return this.properties.factory().name();
     }
 
-    public static class Factory<T extends AbstractDataStore<T, C>, C> implements DataStoreFactory {
-        private final String type;
+    public abstract static class Factory<T extends AbstractDataStore<T, C>, C> implements DataStoreFactory {
+        private final String name;
         private final Class<C> configType;
         /**
          * Function taking the name of a data store instance and its configuration, and creating the appropriate new object.
          */
-        private final BiFunction<String, C, T> newInstanceSupplier;
+        private final Function<StoreProperties<C>, T> newInstanceSupplier;
+        private final Component friendlyName;
 
-        public Factory(final String type, Class<C> clazz, BiFunction<String, C, T> newInstanceSupplier) {
-            Objects.requireNonNull(type, "type");
-            Objects.requireNonNull(clazz, "clazz");
-            this.type = type;
+        protected Factory(final String name, final Class<C> clazz, final Function<StoreProperties<C>, T> newInstanceSupplier) {
+            requireNonNull(name, "name");
+            requireNonNull(clazz, "clazz");
+            this.name = name;
+            this.friendlyName = Component.text(name);
             this.configType = clazz;
             this.newInstanceSupplier = newInstanceSupplier;
         }
 
-        public String getType() {
-            return this.type;
+        @Override
+        public Component friendlyName() {
+            return this.friendlyName;
         }
 
         @Override
-        public DataStore createDataStore(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
+        public final String name() {
+            return this.name;
+        }
+
+        @Override
+        public final DataStore create(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
             try {
                 final C dataStoreConfig = config.get(this.configType);
-                return this.newInstanceSupplier.apply(identifier, dataStoreConfig);
+                return this.newInstanceSupplier.apply(StoreProperties.of(identifier, dataStoreConfig, this));
             } catch (SerializationException e) {
                 throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.toComponent(identifier), e);
             }

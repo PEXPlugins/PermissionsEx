@@ -15,15 +15,18 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.backend.ConversionResult
+import ca.stellardrift.permissionsex.backend.DataStoreFactory
 import ca.stellardrift.permissionsex.backend.Messages.OPS_DESCRIPTION
 import ca.stellardrift.permissionsex.backend.Messages.OPS_ERROR_NO_FILE
 import ca.stellardrift.permissionsex.backend.Messages.OPS_NAME
+import ca.stellardrift.permissionsex.backend.StoreProperties
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData
 import ca.stellardrift.permissionsex.context.ContextValue
@@ -37,6 +40,8 @@ import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import net.kyori.adventure.text.Component
+import org.pcollections.PVector
+import org.pcollections.TreePVector
 import org.spongepowered.configurate.BasicConfigurationNode
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.gson.GsonConfigurationLoader
@@ -50,22 +55,22 @@ import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEn
  * An extremely rudimentary data store that allows importing data from a server ops list
  *
  */
-class OpsDataStore(identifier: String, config: Config) : ReadOnlyDataStore<OpsDataStore, OpsDataStore.Config>(identifier, config, FACTORY) {
-    companion object : ConversionProvider {
-        @JvmField
-        val FACTORY = Factory("ops", Config::class.java, ::OpsDataStore)
-        override val name: Component = OPS_NAME()
+class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataStore, OpsDataStore.Config>(props) {
+    companion object : Factory<OpsDataStore, Config>("ops", Config::class.java, ::OpsDataStore), DataStoreFactory.Convertable {
 
-        override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
+        override fun friendlyName(): Component {
+            return OPS_NAME()
+        }
+
+        override fun listConversionOptions(pex: PermissionsEx<*>): PVector<ConversionResult> {
             val opsFile = pex.getBaseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
             return if (Files.exists(opsFile)) {
-                listOf(ConversionResult(
-                    OpsDataStore(
-                        "ops",
-                        opsFile
-                    ), OPS_DESCRIPTION()))
+                TreePVector.singleton(ConversionResult.builder()
+                    .store(OpsDataStore(StoreProperties.of("ops", Config(opsFile.fileName.toString()), this)))
+                    .description(OPS_DESCRIPTION())
+                    .build())
             } else {
-                listOf()
+                TreePVector.empty()
             }
         }
     }
@@ -77,10 +82,6 @@ class OpsDataStore(identifier: String, config: Config) : ReadOnlyDataStore<OpsDa
     private lateinit var configListener: WatchServiceListener
     private lateinit var opsListNode: ConfigurationReference<BasicConfigurationNode>
     private var opsList = listOf<OpsListEntry>()
-
-    constructor(identifier: String, opsFile: Path) : this(identifier, Config(opsFile.fileName.toString())) {
-        this.file = opsFile
-    }
 
     override fun initializeInternal(): Boolean {
         if (!this::file.isInitialized) {

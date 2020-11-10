@@ -17,7 +17,9 @@
 
 package ca.stellardrift.permissionsex.backend.sql;
 
+import ca.stellardrift.permissionsex.backend.DataStoreFactory;
 import ca.stellardrift.permissionsex.backend.Messages;
+import ca.stellardrift.permissionsex.backend.StoreProperties;
 import ca.stellardrift.permissionsex.backend.sql.dao.H2SqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.MySqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.SchemaMigration;
@@ -30,6 +32,7 @@ import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
+import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableMap;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
@@ -59,12 +62,19 @@ import static ca.stellardrift.permissionsex.backend.sql.SchemaMigrations.VERSION
  * DataSource for SQL data.
  */
 public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataStore.Config> {
-    public static final Factory<SqlDataStore, Config> FACTORY = new Factory<>("sql", Config.class, SqlDataStore::new);
     private static final Pattern BRACES_PATTERN = Pattern.compile("\\{\\}");
     private boolean autoInitialize = true;
 
-    SqlDataStore(final String identifier, final Config config) {
-        super(identifier, config, FACTORY);
+    SqlDataStore(final StoreProperties<Config> properties) {
+        super(properties);
+    }
+
+    @AutoService(DataStoreFactory.class)
+    public static class Factory extends AbstractDataStore.Factory<SqlDataStore, Config> {
+
+        public Factory() {
+            super("sql", Config.class, SqlDataStore::new);
+        }
     }
 
     @ConfigSerializable

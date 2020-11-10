@@ -18,35 +18,34 @@
 package ca.stellardrift.permissionsex.config;
 
 import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.backend.DataStoreFactories;
 import ca.stellardrift.permissionsex.backend.DataStoreFactory;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 
 import java.lang.reflect.Type;
-import java.util.Optional;
 
 public class DataStoreSerializer implements TypeSerializer<DataStore> {
     @Override
-    public DataStore deserialize(Type type, ConfigurationNode value) throws SerializationException {
-        String dataStoreType = value.node("type").getString(value.key().toString());
-        Optional<DataStoreFactory> factory = DataStoreFactories.get(dataStoreType);
-        if (!factory.isPresent()) {
+    public DataStore deserialize(final Type type, final ConfigurationNode value) throws SerializationException {
+        final String dataStoreType = value.node("type").getString(value.key().toString());
+        final @Nullable DataStoreFactory factory = DataStoreFactory.forType(dataStoreType);
+        if (factory == null) {
             throw new SerializationException("Unknown DataStore type " + dataStoreType);
         }
         try {
-            return factory.get().createDataStore(value.key().toString(), value);
+            return factory.create(value.key().toString(), value);
         } catch (PermissionsLoadingException e) {
             throw new SerializationException(e);
         }
     }
 
     @Override
-    public void serialize(Type type, DataStore obj, ConfigurationNode value) throws SerializationException {
+    public void serialize(final Type type, final DataStore store, final ConfigurationNode value) throws SerializationException {
         try {
-            value.node("type").set(obj.serialize(value));
+            value.node("type").set(store.serialize(value));
         } catch (PermissionsLoadingException e) {
             throw new SerializationException(e);
         }

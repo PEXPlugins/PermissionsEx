@@ -15,22 +15,25 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.groupmanager
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.backend.ConversionResult
+import ca.stellardrift.permissionsex.backend.DataStoreFactory
 import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_DESCRIPTION
 import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_ERROR_NO_DIR
 import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_NAME
-import ca.stellardrift.permissionsex.backend.conversion.ConversionProvider
-import ca.stellardrift.permissionsex.backend.conversion.ConversionResult
-import ca.stellardrift.permissionsex.backend.conversion.ReadOnlyDataStore
+import ca.stellardrift.permissionsex.backend.StoreProperties
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
+import com.google.auto.service.AutoService
+import org.pcollections.PVector
+import org.pcollections.TreePVector
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -53,7 +56,7 @@ data class UserGroupPair(val user: ConfigurationNode, val group: ConfigurationNo
 /**
  * Backend implementing GroupManager data storage format
  */
-class GroupManagerDataStore internal constructor(identifier: String, config: Config) : ReadOnlyDataStore<GroupManagerDataStore, GroupManagerDataStore.Config>(identifier, config, FACTORY) {
+class GroupManagerDataStore internal constructor(properties: StoreProperties<Config>) : ReadOnlyDataStore<GroupManagerDataStore, GroupManagerDataStore.Config>(properties) {
 
     @ConfigSerializable
     data class Config(val groupManagerRoot: Path = Paths.get("plugins/GroupManager"))
@@ -184,17 +187,19 @@ class GroupManagerDataStore internal constructor(identifier: String, config: Con
         return completedFuture(false)
     }
 
-    companion object : ConversionProvider {
-        @JvmField
-        val FACTORY = Factory("groupmanager", Config::class.java, ::GroupManagerDataStore)
-        override val name = GROUPMANAGER_NAME()
+    @AutoService(DataStoreFactory::class)
+    companion object : Factory<GroupManagerDataStore, Config>("groupmanager", Config::class.java, ::GroupManagerDataStore), DataStoreFactory.Convertable {
+        override fun friendlyName() = GROUPMANAGER_NAME()
 
-        override fun listConversionOptions(pex: PermissionsEx<*>): List<ConversionResult> {
+        override fun listConversionOptions(pex: PermissionsEx<*>): PVector<ConversionResult> {
             val gmBaseDir = pex.baseDirectory.parent.resolve("GroupManager")
             return if (Files.exists(gmBaseDir.resolve("config.yml"))) { // we exist
-                listOf(ConversionResult(GroupManagerDataStore("gm-file", Config()), GROUPMANAGER_DESCRIPTION()))
+                TreePVector.singleton(ConversionResult.builder()
+                    .store(GroupManagerDataStore(StoreProperties.of("gm-file", Config(), this)))
+                    .description(GROUPMANAGER_DESCRIPTION())
+                    .build())
             } else {
-                emptyList()
+                TreePVector.empty()
             }
         }
     }

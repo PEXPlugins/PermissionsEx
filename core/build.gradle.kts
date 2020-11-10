@@ -29,6 +29,10 @@ plugins {
 dependencies {
     api(project(":api"))
     api(platform(configurate("bom", Versions.CONFIGURATE)))
+    annotationProcessor("org.immutables:value:2.8.8")
+    annotationProcessor("com.google.auto.service:auto-service:1.0-rc7")
+    compileOnly("com.google.auto.service:auto-service-annotations:1.0-rc7")
+
     api(configurate("gson"))
     api(configurate("hocon"))
     implementation(configurate("yaml"))

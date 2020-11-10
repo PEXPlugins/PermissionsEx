@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.groupmanager
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import org.spongepowered.configurate.ConfigurationNode
 

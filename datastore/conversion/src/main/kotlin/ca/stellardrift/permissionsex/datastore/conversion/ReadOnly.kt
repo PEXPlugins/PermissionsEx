@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.backend.DataStore
+import ca.stellardrift.permissionsex.backend.StoreProperties
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.data.ContextInheritance
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
@@ -91,7 +92,7 @@ abstract class ReadOnlySubjectData : ImmutableSubjectData {
 /**
  * A specialization of AbstractDataStore that handles backends for a global data store
  */
-abstract class ReadOnlyDataStore<T : ReadOnlyDataStore<T, C>, C> protected constructor(identifier: String, config: C, factory: Factory<T, C>) : AbstractDataStore<T, C>(identifier, config, factory) {
+abstract class ReadOnlyDataStore<T : ReadOnlyDataStore<T, C>, C> protected constructor(props: StoreProperties<C>) : AbstractDataStore<T, C>(props) {
 
     override fun setDataInternal(
         type: String,

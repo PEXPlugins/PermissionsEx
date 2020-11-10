@@ -19,12 +19,15 @@ package ca.stellardrift.permissionsex.backend.memory;
 
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.backend.DataStoreFactory;
+import ca.stellardrift.permissionsex.backend.StoreProperties;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ContextInheritance;
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.GuavaCollectors;
+import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -46,13 +49,24 @@ import java.util.stream.Collectors;
  * A data store backed entirely in memory
  */
 public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDataStore.Config> {
-    public static final Factory<MemoryDataStore, Config> FACTORY = new Factory<>("memory", Config.class, MemoryDataStore::new);
-
     @ConfigSerializable
     static class Config {
         @Setting
         @Comment("Whether or not this data store will store subjects being set")
         boolean track = true;
+    }
+
+    @AutoService(DataStoreFactory.class)
+    public static class Factory extends AbstractDataStore.Factory<MemoryDataStore, Config> {
+        static final Factory INSTANCE = new Factory();
+
+        public static Factory provider() {
+            return INSTANCE;
+        }
+
+        private Factory() {
+            super("memory", Config.class, MemoryDataStore::new);
+        }
     }
 
 
@@ -61,11 +75,11 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
     public MemoryDataStore(final String identifier) {
-        super(identifier, new Config(), FACTORY);
+        super(StoreProperties.of(identifier, new Config(), Factory.INSTANCE));
     }
 
-    public MemoryDataStore(final String identifier, final Config config) {
-        super(identifier, config, FACTORY);
+    public MemoryDataStore(final StoreProperties<Config> properties) {
+        super(properties);
     }
 
     @Override

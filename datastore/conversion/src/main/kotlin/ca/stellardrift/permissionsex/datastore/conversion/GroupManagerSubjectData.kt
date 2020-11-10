@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.backend.conversion.groupmanager
+package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.ConversionUtils
-import ca.stellardrift.permissionsex.backend.conversion.ReadOnlySubjectData
 import ca.stellardrift.permissionsex.context.ContextValue
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.kotlin.extensions.get
