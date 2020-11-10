@@ -22,6 +22,7 @@ import java.lang.IllegalArgumentException
 import java.util.UUID
 import org.spongepowered.api.Game
 import org.spongepowered.api.entity.living.player.server.ServerPlayer
+import org.spongepowered.api.profile.GameProfileCache
 
 /**
  * Metadata for user types
@@ -37,22 +38,22 @@ internal class UserSubjectTypeDefinition(typeName: String, private val game: Gam
     }
 
     override fun getAliasForName(name: String): String? {
-        try {
+        return try {
             UUID.fromString(name)
+            null
         } catch (ex: IllegalArgumentException) {
             val player = game.server.getPlayer(name)
             if (player.isPresent) {
-                return player.get().uniqueId.toString()
+                player.get().uniqueId.toString()
             } else {
-                val res = game.server.gameProfileManager.cache
-                for (profile in res.match(name)) {
-                    if (profile.name.isPresent && profile.name.get().equals(name, ignoreCase = true)) {
-                        return profile.uniqueId.toString()
-                    }
-                }
+                val res: GameProfileCache = game.server.gameProfileManager.cache
+                res.streamOfMatches(name)
+                    .filter { it.name.isPresent && it.name.get().equals(name, ignoreCase = true) }
+                    .findFirst()
+                    .map { it.uniqueId.toString() }
+                    .orElse(null)
             }
         }
-        return null
     }
 
     override fun getAssociatedObject(identifier: String): ServerPlayer? {
