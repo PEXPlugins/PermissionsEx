@@ -66,6 +66,12 @@ subprojects {
         header = rootProject.file("LICENSE_HEADER")
         ext["year"] = LocalDate.now(ZoneOffset.UTC).year
     }
+
+    extensions.configure(JavaPluginExtension::class) {
+        if (!JavaVersion.current().isJava11Compatible) {
+            toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+        }
+    }
 }
 
 tasks.withType(Jar::class).configureEach { // disable
