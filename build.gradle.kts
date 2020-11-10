@@ -67,15 +67,15 @@ subprojects {
         ext["year"] = LocalDate.now(ZoneOffset.UTC).year
     }
 
-    extensions.configure(JavaPluginExtension::class) {
-        if (!JavaVersion.current().isJava11Compatible) {
+    if (!JavaVersion.current().isJava11Compatible) {
+        extensions.configure(JavaPluginExtension::class) {
             toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+        }
+        tasks.withType(JavaCompile::class).configureEach { // TODO: do this more properly with new opinionated version
+            options.release.set(8)
         }
     }
 
-    tasks.withType(JavaCompile::class).configureEach {
-        options.release.set(8)
-    }
 }
 
 tasks.withType(Jar::class).configureEach { // disable
