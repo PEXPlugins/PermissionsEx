@@ -24,6 +24,7 @@ import net.fabricmc.loom.task.RemapJarTask
  */
 
 plugins {
+    id("ca.stellardrift.opinionated.kotlin")
     id("fabric-loom") version "0.5-SNAPSHOT"
     id("ca.stellardrift.opinionated.fabric") version "3.1"
     id("ca.stellardrift.configurate-transformations")
@@ -36,7 +37,7 @@ configurations.implementation.get().extendsFrom(shade)
 
 val minecraftVersion = "1.16.4"
 dependencies {
-    shade(project(":core")) {
+    shade(project(":impl-blocks:minecraft")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
         exclude("org.spongepowered")
@@ -95,10 +96,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     listOf("com.zaxxer", "com.github.benmanes", "org.slf4j",
         "org.antlr", "org.apache.logging.slf4j").forEach {
         relocate(it, "$relocateRoot.$it")
-    }
-
-    manifest {
-        attributes("Automatic-Module-Name" to project.name)
     }
 }
 

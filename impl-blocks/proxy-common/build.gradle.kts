@@ -17,6 +17,9 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  * limitations under the License.
  *
  */
+plugins {
+    id("ca.stellardrift.opinionated.kotlin")
+}
 
 setupPublication()
 

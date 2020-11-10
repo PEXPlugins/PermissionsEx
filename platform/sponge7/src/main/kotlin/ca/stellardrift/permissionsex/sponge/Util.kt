@@ -21,21 +21,11 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.util.ContextSet
-import ca.stellardrift.permissionsex.util.MinecraftProfile
 import com.google.common.collect.ImmutableSet
-import java.util.UUID
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.spongeapi.SpongeComponentSerializer
-import org.spongepowered.api.profile.GameProfile
 import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.text.Text
-
-class SpongeMinecraftProfile(private val profile: GameProfile) : MinecraftProfile {
-    override val name: String
-        get() = profile.name.get()
-    override val uuid: UUID
-        get() = profile.uniqueId
-}
 
 fun Component.toSponge(): Text {
     return SpongeComponentSerializer.get().serialize(this)

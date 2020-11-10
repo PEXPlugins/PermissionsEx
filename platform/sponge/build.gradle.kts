@@ -24,8 +24,8 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
+    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
-    kotlin("kapt")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
     id("ca.stellardrift.configurate-transformations")
@@ -40,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    api(project(":core")) {
+    api(project(":impl-blocks:minecraft")) {
         exclude("com.google.guava", "guava")
         exclude("com.github.ben-manes.caffeine", "caffeine")
         exclude("net.kyori")

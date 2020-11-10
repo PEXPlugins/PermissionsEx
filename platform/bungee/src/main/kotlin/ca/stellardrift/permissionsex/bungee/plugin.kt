@@ -25,19 +25,15 @@ import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.MinecraftProfile
 import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
-import java.util.function.Function
-import java.util.function.Supplier
 import java.util.logging.Logger
 import javax.sql.DataSource
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences
@@ -58,12 +54,12 @@ import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 
 class PermissionsExPlugin : Plugin(), Listener {
-    private val cachedCommands = ConcurrentLinkedQueue<Supplier<Set<CommandSpec>>>()
     internal lateinit var logger: FormattedLogger private set
     internal lateinit var dataPath: Path private set
     internal lateinit var adventure: BungeeAudiences
 
-    lateinit var manager: PermissionsEx<*> internal set
+    private var _manager: MinecraftPermissionsEx<*>? = null
+    val manager: PermissionsEx<*> get() = requireNotNull(_manager) { "PermissionsEx has not yet been initialized" }.engine()
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -90,9 +86,10 @@ class PermissionsExPlugin : Plugin(), Listener {
         }.build()
 
         try {
-            this.manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), BungeeImplementationInterface(this))
+            this._manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), BungeeImplementationInterface(this)))
         } catch (e: Exception) {
             logger.error("Unable to load PermissionsEx!", e)
+            return
         }
         this.manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
         manager.getSubjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
@@ -108,7 +105,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     }
 
     override fun onDisable() {
-        if (this::manager.isInitialized) {
+        if (this._manager != null) {
             this.manager.close()
         }
         this.adventure.close()
@@ -151,12 +148,6 @@ fun CommandSender.toCalculatedSubject(): CalculatedSubject {
 }
 
 class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : ImplementationInterface {
-    override fun lookupMinecraftProfilesByName(
-        names: Iterable<String>,
-        action: Function<MinecraftProfile, CompletableFuture<Void>>
-    ): CompletableFuture<Int> {
-        return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
-    }
 
     private val exec = Executor { task ->
         plugin.proxy.scheduler.runAsync(plugin, task)

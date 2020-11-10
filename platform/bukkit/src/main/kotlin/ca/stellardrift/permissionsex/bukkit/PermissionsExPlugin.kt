@@ -27,17 +27,15 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.subject.SubjectType
-import ca.stellardrift.permissionsex.util.MinecraftProfile
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 import java.sql.SQLException
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
 import javax.sql.DataSource
 import net.kyori.adventure.platform.bukkit.BukkitAudiences
 import org.bukkit.Bukkit
@@ -81,7 +79,7 @@ data class BukkitConfiguration(
  * PermissionsEx plugin
  */
 class PermissionsExPlugin : JavaPlugin(), Listener {
-    private var _manager: PermissionsEx<BukkitConfiguration>? = null
+    private var _manager: MinecraftPermissionsEx<BukkitConfiguration>? = null
 
     /**
      * Access the PEX engine
@@ -89,7 +87,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      * @return The engine
      */
     val manager: PermissionsEx<BukkitConfiguration>
-        get() = requireNotNull(_manager) { "PermissionsEx is not currently initialized!" }
+        get() = (requireNotNull(_manager) { "PermissionsEx is not currently initialized!" }).engine()
 
     private lateinit var logger: FormattedLogger
 
@@ -141,12 +139,12 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         try {
             val impl = BukkitImplementationInterface()
             dataFolder.mkdirs()
-            _manager = PermissionsEx(
+            _manager = MinecraftPermissionsEx(PermissionsEx(
                 FilePermissionsExConfiguration.fromLoader(
                     configLoader,
                     BukkitConfiguration::class.java
                 ), impl
-            )
+            ))
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -259,7 +257,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     private fun onPlayerQuit(event: PlayerQuitEvent) {
         uninjectPermissible(event.player)
-        this._manager?.callbackController?.clearOwnedBy(event.player.uniqueId)
+        this._manager?.engine()?.callbackController?.clearOwnedBy(event.player.uniqueId)
         userSubjects.uncache(event.player.uniqueId.toString())
     }
 
@@ -335,7 +333,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             }
             if (!success) {
                 logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR(player.name))
-            } else if (_manager?.hasDebugMode() == true) {
+            } else if (_manager?.engine()?.hasDebugMode() == true) {
                 logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS(player.name))
             }
         } catch (e: Throwable) {
@@ -378,13 +376,6 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
 
         override fun getLogger(): Logger {
             return this@PermissionsExPlugin.logger
-        }
-
-        override fun lookupMinecraftProfilesByName(
-            names: Iterable<String>,
-            action: Function<MinecraftProfile, CompletableFuture<Void>>
-        ): CompletableFuture<Int> {
-            return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
         }
     }
 }

@@ -30,6 +30,7 @@ import java.time.ZoneOffset
 val spigotVersion: String = "1.15.1-R0.1-SNAPSHOT"
 
 plugins {
+    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
 }
@@ -37,8 +38,10 @@ plugins {
 setupPublication()
 
 repositories {
-    jitpack()
     spigot()
+    jitpack().content {
+        includeGroup("com.github.MilkBowl")
+    }
 }
 
 java {
@@ -61,7 +64,7 @@ tasks.processResources {
 }
 
 dependencies {
-    api(project(":core")) {
+    api(project(":impl-blocks:minecraft")) {
         exclude(group = "com.google.guava")
         exclude("org.yaml", "snakeyaml")
         exclude("com.google.code.gson", "gson")
@@ -76,7 +79,6 @@ dependencies {
 
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
     implementation(project(":impl-blocks:hikari-config"))
-    implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
 
     // provided at runtime
     shadow("org.spigotmc:spigot-api:$spigotVersion")

@@ -29,9 +29,9 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.subject.subjectType
 import ca.stellardrift.permissionsex.util.CachingValue
-import ca.stellardrift.permissionsex.util.MinecraftProfile
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
@@ -47,7 +47,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
-import java.util.function.Function
 import java.util.function.Predicate
 import javax.sql.DataSource
 import net.kyori.adventure.platform.spongeapi.SpongeAudiences
@@ -92,9 +91,9 @@ class PermissionsExPlugin @Inject internal constructor(
     private var sql: Optional<SqlService> = Optional.empty()
     private var scheduler: Scheduler = game.scheduler
     private val logger = FormattedLogger.forLogger(logger, true)
-    private var _manager: PermissionsEx<*>? = null
+    private var _manager: MinecraftPermissionsEx<*>? = null
     val manager: PermissionsEx<*> get() {
-        return _manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
+        return _manager?.engine() ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
     }
     private val spongeExecutor = Executor { runnable: Runnable ->
         scheduler
@@ -129,7 +128,7 @@ class PermissionsExPlugin @Inject internal constructor(
             convertFromBukkit()
             convertFromLegacySpongeName()
             Files.createDirectories(configDir)
-            _manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this)
+            _manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this))
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(PomData.NAME), e))
         }
@@ -187,7 +186,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     @Listener
     fun onReload(event: GameReloadEvent) {
-        this._manager?.reload()
+        this._manager?.engine()?.reload()
     }
 
     @Listener
@@ -374,7 +373,7 @@ class PermissionsExPlugin @Inject internal constructor(
         return PEXSubjectReference(collection, ident, this)
     }
 
-    override fun lookupMinecraftProfilesByName(
+    /*override fun lookupMinecraftProfilesByName(
         names: Iterable<String>,
         action: Function<MinecraftProfile, CompletableFuture<Void>>
     ): CompletableFuture<Int> {
@@ -383,7 +382,7 @@ class PermissionsExPlugin @Inject internal constructor(
                 CompletableFuture.allOf(*profiles.map { action.apply(SpongeMinecraftProfile(it)) }.toTypedArray())
                     .thenApply { profiles.size }
             }
-    }
+    }*/
 
     override fun getVersion(): String {
         return PomData.VERSION

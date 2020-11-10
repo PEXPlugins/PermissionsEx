@@ -22,17 +22,12 @@ import ca.stellardrift.permissionsex.gradle.Versions
  */
 
 plugins {
-    antlr
+    id("ca.stellardrift.opinionated.kotlin")
     id("ca.stellardrift.localization")
 }
 
-configurations.compile {
-    exclude("org.antlr", "antlr4")
-}
-
 dependencies {
-    antlr("org.antlr:antlr4:${Versions.ANTLR}")
-
+    api(project(":api"))
     api(platform(configurate("bom", Versions.CONFIGURATE)))
     api(configurate("gson"))
     api(configurate("hocon"))
@@ -43,12 +38,12 @@ dependencies {
     }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Versions.KOTLINX_COROUTINES}")
     implementation("com.google.guava:guava:21.0")
+    implementation(project(":impl-blocks:glob"))
 
     api("org.slf4j:slf4j-api:${Versions.SLF4J}")
     api(adventure("api", Versions.TEXT))
     implementation(adventure("text-serializer-plain", Versions.TEXT))
     implementation(adventure("text-serializer-legacy", Versions.TEXT))
-    implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KOTLINX_COROUTINES}")
 
     testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
@@ -64,8 +59,4 @@ localization {
 
 opinionated {
     useJUnit5()
-}
-
-tasks.generateGrammarSource {
-    this.arguments.addAll(listOf("-visitor", "-no-listener"))
 }

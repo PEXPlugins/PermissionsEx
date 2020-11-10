@@ -27,19 +27,12 @@ import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
-import ca.stellardrift.permissionsex.util.MinecraftProfile
-import com.google.common.collect.Iterables
-import com.mojang.authlib.Agent
-import com.mojang.authlib.GameProfile
-import com.mojang.authlib.ProfileLookupCallback
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
 import java.util.function.Supplier
 import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
@@ -67,14 +60,14 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     val manager: PermissionsEx<*>
     get() {
-        val temp = _manager
+        val temp = _manager?.engine()
         if (temp != null) {
             return temp
         } else {
             throw IllegalStateException("PermissionsEx has not yet been initialized!")
         }
     }
-    private var _manager: PermissionsEx<*>? = null
+    private var _manager: MinecraftPermissionsEx<*>? = null
     private lateinit var container: ModContainer
     private lateinit var dataDir: Path
     lateinit var server: MinecraftServer private set
@@ -99,7 +92,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         // TODO: expose these commands earlier?
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
             if (this._manager != null) {
-                this._manager?.registerCommandsTo {
+                this._manager?.engine()?.registerCommandsTo {
                     registerCommand(it, dispatcher)
                 }
             }
@@ -117,7 +110,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             .build()
 
         try {
-            _manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(loader), this)
+            _manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(loader), this))
         } catch (e: Exception) {
             logger.error(Messages.MOD_ENABLE_ERROR(), e)
             server.stop(false)
@@ -180,8 +173,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun handlePlayerQuit(player: ServerPlayerEntity) {
-        _manager?.callbackController?.clearOwnedBy(player.uuidAsString)
-        _manager?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
+        _manager?.engine()?.callbackController?.clearOwnedBy(player.uuidAsString)
+        _manager?.engine()?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 
     override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
@@ -213,25 +206,26 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         return container.metadata.version.friendlyString
     }
 
-    override fun lookupMinecraftProfilesByName(
-        namesIter: Iterable<String>,
-        action: Function<MinecraftProfile, CompletableFuture<Void>>
-    ): CompletableFuture<Int> {
-        val futures = mutableListOf<CompletableFuture<Void>>()
-        return CompletableFuture.supplyAsync({
-            val names = Iterables.toArray(namesIter, String::class.java)
-            val state = CountDownLatch(names.size)
-            val callback = PEXProfileLookupCallback(state, action, futures)
-            this.server.gameProfileRepo.findProfilesByNames(names, Agent.MINECRAFT, callback)
-            state.await()
-            futures.size
-        }, asyncExecutor).thenCombine(CompletableFuture.allOf(*futures.toTypedArray())) { count, _ -> count }
-    }
-
     fun logUnredirectedPermissionsCheck(method: String) {
         logger.warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method))
         logger.debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method), Exception("call chain"))
     }
+}
+
+/** Old profile lookup -- would be good to bring back
+override fun lookupMinecraftProfilesByName(
+    namesIter: Iterable<String>,
+    action: Function<MinecraftProfile, CompletableFuture<Void>>
+): CompletableFuture<Int> {
+    val futures = mutableListOf<CompletableFuture<Void>>()
+    return CompletableFuture.supplyAsync({
+        val names = Iterables.toArray(namesIter, String::class.java)
+        val state = CountDownLatch(names.size)
+        val callback = PEXProfileLookupCallback(state, action, futures)
+        this.server.gameProfileRepo.findProfilesByNames(names, Agent.MINECRAFT, callback)
+        state.await()
+        futures.size
+    }, asyncExecutor).thenCombine(CompletableFuture.allOf(*futures.toTypedArray())) { count, _ -> count }
 }
 
 internal class PEXProfileLookupCallback(private val state: CountDownLatch, private val action: Function<MinecraftProfile, CompletableFuture<Void>>, val futures: MutableList<CompletableFuture<Void>>) : ProfileLookupCallback {
@@ -247,4 +241,4 @@ internal class PEXProfileLookupCallback(private val state: CountDownLatch, priva
         state.countDown()
         PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_LOOKUP(profile, exception.message.toString()), exception)
     }
-}
+} */

@@ -19,7 +19,9 @@
  * The PermissionsEx permissions engine.
  */
 @DefaultQualifier(NonNull.class)
+@ImmutablesStyle
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.util.ImmutablesStyle;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;

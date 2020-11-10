@@ -85,7 +85,7 @@ public class SubjectCache {
      * @param listener A callback that will be notified whenever a change is made to the data object
      * @return A future returning when the data is available
      */
-    public CompletableFuture<ImmutableSubjectData> getData(String identifier, Consumer<ImmutableSubjectData> listener) {
+    public CompletableFuture<ImmutableSubjectData> getData(String identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
         Objects.requireNonNull(identifier, "identifier");
 
         CompletableFuture<ImmutableSubjectData> ret = cache.get().get(identifier);
@@ -199,7 +199,7 @@ public class SubjectCache {
         return set(identifier, null);
     }
 
-    CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
+    public CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData) {
         Objects.requireNonNull(identifier, "identifier");
 
         return dataStore.setData(type, identifier, newData);

@@ -25,10 +25,10 @@ import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
-import ca.stellardrift.permissionsex.util.MinecraftProfile
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent
@@ -43,11 +43,9 @@ import com.velocitypowered.api.proxy.ProxyServer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
 import javax.inject.Inject
 import javax.sql.DataSource
 import org.slf4j.Logger
@@ -84,16 +82,11 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         return ProjectData.VERSION
     }
 
-    override fun lookupMinecraftProfilesByName(
-        names: Iterable<String>,
-        action: Function<MinecraftProfile, CompletableFuture<Void>>
-    ): CompletableFuture<Int> {
-        return ca.stellardrift.permissionsex.profile.lookupMinecraftProfilesByName(names, action::apply)
-    }
-
     private val logger = FormattedLogger.forLogger(rawLogger, true)
 
-    lateinit var manager: PermissionsEx<*>
+    private var _manager: MinecraftPermissionsEx<*>? = null
+
+    val manager: PermissionsEx<*> get() = requireNotNull(this._manager) { "PermissionsEx has not yet been initialized" }.engine()
 
     @Subscribe
     fun onProxyInit(event: ProxyInitializeEvent) {
@@ -105,7 +98,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
             .build()
 
         try {
-            manager = PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this)
+            this._manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this))
         } catch (e: Exception) {
             logger.error(Messages.PLUGIN_INIT_ERROR(), e)
             return
@@ -130,8 +123,9 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     @Subscribe
     fun onDisable(event: ProxyShutdownEvent) {
-        if (this::manager.isInitialized) {
-            this.manager.close()
+        if (this._manager != null) {
+            this._manager?.close()
+            this._manager = null
         }
         this.exec.shutdown()
         try {
@@ -152,7 +146,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
     fun onPermissionSetup(event: PermissionsSetupEvent) {
         event.provider = PermissionProvider {
             val func = PEXPermissionFunction(this, it)
-            if (this::manager.isInitialized) {
+            if (this._manager != null) {
                 func.subject.identifier
             }
             func

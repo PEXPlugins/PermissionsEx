@@ -17,9 +17,8 @@
 
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.util.MinecraftProfile;
+import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile;
 import com.mojang.authlib.GameProfile;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -28,16 +27,15 @@ import java.util.UUID;
 @Mixin(value = GameProfile.class, remap = false)
 public abstract class MixinGameProfile implements MinecraftProfile {
     @Shadow
-    @NotNull
-    @Override
     public abstract String getName();
 
     @Shadow
     public abstract UUID getId();
 
-    @NotNull
     @Override
-    public UUID getUuid() {
-        return getId();
+    public String name() {
+        return this.getName();
     }
+
+    // uuid() is implemented by adventure-platform-fabric
 }

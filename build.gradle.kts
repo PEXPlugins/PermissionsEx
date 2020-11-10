@@ -24,12 +24,7 @@ version = "2.0-SNAPSHOT"
 description = project.property("pexDescription") as String
 
 subprojects {
-    if (name == "api") { // TODO: make this less hacky
-        apply(plugin="ca.stellardrift.opinionated")
-    } else {
-        apply(plugin = "ca.stellardrift.opinionated.kotlin")
-    }
-
+    apply(plugin="ca.stellardrift.opinionated")
     apply(plugin="ca.stellardrift.opinionated.publish")
 
     repositories {

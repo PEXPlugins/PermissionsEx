@@ -24,6 +24,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
+    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
     id("ca.stellardrift.localization")
 }
@@ -37,7 +38,7 @@ repositories {
 }
 
 dependencies {
-    api(project(":core")) {
+    api(project(":impl-blocks:minecraft")) {
         exclude("com.google.code.gson")
         exclude("com.google.guava")
         exclude("org.yaml", "snakeyaml")
@@ -50,7 +51,7 @@ dependencies {
         exclude("com.google.code.gson")
     }
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
+    implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
     api(project(":impl-blocks:proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:hikari-config"))
 
@@ -77,9 +78,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
 
     exclude("org/checkerframework/**")
-    manifest {
-        attributes("Automatic-Module-Name" to project.name)
-    }
 }
 
 tasks.assemble {

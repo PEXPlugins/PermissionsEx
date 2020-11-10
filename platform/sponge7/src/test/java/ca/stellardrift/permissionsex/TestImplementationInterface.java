@@ -17,23 +17,12 @@
 
 package ca.stellardrift.permissionsex;
 
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
-import ca.stellardrift.permissionsex.util.MinecraftProfile;
-import com.google.common.collect.ImmutableSet;
-import kotlin.text.Charsets;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.StreamSupport;
 
 /**
  */
@@ -74,36 +63,5 @@ public class TestImplementationInterface implements ImplementationInterface {
     public String getVersion() {
         return "test";
     }
-
-    @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
-        final int[] count = new int[] {0};
-        return CompletableFuture.allOf(StreamSupport.stream(names.spliterator(), false)
-                .map(name -> {
-                    count[0]++;
-                    return action.apply(new TestProfile(name, UUID.nameUUIDFromBytes(name.getBytes(Charsets.UTF_8))));
-                })
-                .toArray(CompletableFuture[]::new)).thenApply(none -> count[0]);
-    }
 }
 
-class TestProfile implements MinecraftProfile {
-    private final String name;
-    private final UUID uid;
-    TestProfile(String name, UUID uid) {
-        this.name = name;
-        this.uid = uid;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-    @NotNull
-    @Override
-    public UUID getUuid() {
-        return this.uid;
-    }
-}

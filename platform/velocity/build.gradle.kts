@@ -22,6 +22,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
+    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
     kotlin("kapt")
     id("ca.stellardrift.localization")
@@ -36,7 +37,7 @@ repositories {
 }
 
 dependencies {
-    api(project(":core")) {
+    api(project(":impl-blocks:minecraft")) {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.google.code.gson")
         exclude("com.google.guava")
@@ -49,7 +50,7 @@ dependencies {
     implementation(project(":impl-blocks:hikari-config")) {
         exclude("org.slf4j", "slf4j-api")
     }
-    implementation(project(":impl-blocks:profile-resolver")) { isTransitive = false }
+    implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
 
     kapt(shadow("com.velocitypowered:velocity-api:1.1.0-SNAPSHOT")!!)
 }
@@ -63,15 +64,17 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
     }
-    listOf("com.zaxxer", "org.spongepowered.configurate", "com.github.benmanes",
-        "org.jetbrains", "org.checkerframework", "org.antlr.v4").forEach {
+    listOf(
+        "com.zaxxer",
+        "org.spongepowered.configurate",
+        "com.github.benmanes",
+        "org.jetbrains",
+        "org.checkerframework",
+        "org.antlr.v4"
+    ).forEach {
         relocate(it, "$relocateRoot.$it")
     }
     exclude("org/checkerframework/**")
-
-    manifest {
-        attributes("Automatic-Module-Name" to project.name)
-    }
 }
 
 tasks.assemble {

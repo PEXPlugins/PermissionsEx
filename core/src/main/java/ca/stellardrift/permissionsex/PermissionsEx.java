@@ -35,7 +35,6 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinitionKt;
-import ca.stellardrift.permissionsex.util.MinecraftProfile;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import com.google.common.collect.ImmutableList;
@@ -46,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.*;
@@ -57,10 +54,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.Messages.*;
 import static ca.stellardrift.permissionsex.commands.PermissionsExCommandsKt.createRootCommand;
@@ -80,7 +75,7 @@ import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromot
  * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
  * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
  */
-public class PermissionsEx<PlatformConfigType> implements ImplementationInterface, Consumer<ContextInheritance> {
+public class PermissionsEx<P> implements ImplementationInterface, Consumer<ContextInheritance> {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
@@ -94,25 +89,25 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     private volatile PermissionCheckNotifier notifier = baseNotifier;
     private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
 
-    private final AtomicReference<State<PlatformConfigType>> state = new AtomicReference<>();
+    private final AtomicReference<State<P>> state = new AtomicReference<>();
     private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
     private RankLadderCache rankLadderCache;
     private volatile CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
     private final CallbackController callbackController;
 
-    private static class State<PlatformConfigType> {
-        private final PermissionsExConfiguration<PlatformConfigType> config;
+    private static class State<P> {
+        private final PermissionsExConfiguration<P> config;
         private final DataStore activeDataStore;
         private List<ConversionResult> availableConversions = Collections.emptyList();
 
-        private State(PermissionsExConfiguration<PlatformConfigType> config, DataStore activeDataStore) {
+        private State(PermissionsExConfiguration<P> config, DataStore activeDataStore) {
             this.config = config;
             this.activeDataStore = activeDataStore;
         }
     }
 
-    public PermissionsEx(final PermissionsExConfiguration<PlatformConfigType> config, ImplementationInterface impl) throws PermissionsLoadingException {
+    public PermissionsEx(final PermissionsExConfiguration<P> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
         this.logger = FormattedLogger.forLogger(impl.getLogger(), false);
         this.transientData = new MemoryDataStore("transient");
@@ -125,7 +120,6 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         initialize(config);
 
         getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinitionKt.subjectType(SUBJECTS_DEFAULTS, false));
-        convertUuids();
     }
 
     /**
@@ -139,79 +133,14 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         consumer.accept(getDemoteCommand(this));
     }
 
-    private State<PlatformConfigType> getState() throws IllegalStateException {
-        State<PlatformConfigType> ret = this.state.get();
+    private State<P> getState() throws IllegalStateException {
+        State<P> ret = this.state.get();
         if (ret == null) {
             throw new IllegalStateException("Manager has already been closed!");
         }
         return ret;
     }
 
-    private void convertUuids() {
-        try {
-            InetAddress.getByName("api.mojang.com");
-            final DataStore dataStore = state.get().activeDataStore;
-            performBulkOperation(() -> {
-                Set<String> toConvert = dataStore.getAllIdentifiers(SUBJECTS_USER).stream()
-                        .filter(ident -> {
-                            if (ident.length() != 36) {
-                                return true;
-                            }
-                            try {
-                                UUID.fromString(ident);
-                                return false;
-                            } catch (IllegalArgumentException ex) {
-                                return true;
-                            }
-                        }).collect(Collectors.toSet());
-                if (!toConvert.isEmpty()) {
-                    getLogger().info(UUIDCONVERSION_BEGIN.toComponent());
-                } else {
-                    return CompletableFuture.completedFuture(0);
-                }
-
-                return lookupMinecraftProfilesByName(toConvert, profile -> {
-                    final String newIdentifier = profile.getUuid().toString();
-                    String lookupName = profile.getName();
-                    return dataStore.isRegistered(SUBJECTS_USER, newIdentifier).thenCombine(
-                            dataStore.isRegistered(SUBJECTS_USER, lookupName)
-                                    .thenCombine(dataStore.isRegistered(SUBJECTS_USER, lookupName.toLowerCase()), (a, b) -> (a || b)), (newRegistered, oldRegistered) -> {
-                                if (newRegistered) {
-                                    getLogger().warn(UUIDCONVERSION_ERROR_DUPLICATE.toComponent(newIdentifier));
-                                    return false;
-                                } else if (!oldRegistered) {
-                                    return false;
-                                }
-                                return true;
-
-                            }).thenCompose(doConvert -> {
-                        if (!doConvert) {
-                            return Util.<Void>emptyFuture();
-                        }
-                        return dataStore.getData(SUBJECTS_USER, profile.getName(), null)
-                                .thenCompose(oldData -> {
-                                    return dataStore.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.getName()))
-                                            .thenAccept(result -> dataStore.setData(SUBJECTS_USER, profile.getName(), null)
-                                                    .exceptionally(t -> {
-                                                        t.printStackTrace();
-                                                        return null;
-                                                    }));
-                                });
-                    });
-                });
-            }).thenAccept(result -> {
-                    if (result != null && result > 0) {
-                        getLogger().info(UUIDCONVERSION_END.toComponent(result));
-                    }
-                }).exceptionally(t -> {
-                    getLogger().error(UUIDCONVERSION_ERROR_GENERAL.toComponent(), t);
-                    return null;
-                });
-        } catch (UnknownHostException e) {
-            getLogger().warn(UUIDCONVERSION_ERROR_DNS.toComponent());
-        }
-
-    }
 
     /**
      * Get the collection of subjects of a given type. No data is loaded in this operation.
@@ -219,8 +148,6 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      * in this class for convenience.
      *
      * @see #SUBJECTS_DEFAULTS
-     * @see #SUBJECTS_GROUP
-     * @see #SUBJECTS_USER
      * @param type The type identifier requested. Can be any string
      * @return The subject type collection
      */
@@ -275,7 +202,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      * @return A future that completes once the import operation is complete
      */
     public CompletableFuture<Void> importDataFrom(String dataStoreIdentifier) {
-        final State<PlatformConfigType> state = getState();
+        final State<P> state = getState();
         final DataStore expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
@@ -288,7 +215,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
     }
 
     private CompletableFuture<Void> importDataFrom(DataStore expected) {
-        final State<PlatformConfigType> state = getState();
+        final State<P> state = getState();
         try {
             expected.initialize(this);
         } catch (PermissionsLoadingException e) {
@@ -351,7 +278,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      * @param debug Whether to enable debug mode
      * @param filterPattern A pattern to filter which permissions are logged. Null for no filter.
      */
-    public synchronized void setDebugMode(boolean debug, Pattern filterPattern) {
+    public synchronized void setDebugMode(boolean debug, final @Nullable Pattern filterPattern) {
         if (debug) {
             if (this.notifier instanceof DebugPermissionCheckNotifier) {
                 this.notifier = new DebugPermissionCheckNotifier(getLogger(), ((DebugPermissionCheckNotifier) this.notifier).getDelegate(), filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
@@ -373,10 +300,10 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      */
     private void reloadSync() throws PEBKACException, PermissionsLoadingException {
         try {
-            PermissionsExConfiguration<PlatformConfigType> config = getState().config.reload();
+            PermissionsExConfiguration<P> config = getState().config.reload();
             config.validate();
             initialize(config);
-            getSubjects(SUBJECTS_GROUP).cacheAll();
+            // TODO: Throw reload event to cache any relevant subject types
         } catch (IOException e) {
             throw new PEBKACException(CONFIG_ERROR_LOAD.toComponent(e.getLocalizedMessage()));
         }
@@ -390,8 +317,8 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      * @param config The configuration to use in this engine
      * @throws PermissionsLoadingException If an error occurs loading the backend
      */
-    private void initialize(PermissionsExConfiguration<PlatformConfigType> config) throws PermissionsLoadingException {
-        State<PlatformConfigType> newState = new State<>(config, config.getDefaultDataStore());
+    private void initialize(PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
+        State<P> newState = new State<>(config, config.getDefaultDataStore());
         boolean shouldAnnounceImports = !newState.activeDataStore.initialize(this);
         try {
             newState.config.save();
@@ -418,7 +345,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         }
         newState.availableConversions = ImmutableList.copyOf(allResults);
 
-        State<PlatformConfigType> oldState = this.state.getAndSet(newState);
+        State<P> oldState = this.state.getAndSet(newState);
         if (oldState != null) {
             try {
                 oldState.activeDataStore.close();
@@ -432,7 +359,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
                 ((PEXContextDefinition<?>) ctxDef).update(newState.config);
             }
         });
-        getSubjects(SUBJECTS_GROUP).cacheAll();
+        getSubjects("group").cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
             getContextInheritance(null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
@@ -461,7 +388,7 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
      * until the engine is reinitialized with a fresh configuration.
      */
     public void close() {
-        State<PlatformConfigType> state = this.state.getAndSet(null);
+        State<P> state = this.state.getAndSet(null);
         state.activeDataStore.close();
     }
 
@@ -525,22 +452,12 @@ public class PermissionsEx<PlatformConfigType> implements ImplementationInterfac
         return impl.createSubjectIdentifier(collection, ident);
     }
 
-    @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Consumer<MinecraftProfile> action) {
-        return impl.lookupMinecraftProfilesByName(names, action);
-    }
-
-    @Override
-    public CompletableFuture<Integer> lookupMinecraftProfilesByName(Iterable<String> names, Function<MinecraftProfile, CompletableFuture<Void>> action) {
-        return impl.lookupMinecraftProfilesByName(names, action);
-    }
-
     /**
      * Get the current configuration PEX is operating with. This object is immutable.
      *
      * @return The current configuration object
      */
-    public PermissionsExConfiguration<PlatformConfigType> getConfig() {
+    public PermissionsExConfiguration<P> getConfig() {
         return getState().config;
     }
 

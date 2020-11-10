@@ -23,6 +23,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
+    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
     kotlin("kapt")
     id("ca.stellardrift.localization")
@@ -38,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    api(project(":core")) {
+    api(project(":impl-blocks:minecraft")) {
         exclude("com.google.guava", "guava")
         exclude("org.slf4j", "slf4j-api")
         exclude("com.github.ben-manes.caffeine", "caffeine")
@@ -82,10 +83,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("com.typesafe:config:.*"))
         exclude(dependency("org.yaml:snakeyaml:.*"))
         exclude(dependency("com.google.code.gson:gson:.*"))
-    }
-
-    manifest {
-        attributes("Automatic-Module-Name" to project.name)
     }
 }
 
