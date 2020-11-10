@@ -25,9 +25,9 @@ import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_DEFAULTS
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
-import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executor
@@ -191,7 +191,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     override fun getDataSourceForURL(url: String): DataSource {
-        return createHikariDataSource(url, dataDir)
+        return Hikari.createDataSource(url, this.dataDir)
     }
 
     override fun getAsyncExecutor(): Executor {

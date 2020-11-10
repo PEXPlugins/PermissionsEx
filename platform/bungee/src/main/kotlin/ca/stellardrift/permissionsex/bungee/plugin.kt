@@ -23,12 +23,12 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
-import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
-import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
-import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
+import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import java.lang.reflect.Constructor
 import java.nio.file.Files
@@ -95,7 +95,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         manager.getSubjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
             it.setDefaultValue(PermissionsEx.GLOBAL_CONTEXT, 1)
         }
-        this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
+        this.manager.registerContextDefinitions(ProxyContextDefinition.INSTANCE, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
 
         this.manager.registerCommandsTo {
@@ -166,7 +166,7 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
     }
 
     override fun getDataSourceForURL(url: String): DataSource {
-        return createHikariDataSource(url, plugin.dataPath)
+        return Hikari.createDataSource(url, plugin.dataPath)
     }
 
     override fun getAsyncExecutor(): Executor {

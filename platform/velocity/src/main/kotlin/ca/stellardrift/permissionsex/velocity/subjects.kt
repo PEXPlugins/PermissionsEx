@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
-import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import com.google.common.collect.Maps

@@ -15,10 +15,15 @@
  * limitations under the License.
  */
 
-@file:JvmName("ProxyCommon")
-package ca.stellardrift.permissionsex.proxycommon
+package ca.stellardrift.permissionsex.proxycommon;
 
-import org.spongepowered.configurate.util.UnmodifiableCollections
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
-const val SUBJECTS_SYSTEM: String = "system"
-val IDENT_SERVER_CONSOLE = UnmodifiableCollections.immutableMapEntry(SUBJECTS_SYSTEM, "Server")
+import java.util.Map;
+
+public final class ProxyCommon {
+    private ProxyCommon() {}
+
+    public static final String SUBJECTS_SYSTEM = "system";
+    public static final Map.Entry<String, String> IDENT_SERVER_CONSOLE = UnmodifiableCollections.immutableMapEntry(SUBJECTS_SYSTEM, "Server");
+}

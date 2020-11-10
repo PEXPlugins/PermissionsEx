@@ -25,9 +25,9 @@ import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPe
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.SubjectType
 import java.io.File
 import java.lang.reflect.InvocationTargetException
@@ -358,7 +358,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
 
         @Throws(SQLException::class)
         override fun getDataSourceForURL(url: String): DataSource {
-            return createHikariDataSource(url, this.baseDirectory)
+            return Hikari.createDataSource(url, this.baseDirectory)
         }
 
         /**

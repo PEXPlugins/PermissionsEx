@@ -23,12 +23,12 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
-import ca.stellardrift.permissionsex.hikariconfig.createHikariDataSource
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
-import ca.stellardrift.permissionsex.proxycommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
-import ca.stellardrift.permissionsex.proxycommon.SUBJECTS_SYSTEM
+import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent
@@ -69,7 +69,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
     }
 
     override fun getDataSourceForURL(url: String): DataSource {
-        return createHikariDataSource(url, dataPath)
+        return Hikari.createDataSource(url, dataPath)
     }
 
     override fun getLogger(): FormattedLogger = logger
@@ -108,7 +108,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 
-        this.manager.registerContextDefinitions(ProxyContextDefinition, RemoteIpContextDefinition,
+        this.manager.registerContextDefinitions(ProxyContextDefinition.INSTANCE, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
 
         this.manager.registerCommandsTo {
