@@ -18,11 +18,10 @@
 package ca.stellardrift.permissionsex.backend.sql;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.util.CheckedBiConsumer;
 import ca.stellardrift.permissionsex.util.Util;
 import com.google.common.collect.ImmutableList;
-import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.sql.SQLException;
 import java.util.Collections;

@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.data;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.PermissionsExTest;
-import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
@@ -27,7 +27,7 @@ import ca.stellardrift.permissionsex.context.*;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import ca.stellardrift.permissionsex.subject.SubjectType;
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -55,9 +55,9 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
-        SubjectType groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
+        SubjectTypeImpl groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
         CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
-        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, groupCache.getTypeInfo().getTypeName(), parentS.getIdentifier().getValue())
+        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, groupCache.getTypeInfo().typeName(), parentS.getIdentifier().getValue())
                 .setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.child", 1)
         ).thenApply(data -> child)).get();
         CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, childS.getIdentifier().getKey(), childS.getIdentifier().getValue())).thenApply(data -> subject)).get();
@@ -176,7 +176,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
             @Override
             public DataStore getDefaultDataStore() {
-                return new MemoryDataStore("data-baker");
+                return MemoryDataStore.create("data-baker");
             }
 
             @Override

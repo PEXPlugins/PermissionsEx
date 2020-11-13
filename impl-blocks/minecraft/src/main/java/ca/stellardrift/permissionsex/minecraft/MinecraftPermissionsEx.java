@@ -18,13 +18,12 @@
 package ca.stellardrift.permissionsex.minecraft;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.data.SubjectCache;
+import ca.stellardrift.permissionsex.data.SubjectDataCacheImpl;
 import ca.stellardrift.permissionsex.minecraft.profile.ProfileApiResolver;
-import ca.stellardrift.permissionsex.subject.SubjectType;
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl;
 import reactor.core.publisher.Mono;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Locale;
@@ -60,11 +59,11 @@ public class MinecraftPermissionsEx<T> implements Closeable {
         return this.engine;
     }
 
-    public SubjectType users() {
+    public SubjectTypeImpl users() {
         return this.engine.getSubjects(SUBJECTS_USER);
     }
 
-    public SubjectType groups() {
+    public SubjectTypeImpl groups() {
         return this.engine.getSubjects(SUBJECTS_GROUP);
     }
 
@@ -72,7 +71,7 @@ public class MinecraftPermissionsEx<T> implements Closeable {
         try {
             InetAddress.getByName("api.mojang.com");
             this.engine.performBulkOperation(() -> {
-                final SubjectCache users = this.users().persistentData();
+                final SubjectDataCacheImpl users = this.users().persistentData();
                 Set<String> toConvert = users.getAllIdentifiers().stream()
                         .filter(ident -> {
                             if (ident.length() != 36) {

@@ -129,10 +129,10 @@ val InetAddress.maxPrefixLength: Int get() =
     }
 
 abstract class IpSetContextDefinition(name: String) : ContextDefinition<IpSet>(name) {
-    override fun serialize(userValue: IpSet): String = userValue.toString()
-    override fun deserialize(canonicalValue: String): IpSet? {
+    override fun serialize(canonicalValue: IpSet): String = canonicalValue.toString()
+    override fun deserialize(userValue: String): IpSet? {
         return try {
-            IpSet.fromCidr(canonicalValue)
+            IpSet.fromCidr(userValue)
         } catch (ex: IllegalArgumentException) {
             null
         }

@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.commands
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.DataStoreFactory
 import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_CBTEXT
 import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.CALLBACKTEST_SUCCESS
@@ -69,6 +68,7 @@ import ca.stellardrift.permissionsex.commands.parse.none
 import ca.stellardrift.permissionsex.commands.parse.string
 import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.commands.parse.subjectType
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.thenMessageSubject

@@ -26,6 +26,7 @@ import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.util.UUID
+import java.util.function.Consumer
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
 class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<ProxiedPlayer>(SUBJECTS_USER) {
@@ -59,39 +60,39 @@ class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : Subje
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
-            consumer(IpSet.fromAddrPrefix(address.address, address.address.maxPrefixLength))
+            consumer.accept(IpSet.fromAddrPrefix(address.address, address.address.maxPrefixLength))
         }
     }
 }
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
-            pendingConnection.virtualHost?.hostName?.apply(consumer)
+            pendingConnection.virtualHost?.hostName?.apply(consumer::accept)
         }
     }
 }
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.address?.run {
                 IpSet.fromAddrPrefix(this, this.maxPrefixLength)
-            }?.apply(consumer)
+            }?.apply(consumer::accept)
         }
     }
 }
 
 object LocalPortContextDefiniiton : ContextDefinition<Int>("localport") {
     override fun serialize(userValue: Int): String = userValue.toString()
-    override fun deserialize(canonicalValue: String): Int = Integer.parseInt(canonicalValue)
+    override fun deserialize(userValue: String): Int = Integer.parseInt(userValue)
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Int>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
-            pendingConnection.virtualHost?.port?.apply(consumer)
+            pendingConnection.virtualHost?.port?.apply(consumer::accept)
         }
     }
 }

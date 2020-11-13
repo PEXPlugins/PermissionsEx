@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.backend;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 
 import java.util.List;
 import java.util.Map;

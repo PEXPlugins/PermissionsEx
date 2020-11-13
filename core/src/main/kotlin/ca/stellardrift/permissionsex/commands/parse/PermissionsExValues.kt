@@ -127,7 +127,7 @@ private class SubjectElement(
                 (allIdents +
                         allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())
                     .filter { it.startsWith(identifierSegment, ignoreCase = true) }
-                    .map { "${typeObj.typeInfo.typeName}:$it" }
+                    .map { "${typeObj.typeInfo.typeName()}:$it" }
             } else {
                 pex.registeredSubjectTypes.asSequence()
                     .filter { it.startsWith(type, ignoreCase = true) }

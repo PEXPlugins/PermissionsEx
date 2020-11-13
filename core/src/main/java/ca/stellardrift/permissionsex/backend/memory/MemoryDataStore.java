@@ -18,12 +18,14 @@
 package ca.stellardrift.permissionsex.backend.memory;
 
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
-import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.backend.DataStoreFactory;
-import ca.stellardrift.permissionsex.backend.StoreProperties;
+import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.GuavaCollectors;
@@ -32,6 +34,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
@@ -57,15 +60,11 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     @AutoService(DataStoreFactory.class)
-    public static class Factory extends AbstractDataStore.Factory<MemoryDataStore, Config> {
-        static final Factory INSTANCE = new Factory();
+    public static final class Factory extends AbstractDataStore.Factory<MemoryDataStore, Config> {
+        static final String TYPE = "memory";
 
-        public static Factory provider() {
-            return INSTANCE;
-        }
-
-        private Factory() {
-            super("memory", Config.class, MemoryDataStore::new);
+        public Factory() {
+            super(TYPE, Config.class, MemoryDataStore::new);
         }
     }
 
@@ -74,8 +73,13 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
-    public MemoryDataStore(final String identifier) {
-        super(StoreProperties.of(identifier, new Config(), Factory.INSTANCE));
+    public static MemoryDataStore create(final String identifier) {
+        try {
+            return (MemoryDataStore) DataStoreFactory.forType(Factory.TYPE).create(identifier, BasicConfigurationNode.root(FilePermissionsExConfiguration.PEX_OPTIONS));
+        } catch (final PermissionsLoadingException ex) {
+            // Not possible to have loading errors when we're not loading anything
+            throw new RuntimeException(ex);
+        }
     }
 
     public MemoryDataStore(final StoreProperties<Config> properties) {
@@ -157,7 +161,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
         return CompletableFuture.completedFuture(data.values().stream()
                 .flatMap(data -> data.getActiveContexts().stream())
                 .flatMap(Collection::stream)
-                .map(ContextValue::getKey)
+                .map(ContextValue::key)
                 .collect(Collectors.toSet()));
     }
 

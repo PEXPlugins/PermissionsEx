@@ -17,6 +17,9 @@
 
 package ca.stellardrift.permissionsex.data;
 
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.util.Change;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 
@@ -27,27 +30,30 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * An automatically updating reference to the latest data for a certain subject.
+ *
+ * @since 2.0.0
  */
-public class SubjectDataReference implements Consumer<ImmutableSubjectData> {
+public class SubjectDataReference implements Consumer<ImmutableSubjectData>, SubjectRef {
     private final String identifier;
-    private final SubjectCache cache;
+    private final SubjectDataCacheImpl cache;
     private final Set<Consumer<ImmutableSubjectData>> updateListeners;
     final AtomicReference<ImmutableSubjectData> data = new AtomicReference<>();
     private final boolean strongListeners;
 
     /**
-     * Create a new reference to subject data
-     * Instances are accessible through a {@link SubjectCache} instance
+     * Create a new reference to subject data.
+     *
+     * <p>Instances are accessible through a {@link SubjectDataCacheImpl} instance.</p>
      *
      * @param identifier The subject's identifier
      * @param cache The cache to get data from and listen for changes from
      * @param strongListeners Whether or not to hold strong references to listeners registered
      */
-    SubjectDataReference(String identifier, SubjectCache cache, boolean strongListeners) {
+    SubjectDataReference(String identifier, SubjectDataCacheImpl cache, boolean strongListeners) {
         this.identifier = identifier;
         this.cache = cache;
         this.strongListeners = strongListeners;
@@ -58,33 +64,24 @@ public class SubjectDataReference implements Consumer<ImmutableSubjectData> {
         }
     }
 
-    /**
-     * Get the current subject data
-     *
-     * @return The current data
-     */
+    @Override
     public ImmutableSubjectData get() {
         return this.data.get();
     }
 
-    /**
-     * Update the contained data based on the result of a function
-     *
-     * @param modifierFunc The function that will be called to update the data
-     * @return A future completing when data updates have been written to the data store
-     */
-    public CompletableFuture<Change<ImmutableSubjectData>> update(Function<ImmutableSubjectData, ImmutableSubjectData> modifierFunc) {
+    @Override
+    public CompletableFuture<Change<ImmutableSubjectData>> update(UnaryOperator<ImmutableSubjectData> modifierFunc) {
         ImmutableSubjectData data, newData;
         do {
             data = get();
 
             newData = modifierFunc.apply(data);
             if (newData == data) {
-                return CompletableFuture.completedFuture(new Change<>(data, newData));
+                return CompletableFuture.completedFuture(Change.of(data, newData));
             }
         } while (!this.data.compareAndSet(data, newData));
         final ImmutableSubjectData finalData = data;
-        return this.cache.set(this.identifier, newData).thenApply(finalNew -> new Change<>(finalData, finalNew));
+        return this.cache.set(this.identifier, newData).thenApply(finalNew -> Change.of(finalData, finalNew));
     }
 
     @Override
@@ -95,38 +92,37 @@ public class SubjectDataReference implements Consumer<ImmutableSubjectData> {
         }
     }
 
-    /**
-     * Get whether or not this reference will hold strong references to stored listeners.
-     * If the return value  is false, registering a listener object with this reference will
-     * not prevent it from being garbage collected, so the listener must be held somewhere
-     * else for it to continue being called.
-     * @return Whether or not listeners are held strongly.
-     */
+    @Override
     public boolean holdsListenersStrongly() {
         return this.strongListeners;
     }
 
-    /**
-     * Register a listener to be called when an update is performed
-     * @param listener The listener to register
-     */
+    @Override
     public void onUpdate(Consumer<ImmutableSubjectData> listener) {
         updateListeners.add(listener);
     }
 
     /**
-     * Get the cache this subject is held in
+     * Get the cache this subject is held in.
+     *
      * @return The cache holding this data
      */
-    public SubjectCache getCache() {
+    public SubjectDataCacheImpl getCache() {
         return cache;
     }
 
-    /**
-     * Get an identifier that can be used to refer to this subject
-     * @return The subject's identifier
-     */
+    @Override
     public Map.Entry<String, String> getIdentifier() {
         return Maps.immutableEntry(getCache().getType(), this.identifier);
+    }
+
+    @Override
+    public CompletableFuture<Boolean> isRegistered() {
+        return getCache().isRegistered(this.identifier);
+    }
+
+    @Override
+    public CompletableFuture<ImmutableSubjectData> remove() {
+        return getCache().remove(this.identifier);
     }
 }

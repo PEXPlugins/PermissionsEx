@@ -24,11 +24,11 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPermissibleInjector
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
-import ca.stellardrift.permissionsex.subject.SubjectType
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
@@ -160,7 +160,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             RemoteIpContextDefinition,
             LocalIpContextDefinition,
             LocalHostContextDefinition,
-            LocalPortContextDefiniiton
+            LocalPortContextDefinition
         )
         manager.getSubjects(PermissionsEx.SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(
             PermissionsEx.SUBJECTS_USER,
@@ -266,7 +266,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      *
      * @return The user subject collection
      */
-    val userSubjects: SubjectType
+    val userSubjects: SubjectTypeImpl
         get() = manager.getSubjects(PermissionsEx.SUBJECTS_USER)
 
     /**
@@ -274,7 +274,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      *
      * @return The group subject collection
      */
-    val groupSubjects: SubjectType
+    val groupSubjects: SubjectTypeImpl
         get() = manager.getSubjects(PermissionsEx.SUBJECTS_GROUP)
 
     private fun injectPermissible(player: Player) {

@@ -17,19 +17,19 @@
 
 package ca.stellardrift.permissionsex.rank;
 
-import com.google.common.collect.ImmutableList;
-import org.spongepowered.configurate.util.UnmodifiableCollections;
+import org.pcollections.PVector;
+import org.pcollections.TreePVector;
 
 import java.util.List;
 
 import static java.util.Map.Entry;
 
 public class FixedRankLadder extends AbstractRankLadder {
-    private final List<Entry<String, String>> ranks;
+    private final PVector<Entry<String, String>> ranks;
 
     public FixedRankLadder(String name, List<Entry<String, String>> ranks) {
         super(name);
-        this.ranks = ImmutableList.copyOf(ranks);
+        this.ranks = TreePVector.from(ranks);
     }
 
     @Override

@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface SubjectDataBaker {
-    CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<ContextValue<?>> activeContexts);
+    CompletableFuture<BakedSubjectData> bake(CalculatedSubjectImpl data, Set<ContextValue<?>> activeContexts);
 
     static SubjectDataBaker inheritance() {
         return InheritanceSubjectDataBaker.INSTANCE;

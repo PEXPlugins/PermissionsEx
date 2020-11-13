@@ -30,7 +30,7 @@ import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
-import ca.stellardrift.permissionsex.subject.subjectType
+import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -48,6 +48,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Predicate
+import java.util.function.Supplier
 import javax.sql.DataSource
 import net.kyori.adventure.platform.spongeapi.SpongeAudiences
 import org.slf4j.Logger
@@ -74,6 +75,7 @@ import org.spongepowered.api.util.annotation.NonnullByDefault
 import org.spongepowered.configurate.CommentedConfigurationNode
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 
 /**
@@ -134,11 +136,12 @@ class PermissionsExPlugin @Inject internal constructor(
         }
         defaults = loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
             .get() as PEXSubject
-        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = subjectType<Any?>(
+        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
             PermissionService.SUBJECTS_SYSTEM,
-                "Server" to { game.server.console },
-                "RCON" to { null }
-        ) { true }
+            { true },
+            immutableMapEntry("Server", Supplier { game.server.console }),
+            immutableMapEntry("RCON", Supplier { null })
+        )
         manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
             UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, this)
         registerFakeOpCommand("op", "minecraft.command.op")

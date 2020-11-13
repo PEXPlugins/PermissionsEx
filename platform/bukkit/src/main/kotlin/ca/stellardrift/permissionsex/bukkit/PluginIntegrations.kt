@@ -26,6 +26,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin
 import com.sk89q.worldguard.protection.regions.ProtectedRegion
+import java.util.function.Consumer
 import net.milkbowl.vault.chat.Chat
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.entity.Player
@@ -33,7 +34,7 @@ import org.bukkit.plugin.ServicePriority
 
 // TODO: Make region parents work properly
 class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleContextDefinition("region") {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
         (subject.associatedObject as? Player)?.apply {
             val wgPlayer = plugin.wrapPlayer(this)
             val regionProvider = WorldGuard.getInstance().platform.regionContainer[wgPlayer.world]
@@ -44,7 +45,7 @@ class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleCont
                     var current: ProtectedRegion? = region
                     while (current != null && current !in seen) {
                         seen += current
-                        consumer(region.id)
+                        consumer.accept(region.id)
                         current = current.parent
                     }
                 }

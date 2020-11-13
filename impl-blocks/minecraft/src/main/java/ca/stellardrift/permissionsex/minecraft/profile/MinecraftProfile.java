@@ -50,7 +50,7 @@ public interface MinecraftProfile extends Identity {
      * @since 2.0.0
      */
     static MinecraftProfile of(final UUID uuid, final String name) {
-        return ImmutableMinecraftProfile.of(uuid, name);
+        return new MinecraftProfileImpl(uuid, name);
     }
 
     /**
@@ -73,5 +73,5 @@ public interface MinecraftProfile extends Identity {
     @Value.Parameter
     String name();
 
-    class Builder extends ImmutableMinecraftProfile.Builder {}
+    class Builder extends MinecraftProfileImpl.Builder {}
 }

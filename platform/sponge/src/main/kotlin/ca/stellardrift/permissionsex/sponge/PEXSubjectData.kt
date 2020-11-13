@@ -17,9 +17,9 @@
 
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.data.Change
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData
-import ca.stellardrift.permissionsex.data.SubjectDataReference
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
+import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.util.Change
 import ca.stellardrift.permissionsex.util.ContextSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -34,7 +34,7 @@ import org.spongepowered.api.util.Tristate
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
 class PEXSubjectData internal constructor(
-    private val data: SubjectDataReference,
+    private val data: SubjectRef,
     private val subject: PEXSubject
 ) : SubjectData {
     private val parentsCache: ConcurrentMap<ContextSet, List<SubjectReference>> = ConcurrentHashMap()
@@ -50,7 +50,7 @@ class PEXSubjectData internal constructor(
      * @return Whether or not the old data object is different from the new data object
      */
     private fun CompletableFuture<Change<ImmutableSubjectData?>>.boolSuccess(): CompletableFuture<Boolean> {
-        return thenApply { it.old != it.new }
+        return thenApply { it.old() != it.current() }
     }
 
     private fun clearCache() {

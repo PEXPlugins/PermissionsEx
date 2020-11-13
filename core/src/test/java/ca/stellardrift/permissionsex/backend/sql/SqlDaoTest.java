@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.backend.sql;
 
 import ca.stellardrift.permissionsex.PermissionsExTest;
-import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.ContextValue;
@@ -65,7 +65,7 @@ public class SqlDaoTest extends PermissionsExTest {
         this.jdbcUrl = "jdbc:h2:file:{base}/test.db";
     }
 
-    private static final SqlDataStore sqlStore = new SqlDataStore("sql-dao", new SqlDataStore.Config());
+    private static final SqlDataStore sqlStore = SqlDataStore.create("sql-dao");
     private final String jdbcUrl;
 
     @BeforeEach

@@ -17,15 +17,15 @@
 
 package ca.stellardrift.permissionsex
 
-import ca.stellardrift.permissionsex.backend.DataStore
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore
 import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
+import ca.stellardrift.permissionsex.datastore.DataStore
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.util.unaryPlus
 
 class EmptyTestConfiguration : PermissionsExConfiguration<EmptyPlatformConfiguration> {
-    val defaultDataStore = MemoryDataStore("test")
+    val defaultDataStore = MemoryDataStore.create("test")
     val _platformConfig = EmptyPlatformConfiguration()
 
     override fun getDataStore(name: String?): DataStore {

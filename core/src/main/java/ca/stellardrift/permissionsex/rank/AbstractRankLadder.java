@@ -17,9 +17,14 @@
 
 package ca.stellardrift.permissionsex.rank;
 
+import ca.stellardrift.permissionsex.commands.Messages;
 import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -173,4 +178,12 @@ public abstract class AbstractRankLadder implements RankLadder {
     public abstract List<? extends Entry<String, String>> getRanks();
 
     protected abstract RankLadder newWithRanks(List<Entry<String,String>> ents);
+
+    @Override
+    public final Component asComponent() {
+        return Component.text(build -> build.content(getName())
+                .decoration(TextDecoration.BOLD, true)
+                .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.toComponent()))
+                .clickEvent(ClickEvent.runCommand("/pex rank " + getName())));
+    }
 }

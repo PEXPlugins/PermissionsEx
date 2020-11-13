@@ -17,9 +17,9 @@
 
 package ca.stellardrift.permissionsex;
 
-import ca.stellardrift.permissionsex.backend.ConversionResult;
-import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.backend.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.ConversionResult;
+import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.commands.CallbackController;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
@@ -31,15 +31,14 @@ import ca.stellardrift.permissionsex.logging.DebugPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
-import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import ca.stellardrift.permissionsex.subject.SubjectType;
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinitionKt;
+import ca.stellardrift.permissionsex.subject.CalculatedSubjectImpl;
+import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
@@ -68,7 +67,7 @@ import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromot
  * The entry point to the PermissionsEx engine.
  *
  * The fastest way to get going with working with subjects is to access a subject type collection with {@link #getSubjects(String)}
- * and request a {@link CalculatedSubject} to query data from. Directly working with
+ * and request a {@link CalculatedSubjectImpl} to query data from. Directly working with
  * {@link SubjectDataReference}s is another option, preferable if most of the operations
  * being performed are writes, or querying data directly defined on a subject.
  *
@@ -76,12 +75,11 @@ import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromot
  * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
  * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
  */
-public class PermissionsEx<P> implements ImplementationInterface, Consumer<ContextInheritance> {
+public class PermissionsEx<P> implements ImplementationInterface, Consumer<ContextInheritance>, ContextDefinitionProvider, PermissionsEngine {
     public static final String SUBJECTS_USER = "user";
     public static final String SUBJECTS_GROUP = "group";
     public static final String SUBJECTS_DEFAULTS = "default";
     public static final String SUBJECTS_FALLBACK = "fallback";
-    public static final Set<ContextValue<?>> GLOBAL_CONTEXT = Collections.emptySet();
 
     private final FormattedLogger logger;
     private final ImplementationInterface impl;
@@ -91,7 +89,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
 
     private final AtomicReference<State<P>> state = new AtomicReference<>();
-    private final ConcurrentMap<String, SubjectType> subjectTypeCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, SubjectTypeImpl> subjectTypeCache = new ConcurrentHashMap<>();
     private RankLadderCache rankLadderCache;
     private volatile CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
@@ -111,7 +109,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     public PermissionsEx(final PermissionsExConfiguration<P> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
         this.logger = FormattedLogger.forLogger(impl.getLogger(), false);
-        this.transientData = new MemoryDataStore("transient");
+        this.transientData = MemoryDataStore.create("transient");
         this.transientData.initialize(this);
         this.callbackController = new CallbackController();
         setDebugMode(config.isDebugEnabled());
@@ -120,7 +118,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         registerContextDefinition(AfterTimeContextDefinition.INSTANCE);
         initialize(config);
 
-        getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinitionKt.subjectType(SUBJECTS_DEFAULTS, false));
+        getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.of(SUBJECTS_DEFAULTS, false));
     }
 
     /**
@@ -152,9 +150,9 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @param type The type identifier requested. Can be any string
      * @return The subject type collection
      */
-    public SubjectType getSubjects(String type) {
+    public SubjectTypeImpl getSubjects(String type) {
         return subjectTypeCache.computeIfAbsent(type,
-                key -> new SubjectType(this, type, new SubjectCache(type, getState().activeDataStore), new SubjectCache(type, transientData)));
+                key -> new SubjectTypeImpl(this, type, new SubjectDataCacheImpl(type, getState().activeDataStore), new SubjectDataCacheImpl(type, transientData)));
     }
 
     /**
@@ -162,7 +160,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      *
      * @return Unmodifiable view of the currently cached subject types
      */
-    public Collection<SubjectType> getActiveSubjectTypes() {
+    public Collection<SubjectTypeImpl> getActiveSubjectTypes() {
         return Collections.unmodifiableCollection(subjectTypeCache.values());
     }
 
@@ -508,11 +506,12 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         this.cachedInheritanceListeners.call(true, newData);
     }
 
+    @Override
     public CompletableFuture<Set<ContextDefinition<?>>> getUsedContextTypes() {
-        ImmutableSet.Builder<ContextDefinition<?>> build = ImmutableSet.builder();
         return getState().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
-            for (ContextDefinition<?> def : this.contextTypes.values()) {
-                if (persist.contains(def.getName()) || trans.contains(def.getName())) {
+            ImmutableSet.Builder<ContextDefinition<?>> build = ImmutableSet.builder();
+            for (final ContextDefinition<?> def : this.contextTypes.values()) {
+                if (persist.contains(def.name()) || trans.contains(def.name())) {
                     build.add(def);
                 }
             }
@@ -520,33 +519,20 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         });
     }
 
-    /**
-     * Register a new context type that can be queried. If there is another context type registered with the same key
-     * as the one trying to be registered, the registration will fail.
-     *
-     * @param contextDefinition The new context type
-     * @param <T> The context value type
-     * @return whether the context was successfully registered
-     */
+    @Override
     public <T> boolean registerContextDefinition(ContextDefinition<T> contextDefinition) {
         if (contextDefinition instanceof PEXContextDefinition<?> && this.state.get() != null) {
             ((PEXContextDefinition<T>) contextDefinition).update(getConfig());
         }
-       ContextDefinition<?> possibleOut =  this.contextTypes.putIfAbsent(contextDefinition.getName(), contextDefinition);
-        if (possibleOut instanceof FallbackContextDefinition) {
-            return this.contextTypes.replace(contextDefinition.getName(), possibleOut, contextDefinition);
+       final @Nullable ContextDefinition<?> possibleOut =  this.contextTypes.putIfAbsent(contextDefinition.name(), contextDefinition);
+        if (possibleOut instanceof SimpleContextDefinition.Fallback) {
+            return this.contextTypes.replace(contextDefinition.name(), possibleOut, contextDefinition);
         } else {
             return possibleOut == null;
         }
     }
 
-    /**
-     * Register multiple context definitions.
-     *
-     * @see #registerContextDefinition for details on how individual registrations occur
-     * @param definitions The definitions to register
-     * @return The number of definitions that were successfully registered
-     */
+    @Override
     public int registerContextDefinitions(ContextDefinition<?>... definitions) {
         int numRegistered = 0;
         for (ContextDefinition<?> def : definitions) {
@@ -557,25 +543,17 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         return numRegistered;
     }
 
-    /**
-     * Get an immutable copy as a list of the registered context types
-     *
-     * @return The registered context types
-     */
+    @Override
     public List<ContextDefinition<?>> getRegisteredContextTypes() {
         return ImmutableList.copyOf(this.contextTypes.values());
     }
 
+    @Override
     @Nullable
-    public ContextDefinition<?> getContextDefinition(@NotNull String definitionKey) {
-        return getContextDefinition(definitionKey, false);
-    }
-
-    @Nullable
-    public ContextDefinition<?> getContextDefinition(@NotNull String definitionKey, boolean allowFallbacks) {
+    public ContextDefinition<?> getContextDefinition(final String definitionKey, final boolean allowFallbacks) {
         ContextDefinition<?> ret = this.contextTypes.get(definitionKey);
         if (ret == null && allowFallbacks) {
-            ContextDefinition<?> fallback = new FallbackContextDefinition(definitionKey);
+            ContextDefinition<?> fallback = new SimpleContextDefinition.Fallback(definitionKey);
             ret = this.contextTypes.putIfAbsent(definitionKey, fallback);
             if (ret == null) {
                 ret = fallback;

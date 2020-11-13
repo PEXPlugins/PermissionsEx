@@ -202,7 +202,7 @@ public class SchemaMigrations {
                                         break;
                                     } else if (segment.getContexts().size() == 1) {
                                         ContextValue<?> ctx = segment.getContexts().iterator().next();
-                                        if (ctx.getKey().equals("world") && ctx.getRawValue().equals(ent.getKey())) {
+                                        if (ctx.key().equals("world") && ctx.rawValue().equals(ent.getKey())) {
                                             seg = segment;
                                             break;
                                         }

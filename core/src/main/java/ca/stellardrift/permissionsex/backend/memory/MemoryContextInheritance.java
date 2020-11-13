@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.Collections;
@@ -97,7 +97,7 @@ public class MemoryContextInheritance implements ContextInheritance {
     }
 
     public static String ctxToString(ContextValue<?> input) {
-        return input.getKey() + ":" + input.getRawValue();
+        return input.key() + ":" + input.rawValue();
     }
 
 

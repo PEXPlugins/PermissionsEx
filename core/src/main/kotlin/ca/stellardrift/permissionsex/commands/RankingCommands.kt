@@ -58,8 +58,8 @@ import ca.stellardrift.permissionsex.commands.parse.int
 import ca.stellardrift.permissionsex.commands.parse.rankLadder
 import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.rank.RankLadder
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.styled
@@ -91,7 +91,7 @@ fun getPromoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: SubjectDataReference = getDataRef(src, args, "permissionsex.promote")
+                val ref: SubjectRef = getDataRef(src, args, "permissionsex.promote")
                 // ." + ladderF); // TODO: Re-add permissions checks for ladders
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName = AtomicReference<RankLadder>()
@@ -99,7 +99,7 @@ fun getPromoteCommand(pex: PermissionsEx<*>) =
                     ladderName.set(ladder)
                     ref.update { old -> ladder.promote(contexts, old) }
                 }.thenAccept { res ->
-                    if (res.new === res.old) {
+                    if (!res.changed()) {
                         throw CommandException(
                             PROMOTE_ERROR_ALREADY_AT_TOP(src.formatter.subject(ref), ladderName.get().toComponent())
                         )
@@ -130,7 +130,7 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: SubjectDataReference = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
+                val ref: SubjectRef = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName =
                     AtomicReference<RankLadder>()
@@ -138,7 +138,7 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                     ladderName.set(ladder)
                     ref.update { old -> ladder.demote(contexts, old) }
                 }.thenAccept { res ->
-                    if (res.new === res.old) {
+                    if (res.changed()) {
                         throw CommandException(
                             DEMOTE_ERROR_NOT_ON_LADDER(src.formatter.subject(ref), ladderName.get().toComponent())
                         )

@@ -36,7 +36,7 @@ fun Text.toAdventure(): Component {
 }
 
 fun ContextSet.toSponge(): MutableSet<Context> {
-    return mapTo(mutableSetOf()) { Context(it.key, it.rawValue) }
+    return mapTo(mutableSetOf()) { Context(it.key(), it.rawValue()) }
 }
 
 private fun <T> Context.toPex(def: ContextDefinition<T>): ContextValue<T>? {

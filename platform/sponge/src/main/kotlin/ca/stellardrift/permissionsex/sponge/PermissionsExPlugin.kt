@@ -32,7 +32,7 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sponge.command.register
 import ca.stellardrift.permissionsex.sponge.command.registerRegistrar
-import ca.stellardrift.permissionsex.subject.subjectType
+import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.optionally
@@ -51,6 +51,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Predicate
+import java.util.function.Supplier
 import javax.sql.DataSource
 import org.apache.logging.log4j.Logger
 import org.apache.logging.log4j.spi.ExtendedLogger
@@ -75,6 +76,7 @@ import org.spongepowered.api.service.permission.SubjectCollection
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.sql.SqlManager
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import org.spongepowered.plugin.PluginContainer
 import org.spongepowered.plugin.jvm.Plugin
@@ -119,10 +121,10 @@ class PermissionsExPlugin @Inject internal constructor(
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(ProjectData.NAME), e))
         }
-        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = subjectType(
+        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
             PermissionService.SUBJECTS_SYSTEM,
-            "console" to { event.game.systemSubject },
-            "Recon" to { null }
+            immutableMapEntry("console", Supplier { event.game.systemSubject }),
+            immutableMapEntry("Recon", Supplier { null })
         )
         manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
             UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, event.game)
@@ -184,7 +186,7 @@ class PermissionsExPlugin @Inject internal constructor(
         val cache = this.manager.getSubjects(PermissionsEx.SUBJECTS_USER)
         cache[identifier].thenAccept {
             // Update name option
-            it.data().cache.isRegistered(it.identifier.value).thenAccept { isReg ->
+            it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
                     it.data().update { data ->
                         data.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.player.name)

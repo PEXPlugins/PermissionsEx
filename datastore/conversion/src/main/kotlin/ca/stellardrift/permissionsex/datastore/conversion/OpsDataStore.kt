@@ -18,22 +18,23 @@
 package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
-import ca.stellardrift.permissionsex.backend.ConversionResult
-import ca.stellardrift.permissionsex.backend.DataStoreFactory
 import ca.stellardrift.permissionsex.backend.Messages.OPS_DESCRIPTION
 import ca.stellardrift.permissionsex.backend.Messages.OPS_ERROR_NO_FILE
 import ca.stellardrift.permissionsex.backend.Messages.OPS_NAME
-import ca.stellardrift.permissionsex.backend.StoreProperties
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData
+import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.data.ContextInheritance
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData
+import ca.stellardrift.permissionsex.datastore.ConversionResult
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory
+import ca.stellardrift.permissionsex.datastore.StoreProperties
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -52,7 +53,7 @@ import org.spongepowered.configurate.reference.WatchServiceListener
 import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 /**
- * An extremely rudimentary data store that allows importing data from a server ops list
+ * An extremely rudimentary data store that allows importing data from a server ops list.
  *
  */
 class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataStore, OpsDataStore.Config>(props) {
@@ -62,10 +63,11 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
             return OPS_NAME()
         }
 
-        override fun listConversionOptions(pex: PermissionsEx<*>): PVector<ConversionResult> {
-            val opsFile = pex.getBaseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
+        override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
+            val opsFile = (pex as PermissionsEx<*>).getBaseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
             return if (Files.exists(opsFile)) {
-                TreePVector.singleton(ConversionResult.builder()
+                TreePVector.singleton(
+                    ConversionResult.builder()
                     .store(OpsDataStore(StoreProperties.of("ops", Config(opsFile.fileName.toString()), this)))
                     .description(OPS_DESCRIPTION())
                     .build())

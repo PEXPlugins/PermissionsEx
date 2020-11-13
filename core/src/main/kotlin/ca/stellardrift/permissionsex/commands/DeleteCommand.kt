@@ -41,13 +41,13 @@ internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
                 val subject = subjectOrSelf(src, args)
                 src.checkSubjectPermission(subject.identifier, "permissionsex.delete")
                 val cache =
-                    if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData().cache else subject.data().cache
-                cache.isRegistered(subject.identifier.value)
+                    if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData() else subject.data()
+                cache.isRegistered()
                     .thenCompose { registered ->
                         if (!registered) {
                             throw CommandException(DELETE_ERROR_DOES_NOT_EXIST(src.formatter.subject(subject)))
                         }
-                        cache.remove(subject.identifier.value)
+                        cache.remove()
                     }.thenMessageSubject(src) { send -> send(DELETE_SUCCESS(+subject)) }
             }
         })

@@ -17,8 +17,8 @@
 
 package ca.stellardrift.permissionsex.config;
 
-import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.backend.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;

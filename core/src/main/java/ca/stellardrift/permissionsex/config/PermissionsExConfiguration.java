@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.config;
 
-import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 
 import java.io.IOException;

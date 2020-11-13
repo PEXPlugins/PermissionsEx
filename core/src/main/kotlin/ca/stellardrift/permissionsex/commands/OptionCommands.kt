@@ -31,7 +31,7 @@ import ca.stellardrift.permissionsex.commands.parse.command
 import ca.stellardrift.permissionsex.commands.parse.option
 import ca.stellardrift.permissionsex.commands.parse.string
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent

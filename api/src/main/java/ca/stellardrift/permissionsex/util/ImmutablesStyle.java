@@ -30,8 +30,10 @@ import java.lang.annotation.Target;
 @Target({ElementType.PACKAGE, ElementType.TYPE})
 @Retention(RetentionPolicy.CLASS)
 @Value.Style(
-        overshadowImplementation = true,
         with = "*",
+        of = "new",
+        typeImmutable = "*Impl",
+        overshadowImplementation = true,
         visibility = Value.Style.ImplementationVisibility.PACKAGE,
         deferCollectionAllocation = true,
         jdkOnly = true

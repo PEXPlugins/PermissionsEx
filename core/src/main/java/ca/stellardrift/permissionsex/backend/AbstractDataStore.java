@@ -17,11 +17,16 @@
 
 package ca.stellardrift.permissionsex.backend;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.CacheListenerHolder;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.exception.PermissionsException;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
@@ -37,7 +42,6 @@ import org.spongepowered.configurate.util.CheckedSupplier;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -74,8 +78,8 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     @Override
-    public final boolean initialize(PermissionsEx<?> core) throws PermissionsLoadingException {
-        this.manager = core;
+    public final boolean initialize(PermissionsEngine core) throws PermissionsLoadingException {
+        this.manager = (PermissionsEx<?>) core;
         return initializeInternal();
     }
 
@@ -194,6 +198,8 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
                 });
     }
 
+
+
     protected abstract CompletableFuture<ContextInheritance> getContextInheritanceInternal();
     protected abstract CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
 
@@ -206,6 +212,21 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      * @throws Exception if thrown by operation
      */
     protected abstract <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception;
+
+    @Override
+    public CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {
+        return isRegistered(oldType, oldIdentifier).thenCombine(isRegistered(newType, newIdentifier), (oldRegistered, newRegistered) -> {
+            if (oldRegistered && !newRegistered) {
+                return getData(oldType, oldIdentifier, null)
+                        .thenCompose(oldData -> setData(newType, newIdentifier, oldData))
+                        .thenCompose(newData -> setData(oldType, oldIdentifier, null))
+                        .thenApply(inp -> (Void) null);
+            } else {
+                return Util.<Void>failedFuture(new PermissionsException(Messages.DATASTORE_MOVE_ERROR.toComponent()));
+            }
+
+        }).thenCompose(future -> future);
+    }
 
     @Override
     public String serialize(ConfigurationNode node) throws PermissionsLoadingException {

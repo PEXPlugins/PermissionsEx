@@ -17,7 +17,7 @@
 
 package ca.stellardrift.permissionsex.data;
 
-import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -28,9 +28,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
- * Access information about rank ladders
+ * Access information about rank ladders.
  */
 public class RankLadderCache {
     private final DataStore dataStore;
@@ -57,7 +58,6 @@ public class RankLadderCache {
         }
     }
 
-
     public CompletableFuture<RankLadder> get(String identifier, Consumer<RankLadder> listener) {
         Objects.requireNonNull(identifier, "identifier");
 
@@ -70,7 +70,7 @@ public class RankLadderCache {
         return ret;
     }
 
-    public CompletableFuture<RankLadder> update(String identifier, Function<RankLadder, RankLadder> updateFunc) {
+    public CompletableFuture<RankLadder> update(final String identifier, final UnaryOperator<RankLadder> updateFunc) {
         return cache.get(identifier)
                 .thenCompose(oldLadder -> {
                     RankLadder newLadder = updateFunc.apply(oldLadder);
@@ -82,7 +82,7 @@ public class RankLadderCache {
                 });
     }
 
-    public void load(String identifier) {
+    public void load(final String identifier) {
         Objects.requireNonNull(identifier, "identifier");
         cache.synchronous().refresh(identifier);
     }

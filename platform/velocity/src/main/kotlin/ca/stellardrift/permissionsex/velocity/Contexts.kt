@@ -24,21 +24,22 @@ import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import com.velocitypowered.api.proxy.Player
+import java.util.function.Consumer
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? Player)?.apply {
-            consumer(IpSet.fromAddrPrefix(this.remoteAddress.address, this.remoteAddress.address.maxPrefixLength))
+            consumer.accept(IpSet.fromAddrPrefix(this.remoteAddress.address, this.remoteAddress.address.maxPrefixLength))
         }
     }
 }
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: IpSet) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? Player)?.apply {
             virtualHost.ifPresent {
                 if (!it.isUnresolved) {
-                    consumer(IpSet.fromAddrPrefix(it.address, it.address.maxPrefixLength))
+                    consumer.accept(IpSet.fromAddrPrefix(it.address, it.address.maxPrefixLength))
                 }
             }
         }
@@ -46,10 +47,10 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip") {
 }
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
         (subject.associatedObject as? Player)?.apply {
             virtualHost.ifPresent {
-                consumer(it.hostString)
+                consumer.accept(it.hostString)
             }
         }
     }
@@ -57,11 +58,11 @@ object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
 
 object LocalPortContextDefinition : ContextDefinition<Int>("localport") {
     override fun serialize(userValue: Int): String = userValue.toString()
-    override fun deserialize(canonicalValue: String): Int = canonicalValue.toInt()
+    override fun deserialize(userValue: String): Int = userValue.toInt()
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: Int) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Int>) {
         (subject.associatedObject as? Player)?.apply {
-            virtualHost.ifPresent { consumer(it.port) }
+            virtualHost.ifPresent { consumer.accept(it.port) }
         }
     }
 }

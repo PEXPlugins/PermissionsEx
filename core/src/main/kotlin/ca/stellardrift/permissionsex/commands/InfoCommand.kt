@@ -34,7 +34,7 @@ import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.command
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.util.TranslatableProvider
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.plus

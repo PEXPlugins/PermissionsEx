@@ -438,8 +438,8 @@ public abstract class SqlDao implements AutoCloseable {
                 insert.setInt(1, seg.getId());
 
                 for (ContextValue<?> context : contexts) {
-                    insert.setString(2, context.getKey());
-                    insert.setString(3, context.getRawValue());
+                    insert.setString(2, context.key());
+                    insert.setString(3, context.rawValue());
                     insert.addBatch();
                 }
                 insert.executeBatch();
@@ -686,7 +686,7 @@ public abstract class SqlDao implements AutoCloseable {
                         childValue = rs.getString(2),
                         parentKey = rs.getString(3),
                         parentValue = rs.getString(4);
-                if (current == null || !childKey.equals(current.getKey()) || !childValue.equals(current.getRawValue())) {
+                if (current == null || !childKey.equals(current.key()) || !childValue.equals(current.rawValue())) {
                     if (current != null && builder != null) {
                         ret.put(current, builder.build());
                     }
@@ -709,16 +709,16 @@ public abstract class SqlDao implements AutoCloseable {
         executeInTransaction(() -> {
             try (PreparedStatement delete = prepareStatement(getDeleteContextInheritanceQuery());
             PreparedStatement insert = prepareStatement(getInsertContextInheritanceQuery())) {
-                delete.setString(1, child.getKey());
-                delete.setString(2, child.getRawValue());
+                delete.setString(1, child.key());
+                delete.setString(2, child.rawValue());
                 delete.executeUpdate();
 
                 if (parents != null && parents.size() > 0) {
-                    insert.setString(1, child.getKey());
-                    insert.setString(2, child.getRawValue());
+                    insert.setString(1, child.key());
+                    insert.setString(2, child.rawValue());
                     for (ContextValue<?> parent : parents) {
-                        insert.setString(3, parent.getKey());
-                        insert.setString(4, parent.getRawValue());
+                        insert.setString(3, parent.key());
+                        insert.setString(4, parent.rawValue());
                         insert.addBatch();
                     }
                     insert.executeBatch();

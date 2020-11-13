@@ -153,7 +153,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     fun handlePlayerJoin(player: ServerPlayerEntity) {
         manager.getSubjects(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
             // Update name option
-            it.data().cache.isRegistered(it.identifier.value).thenAccept { isReg ->
+            it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
                     it.data().update { data ->
                         data.setOption(GLOBAL_CONTEXT, "name", player.name.asString())

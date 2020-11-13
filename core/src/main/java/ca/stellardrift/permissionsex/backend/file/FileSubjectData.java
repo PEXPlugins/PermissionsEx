@@ -87,7 +87,7 @@ public final class FileSubjectData extends MemorySubjectData {
                 contextSection = node.appendListNode();
                 ConfigurationNode contextsNode = contextSection.node(KEY_CONTEXTS);
                 for (ContextValue<?> context : ent.getKey()) {
-                    contextsNode.node(context.getKey()).raw(context.getRawValue());
+                    contextsNode.node(context.key()).set(context.rawValue());
                 }
             }
             MAPPER.save(ent.getValue(), contextSection);

@@ -17,23 +17,26 @@
 
 package ca.stellardrift.permissionsex.backend.sql;
 
-import ca.stellardrift.permissionsex.backend.DataStoreFactory;
+import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.backend.Messages;
-import ca.stellardrift.permissionsex.backend.StoreProperties;
+import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.backend.sql.dao.H2SqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.MySqlDao;
 import ca.stellardrift.permissionsex.backend.sql.dao.SchemaMigration;
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
-import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableMap;
+import org.spongepowered.configurate.BasicConfigurationNode;
+import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.util.CheckedFunction;
@@ -70,10 +73,12 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     @AutoService(DataStoreFactory.class)
-    public static class Factory extends AbstractDataStore.Factory<SqlDataStore, Config> {
+    public static final class Factory extends AbstractDataStore.Factory<SqlDataStore, Config> {
+
+        static String ID = "sql";
 
         public Factory() {
-            super("sql", Config.class, SqlDataStore::new);
+            super(ID, Config.class, SqlDataStore::new);
         }
     }
 
@@ -98,6 +103,15 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 }
             }
             return this.realPrefix;
+        }
+    }
+
+    // For testing
+    static SqlDataStore create(final String ident) {
+        try {
+            return (SqlDataStore) DataStoreFactory.forType(Factory.ID).create(ident, BasicConfigurationNode.root(FilePermissionsExConfiguration.PEX_OPTIONS));
+        } catch (PermissionsLoadingException e) {
+            throw new RuntimeException(e);
         }
     }
 

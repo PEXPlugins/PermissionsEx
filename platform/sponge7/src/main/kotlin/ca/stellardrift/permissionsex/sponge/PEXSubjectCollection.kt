@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectType
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -40,7 +40,7 @@ import org.spongepowered.api.util.Tristate
  */
 class PEXSubjectCollection private constructor(private val identifier: String, val plugin: PermissionsExPlugin) :
     SubjectCollection {
-    val type: SubjectType = plugin.manager.getSubjects(identifier)
+    val type: SubjectTypeImpl = plugin.manager.getSubjects(identifier)
     private var defaults: PEXSubject? = null
     private val subjectCache: AsyncLoadingCache<String, PEXSubject>
 

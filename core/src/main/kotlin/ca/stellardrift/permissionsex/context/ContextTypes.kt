@@ -25,17 +25,13 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
-
-/**
- * A placeholder context definition for implementations to use when a context query comes in for an unknown context
- */
-class FallbackContextDefinition(name: String) : SimpleContextDefinition(name)
+import java.util.function.Consumer
 
 object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
     private var activeTags: List<String> = listOf()
 
-    override fun serialize(userValue: String): String = userValue
-    override fun deserialize(canonicalValue: String): String = canonicalValue
+    override fun serialize(canonicalValue: String): String = canonicalValue
+    override fun deserialize(userValue: String): String = userValue
     override fun matches(ownVal: String, testVal: String): Boolean =
         ownVal == testVal
 
@@ -43,7 +39,7 @@ object ServerTagContextDefinition : PEXContextDefinition<String>("server-tag") {
         activeTags = config.serverTags
     }
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: String) -> Unit) {
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
         activeTags.forEach(consumer)
     }
 }
@@ -146,17 +142,17 @@ open class TimeContextDefinition internal constructor(name: String) : PEXContext
         // TODO: implement timezone configuration option
     }
 
-    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: (value: ZonedDateTime) -> Unit) {
-        consumer(ZonedDateTime.now(currentTimeZone).truncatedTo(ChronoUnit.SECONDS))
+    override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<ZonedDateTime>) {
+        consumer.accept(ZonedDateTime.now(currentTimeZone).truncatedTo(ChronoUnit.SECONDS))
     }
 
-    override fun serialize(userValue: ZonedDateTime): String {
-        return userValue.format(DateTimeFormatter.ISO_DATE_TIME)
+    override fun serialize(canonicalValue: ZonedDateTime): String {
+        return canonicalValue.format(DateTimeFormatter.ISO_DATE_TIME)
     }
 
-    override fun deserialize(canonicalValue: String): ZonedDateTime {
+    override fun deserialize(userValue: String): ZonedDateTime {
         for (parser in timeParsers) {
-            return parser.parse(canonicalValue) ?: continue
+            return parser.parse(userValue) ?: continue
         }
 
         throw IllegalArgumentException("Could not deserialize using any known methods")

@@ -95,10 +95,10 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
         if (worldOverride == null) {
             return origContexts
         }
-        if ((subject.associatedObject as? Player)?.world?.name.equals(worldOverride, ignoreCase = true) == true) {
+        if ((subject.associatedObject as? Player)?.world?.name.equals(worldOverride, ignoreCase = true)) {
             return origContexts
         }
-        origContexts.removeIf { it.definition === WorldContextDefinition }
+        origContexts.removeIf { it.definition() === WorldContextDefinition }
         origContexts.add(WorldContextDefinition.createValue(worldOverride))
         return origContexts
     }

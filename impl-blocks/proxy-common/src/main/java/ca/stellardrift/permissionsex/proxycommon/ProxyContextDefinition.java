@@ -19,13 +19,12 @@ package ca.stellardrift.permissionsex.proxycommon;
 
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.serialize.Scalars;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class ProxyContextDefinition extends ContextDefinition<Boolean> {
     public static final ProxyContextDefinition INSTANCE = new ProxyContextDefinition();
@@ -35,13 +34,13 @@ public final class ProxyContextDefinition extends ContextDefinition<Boolean> {
     }
 
     @Override
-    public @NonNull String serialize(final Boolean userValue) {
-        return String.valueOf(userValue);
+    public @NonNull String serialize(final Boolean canonicalValue) {
+        return String.valueOf(canonicalValue);
     }
 
     @Override
-    public @Nullable Boolean deserialize(final String canonicalValue) {
-        return Scalars.BOOLEAN.tryDeserialize(canonicalValue);
+    public @Nullable Boolean deserialize(final String userValue) {
+        return Scalars.BOOLEAN.tryDeserialize(userValue);
     }
 
     @Override
@@ -50,7 +49,7 @@ public final class ProxyContextDefinition extends ContextDefinition<Boolean> {
     }
 
     @Override
-    public void accumulateCurrentValues(final CalculatedSubject subject, final Function1<? super Boolean, Unit> consumer) {
-        consumer.invoke(true);
+    public void accumulateCurrentValues(final CalculatedSubject subject, final Consumer<Boolean> consumer) {
+        consumer.accept(true);
     }
 }

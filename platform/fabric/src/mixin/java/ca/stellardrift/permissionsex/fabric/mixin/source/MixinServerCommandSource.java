@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.CalculatedSubjectImpl;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.CachingValues;
 import com.google.common.collect.ImmutableSet;
@@ -48,6 +49,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 @Mixin(ServerCommandSource.class)
 public abstract class MixinServerCommandSource implements IPermissionCommandSource {
@@ -98,10 +100,7 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
 
     @SuppressWarnings("unchecked")
     private <T> void handleSingleCtx(CalculatedSubject subj, ContextDefinition<T> definition, Set<ContextValue<?>> accumulator) {
-        final Function1<T, Unit> callback = key -> {
-            accumulator.add(definition.createValue(key));
-           return null;
-        };
+        final Consumer<T> callback = key -> accumulator.add(definition.createValue(key));
         if (definition instanceof CommandSourceContextDefinition) {
             //noinspection ConstantConditions,unchecked // mixin target
             ((CommandSourceContextDefinition<T>) definition).accumulateCurrentValues((ServerCommandSource) (Object) this, callback);

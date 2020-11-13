@@ -19,9 +19,9 @@ package ca.stellardrift.permissionsex.commands.commander
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
-import ca.stellardrift.permissionsex.data.SubjectDataReference
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectType
+import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.colored
 import ca.stellardrift.permissionsex.util.component
@@ -65,7 +65,7 @@ abstract class MessageFormatter(
 ) {
 
     /**
-     * Given a command in standard format, correct it to refer to specifically the proxy format
+     * Given a command in standard format, correct it to refer to specifically the proxy format.
      */
     protected open fun transformCommand(cmd: String) = cmd
 
@@ -81,9 +81,9 @@ abstract class MessageFormatter(
 
     operator fun CalculatedSubject.unaryPlus() = subject(this)
 
-    fun subject(ref: SubjectDataReference) = subject(ref.identifier)
+    fun subject(ref: SubjectRef) = subject(ref.identifier)
 
-    operator fun SubjectDataReference.unaryPlus() = subject(this)
+    operator fun SubjectRef.unaryPlus() = subject(this)
 
     /**
      * Print the subject in a user-friendly manner. May link to the subject info printout
@@ -92,7 +92,7 @@ abstract class MessageFormatter(
      * @return the formatted value
      */
     fun subject(subject: SubjectIdentifier): Component {
-        val subjType: SubjectType = pex.getSubjects(subject.key)
+        val subjType: SubjectTypeImpl = pex.getSubjects(subject.key)
         var name = subject.friendlyName
         if (name == null) {
             try {

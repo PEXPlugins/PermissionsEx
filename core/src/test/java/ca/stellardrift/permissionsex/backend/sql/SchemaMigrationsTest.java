@@ -18,7 +18,7 @@
 package ca.stellardrift.permissionsex.backend.sql;
 
 import ca.stellardrift.permissionsex.PermissionsExTest;
-import ca.stellardrift.permissionsex.backend.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
@@ -73,7 +73,7 @@ public class SchemaMigrationsTest extends PermissionsExTest {
         this.jdbcUrl = jdbcUrl;
     }*/
 
-    private final SqlDataStore sqlStore = new SqlDataStore("schema-migrations", new SqlDataStore.Config());
+    private final SqlDataStore sqlStore = SqlDataStore.create("schema-migrations");
 
     @BeforeEach
     public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {

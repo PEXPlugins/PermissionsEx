@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.subject;
 
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.glob.GlobParseException;
@@ -50,11 +49,11 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         private int defaultValue;
 
         // State objects
-        private final CalculatedSubject base;
+        private final CalculatedSubjectImpl base;
         private final PermissionsEx<?> pex;
         private final Set<ContextValue<?>> activeContexts;
 
-        private BakeState(CalculatedSubject base, Set<ContextValue<?>> activeContexts) {
+        private BakeState(CalculatedSubjectImpl base, Set<ContextValue<?>> activeContexts) {
             this.base = base;
             this.activeContexts = activeContexts;
             this.pex = base.getManager();
@@ -78,7 +77,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     }
 
     @Override
-    public CompletableFuture<BakedSubjectData> bake(CalculatedSubject data, Set<ContextValue<?>> activeContexts) {
+    public CompletableFuture<BakedSubjectData> bake(CalculatedSubjectImpl data, Set<ContextValue<?>> activeContexts) {
         final Map.Entry<String, String> subject = data.getIdentifier();
         return processContexts(data.getManager(), activeContexts)
                 .thenCompose(processedContexts -> {
@@ -108,7 +107,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);
-        SubjectType type = state.pex.getSubjects(subject.getKey());
+        SubjectTypeImpl type = state.pex.getSubjects(subject.getKey());
         return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
 
@@ -169,11 +168,9 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     @SuppressWarnings("unchecked")
     private <T> boolean checkSingleContextMatch(ContextValue<T> value, ContextValue<?> other, PermissionsEx<?> pex) {
-        return value.getKey().equals(other.getKey()) && value.tryResolve(pex)
-                && value.getDefinition().matches(value, ((ContextValue<T>) other).getParsedValue(value.getDefinition()));
+        return value.key().equals(other.key()) && value.tryResolve(pex)
+                && value.definition().matches(value, ((ContextValue<T>) other).getParsedValue(value.definition()));
     }
-
-
 
     private CompletableFuture<Void> visitSubjectSingle(BakeState state, ImmutableSubjectData data, CompletableFuture<Void> initial, Set<ContextValue<?>> activeCombo, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         initial = initial.thenRun(() -> visitSingle(state, data, activeCombo, inheritanceLevel));

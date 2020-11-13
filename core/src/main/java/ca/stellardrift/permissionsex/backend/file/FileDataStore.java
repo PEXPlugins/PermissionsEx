@@ -19,12 +19,12 @@ package ca.stellardrift.permissionsex.backend.file;
 
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
-import ca.stellardrift.permissionsex.backend.DataStore;
-import ca.stellardrift.permissionsex.backend.DataStoreFactory;
-import ca.stellardrift.permissionsex.backend.StoreProperties;
+import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance;
-import ca.stellardrift.permissionsex.data.ContextInheritance;
-import ca.stellardrift.permissionsex.data.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
@@ -411,7 +411,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
 
     @AutoService(DataStoreFactory.class)
     public static class Factory extends AbstractDataStore.Factory<FileDataStore, Config> {
-        Factory() {
+        public Factory() {
             super("file", Config.class, FileDataStore::new);
         }
     }
