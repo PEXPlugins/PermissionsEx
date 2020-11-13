@@ -2,6 +2,7 @@
 import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
 import ca.stellardrift.permissionsex.gradle.Versions
+import ca.stellardrift.permissionsex.gradle.setupPublication
 
 /*
  * PermissionsEx
@@ -25,6 +26,8 @@ plugins {
     id("ca.stellardrift.opinionated.kotlin")
     id("ca.stellardrift.localization")
 }
+
+setupPublication()
 
 dependencies {
     api(project(":api"))
