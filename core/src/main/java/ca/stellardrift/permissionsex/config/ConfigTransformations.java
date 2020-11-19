@@ -21,8 +21,8 @@ import org.spongepowered.configurate.transformation.ConfigurationTransformation;
 import org.spongepowered.configurate.transformation.MoveStrategy;
 import org.spongepowered.configurate.transformation.TransformAction;
 
+import static org.spongepowered.configurate.NodePath.path;
 import static org.spongepowered.configurate.transformation.ConfigurationTransformation.builder;
-import static org.spongepowered.configurate.transformation.NodePath.path;
 
 public final class ConfigTransformations {
 

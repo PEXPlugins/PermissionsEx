@@ -72,7 +72,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "net.kyori",
         "org.jetbrains.annotations",
         "io.leangen.geantyref",
-        "org.spongepowered.configurate"
+        "org.spongepowered.configurate",
+        "kotlinx",
+        "kotlin"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }

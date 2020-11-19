@@ -36,11 +36,11 @@ import java.util.stream.Collectors;
  * PermissibleMap for the permissions subscriptions data in Bukkit's {@link PluginManager} so we can put in our own data too.
  */
 public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>> {
+    @SuppressWarnings("rawtypes")
     private static FieldReplacer<PluginManager, Map> INJECTOR;
     private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<>();
     private final PermissionsExPlugin plugin;
     private final PluginManager manager;
-
 
     private PEXPermissionSubscriptionMap(PermissionsExPlugin plugin, PluginManager manager, Map<String, Map<Permissible, Boolean>> backing) {
         super(backing);

@@ -23,7 +23,7 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile
 import ca.stellardrift.permissionsex.util.ContextSet
 import com.google.common.collect.ImmutableSet
-import com.google.common.reflect.TypeToken
+import io.leangen.geantyref.TypeToken
 import java.util.UUID
 import org.spongepowered.api.event.Event
 import org.spongepowered.api.event.EventManager

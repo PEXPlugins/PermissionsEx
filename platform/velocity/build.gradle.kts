@@ -70,7 +70,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "com.github.benmanes",
         "org.jetbrains",
         "org.checkerframework",
-        "org.antlr.v4"
+        "org.antlr.v4",
+        "kotlinx",
+        "kotlin"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }

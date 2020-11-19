@@ -22,7 +22,7 @@ import ca.stellardrift.permissionsex.sponge.Messages
 import ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
 import ca.stellardrift.permissionsex.sponge.register
 import ca.stellardrift.permissionsex.util.optionally
-import com.google.common.reflect.TypeToken
+import io.leangen.geantyref.TypeToken
 import java.util.Optional
 import net.kyori.adventure.text.Component
 import org.spongepowered.api.ResourceKey
@@ -47,7 +47,7 @@ fun registerRegistrar(plugin: PermissionsExPlugin) {
 
 class PEXCommandRegistrar internal constructor(private val plugin: PermissionsExPlugin, private val manager: CommandManager) : CommandRegistrar<CommandSpec> {
     private val key: ResourceKey = ResourceKey.of(plugin.container.metadata.id, "commands")
-    private val type = TypeToken.of(CommandSpec::class.java)
+    private val type = TypeToken.get(CommandSpec::class.java)
     private val commands = mutableMapOf<String, CommandSpec>()
 
     override fun getKey(): ResourceKey = key

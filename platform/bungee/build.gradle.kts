@@ -73,7 +73,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
         "ong.spongepowered.configurate", "org.jetbrains.annotations",
-        "org.slf4j", "org.antlr.v4.runtime", "net.kyori").forEach {
+        "org.slf4j", "org.antlr.v4.runtime", "net.kyori", "kotlinx", "kotlin").forEach {
         relocate(it, "$relocateRoot.$it")
     }
 

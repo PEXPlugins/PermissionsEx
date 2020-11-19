@@ -41,9 +41,11 @@ repositories {
 
 dependencies {
     api(project(":impl-blocks:minecraft")) {
-        exclude("com.google.guava", "guava")
-        exclude("com.github.ben-manes.caffeine", "caffeine")
-        exclude("net.kyori")
+        // Dependencies provided by spongeapi
+        exclude(group = "com.google.guava", module = "guava")
+        exclude(group = "com.github.ben-manes.caffeine", module = "caffeine")
+        exclude(group = "org.spongepowered")
+        exclude(group = "net.kyori")
     }
 
     testImplementation(compileOnly("org.spongepowered:spongeapi:8.0.0-SNAPSHOT")!!)
@@ -70,8 +72,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.slf4j",
         "org.jetbrains.annotations",
         "org.apache.logging.slf4j",
-        "org.spongepowered.configurate",
-        "io.leangen.geantyref"
+        "kotlinx",
+        "kotlin"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }
@@ -79,8 +81,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     exclude("**/module-info.class")
 
     dependencies {
-        exclude(dependency("com.typesafe:config:.*"))
-        exclude(dependency("org.yaml:snakeyaml:.*"))
         exclude(dependency("com.google.code.gson:gson:.*"))
     }
 

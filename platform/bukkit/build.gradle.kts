@@ -101,7 +101,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         "org.jetbrains.annotations",
         "org.slf4j",
         "org.antlr",
-        "net.kyori"
+        "net.kyori",
+        "kotlinx",
+        "kotlin"
     ).forEach {
         relocate(it, "$relocateRoot.$it")
     }

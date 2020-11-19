@@ -30,7 +30,7 @@ public final class ContextValue<V> {
     private final String key;
     private final String rawValue;
     private @Nullable ContextDefinition<V> definition;
-    private V parsedValue;
+    private @Nullable V parsedValue;
 
     public ContextValue(final String key, final String rawValue) {
         this.key = key;
@@ -69,6 +69,7 @@ public final class ContextValue<V> {
         return this.parsedValue;
     }
 
+    @SuppressWarnings("unchecked")
     public boolean tryResolve(final ContextDefinitionProvider provider) {
         if (this.definition != null && !(this.definition instanceof SimpleContextDefinition.Fallback)) {
             return this.parsedValue != null;

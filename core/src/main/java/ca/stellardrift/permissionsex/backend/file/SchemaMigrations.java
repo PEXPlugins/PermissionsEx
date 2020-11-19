@@ -27,10 +27,15 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.transformation.ConfigurationTransformation;
 import org.spongepowered.configurate.transformation.TransformAction;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+import static org.spongepowered.configurate.NodePath.path;
 import static org.spongepowered.configurate.transformation.ConfigurationTransformation.WILDCARD_OBJECT;
-import static org.spongepowered.configurate.transformation.NodePath.path;
 import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
 public class SchemaMigrations {
