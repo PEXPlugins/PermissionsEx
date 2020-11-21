@@ -50,7 +50,7 @@ public abstract class SqlDao implements AutoCloseable {
     private final SqlDataStore ds;
     int holdOpen, transactionLevel;
 
-    public SqlDao(SqlDataStore ds) throws SQLException {
+    protected SqlDao(SqlDataStore ds) throws SQLException {
         this.ds = ds;
         this.conn = ds.getDataSource().getConnection();
     }
@@ -654,7 +654,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setParents(Segment segment, List<SubjectRef> parents) throws SQLException {
+    public void setParents(Segment segment, Iterable<SubjectRef> parents) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeleteInheritanceQuery());
                  PreparedStatement ins = prepareStatement(getInsertInheritanceQuery())) {

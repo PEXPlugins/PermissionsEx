@@ -63,7 +63,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
                 .executor(type.getManager().getAsyncExecutor())
-                .buildAsync(((key, executor) -> this.baker.bake(CalculatedSubjectImpl.this, key)));
+                .buildAsync((key, executor) -> this.baker.bake(CalculatedSubjectImpl.this, key));
     }
 
     void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {

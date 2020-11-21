@@ -51,6 +51,7 @@ dependencies {
     implementation("ca.stellardrift:gradle-plugin-configurate:$opinionatedVersion")
     implementation("com.github.jengelman.gradle.plugins:shadow:6.1.0")
     implementation("kr.entree:spigradle:2.2.3")
+    implementation("net.ltgt.gradle:gradle-errorprone-plugin:1.3.0")
 }
 
 kotlinDslPluginOptions {

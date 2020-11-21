@@ -60,15 +60,11 @@ public class SchemaMigrations {
         return ConfigurationTransformation.chain(
                 tBuilder()
                         .addAction(path("worlds", WILDCARD_OBJECT, "inheritance"), (inputPath, valueAtPath) -> {
-                            try {
-                                final List<String> items = valueAtPath.getList(String.class);
-                                valueAtPath.raw(null);
-                                items.stream()
-                                        .map(input -> "world:" + input)
-                                        .collect(valueAtPath.toListCollector(String.class));
-                            } catch (SerializationException e) {
-                                throw new RuntimeException(e);
-                            }
+                            final List<String> items = valueAtPath.getList(String.class);
+                            valueAtPath.raw(null);
+                            items.stream()
+                                    .map(input -> "world:" + input)
+                                    .forEach(longer -> valueAtPath.appendListNode().raw(longer));
 
                             return new Object[]{"context-inheritance", "world:" + inputPath.get(1)};
                         }).build(),

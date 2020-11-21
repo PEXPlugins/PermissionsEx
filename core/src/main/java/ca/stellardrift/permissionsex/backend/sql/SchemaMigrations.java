@@ -27,8 +27,10 @@ import ca.stellardrift.permissionsex.util.GuavaCollectors;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,7 +147,9 @@ public class SchemaMigrations {
                                             List<Map.Entry<SubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
                                             try {
                                                 ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
-                                            } catch (IllegalArgumentException ex) {}
+                                            } catch (IllegalArgumentException ignore) {
+                                                // non-integer rank TODO maybe warn
+                                            }
                                             rankLadder = null;
                                             rank = null;
                                         }
@@ -174,7 +178,9 @@ public class SchemaMigrations {
                                 List<Map.Entry<SubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
                                 try {
                                     ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
-                                } catch (IllegalArgumentException ex) {}
+                                } catch (IllegalArgumentException ex) {
+                                    // non-integer rank TODO maybe warn
+                                }
 
                             }
                         }
@@ -222,7 +228,7 @@ public class SchemaMigrations {
                         selectInheritance.setInt(2, rs.getInt(1));
 
                         ResultSet inheritance = selectInheritance.executeQuery();
-                        List<SubjectRef> newInheritance = new LinkedList<>();
+                        Deque<SubjectRef> newInheritance = new ArrayDeque<>();
                         while (inheritance.next()) {
                             if (currentSeg == null || !Objects.equals(inheritance.getString(3), currentWorld)) {
                                 if (currentSeg != null && !newInheritance.isEmpty()) {

@@ -35,7 +35,6 @@ import ca.stellardrift.permissionsex.util.Util;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableMap;
 import org.spongepowered.configurate.BasicConfigurationNode;
-import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.util.CheckedFunction;
@@ -49,7 +48,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -308,9 +306,9 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     @Override
-    public Iterable<Entry<Entry<String, String>, ImmutableSubjectData>> getAll() {
+    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
         try (SqlDao dao = getDao()) {
-            Set<Entry<Entry<String, String>, ImmutableSubjectData>> builder = new HashSet<>();
+            Set<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> builder = new HashSet<>();
             for (SubjectRef ref : dao.getAllSubjectRefs()) {
                 builder.add(UnmodifiableCollections.immutableMapEntry(ref, getDataForRef(dao, ref)));
             }
@@ -375,7 +373,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                     sqlInheritance = (SqlContextInheritance) inheritance;
                 } else {
                     sqlInheritance = new SqlContextInheritance(inheritance.getAllParents(), Util.appendImmutable(null, (dao_, inheritance_) -> {
-                        for (Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.getAllParents().entrySet()) {
+                        for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.getAllParents().entrySet()) {
                             dao_.setContextInheritance(ent.getKey(), ent.getValue());
                         }
                     }));
@@ -402,6 +400,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 try {
                     dao.close();
                 } catch (SQLException ignore) {
+                    // Not much we can do
                 }
             }
         }
@@ -410,6 +409,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     @Override
     public void close() {
         this.queryPrefixCache.clear();
+        this.heldDao.remove();
     }
 
     public void setPrefix(String prefix) {

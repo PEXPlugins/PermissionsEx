@@ -52,11 +52,11 @@ class BakedSubjectData {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object other) {
+        if (this == other) return true;
+        if (!(other instanceof BakedSubjectData)) return false;
 
-        BakedSubjectData that = (BakedSubjectData) o;
+        BakedSubjectData that = (BakedSubjectData) other;
 
         if (!options.equals(that.options)) return false;
         if (!parents.equals(that.parents)) return false;

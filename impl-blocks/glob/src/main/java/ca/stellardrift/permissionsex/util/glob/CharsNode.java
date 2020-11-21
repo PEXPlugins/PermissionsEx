@@ -38,7 +38,7 @@ final class CharsNode extends GlobNode {
             int index = 0;
             @Override
             public boolean hasNext() {
-                return index < (characters.length);
+                return index < characters.length;
             }
 
             @Override

@@ -35,7 +35,7 @@ import static java.util.Map.Entry;
 public abstract class AbstractRankLadder implements RankLadder {
     private final String name;
 
-    public AbstractRankLadder(String name) {
+    protected AbstractRankLadder(String name) {
         this.name = name;
     }
 

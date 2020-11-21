@@ -60,6 +60,7 @@ public class LegacyDao {
         return "SELECT `id`, `parent`, `world` FROM `{}permissions_inheritance_old` WHERE `child` = ? AND `type` = ? ORDER BY `world`, `id` DESC";
     }
 
+    @SuppressWarnings("JdkObsolete") // StringBuilder methods on Matcher were only added in JDK 9
     public PreparedStatement prepareStatement(SqlDao dao, String query) throws SQLException {
         StringBuffer ret = new StringBuffer();
         Matcher m = TABLE_PATTERN.matcher(query);

@@ -46,7 +46,7 @@ public class RankLadderCache {
         this.dataStore = dataStore;
         cache = Caffeine.newBuilder()
                 .maximumSize(256)
-                .buildAsync(((key, executor) -> dataStore.getRankLadder(key, clearListener(key))));
+                .buildAsync((key, executor) -> dataStore.getRankLadder(key, clearListener(key)));
         if (existing != null) {
             listeners = existing.listeners;
             existing.cache.synchronous().asMap().forEach((key, rankLadder) -> {

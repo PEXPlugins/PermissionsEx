@@ -147,7 +147,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     @Override
-    public final <T> CompletableFuture<T> performBulkOperation(final Function<DataStore, T> function) {
+    public final <V> CompletableFuture<V> performBulkOperation(final Function<DataStore, V> function) {
         return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().getAsyncExecutor());
     }
 
@@ -206,11 +206,11 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.
      *
      * @param function The function to run
-     * @param <T> The
+     * @param <V> The
      * @return result of operation, after a save
      * @throws Exception if thrown by operation
      */
-    protected abstract <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception;
+    protected abstract <V> V performBulkOperationSync(Function<DataStore, V> function) throws Exception;
 
     @Override
     public CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier) {

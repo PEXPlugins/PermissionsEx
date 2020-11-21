@@ -94,7 +94,7 @@ class ProfileApiResolverImpl implements ProfileApiResolver {
      * @throws IOException if unable to establish the connection
      */
     private HttpURLConnection openConnection(final URL endpoint) throws IOException {
-        final URLConnection conn = PROFILE_QUERY_URL.openConnection();
+        final URLConnection conn = endpoint.openConnection();
         if (!(conn instanceof HttpURLConnection)) {
             throw new IllegalStateException("Profile connection should be a HttpURLConnection but isn't");
         }
@@ -138,6 +138,6 @@ class ProfileApiResolverImpl implements ProfileApiResolver {
                         sink.error(ex);
                     }
                     sink.complete();
-                }).publishOn(Schedulers.boundedElastic()));
+                }).publishOn(Schedulers.fromExecutor(this.executor)));
     }
 }

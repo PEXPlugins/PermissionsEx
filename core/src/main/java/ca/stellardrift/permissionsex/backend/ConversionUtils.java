@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 public class ConversionUtils {
     private static final Pattern MATCHER_GROUP_PATTERN = Pattern.compile("\\((.*?)\\)");
 
+    @SuppressWarnings("JdkObsolete") // StringBuilder methods on Matcher were only added in JDK 9
     public static String convertLegacyPermission(String permission) {
         final StringBuffer ret = new StringBuffer();
         Matcher matcher = MATCHER_GROUP_PATTERN.matcher(permission); // Convert regex multimatches to shell globs

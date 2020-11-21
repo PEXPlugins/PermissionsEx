@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -204,13 +203,13 @@ class SqlSubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public Map<Set<ContextValue<?>>, List<Entry<String, String>>> getAllParents() {
+    public Map<Set<ContextValue<?>>, List<Map.Entry<String, String>>> getAllParents() {
         return Maps.filterValues(Maps.transformValues(segments,
                 dataEntry -> dataEntry == null ? null : dataEntry.getParents() == null ? null : ImmutableList.copyOf(dataEntry.getParents())), v -> v != null);
     }
 
     @Override
-    public List<Entry<String, String>> getParents(Set<ContextValue<?>> segments) {
+    public List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> segments) {
         Segment ent = this.segments.get(segments);
         return ent == null || ent.getParents() == null ? Collections.emptyList() : ImmutableList.copyOf(ent.getParents());
     }
@@ -240,7 +239,7 @@ class SqlSubjectData implements ImmutableSubjectData {
     }
 
     @Override
-    public ImmutableSubjectData setParents(Set<ContextValue<?>> segments, List<Entry<String, String>> parents) {
+    public ImmutableSubjectData setParents(Set<ContextValue<?>> segments, List<Map.Entry<String, String>> parents) {
         Segment entry = getSegmentOrNew(segments);
         return newWithUpdated(segments, entry.withParents(Lists.transform(parents, ent -> ent instanceof SubjectRef ? (SubjectRef) ent : SubjectRef.unresolved(ent.getKey(), ent.getValue()))));
     }

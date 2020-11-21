@@ -1,11 +1,11 @@
-import ca.stellardrift.build.common.engineHub
-import ca.stellardrift.build.common.pex
 import ca.stellardrift.build.localization.LocalizationExtension
 import net.kyori.indra.sonatypeSnapshots
+import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
     id("ca.stellardrift.opinionated")
     id("net.kyori.indra.publishing")
+    id("net.ltgt.errorprone")
 }
 
 repositories {
@@ -61,6 +61,20 @@ plugins.withId("ca.stellardrift.localization") {
 ktlint {
     filter {
         exclude("generated-src/**")
+    }
+}
+
+// Errorprone
+dependencies {
+    val errorproneVersion: String by project
+    compileOnly("com.google.errorprone:error_prone_annotations:$errorproneVersion")
+    errorprone("com.google.errorprone:error_prone_core:$errorproneVersion")
+}
+
+tasks.withType(JavaCompile::class).configureEach {
+    options.errorprone {
+        disableWarningsInGeneratedCode.set(true)
+        excludedPaths.set(".*/(generated-src|mixin|accessor)/.*.java")
     }
 }
 

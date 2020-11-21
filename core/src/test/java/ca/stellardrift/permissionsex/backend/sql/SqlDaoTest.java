@@ -68,6 +68,7 @@ public class SqlDaoTest extends PermissionsExTest {
     private final String jdbcUrl;
 
     @BeforeEach
+    @Override
     public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {
         Path testDir = tempDir.resolve(info.getDisplayName() + "-dao");
         final String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));

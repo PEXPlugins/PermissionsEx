@@ -173,6 +173,11 @@ public final class NodeTree {
         return ret;
     }
 
+    @Override
+    public String toString() {
+        return "NodeTree{" + this.rootNode + "}";
+    }
+
     static class Node {
 
         final Map<String, Node> children;
@@ -180,6 +185,11 @@ public final class NodeTree {
 
         private Node(Map<String, Node> children) {
             this.children = children;
+        }
+
+        @Override
+        public String toString() {
+            return "<value: " + this.value + ", children=" + this.children + ">";
         }
     }
 }

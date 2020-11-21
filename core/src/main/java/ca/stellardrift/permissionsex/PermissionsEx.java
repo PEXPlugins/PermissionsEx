@@ -352,7 +352,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         if (oldState != null) {
             try {
                 oldState.activeDataStore.close();
-            } catch (Exception e) {} // TODO maybe warn?
+            } catch (final Exception ignore) {} // TODO maybe warn?
         }
 
         this.rankLadderCache = new RankLadderCache(this.rankLadderCache, newState.activeDataStore);

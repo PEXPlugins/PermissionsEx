@@ -32,7 +32,7 @@ abstract class PermissibleInjector {
     protected final String clazzName, fieldName;
     protected final boolean copyValues;
 
-    public PermissibleInjector(String clazzName, String fieldName, boolean copyValues) {
+    PermissibleInjector(String clazzName, String fieldName, boolean copyValues) {
         this.clazzName = clazzName;
         this.fieldName = fieldName;
         this.copyValues = copyValues;

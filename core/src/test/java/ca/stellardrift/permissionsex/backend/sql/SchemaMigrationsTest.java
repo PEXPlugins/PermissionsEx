@@ -75,6 +75,7 @@ public class SchemaMigrationsTest extends PermissionsExTest {
     private final SqlDataStore sqlStore = SqlDataStore.create("schema-migrations");
 
     @BeforeEach
+    @Override
     public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {
         Path testDir = tempFolder.resolve("sql");
         String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));

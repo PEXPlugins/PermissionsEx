@@ -83,7 +83,7 @@ public final class ContextValue<V> {
     }
 
     public V getParsedValue(final ContextDefinition<V> definition) {
-        if (this.definition != null && this.definition != definition) {
+        if (this.definition != null && !this.definition.equals(definition)) {
             throw new IllegalStateException("The provided context definition does not match the one this context object currently knows about");
         }
 
@@ -116,6 +116,7 @@ public final class ContextValue<V> {
         return tempParsed;
     }
 
+    @Override
     public boolean equals(final @Nullable Object other) {
         if (this == other) return true;
         if (!(other instanceof ContextValue<?>)) return false;
@@ -134,6 +135,7 @@ public final class ContextValue<V> {
         return result;
     }
 
+    @Override
     public String toString() {
         return this.key + ":" + this.parsedValue + " (raw: " + this.rawValue + ")";
     }

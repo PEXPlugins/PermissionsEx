@@ -98,6 +98,7 @@ public abstract class ContextDefinition<V> {
         return "ContextDefinition{name='" + this.name + "'}";
     }
 
+    @Override
     public boolean equals(final @Nullable Object other) {
         if (this == other) return true;
         if (!(other instanceof ContextDefinition<?>)) return false;

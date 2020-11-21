@@ -64,7 +64,7 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
         this.dataStore = newDataStore;
         AsyncLoadingCache<String, ImmutableSubjectData> oldCache = this.cache.getAndSet(Caffeine.newBuilder()
                         .maximumSize(512)
-                        .buildAsync(((key, executor) -> dataStore.getData(type, key, clearListener(key)))));
+                        .buildAsync((key, executor) -> dataStore.getData(type, key, clearListener(key))));
         if (oldCache != null) {
             oldCache.synchronous().asMap().forEach((k, v) -> {
                     getData(k, null).thenAccept(data -> listeners.call(k, data));

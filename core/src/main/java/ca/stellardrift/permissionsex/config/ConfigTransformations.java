@@ -21,7 +21,6 @@ import org.spongepowered.configurate.transformation.MoveStrategy;
 import org.spongepowered.configurate.transformation.TransformAction;
 
 import static org.spongepowered.configurate.NodePath.path;
-import static org.spongepowered.configurate.transformation.ConfigurationTransformation.builder;
 
 public final class ConfigTransformations {
 
@@ -34,7 +33,7 @@ public final class ConfigTransformations {
      * @return A transformation that converts a 1.x-style configuration to a 2.x-style configuration
      */
     private static ConfigurationTransformation initialToZero() {
-        return builder()
+        return ConfigurationTransformation.builder()
                         .moveStrategy(MoveStrategy.MERGE)
                         .addAction(path("permissions"), (inputPath, valueAtPath) -> new Object[0])
                         .addAction(path("permissions", "backend"), (inputPath, valueAtPath) -> p("default-backend"))

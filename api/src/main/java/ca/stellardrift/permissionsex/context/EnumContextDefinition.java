@@ -50,6 +50,7 @@ public abstract class EnumContextDefinition<T extends Enum<T>> extends ContextDe
         }
     }
 
+    @Override
     public boolean matches(final T ownVal, final T testVal) {
         return ownVal == testVal;
     }
@@ -58,6 +59,7 @@ public abstract class EnumContextDefinition<T extends Enum<T>> extends ContextDe
     public void accumulateCurrentValues(final CalculatedSubject subject, final Consumer<T> consumer) {
     }
 
+    @Override
     public Set<T> suggestValues(final CalculatedSubject subject) {
         return this.values;
     }

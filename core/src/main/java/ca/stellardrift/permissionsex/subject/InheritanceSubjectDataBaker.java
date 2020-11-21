@@ -62,7 +62,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     private static CompletableFuture<Set<ContextValue<?>>> processContexts(PermissionsEx<?> pex, Set<ContextValue<?>> rawContexts) {
         return pex.getContextInheritance(null).thenApply(inheritance -> {
             // Step one: calculate context inheritance
-            Queue<ContextValue<?>> inProgressContexts = new LinkedList<>(rawContexts);
+            Queue<ContextValue<?>> inProgressContexts = new ArrayDeque<>(rawContexts);
             Set<ContextValue<?>> contexts = new HashSet<>();
             ContextValue<?> context;
             while ((context = inProgressContexts.poll()) != null) {
@@ -124,7 +124,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     }
 
     private List<Set<ContextValue<?>>> processContexts(Set<Set<ContextValue<?>>> possibilities, Set<Set<ContextValue<?>>> transientPossibilities, BakeState state) {
-        List<Set<ContextValue<?>>> ret = new LinkedList<>();
+        List<Set<ContextValue<?>>> ret = new ArrayList<>();
         Set<Set<ContextValue<?>>> seen = new HashSet<>(possibilities.size());
         processSingleDataContexts(ret, seen, possibilities, state);
         processSingleDataContexts(ret, seen, transientPossibilities, state);
