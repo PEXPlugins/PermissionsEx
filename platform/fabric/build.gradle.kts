@@ -1,7 +1,6 @@
 
-import ca.stellardrift.build.transformations.ConfigFormats
-import ca.stellardrift.build.transformations.convertFormat
-import ca.stellardrift.permissionsex.gradle.Versions
+import ca.stellardrift.build.configurate.ConfigFormats
+import ca.stellardrift.build.configurate.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
 
@@ -24,11 +23,8 @@ import net.fabricmc.loom.task.RemapJarTask
  */
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin")
-    id("fabric-loom") version "0.5-SNAPSHOT"
-    id("ca.stellardrift.opinionated.fabric") version "3.1"
-    id("ca.stellardrift.configurate-transformations")
-    id("com.github.johnrengelman.shadow")
+    id("pex-platform")
+    id("ca.stellardrift.opinionated.fabric") version "4.0"
     id("ca.stellardrift.localization")
 }
 
@@ -37,6 +33,8 @@ configurations.implementation.get().extendsFrom(shade)
 
 val minecraftVersion = "1.16.4"
 dependencies {
+    val adventurePlatformVersion: String by project
+
     shade(project(":impl-blocks:minecraft")) {
         exclude("com.google.guava")
         exclude("com.google.code.gson")
@@ -56,7 +54,7 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.25.1+build.416-1.16")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.4.0+build.1")
-    modImplementation(include("net.kyori:adventure-platform-fabric:${Versions.TEXT_ADAPTER}") {
+    modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
     })
     modImplementation(include("ca.stellardrift:confabricate:2.0-SNAPSHOT+4.0.0") {
@@ -64,24 +62,25 @@ dependencies {
     })
 }
 
-localization {
-    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
-}
-
 tasks.withType(ProcessResources::class).configureEach {
     filesMatching("*.yml") {
-        expand("project" to project)
-        convertFormat(ConfigFormats.YAML, ConfigFormats.GSON)
+        convertFormat(ConfigFormats.YAML, ConfigFormats.JSON)
         name = "${name.removeSuffix(".yml")}.json"
     }
 }
 
-val relocateRoot = project.ext["pexRelocateRoot"]
+pexPlatform {
+    relocate(
+        "com.github.benmanes",
+        "com.zaxxer",
+        "org.antlr",
+        "org.apache.logging.slf4j",
+        "org.slf4j"
+    )
+}
+
 val shadowJar by tasks.getting(ShadowJar::class) {
     configurations = listOf(shade)
-    minimize {
-        exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
-    }
     archiveClassifier.set("dev-all")
     from(sourceSets["accessor"].output)
     from(sourceSets["mixin"].output)
@@ -92,11 +91,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("org.jetbrains:annotations:.*"))
         exclude(dependency("org.checkerframework:checker-qual:.*"))
     }
-
-    listOf("com.zaxxer", "com.github.benmanes", "org.slf4j",
-        "org.antlr", "org.apache.logging.slf4j").forEach {
-        relocate(it, "$relocateRoot.$it")
-    }
 }
 
 val remapShadowJar = tasks.register<RemapJarTask>("remapShadowJar") {
@@ -106,13 +100,6 @@ val remapShadowJar = tasks.register<RemapJarTask>("remapShadowJar") {
     addNestedDependencies.set(true)
 }
 
-tasks.assemble.configure {
-    dependsOn(shadowJar)
-}
-
-tasks.build.configure {
-    dependsOn(remapShadowJar)
-}
 configurations {
     sequenceOf(shadowRuntimeElements, shadow).forEach {
         it.configure {

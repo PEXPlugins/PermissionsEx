@@ -1,5 +1,3 @@
-import ca.stellardrift.permissionsex.gradle.setupPublication
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -17,10 +15,12 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  * limitations under the License.
  *
  */
-setupPublication()
+plugins {
+    id("pex-component")
+}
 
+useCheckerFramework()
 dependencies {
-    compileOnlyApi("org.checkerframework:checker-qual:3.7.1")
     api("org.pcollections:pcollections:3.1.4")
     api("com.zaxxer:HikariCP:3.3.1")
     compileOnly("com.h2database:h2:1.4.199")

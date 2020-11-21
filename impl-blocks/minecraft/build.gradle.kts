@@ -1,5 +1,3 @@
-import ca.stellardrift.permissionsex.gradle.setupPublication
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -17,18 +15,20 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  * limitations under the License.
  *
  */
-
-setupPublication()
-
-dependencies {
-    api(project(":api"))
-    api(project(":core"))
-    implementation("com.google.code.gson:gson:2.8.0")
-    annotationProcessor("org.immutables:value:2.8.8")
-    compileOnlyApi("org.immutables:gson:2.8.8")
-    testRuntimeOnly("org.slf4j:slf4j-simple:1.7.30")
+plugins {
+    id("pex-component")
 }
 
-opinionated {
-    useJUnit5()
+useImmutables()
+dependencies {
+    val immutablesVersion: String by project
+
+    api(project(":api"))
+    api(project(":core"))
+    compileOnlyApi("org.immutables:gson:$immutablesVersion")
+
+    // Fixed version to line up with MC
+    implementation("com.google.code.gson:gson:2.8.0")
+
+    testRuntimeOnly("org.slf4j:slf4j-simple:1.7.30")
 }

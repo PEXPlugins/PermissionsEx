@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ca.stellardrift.permissionsex.commands.parse
 
 import ca.stellardrift.permissionsex.commands.CommonMessages
@@ -59,6 +58,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     }
 
     operator fun <T> get(arg: ValueElement<T>): T {
+        @Suppress("UNCHECKED_CAST")
         return parsedArgs[arg.key.toContextKey()]!!.iterator().next() as T
     }
 

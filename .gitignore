@@ -6,11 +6,13 @@
 
 .gradle/
 
+/platform/*/debug/
 /run/
 build/
 /bin
 /dist
 /.idea/
 /PermissionsEx.iml
+/idea/
 .DS_Store
 .*.swp

@@ -17,7 +17,7 @@
  */
 
 plugins {
-    kotlin("jvm") version embeddedKotlinVersion
+    `kotlin-dsl`
 }
 
 repositories {
@@ -28,5 +28,25 @@ repositories {
 }
 
 dependencies {
-    implementation(gradleApi())
+    constraints {
+        sequenceOf("asm", "asm-util", "asm-tree", "asm-analysis").forEach {
+            implementation("org.ow2.asm:$it") {
+                version { require("9.0") }
+                because("Fabric's TinyRemapper requires ASM 9")
+            }
+        }
+    }
+
+    val opinionatedVersion = "4.0"
+    val indraVersion = "1.1.1"
+    implementation("ca.stellardrift:gradle-plugin-opinionated-common:$opinionatedVersion")
+    implementation("ca.stellardrift:gradle-plugin-opinionated-kotlin:$opinionatedVersion")
+    implementation("net.kyori:indra-common:$indraVersion")
+    implementation("ca.stellardrift:gradle-plugin-localization:$opinionatedVersion")
+    implementation("ca.stellardrift:gradle-plugin-templating:$opinionatedVersion")
+    implementation("ca.stellardrift:gradle-plugin-configurate:$opinionatedVersion")
+    implementation("com.github.jengelman.gradle.plugins:shadow:6.1.0")
+    implementation("kr.entree:spigradle:2.2.3") {
+    }
 }
+

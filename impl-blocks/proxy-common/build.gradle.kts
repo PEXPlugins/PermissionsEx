@@ -1,5 +1,3 @@
-import ca.stellardrift.permissionsex.gradle.setupPublication
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -17,7 +15,9 @@ import ca.stellardrift.permissionsex.gradle.setupPublication
  * limitations under the License.
  *
  */
-setupPublication()
+plugins {
+    id("pex-component")
+}
 
 dependencies {
     api(project(":api"))

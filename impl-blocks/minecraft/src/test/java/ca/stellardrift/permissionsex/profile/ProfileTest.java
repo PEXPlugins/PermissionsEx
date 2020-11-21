@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ca.stellardrift.permissionsex.profile;
 
 import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile;

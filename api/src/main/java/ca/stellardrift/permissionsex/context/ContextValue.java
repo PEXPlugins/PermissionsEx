@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ca.stellardrift.permissionsex.context;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -100,6 +99,7 @@ public final class ContextValue<V> {
         return parsedValue;
     }
 
+    @SuppressWarnings("unchecked")
     public V getParsedValue(final ContextDefinitionProvider provider) {
         @Nullable V tempParsed = parsedValue;
         if (tempParsed != null) {

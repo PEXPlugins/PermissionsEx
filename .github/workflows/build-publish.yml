@@ -6,27 +6,25 @@ on: [push, pull_request]
 
 jobs:
   build:
+    # Only run on PRs if the source branch is on someone else's repo
+    if: ${{ github.event_name != 'pull_request' || github.repository != github.event.repository.full_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java: [
-                11, # LTS
-                15 # Latest
-        ]
     steps:
       - name: Check out
         uses: actions/checkout@v2
-      - name: Setup JDK ${{ matrix.java }}
+      - name: Setup JDK 11
         uses: actions/setup-java@v1
         with:
-          java-version: ${{ matrix.java }}
+          java-version: 11
       - name: Cache Gradle packages
         uses: actions/cache@v1
         with:
           path: ~/.gradle/caches
-          key: ${{ runner.os }}-${{matrix.java}}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-${{matrix.java}}-gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
       - name: Build with Gradle
         run: ./gradlew build
       - name: Archive test results
@@ -39,7 +37,13 @@ jobs:
             platform/*/build/test-results/test
       - name: Archive distributable plugins
         uses: actions/upload-artifact@v2
-        if: ${{ runner.os == 'Linux' && matrix.java == '11' }} # Only upload one set of artifacts
+        if: ${{ runner.os == 'Linux' }} # Only upload one set of artifacts
         with:
           name: PermissionsEx (all platforms)
           path: build/libs/
+      - name: Publish to Maven
+        if: ${{ runner.os == 'Linux' && github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        run: ./gradlew publish
+        env:
+          ORG_GRADLE_PROJECT_pexUsername: ${{ secrets.REPO_USERNAME }}
+          ORG_GRADLE_PROJECT_pexPassword: ${{ secrets.REPO_PASSWORD }}

@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ca.stellardrift.permissionsex.subject;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -81,6 +80,7 @@ public abstract class SubjectTypeDefinition<A> {
      * @return a new subject type definition
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <A> SubjectTypeDefinition<A> of(final String typeName, final Map.Entry<String, Supplier<A>>... validEntries) {
         return of(typeName, null, validEntries);
     }

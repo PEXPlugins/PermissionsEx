@@ -1,8 +1,7 @@
 
-import ca.stellardrift.build.transformations.ConfigFormats
-import ca.stellardrift.build.transformations.convertFormat
-import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.setupPublication
+import ca.stellardrift.build.common.sponge
+import ca.stellardrift.build.configurate.ConfigFormats
+import ca.stellardrift.build.configurate.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 /*
@@ -24,22 +23,19 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin")
-    id("com.github.johnrengelman.shadow")
+    id("pex-platform")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
     id("ca.stellardrift.configurate-transformations")
 }
 
-setupPublication()
-
 repositories {
-    maven("https://repo-new.spongepowered.org/repository/maven-public") {
-        name = "spongeNew"
-    }
+    sponge()
 }
 
 dependencies {
+    val slf4jVersion: String by project
+
     api(project(":impl-blocks:minecraft")) {
         // Dependencies provided by spongeapi
         exclude(group = "com.google.guava", module = "guava")
@@ -51,55 +47,35 @@ dependencies {
     testImplementation(compileOnly("org.spongepowered:spongeapi:8.0.0-SNAPSHOT")!!)
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3") { isTransitive = false }
 
-    testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
+    testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.0.0")
 }
 
-localization {
-    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
-}
-
-opinionated {
-    useJUnit5()
-    automaticModuleNames = true
-}
-
-val relocateRoot = project.ext["pexRelocateRoot"]
-val shadowJar by tasks.getting(ShadowJar::class) {
-    minimize()
-    listOf(
-        "org.antlr",
-        "org.slf4j",
-        "org.jetbrains.annotations",
-        "org.apache.logging.slf4j",
+pexPlatform {
+    relocate(
+        "kotlin",
         "kotlinx",
-        "kotlin"
-    ).forEach {
-        relocate(it, "$relocateRoot.$it")
-    }
-    exclude("org/checkerframework/**")
-    exclude("**/module-info.class")
+        "org.antlr",
+        "org.apache.logging.slf4j",
+        "org.jetbrains.annotations",
+        "org.slf4j"
+    )
+}
 
+val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("com.google.code.gson:gson:.*"))
     }
 
-    manifest {
-        attributes(
-            "Loader" to "java_plain" // declare as a Sponge plugin
-        )
-    }
+    manifest.attributes(
+        "Loader" to "java_plain" // declare as a Sponge plugin
+    )
 }
 
 tasks.processResources {
     inputs.property("version", project.version)
     filesMatching("**/*.yml") {
-        expand("project" to project)
-        convertFormat(ConfigFormats.YAML, ConfigFormats.GSON)
+        convertFormat(ConfigFormats.YAML, ConfigFormats.JSON)
         name = name.substringBeforeLast('.') + ".json"
     }
-}
-
-tasks.assemble {
-    dependsOn(shadowJar)
 }

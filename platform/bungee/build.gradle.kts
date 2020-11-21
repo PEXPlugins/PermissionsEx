@@ -1,9 +1,8 @@
 
 import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
-import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.setupPublication
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import kr.entree.spigradle.kotlin.bungeecord
+import net.kyori.indra.sonatypeSnapshots
 
 /*
  * PermissionsEx
@@ -24,20 +23,19 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin")
-    id("com.github.johnrengelman.shadow")
+    id("pex-platform")
     id("ca.stellardrift.localization")
+    id("kr.entree.spigradle.bungee")
 }
 
-setupPublication()
-
 repositories {
-    maven {
-        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-    }
+    sonatypeSnapshots()
 }
 
 dependencies {
+    val adventurePlatformVersion: String by project
+    val slf4jVersion: String by project
+
     api(project(":impl-blocks:minecraft")) {
         exclude("com.google.code.gson")
         exclude("com.google.guava")
@@ -47,39 +45,40 @@ dependencies {
     implementation(configurate("yaml")) {
         exclude("org.yaml", "snakeyaml")
     }
-    implementation(adventure("platform-bungeecord", Versions.TEXT_ADAPTER)) {
+    implementation(adventure("platform-bungeecord", adventurePlatformVersion)) {
         exclude("com.google.code.gson")
     }
-    implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
+    implementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
     api(project(":impl-blocks:proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:hikari-config"))
 
-    shadow("net.md-5:bungeecord-api:1.14-SNAPSHOT")
+    shadow(bungeecord("1.16-R0.4-SNAPSHOT"))
 }
 
-tasks.processResources {
-    expand("project" to project)
-}
-
-localization {
-    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
-}
-
-val relocateRoot = project.ext["pexRelocateRoot"]
-val shadowJar by tasks.getting(ShadowJar::class) {
-    minimize {
-        exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
+bungee {
+    val pexDescription: String by project
+    val pexSuffix: String by project
+    name = rootProject.name
+    version = "${project.version}$pexSuffix"
+    description = pexDescription
+    debug {
+        args("--nojline")
     }
-    listOf("com.github.benmanes", "com.zaxxer", "com.typesafe",
-        "ong.spongepowered.configurate", "org.jetbrains.annotations",
-        "org.slf4j", "org.antlr.v4.runtime", "net.kyori", "kotlinx", "kotlin").forEach {
-        relocate(it, "$relocateRoot.$it")
-    }
-
-    exclude("org/checkerframework/**")
 }
 
-tasks.assemble {
-    dependsOn(shadowJar)
+pexPlatform {
+    relocate(
+        "com.github.benmanes",
+        "com.typesafe",
+        "com.zaxxer",
+        "io.leangen.geantyref",
+        "kotlin",
+        "kotlinx",
+        "net.kyori",
+        "org.antlr.v4.runtime",
+        "org.jetbrains.annotations",
+        "org.slf4j",
+        "org.spongepowered.configurate"
+    )
 }

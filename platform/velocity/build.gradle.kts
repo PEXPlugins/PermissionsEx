@@ -1,7 +1,6 @@
 
+import ca.stellardrift.build.common.minecraft
 import ca.stellardrift.build.common.velocitySnapshots
-import ca.stellardrift.permissionsex.gradle.setupPublication
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 /*
  * PermissionsEx
@@ -22,17 +21,14 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin")
-    id("com.github.johnrengelman.shadow")
+    id("pex-platform")
     kotlin("kapt")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
 }
 
-setupPublication()
-
 repositories {
-    maven("https://libraries.minecraft.net/")
+    minecraft()
     velocitySnapshots()
 }
 
@@ -55,30 +51,16 @@ dependencies {
     kapt(shadow("com.velocitypowered:velocity-api:1.1.0-SNAPSHOT")!!)
 }
 
-localization {
-    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
-}
-
-val relocateRoot = project.ext["pexRelocateRoot"]
-val shadowJar by tasks.getting(ShadowJar::class) {
-    minimize {
-        exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
-    }
-    listOf(
-        "com.zaxxer",
-        "org.spongepowered.configurate",
+pexPlatform {
+    relocate(
         "com.github.benmanes",
-        "org.jetbrains",
-        "org.checkerframework",
-        "org.antlr.v4",
+        "com.zaxxer",
+        "io.leangen.geantyref",
+        "kotlin",
         "kotlinx",
-        "kotlin"
-    ).forEach {
-        relocate(it, "$relocateRoot.$it")
-    }
-    exclude("org/checkerframework/**")
-}
-
-tasks.assemble {
-    dependsOn(shadowJar)
+        "org.antlr.v4",
+        "org.checkerframework",
+        "org.jetbrains",
+        "org.spongepowered.configurate"
+    )
 }

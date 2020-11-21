@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
@@ -25,6 +24,7 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.maxPrefixLength
+import java.net.InetSocketAddress
 import java.util.UUID
 import java.util.function.Consumer
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -62,6 +62,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
+            val address = socketAddress as? InetSocketAddress ?: return
             consumer.accept(IpSet.fromAddrPrefix(address.address, address.address.maxPrefixLength))
         }
     }

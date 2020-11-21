@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ca.stellardrift.permissionsex.datastore;
 
 import org.pcollections.HashTreePMap;
@@ -26,7 +25,8 @@ import java.util.ServiceLoader;
 import static java.util.Objects.requireNonNull;
 
 class DataStoreFactories {
-    private static final ServiceLoader<DataStoreFactory> LOADER = ServiceLoader.load(DataStoreFactory.class);
+    // service loader, needs explicitly specified ClassLoader as a workaround for Bukkit/Bungee brokenness
+    private static final ServiceLoader<DataStoreFactory> LOADER = ServiceLoader.load(DataStoreFactory.class, DataStoreFactory.class.getClassLoader());
     static final PMap<String, DataStoreFactory> REGISTRY;
 
     static {

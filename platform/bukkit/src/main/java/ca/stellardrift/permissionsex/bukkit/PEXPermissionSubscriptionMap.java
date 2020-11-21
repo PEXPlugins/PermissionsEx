@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package ca.stellardrift.permissionsex.bukkit;
 
 import com.google.common.collect.Sets;
@@ -36,6 +35,9 @@ import java.util.stream.Collectors;
  * PermissibleMap for the permissions subscriptions data in Bukkit's {@link PluginManager} so we can put in our own data too.
  */
 public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>> {
+
+    private static final long serialVersionUID = 4740875815040785091L;
+
     @SuppressWarnings("rawtypes")
     private static FieldReplacer<PluginManager, Map> INJECTOR;
     private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<>();

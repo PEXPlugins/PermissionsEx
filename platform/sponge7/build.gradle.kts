@@ -1,7 +1,6 @@
 
 import ca.stellardrift.build.common.adventure
-import ca.stellardrift.permissionsex.gradle.Versions
-import ca.stellardrift.permissionsex.gradle.setupPublication
+import ca.stellardrift.build.common.sponge
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 /*
@@ -23,71 +22,52 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin")
-    id("com.github.johnrengelman.shadow")
-    kotlin("kapt")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
+    id("pex-platform")
+    kotlin("kapt")
 }
 
-setupPublication()
-
 repositories {
-    maven("https://repo-new.spongepowered.org/repository/maven-public") {
-        name = "spongeNew"
-    }
+    sponge()
 }
 
 dependencies {
+    val adventurePlatformVersion: String by project
+    val slf4jVersion: String by project
+
     api(project(":impl-blocks:minecraft")) {
         exclude("com.google.guava", "guava")
         exclude("org.slf4j", "slf4j-api")
         exclude("com.github.ben-manes.caffeine", "caffeine")
     }
 
-    implementation(adventure("platform-spongeapi", Versions.TEXT_ADAPTER)) {
+    implementation(adventure("platform-spongeapi", adventurePlatformVersion)) {
         exclude("com.google.code.gson")
     }
 
-    kapt(shadow("org.spongepowered:spongeapi:${Versions.SPONGE}")!!)
-    testImplementation("org.spongepowered:spongeapi:${Versions.SPONGE}")
+    testImplementation(kapt(shadow("org.spongepowered:spongeapi:7.3.0")!!)!!)
 
-    testImplementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
+    testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.0.0")
 }
 
-localization {
-    templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
-}
-
-opinionated {
-    useJUnit5()
-}
-
-val relocateRoot = project.ext["pexRelocateRoot"]
-val shadowJar by tasks.getting(ShadowJar::class) {
-    minimize()
-    listOf(
-        "org.antlr",
-        "net.kyori",
-        "org.jetbrains.annotations",
+pexPlatform {
+    relocate(
         "io.leangen.geantyref",
-        "org.spongepowered.configurate",
+        "kotlin",
         "kotlinx",
-        "kotlin"
-    ).forEach {
-        relocate(it, "$relocateRoot.$it")
-    }
-    exclude("org/checkerframework/**")
-    exclude("**/module-info.class")
+        "net.kyori",
+        "org.antlr",
+        "org.jetbrains.annotations",
+        "org.spongepowered.configurate"
+    )
+}
 
+val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("com.typesafe:config:.*"))
         exclude(dependency("org.yaml:snakeyaml:.*"))
         exclude(dependency("com.google.code.gson:gson:.*"))
     }
-}
-
-tasks.assemble {
-    dependsOn(shadowJar)
 }

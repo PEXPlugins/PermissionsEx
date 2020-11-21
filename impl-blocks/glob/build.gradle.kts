@@ -1,6 +1,5 @@
-import ca.stellardrift.permissionsex.gradle.Versions
-
 plugins {
+    id("pex-component")
     antlr
 }
 
@@ -8,16 +7,13 @@ configurations.compile {
     exclude("org.antlr", "antlr4")
 }
 
+useCheckerFramework()
 dependencies {
-    antlr("org.antlr:antlr4:${Versions.ANTLR}")
-    implementation("org.antlr:antlr4-runtime:${Versions.ANTLR}")
-    compileOnlyApi("org.checkerframework:checker-qual:3.7.1")
+    val antlrVersion: String by project
+    antlr("org.antlr:antlr4:$antlrVersion")
+    implementation("org.antlr:antlr4-runtime:$antlrVersion")
 }
 
 tasks.generateGrammarSource {
     this.arguments.addAll(listOf("-visitor", "-no-listener"))
-}
-
-opinionated {
-    useJUnit5()
 }
