@@ -22,9 +22,12 @@ plugins {
 
 repositories {
     jcenter()
-    mavenLocal()
-    gradlePluginPortal()
     mavenCentral()
+    maven {
+        name = "Fabric"
+        url = uri("https://maven.fabricmc.net")
+    }
+    gradlePluginPortal()
 }
 
 dependencies {
@@ -37,16 +40,16 @@ dependencies {
         }
     }
 
-    val opinionatedVersion = "4.0"
+    val opinionatedVersion = "4.0.1"
     val indraVersion = "1.1.1"
     implementation("ca.stellardrift:gradle-plugin-opinionated-common:$opinionatedVersion")
     implementation("ca.stellardrift:gradle-plugin-opinionated-kotlin:$opinionatedVersion")
+    implementation("ca.stellardrift:gradle-plugin-opinionated-fabric:$opinionatedVersion")
     implementation("net.kyori:indra-common:$indraVersion")
     implementation("ca.stellardrift:gradle-plugin-localization:$opinionatedVersion")
     implementation("ca.stellardrift:gradle-plugin-templating:$opinionatedVersion")
     implementation("ca.stellardrift:gradle-plugin-configurate:$opinionatedVersion")
     implementation("com.github.jengelman.gradle.plugins:shadow:6.1.0")
-    implementation("kr.entree:spigradle:2.2.3") {
-    }
+    implementation("kr.entree:spigradle:2.2.3")
 }
 

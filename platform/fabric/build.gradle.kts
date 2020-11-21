@@ -24,7 +24,7 @@ import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
     id("pex-platform")
-    id("ca.stellardrift.opinionated.fabric") version "4.0"
+    id("ca.stellardrift.opinionated.fabric")
     id("ca.stellardrift.localization")
 }
 
