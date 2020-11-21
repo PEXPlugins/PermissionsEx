@@ -53,3 +53,6 @@ dependencies {
     implementation("kr.entree:spigradle:2.2.3")
 }
 
+kotlinDslPluginOptions {
+    experimentalWarning.set(false)
+}
