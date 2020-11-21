@@ -6,9 +6,9 @@ plugins:
     main-class: ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
     description: "${project.description}"
     links:
-      homepage: "${project.opinionated.scm.get().website}"
-      issues: "${project.opinionated.scm.get().issueTrackerURL}"
-      source: "${project.opinionated.scm.get().scmWeb}"
+      homepage: "${project.indra.scm.get().url}"
+      issues: "${project.indra.issues.get().url}"
+      source: "${project.indra.scm.get().url}"
     contributors:
       - name: "zml"
         description: "permission herder"
