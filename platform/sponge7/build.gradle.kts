@@ -68,6 +68,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("com.typesafe:config:.*"))
         exclude(dependency("org.yaml:snakeyaml:.*"))
-        exclude(dependency("com.google.code.gson:gson:.*"))
+        exclude(dependency("com.google.code.gson:gson:2.8.6"))
     }
 }

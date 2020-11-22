@@ -28,7 +28,7 @@ dependencies {
     compileOnlyApi("org.immutables:gson:$immutablesVersion")
 
     // Fixed version to line up with MC
-    implementation("com.google.code.gson:gson:2.8.0")
+    implementation("com.google.code.gson:gson:2.8.6")
 
     testRuntimeOnly("org.slf4j:slf4j-simple:1.7.30")
 }
