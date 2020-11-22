@@ -45,7 +45,7 @@ dependencies {
     }
 
     testImplementation(compileOnly("org.spongepowered:spongeapi:8.0.0-SNAPSHOT")!!)
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3") { isTransitive = false }
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0") { isTransitive = false }
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.0.0")
