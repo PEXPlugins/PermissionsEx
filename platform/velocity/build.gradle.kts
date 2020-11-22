@@ -48,7 +48,7 @@ dependencies {
     }
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
 
-    kapt(shadow("com.velocitypowered:velocity-api:1.1.0-SNAPSHOT")!!)
+    kapt(shadow("com.velocitypowered:velocity-api:1.1.2")!!)
 }
 
 pexPlatform {
