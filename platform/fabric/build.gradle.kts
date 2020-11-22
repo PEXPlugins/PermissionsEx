@@ -88,7 +88,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))
         exclude(dependency("org.jetbrains.kotlinx:.*:.*"))
-        exclude(dependency("org.jetbrains:annotations:.*"))
+        exclude(dependency("org.jetbrains:annotations:20.1.0"))
         exclude(dependency("org.checkerframework:checker-qual:.*"))
     }
 }
