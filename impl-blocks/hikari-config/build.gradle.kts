@@ -22,6 +22,6 @@ plugins {
 useCheckerFramework()
 dependencies {
     api("org.pcollections:pcollections:3.1.4")
-    api("com.zaxxer:HikariCP:3.3.1")
+    api("com.zaxxer:HikariCP:3.4.5")
     compileOnly("com.h2database:h2:1.4.199")
 }
