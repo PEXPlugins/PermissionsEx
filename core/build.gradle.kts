@@ -44,7 +44,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:2.8.6") {
         exclude("com.google.errorprone")
     }
-    implementation("com.google.guava:guava:21.0")
+    implementation("com.google.guava:guava:30.0-jre")
     implementation(project(":impl-blocks:glob"))
 
     api(adventure("api", adventureVersion))
