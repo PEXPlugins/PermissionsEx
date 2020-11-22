@@ -1,5 +1,6 @@
 
 import ca.stellardrift.build.common.minecraft
+import ca.stellardrift.build.common.velocityReleases
 import ca.stellardrift.build.common.velocitySnapshots
 
 /*
@@ -29,6 +30,7 @@ plugins {
 
 repositories {
     minecraft()
+    velocityReleases()
     velocitySnapshots()
 }
 
@@ -48,7 +50,7 @@ dependencies {
     }
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
 
-    kapt(shadow("com.velocitypowered:velocity-api:1.1.0-SNAPSHOT")!!)
+    kapt(shadow("com.velocitypowered:velocity-api:1.1.2")!!)
 }
 
 pexPlatform {
