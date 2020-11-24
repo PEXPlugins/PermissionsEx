@@ -40,8 +40,8 @@ dependencies {
         }
     }
 
-    val opinionatedVersion = "4.0.1"
-    val indraVersion = "1.1.1"
+    val opinionatedVersion = "4.1"
+    val indraVersion = "1.2.1"
     implementation("ca.stellardrift:gradle-plugin-opinionated-common:$opinionatedVersion")
     implementation("ca.stellardrift:gradle-plugin-opinionated-kotlin:$opinionatedVersion")
     implementation("ca.stellardrift:gradle-plugin-opinionated-fabric:$opinionatedVersion")
