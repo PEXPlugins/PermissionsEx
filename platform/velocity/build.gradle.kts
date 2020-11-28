@@ -24,6 +24,7 @@ plugins {
 }
 
 dependencies {
+    val cloudVersion: String by project
     api(project(":impl-blocks:minecraft")) {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.google.code.gson")
@@ -38,12 +39,14 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
+    implementation("cloud.commandframework:cloud-velocity:$cloudVersion")
 
     kapt(shadow("com.velocitypowered:velocity-api:1.1.2")!!)
 }
 
 pexPlatform {
     relocate(
+        "cloud.commandframework",
         "com.github.benmanes",
         "com.zaxxer",
         "io.leangen.geantyref",

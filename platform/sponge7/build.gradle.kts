@@ -49,6 +49,7 @@ dependencies {
 
 pexPlatform {
     relocate(
+        "cloud.commandframework",
         "io.leangen.geantyref",
         "kotlin",
         "kotlinx",

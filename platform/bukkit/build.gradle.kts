@@ -31,9 +31,10 @@ license {
 }
 
 dependencies {
-    val spigotVersion: String = "1.15.1-R0.1-SNAPSHOT"
     val adventurePlatformVersion: String by project
+    val cloudVersion: String by project
     val slf4jVersion: String by project
+    val spigotVersion: String = "1.15.1-R0.1-SNAPSHOT"
 
     api(project(":impl-blocks:minecraft")) {
         exclude(group = "com.google.guava")
@@ -47,6 +48,7 @@ dependencies {
     implementation(adventure("platform-bukkit", adventurePlatformVersion)) {
         exclude("com.google.code.gson")
     }
+    implementation("cloud.commandframework:cloud-paper:$cloudVersion")
 
     implementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     implementation(project(":impl-blocks:hikari-config"))
@@ -70,26 +72,14 @@ spigot {
     load = Load.STARTUP
     softDepends("Vault", "WorldGuard")
 
-    commands {
-        create("permissionsex") {
-            aliases("pex")
-            description = "Command for PermissionsEx"
-        }
-
-        create("promote") {
-            aliases("prom", "rankup")
-            description = "Promote a user"
-        }
-
-        create("demote") {
-            aliases("dem", "rankdown")
-            description = "Demote a user"
-        }
+    debug {
+        buildVersion = "1.16.4"
     }
 }
 
 pexPlatform {
     relocate(
+        "cloud.commandframework",
         "com.github.benmanes.caffeine",
         "com.typesafe",
         "com.zaxxer.hikari",
@@ -101,7 +91,8 @@ pexPlatform {
         "org.antlr",
         "org.jetbrains.annotations",
         "org.slf4j",
-        "org.spongepowered.configurate"
+        "org.spongepowered.configurate",
+        "org.pcollections"
     )
 }
 

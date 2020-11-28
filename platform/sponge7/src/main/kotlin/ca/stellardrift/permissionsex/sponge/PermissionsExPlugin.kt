@@ -27,8 +27,13 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
+import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.sponge.command.SpongeApi7CommandManager
+import ca.stellardrift.permissionsex.sponge.command.SpongeApi7MetaKeys
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.optionally
+import cloud.commandframework.arguments.standard.StringArgument
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
 import java.io.IOException
@@ -57,6 +62,7 @@ import org.spongepowered.api.event.game.state.GamePreInitializationEvent
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent
 import org.spongepowered.api.event.network.ClientConnectionEvent
 import org.spongepowered.api.plugin.Plugin
+import org.spongepowered.api.plugin.PluginContainer
 import org.spongepowered.api.scheduler.Scheduler
 import org.spongepowered.api.service.ServiceManager
 import org.spongepowered.api.service.context.ContextCalculator
@@ -82,6 +88,7 @@ class PermissionsExPlugin @Inject internal constructor(
     logger: Logger,
     val game: Game,
     private val services: ServiceManager,
+    private val container: PluginContainer,
     @ConfigDir(sharedRoot = false) private val configDir: Path,
     internal val adventure: SpongeAudiences
 ) : PermissionService, ImplementationInterface {
@@ -160,6 +167,15 @@ class PermissionsExPlugin @Inject internal constructor(
                     }
                     null
                 }
+                .commands { coord ->
+                    SpongeApi7CommandManager(
+                        this.container,
+                        coord,
+                        { SpongeCommander(this, it) },
+                        { (it as SpongeCommander).commandSource }
+                    )
+                }
+                .commandContributor(this::registerFakeOpCommand)
                 .build()
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(PomData.NAME), e))
@@ -172,8 +188,6 @@ class PermissionsExPlugin @Inject internal constructor(
         manager.subjects(roleTemplateSubjectType)
         manager.subjects(commandBlockSubjectType)
 
-        registerFakeOpCommand("op", "minecraft.command.op")
-        registerFakeOpCommand("deop", "minecraft.command.deop")
 
         // Registering the PEX service *must* occur after the plugin has been completely initialized
         if (!services.isRegistered(PermissionService::class.java)) {
@@ -184,13 +198,20 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    private fun registerFakeOpCommand(alias: String, permission: String) {
-        /*command(alias) {
-            this.permission = Permission(permission, null, 0)
-            description = Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr()
-            args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER.tr())
-            executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR.tr()) }
-        }.register()*/
+    private fun registerFakeOpCommand(ctx: CommandRegistrationContext) {
+        val userArgument = StringArgument.of<Commander>("user")
+        fun register(name: String, permission: String) {
+            ctx.register(ctx.rootBuilder(name)
+                .argument(userArgument)
+                .permission(permission)
+                .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())
+                .handler {
+                    it.sender.error(Messages.COMMANDS_FAKE_OP_ERROR.tr())
+                })
+        }
+
+        register("op", "minecraft.command.op")
+        register("deop", "minecraft.command.deop")
     }
 
     @Listener

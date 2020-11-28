@@ -33,7 +33,7 @@ import org.spongepowered.api.service.pagination.PaginationService
  */
 internal class SpongeCommander(
     val pex: PermissionsExPlugin,
-    private val commandSource: CommandSource
+    internal val commandSource: CommandSource
 ) : Commander {
     private val formatter = SpongeMessageFormatter(pex)
     private val audience = pex.adventure.receiver(commandSource)

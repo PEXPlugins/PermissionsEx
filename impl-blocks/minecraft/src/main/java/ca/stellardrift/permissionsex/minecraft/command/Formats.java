@@ -16,12 +16,17 @@
  */
 package ca.stellardrift.permissionsex.minecraft.command;
 
+import ca.stellardrift.permissionsex.impl.util.PCollections;
+import cloud.commandframework.Command;
+import cloud.commandframework.arguments.CommandArgument;
+import cloud.commandframework.arguments.StaticArgument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.reactive.Publisher;
 import org.spongepowered.configurate.reactive.Subscriber;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
@@ -72,6 +77,46 @@ public final class Formats {
     }
 
     /**
+     * Format the specified command, filling in arguments as provided until the first unset
+     * non-static argument is encountered.
+     *
+     * @param command the command to format
+     * @param arguments arguments to fill in
+     * @return the formatted command
+     */
+    public static String formatCommand(final Command<?> command, final Map<CommandArgument<?, ?>, String> arguments) {
+        final StringBuilder builder = new StringBuilder("/");
+        for (final CommandArgument<?, ?> argument : command.getArguments()) {
+            if (argument instanceof StaticArgument<?>) {
+                builder.append(argument.getName());
+            } else {
+                final @Nullable String value = arguments.get(argument);
+                if (value == null) {
+                    break;
+                }
+                builder.append(value);
+            }
+            builder.append(" ");
+        }
+        return builder.toString();
+    }
+
+    public static String formatCommand(
+            final Command<?> command,
+            final CommandArgument<?, ?> arg1, final String val1
+    ) {
+        return formatCommand(command, PCollections.map(arg1, val1));
+    }
+
+    public static String formatCommand(
+            final Command<?> command,
+            final CommandArgument<?, ?> arg1, final String val1,
+            final CommandArgument<?, ?> arg2, final String val2
+    ) {
+        return formatCommand(command, PCollections.<CommandArgument<?, ?>, String>map(arg1, val1).plus(arg2, val2));
+    }
+
+    /**
      * To be used with {@link CompletableFuture#handle(BiFunction)}
      */
     public static <V, U> BiFunction<V, Throwable, U> messageSender(
@@ -104,7 +149,7 @@ public final class Formats {
                     err = cause;
                 }
                 if (err instanceof CommandException) {
-                    src.error(((CommandException) err).getComponent());
+                    src.error(((CommandException) err).componentMessage());
                 } else {
                     // TODO: err.getMessage() can be null
                     src.error(Messages.EXECUTOR_ERROR_ASYNC_TASK.tr(err.getClass().getSimpleName(), err.getMessage()), err);

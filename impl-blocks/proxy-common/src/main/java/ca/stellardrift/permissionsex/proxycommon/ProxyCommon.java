@@ -30,4 +30,5 @@ public final class ProxyCommon {
             .fixedEntries(UnmodifiableCollections.immutableMapEntry("Server", () -> null))
             .build();
     public static final SubjectRef<String> IDENT_SERVER_CONSOLE = SubjectRef.subject(SUBJECTS_SYSTEM, SERVER_CONSOLE_NAME);
+    public static final String PROXY_COMMAND_PREFIX = "/";
 }

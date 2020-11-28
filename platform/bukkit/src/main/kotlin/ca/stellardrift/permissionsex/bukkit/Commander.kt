@@ -38,7 +38,7 @@ internal class BukkitMessageFormatter(plugin: PermissionsExPlugin) : MessageForm
  */
 internal class BukkitCommander internal constructor(
     private val pex: PermissionsExPlugin,
-    private val commandSource: CommandSender
+    internal val commandSource: CommandSender
 ) : Commander {
     private val formatter: BukkitMessageFormatter = BukkitMessageFormatter(pex)
 

@@ -14,5 +14,5 @@ An eventual goal is to allow overriding messages using files in the plugin data 
 
 While we eventually plan to put up a CrowdIn page to allow translations to be contributed more easily, the only way to contribute at the moment is to provide new versions of the files in the `src/main/messages` folder in each module.
 
-Feel free to ask for help in the Discord -- we will be happy to assist in getting more localizations in
+Feel free to ask for help in the Discord -- we will be happy to assist in getting more localizations in.
 

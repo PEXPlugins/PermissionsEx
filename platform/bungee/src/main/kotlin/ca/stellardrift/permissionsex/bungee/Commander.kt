@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import net.kyori.adventure.audience.Audience
@@ -29,7 +30,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer
 
 internal class BungeeCommander(
     private val pex: PermissionsExPlugin,
-    private val src: CommandSender
+    internal val src: CommandSender
 ) : Commander {
     private val audience = pex.adventure.sender(src)
     private val formatter = BungeePluginMessageFormatter(pex)
@@ -54,6 +55,6 @@ internal class BungeePluginMessageFormatter(plugin: PermissionsExPlugin) : Messa
      * On Bungee and other proxies, we have an extra `/` in front of commands -- this makes clickables work properly
      */
     override fun transformCommand(cmd: String): String {
-        return "/$cmd"
+        return "${ProxyCommon.PROXY_COMMAND_PREFIX}$cmd"
     }
 }

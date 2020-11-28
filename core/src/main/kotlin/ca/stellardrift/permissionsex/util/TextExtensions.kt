@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.util
 
-import ca.stellardrift.permissionsex.context.ContextValue
 import java.text.MessageFormat
 import java.util.Locale
 import java.util.ResourceBundle
@@ -27,7 +26,6 @@ import net.kyori.adventure.text.Component.space
 import net.kyori.adventure.text.ComponentBuilder
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.Style.style
 import net.kyori.adventure.text.format.TextColor
@@ -45,11 +43,12 @@ fun Any?.toComponent(): Component {
 }
 
 fun Boolean.toComponent(): Component {
-    return if (this) {
+    return +this.toString()
+    /*return if (this) {
         Messages.FORMATTER_BOOLEAN_TRUE.bTr().color(NamedTextColor.GREEN)
     } else {
         Messages.FORMATTER_BOOLEAN_FALSE.bTr().color(NamedTextColor.RED)
-    }.build()
+    }.build()*/
 }
 operator fun Boolean.unaryPlus() = this.toComponent()
 
@@ -97,14 +96,6 @@ operator fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> B.plusAs
 }
 
 // -- PEX-Specific
-
-fun Set<ContextValue<*>>.toComponent(): Component {
-    return if (isEmpty()) {
-        Messages.COMMON_ARGS_CONTEXT_GLOBAL.tr()
-    } else {
-        +toString()
-    }
-}
 
 object PEXComponentRenderer : TranslatableComponentRenderer<Locale>() {
     override fun translate(key: String, context: Locale): MessageFormat {

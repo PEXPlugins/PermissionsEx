@@ -2,6 +2,7 @@
 
 * [Home](2.0-home.md)
 * [Getting Started](tutorial.md)
+* [Commands](components-in-detail/command.md)  
 * [Components in Detail](components-in-detail/README.md)
   * [Subject](components-in-detail/subject.md)
   * [Defaults and Fallbacks](components-in-detail/defaults-and-fallbacks.md)

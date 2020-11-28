@@ -17,10 +17,16 @@
 package ca.stellardrift.permissionsex.minecraft.command;
 
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import cloud.commandframework.Command;
+import cloud.commandframework.CommandManager;
+import cloud.commandframework.arguments.CommandArgument;
+import cloud.commandframework.arguments.standard.UUIDArgument;
+import cloud.commandframework.meta.CommandMeta;
 import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -30,6 +36,7 @@ import java.util.function.Consumer;
  * Handler for command callbacks.
  */
 public final class CallbackController {
+    private static final CommandArgument<Commander, UUID> CALLBACK_ID = UUIDArgument.of("id");
     private final ConcurrentMap<String, java.util.concurrent.ConcurrentMap<UUID, CallbackInstance>> knownCallbacks = new ConcurrentHashMap<>();
 
     /**
@@ -61,29 +68,33 @@ public final class CallbackController {
         knownCallbacks.remove(name.toString().toLowerCase(Locale.ROOT));
     }
 
-    public Object createCommand() {
-        throw new UnsupportedOperationException("Cloud does not yet exist :(");
-        /*return command("callback", "cb") {
-            val uid = uuid() key Messages.COMMAND_ARG_TYPE_CALLBACK_ID.tr()
-            args = uid
-            description = Messages.COMMAND_CALLBACK_DESCRIPTION.tr()
-            executor { src, args ->
-                    val callbackId = args[uid]
-                val userCallbacks = knownCallbacks[src.mapKey]
-                val callback = userCallbacks?.get(callbackId)
-                when {
-                    callback == null -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_UNKNOWN_ID.tr(callbackId))
-                    callback.source.mapKey != src.mapKey -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_ONLY_OWN_ALLOWED.tr())
-                    else -> try {
-                        callback()
-                    } finally {
-                        if (callback.oneUse) {
-                            userCallbacks.remove(callbackId)
-                        }
+    public void registerCommand(final CommandRegistrationContext registration) {
+        registration.register(builder -> builder.argument(CALLBACK_ID)
+            .meta(CommandMeta.DESCRIPTION, "Trigger a registered command callback")
+            .hidden()
+            .handler(ctx -> {
+                final UUID id = ctx.get(CALLBACK_ID);
+                final Map<UUID, CallbackInstance> userCalllbacks = knownCallbacks.get(mapKey(ctx.getSender()));
+                if (userCalllbacks == null) {
+                    throw new CommandException(Messages.COMMAND_CALLBACK_ERROR_UNKNOWN_ID.tr(id));
+                }
+                final CallbackInstance callback = userCalllbacks.get(id);
+                if (callback == null) {
+                    throw new CommandException(Messages.COMMAND_CALLBACK_ERROR_UNKNOWN_ID.tr(id));
+                }
+
+                if (!mapKey(callback.source).equals(mapKey(ctx.getSender()))) {
+                    throw new CommandException(Messages.COMMAND_CALLBACK_ERROR_ONLY_OWN_ALLOWED.tr());
+                }
+
+                try {
+                    callback.callback.accept(ctx.getSender());
+                } finally {
+                    if (callback.oneUse) {
+                        userCalllbacks.remove(id);
                     }
                 }
-            }
-        }*/
+            }), "callback", "cb").toString();
     }
 
 

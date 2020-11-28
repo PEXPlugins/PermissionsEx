@@ -27,9 +27,14 @@ import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
+import cloud.commandframework.CommandTree
+import cloud.commandframework.bukkit.CloudBukkitCapabilities
+import cloud.commandframework.execution.CommandExecutionCoordinator
+import cloud.commandframework.paper.PaperCommandManager
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
@@ -55,6 +60,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
+import java.util.function.Function
 
 private val INJECTORS = arrayOf(
     ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
@@ -136,6 +142,24 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         }
     }
 
+    private fun createCommandManager(execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>): PaperCommandManager<Commander> {
+        val mgr = PaperCommandManager(
+            this,
+            execCoord,
+            { sender -> BukkitCommander(this, sender) },
+            { commander -> (commander as BukkitCommander).commandSource }
+        )
+
+        if (mgr.queryCapability(CloudBukkitCapabilities.BRIGADIER)) {
+            mgr.registerBrigadier()
+        }
+
+        if (mgr.queryCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
+            mgr.registerAsynchronousCompletions()
+        }
+        return mgr
+    }
+
     override fun onEnable() {
         this.dataPath = dataFolder.toPath()
         this.logger = createLogger()
@@ -158,6 +182,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
                 .opProvider { server.operators.contains(server.getOfflinePlayer(it)) }
                 .cachedUuidResolver { server.getOfflinePlayer(it)?.uniqueId } // TODO: is this correct?
                 .playerProvider(server::getPlayer)
+                .commands(this::createCommandManager)
                 .build()
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());

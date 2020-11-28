@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.exception;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import net.kyori.adventure.translation.GlobalTranslator;
+import net.kyori.adventure.util.ComponentMessageThrowable;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Locale;
@@ -28,7 +29,7 @@ import java.util.Locale;
  *
  * @since 2.0.0
  */
-public class PermissionsException extends Exception {
+public class PermissionsException extends Exception implements ComponentMessageThrowable {
     private static final long serialVersionUID = 138001301588644173L;
     private static final Component NULL = Component.text("null");
 
@@ -53,11 +54,12 @@ public class PermissionsException extends Exception {
         return getLocalizedMessage(Locale.getDefault());
     }
 
-    public Component getComponent() {
+    @Override
+    public Component componentMessage() {
         return this.message == null ? NULL : this.message;
     }
 
     public String getLocalizedMessage(Locale locale) {
-        return PlainComponentSerializer.plain().serialize(GlobalTranslator.renderer().render(getComponent(), locale));
+        return PlainComponentSerializer.plain().serialize(GlobalTranslator.renderer().render(componentMessage(), locale));
     }
 }

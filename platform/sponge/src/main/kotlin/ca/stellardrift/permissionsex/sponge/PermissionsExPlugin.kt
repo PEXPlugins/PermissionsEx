@@ -27,8 +27,11 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
+import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.optionally
+import cloud.commandframework.arguments.standard.StringArgument
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
 import java.io.IOException
@@ -145,6 +148,7 @@ class PermissionsExPlugin @Inject internal constructor(
                             .orElse(null)
                     }
                 }
+                .commandContributor(this::registerFakeOpCommand)
                 .build()
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(ProjectData.NAME), e))
@@ -163,23 +167,21 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    /* @Listener
-    fun registerCommands(event: RegisterCommandEvent<CommandSpec>) {
-        // fake op commands
-        mapOf("op" to "minecraft.command.op",
-            "deop" to "minecraft.command.deop").forEach { (alias, perm) ->
-            event.register(container, command(alias) {
-                permission = Permission(perm, null, 0)
-                description = Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr()
-                args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER.tr())
-                executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR.tr()) }
-            })
+    private fun registerFakeOpCommand(ctx: CommandRegistrationContext) {
+        val userArgument = StringArgument.of<Commander>("user")
+        fun register(name: String, permission: String) {
+            ctx.register(ctx.rootBuilder(name)
+                .argument(userArgument)
+                .permission(permission)
+                // .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())
+                .handler {
+                    it.sender.error(Messages.COMMANDS_FAKE_OP_ERROR.tr())
+                })
         }
 
-        this.manager.registerCommandsTo {
-            event.register(this.container, it)
-        }
-    }*/
+        register("op", "minecraft.command.op")
+        register("deop", "minecraft.command.deop")
+    }
 
     @Listener
     fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {

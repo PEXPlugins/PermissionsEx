@@ -201,6 +201,7 @@ public final class PCollections {
         return HashTreePSet.singleton(element);
     }
 
+    @SafeVarargs
     public static <E> PSet<E> set(final E... elements) {
         PSet<E> out = set();
         for (final E element : elements) {
@@ -217,6 +218,7 @@ public final class PCollections {
         return TreePVector.singleton(element);
     }
 
+    @SafeVarargs
     public static <E> PVector<E> vector(final E... elements) {
         PVector<E> out = vector();
         for (final E element : elements) {
@@ -233,6 +235,7 @@ public final class PCollections {
         return ConsPStack.singleton(element);
     }
 
+    @SafeVarargs
     public static <E> PStack<E> stack(final E... elements) {
         PStack<E> out = stack();
         for (final E element : elements) {

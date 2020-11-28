@@ -24,11 +24,17 @@ import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.PROXY_COMMAND_PREFIX
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
+import cloud.commandframework.CommandManager
+import cloud.commandframework.CommandTree
+import cloud.commandframework.execution.CommandExecutionCoordinator
+import cloud.commandframework.velocity.VelocityCommandManager
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent
@@ -38,6 +44,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent
 import com.velocitypowered.api.permission.PermissionProvider
 import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.plugin.Plugin
+import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
 import java.nio.file.Files
@@ -51,6 +58,7 @@ import javax.inject.Inject
 import javax.sql.DataSource
 import org.slf4j.Logger
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
+import java.util.function.Function
 
 private val SERVER_PATH = Paths.get(".")
 private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
@@ -58,6 +66,7 @@ private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
 @Plugin(id = ProjectData.ARTIFACT_ID, name = ProjectData.NAME, version = ProjectData.VERSION, description = ProjectData.DESCRIPTION)
 class PermissionsExPlugin @Inject constructor(
     rawLogger: Logger,
+    private val container: PluginContainer,
     private val server: ProxyServer,
     @DataDirectory private val dataPath: Path
 ) : ImplementationInterface {
@@ -100,6 +109,16 @@ class PermissionsExPlugin @Inject constructor(
     val groups: SubjectTypeCollection<String>
         get() = this._manager!!.groups()
 
+    private fun createCommandManager(execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>): CommandManager<Commander> {
+        return VelocityCommandManager(
+            this.container,
+            this.server,
+            execCoord,
+            { VelocityCommander(this, it) },
+            { (it as VelocityCommander).src }
+        )
+    }
+
     @Subscribe
     fun onProxyInit(event: ProxyInitializeEvent) {
         Files.createDirectories(dataPath)
@@ -114,6 +133,7 @@ class PermissionsExPlugin @Inject constructor(
                 .implementationInterface(this)
                 .cachedUuidResolver { server.getPlayer(it).orElse(null)?.uniqueId }
                 .playerProvider { server.getPlayer(it).orElse(null) }
+                .commands(this::createCommandManager, PROXY_COMMAND_PREFIX)
                 .build()
         } catch (e: Exception) {
             logger.error(Messages.PLUGIN_INIT_ERROR.tr(), e)

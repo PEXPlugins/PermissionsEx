@@ -17,9 +17,14 @@
 package ca.stellardrift.permissionsex.minecraft.command;
 
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import cloud.commandframework.permission.CommandPermission;
 import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.immutables.value.Value;
+
+import java.util.Collection;
+import java.util.Collections;
 
 import static java.util.Objects.requireNonNull;
 
@@ -31,7 +36,7 @@ import static java.util.Objects.requireNonNull;
  * [default] is the value to resolve this permission to when unset
  */
 @Value.Immutable(builder = false)
-public interface Permission {
+public abstract class Permission implements CommandPermission {
 
     static Permission of(final String permission) {
         return of(permission, Component.empty(), 0);
@@ -55,9 +60,15 @@ public interface Permission {
      * @return the permission value
      */
     @Value.Parameter
-    String value();
+    public abstract String value();
 
-    Permission value(String value);
+    /**
+     * Get a permission with a modified value.
+     *
+     * @param value the new permission value
+     * @return a new value
+     */
+    public abstract Permission value(String value);
 
     /**
      * A description of the purpose of this permission.
@@ -65,7 +76,7 @@ public interface Permission {
      * @return the description, or empty
      */
     @Value.Parameter
-    @Nullable Component description();
+    public abstract @Nullable Component description();
 
     /**
      * A default value for when this permission is unassigned.
@@ -74,17 +85,27 @@ public interface Permission {
      */
     @Value.Parameter
     @Value.Default
-    default int defaultValue() {
+    public int defaultValue() {
         return 0;
     }
 
-    default Permission then(final SubjectRef<?> other) {
+    public final Permission then(final SubjectRef<?> other) {
         requireNonNull(other, "other");
         return this.value(this.value() + '.' + other.type().name() + '.' + other.serializedIdentifier());
     }
 
-    default Permission then(final String other) {
+    public final Permission then(final String other) {
         requireNonNull(other, "other");
         return this.value(this.value() + '.' + other);
+    }
+
+    @Override
+    public final @NonNull Collection<@NonNull CommandPermission> getPermissions() {
+        return Collections.singleton(this);
+    }
+
+    @Override
+    public final String toString() {
+        return this.value();
     }
 }

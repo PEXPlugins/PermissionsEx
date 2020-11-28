@@ -24,6 +24,7 @@ plugins {
 
 useImmutables()
 dependencies {
+    val cloudVersion: String by project
     val immutablesVersion: String by project
 
     api(project(":api"))
@@ -31,7 +32,9 @@ dependencies {
     implementation(adventure("text-serializer-plain"))
     compileOnlyApi("org.immutables:gson:$immutablesVersion")
     implementation("io.projectreactor:reactor-core:3.4.0")
-    implementation(project(":datastore:sql")) // todo: once core deps are extracted, this module should be a dep of core
+    runtimeOnly(project(":datastore:sql"))
+    api("cloud.commandframework:cloud-core:$cloudVersion")
+    implementation("cloud.commandframework:cloud-minecraft-extras:$cloudVersion")
 
     // Fixed version to line up with MC
     implementation("com.google.code.gson:gson:2.8.0")

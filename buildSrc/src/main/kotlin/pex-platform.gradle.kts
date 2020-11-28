@@ -21,6 +21,7 @@ val shadowJar = tasks.named("shadowJar", ShadowJar::class) {
     // Caffeine reflectively accesses some of its cache implementations, so it can't be minimized
     minimize {
         exclude(dependency("com.github.ben-manes.caffeine:.*:.*"))
+        exclude(project(":datastore:sql"))
     }
 
     // Don't shade compile-only annotations, or other project's module info files

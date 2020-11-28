@@ -18,10 +18,12 @@ package ca.stellardrift.permissionsex.minecraft.profile;
 
 import com.google.gson.annotations.SerializedName;
 import net.kyori.adventure.identity.Identity;
+import net.kyori.examination.ExaminableProperty;
 import org.immutables.gson.Gson;
 import org.immutables.value.Value;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * A profile containing user data for a Minecraft user.
@@ -71,6 +73,19 @@ public interface MinecraftProfile extends Identity {
      */
     @Value.Parameter
     String name();
+
+    @Override
+    default String examinableName() {
+        return MinecraftProfile.class.getSimpleName();
+    }
+
+    @Override
+    default Stream<? extends ExaminableProperty> examinableProperties() {
+        return Stream.of(
+                ExaminableProperty.of("uuid", this.uuid()),
+                ExaminableProperty.of("name", this.name())
+        );
+    }
 
     class Builder extends MinecraftProfileImpl.Builder {}
 }

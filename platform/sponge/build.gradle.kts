@@ -48,6 +48,7 @@ dependencies {
 
 pexPlatform {
     relocate(
+        "cloud.commandframework",
         "kotlin",
         "kotlinx",
         "org.antlr",

@@ -35,6 +35,7 @@ configurations.implementation.get().extendsFrom(shade)
 val minecraftVersion = "1.16.4"
 dependencies {
     val adventurePlatformVersion: String by project
+    val cloudVersion: String by project
 
     shade(project(":impl-blocks:minecraft")) {
         exclude("com.google.guava")
@@ -46,6 +47,7 @@ dependencies {
 
     shade(project(":impl-blocks:hikari-config"))
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
+    shade("cloud.commandframework:cloud-brigadier:$cloudVersion")
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.7:v2")
@@ -99,6 +101,7 @@ tasks.withType(net.fabricmc.loom.task.AbstractRunTask::class).configureEach {
 
 pexPlatform {
     relocate(
+        "cloud.commandframework",
         "com.github.benmanes",
         "com.zaxxer",
         "org.antlr",

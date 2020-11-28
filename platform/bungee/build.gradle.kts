@@ -29,6 +29,7 @@ plugins {
 
 dependencies {
     val adventurePlatformVersion: String by project
+    val cloudVersion: String by project
     val slf4jVersion: String by project
 
     api(project(":impl-blocks:minecraft")) {
@@ -47,6 +48,7 @@ dependencies {
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
     api(project(":impl-blocks:proxy-common")) { isTransitive = false }
     implementation(project(":impl-blocks:hikari-config"))
+    implementation("cloud.commandframework:cloud-bungee:$cloudVersion")
 
     shadow(bungeecord("1.16-R0.4-SNAPSHOT"))
 }
@@ -64,6 +66,7 @@ bungee {
 
 pexPlatform {
     relocate(
+        "cloud.commandframework",
         "com.github.benmanes",
         "com.typesafe",
         "com.zaxxer",
