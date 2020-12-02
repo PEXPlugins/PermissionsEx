@@ -44,7 +44,7 @@ dependencies {
     }
 
     shade(project(":impl-blocks:hikari-config"))
-    shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
+    shade("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.6:v2")
