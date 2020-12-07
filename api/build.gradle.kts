@@ -11,7 +11,7 @@ useImmutables()
 val configurateVersion: String by project
 val adventureVersion: String by project
 dependencies {
-    api("io.projectreactor:reactor-core:3.4.0")
+    api("io.projectreactor:reactor-core:3.4.1")
     api("org.pcollections:pcollections:3.1.4")
     api(adventure("api", adventureVersion))
     implementation(adventure("text-serializer-plain", adventureVersion))
