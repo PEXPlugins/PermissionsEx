@@ -33,14 +33,15 @@ import org.spongepowered.api.command.manager.CommandMapping
 import org.spongepowered.api.command.registrar.CommandRegistrar
 import org.spongepowered.api.command.registrar.tree.ClientCompletionKeys
 import org.spongepowered.api.command.registrar.tree.CommandTreeNode
-import org.spongepowered.api.event.lifecycle.RegisterCatalogEvent
 import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
+import org.spongepowered.api.event.lifecycle.RegisterRegistryValueEvent
 import org.spongepowered.plugin.PluginContainer
 
 fun registerRegistrar(plugin: PermissionsExPlugin) {
-    plugin.game.eventManager.register<RegisterCatalogEvent<CommandRegistrar<*>>>(plugin.container) {
+    plugin.game.eventManager.register<RegisterRegistryValueEvent<CommandRegistrar<*>>>(plugin.container) {
         plugin.logger.debug("state :: RegisterCatalogEvent<CommandRegistrar<*>>")
-        it.register(PEXCommandRegistrar(plugin, it.game.commandManager))
+        val registrar = PEXCommandRegistrar(plugin, it.game.commandManager)
+        it.register(registrar.key, registrar)
     }
 }
 
