@@ -33,6 +33,7 @@ import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
+import net.minecraft.util.registry.Registry
 
 const val SUBJECTS_SYSTEM = "system"
 const val SUBJECTS_COMMAND_BLOCK = "commandblock"
@@ -81,7 +82,7 @@ object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSou
 
 object DimensionContextDefinition : IdentifierContextDefinition("dimension"), CommandSourceContextDefinition<Identifier> {
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<Identifier>) {
-        val dimension = source.world.registryManager.dimensionTypes.getId(source.world.dimension)
+        val dimension = source.world.registryManager[Registry.DIMENSION_TYPE_KEY].getId(source.world.dimension)
         if (dimension != null) {
             consumer.accept(dimension)
         }
@@ -89,7 +90,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Identifier>) {
         (subject.associatedObject as?ServerPlayerEntity)?.apply {
-            val key = world.registryManager.dimensionTypes.getId(world.dimension)
+            val key = world.registryManager[Registry.DIMENSION_TYPE_KEY].getId(world.dimension)
             if (key != null) {
                 consumer.accept(key)
             }
@@ -99,7 +100,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
         return (subject.associatedObject as? Entity)?.run {
             if (entityWorld is ServerWorld) {
-                (entityWorld.server as? AccessorMinecraftServer)?.registryManager?.dimensionTypes?.ids
+                (entityWorld.server as? AccessorMinecraftServer)?.registryManager?.getOptional(Registry.DIMENSION_TYPE_KEY)?.orElse(null)?.ids
             } else {
                 null
             }
