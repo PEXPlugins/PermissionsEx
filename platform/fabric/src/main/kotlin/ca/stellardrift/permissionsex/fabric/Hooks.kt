@@ -17,7 +17,7 @@
 @file:JvmName("PermissionsExHooks")
 package ca.stellardrift.permissionsex.fabric
 
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import com.mojang.authlib.GameProfile
@@ -114,7 +114,7 @@ interface IPermissionCommandSource {
 
     @JvmDefault
     fun asCalculatedSubject(): CalculatedSubject {
-        return PermissionsExMod.manager.getSubjects(permType)[permIdentifier].join()
+        return PermissionsExMod.manager.subjectType(permType)[permIdentifier].join()
     }
 
     @JvmDefault
@@ -160,10 +160,10 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
 
 fun GameProfile.hasPermission(perm: String): Boolean {
     if (this.id == null) {
-        PermissionsExMod.logger.error(Messages.GAMEPROFILE_ERROR_INCOMPLETE(this.name))
+        PermissionsExMod.logger().error(Messages.GAMEPROFILE_ERROR_INCOMPLETE(this.name))
         return false
     }
-    return PermissionsExMod.manager.getSubjects(SUBJECTS_USER)[this.id.toString()].join().hasPermission(perm)
+    return PermissionsExMod.manager.subjectType(SUBJECTS_USER)[this.id.toString()].join().hasPermission(perm)
 }
 
 internal interface LocaleHolder {

@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
@@ -29,7 +29,9 @@ import java.util.UUID
 import java.util.function.Consumer
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
-class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<ProxiedPlayer>(SUBJECTS_USER) {
+class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<ProxiedPlayer>(
+    SUBJECTS_USER
+) {
     override fun isNameValid(name: String): Boolean {
         return try {
             UUID.fromString(name)

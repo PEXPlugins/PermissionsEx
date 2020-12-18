@@ -38,8 +38,8 @@ public interface ImplementationInterface {
      *
      * @return The base directory
      */
-    default Path getBaseDirectory() {
-        return getBaseDirectory(BaseDirectoryScope.CONFIG);
+    default Path baseDirectory() {
+        return baseDirectory(BaseDirectoryScope.CONFIG);
     }
 
     /**
@@ -48,13 +48,13 @@ public interface ImplementationInterface {
      * @param scope The scope to find the base directory for
      * @return An appropriate path
      */
-    Path getBaseDirectory(BaseDirectoryScope scope);
+    Path baseDirectory(BaseDirectoryScope scope);
 
     /**
      * Gets the appropriate logger
      * @return The base logger
      */
-    Logger getLogger();
+    Logger logger();
 
     /**
      * Returns an appropriate data source for the implementation-dependent specificer {@code url}.
@@ -63,14 +63,14 @@ public interface ImplementationInterface {
      * @return The appropriate data source, or null if not supported
      * @throws SQLException If a connection to the provided database cannot be established
      */
-    DataSource getDataSourceForURL(String url) throws SQLException;
+    DataSource dataSourceForUrl(String url) throws SQLException;
 
     /**
      * Get an executor to run tasks asynchronously on.
      *
      * @return The async executor
      */
-    Executor getAsyncExecutor();
+    Executor asyncExecutor();
 
     /**
      * Get commands that the implementation wants to register as a child of the {@code /pex} command

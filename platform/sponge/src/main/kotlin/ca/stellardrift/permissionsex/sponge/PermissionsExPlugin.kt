@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.commands.parse.CommandException
@@ -28,6 +29,7 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sponge.command.register
 import ca.stellardrift.permissionsex.sponge.command.registerRegistrar
@@ -51,6 +53,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Predicate
 import java.util.function.Supplier
+import java.util.stream.Collectors
 import javax.sql.DataSource
 import org.apache.logging.log4j.Logger
 import org.apache.logging.log4j.spi.ExtendedLogger
@@ -92,7 +95,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @ConfigDir(sharedRoot = false) private val configDir: Path
 ) : ImplementationInterface {
     internal val scheduler = game.asyncScheduler.createExecutor(container)
-    private val logger = FormattedLogger.forLogger(Log4jLogger(logger as ExtendedLogger, logger.name), true)
+    private val logger = WrappingFormattedLogger.of(Log4jLogger(logger as ExtendedLogger, logger.name), true)
     private var _manager: MinecraftPermissionsEx<*>? = null
     val manager: PermissionsEx<*> get() {
         return _manager?.engine() ?: throw IllegalStateException("PermissionsEx Manager is not yet initialized, or there was an error loading the plugin!")
@@ -120,12 +123,12 @@ class PermissionsExPlugin @Inject internal constructor(
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(ProjectData.NAME), e))
         }
-        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
+        manager.subjectType(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
             PermissionService.SUBJECTS_SYSTEM,
             immutableMapEntry("console", Supplier { event.game.systemSubject }),
             immutableMapEntry("Recon", Supplier { null })
         )
-        manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
+        manager.subjectType(PermissionService.SUBJECTS_USER).typeInfo =
             UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, event.game)
     }
 
@@ -158,7 +161,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @Listener
     fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {
         try {
-            manager.getSubjects(PermissionsEx.SUBJECTS_USER)[event.profile.uniqueId.toString()].exceptionally {
+            manager.subjectType(PermissionsEngine.SUBJECTS_USER)[event.profile.uniqueId.toString()].exceptionally {
                 logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, it.message ?: "<unknown>"), it)
                 null
             }
@@ -182,7 +185,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @Listener
     fun onPlayerJoin(event: ServerSideConnectionEvent.Join) {
         val identifier = event.player.identifier
-        val cache = this.manager.getSubjects(PermissionsEx.SUBJECTS_USER)
+        val cache = this.manager.subjectType(PermissionsEngine.SUBJECTS_USER)
         cache[identifier].thenAccept {
             // Update name option
             it.data().isRegistered.thenAccept { isReg ->
@@ -251,7 +254,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     // ImplementationInterface
 
-    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+    override fun baseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> configDir
             BaseDirectoryScope.JAR -> game.gameDirectory.resolve("mods")
@@ -260,11 +263,11 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    override fun getLogger(): FormattedLogger {
+    override fun logger(): FormattedLogger {
         return logger
     }
 
-    override fun getDataSourceForURL(url: String): DataSource? {
+    override fun dataSourceForUrl(url: String): DataSource? {
         return try {
             sql.getDataSource(container, url)
         } catch (e: SQLException) {
@@ -278,7 +281,7 @@ class PermissionsExPlugin @Inject internal constructor(
      *
      * @return The async executor
      */
-    override fun getAsyncExecutor(): Executor {
+    override fun asyncExecutor(): Executor {
         return this.scheduler
     }
 
@@ -320,8 +323,8 @@ class PermissionsExService internal constructor(private val server: Server, priv
         }
 
     private val _defaults: PEXSubject =
-        loadCollection(PermissionsEx.SUBJECTS_DEFAULTS)
-            .thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
+        loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS)
+            .thenCompose { coll -> coll.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS) }
             .get() as PEXSubject
     private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
 
@@ -361,7 +364,7 @@ class PermissionsExService internal constructor(private val server: Server, priv
     }
 
     override fun getAllIdentifiers(): CompletableFuture<Set<String>> {
-        return CompletableFuture.completedFuture(manager.registeredSubjectTypes)
+        return CompletableFuture.completedFuture(manager.knownSubjectTypes().collect(Collectors.toSet()))
     }
 
     override fun newSubjectReference(collectionIdentifier: String, subjectIdentifier: String): SubjectReference {
@@ -378,7 +381,7 @@ class PermissionsExService internal constructor(private val server: Server, priv
 
     fun registerDescription(description: PEXPermissionDescription, ranks: Map<String, Int>) {
         descriptions[description.id] = description
-        val coll = manager.getSubjects(PermissionService.SUBJECTS_ROLE_TEMPLATE)
+        val coll = manager.subjectType(PermissionService.SUBJECTS_ROLE_TEMPLATE)
         for ((key, value) in ranks) {
             coll.transientData().update(key) { input ->
                 input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.id, value)

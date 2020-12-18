@@ -131,8 +131,8 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                     val subjectType = args.getOne<String>(COMMON_ARGS_SUBJECT_TYPE)!!
                     args.checkPermission(src, "permissionsex.list.$subjectType")
                     val cache =
-                        if (args.hasAny(COMMON_ARGS_TRANSIENT)) pex.getSubjects(subjectType)
-                            .transientData() else pex.getSubjects(
+                        if (args.hasAny(COMMON_ARGS_TRANSIENT)) pex.subjectType(subjectType)
+                            .transientData() else pex.subjectType(
                             subjectType
                         ).persistentData()
                     var iter = cache.allIdentifiers.asSequence()
@@ -169,16 +169,16 @@ private fun getDebugToggleCommand(pex: PermissionsEx<*>) =
         permission = pexPerm("debug")
         args = optional(string() key PEX_ARGS_FILTER())
         executor { src, args ->
-            val debugEnabled = !pex.hasDebugMode()
+            val debugEnabled = !pex.debugMode()
             val filter = args.getOne<String>(PEX_ARGS_FILTER)
             src.msg { send ->
                 if (filter != null) {
-                    pex.setDebugMode(debugEnabled, Pattern.compile(filter))
+                    pex.debugMode(debugEnabled, Pattern.compile(filter))
                     send(
                         DEBUG_SUCCESS_FILTER(debugEnabled, (-filter).hl())
                     )
                 } else {
-                    pex.setDebugMode(debugEnabled)
+                    pex.debugMode(debugEnabled)
                     send(DEBUG_SUCCESS(debugEnabled))
                 }
             }
@@ -275,10 +275,10 @@ private fun getVersionCommand(pex: PermissionsEx<*>): CommandSpec {
                 send(+"")
                 if (verbose) {
                     send(VERSION_BASEDIRS_HEADER.get().header().build())
-                    send(VERSION_BASEDIRS_CONFIG(pex.getBaseDirectory(BaseDirectoryScope.CONFIG)))
-                    send(VERSION_BASEDIRS_JAR(pex.getBaseDirectory(BaseDirectoryScope.JAR)))
-                    send(VERSION_BASEDIRS_SERVER(pex.getBaseDirectory(BaseDirectoryScope.SERVER)))
-                    send(VERSION_BASEDIRS_WORLDS(pex.getBaseDirectory(BaseDirectoryScope.WORLDS)))
+                    send(VERSION_BASEDIRS_CONFIG(pex.baseDirectory(BaseDirectoryScope.CONFIG)))
+                    send(VERSION_BASEDIRS_JAR(pex.baseDirectory(BaseDirectoryScope.JAR)))
+                    send(VERSION_BASEDIRS_SERVER(pex.baseDirectory(BaseDirectoryScope.SERVER)))
+                    send(VERSION_BASEDIRS_WORLDS(pex.baseDirectory(BaseDirectoryScope.WORLDS)))
                 }
             }
         }

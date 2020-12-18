@@ -19,11 +19,13 @@ package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPermissibleInjector
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
@@ -113,7 +115,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             val adapter =
                 JDK14LoggerAdapter::class.java.getDeclaredConstructor(java.util.logging.Logger::class.java)
             adapter.isAccessible = true
-            FormattedLogger.forLogger(adapter.newInstance(getLogger()), true)
+            WrappingFormattedLogger.of(adapter.newInstance(getLogger()), true)
         } catch (e: NoSuchMethodException) {
             throw ExceptionInInitializerError(e)
         } catch (e: InstantiationException) {
@@ -161,8 +163,8 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             LocalHostContextDefinition,
             LocalPortContextDefinition
         )
-        manager.getSubjects(PermissionsEx.SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(
-            PermissionsEx.SUBJECTS_USER,
+        manager.subjectType(PermissionsEngine.SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(
+            PermissionsEngine.SUBJECTS_USER,
             this
         )
         server.pluginManager.registerEvents(this, this)
@@ -266,7 +268,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      * @return The user subject collection
      */
     val userSubjects: SubjectTypeImpl
-        get() = manager.getSubjects(PermissionsEx.SUBJECTS_USER)
+        get() = manager.subjectType(PermissionsEngine.SUBJECTS_USER)
 
     /**
      * Access group subjects
@@ -274,7 +276,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      * @return The group subject collection
      */
     val groupSubjects: SubjectTypeImpl
-        get() = manager.getSubjects(PermissionsEx.SUBJECTS_GROUP)
+        get() = manager.subjectType(PermissionsEngine.SUBJECTS_GROUP)
 
     private fun injectPermissible(player: Player) {
         try {
@@ -298,7 +300,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
                 logger.warn(Messages.SUPERPERMS_INJECT_ERROR_GENERIC(player.name))
             }
             permissible.recalculatePermissions()
-            if (success && manager.hasDebugMode()) {
+            if (success && manager.debugMode()) {
                 logger.info(Messages.SUPERPERMS_INJECT_SUCCESS())
             }
         } catch (e: Throwable) {
@@ -332,7 +334,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             }
             if (!success) {
                 logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR(player.name))
-            } else if (_manager?.engine()?.hasDebugMode() == true) {
+            } else if (_manager?.engine()?.debugMode() == true) {
                 logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS(player.name))
             }
         } catch (e: Throwable) {
@@ -345,7 +347,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     }
 
     private inner class BukkitImplementationInterface : ImplementationInterface {
-        override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+        override fun baseDirectory(scope: BaseDirectoryScope): Path {
             return when (scope) {
                 BaseDirectoryScope.CONFIG -> dataPath
                 BaseDirectoryScope.JAR -> Bukkit.getUpdateFolderFile().toPath()
@@ -356,8 +358,8 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         }
 
         @Throws(SQLException::class)
-        override fun getDataSourceForURL(url: String): DataSource {
-            return Hikari.createDataSource(url, this.baseDirectory)
+        override fun dataSourceForUrl(url: String): DataSource {
+            return Hikari.createDataSource(url, this.baseDirectory())
         }
 
         /**
@@ -365,7 +367,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
          *
          * @return The async executor
          */
-        override fun getAsyncExecutor(): Executor {
+        override fun asyncExecutor(): Executor {
             return executorService
         }
 
@@ -373,7 +375,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             return description.version
         }
 
-        override fun getLogger(): Logger {
+        override fun logger(): Logger {
             return this@PermissionsExPlugin.logger
         }
     }

@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.data;
 
-import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
@@ -51,7 +51,7 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
     public SubjectDataCacheImpl(final String type, final DataStore dataStore) {
         this.type = type;
         update(dataStore);
-        this.defaultIdentifier = UnmodifiableCollections.immutableMapEntry(PermissionsEx.SUBJECTS_DEFAULTS, type);
+        this.defaultIdentifier = UnmodifiableCollections.immutableMapEntry(PermissionsEngine.SUBJECTS_DEFAULTS, type);
         this.listeners = new CacheListenerHolder<>();
     }
 

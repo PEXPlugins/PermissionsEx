@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
 import ca.stellardrift.permissionsex.fabric.LocaleHolder;
 import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
@@ -58,7 +58,7 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
     @NotNull
     @Override
     public String getPermType() {
-        return PermissionsEx.SUBJECTS_USER;
+        return PermissionsEngine.SUBJECTS_USER;
     }
 
     @NotNull
@@ -74,7 +74,7 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
         if (ret != null) {
             return ret;
         }
-        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().subjectType(getPermType()).get(getPermIdentifier()).join();
         permSubject.set(updated);
         return updated;
     }

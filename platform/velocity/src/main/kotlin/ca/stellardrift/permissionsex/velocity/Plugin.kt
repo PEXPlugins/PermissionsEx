@@ -18,11 +18,12 @@ package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
@@ -58,7 +59,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     private val exec = Executors.newCachedThreadPool()
 
-    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+    override fun baseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> dataPath
             BaseDirectoryScope.JAR -> PLUGINS_PATH
@@ -67,13 +68,13 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         }
     }
 
-    override fun getDataSourceForURL(url: String): DataSource {
+    override fun dataSourceForUrl(url: String): DataSource {
         return Hikari.createDataSource(url, dataPath)
     }
 
-    override fun getLogger(): FormattedLogger = logger
+    override fun logger(): FormattedLogger = logger
 
-    override fun getAsyncExecutor(): Executor {
+    override fun asyncExecutor(): Executor {
         return exec
     }
 
@@ -81,7 +82,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         return ProjectData.VERSION
     }
 
-    private val logger = FormattedLogger.forLogger(rawLogger, true)
+    private val logger = WrappingFormattedLogger.of(rawLogger, true)
 
     private var _manager: MinecraftPermissionsEx<*>? = null
 
@@ -102,8 +103,8 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
             logger.error(Messages.PLUGIN_INIT_ERROR(), e)
             return
         }
-        manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
-        manager.getSubjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
+        manager.subjectType(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
+        manager.subjectType(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 
@@ -155,7 +156,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
     @Subscribe
     fun uncachePlayer(event: DisconnectEvent) {
         manager.callbackController.clearOwnedBy(event.player.uniqueId)
-        manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
+        manager.subjectType(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
     }
 }
 

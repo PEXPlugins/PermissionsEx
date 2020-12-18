@@ -81,7 +81,7 @@ fun CompletableFuture<*>.thenMessageSubject(
                         send(Messages.EXECUTOR_ERROR_ASYNC_TASK(err.javaClass.simpleName, err.message
                                 ?: "null"))
                     }
-                    src.formatter.pex.logger.error(Messages.EXECUTOR_ERROR_ASYNC_TASK_CONSOLE(src.name), err)
+                    src.formatter.pex.logger().error(Messages.EXECUTOR_ERROR_ASYNC_TASK_CONSOLE(src.name), err)
                 }
                 null
             }

@@ -40,7 +40,7 @@ public class SubjectTypeImpl implements SubjectType {
         this.type = SubjectTypeDefinition.of(type);
         this.persistentData = persistentData;
         this.transientData = transientData; 
-        this.cache = Caffeine.newBuilder().executor(pex.getAsyncExecutor()).buildAsync((key, executor) -> {
+        this.cache = Caffeine.newBuilder().executor(pex.asyncExecutor()).buildAsync((key, executor) -> {
             CalculatedSubjectImpl subj = new CalculatedSubjectImpl(SubjectDataBaker.inheritance(), this.pex.createSubjectIdentifier(this.type.typeName(), key), SubjectTypeImpl.this);
             return persistentData.getReference(key, false).thenCombine(transientData.getReference(key, false), (persistentRef, transientRef) -> {
                 subj.initialize(persistentRef, transientRef);

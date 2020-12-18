@@ -91,7 +91,7 @@ abstract class MessageFormatter(
      * @return the formatted value
      */
     fun subject(subject: SubjectIdentifier): Component {
-        val subjType: SubjectTypeImpl = pex.getSubjects(subject.key)
+        val subjType: SubjectTypeImpl = pex.subjectType(subject.key)
         var name = subject.friendlyName
         if (name == null) {
             try {

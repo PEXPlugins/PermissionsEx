@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.commands
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT
 import ca.stellardrift.permissionsex.commands.Messages.PARENT_ADD_SUCCESS
@@ -37,7 +38,9 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
              * Add a parent
              */
             child("add", "a", "+") {
-                val parent = subject(pex, PermissionsEx.SUBJECTS_GROUP) key PARENT_ARGS_PARENT()
+                val parent = subject(pex,
+                    PermissionsEngine.SUBJECTS_GROUP
+                ) key PARENT_ARGS_PARENT()
                 args = parent
                 executor(object : PermissionsExExecutor(pex) {
                     @Throws(CommandException::class)
@@ -63,7 +66,9 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
              * Remove a parent
              */
             child("remove", "rem", "delete", "del", "-") {
-                val parent = subject(pex, PermissionsEx.SUBJECTS_GROUP) key PARENT_ARGS_PARENT()
+                val parent = subject(pex,
+                    PermissionsEngine.SUBJECTS_GROUP
+                ) key PARENT_ARGS_PARENT()
                 args = parent
                 executor(object : PermissionsExExecutor(pex) {
                     @Throws(CommandException::class)
@@ -92,7 +97,9 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
              * Clear all parents from the provided context
              */
             child("set", "replace", "=") {
-                val parent = subject(pex, PermissionsEx.SUBJECTS_GROUP) key PARENT_ARGS_PARENT()
+                val parent = subject(pex,
+                    PermissionsEngine.SUBJECTS_GROUP
+                ) key PARENT_ARGS_PARENT()
                 args = parent
                 executor(object : PermissionsExExecutor(pex) {
                     @Throws(CommandException::class)

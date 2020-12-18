@@ -221,4 +221,30 @@ public interface ImmutableSubjectData {
      */
     Set<Set<ContextValue<?>>> getActiveContexts();
 
+    /**
+     * Create a new subject data instance, applying all data from {@code other}.
+     *
+     * <p>This will <em>add</em> to existing data, rather than overwriting</p>
+     *
+     * @param other source to add from
+     * @return a modified subject data
+     */
+    default ImmutableSubjectData mergeFrom(final ImmutableSubjectData other) {
+        ImmutableSubjectData output = this;
+        for (Map.Entry<Set<ContextValue<?>>, Map<String, Integer>> ent : other.getAllPermissions().entrySet()) {
+            output = output.setPermissions(ent.getKey(), ent.getValue());
+        }
+        for (Map.Entry<Set<ContextValue<?>>, Map<String, String>> ent : other.getAllOptions().entrySet()) {
+            output = output.setOptions(ent.getKey(), ent.getValue());
+        }
+        for (Map.Entry<Set<ContextValue<?>>, List<Map.Entry<String, String>>> ent : other.getAllParents().entrySet()) {
+            output = output.setParents(ent.getKey(), ent.getValue());
+        }
+        for (Map.Entry<Set<ContextValue<?>>, Integer> ent : other.getAllDefaultValues().entrySet()) {
+            output = output.setDefaultValue(ent.getKey(), ent.getValue());
+        }
+        return output;
+
+    }
+
 }

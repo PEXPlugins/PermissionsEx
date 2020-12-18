@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
 import ca.stellardrift.permissionsex.util.optionally
@@ -39,12 +39,12 @@ import org.spongepowered.api.util.Tristate
  */
 class PEXSubjectCollection private constructor(private val identifier: String, internal val service: PermissionsExService) :
     SubjectCollection {
-    val type: SubjectTypeImpl = service.manager.getSubjects(identifier)
+    val type: SubjectTypeImpl = service.manager.subjectType(identifier)
     private lateinit var defaults: PEXSubject
     private val subjectCache: AsyncLoadingCache<String, PEXSubject>
 
     init {
-        subjectCache = Caffeine.newBuilder().executor(service.manager.asyncExecutor)
+        subjectCache = Caffeine.newBuilder().executor(service.manager.asyncExecutor())
             .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
     }
 
@@ -52,10 +52,10 @@ class PEXSubjectCollection private constructor(private val identifier: String, i
         internal fun load(identifier: String, service: PermissionsExService): CompletableFuture<PEXSubjectCollection> {
             val ret = PEXSubjectCollection(identifier, service)
             val defaultFuture =
-                if (identifier == PermissionsEx.SUBJECTS_DEFAULTS) {
-                    ret.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS)
+                if (identifier == PermissionsEngine.SUBJECTS_DEFAULTS) {
+                    ret.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS)
                 } else {
-                    service.loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose { it.loadSubject(identifier) }
+                    service.loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS).thenCompose { it.loadSubject(identifier) }
                 }
             return defaultFuture.thenApply {
                 ret.defaults = it as PEXSubject

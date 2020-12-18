@@ -16,13 +16,12 @@
  */
 package ca.stellardrift.permissionsex.backend.file;
 
-import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ScopedConfigurationNode;
-import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.transformation.ConfigurationTransformation;
 import org.spongepowered.configurate.transformation.TransformAction;
 
@@ -193,7 +192,7 @@ public class SchemaMigrations {
                             if (!defaultNode.virtual()) {
                                 if (defaultNode.getBoolean()) {
                                     ConfigurationNode addToNode = null;
-                                    final ConfigurationNode defaultsParent = valueAtPath.parent().parent().parent().node("fallbacks", PermissionsEx.SUBJECTS_USER);
+                                    final ConfigurationNode defaultsParent = valueAtPath.parent().parent().parent().node("fallbacks", PermissionsEngine.SUBJECTS_USER);
                                     final Object contexts = valueAtPath.node(FileSubjectData.KEY_CONTEXTS).raw();
                                     for (ConfigurationNode node : defaultsParent.childrenList()) {
                                         if (Objects.equals(node.node(FileSubjectData.KEY_CONTEXTS).raw(), contexts)) {

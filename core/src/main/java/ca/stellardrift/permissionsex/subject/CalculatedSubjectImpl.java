@@ -62,7 +62,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
         this.data = Caffeine.newBuilder()
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
-                .executor(type.getManager().getAsyncExecutor())
+                .executor(type.getManager().asyncExecutor())
                 .buildAsync((key, executor) -> this.baker.bake(CalculatedSubjectImpl.this, key));
     }
 
@@ -215,7 +215,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
     @Override
     public void accept(ImmutableSubjectData newData) {
         data.synchronous().invalidateAll();
-        getManager().getActiveSubjectTypes().stream()
+        getManager().loadedSubjectTypes().stream()
                 .flatMap(type -> type.getActiveSubjects().stream())
                 .map(it -> (CalculatedSubjectImpl) it)
                 .filter(subj -> {

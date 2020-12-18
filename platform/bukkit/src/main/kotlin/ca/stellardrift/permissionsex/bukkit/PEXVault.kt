@@ -17,6 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
@@ -165,24 +166,26 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun playerInGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         val subj = getSubject(player)
-        return subjectIdentifier(PermissionsEx.SUBJECTS_GROUP, group) in subj.getParents(contextsFrom(subj, world))
+        return subjectIdentifier(PermissionsEngine.SUBJECTS_GROUP, group) in subj.getParents(contextsFrom(subj, world))
     }
 
     override fun playerAddGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         return !getSubject(player).data()
-            .update { it.addParent(contextsFrom(world), PermissionsEx.SUBJECTS_GROUP, group) }.isCancelled
+            .update { it.addParent(contextsFrom(world),
+                PermissionsEngine.SUBJECTS_GROUP, group) }.isCancelled
     }
 
     override fun playerRemoveGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         return !getSubject(player).data()
-            .update { it.removeParent(contextsFrom(world), PermissionsEx.SUBJECTS_GROUP, group) }.isCancelled
+            .update { it.removeParent(contextsFrom(world),
+                PermissionsEngine.SUBJECTS_GROUP, group) }.isCancelled
     }
 
     override fun getPlayerGroups(world: String, player: OfflinePlayer): Array<String> {
         val subj = getSubject(player)
         return subj.getParents(contextsFrom(subj, world))
             .mapNotNull { (key, value) ->
-            if (key == PermissionsEx.SUBJECTS_GROUP) value else null
+            if (key == PermissionsEngine.SUBJECTS_GROUP) value else null
         }.toTypedArray()
     }
 

@@ -16,8 +16,9 @@
  */
 package ca.stellardrift.permissionsex.data;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.PermissionsExTest;
+import ca.stellardrift.permissionsex.test.PermissionsExTest;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
@@ -33,7 +34,6 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -56,7 +56,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
-        SubjectTypeImpl groupCache = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP);
+        SubjectTypeImpl groupCache = getManager().subjectType(PermissionsEngine.SUBJECTS_GROUP);
         CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
         CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, groupCache.getTypeInfo().typeName(), parentS.getIdentifier().getValue())
                 .setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.child", 1)
@@ -72,13 +72,13 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
     @Test
     public void testFallbackSubject() {
-        getManager().getSubjects(PermissionsEx.SUBJECTS_FALLBACK).transientData().update(PermissionsEx.SUBJECTS_USER, old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "messages.welcome", 1)).join();
+        getManager().subjectType(PermissionsEngine.SUBJECTS_FALLBACK).transientData().update(PermissionsEngine.SUBJECTS_USER, old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "messages.welcome", 1)).join();
 
-        CalculatedSubject subject = getManager().getSubjects(PermissionsEx.SUBJECTS_USER).get("test").join();
+        CalculatedSubject subject = getManager().subjectType(PermissionsEngine.SUBJECTS_USER).get("test").join();
 
         assertTrue(subject.hasPermission("messages.welcome")); // we are inheriting from fallback
 
-        subject.transientData().update(data -> data.addParent(PermissionsEx.GLOBAL_CONTEXT, PermissionsEx.SUBJECTS_GROUP, "member")).join();
+        subject.transientData().update(data -> data.addParent(PermissionsEx.GLOBAL_CONTEXT, PermissionsEngine.SUBJECTS_GROUP, "member")).join();
 
         assertFalse(subject.hasPermission("messages.welcome")); // now that we have data stored for the subject, we no longer inherit from fallback.
     }
@@ -128,7 +128,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
         ContextDefinition<ZonedDateTime> beforeTimeCtx = BeforeTimeContextDefinition.INSTANCE;
 
-        CalculatedSubject subject = getManager().getSubjects(PermissionsEx.SUBJECTS_GROUP).get("a").get();
+        CalculatedSubject subject = getManager().subjectType(PermissionsEngine.SUBJECTS_GROUP).get("a").get();
         subject.data().update(data -> {
             return data.setPermissions(cSet(worldCtx.createValue("nether")), ImmutableMap.of("some.perm", 1, "some.meme", -1))
                     .setPermissions(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(nowUtc().plus(2, ChronoUnit.DAYS))), ImmutableMap.of("some.meme", 1, "some.cat", 1))

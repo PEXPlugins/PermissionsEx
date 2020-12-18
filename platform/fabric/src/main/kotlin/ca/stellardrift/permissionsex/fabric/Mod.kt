@@ -18,13 +18,14 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_DEFAULTS
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_DEFAULTS
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import java.nio.file.Files
@@ -78,13 +79,13 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
     override fun onInitialize() {
-        this._logger = FormattedLogger.forLogger(LoggerFactory.getLogger(MOD_ID), false)
+        this._logger = WrappingFormattedLogger.of(LoggerFactory.getLogger(MOD_ID), false)
         this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
-        logger.prefix = "[${container.metadata.name}] "
+        logger().prefix = "[${container.metadata.name}] "
 
-        logger.info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
+        logger().info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
         ServerLifecycleEvents.SERVER_STARTING.register(ServerLifecycleEvents.ServerStarting { init(it) })
         ServerLifecycleEvents.SERVER_STOPPED.register(ServerLifecycleEvents.ServerStopped { shutdown() })
 
@@ -111,7 +112,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             _manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(loader), this))
         } catch (e: Exception) {
-            logger.error(Messages.MOD_ENABLE_ERROR(), e)
+            logger().error(Messages.MOD_ENABLE_ERROR(), e)
             server.stop(false)
             return
         }
@@ -122,8 +123,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             LocalIpContextDefinition,
             LocalHostContextDefinition,
             LocalPortContextDefinition)
-        manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition()
-        manager.getSubjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
+        manager.subjectType(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition()
+        manager.subjectType(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 
@@ -131,7 +132,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             manager.registerCommandsTo { cmd -> registerCommand(cmd, it.dispatcher) }
         }
 
-        logger.info(Messages.MOD_ENABLE_SUCCESS(container.metadata.version))
+        logger().info(Messages.MOD_ENABLE_SUCCESS(container.metadata.version))
     }
 
     private fun shutdown() {
@@ -144,13 +145,13 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
-            logger.error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT())
+            logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT())
             this.exec.shutdownNow()
         }
     }
 
     fun handlePlayerJoin(player: ServerPlayerEntity) {
-        manager.getSubjects(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
+        manager.subjectType(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
             // Update name option
             it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
@@ -173,10 +174,10 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     fun handlePlayerQuit(player: ServerPlayerEntity) {
         _manager?.engine()?.callbackController?.clearOwnedBy(player.uuidAsString)
-        _manager?.engine()?.getSubjects(SUBJECTS_USER)?.uncache(player.uuidAsString)
+        _manager?.engine()?.subjectType(SUBJECTS_USER)?.uncache(player.uuidAsString)
     }
 
-    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+    override fun baseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> dataDir
             BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDir.resolve("mods")
@@ -185,15 +186,15 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         }
     }
 
-    override fun getLogger(): FormattedLogger {
+    override fun logger(): FormattedLogger {
         return _logger
     }
 
-    override fun getDataSourceForURL(url: String): DataSource {
+    override fun dataSourceForUrl(url: String): DataSource {
         return Hikari.createDataSource(url, this.dataDir)
     }
 
-    override fun getAsyncExecutor(): Executor {
+    override fun asyncExecutor(): Executor {
         return exec
     }
 
@@ -206,8 +207,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun logUnredirectedPermissionsCheck(method: String) {
-        logger.warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method))
-        logger.debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method), Exception("call chain"))
+        logger().warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method))
+        logger().debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method), Exception("call chain"))
     }
 }
 

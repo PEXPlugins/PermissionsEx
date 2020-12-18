@@ -61,7 +61,7 @@ internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private v
     }
 
     init {
-        subjectData = perm.manager.getSubjects(ATTACHMENT_TYPE).transientData().getReference(identifier).join()
+        subjectData = perm.manager.subjectType(ATTACHMENT_TYPE).transientData().getReference(identifier).join()
         subjectData.update { it.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", this.plugin.name) }
     }
 }

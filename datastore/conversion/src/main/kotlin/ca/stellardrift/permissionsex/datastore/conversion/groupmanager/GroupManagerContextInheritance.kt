@@ -44,7 +44,7 @@ class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) :
         }
     }
 
-    override fun setParents(context: ContextValue<*>, parents: List<ContextValue<*>>): ContextInheritance = this
+    override fun setParents(context: ContextValue<*>, parents: List<ContextValue<*>>?): ContextInheritance = this
 
     override fun getAllParents(): Map<ContextValue<*>, List<ContextValue<*>>> {
         return worlds.mapKeys { MemoryContextInheritance.ctxFromString(it.key) }

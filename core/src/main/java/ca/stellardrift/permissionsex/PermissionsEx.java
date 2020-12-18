@@ -30,6 +30,7 @@ import ca.stellardrift.permissionsex.logging.DebugPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubjectImpl;
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectTypeImpl;
@@ -55,6 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static ca.stellardrift.permissionsex.Messages.*;
 import static ca.stellardrift.permissionsex.commands.PermissionsExCommandsKt.createRootCommand;
@@ -65,7 +67,7 @@ import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromot
 /**
  * The entry point to the PermissionsEx engine.
  *
- * The fastest way to get going with working with subjects is to access a subject type collection with {@link #getSubjects(String)}
+ * The fastest way to get going with working with subjects is to access a subject type collection with {@link #subjectType(String)}
  * and request a {@link CalculatedSubjectImpl} to query data from. Directly working with
  * {@link SubjectDataReference}s is another option, preferable if most of the operations
  * being performed are writes, or querying data directly defined on a subject.
@@ -75,10 +77,6 @@ import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromot
  * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
  */
 public class PermissionsEx<P> implements ImplementationInterface, Consumer<ContextInheritance>, ContextDefinitionProvider, PermissionsEngine {
-    public static final String SUBJECTS_USER = "user";
-    public static final String SUBJECTS_GROUP = "group";
-    public static final String SUBJECTS_DEFAULTS = "default";
-    public static final String SUBJECTS_FALLBACK = "fallback";
 
     private final FormattedLogger logger;
     private final ImplementationInterface impl;
@@ -107,17 +105,17 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
 
     public PermissionsEx(final PermissionsExConfiguration<P> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
-        this.logger = FormattedLogger.forLogger(impl.getLogger(), false);
+        this.logger = WrappingFormattedLogger.of(impl.logger(), false);
         this.transientData = MemoryDataStore.create("transient");
         this.transientData.initialize(this);
         this.callbackController = new CallbackController();
-        setDebugMode(config.isDebugEnabled());
+        debugMode(config.isDebugEnabled());
         registerContextDefinition(ServerTagContextDefinition.INSTANCE);
         registerContextDefinition(BeforeTimeContextDefinition.INSTANCE);
         registerContextDefinition(AfterTimeContextDefinition.INSTANCE);
         initialize(config);
 
-        getSubjects(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.of(SUBJECTS_DEFAULTS, false));
+        subjectType(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.of(SUBJECTS_DEFAULTS, false));
     }
 
     /**
@@ -145,11 +143,12 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * Any string is supported as a subject type, but some common types have been provided as constants
      * in this class for convenience.
      *
-     * @see #SUBJECTS_DEFAULTS
+     * @see PermissionsEngine#SUBJECTS_DEFAULTS
      * @param type The type identifier requested. Can be any string
      * @return The subject type collection
      */
-    public SubjectTypeImpl getSubjects(String type) {
+    @Override
+    public SubjectTypeImpl subjectType(final String type) {
         return subjectTypeCache.computeIfAbsent(type,
                 key -> new SubjectTypeImpl(this, type, new SubjectDataCacheImpl(type, getState().activeDataStore), new SubjectDataCacheImpl(type, transientData)));
     }
@@ -159,7 +158,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      *
      * @return Unmodifiable view of the currently cached subject types
      */
-    public Collection<SubjectTypeImpl> getActiveSubjectTypes() {
+    @Override
+    public Collection<SubjectTypeImpl> loadedSubjectTypes() {
         return Collections.unmodifiableCollection(subjectTypeCache.values());
     }
 
@@ -169,8 +169,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      *
      * @return A set of registered subject types
      */
-    public Set<String> getRegisteredSubjectTypes() {
-        return getState().activeDataStore.getRegisteredTypes();
+    public Stream<String> knownSubjectTypes() {
+        return getState().activeDataStore.getRegisteredTypes().stream(); // TODO
     }
 
     /**
@@ -255,18 +255,9 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      *
      * @return true if debug mode is enabled
      */
-    public boolean hasDebugMode() {
+    @Override
+    public boolean debugMode() {
         return this.getNotifier() instanceof DebugPermissionCheckNotifier;
-    }
-
-    /**
-     * Set whether or not debug mode is enabled, with no filter pattern
-     *
-     * @see #setDebugMode(boolean, Pattern)
-     * @param debug Whether or not debug mode is enabled
-     */
-    public void setDebugMode(boolean debug) {
-        setDebugMode(debug, null);
     }
 
     /**
@@ -276,12 +267,12 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @param debug Whether to enable debug mode
      * @param filterPattern A pattern to filter which permissions are logged. Null for no filter.
      */
-    public synchronized void setDebugMode(boolean debug, final @Nullable Pattern filterPattern) {
+    public synchronized void debugMode(boolean debug, final @Nullable Pattern filterPattern) {
         if (debug) {
             if (this.notifier instanceof DebugPermissionCheckNotifier) {
-                this.notifier = new DebugPermissionCheckNotifier(getLogger(), ((DebugPermissionCheckNotifier) this.notifier).getDelegate(), filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
+                this.notifier = new DebugPermissionCheckNotifier(this.logger(), ((DebugPermissionCheckNotifier) this.notifier).getDelegate(), filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
             } else {
-                this.notifier = new DebugPermissionCheckNotifier(getLogger(), this.notifier, filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
+                this.notifier = new DebugPermissionCheckNotifier(this.logger(), this.notifier, filterPattern == null ? null : perm -> filterPattern.matcher(perm).find());
             }
         } else {
             if (this.notifier instanceof DebugPermissionCheckNotifier) {
@@ -325,7 +316,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         }
 
         if (shouldAnnounceImports) {
-            getLogger().warn(CONVERSION_BANNER.toComponent());
+            this.logger().warn(CONVERSION_BANNER.toComponent());
         }
 
         PVector<ConversionResult> allResults = TreePVector.empty();
@@ -338,9 +329,9 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
             PVector<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
-                    getLogger().info(CONVERSION_PLUGINHEADER.toComponent(prov.friendlyName()));
+                    this.logger().info(CONVERSION_PLUGINHEADER.toComponent(prov.friendlyName()));
                     for (ConversionResult result : res) {
-                        getLogger().info(CONVERSION_INSTANCE.toComponent(result.description(), result.store().getName()));
+                        this.logger().info(CONVERSION_INSTANCE.toComponent(result.description(), result.store().getName()));
                     }
                 }
                 allResults = allResults.plusAll(res);
@@ -362,7 +353,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
                 ((PEXContextDefinition<?>) ctxDef).update(newState.config);
             }
         });
-        getSubjects("group").cacheAll();
+        subjectType("group").cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
             getContextInheritance(null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
@@ -370,7 +361,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
 
         // Migrate over legacy subject data
         newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
-            getLogger().info(CONVERSION_RESULT_SUCCESS.toComponent());
+            this.logger().info(CONVERSION_RESULT_SUCCESS.toComponent());
         });
     }
 
@@ -383,7 +374,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         return Util.asyncFailableFuture(() -> {
             reloadSync();
             return null;
-        }, getAsyncExecutor());
+        }, asyncExecutor());
     }
 
     /**
@@ -409,25 +400,26 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     }
 
     @Override
-    public FormattedLogger getLogger() {
+    public FormattedLogger logger() {
         return this.logger;
     }
 
     // -- Implementation interface proxy methods --
 
     @Override
-    public Path getBaseDirectory() {
-        return impl.getBaseDirectory();
+    public Path baseDirectory() {
+        return impl.baseDirectory();
     }
 
     @Override
-    public Path getBaseDirectory(BaseDirectoryScope scope) {
-        return impl.getBaseDirectory(scope);
+    public Path baseDirectory(BaseDirectoryScope scope) {
+        return impl.baseDirectory(scope);
     }
 
     @Override
-    public DataSource getDataSourceForURL(String url) throws SQLException {
-        return impl.getDataSourceForURL(url);
+    @Deprecated
+    public DataSource dataSourceForUrl(String url) throws SQLException {
+        return impl.dataSourceForUrl(url);
     }
 
     /**
@@ -436,8 +428,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @return The async executor
      */
     @Override
-    public Executor getAsyncExecutor() {
-        return impl.getAsyncExecutor();
+    public Executor asyncExecutor() {
+        return impl.asyncExecutor();
     }
 
     @Override

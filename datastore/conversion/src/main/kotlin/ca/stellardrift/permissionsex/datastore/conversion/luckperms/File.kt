@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.datastore.conversion.luckperms
 
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_ERROR_INVALID_TRACK
 import ca.stellardrift.permissionsex.context.ContextInheritance
@@ -79,7 +79,7 @@ class LuckPermsFileDataStore constructor(properties: StoreProperties<Config>) : 
     internal val format get() = config().format
 
     override fun initializeInternal(): Boolean {
-        val rootDir = manager.baseDirectory.parent.resolve(config().pluginDir)
+        val rootDir = manager.baseDirectory().parent.resolve(config().pluginDir)
         subjectLayout = (if (config().combined) {
             ::CombinedSubjectLayout
         } else {
@@ -91,7 +91,7 @@ class LuckPermsFileDataStore constructor(properties: StoreProperties<Config>) : 
                 .path(rootDir.resolve("config.yml"))
                 .build().loadToReference()
         watcher = WatchServiceListener.builder()
-            .taskExecutor(manager.asyncExecutor)
+            .taskExecutor(manager.asyncExecutor())
             .build()
         return true
     }

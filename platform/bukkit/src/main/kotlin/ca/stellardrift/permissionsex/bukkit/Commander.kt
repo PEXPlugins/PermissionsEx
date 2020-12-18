@@ -17,6 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
 import ca.stellardrift.permissionsex.commands.commander.Commander
@@ -55,7 +56,7 @@ fun String.toLocale(): Locale {
 class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val Map.Entry<String, String>.friendlyName: String?
-        get() = (cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
+        get() = (cmd.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
 }
 
 /**
@@ -80,7 +81,7 @@ class BukkitCommander internal constructor(
     override val subjectIdentifier: SubjectIdentifier?
         get() = if (commandSource is Player) {
                 subjectIdentifier(
-                    PermissionsEx.SUBJECTS_USER,
+                    PermissionsEngine.SUBJECTS_USER,
                     commandSource.uniqueId.toString()
                 )
         } else null

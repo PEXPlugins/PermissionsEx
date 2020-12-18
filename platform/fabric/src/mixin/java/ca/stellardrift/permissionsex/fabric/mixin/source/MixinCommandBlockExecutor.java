@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.fabric.mixin.source;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
 import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import kotlin.jvm.Volatile;
 import net.minecraft.text.Text;
 import net.minecraft.world.CommandBlockExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,7 @@ public class MixinCommandBlockExecutor implements IPermissionCommandSource {
     @Override
     public @NotNull CalculatedSubject asCalculatedSubject() {
         if (subj == null) {
-            return subj = PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+            return subj = PermissionsExMod.INSTANCE.getManager().subjectType(getPermType()).get(getPermIdentifier()).join();
         }
         return subj;
     }

@@ -22,6 +22,7 @@ import ca.stellardrift.build.common.configurate
 
 plugins {
     id("pex-component")
+    `java-test-fixtures`
     id("ca.stellardrift.opinionated.kotlin")
     id("ca.stellardrift.localization")
 }
@@ -54,7 +55,9 @@ dependencies {
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.6.28")
-    testImplementation("com.h2database:h2:1.4.200")
-    testImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.1")
-    testImplementation("org.postgresql:postgresql:42.2.18")
+
+    testFixturesApi("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    testFixturesImplementation("com.h2database:h2:1.4.200")
+    testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.1")
+    testFixturesImplementation("org.postgresql:postgresql:42.2.18")
 }

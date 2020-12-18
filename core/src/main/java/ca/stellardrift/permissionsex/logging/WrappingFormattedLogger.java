@@ -16,11 +16,12 @@
  */
 package ca.stellardrift.permissionsex.logging;
 
+import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
-import org.jetbrains.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
@@ -29,9 +30,13 @@ import java.util.Locale;
 /**
  * An implementation of {@link FormattedLogger} that delegates to an existing logger
  */
-class WrappingFormattedLogger implements FormattedLogger {
+public class WrappingFormattedLogger implements FormattedLogger {
+
+    public static FormattedLogger of(Logger logger, boolean supportsFormatting) {
+        return logger instanceof FormattedLogger ? ((FormattedLogger) logger) : new WrappingFormattedLogger(logger, supportsFormatting);
+    }
     private final Logger wrapping;
-    private String prefix;
+    private @Nullable String prefix;
     private final boolean supportsFormatting;
 
     public WrappingFormattedLogger(Logger wrapping, boolean supportsFormatting) {
@@ -45,18 +50,17 @@ class WrappingFormattedLogger implements FormattedLogger {
     }
 
     @Override
-    public Locale getLogLocale(Marker marker) {
+    public Locale getLogLocale(final @Nullable Marker marker) {
         return getLogLocale();
     }
 
-    @Nullable
     @Override
-    public String getPrefix() {
+    public @Nullable String getPrefix() {
         return this.prefix;
     }
 
     @Override
-    public void setPrefix(@Nullable String prefix) {
+    public void setPrefix(final @Nullable String prefix) {
         this.prefix = prefix;
     }
 
@@ -67,6 +71,11 @@ class WrappingFormattedLogger implements FormattedLogger {
         } else {
             return PlainComponentSerializer.plain();
         }
+    }
+
+    @Override
+    public String formatText(Component component, @org.checkerframework.checker.nullness.qual.Nullable Marker marker) {
+        return getSerializer().serialize(PEXComponentRenderer.INSTANCE.render(component, getLogLocale(marker)));
     }
 
     private String applyPrefix(String input) {

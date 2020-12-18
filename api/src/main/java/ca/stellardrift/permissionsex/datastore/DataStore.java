@@ -192,7 +192,7 @@ public interface DataStore {
      * @param inheritance The listener to notify about changes
      * @return A future that will supply context inheritance
      */
-    CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> inheritance);
+    CompletableFuture<ContextInheritance> getContextInheritance(@Nullable Consumer<ContextInheritance> inheritance);
 
     CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance inheritance);
 }

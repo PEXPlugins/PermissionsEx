@@ -27,7 +27,7 @@ data class PEXSubjectReference internal constructor(
 ) : SubjectReference, MutableMap.MutableEntry<String, String> {
 
     init {
-        require(pex.manager.getSubjects(key).typeInfo.isNameValid(value)) { "Name '$value' was not a valid name for a subject in collection '$key'!" }
+        require(pex.manager.subjectType(key).typeInfo.isNameValid(value)) { "Name '$value' was not a valid name for a subject in collection '$key'!" }
     }
 
     override fun getCollectionIdentifier(): String {

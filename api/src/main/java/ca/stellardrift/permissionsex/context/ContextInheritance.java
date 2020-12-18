@@ -16,36 +16,46 @@
  */
 package ca.stellardrift.permissionsex.context;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.util.List;
 import java.util.Map;
 
 /**
- * Holder for information about inheritance between contexts. Immutable
+ * Holder for information about inheritance between contexts. Immutable.
+ *
+ * @since 2.0.0
  */
 public interface ContextInheritance {
     /**
      * Get the parents of a specific context.
-     * When this context is present in a subject's active contexts, its parents are appended to the subject's
-     * active contexts for the purpose of data queries.
+     *
+     * <p>When this context is present in a subject's active contexts, its parents are appended
+     * to the subject's active contexts for the purpose of data queries.</p>
      *
      * @param context The child context
      * @return Any parent contexts, or an empty list
+     * @since 2.0.0
      */
     List<ContextValue<?>> getParents(ContextValue<?> context);
 
     /**
-     * Set the parents for a specific context
+     * Set the parents for a specific context.
      *
      * @param context The context to set parents in
-     * @param parents The parents to set
+     * @param parents The parents to set, or {@code null} to clear parents for the context.
      * @return A new context inheritance object with the updated parents
+     * @since 2.0.0
      */
-    ContextInheritance setParents(ContextValue<?> context, List<ContextValue<?>> parents);
+    ContextInheritance setParents(ContextValue<?> context, @Nullable List<ContextValue<?>> parents);
 
     /**
-     * Get all parent data as a map from context to list of parent contexts. The returned map is immutable.
+     * Get all parent data as a map from context to list of parent contexts.
+     *
+     * <p>The returned map is immutable.</p>
      *
      * @return parents
+     * @since 2.0.0
      */
     Map<ContextValue<?>, List<ContextValue<?>>> getAllParents();
 

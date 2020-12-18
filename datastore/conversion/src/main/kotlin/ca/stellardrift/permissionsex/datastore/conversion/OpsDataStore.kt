@@ -18,9 +18,9 @@ package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEngine
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.backend.Messages.OPS_DESCRIPTION
 import ca.stellardrift.permissionsex.backend.Messages.OPS_ERROR_NO_FILE
 import ca.stellardrift.permissionsex.backend.Messages.OPS_NAME
@@ -34,6 +34,7 @@ import ca.stellardrift.permissionsex.datastore.StoreProperties
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
+import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -63,7 +64,7 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
         }
 
         override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
-            val opsFile = (pex as PermissionsEx<*>).getBaseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
+            val opsFile = (pex as PermissionsEx<*>).baseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
             return if (Files.exists(opsFile)) {
                 TreePVector.singleton(
                     ConversionResult.builder()
@@ -86,15 +87,15 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
 
     override fun initializeInternal(): Boolean {
         if (!this::file.isInitialized) {
-            file = manager.getBaseDirectory(BaseDirectoryScope.SERVER).resolve(config().fileName)
+            file = (manager as PermissionsEx<*>).baseDirectory(BaseDirectoryScope.SERVER).resolve(config().fileName) // todo
         }
 
         if (!Files.exists(file)) {
-            manager.logger.warn(OPS_ERROR_NO_FILE())
+            manager.logger().warn(OPS_ERROR_NO_FILE())
         }
 
         this.configListener = WatchServiceListener.builder()
-            .taskExecutor(manager.asyncExecutor)
+            .taskExecutor(manager.asyncExecutor())
             .build()
         this.opsListNode = configListener.listenToConfiguration({ GsonConfigurationLoader.builder()
             .lenient(true)
@@ -111,7 +112,7 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
     private fun reload(node: ConfigurationNode, notify: Boolean = true) {
         this.opsList = node.getList(OpsListEntry::class.java, listOf())
         if (notify) {
-            manager.getSubjects(SUBJECTS_USER).update(this)
+            (manager.subjectType(SUBJECTS_USER) as SubjectTypeImpl).update(this)
         }
     }
 
@@ -130,7 +131,10 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
     }
 
     override fun getRegisteredTypes(): Set<String> {
-        return setOf(SUBJECTS_USER, SUBJECTS_GROUP)
+        return setOf(
+            SUBJECTS_USER,
+            SUBJECTS_GROUP
+        )
     }
 
     override fun getAllIdentifiers(type: String): Set<String> {

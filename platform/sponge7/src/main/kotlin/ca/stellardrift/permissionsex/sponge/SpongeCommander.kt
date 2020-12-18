@@ -85,5 +85,5 @@ internal class SpongeCommander(
 internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val SubjectIdentifier.friendlyName: String?
-        get() = (cmd.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSource)?.name
+        get() = (cmd.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? CommandSource)?.name
 }

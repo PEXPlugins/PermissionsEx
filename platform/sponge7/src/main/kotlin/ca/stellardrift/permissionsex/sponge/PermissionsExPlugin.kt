@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.commands.parse.CommandException
@@ -28,6 +29,7 @@ import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.CachingValue
@@ -48,6 +50,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Predicate
 import java.util.function.Supplier
+import java.util.stream.Collectors
 import javax.sql.DataSource
 import net.kyori.adventure.platform.spongeapi.SpongeAudiences
 import org.slf4j.Logger
@@ -91,7 +94,7 @@ class PermissionsExPlugin @Inject internal constructor(
 ) : PermissionService, ImplementationInterface {
     private var sql: Optional<SqlService> = Optional.empty()
     private var scheduler: Scheduler = game.scheduler
-    private val logger = FormattedLogger.forLogger(logger, true)
+    private val logger = WrappingFormattedLogger.of(logger, true)
     private var _manager: MinecraftPermissionsEx<*>? = null
     val manager: PermissionsEx<*> get() {
         return _manager?.engine() ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
@@ -133,15 +136,17 @@ class PermissionsExPlugin @Inject internal constructor(
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(PomData.NAME), e))
         }
-        defaults = loadCollection(PermissionsEx.SUBJECTS_DEFAULTS).thenCompose { coll -> coll.loadSubject(PermissionsEx.SUBJECTS_DEFAULTS) }
+        defaults = loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS).thenCompose { coll -> coll.loadSubject(
+            PermissionsEngine.SUBJECTS_DEFAULTS
+        ) }
             .get() as PEXSubject
-        manager.getSubjects(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
+        manager.subjectType(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
             PermissionService.SUBJECTS_SYSTEM,
             { true },
             immutableMapEntry("Server", Supplier { game.server.console }),
             immutableMapEntry("RCON", Supplier { null })
         )
-        manager.getSubjects(PermissionService.SUBJECTS_USER).typeInfo =
+        manager.subjectType(PermissionService.SUBJECTS_USER).typeInfo =
             UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, this)
         registerFakeOpCommand("op", "minecraft.command.op")
         registerFakeOpCommand("deop", "minecraft.command.deop")
@@ -168,7 +173,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @Listener
     fun cacheUserAsync(event: Auth) {
         try {
-            manager.getSubjects(PermissionsEx.SUBJECTS_USER)[event.profile.uniqueId.toString()]
+            manager.subjectType(PermissionsEngine.SUBJECTS_USER)[event.profile.uniqueId.toString()]
         } catch (e: Exception) {
             logger.warn(
                 Messages.EVENT_CLIENT_AUTH_ERROR.invoke(
@@ -194,7 +199,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @Listener
     fun onPlayerJoin(event: Join) {
         val identifier = event.targetEntity.identifier
-        val cache = this.manager.getSubjects(PermissionsEx.SUBJECTS_USER)
+        val cache = this.manager.subjectType(PermissionsEngine.SUBJECTS_USER)
         cache.isRegistered(identifier).thenAccept { registered: Boolean ->
             if (registered) {
                 cache.persistentData().update(identifier) { input ->
@@ -298,7 +303,7 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     override fun getAllIdentifiers(): CompletableFuture<Set<String>> {
-        return CompletableFuture.completedFuture(manager.registeredSubjectTypes)
+        return CompletableFuture.completedFuture(manager.knownSubjectTypes().collect(Collectors.toSet()))
     }
 
     override fun newSubjectReference(collectionIdentifier: String, subjectIdentifier: String): SubjectReference {
@@ -317,7 +322,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     fun registerDescription(description: PEXPermissionDescription, ranks: Map<String, Int>) {
         descriptions[description.id] = description
-        val coll = manager.getSubjects(PermissionService.SUBJECTS_ROLE_TEMPLATE)
+        val coll = manager.subjectType(PermissionService.SUBJECTS_ROLE_TEMPLATE)
         for ((key, value) in ranks) {
             coll.transientData().update(key) { input ->
                 input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.id, value)
@@ -333,7 +338,7 @@ class PermissionsExPlugin @Inject internal constructor(
         return descriptions.values.toSet()
     }
 
-    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+    override fun baseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> configDir
             BaseDirectoryScope.JAR -> game.gameDirectory.resolve("mods")
@@ -343,11 +348,11 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    override fun getLogger(): FormattedLogger {
+    override fun logger(): FormattedLogger {
         return logger
     }
 
-    override fun getDataSourceForURL(url: String): DataSource? {
+    override fun dataSourceForUrl(url: String): DataSource? {
         return if (!sql.isPresent) {
             null
         } else try {
@@ -363,7 +368,7 @@ class PermissionsExPlugin @Inject internal constructor(
      *
      * @return The async executor
      */
-    override fun getAsyncExecutor(): Executor {
+    override fun asyncExecutor(): Executor {
         return spongeExecutor
     }
 

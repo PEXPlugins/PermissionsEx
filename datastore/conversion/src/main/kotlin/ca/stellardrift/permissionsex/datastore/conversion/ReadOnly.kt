@@ -96,12 +96,12 @@ abstract class ReadOnlyDataStore<T : ReadOnlyDataStore<T, C>, C> protected const
     override fun setDataInternal(
         type: String,
         identifier: String,
-        data: ImmutableSubjectData
+        data: ImmutableSubjectData?
     ): CompletableFuture<ImmutableSubjectData> {
         return Util.failedFuture(UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!"))
     }
 
-    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder): CompletableFuture<RankLadder> {
+    override fun setRankLadderInternal(ladder: String, newLadder: RankLadder?): CompletableFuture<RankLadder> {
         return Util.failedFuture(UnsupportedOperationException("The ${this::class.java.simpleName} backend is-read-only!"))
     }
 

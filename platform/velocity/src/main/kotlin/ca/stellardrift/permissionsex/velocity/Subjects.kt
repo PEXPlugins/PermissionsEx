@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.velocity
 
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
@@ -27,7 +27,9 @@ import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.proxy.Player
 import java.util.UUID
 
-class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(SUBJECTS_USER) {
+class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(
+    SUBJECTS_USER
+) {
     override fun isNameValid(name: String): Boolean {
         return try {
             UUID.fromString(name)
@@ -62,7 +64,7 @@ class PEXPermissionFunction(val plugin: PermissionsExPlugin, private val source:
             is Player -> Maps.immutableEntry(SUBJECTS_USER, source.gameProfile.id.toString())
             else -> IDENT_SERVER_CONSOLE
         }
-        plugin.manager.getSubjects(ident.key)[ident.value].join()
+        plugin.manager.subjectType(ident.key)[ident.value].join()
     }
 
     override fun getPermissionValue(permission: String): Tristate {

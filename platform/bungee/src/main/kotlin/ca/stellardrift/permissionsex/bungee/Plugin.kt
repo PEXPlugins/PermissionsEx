@@ -18,11 +18,12 @@ package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
@@ -69,7 +70,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         val adapter: Constructor<JDK14LoggerAdapter> =
             JDK14LoggerAdapter::class.java.getDeclaredConstructor(Logger::class.java)
         adapter.isAccessible = true
-        return FormattedLogger.forLogger(adapter.newInstance(super.getLogger()), false)
+        return WrappingFormattedLogger.of(adapter.newInstance(super.getLogger()), false)
     }
 
     override fun onEnable() {
@@ -90,8 +91,8 @@ class PermissionsExPlugin : Plugin(), Listener {
             logger.error("Unable to load PermissionsEx!", e)
             return
         }
-        this.manager.getSubjects(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
-        manager.getSubjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
+        this.manager.subjectType(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
+        manager.subjectType(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
             it.setDefaultValue(PermissionsEx.GLOBAL_CONTEXT, 1)
         }
         this.manager.registerContextDefinitions(ProxyContextDefinition.INSTANCE, RemoteIpContextDefinition,
@@ -119,7 +120,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun cachePlayer(event: LoginEvent) {
         try {
-            manager.getSubjects(SUBJECTS_USER).load(event.connection.uniqueId.toString())
+            manager.subjectType(SUBJECTS_USER).load(event.connection.uniqueId.toString())
         } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGIN(event.connection.name, event.connection.uniqueId), e)
         }
@@ -129,7 +130,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     fun unloadPlayer(event: PlayerDisconnectEvent) {
         try {
             manager.callbackController.clearOwnedBy(event.player.uniqueId)
-            manager.getSubjects(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
+            manager.subjectType(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
         } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
         }
@@ -137,7 +138,7 @@ class PermissionsExPlugin : Plugin(), Listener {
 }
 
 fun CommandSender.toCalculatedSubject(): CalculatedSubject {
-    return (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin).manager.getSubjects(when (this) {
+    return (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin).manager.subjectType(when (this) {
         is ProxiedPlayer -> SUBJECTS_USER
         else -> IDENT_SERVER_CONSOLE.key
     })[when (this) {
@@ -151,7 +152,7 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
     private val exec = Executor { task ->
         plugin.proxy.scheduler.runAsync(plugin, task)
     }
-    override fun getBaseDirectory(scope: BaseDirectoryScope): Path {
+    override fun baseDirectory(scope: BaseDirectoryScope): Path {
         return when (scope) {
             BaseDirectoryScope.CONFIG -> plugin.dataPath
             BaseDirectoryScope.JAR -> plugin.proxy.pluginsFolder.toPath()
@@ -160,15 +161,15 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : I
         }
     }
 
-    override fun getLogger(): org.slf4j.Logger {
+    override fun logger(): org.slf4j.Logger {
         return plugin.logger
     }
 
-    override fun getDataSourceForURL(url: String): DataSource {
+    override fun dataSourceForUrl(url: String): DataSource {
         return Hikari.createDataSource(url, plugin.dataPath)
     }
 
-    override fun getAsyncExecutor(): Executor {
+    override fun asyncExecutor(): Executor {
         return exec
     }
 

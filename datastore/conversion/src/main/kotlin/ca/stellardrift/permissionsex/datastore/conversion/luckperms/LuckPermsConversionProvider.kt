@@ -43,7 +43,7 @@ class LuckPermsConversionProvider : AbstractDataStore.Factory<LuckPermsFileDataS
     override fun friendlyName(): Component = LUCKPERMS_NAME()
 
     override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
-        val luckBaseDir = (pex as PermissionsEx<*>).baseDirectory.parent.resolve("LuckPerms")
+        val luckBaseDir = (pex as PermissionsEx<*>).baseDirectory().parent.resolve("LuckPerms")
         var result = TreePVector.empty<ConversionResult>()
         for (format in formatNames) {
             val configDir = luckBaseDir.resolve(format.storageDirName)

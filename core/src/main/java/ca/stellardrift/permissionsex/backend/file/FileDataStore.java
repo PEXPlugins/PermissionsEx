@@ -31,6 +31,7 @@ import ca.stellardrift.permissionsex.util.Util;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -79,8 +80,8 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     }
 
 
-    private WatchServiceListener reloadService;
-    private ConfigurationReference<BasicConfigurationNode> permissionsConfig;
+    private @MonotonicNonNull WatchServiceListener reloadService;
+    private @MonotonicNonNull ConfigurationReference<BasicConfigurationNode> permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();
 
@@ -112,7 +113,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         ret.updates().subscribe(this::refresh);
 
         ret.errors().subscribe(e -> {
-            getManager().getLogger().error(FILE_ERROR_AUTORELOAD.toComponent(e.getKey(), e.getValue().getLocalizedMessage()));
+            getManager().logger().error(FILE_ERROR_AUTORELOAD.toComponent(e.getKey(), e.getValue().getLocalizedMessage()));
         });
 
         return ret;
@@ -128,7 +129,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             try {
                 this.listeners.call(key, getDataSync(key.getKey(), key.getValue()));
             } catch (PermissionsLoadingException e) {
-                getManager().getLogger().error(FILE_ERROR_SUBJECT_AUTORELOAD.toComponent(key.getKey(), key.getValue()));
+                getManager().logger().error(FILE_ERROR_SUBJECT_AUTORELOAD.toComponent(key.getKey(), key.getValue()));
             }
         });
 
@@ -138,13 +139,13 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         this.contextInheritanceListeners.getAllKeys().forEach(key ->
                 this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
 
-        getManager().getLogger().info(FILE_RELOAD_AUTO.toComponent(config().file));
+        getManager().logger().info(FILE_RELOAD_AUTO.toComponent(config().file));
     }
 
     private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> legacyLoader, String formatName) throws PermissionsLoadingException {
         Path legacyPermissionsFile = permissionsFile;
         config().file = config().file.replace(extension, ".json");
-        permissionsFile = getManager().getBaseDirectory().resolve(config().file);
+        permissionsFile = getManager().baseDirectory().resolve(config().file);
         try {
             permissionsConfig = createLoader(permissionsFile);
             permissionsConfig.save(legacyLoader.load());
@@ -160,7 +161,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         if (config().autoReload) {
             try {
                 reloadService = WatchServiceListener.builder()
-                        .taskExecutor(getManager().getAsyncExecutor())
+                        .taskExecutor(getManager().asyncExecutor())
                         .build();
             } catch (IOException e) {
                 throw new PermissionsLoadingException(e);
@@ -168,7 +169,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         }
 
         final String rawFile = config().file;
-        Path permissionsFile = getManager().getBaseDirectory().resolve(rawFile);
+        Path permissionsFile = getManager().baseDirectory().resolve(rawFile);
         if (rawFile.endsWith(".yml")) {
             permissionsFile = migrateLegacy(permissionsFile, ".yml", YamlConfigurationLoader.builder().path(permissionsFile).build(), "YML");
         } else if (rawFile.endsWith(".conf")) {
@@ -196,13 +197,13 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             return false;
         } else {
             try {
-                ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().getLogger());
+                ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(getManager().logger());
                 int startVersion = permissionsConfig.get("schema-version").getInt(-1);
                 ConfigurationNode node = permissionsConfig.node();
                 versionUpdater.apply(node);
                 int endVersion = permissionsConfig.get("schema-version").getInt();
                 if (endVersion > startVersion) {
-                    getManager().getLogger().info(FILE_SCHEMA_MIGRATION_SUCCESS.toComponent(permissionsFile, startVersion, endVersion));
+                    getManager().logger().info(FILE_SCHEMA_MIGRATION_SUCCESS.toComponent(permissionsFile, startVersion, endVersion));
                     permissionsConfig.save(node);
                 }
             } catch (final ConfigurateException ex) {
@@ -218,7 +219,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             try {
                 this.reloadService.close();
             } catch (IOException e) {
-                getManager().getLogger().error("Unable to shut down FileDataStore watch service", e);
+                getManager().logger().error("Unable to shut down FileDataStore watch service", e);
             }
             this.reloadService = null;
         }
@@ -233,7 +234,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             return Util.asyncFailableFuture(() -> {
                 saveSync();
                 return null;
-            }, getManager().getAsyncExecutor());
+            }, getManager().asyncExecutor());
         } else {
             return completedFuture(null);
         }
@@ -278,7 +279,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             if (data instanceof FileSubjectData) {
                 fileData = (FileSubjectData) data;
             } else {
-                fileData = ConversionUtils.transfer(data, new FileSubjectData());
+                fileData = (FileSubjectData) new FileSubjectData().mergeFrom(data);
             }
             fileData.serialize(getSubjectsNode().node(type, identifier));
             dirty.set(true);

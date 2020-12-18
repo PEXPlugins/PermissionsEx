@@ -17,6 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.BeforeTimeContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
@@ -41,7 +42,7 @@ import org.bukkit.plugin.Plugin
 internal class PEXPermissible(private val player: Player, private val plugin: PermissionsExPlugin) : PermissibleBase(player) {
 
     val manager: PermissionsEx<BukkitConfiguration> = plugin.manager
-    private val pexSubject: CalculatedSubject = manager.getSubjects(PermissionsEx.SUBJECTS_USER)[player.uniqueId.toString()].get()
+    private val pexSubject: CalculatedSubject = manager.subjectType(PermissionsEngine.SUBJECTS_USER)[player.uniqueId.toString()].get()
     var previousPermissible: Permissible? = null
     private val attachments: MutableSet<PEXPermissionAttachment> = mutableSetOf()
 
@@ -82,8 +83,8 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
             }
         }
 
-        if (manager.hasDebugMode()) {
-            manager.logger.info(Messages.SUPERPERMS_CHECK_NOTIFY(permission, player.name, contexts, ret))
+        if (manager.debugMode()) {
+            manager.logger().info(Messages.SUPERPERMS_CHECK_NOTIFY(permission, player.name, contexts, ret))
         }
         return ret
     }
@@ -213,12 +214,12 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
              */
             object : Metapermission(Regex("groups?\\.(?<name>.+)")) {
                 override fun isMatch(result: MatchResult, subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Boolean {
-                    return subjectIdentifier(PermissionsEx.SUBJECTS_GROUP, result.groups["name"]!!.value) in subj.getParents(contexts)
+                    return subjectIdentifier(PermissionsEngine.SUBJECTS_GROUP, result.groups["name"]!!.value) in subj.getParents(contexts)
                 }
 
                 override fun getValues(subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Sequence<String> {
                     return subj.getParents(contexts).asSequence()
-                        .filter { (key, _) -> key == PermissionsEx.SUBJECTS_GROUP }
+                        .filter { (key, _) -> key == PermissionsEngine.SUBJECTS_GROUP }
                         .flatMap { (_, value) -> sequenceOf("group.$value", "groups.$value") }
                 }
             },

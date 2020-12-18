@@ -29,16 +29,16 @@ import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.util.Util;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Futures;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.util.CheckedSupplier;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -68,7 +68,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
         return this.properties.identifier();
     }
 
-    protected PermissionsEx<?> getManager() {
+    protected PermissionsEngine getManager() {
         return this.manager;
     }
 
@@ -85,25 +85,25 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     protected abstract boolean initializeInternal() throws PermissionsLoadingException;
 
     @Override
-    public final CompletableFuture<ImmutableSubjectData> getData(final String type, final String identifier, final Consumer<ImmutableSubjectData> listener) {
+    public final CompletableFuture<ImmutableSubjectData> getData(final String type, final String identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
         requireNonNull(type, "type");
         requireNonNull(identifier, "identifier");
 
-        CompletableFuture<ImmutableSubjectData> ret = getDataInternal(type, identifier);
+        final CompletableFuture<ImmutableSubjectData> ret = getDataInternal(type, identifier);
         ret.thenRun(() -> {
             if (listener != null) {
-                listeners.addListener(Maps.immutableEntry(type, identifier), listener);
+                listeners.addListener(UnmodifiableCollections.immutableMapEntry(type, identifier), listener);
             }
         });
         return ret;
     }
 
     @Override
-    public final CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, ImmutableSubjectData data) {
+    public final CompletableFuture<ImmutableSubjectData> setData(final String type, final String identifier, final @Nullable ImmutableSubjectData data) {
         requireNonNull(type, "type");
         requireNonNull(identifier, "identifier");
 
-        final Map.Entry<String, String> lookupKey = Maps.immutableEntry(type, identifier);
+        final Map.Entry<String, String> lookupKey = UnmodifiableCollections.immutableMapEntry(type, identifier);
         return setDataInternal(type, identifier, data)
                 .thenApply(newData -> {
                     if (newData != null) {
@@ -114,11 +114,11 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     protected <V> CompletableFuture<V> runAsync(CheckedSupplier<V, ?> supplier) {
-        return Util.asyncFailableFuture(supplier, getManager().getAsyncExecutor());
+        return Util.asyncFailableFuture(supplier, getManager().asyncExecutor());
     }
 
     protected CompletableFuture<Void> runAsync(Runnable run) {
-        return CompletableFuture.runAsync(run, getManager().getAsyncExecutor());
+        return CompletableFuture.runAsync(run, getManager().asyncExecutor());
     }
 
     /**
@@ -130,29 +130,29 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      * </ul>
      */
     protected final void applyDefaultData() {
-        getData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, null)
-                .thenApply(data -> data.setDefaultValue(ImmutableSet.of(new ContextValue<>("localip", "127.0.0.1")), 1))
-                .thenCompose(data -> setData(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS, data));
+        getData(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS, null)
+                .thenApply(data -> data.setDefaultValue(Collections.singleton(new ContextValue<>("localip", "127.0.0.1")), 1))
+                .thenCompose(data -> setData(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS, data));
     }
 
     protected abstract CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier);
 
-    protected abstract CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data);
+    protected abstract CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, @Nullable ImmutableSubjectData data);
 
     @Override
     public final Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(final String type) {
         requireNonNull(type, "type");
         return Iterables.transform(getAllIdentifiers(type),
-                input -> Maps.immutableEntry(input, Futures.getUnchecked(getData(type, input, null))));
+                input -> UnmodifiableCollections.immutableMapEntry(input, getData(type, input, null).join()));
     }
 
     @Override
     public final <V> CompletableFuture<V> performBulkOperation(final Function<DataStore, V> function) {
-        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().getAsyncExecutor());
+        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().asyncExecutor());
     }
 
     @Override
-    public final CompletableFuture<RankLadder> getRankLadder(String ladderName, Consumer<RankLadder> listener) {
+    public final CompletableFuture<RankLadder> getRankLadder(final String ladderName, final @Nullable Consumer<RankLadder> listener) {
         requireNonNull(ladderName, "ladderName");
         CompletableFuture<RankLadder> ladder = getRankLadderInternal(ladderName);
         if (listener != null) {
@@ -162,7 +162,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     @Override
-    public final CompletableFuture<RankLadder> setRankLadder(final String identifier, RankLadder ladder) {
+    public final CompletableFuture<RankLadder> setRankLadder(final String identifier, final @Nullable RankLadder ladder) {
         return setRankLadderInternal(identifier, ladder)
                 .thenApply(newData -> {
                     if (newData != null) {
@@ -174,10 +174,10 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
 
 
     protected abstract CompletableFuture<RankLadder> getRankLadderInternal(String ladder);
-    protected abstract CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder);
+    protected abstract CompletableFuture<RankLadder> setRankLadderInternal(String ladder, final @Nullable RankLadder newLadder);
 
     @Override
-    public final CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
+    public final CompletableFuture<ContextInheritance> getContextInheritance(final @Nullable Consumer<ContextInheritance> listener) {
         CompletableFuture<ContextInheritance> inheritance = getContextInheritanceInternal();
         if (listener != null) {
             contextInheritanceListeners.addListener(true, listener);
@@ -203,7 +203,9 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     protected abstract CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance contextInheritance);
 
     /**
-     * Internally perform a bulk operation. Safe to call blocking operations from this method -- we're running it asyncly.
+     * Internally perform a bulk operation.
+     *
+     * <p>Safe to call blocking operations from this method -- we're running it asyncly.</p>
      *
      * @param function The function to run
      * @param <V> The

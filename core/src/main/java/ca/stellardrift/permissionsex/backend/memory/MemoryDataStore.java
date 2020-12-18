@@ -134,7 +134,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     private <T> CompletableFuture<T> completedFuture(T i) {
-        return CompletableFuture.supplyAsync(() -> i, getManager().getAsyncExecutor());
+        return CompletableFuture.supplyAsync(() -> i, getManager().asyncExecutor());
     }
 
     @Override

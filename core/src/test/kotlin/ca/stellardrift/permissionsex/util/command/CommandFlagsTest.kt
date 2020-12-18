@@ -17,12 +17,12 @@
 package ca.stellardrift.permissionsex.util.command
 
 import ca.stellardrift.permissionsex.EmptyTestConfiguration
-import ca.stellardrift.permissionsex.PermissionsExTest
 import ca.stellardrift.permissionsex.commands.parse.StructuralArguments.flags
 import ca.stellardrift.permissionsex.commands.parse.command
 import ca.stellardrift.permissionsex.commands.parse.int
 import ca.stellardrift.permissionsex.commands.parse.string
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
+import ca.stellardrift.permissionsex.test.PermissionsExTest
 import ca.stellardrift.permissionsex.util.unaryPlus
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

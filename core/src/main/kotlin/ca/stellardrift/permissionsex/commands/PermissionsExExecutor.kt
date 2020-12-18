@@ -38,10 +38,10 @@ abstract class PermissionsExExecutor protected constructor(protected val pex: Pe
         return try {
             val argIdentifier = args.getOne<SubjectIdentifier>(COMMON_ARGS_SUBJECT)
             if (argIdentifier != null) {
-                pex.getSubjects(argIdentifier.key)[argIdentifier.value].get()
+                pex.subjectType(argIdentifier.key)[argIdentifier.value].get()
             } else {
                 val ret = src.subjectIdentifier ?: throw CommandException(EXECUTOR_ERROR_SUBJECT_REQUIRED())
-                pex.getSubjects(ret.key)[ret.value].get()
+                pex.subjectType(ret.key)[ret.value].get()
             }
         } catch (e: InterruptedException) {
             throw CommandException(EXECUTOR_ERROR_GETTING_SUBJECT(), e)

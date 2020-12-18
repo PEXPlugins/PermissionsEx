@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.backend.file;
 
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
+import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger;
 import com.google.common.io.Resources;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.CommentedConfigurationNode;
@@ -61,7 +62,7 @@ public class SchemaMigrationsTest {
                 .build();
 
         final ConfigurationNode node = yamlLoader.load();
-        SchemaMigrations.oneTo2(FormattedLogger.forLogger(LoggerFactory.getLogger(getClass()), false)).apply(node);
+        SchemaMigrations.oneTo2(WrappingFormattedLogger.of(LoggerFactory.getLogger(getClass()), false)).apply(node);
 
         jsonSaver.save(node);
 

@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.datastore.conversion.groupmanager
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.ConversionUtils
 import ca.stellardrift.permissionsex.context.ContextValue
@@ -106,7 +107,7 @@ class GroupManagerSubjectData(
                     if (name.startsWith("g:")) {
                         name = name.substring(2)
                     }
-                    immutableMapEntry(PermissionsEx.SUBJECTS_GROUP, name)
+                    immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, name)
                 }
         } catch (e: SerializationException) {
             emptyList()

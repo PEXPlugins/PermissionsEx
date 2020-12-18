@@ -27,12 +27,11 @@ import net.minecraft.server.dedicated.DedicatedPlayerManager;
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import static ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER;
+import static ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER;
 
 @Mixin(MinecraftDedicatedServer.class)
 public class MixinDedicatedServer {
@@ -46,7 +45,7 @@ public class MixinDedicatedServer {
     @Redirect(method = "isSpawnProtected",
             at = @At(value = "INVOKE", target = RedirectTargets.OPERATOR_LIST_IS_EMPTY))
     public boolean isSpawnProtectionIgnored(OperatorList ops) {
-        return !PermissionsExMod.INSTANCE.getManager().getRegisteredSubjectTypes().contains(SUBJECTS_USER);
+        return !PermissionsExMod.INSTANCE.getManager().knownSubjectTypes().anyMatch(it -> it.equals(SUBJECTS_USER));
     }
 
     /*

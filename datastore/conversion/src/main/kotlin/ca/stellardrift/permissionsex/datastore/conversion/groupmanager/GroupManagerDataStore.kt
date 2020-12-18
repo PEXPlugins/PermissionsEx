@@ -17,9 +17,9 @@
 package ca.stellardrift.permissionsex.datastore.conversion.groupmanager
 
 import ca.stellardrift.permissionsex.PermissionsEngine
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
+import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_GROUP
-import ca.stellardrift.permissionsex.PermissionsEx.SUBJECTS_USER
 import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_DESCRIPTION
 import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_ERROR_NO_DIR
 import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_NAME
@@ -167,7 +167,10 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
     }
 
     override fun getRegisteredTypes(): Set<String> {
-        return setOf(SUBJECTS_USER, SUBJECTS_GROUP)
+        return setOf(
+            SUBJECTS_USER,
+            SUBJECTS_GROUP
+        )
     }
 
     override fun getDefinedContextKeys(): CompletableFuture<Set<String>> {
@@ -175,8 +178,10 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
     }
 
     override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
-        return (getAllIdentifiers(SUBJECTS_USER).map { immutableMapEntry(SUBJECTS_USER, it) } +
-                getAllIdentifiers(SUBJECTS_GROUP).map { immutableMapEntry(SUBJECTS_GROUP, it) })
+        return (getAllIdentifiers(SUBJECTS_USER).map { immutableMapEntry(
+            SUBJECTS_USER, it) } +
+                getAllIdentifiers(SUBJECTS_GROUP).map { immutableMapEntry(
+                    SUBJECTS_GROUP, it) })
             .map { immutableMapEntry(it, getDataGM(it.key, it.value)) }
     }
 
@@ -193,7 +198,7 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
         override fun friendlyName() = GROUPMANAGER_NAME()
 
         override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
-            val gmBaseDir = (pex as PermissionsEx<*>).baseDirectory.parent.resolve("GroupManager")
+            val gmBaseDir = (pex as PermissionsEx<*>).baseDirectory().parent.resolve("GroupManager")
             return if (Files.exists(gmBaseDir.resolve("config.yml"))) { // we exist
                 TreePVector.singleton(
                     ConversionResult.builder()

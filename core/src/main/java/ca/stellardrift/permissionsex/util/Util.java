@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.util;
 
-import ca.stellardrift.permissionsex.PermissionsEx;
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import org.spongepowered.configurate.util.CheckedFunction;
 import org.spongepowered.configurate.util.CheckedSupplier;
 import org.spongepowered.configurate.util.UnmodifiableCollections;
@@ -34,7 +34,7 @@ public class Util {
     public static Map.Entry<String, String> subjectFromString(String input) {
         String[] entries = input.split(":", 2);
         if (entries.length == 1) {
-            return UnmodifiableCollections.immutableMapEntry(PermissionsEx.SUBJECTS_GROUP, entries[0]);
+            return UnmodifiableCollections.immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, entries[0]);
         } else {
             return UnmodifiableCollections.immutableMapEntry(entries[0], entries[1]);
         }

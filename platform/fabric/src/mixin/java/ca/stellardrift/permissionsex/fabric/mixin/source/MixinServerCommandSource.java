@@ -20,14 +20,11 @@ import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
-import ca.stellardrift.permissionsex.subject.CalculatedSubjectImpl;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.CachingValues;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.brigadier.ResultConsumer;
-import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
@@ -128,7 +125,7 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     @NotNull
     @Override
     public CalculatedSubject asCalculatedSubject() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : PermissionsExMod.INSTANCE.getManager().getSubjects(getPermType()).get(getPermIdentifier()).join();
+        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : PermissionsExMod.INSTANCE.getManager().subjectType(getPermType()).get(getPermIdentifier()).join();
     }
 
     @NotNull

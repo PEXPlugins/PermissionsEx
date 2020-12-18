@@ -34,17 +34,17 @@ public class TestImplementationInterface implements ImplementationInterface {
     }
 
     @Override
-    public Path getBaseDirectory(BaseDirectoryScope scope) {
+    public Path baseDirectory(BaseDirectoryScope scope) {
         return baseDirectory;
     }
 
     @Override
-    public Logger getLogger() {
+    public Logger logger() {
         return logger;
     }
 
     @Override
-    public DataSource getDataSourceForURL(String url) {
+    public DataSource dataSourceForUrl(String url) {
         return null;
     }
 
@@ -54,7 +54,7 @@ public class TestImplementationInterface implements ImplementationInterface {
      * @return The async executor
      */
     @Override
-    public Executor getAsyncExecutor() {
+    public Executor asyncExecutor() {
         return Runnable::run;
     }
 

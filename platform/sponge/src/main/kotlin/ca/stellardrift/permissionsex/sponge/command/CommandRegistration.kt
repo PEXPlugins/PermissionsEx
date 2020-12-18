@@ -39,18 +39,17 @@ import org.spongepowered.plugin.PluginContainer
 
 fun registerRegistrar(plugin: PermissionsExPlugin) {
     plugin.game.eventManager.register<RegisterRegistryValueEvent<CommandRegistrar<*>>>(plugin.container) {
-        plugin.logger.debug("state :: RegisterCatalogEvent<CommandRegistrar<*>>")
+        plugin.logger().debug("state :: RegisterCatalogEvent<CommandRegistrar<*>>")
         val registrar = PEXCommandRegistrar(plugin, it.game.commandManager)
         it.register(registrar.key, registrar)
     }
 }
 
 class PEXCommandRegistrar internal constructor(private val plugin: PermissionsExPlugin, private val manager: CommandManager) : CommandRegistrar<CommandSpec> {
-    private val key: ResourceKey = ResourceKey.of(plugin.container.metadata.id, "commands")
+    internal val key: ResourceKey = ResourceKey.of(plugin.container.metadata.id, "commands")
     private val type = TypeToken.get(CommandSpec::class.java)
     private val commands = mutableMapOf<String, CommandSpec>()
 
-    override fun getKey(): ResourceKey = key
     override fun handledType(): TypeToken<CommandSpec> = type
 
     private operator fun get(mapping: CommandMapping): CommandSpec {

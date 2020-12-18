@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.commands
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_CONTEXT
 import ca.stellardrift.permissionsex.commands.Messages.COMMON_ARGS_POSITION
@@ -271,7 +272,7 @@ private fun getRankAddChildCommand(
     rankLadderArg: ValueElement<CompletableFuture<RankLadder>>
 ) =
     command("add", "+") {
-        val subject = subject(pex, PermissionsEx.SUBJECTS_GROUP) key COMMON_ARGS_SUBJECT()
+        val subject = subject(pex, PermissionsEngine.SUBJECTS_GROUP) key COMMON_ARGS_SUBJECT()
         args = flags()
             .flag("r", "-relative")
             .setUnknownShortFlagBehavior(UnknownFlagBehavior.IGNORE)
@@ -314,7 +315,7 @@ private fun getRankRemoveCommand(
     rankLadderArg: ValueElement<CompletableFuture<RankLadder>>
 ) =
     command("remove", "rem", "-") {
-        val subject = subject(pex, PermissionsEx.SUBJECTS_GROUP) key COMMON_ARGS_SUBJECT()
+        val subject = subject(pex, PermissionsEngine.SUBJECTS_GROUP) key COMMON_ARGS_SUBJECT()
         args = subject
         executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)

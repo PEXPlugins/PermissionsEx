@@ -48,7 +48,7 @@ public class MinecraftPermissionsEx<T> implements Closeable {
 
     public MinecraftPermissionsEx(final PermissionsEx<T> engine) {
         this.engine = engine;
-        this.resolver = ProfileApiResolver.resolver(engine.getAsyncExecutor());
+        this.resolver = ProfileApiResolver.resolver(engine.asyncExecutor());
 
         convertUuids();
         groups().cacheAll();
@@ -59,11 +59,11 @@ public class MinecraftPermissionsEx<T> implements Closeable {
     }
 
     public SubjectTypeImpl users() {
-        return this.engine.getSubjects(SUBJECTS_USER);
+        return this.engine.subjectType(SUBJECTS_USER);
     }
 
     public SubjectTypeImpl groups() {
-        return this.engine.getSubjects(SUBJECTS_GROUP);
+        return this.engine.subjectType(SUBJECTS_GROUP);
     }
 
     private void convertUuids() {
@@ -84,7 +84,7 @@ public class MinecraftPermissionsEx<T> implements Closeable {
                             }
                         }).collect(Collectors.toSet());
                 if (!toConvert.isEmpty()) {
-                    engine.getLogger().info(UUIDCONVERSION_BEGIN.toComponent());
+                    engine.logger().info(UUIDCONVERSION_BEGIN.toComponent());
                 } else {
                     return CompletableFuture.completedFuture(0L);
                 }
@@ -98,7 +98,7 @@ public class MinecraftPermissionsEx<T> implements Closeable {
                                     Mono.fromCompletionStage(users.isRegistered(lookupName.toLowerCase(Locale.ROOT))), (a, b) -> a || b);
                             return Mono.zip(newRegistered, oldRegistered, (n, o) -> {
                                 if (n) {
-                                    this.engine.getLogger().warn(UUIDCONVERSION_ERROR_DUPLICATE.toComponent(newIdentifier));
+                                    this.engine.logger().warn(UUIDCONVERSION_ERROR_DUPLICATE.toComponent(newIdentifier));
                                     return false;
                                 } else {
                                     return o;
@@ -116,14 +116,14 @@ public class MinecraftPermissionsEx<T> implements Closeable {
                         }).count().toFuture();
             }).thenAccept(result -> {
                 if (result != null && result > 0) {
-                    engine.getLogger().info(UUIDCONVERSION_END.toComponent(result));
+                    engine.logger().info(UUIDCONVERSION_END.toComponent(result));
                 }
             }).exceptionally(t -> {
-                engine.getLogger().error(UUIDCONVERSION_ERROR_GENERAL.toComponent(), t);
+                engine.logger().error(UUIDCONVERSION_ERROR_GENERAL.toComponent(), t);
                 return null;
             });
         } catch (final UnknownHostException ex) {
-            engine.getLogger().warn(UUIDCONVERSION_ERROR_DNS.toComponent());
+            engine.logger().warn(UUIDCONVERSION_ERROR_DNS.toComponent());
         }
     }
 

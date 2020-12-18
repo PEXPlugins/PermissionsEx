@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.subject;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.util.NodeTree;
@@ -85,15 +86,15 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                     final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
                     CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
 
-                    if (state.parents.isEmpty() && state.combinedPermissions.isEmpty() && state.options.isEmpty() && state.defaultValue == 0 && !(subject.getKey().equals(PermissionsEx.SUBJECTS_FALLBACK)
-                            && subject.getValue().equals(PermissionsEx.SUBJECTS_FALLBACK))) { // If we have no data, include the fallback subject
-                        ret = ret.thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_FALLBACK, subject.getKey()), visitedSubjects, 0));
+                    if (state.parents.isEmpty() && state.combinedPermissions.isEmpty() && state.options.isEmpty() && state.defaultValue == 0 && !(subject.getKey().equals(PermissionsEngine.SUBJECTS_FALLBACK)
+                            && subject.getValue().equals(PermissionsEngine.SUBJECTS_FALLBACK))) { // If we have no data, include the fallback subject
+                        ret = ret.thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEngine.SUBJECTS_FALLBACK, subject.getKey()), visitedSubjects, 0));
                     }
 
                     Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
                     if (!subject.equals(defIdentifier)) {
                         ret = ret.thenCompose(none -> visitSubject(state, defIdentifier, visitedSubjects, 1))
-                            .thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEx.SUBJECTS_DEFAULTS, PermissionsEx.SUBJECTS_DEFAULTS), visitedSubjects, 2)); // Force in global defaults
+                            .thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS), visitedSubjects, 2)); // Force in global defaults
                     }
                     return ret.thenApply(none -> state);
 
@@ -102,11 +103,11 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     private CompletableFuture<Void> visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
-            state.pex.getLogger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.toComponent(state.base.getIdentifier(), subject));
+            state.pex.logger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.toComponent(state.base.getIdentifier(), subject));
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);
-        SubjectTypeImpl type = state.pex.getSubjects(subject.getKey());
+        SubjectTypeImpl type = state.pex.subjectType(subject.getKey());
         return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
 

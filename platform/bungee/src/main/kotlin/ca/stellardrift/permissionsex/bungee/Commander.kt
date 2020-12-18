@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
@@ -41,7 +42,7 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
         (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
     override val subjectIdentifier: SubjectIdentifier?
         get() = when (src) {
-            is ProxiedPlayer -> subjectIdentifier(PermissionsEx.SUBJECTS_USER, src.uniqueId.toString())
+            is ProxiedPlayer -> subjectIdentifier(PermissionsEngine.SUBJECTS_USER, src.uniqueId.toString())
             else -> IDENT_SERVER_CONSOLE
         }
 
@@ -57,7 +58,7 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
 class BungeePluginMessageFormatter(val sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = NamedTextColor.YELLOW) {
 
     override val SubjectIdentifier.friendlyName: String? get() {
-        return (sender.pex.manager.getSubjects(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
+        return (sender.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
     }
 
     /**

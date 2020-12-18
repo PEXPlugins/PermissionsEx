@@ -32,6 +32,7 @@ import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
+import kotlin.streams.asSequence
 import net.kyori.adventure.text.Component
 
 fun contextTransientFlags(pex: PermissionsEx<*>): FlagCommandElementBuilder {
@@ -46,8 +47,8 @@ class SubjectTypeValue(private val pex: PermissionsEx<*>) : Value<String>(+"") {
     @Throws(ArgumentParseException::class)
     override fun parse(args: CommandArgs): String {
         val next = args.next()
-        val subjectTypes = pex.registeredSubjectTypes
-        if (!subjectTypes.contains(next)) {
+        val subjectTypes = pex.knownSubjectTypes()
+        if (!subjectTypes.filter { it.startsWith(next, ignoreCase = true) }.findAny().isPresent) {
             throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.invoke(next))
         }
         return next
@@ -57,7 +58,7 @@ class SubjectTypeValue(private val pex: PermissionsEx<*>) : Value<String>(+"") {
         src: Commander,
         args: CommandArgs
     ): Sequence<String> {
-        val seq = pex.registeredSubjectTypes.asSequence()
+        val seq = pex.knownSubjectTypes().asSequence()
         val nextOpt = args.nextIfPresent() ?: return seq
         return seq.filter { it.startsWith(nextOpt, ignoreCase = true) }
     }
@@ -97,7 +98,7 @@ private class SubjectElement(
         } else {
             identifier = args.next()
         }
-        val subjType = pex.getSubjects(type)
+        val subjType = pex.subjectType(type)
         if (!subjType.isRegistered(identifier).join()) { // TODO: Async command elements
             val newIdentifier = subjType.typeInfo.getAliasForName(identifier)
             if (newIdentifier != null) {
@@ -114,25 +115,25 @@ private class SubjectElement(
         src: Commander,
         args: CommandArgs
     ): Sequence<String> {
-        var type = args.nextIfPresent() ?: return pex.registeredSubjectTypes.asSequence()
+        var type = args.nextIfPresent() ?: return pex.knownSubjectTypes().asSequence()
         var identifierSegment = args.nextIfPresent()
         if (identifierSegment == null) { // TODO: Correct tab completion logic
             return if (type.contains(":")) {
                 val argSplit = type.split(":", limit = 2).toTypedArray()
                 type = argSplit[0]
                 identifierSegment = argSplit[1]
-                val typeObj = pex.getSubjects(type)
+                val typeObj = pex.subjectType(type)
                 val allIdents = typeObj.allIdentifiers.asSequence()
                 (allIdents +
                         allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())
                     .filter { it.startsWith(identifierSegment, ignoreCase = true) }
                     .map { "${typeObj.typeInfo.typeName()}:$it" }
             } else {
-                pex.registeredSubjectTypes.asSequence()
+                pex.knownSubjectTypes().asSequence()
                     .filter { it.startsWith(type, ignoreCase = true) }
             }
         }
-        val typeObj = pex.getSubjects(type)
+        val typeObj = pex.subjectType(type)
         val allIdents = typeObj.allIdentifiers.asSequence()
         return (allIdents +
                 allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())
