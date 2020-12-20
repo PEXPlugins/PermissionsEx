@@ -37,8 +37,8 @@ import ca.stellardrift.permissionsex.util.toComponent
 
 internal fun getOptionCommand(pex: PermissionsEx<*>) =
     command("option", "options", "opt", "o", "meta") {
-        val option = option(pex) key OPTION_ARG_KEY()
-        args(option, optional(string() key OPTION_ARG_VALUE()))
+        val option = option(pex) key OPTION_ARG_KEY.tr()
+        args(option, optional(string() key OPTION_ARG_VALUE.tr()))
         executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
             override fun execute(src: Commander, args: CommandContext) {
@@ -51,7 +51,7 @@ internal fun getOptionCommand(pex: PermissionsEx<*>) =
                         old.setOption(contexts, key, null)
                     }.thenMessageSubject(src) { send ->
                         send(
-                            OPTION_SUCCESS_UNSET(
+                            OPTION_SUCCESS_UNSET.tr(
                                 key,
                                 subject(ref).styled { hl() },
                                 contexts.toComponent()
@@ -63,7 +63,7 @@ internal fun getOptionCommand(pex: PermissionsEx<*>) =
                         old.setOption(contexts, key, value)
                     }.thenMessageSubject(src) { send ->
                         send(
-                            OPTION_SUCCESS_SET(
+                            OPTION_SUCCESS_SET.tr(
                                 option(key, value),
                                 subject(ref).styled { hl() },
                                 contexts.toComponent()

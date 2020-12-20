@@ -44,10 +44,10 @@ internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
                 cache.isRegistered()
                     .thenCompose { registered ->
                         if (!registered) {
-                            throw CommandException(DELETE_ERROR_DOES_NOT_EXIST(src.formatter.subject(subject)))
+                            throw CommandException(DELETE_ERROR_DOES_NOT_EXIST.tr(src.formatter.subject(subject)))
                         }
                         cache.remove()
-                    }.thenMessageSubject(src) { send -> send(DELETE_SUCCESS(+subject)) }
+                    }.thenMessageSubject(src) { send -> send(DELETE_SUCCESS.tr(+subject)) }
             }
         })
     }

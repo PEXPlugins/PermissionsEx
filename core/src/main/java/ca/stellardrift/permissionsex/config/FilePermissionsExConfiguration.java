@@ -41,11 +41,12 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 
 /**
- * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
+ * Configuration for PermissionsEx.
+ *
+ * <p>This is designed to be serialized with a Configurate {@link ObjectMapper}
  */
 @ConfigSerializable
 public class FilePermissionsExConfiguration<T> implements PermissionsExConfiguration<T> {

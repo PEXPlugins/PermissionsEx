@@ -41,8 +41,8 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>) =
         "perms",
         "p"
     ) {
-        val permission = permission(pex) key PERMISSION_ARG_KEY()
-        val permissionValue = permissionValue() key PERMISSION_ARG_PERMISSION_VALUE()
+        val permission = permission(pex) key PERMISSION_ARG_KEY.tr()
+        val permissionValue = permissionValue() key PERMISSION_ARG_PERMISSION_VALUE.tr()
         args(permission, permissionValue)
         executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
@@ -54,7 +54,7 @@ internal fun getPermissionCommand(pex: PermissionsEx<*>) =
                 ref.update { old -> old.setPermission(contexts, key, value) }
                     .thenMessageSubject(src) { send ->
                     send(
-                        PERMISSION_SUCCESS(
+                        PERMISSION_SUCCESS.tr(
                             permission(key, value),
                             subject(ref).styled { hl() },
                             contexts.toComponent()
@@ -75,7 +75,7 @@ internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>) =
         "default",
         "def"
     ) {
-        val permissionVal = permissionValue() key PERMISSION_ARG_PERMISSION_VALUE()
+        val permissionVal = permissionValue() key PERMISSION_ARG_PERMISSION_VALUE.tr()
         args = permissionVal
         executor(object : PermissionsExExecutor(pex) {
             @Throws(CommandException::class)
@@ -86,7 +86,7 @@ internal fun getPermissionDefaultCommand(pex: PermissionsEx<*>) =
                 ref.update { old -> old.setDefaultValue(contexts, value) }
                     .thenMessageSubject(src) { send ->
                         send(
-                            PERMISSION_DEFAULT_SUCCESS(
+                            PERMISSION_DEFAULT_SUCCESS.tr(
                                 value.toComponent(),
                                 subject(ref).styled { hl() },
                                 contexts.toComponent()

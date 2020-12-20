@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.sponge
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.CachingValue
-import ca.stellardrift.permissionsex.util.ContextSet
 import ca.stellardrift.permissionsex.util.optionally
 import java.util.Objects
 import java.util.Optional

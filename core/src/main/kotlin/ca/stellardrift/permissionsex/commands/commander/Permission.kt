@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.commands.commander
 
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import net.kyori.adventure.text.Component
 
 /**
@@ -27,9 +27,8 @@ import net.kyori.adventure.text.Component
  * [default] is the value to resolve this permission to when unset
  */
 data class Permission(val value: String, val description: Component? = null, val default: Int = 0) {
-    operator fun plus(other: SubjectIdentifier): Permission {
-        val (name, subj) = other
-        return Permission(value = "$value.$name.$subj", description = this.description, default = this.default)
+    operator fun plus(other: SubjectRef<*>): Permission {
+        return Permission(value = "$value.${other.type().name()}.${other.serializedIdentifier()}", description = this.description, default = this.default)
     }
 
     operator fun plus(other: String): Permission {

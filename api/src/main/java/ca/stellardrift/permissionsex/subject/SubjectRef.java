@@ -75,7 +75,7 @@ public interface SubjectRef<I> {
     }
 
     /**
-     * The subject's type
+     * The subject's type.
      *
      * @return the type referred to.
      * @since 2.0.0
@@ -84,12 +84,22 @@ public interface SubjectRef<I> {
     SubjectType<I> type();
 
     /**
-     * An identifier
+     * An identifier.
+     *
      * @return the subject identifier
      * @since 2.0.0
      */
     @Value.Parameter
     I identifier();
+
+    /**
+     * Compute the serialized form of the identifier.
+     *
+     * @return the canonical serialized form of the subject identifier
+     */
+    default String serializedIdentifier() {
+        return this.type().serializeIdentifier(this.identifier());
+    }
 
     /**
      * A resolved reference to a subject's data in a specific collection.

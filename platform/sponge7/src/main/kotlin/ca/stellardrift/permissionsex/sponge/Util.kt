@@ -19,12 +19,13 @@ package ca.stellardrift.permissionsex.sponge
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.util.ContextSet
 import com.google.common.collect.ImmutableSet
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.spongeapi.SpongeComponentSerializer
 import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.text.Text
+
+typealias ContextSet = Set<ContextValue<*>>
 
 fun Component.toSponge(): Text {
     return SpongeComponentSerializer.get().serialize(this)

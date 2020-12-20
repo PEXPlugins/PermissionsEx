@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages.INFO_ACTIVE_CONTEXTS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_ACTIVE_USED_CONTEXTS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_ASSOCIATED_OBJECT
+import ca.stellardrift.permissionsex.commands.Messages.INFO_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS_TRANSIENT
@@ -33,6 +34,7 @@ import ca.stellardrift.permissionsex.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.command
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
+import ca.stellardrift.permissionsex.util.TranslatableProvider
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.toComponent
@@ -43,7 +45,7 @@ import net.kyori.adventure.text.ComponentBuilder
 
 internal fun getInfoCommand(pex: PermissionsEx<*>) =
     command("info", "i", "who") {
-        description = INFO_DESCRIPTION()
+        description = INFO_DESCRIPTION.tr()
         executor(SubjectInfoPrintingExecutor(pex))
     }
 
@@ -64,17 +66,17 @@ internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : 
         val data = subject.data().get()
         src.msg { send ->
             fun head(msg: TranslatableProvider) {
-                send(msg.get().hl().build())
+                send(msg.bTr().hl().build())
             }
-            send(INFO_HEADER[subject(subject)].header().build())
+            send(INFO_HEADER.bTr(subject(subject)).header().build())
             if (pex.debugMode()) {
                 val associatedObject = subject.associatedObject
                 if (associatedObject != null) {
-                    send(INFO_ASSOCIATED_OBJECT.get().hl().append(+associatedObject.toString()).build())
+                    send(INFO_ASSOCIATED_OBJECT.bTr().hl().append(+associatedObject.toString()).build())
                 }
             }
-            send(hlKeyVal(INFO_ACTIVE_CONTEXTS.get(), +subject.activeContexts.toString()))
-            send(hlKeyVal(INFO_ACTIVE_USED_CONTEXTS.get(), +subject.usedContextValues.join().toString()))
+            send(hlKeyVal(INFO_ACTIVE_CONTEXTS.bTr(), +subject.activeContexts.toString()))
+            send(hlKeyVal(INFO_ACTIVE_USED_CONTEXTS.bTr(), +subject.usedContextValues.join().toString()))
 
             if (data.allPermissions.isNotEmpty() || data.allDefaultValues.isNotEmpty()) {
                 head(INFO_HEADER_PERMISSIONS)
@@ -110,7 +112,7 @@ internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : 
         val targetContexts = data.allPermissions.keys + data.allDefaultValues.keys
         for (entry in targetContexts) {
             src.msg(listOf(INDENT, entry.toComponent(), COLON).join(separator = null))
-            src.msg(DOUBLE_INDENT + INFO_PERMISSIONS_DEFAULT[data.getDefaultValue(entry).toComponent()].hl().build())
+            src.msg(DOUBLE_INDENT + INFO_PERMISSIONS_DEFAULT.bTr(data.getDefaultValue(entry).toComponent()).hl().build())
             data.getPermissions(entry).forEach { (k, v) ->
                 src.msg(DOUBLE_INDENT + permission(k, v))
             }

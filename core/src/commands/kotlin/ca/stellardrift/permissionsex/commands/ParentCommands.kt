@@ -40,7 +40,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
             child("add", "a", "+") {
                 val parent = subject(pex,
                     PermissionsEngine.SUBJECTS_GROUP
-                ) key PARENT_ARGS_PARENT()
+                ) key PARENT_ARGS_PARENT.tr()
                 args = parent
                 executor(object : PermissionsExExecutor(pex) {
                     @Throws(CommandException::class)
@@ -52,7 +52,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
                             old.addParent(contexts, parent.key, parent.value)
                         }.thenMessageSubject(src) { send ->
                             send(
-                                PARENT_ADD_SUCCESS(
+                                PARENT_ADD_SUCCESS.tr(
                                     subject(parent),
                                     subject(ref).styled { hl() }, contexts.toComponent()
                                 )
@@ -68,7 +68,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
             child("remove", "rem", "delete", "del", "-") {
                 val parent = subject(pex,
                     PermissionsEngine.SUBJECTS_GROUP
-                ) key PARENT_ARGS_PARENT()
+                ) key PARENT_ARGS_PARENT.tr()
                 args = parent
                 executor(object : PermissionsExExecutor(pex) {
                     @Throws(CommandException::class)
@@ -82,7 +82,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
                         ref.update { old -> old.removeParent(contexts, parent.key, parent.value) }
                             .thenMessageSubject(src) { send ->
                                 send(
-                                    Messages.PARENT_REMOVE_SUCCESS(
+                                    Messages.PARENT_REMOVE_SUCCESS.tr(
                                         subject(parent),
                                         subject(ref).styled { hl() },
                                         contexts.toComponent()
@@ -99,7 +99,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
             child("set", "replace", "=") {
                 val parent = subject(pex,
                     PermissionsEngine.SUBJECTS_GROUP
-                ) key PARENT_ARGS_PARENT()
+                ) key PARENT_ARGS_PARENT.tr()
                 args = parent
                 executor(object : PermissionsExExecutor(pex) {
                     @Throws(CommandException::class)
@@ -115,7 +115,7 @@ internal fun getParentCommand(pex: PermissionsEx<*>) =
                                 .addParent(contexts, parent.key, parent.value)
                         }.thenMessageSubject(src) { send ->
                             send(
-                                Messages.PARENT_SET_SUCCESS(
+                                Messages.PARENT_SET_SUCCESS.tr(
                                     subject(ref).styled { hl() },
                                     subject(parent),
                                     contexts.toComponent()

@@ -29,15 +29,15 @@ import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.subjectIdentifier
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
 import net.kyori.adventure.text.Component
+import org.spongepowered.configurate.util.UnmodifiableCollections
 
 fun contextTransientFlags(pex: PermissionsEx<*>): FlagCommandElementBuilder {
     return StructuralArguments.flags()
         .flag("-transient")
-        .valueFlag(context(pex).key(Messages.COMMON_ARGS_CONTEXT()), "-context", "-contexts", "c")
+        .valueFlag(context(pex).key(Messages.COMMON_ARGS_CONTEXT.tr()), "-context", "-contexts", "c")
 }
 
 fun subjectType(pex: PermissionsEx<*>): Value<String> = SubjectTypeValue(pex)
@@ -48,7 +48,7 @@ class SubjectTypeValue(private val pex: PermissionsEx<*>) : Value<String>(+"") {
         val next = args.next()
         val subjectTypes = pex.knownSubjectTypes()
         if (subjectTypes.firstOrNull { it.name().startsWith(next, ignoreCase = true) } == null) {
-            throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.invoke(next))
+            throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.tr(next))
         }
         return next
     }
@@ -105,9 +105,9 @@ private class SubjectElement(
             }
         }
         if (!subjType.typeInfo.isIdentifierValid(identifier)) {
-            throw args.createError(SUBJECT_ERROR_NAMEINVALID.invoke(identifier, type))
+            throw args.createError(SUBJECT_ERROR_NAMEINVALID.tr(identifier, type))
         }
-        return subjectIdentifier(type, identifier)
+        return UnmodifiableCollections.immutableMapEntry(type, identifier)
     }
 
     override fun tabComplete(
@@ -147,12 +147,12 @@ private class ContextCommandValue(private val pex: PermissionsEx<*>) : Value<Con
         val context = args.next() // TODO: Allow multi-word contexts (<key> <value>)
         val contextSplit = context.split("=", limit = 2).toTypedArray()
         if (contextSplit.size != 2) {
-            throw args.createError(CONTEXT_ERROR_FORMAT.invoke())
+            throw args.createError(CONTEXT_ERROR_FORMAT.tr())
         }
         val def =
             pex.getContextDefinition(contextSplit[0])
-                ?: throw args.createError(CONTEXT_ERROR_TYPE.invoke(contextSplit[0]))
-        return toCtxValue(def, contextSplit[1]) ?: throw args.createError(CONTEXT_ERROR_VALUE.invoke(context))
+                ?: throw args.createError(CONTEXT_ERROR_TYPE.tr(contextSplit[0]))
+        return toCtxValue(def, contextSplit[1]) ?: throw args.createError(CONTEXT_ERROR_VALUE.tr(context))
     }
 
     private fun <T> toCtxValue(

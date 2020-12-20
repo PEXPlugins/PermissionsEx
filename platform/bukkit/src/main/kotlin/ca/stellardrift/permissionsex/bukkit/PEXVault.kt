@@ -21,12 +21,12 @@ import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     init {
@@ -162,7 +162,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun playerInGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         val subj = getUser(player)
-        return subjectIdentifier(PermissionsEngine.SUBJECTS_GROUP, group) in subj.getParents(contextsFrom(subj, world))
+        return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, group) in subj.getParents(contextsFrom(subj, world))
     }
 
     override fun playerAddGroup(world: String, player: OfflinePlayer, group: String): Boolean {

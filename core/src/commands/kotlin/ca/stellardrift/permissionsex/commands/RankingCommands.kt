@@ -59,6 +59,7 @@ import ca.stellardrift.permissionsex.commands.parse.rankLadder
 import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.rank.RankLadder
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.subject.SubjectRef.ToData
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.styled
@@ -74,12 +75,12 @@ import net.kyori.adventure.text.Component.text
 
 fun getPromoteCommand(pex: PermissionsEx<*>) =
     command("promote", "prom") {
-        description = PROMOTE_DESCRIPTION()
+        description = PROMOTE_DESCRIPTION.tr()
         args =
             contextTransientFlags(pex).buildWith(
                 seq(
-                    subject(pex) key COMMON_ARGS_SUBJECT(),
-                    optional(rankLadder(pex) key COMMON_ARGS_RANK_LADDER())
+                    subject(pex) key COMMON_ARGS_SUBJECT.tr(),
+                    optional(rankLadder(pex) key COMMON_ARGS_RANK_LADDER.tr())
                 )
             )
         executor(object : PermissionsExExecutor(pex) {
@@ -89,7 +90,7 @@ fun getPromoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: ToData = getDataRef(src, args, "permissionsex.promote")
+                val ref: SubjectRef.ToData<*> = getDataRef(src, args, "permissionsex.promote")
                 // ." + ladderF); // TODO: Re-add permissions checks for ladders
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName = AtomicReference<RankLadder>()
@@ -99,11 +100,11 @@ fun getPromoteCommand(pex: PermissionsEx<*>) =
                 }.thenAccept { res ->
                     if (!res.changed()) {
                         throw CommandException(
-                            PROMOTE_ERROR_ALREADY_AT_TOP(src.formatter.subject(ref), ladderName.get().toComponent())
+                            PROMOTE_ERROR_ALREADY_AT_TOP.tr(src.formatter.subject(ref), ladderName.get().toComponent())
                         )
                     }
                 }.thenMessageSubject(src) { send ->
-                    send(PROMOTE_SUCCESS(+ref, ladderName.get().toComponent().styled { hl() }))
+                    send(PROMOTE_SUCCESS.tr(+ref, ladderName.get().toComponent().styled { hl() }))
                 }
             }
         })
@@ -111,13 +112,13 @@ fun getPromoteCommand(pex: PermissionsEx<*>) =
 
 fun getDemoteCommand(pex: PermissionsEx<*>) =
     command("demote", "dem") {
-        description = DEMOTE_DESCRIPTION()
+        description = DEMOTE_DESCRIPTION.tr()
         args = contextTransientFlags(pex).buildWith(
             seq(
-                subject(pex) key COMMON_ARGS_SUBJECT(),
+                subject(pex) key COMMON_ARGS_SUBJECT.tr(),
                 optional(
                     rankLadder(pex) key
-                            COMMON_ARGS_RANK_LADDER()
+                            COMMON_ARGS_RANK_LADDER.tr()
                 )
             )
         )
@@ -128,7 +129,7 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: ToData = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
+                val ref: SubjectRef.ToData<*> = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName =
                     AtomicReference<RankLadder>()
@@ -138,11 +139,11 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                 }.thenAccept { res ->
                     if (res.changed()) {
                         throw CommandException(
-                            DEMOTE_ERROR_NOT_ON_LADDER(src.formatter.subject(ref), ladderName.get().toComponent())
+                            DEMOTE_ERROR_NOT_ON_LADDER.tr(src.formatter.subject(ref), ladderName.get().toComponent())
                         )
                     }
                 }.thenMessageSubject(src) { send ->
-                    send(DEMOTE_SUCCESS(+ref, text().append(ladderName.get().toComponent()).hl()))
+                    send(DEMOTE_SUCCESS.tr(+ref, text().append(ladderName.get().toComponent()).hl()))
                 }
             }
         })
@@ -156,7 +157,7 @@ private fun MessageFormatter.deleteButton(
 ): Component {
     return (-"-").button(
         ButtonType.NEGATIVE,
-        RANKING_BUTTON_DELETE_DESCRIPTION(),
+        RANKING_BUTTON_DELETE_DESCRIPTION.tr(),
         "/pex rank ${rank.name} remove ${subject.key} ${subject.value}",
         true
     ).build()
@@ -168,7 +169,7 @@ private fun MessageFormatter.moveDownButton(
 ): Component {
     return (-"▼").button(
         ButtonType.NEUTRAL,
-        RANKING_BUTTON_MOVE_DOWN_DESCRIPTION(),
+        RANKING_BUTTON_MOVE_DOWN_DESCRIPTION.tr(),
         "/pex rank ${rank.name} add -r -1 ${subject.key} ${subject.value}",
         true
     ).build()
@@ -180,7 +181,7 @@ private fun MessageFormatter.moveUpButton(
 ): Component {
     return (-"▲").button(
         ButtonType.NEUTRAL,
-        RANKING_BUTTON_MOVE_UP_DESCRIPTION(),
+        RANKING_BUTTON_MOVE_UP_DESCRIPTION.tr(),
         "/pex rank ${rank.name} add -r 1 ${subject.key} ${subject.value}",
         true
     ).build()
@@ -190,9 +191,9 @@ private fun MessageFormatter.moveUpButton(
 
 internal fun getRankingCommand(pex: PermissionsEx<*>) =
     command("ranking", "rank") {
-        description = RANKING_DESCRIPTION()
+        description = RANKING_DESCRIPTION.tr()
 
-        val rankLadderArg = rankLadder(pex) key COMMON_ARGS_RANK_LADDER()
+        val rankLadderArg = rankLadder(pex) key COMMON_ARGS_RANK_LADDER.tr()
 
         val childBuilder = ChildCommandBuilder()
         with(childBuilder) {

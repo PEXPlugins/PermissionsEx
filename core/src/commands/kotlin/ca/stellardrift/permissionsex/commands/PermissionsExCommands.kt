@@ -68,7 +68,6 @@ import ca.stellardrift.permissionsex.commands.parse.string
 import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.commands.parse.subjectType
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory
-import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.unaryMinus
@@ -101,14 +100,14 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
     }
 
     return command("pex", "permissionsex", "permissions") {
-        description = PEX_DESCRIPTION()
+        description = PEX_DESCRIPTION.tr()
         args = optional(
             firstParsing(
                 childrenArg,
                 contextTransientFlags(pex)
                     .buildWith(
                         seq(
-                            subject(pex) key COMMON_ARGS_SUBJECT(),
+                            subject(pex) key COMMON_ARGS_SUBJECT.tr(),
                             subjectChildrenArg
                         )
                     ),
@@ -116,10 +115,10 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                     .flag("-transient")
                     .buildWith(
                         seq(
-                            subjectType(pex) key COMMON_ARGS_SUBJECT_TYPE(),
-                            literal("list") key PEX_ARGS_LIST(),
+                            subjectType(pex) key COMMON_ARGS_SUBJECT_TYPE.tr(),
+                            literal("list") key PEX_ARGS_LIST.tr(),
                             optional(
-                                string() key PEX_ARGS_FILTER()
+                                string() key PEX_ARGS_FILTER.tr()
                             )
                         )
                     )
@@ -141,8 +140,8 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                         iter = iter.filter { it.startsWith(filter, ignoreCase = true) }
                     }
                     src.msgPaginated(
-                        PEX_LIST_HEADER(subjectType),
-                        PEX_LIST_SUBTITLE(subjectType),
+                        PEX_LIST_HEADER.tr(subjectType),
+                        PEX_LIST_SUBTITLE.tr(subjectType),
                         iter.map { src.formatter.subject(subjectType to it) }.asIterable()
                     )
                 }
@@ -165,9 +164,9 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
 
 private fun getDebugToggleCommand(pex: PermissionsEx<*>) =
     command("debug", "d") {
-        description = DEBUG_DESCRIPTION()
+        description = DEBUG_DESCRIPTION.tr()
         permission = pexPerm("debug")
-        args = optional(string() key PEX_ARGS_FILTER())
+        args = optional(string() key PEX_ARGS_FILTER.tr())
         executor { src, args ->
             val debugEnabled = !pex.debugMode()
             val filter = args.getOne<String>(PEX_ARGS_FILTER)
@@ -175,11 +174,11 @@ private fun getDebugToggleCommand(pex: PermissionsEx<*>) =
                 if (filter != null) {
                     pex.debugMode(debugEnabled, Pattern.compile(filter))
                     send(
-                        DEBUG_SUCCESS_FILTER(debugEnabled, (-filter).hl())
+                        DEBUG_SUCCESS_FILTER.tr(debugEnabled, (-filter).hl())
                     )
                 } else {
                     pex.debugMode(debugEnabled)
-                    send(DEBUG_SUCCESS(debugEnabled))
+                    send(DEBUG_SUCCESS.tr(debugEnabled))
                 }
             }
         }
@@ -187,8 +186,8 @@ private fun getDebugToggleCommand(pex: PermissionsEx<*>) =
 
 private fun getImportCommand(pex: PermissionsEx<*>) =
     command("import") {
-        description = IMPORT_DESCRIPTION()
-        args = optional(string() key IMPORT_ARG_DATA_STORE())
+        description = IMPORT_DESCRIPTION.tr()
+        args = optional(string() key IMPORT_ARG_DATA_STORE.tr())
         permission = pexPerm("import")
         executor(object : PermissionsExExecutor(pex) {
             override fun execute(src: Commander, args: CommandContext) {
@@ -196,17 +195,18 @@ private fun getImportCommand(pex: PermissionsEx<*>) =
                 if (backendRequested == null) { // We want to list available conversions
                     src.formatter.apply {
                         src.msgPaginated(
-                            IMPORT_LISTING_HEADER(),
-                            IMPORT_LISTING_SUBTITLE((-"/pex import [id]").hl().build()),
+                            IMPORT_LISTING_HEADER.tr(),
+                            IMPORT_LISTING_SUBTITLE.tr((-"/pex import [id]").hl().build()),
                             pex.availableConversions
                                 .map { conv ->
-                                    component {
-                                        append(conv.description())
-                                        append(+" - /pex import ")
-                                        append((-conv.store().name).callback {
-                                            it.msg(IMPORT_ACTION_BEGINNING(conv.description()))
+                                    text {
+                                        it.append(conv.description())
+                                            .append(+" - /pex import ")
+                                            .append((-conv.store().name)
+                                                .callback {
+                                            it.msg(IMPORT_ACTION_BEGINNING.tr(conv.description()))
                                             pex.importDataFrom(conv)
-                                                .thenMessageSubject(it, IMPORT_ACTION_SUCCESS(conv.description()))
+                                                .thenMessageSubject(it, IMPORT_ACTION_SUCCESS.tr(conv.description()))
                                         })
                                     }
                                 })
@@ -215,20 +215,20 @@ private fun getImportCommand(pex: PermissionsEx<*>) =
                     for (result in pex.availableConversions) {
                         if (result.store().name.equals(backendRequested, ignoreCase = true)) {
                             src.msg { send ->
-                                send(IMPORT_ACTION_BEGINNING(result.description()))
+                                send(IMPORT_ACTION_BEGINNING.tr(result.description()))
                             }
-                            pex.importDataFrom(result).thenMessageSubject(src, IMPORT_ACTION_SUCCESS(result.description()))
+                            pex.importDataFrom(result).thenMessageSubject(src, IMPORT_ACTION_SUCCESS.tr(result.description()))
                             return
                         }
                     }
                     if (pex.config.getDataStore(backendRequested) == null) {
-                        throw CommandException(IMPORT_ERROR_UNKNOWN_STORE(backendRequested))
+                        throw CommandException(IMPORT_ERROR_UNKNOWN_STORE.tr(backendRequested))
                     }
                     src.msg { send ->
-                        send(IMPORT_ACTION_BEGINNING(backendRequested))
+                        send(IMPORT_ACTION_BEGINNING.tr(backendRequested))
                     }
                     pex.importDataFrom(backendRequested)
-                        .thenMessageSubject(src, IMPORT_ACTION_SUCCESS(backendRequested))
+                        .thenMessageSubject(src, IMPORT_ACTION_SUCCESS.tr(backendRequested))
                 }
             }
         })
@@ -236,22 +236,22 @@ private fun getImportCommand(pex: PermissionsEx<*>) =
 
 private fun getReloadCommand(pex: PermissionsEx<*>): CommandSpec {
     return command("reload", "rel") {
-        description = RELOAD_DESCRIPTION()
+        description = RELOAD_DESCRIPTION.tr()
         permission = pexPerm("reload")
         executor { src, _ ->
-            src.msg(RELOAD_ACTION_BEGIN())
-            pex.reload().thenMessageSubject(src, RELOAD_ACTION_SUCCESS())
+            src.msg(RELOAD_ACTION_BEGIN.tr())
+            pex.reload().thenMessageSubject(src, RELOAD_ACTION_SUCCESS.tr())
         }
     }
 }
 
 private fun getCallbackTestCommand(): CommandSpec {
     return command("cbtest", "test") {
-        description = CALLBACKTEST_DESCRIPTION()
+        description = CALLBACKTEST_DESCRIPTION.tr()
         executor { src, _ ->
             src.msg { send ->
-                send(CALLBACKTEST_CBTEXT.get().callback { sender ->
-                    sender.msg(CALLBACKTEST_SUCCESS())
+                send(CALLBACKTEST_CBTEXT.bTr().callback { sender ->
+                    sender.msg(CALLBACKTEST_SUCCESS.tr())
                 }.build())
             }
         }
@@ -260,7 +260,7 @@ private fun getCallbackTestCommand(): CommandSpec {
 
 private fun getVersionCommand(pex: PermissionsEx<*>): CommandSpec {
     return command("version") {
-        description = VERSION_DESCRIPTION()
+        description = VERSION_DESCRIPTION.tr()
         permission = pexPerm("version")
         args(flags().flag("-verbose", "v").buildWith(none()))
         executor { src, args ->
@@ -270,15 +270,15 @@ private fun getVersionCommand(pex: PermissionsEx<*>): CommandSpec {
                     it.content("PermissionsEx v")
                     it.append((-pex.version).hl())
                 })
-                send(VERSION_RESPONSE_ACTIVE_DATA_STORE(-pex.config.defaultDataStore.name))
-                send(VERSION_RESPONSE_AVAILABLE_DATA_STORES(-DataStoreFactory.all().keys.toString()))
+                send(VERSION_RESPONSE_ACTIVE_DATA_STORE.tr(-pex.config.defaultDataStore.name))
+                send(VERSION_RESPONSE_AVAILABLE_DATA_STORES.tr(-DataStoreFactory.all().keys.toString()))
                 send(+"")
                 if (verbose) {
-                    send(VERSION_BASEDIRS_HEADER.get().header().build())
-                    send(VERSION_BASEDIRS_CONFIG(pex.baseDirectory(BaseDirectoryScope.CONFIG)))
-                    send(VERSION_BASEDIRS_JAR(pex.baseDirectory(BaseDirectoryScope.JAR)))
-                    send(VERSION_BASEDIRS_SERVER(pex.baseDirectory(BaseDirectoryScope.SERVER)))
-                    send(VERSION_BASEDIRS_WORLDS(pex.baseDirectory(BaseDirectoryScope.WORLDS)))
+                    send(VERSION_BASEDIRS_HEADER.bTr().header().build())
+                    send(VERSION_BASEDIRS_CONFIG.tr(pex.baseDirectory(BaseDirectoryScope.CONFIG)))
+                    send(VERSION_BASEDIRS_JAR.tr(pex.baseDirectory(BaseDirectoryScope.JAR)))
+                    send(VERSION_BASEDIRS_SERVER.tr(pex.baseDirectory(BaseDirectoryScope.SERVER)))
+                    send(VERSION_BASEDIRS_WORLDS.tr(pex.baseDirectory(BaseDirectoryScope.WORLDS)))
                 }
             }
         }

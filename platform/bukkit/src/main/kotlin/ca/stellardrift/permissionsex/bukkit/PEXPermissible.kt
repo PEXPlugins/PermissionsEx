@@ -23,7 +23,6 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.context.TimeContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.NodeTree
-import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -35,6 +34,7 @@ import org.bukkit.permissions.PermissionAttachment
 import org.bukkit.permissions.PermissionAttachmentInfo
 import org.bukkit.permissions.PermissionDefault
 import org.bukkit.plugin.Plugin
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 /**
  * Implementation of Permissible using PEX for data
@@ -213,7 +213,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
              */
             object : Metapermission(Regex("groups?\\.(?<name>.+)")) {
                 override fun isMatch(result: MatchResult, subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Boolean {
-                    return subjectIdentifier(PermissionsEngine.SUBJECTS_GROUP, result.groups["name"]!!.value) in subj.getParents(contexts)
+                    return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, result.groups["name"]!!.value) in subj.getParents(contexts)
                 }
 
                 override fun getValues(subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Sequence<String> {

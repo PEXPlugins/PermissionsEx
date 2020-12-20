@@ -20,7 +20,6 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile
-import ca.stellardrift.permissionsex.util.ContextSet
 import com.google.common.collect.ImmutableSet
 import io.leangen.geantyref.TypeToken
 import java.util.UUID
@@ -29,6 +28,8 @@ import org.spongepowered.api.event.EventManager
 import org.spongepowered.api.profile.GameProfile
 import org.spongepowered.api.service.context.Context
 import org.spongepowered.plugin.PluginContainer
+
+typealias ContextSet = Set<ContextValue<*>>
 
 class SpongeMinecraftProfile(private val profile: GameProfile) : MinecraftProfile {
     override fun uuid(): UUID = profile.uniqueId

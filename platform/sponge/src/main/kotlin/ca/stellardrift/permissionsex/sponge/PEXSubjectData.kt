@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.sponge
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.Change
-import ca.stellardrift.permissionsex.util.ContextSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap

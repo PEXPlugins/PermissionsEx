@@ -20,7 +20,6 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.invoke
 import ca.stellardrift.permissionsex.util.join
@@ -125,10 +124,10 @@ interface Commander : ForwardingAudience.Single {
     @JvmDefault
     @Throws(CommandException::class)
     fun checkSubjectPermission(
-        subject: SubjectIdentifier,
+        subject: SubjectRef<*>,
         basePermission: String
     ) {
-        if (!hasPermission("$basePermission.${subject.key}.${subject.value}") &&
+        if (!hasPermission("$basePermission.${subject.type().name()}.${subject.serializedIdentifier()}") &&
                 (subject != subjectIdentifier || !hasPermission("$basePermission.own"))
         ) {
             throw CommandException(Messages.EXECUTOR_ERROR_NO_PERMISSION.tr())
