@@ -39,30 +39,30 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return this.name;
     }
 
     @Override
     public final ImmutableSubjectData promote(Set<ContextValue<?>> contexts, ImmutableSubjectData input) {
-        if (getRanks().isEmpty()) {
+        if (ranks().isEmpty()) {
             return input;
         }
 
         List<Entry<String, String>> parents = input.getParents(contexts);
         if (parents.isEmpty()) {
-            return input.addParent(contexts, getRanks().get(0).getKey(), getRanks().get(0).getValue());
+            return input.addParent(contexts, ranks().get(0).getKey(), ranks().get(0).getValue());
         } else {
             int index;
             parents = new ArrayList<>(parents);
             boolean found = false;
             for (ListIterator<Entry<String, String>> it = parents.listIterator(); it.hasNext();) {
                 Entry<String, String> parent = it.next();
-                if ((index = getRanks().indexOf(parent)) > -1) {
-                    if (index == getRanks().size() - 1) {
+                if ((index = ranks().indexOf(parent)) > -1) {
+                    if (index == ranks().size() - 1) {
                         return input;
                     } else {
-                        it.set(getRanks().get(index + 1));
+                        it.set(ranks().get(index + 1));
                         found = true;
                     }
                 }
@@ -70,14 +70,14 @@ public abstract class AbstractRankLadder implements RankLadder {
             if (found) {
                 return input.setParents(contexts, parents); // Promotion happened
             } else {
-                return input.addParent(contexts, getRanks().get(0).getKey(), getRanks().get(0).getValue());
+                return input.addParent(contexts, ranks().get(0).getKey(), ranks().get(0).getValue());
             }
         }
     }
 
     @Override
     public final ImmutableSubjectData demote(Set<ContextValue<?>> contexts, ImmutableSubjectData input) {
-        if (getRanks().isEmpty()) {
+        if (ranks().isEmpty()) {
             return input;
         }
 
@@ -90,12 +90,12 @@ public abstract class AbstractRankLadder implements RankLadder {
             boolean found = false;
             for (ListIterator<Entry<String, String>> it = parents.listIterator(); it.hasNext();) {
                 Entry<String, String> parent = it.next();
-                if ((index = getRanks().indexOf(parent)) > -1) {
+                if ((index = ranks().indexOf(parent)) > -1) {
                     if (index == 0) {
                         // At bottom of rank ladder, remove the rank entirely
                         it.remove();
                     } else {
-                        it.set(getRanks().get(index - 1));
+                        it.set(ranks().get(index - 1));
                     }
                     found = true;
                 }
@@ -110,12 +110,12 @@ public abstract class AbstractRankLadder implements RankLadder {
 
     @Override
     public final boolean isOnLadder(Set<ContextValue<?>> contexts, ImmutableSubjectData subject) {
-        if (getRanks().isEmpty()) {
+        if (ranks().isEmpty()) {
             return false;
         }
 
         for (Entry<String, String> par : subject.getParents(contexts)) {
-            if (getRanks().indexOf(par) != -1) {
+            if (ranks().indexOf(par) != -1) {
                 return true;
             }
         }
@@ -123,33 +123,33 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final int indexOfRank(Entry<String, String> subject) {
-        return getRanks().indexOf(subject);
+    public final int indexOf(Entry<String, String> subject) {
+        return ranks().indexOf(subject);
     }
 
     @Override
-    public final RankLadder addRank(Entry<String, String> subject) {
-        int indexOf = getRanks().indexOf(subject);
+    public final RankLadder with(Entry<String, String> subject) {
+        int indexOf = ranks().indexOf(subject);
         if (indexOf != -1) {
-            List<Entry<String, String>> ents = new ArrayList<>(this.getRanks());
+            List<Entry<String, String>> ents = new ArrayList<>(this.ranks());
             ents.remove(indexOf);
             ents.add(subject);
             return newWithRanks(ents);
         } else {
-            return newWithRanks(ImmutableList.<Entry<String, String>>builder().addAll(this.getRanks()).add(subject).build());
+            return newWithRanks(ImmutableList.<Entry<String, String>>builder().addAll(this.ranks()).add(subject).build());
         }
 
     }
 
 
     @Override
-    public final RankLadder addRankAt(Entry<String, String> subject, int index) {
-        if (index > getRanks().size() || index < 0) {
+    public final RankLadder with(Entry<String, String> subject, int index) {
+        if (index > ranks().size() || index < 0) {
             return this;
         }
 
-        int indexOf = getRanks().indexOf(subject);
-        final List<Entry<String, String>> newEnts = new ArrayList<>(getRanks());
+        int indexOf = ranks().indexOf(subject);
+        final List<Entry<String, String>> newEnts = new ArrayList<>(ranks());
         newEnts.add(index, subject);
         if (indexOf != -1) {
             if (indexOf >= index) {
@@ -161,27 +161,27 @@ public abstract class AbstractRankLadder implements RankLadder {
     }
 
     @Override
-    public final RankLadder removeRank(Entry<String, String> subject) {
-        int indexOf = getRanks().indexOf(subject);
+    public final RankLadder without(Entry<String, String> subject) {
+        int indexOf = ranks().indexOf(subject);
         if (indexOf == -1) {
             return this;
         } else {
-            List<Entry<String, String>> newRanks = new ArrayList<>(getRanks());
+            List<Entry<String, String>> newRanks = new ArrayList<>(ranks());
             newRanks.remove(indexOf);
             return newWithRanks(newRanks);
         }
     }
 
     @Override
-    public abstract List<? extends Entry<String, String>> getRanks();
+    public abstract List<? extends Entry<String, String>> ranks();
 
     protected abstract RankLadder newWithRanks(List<Entry<String,String>> ents);
 
     @Override
     public final Component asComponent() {
-        return Component.text(build -> build.content(getName())
+        return Component.text(build -> build.content(name())
                 .decoration(TextDecoration.BOLD, true)
                 .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.tr()))
-                .clickEvent(ClickEvent.runCommand("/pex rank " + getName())));
+                .clickEvent(ClickEvent.runCommand("/pex rank " + name())));
     }
 }

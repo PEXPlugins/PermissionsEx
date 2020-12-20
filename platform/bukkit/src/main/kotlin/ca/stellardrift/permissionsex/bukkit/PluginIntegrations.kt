@@ -34,7 +34,7 @@ import org.bukkit.plugin.ServicePriority
 // TODO: Make region parents work properly
 class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleContextDefinition("region") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
-        (subject.associatedObject as? Player)?.apply {
+        (subject.associatedObject() as? Player)?.apply {
             val wgPlayer = plugin.wrapPlayer(this)
             val regionProvider = WorldGuard.getInstance().platform.regionContainer[wgPlayer.world]
             if (regionProvider != null) {
@@ -53,7 +53,7 @@ class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleCont
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<String> {
-        return (subject.associatedObject as? Player)?.run {
+        return (subject.associatedObject() as? Player)?.run {
             val wgPlayer = plugin.wrapPlayer(this)
             (WorldGuard.getInstance().platform.regionContainer[wgPlayer.world]?.regions?.keys)
         } ?: setOf()

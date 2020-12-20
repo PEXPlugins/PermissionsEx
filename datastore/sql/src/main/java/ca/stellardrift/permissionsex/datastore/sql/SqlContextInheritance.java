@@ -43,20 +43,20 @@ public class SqlContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public List<ContextValue<?>> getParents(ContextValue<?> context) {
+    public List<ContextValue<?>> parents(ContextValue<?> context) {
         List<ContextValue<?>> ret = inheritance.get(context);
         return ret == null ? Collections.emptyList() : ret;
     }
 
     @Override
-    public SqlContextInheritance setParents(final ContextValue<?> context, final @Nullable List<ContextValue<?>> parents) {
+    public SqlContextInheritance parents(final ContextValue<?> context, final @Nullable List<ContextValue<?>> parents) {
         if (parents == null) {
             return new SqlContextInheritance(this.inheritance.minus(context), this.updatesToPerform.get().plus((dao, inherit) -> {
                 dao.setContextInheritance(context, null);
             }));
         } else {
             return new SqlContextInheritance(this.inheritance.plus(context, parents), this.updatesToPerform.get().plus((dao, inherit) -> {
-                List<ContextValue<?>> newParents = inherit.getParents(context);
+                List<ContextValue<?>> newParents = inherit.parents(context);
                 if (!newParents.isEmpty()) {
                     dao.setContextInheritance(context, newParents);
                 }
@@ -65,7 +65,7 @@ public class SqlContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public Map<ContextValue<?>, List<ContextValue<?>>> getAllParents() {
+    public Map<ContextValue<?>, List<ContextValue<?>>> allParents() {
         return inheritance;
     }
 

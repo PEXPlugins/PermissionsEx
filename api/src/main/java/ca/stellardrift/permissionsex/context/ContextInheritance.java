@@ -37,7 +37,7 @@ public interface ContextInheritance {
      * @return Any parent contexts, or an empty list
      * @since 2.0.0
      */
-    List<ContextValue<?>> getParents(ContextValue<?> context);
+    List<ContextValue<?>> parents(ContextValue<?> context);
 
     /**
      * Set the parents for a specific context.
@@ -47,7 +47,7 @@ public interface ContextInheritance {
      * @return A new context inheritance object with the updated parents
      * @since 2.0.0
      */
-    ContextInheritance setParents(ContextValue<?> context, @Nullable List<ContextValue<?>> parents);
+    ContextInheritance parents(ContextValue<?> context, @Nullable List<ContextValue<?>> parents);
 
     /**
      * Get all parent data as a map from context to list of parent contexts.
@@ -57,6 +57,6 @@ public interface ContextInheritance {
      * @return parents
      * @since 2.0.0
      */
-    Map<ContextValue<?>, List<ContextValue<?>>> getAllParents();
+    Map<ContextValue<?>, List<ContextValue<?>>> allParents();
 
 }

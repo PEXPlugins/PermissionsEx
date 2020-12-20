@@ -94,7 +94,7 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
             }
             final Set<ContextValue<?>> accumulator = new HashSet<>();
             final CalculatedSubject subj = asCalculatedSubject();
-            for (ContextDefinition<?> def : PermissionsExMod.INSTANCE.getManager().getRegisteredContextTypes()) {
+            for (ContextDefinition<?> def : PermissionsExMod.INSTANCE.getManager().registeredContextTypes()) {
                 pex$handleSingleCtx(subj, def, accumulator);
             }
             return ImmutableSet.copyOf(accumulator);

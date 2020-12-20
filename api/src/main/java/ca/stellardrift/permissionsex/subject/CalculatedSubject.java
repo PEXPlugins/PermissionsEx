@@ -36,22 +36,22 @@ public interface CalculatedSubject {
      *
      * @return The identifier
      */
-    SubjectRef<?> getIdentifier();
+    SubjectRef<?> identifier();
 
     /**
      * Get the subject type holding this calculated subject.
      *
      * @return The subject type
      */
-    SubjectTypeCollection<?> getType();
+    SubjectTypeCollection<?> containingType();
 
     /**
      * Get the permissions tree in this subject's active contexts.
      *
      * @return A node tree with the calculated permissions
      */
-    default NodeTree getPermissions() {
-        return getPermissions(getActiveContexts());
+    default NodeTree permissions() {
+        return permissions(activeContexts());
     }
 
     /**
@@ -60,7 +60,7 @@ public interface CalculatedSubject {
      * @param contexts The contexts to get permissions in
      * @return A node tree with the calculated permissions
      */
-    NodeTree getPermissions(Set<ContextValue<?>> contexts);
+    NodeTree permissions(Set<ContextValue<?>> contexts);
 
     /**
      * Get all options for this subject's active contexts. Options are plain strings and therefore
@@ -68,8 +68,8 @@ public interface CalculatedSubject {
      *
      * @return A map of option keys to values
      */
-    default Map<String, String> getOptions() {
-        return getOptions(getActiveContexts());
+    default Map<String, String> options() {
+        return options(activeContexts());
     }
 
     /**
@@ -79,15 +79,15 @@ public interface CalculatedSubject {
      * @param contexts The contexts to query
      * @return A map of option keys to values
      */
-    Map<String, String> getOptions(Set<ContextValue<?>> contexts);
+    Map<String, String> options(Set<ContextValue<?>> contexts);
 
     /**
      * Get a list of all parents inheriting from this subject in the active contexts.
      *
      * @return The list of parents that apply to this subject
      */
-    default List<Map.Entry<String, String>> getParents() {
-        return getParents(getActiveContexts());
+    default List<Map.Entry<String, String>> parents() {
+        return parents(activeContexts());
     }
 
     /**
@@ -96,11 +96,11 @@ public interface CalculatedSubject {
      * @param contexts The contexts to check
      * @return The list of parents that apply to this subject
      */
-    List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> contexts);
+    List<Map.Entry<String, String>> parents(Set<ContextValue<?>> contexts);
 
-    Set<ContextValue<?>> getActiveContexts();
+    Set<ContextValue<?>> activeContexts();
 
-    CompletableFuture<Set<ContextValue<?>>> getUsedContextValues();
+    CompletableFuture<Set<ContextValue<?>>> usedContextValues();
 
     /**
      * Query a specific permission in this subject's active contexts
@@ -112,8 +112,8 @@ public interface CalculatedSubject {
      * @param permission The permission to query
      * @return The permission value. &lt;0 evaluates to false, 0 is undefined, and &gt;0 evaluates to true.
      */
-    default int getPermission(final String permission) {
-        return getPermission(getActiveContexts(), permission);
+    default int permission(final String permission) {
+        return permission(activeContexts(), permission);
     }
 
     /**
@@ -127,7 +127,7 @@ public interface CalculatedSubject {
      * @param permission The permission to query
      * @return The permission value. &lt;0 evaluates to false, 0 is undefined, and &gt;0 evaluates to true.
      */
-    int getPermission(Set<ContextValue<?>> contexts, String permission);
+    int permission(Set<ContextValue<?>> contexts, String permission);
 
     /**
      * Query whether this subject has a specific permission in this subject's active contexts
@@ -140,7 +140,7 @@ public interface CalculatedSubject {
      * @return Whether the subject has a true permissions value
      */
     default boolean hasPermission(final String permission) {
-        return hasPermission(getActiveContexts(), permission);
+        return hasPermission(activeContexts(), permission);
     }
 
     /**
@@ -165,8 +165,8 @@ public interface CalculatedSubject {
      * @param option The option to query
      * @return The option, if set
      */
-    default Optional<String> getOption(final String option) {
-        return getOption(getActiveContexts(), option);
+    default Optional<String> option(final String option) {
+        return option(activeContexts(), option);
     }
 
     /**
@@ -179,7 +179,7 @@ public interface CalculatedSubject {
      * @param option The option to query
      * @return The option, if set
      */
-    Optional<String> getOption(Set<ContextValue<?>> contexts, String option);
+    Optional<String> option(Set<ContextValue<?>> contexts, String option);
 
     /**
      * Get an option from this subject. The value will be returned as a {@link ConfigurationNode} to
@@ -191,8 +191,8 @@ public interface CalculatedSubject {
      * @param option The option to query
      * @return The option, if set
      */
-    default ConfigurationNode getOptionNode(final String option) {
-        return getOptionNode(getActiveContexts(), option);
+    default ConfigurationNode optionNode(final String option) {
+        return optionNode(activeContexts(), option);
     }
 
     /**
@@ -205,7 +205,7 @@ public interface CalculatedSubject {
      * @param option The option to query
      * @return The option, if set
      */
-    ConfigurationNode getOptionNode(Set<ContextValue<?>> contexts, String option);
+    ConfigurationNode optionNode(Set<ContextValue<?>> contexts, String option);
 
     /**
      * Access this subject's persistent data.
@@ -229,7 +229,7 @@ public interface CalculatedSubject {
      *
      * @return a native object
      */
-    @Nullable Object getAssociatedObject();
+    @Nullable Object associatedObject();
 
     /**
      * Register a listener that will receive updates to this subject.

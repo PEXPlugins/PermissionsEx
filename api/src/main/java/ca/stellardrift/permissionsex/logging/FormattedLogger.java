@@ -32,7 +32,7 @@ public interface FormattedLogger extends Logger {
      * @return the locale
      * @since 2.0.0
      */
-    Locale getLogLocale();
+    Locale logLocale();
 
     /**
      * Get the language that will be used to log a specific {@link Marker}.
@@ -41,13 +41,13 @@ public interface FormattedLogger extends Logger {
      * @return the marker
      * @since 2.0.0
      */
-    Locale getLogLocale(final @Nullable Marker marker);
+    Locale logLocale(final @Nullable Marker marker);
 
-    @Nullable String getPrefix();
+    @Nullable String prefix();
 
-    void setPrefix(@Nullable String prefix);
+    void prefix(@Nullable String prefix);
 
-    ComponentSerializer<Component, ?, String> getSerializer();
+    ComponentSerializer<Component, ?, String> serializer();
 
     default String formatText(Component component) {
         return formatText(component, null);

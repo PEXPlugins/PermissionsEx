@@ -73,7 +73,7 @@ public final class ContextValue<V> {
         if (this.definition != null && !(this.definition instanceof SimpleContextDefinition.Fallback)) {
             return this.parsedValue != null;
         }
-        final @Nullable ContextDefinition<V> definition = (ContextDefinition<V>) provider.getContextDefinition(this.key);
+        final @Nullable ContextDefinition<V> definition = (ContextDefinition<V>) provider.contextDefinition(this.key);
         if (definition != null) {
             this.definition = definition;
             this.parsedValue = definition.deserialize(this.rawValue);
@@ -106,7 +106,7 @@ public final class ContextValue<V> {
             return tempParsed;
         }
 
-        final @Nullable ContextDefinition<?> def = provider.getContextDefinition(this.key);
+        final @Nullable ContextDefinition<?> def = provider.contextDefinition(this.key);
         tempParsed = def == null ? null : (V) def.deserialize(this.rawValue);
         if (tempParsed == null) {
             throw new RuntimeException("No definition for context " + this.key);

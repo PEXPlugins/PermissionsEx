@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.subject;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -40,7 +39,7 @@ public interface SubjectDataCache<I> {
      * @return the subject type this cache contains data for
      * @since 2.0.0
      */
-    SubjectType<I> getType();
+    SubjectType<I> type();
 
     /**
      * Get data for a given subject.
@@ -48,14 +47,14 @@ public interface SubjectDataCache<I> {
      * <p>This will return a data object even if the subject is not registered; the data object will
      * just be empty.</p>
      *
-     * <p>For most longer-lifetime use cases, {@link #getReference(Object)} will be the preferred
+     * <p>For most longer-lifetime use cases, {@link #referenceTo(Object)} will be the preferred
      * method to get a reference to the latest subject data.</p>
      *
      * @param identifier The identifier of the subject to query
      * @param listener A callback that will be notified whenever a change is made to the data object
      * @return A future returning when the data is available
      */
-    CompletableFuture<ImmutableSubjectData> getData(final I identifier, final @Nullable Consumer<ImmutableSubjectData> listener);
+    CompletableFuture<ImmutableSubjectData> data(final I identifier, final @Nullable Consumer<ImmutableSubjectData> listener);
 
     /**
      * Get a reference to subject data for a given subject. The reference will update as changes are made to the backing
@@ -64,7 +63,7 @@ public interface SubjectDataCache<I> {
      * @param identifier The identifier of the subject to get data for
      * @return A future returning with a full reference to the given subject's data.
      */
-    CompletableFuture<? extends SubjectRef.ToData<I>> getReference(final I identifier);
+    CompletableFuture<? extends SubjectRef.ToData<I>> referenceTo(final I identifier);
 
     /**
      * Get a reference to subject data for a given subject
@@ -73,7 +72,7 @@ public interface SubjectDataCache<I> {
      * @param strongListeners Whether to hold listeners to this subject data even after they would be otherwise GC'd
      * @return A future completing with the subject data reference
      */
-    CompletableFuture<? extends SubjectRef.ToData<I>> getReference(final I identifier, boolean strongListeners);
+    CompletableFuture<? extends SubjectRef.ToData<I>> referenceTo(final I identifier, boolean strongListeners);
 
     /**
      * Update data for a given subject, acting on the latest data available.

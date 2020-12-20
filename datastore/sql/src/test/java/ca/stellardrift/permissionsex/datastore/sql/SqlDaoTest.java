@@ -462,19 +462,19 @@ public class SqlDaoTest extends PermissionsExTest {
         try (SqlDao dao = sqlStore.getDao()) {
             // resolve, set, set to null, add new
             SqlContextInheritance inherit = dao.getContextInheritance();
-            assertTrue(inherit.getAllParents().isEmpty());
+            assertTrue(inherit.allParents().isEmpty());
 
             dao.setContextInheritance(worldNether, worldNetherParents);
 
             inherit = dao.getContextInheritance();
-            assertEquals(worldNetherParents, inherit.getParents(worldNether));
+            assertEquals(worldNetherParents, inherit.parents(worldNether));
 
-            inherit = inherit.setParents(serverMinigames, serverTagMinigamesParents);
+            inherit = inherit.parents(serverMinigames, serverTagMinigamesParents);
             inherit.doUpdate(dao);
             inherit = dao.getContextInheritance();
 
-            assertEquals(serverTagMinigamesParents, inherit.getParents(serverMinigames));
-            assertEquals(worldNetherParents, inherit.getParents(worldNether));
+            assertEquals(serverTagMinigamesParents, inherit.parents(serverMinigames));
+            assertEquals(worldNetherParents, inherit.parents(worldNether));
 
         }
     }
@@ -490,22 +490,22 @@ public class SqlDaoTest extends PermissionsExTest {
 
             assertFalse(dao.hasEntriesForRankLadder("uncreated"));
             RankLadder uncreated = dao.getRankLadder("uncreated");
-            assertTrue(uncreated.getRanks().isEmpty());
+            assertTrue(uncreated.ranks().isEmpty());
 
-            dao.setRankLadder("test1", dao.getRankLadder("test1").addRank(guest).addRank(novice).addRank(member).addRank(vip));
+            dao.setRankLadder("test1", dao.getRankLadder("test1").with(guest).with(novice).with(member).with(vip));
             RankLadder testLadder = dao.getRankLadder("test1");
-            Assertions.assertEquals(ImmutableList.of(guest, novice, member, vip), testLadder.getRanks());
+            Assertions.assertEquals(ImmutableList.of(guest, novice, member, vip), testLadder.ranks());
 
-            dao.setRankLadder("test1", dao.getRankLadder("another").addRank(potato));
+            dao.setRankLadder("test1", dao.getRankLadder("another").with(potato));
             testLadder = dao.getRankLadder("test1");
-            Assertions.assertEquals(ImmutableList.of(potato), testLadder.getRanks());
+            Assertions.assertEquals(ImmutableList.of(potato), testLadder.ranks());
 
             assertEquals(HashTreePSet.singleton("test1"), dao.getAllRankLadderNames());
 
             dao.setRankLadder("test1", null);
             testLadder = dao.getRankLadder("test1");
             assertEquals(ImmutableSet.of(), dao.getAllRankLadderNames());
-            assertTrue(testLadder.getRanks().isEmpty());
+            assertTrue(testLadder.ranks().isEmpty());
         }
 
     }

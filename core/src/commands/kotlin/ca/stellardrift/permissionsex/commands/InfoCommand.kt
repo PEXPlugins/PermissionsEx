@@ -61,7 +61,7 @@ internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : 
     @Throws(CommandException::class)
     override fun execute(src: Commander, args: CommandContext) {
         val subject = subjectOrSelf(src, args)
-        src.checkSubjectPermission(subject.identifier, "permissionsex.info")
+        src.checkSubjectPermission(subject.identifier(), "permissionsex.info")
         val transientData = subject.transientData().get()
         val data = subject.data().get()
         src.msg { send ->
@@ -70,13 +70,13 @@ internal class SubjectInfoPrintingExecutor constructor(pex: PermissionsEx<*>) : 
             }
             send(INFO_HEADER.bTr(subject(subject)).header().build())
             if (pex.debugMode()) {
-                val associatedObject = subject.associatedObject
+                val associatedObject = subject.associatedObject()
                 if (associatedObject != null) {
                     send(INFO_ASSOCIATED_OBJECT.bTr().hl().append(+associatedObject.toString()).build())
                 }
             }
-            send(hlKeyVal(INFO_ACTIVE_CONTEXTS.bTr(), +subject.activeContexts.toString()))
-            send(hlKeyVal(INFO_ACTIVE_USED_CONTEXTS.bTr(), +subject.usedContextValues.join().toString()))
+            send(hlKeyVal(INFO_ACTIVE_CONTEXTS.bTr(), +subject.activeContexts().toString()))
+            send(hlKeyVal(INFO_ACTIVE_USED_CONTEXTS.bTr(), +subject.usedContextValues().join().toString()))
 
             if (data.allPermissions.isNotEmpty() || data.allDefaultValues.isNotEmpty()) {
                 head(INFO_HEADER_PERMISSIONS)

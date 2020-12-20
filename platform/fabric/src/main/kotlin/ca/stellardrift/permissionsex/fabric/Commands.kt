@@ -162,7 +162,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     override fun hasPermission(permission: Permission): Boolean {
         var ret = 0
         if (src is PermissionCommandSourceBridge<*>) {
-            ret = (src as PermissionCommandSourceBridge<*>).asCalculatedSubject().getPermission(permission.value)
+            ret = (src as PermissionCommandSourceBridge<*>).asCalculatedSubject().permission(permission.value)
         }
         if (ret == 0) { // op status
             ret = (src as ServerCommandSourceAccess).level

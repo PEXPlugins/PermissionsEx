@@ -52,7 +52,7 @@ abstract class PermissionsExExecutor protected constructor(protected val pex: Pe
     @Throws(CommandException::class)
     protected fun getDataRef(src: Commander, args: CommandContext, permission: String): SubjectRef.ToData<*> {
         val subject = subjectOrSelf(src, args)
-        src.checkSubjectPermission(subject.identifier, permission)
+        src.checkSubjectPermission(subject.identifier(), permission)
         return if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData() else subject.data()
     }
 }

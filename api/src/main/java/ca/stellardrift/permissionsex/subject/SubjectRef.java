@@ -42,7 +42,7 @@ public interface SubjectRef<I> {
      * @since 2.0.0
      */
     static <I> SubjectRef<I> subject(final SubjectTypeCollection<I> type, final I identifier) {
-        return new SubjectRefImpl<>(type.getType(), identifier);
+        return new SubjectRefImpl<>(type.type(), identifier);
     }
 
     /**

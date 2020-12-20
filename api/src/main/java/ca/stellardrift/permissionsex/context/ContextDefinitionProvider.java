@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 public interface ContextDefinitionProvider {
     Set<ContextValue<?>> GLOBAL_CONTEXT = Collections.emptySet();
 
-    CompletableFuture<Set<ContextDefinition<?>>> getUsedContextTypes(); // TODO: part of PermissionsEngine instead?
+    CompletableFuture<Set<ContextDefinition<?>>> usedContextTypes(); // TODO: part of PermissionsEngine instead?
 
     /**
      * Register a new context type that can be queried. If there is another context type registered with the same key
@@ -57,11 +57,11 @@ public interface ContextDefinitionProvider {
      *
      * @return The registered context types
      */
-    List<ContextDefinition<?>> getRegisteredContextTypes();
+    List<ContextDefinition<?>> registeredContextTypes();
 
-    default @Nullable ContextDefinition<?> getContextDefinition(final String definitionKey) {
-        return getContextDefinition(definitionKey, false);
+    default @Nullable ContextDefinition<?> contextDefinition(final String definitionKey) {
+        return contextDefinition(definitionKey, false);
     }
 
-    @Nullable ContextDefinition<?> getContextDefinition(String definitionKey, boolean allowFallbacks);
+    @Nullable ContextDefinition<?> contextDefinition(String definitionKey, boolean allowFallbacks);
 }

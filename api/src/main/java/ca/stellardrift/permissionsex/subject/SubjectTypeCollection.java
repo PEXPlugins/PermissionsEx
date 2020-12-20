@@ -34,7 +34,7 @@ public interface SubjectTypeCollection<I> {
      * @return the active type information
      * @since 2.0.0
      */
-    SubjectType<I> getType();
+    SubjectType<I> type();
 
     /**
      * Request that all subjects of this type be loaded into the cache.
@@ -53,7 +53,7 @@ public interface SubjectTypeCollection<I> {
      * @return An unmodifiable view of the subjects
      * @since 2.0.0
      */
-    Collection<CalculatedSubject> getActiveSubjects();
+    Collection<CalculatedSubject> activeSubjects();
 
     /**
      * Request that a given identifier be removed from the cached data stores.
@@ -120,5 +120,5 @@ public interface SubjectTypeCollection<I> {
      * @return All subject identifiers
      * @since 2.0.0
      */
-    Stream<I> getAllIdentifiers();
+    Stream<I> allIdentifiers();
 }

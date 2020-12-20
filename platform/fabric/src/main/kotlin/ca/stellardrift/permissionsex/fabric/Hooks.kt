@@ -119,7 +119,7 @@ interface PermissionCommandSourceBridge<I> {
 
     @JvmDefault
     val activeContexts: Set<ContextValue<*>> get() {
-        return asCalculatedSubject().activeContexts
+        return asCalculatedSubject().activeContexts()
     }
 
     /**

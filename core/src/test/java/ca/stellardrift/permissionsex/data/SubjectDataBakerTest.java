@@ -63,16 +63,16 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
         SubjectTypeCollectionImpl<String> groupCache = getManager().subjects(SUBJECTS_GROUP);
         CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
-        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, parentS.getIdentifier())
+        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, parentS.identifier())
                 .setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.child", 1)
         ).thenApply(data -> child)).get();
-        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, childS.getIdentifier())).thenApply(data -> subject)).get();
+        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, childS.identifier())).thenApply(data -> subject)).get();
 
-        assertEquals(1, parentS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, childS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, childS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.child"));
-        assertEquals(0, subjectS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
-        assertEquals(1, subjectS.getPermissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.child"));
+        assertEquals(1, parentS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, childS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, childS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.child"));
+        assertEquals(0, subjectS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
+        assertEquals(1, subjectS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.child"));
     }
 
     @Test
@@ -146,9 +146,9 @@ public class SubjectDataBakerTest extends PermissionsExTest {
         Set<ContextValue<?>> activeSetA = cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(nowUtc()), serverTypeCtx.createValue("good"));
         Set<ContextValue<?>> activeSetB = cSet(worldCtx.createValue("nether"));
         Set<ContextValue<?>> activeSetC = PermissionsEx.GLOBAL_CONTEXT;
-        NodeTree permsA = subject.getPermissions(activeSetA);
-        NodeTree permsB = subject.getPermissions(activeSetB);
-        NodeTree permsC = subject.getPermissions(activeSetC);
+        NodeTree permsA = subject.permissions(activeSetA);
+        NodeTree permsB = subject.permissions(activeSetB);
+        NodeTree permsC = subject.permissions(activeSetC);
 
         // Set A
         assertEquals(1, permsA.get("some.perm"));

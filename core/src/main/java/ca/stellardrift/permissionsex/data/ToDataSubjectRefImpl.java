@@ -64,7 +64,7 @@ public class ToDataSubjectRefImpl<I> implements Consumer<ImmutableSubjectData>, 
 
     @Override
     public SubjectType<I> type() {
-        return this.cache.getType();
+        return this.cache.type();
     }
 
     @Override

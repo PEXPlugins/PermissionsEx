@@ -36,7 +36,7 @@ class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) :
         }
     }
 
-    override fun getParents(context: ContextValue<*>): List<ContextValue<*>> {
+    override fun parents(context: ContextValue<*>): List<ContextValue<*>> {
         return if (context.key() == "world") {
             worlds[context.rawValue()] ?: return emptyList()
         } else {
@@ -44,9 +44,9 @@ class GroupManagerContextInheritance(mirrorsNode: ConfigurationNode) :
         }
     }
 
-    override fun setParents(context: ContextValue<*>, parents: List<ContextValue<*>>?): ContextInheritance = this
+    override fun parents(context: ContextValue<*>, parents: List<ContextValue<*>>?): ContextInheritance = this
 
-    override fun getAllParents(): Map<ContextValue<*>, List<ContextValue<*>>> {
+    override fun allParents(): Map<ContextValue<*>, List<ContextValue<*>>> {
         return worlds.mapKeys { MemoryContextInheritance.ctxFromString(it.key) }
     }
 }

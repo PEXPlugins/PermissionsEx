@@ -38,7 +38,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     override fun hasSuperPermsCompat(): Boolean = true
     override fun hasGroupSupport(): Boolean = true
 
-    override fun getGroups(): Array<String> = this.pex.groupSubjects.allIdentifiers.toArray { arrayOfNulls<String>(it) }
+    override fun getGroups(): Array<String> = this.pex.groupSubjects.allIdentifiers().toArray { arrayOfNulls<String>(it) }
 
     private fun <T> CompletableFuture<T>.getUnchecked(): T {
         return try {
@@ -87,11 +87,11 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
      * @return The appropriate context values
      */
     fun contextsFrom(subject: CalculatedSubject, worldOverride: String?): Set<ContextValue<*>> {
-        val origContexts = subject.activeContexts
+        val origContexts = subject.activeContexts()
         if (worldOverride == null) {
             return origContexts
         }
-        if ((subject.associatedObject as? Player)?.world?.name.equals(worldOverride, ignoreCase = true)) {
+        if ((subject.associatedObject() as? Player)?.world?.name.equals(worldOverride, ignoreCase = true)) {
             return origContexts
         }
         origContexts.removeIf { it.definition() === WorldContextDefinition }
@@ -101,7 +101,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun groupHas(world: String, name: String, permission: String): Boolean {
         val subj = getGroup(name)
-        return subj.getPermission(contextsFrom(subj, world), permission) > 0
+        return subj.permission(contextsFrom(subj, world), permission) > 0
     }
 
     override fun groupAdd(world: String, name: String, permission: String): Boolean {
@@ -116,7 +116,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun playerHas(world: String, player: OfflinePlayer, permission: String): Boolean {
         val subj = getUser(player)
-        val perm = subj.getPermission(contextsFrom(subj, world), permission)
+        val perm = subj.permission(contextsFrom(subj, world), permission)
         return when {
             perm > 0 -> true
             perm < 0 -> false
@@ -162,7 +162,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun playerInGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         val subj = getUser(player)
-        return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, group) in subj.getParents(contextsFrom(subj, world))
+        return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, group) in subj.parents(contextsFrom(subj, world))
     }
 
     override fun playerAddGroup(world: String, player: OfflinePlayer, group: String): Boolean {
@@ -179,7 +179,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun getPlayerGroups(world: String, player: OfflinePlayer): Array<String> {
         val subj = getUser(player)
-        return subj.getParents(contextsFrom(subj, world))
+        return subj.parents(contextsFrom(subj, world))
             .mapNotNull { (key, value) ->
             if (key == PermissionsEngine.SUBJECTS_GROUP) value else null
         }.toTypedArray()

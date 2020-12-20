@@ -31,7 +31,7 @@ internal class PEXVaultChat(private val perms: PEXVault) : Chat(perms) {
 
     override fun getGroupInfoString(world: String, name: String, key: String, defaultValue: String?): String? {
         val subj = perms.getGroup(name)
-        return subj.getOption(perms.contextsFrom(subj, world), key).orElse(defaultValue)
+        return subj.option(perms.contextsFrom(subj, world), key).orElse(defaultValue)
     }
 
     override fun setGroupInfoString(world: String, name: String, key: String, value: String?) {
@@ -41,7 +41,7 @@ internal class PEXVaultChat(private val perms: PEXVault) : Chat(perms) {
 
     override fun getPlayerInfoString(world: String, player: OfflinePlayer, node: String, defaultValue: String?): String? {
         val subj = perms.getUser(player)
-        return subj.getOption(perms.contextsFrom(subj, world), node).orElse(defaultValue)
+        return subj.option(perms.contextsFrom(subj, world), node).orElse(defaultValue)
     }
 
     override fun setPlayerInfoString(world: String, player: OfflinePlayer, node: String, value: String?) {

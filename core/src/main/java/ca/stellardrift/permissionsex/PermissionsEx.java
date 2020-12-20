@@ -99,7 +99,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         if (existingCollection == null) {
             throw new IllegalArgumentException("Unknown subject type " + serialized.getKey());
         }
-        return deserialize(existingCollection.getType(), serialized.getValue());
+        return deserialize(existingCollection.type(), serialized.getValue());
     }
 
     private <I> SubjectRef<I> deserialize(final SubjectType<I> type, final String serializedIdent) {
@@ -175,8 +175,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
                         type,
                         new SubjectDataCacheImpl<>(type, getState().activeDataStore),
                         new SubjectDataCacheImpl<>(type, transientData)));
-        if (!type.equals(collection.getType())) {
-            throw new IllegalArgumentException("Provided subject type " + type + " is different from registered type " + collection.getType());
+        if (!type.equals(collection.type())) {
+            throw new IllegalArgumentException("Provided subject type " + type + " is different from registered type " + collection.type());
         }
         return collection;
     }
@@ -199,7 +199,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      */
     @Override
     public Set<SubjectType<?>> knownSubjectTypes() {
-        return this.subjectTypeCache.values().stream().map(SubjectTypeCollectionImpl::getType).collect(Collectors.toSet());
+        return this.subjectTypeCache.values().stream().map(SubjectTypeCollectionImpl::type).collect(Collectors.toSet());
     }
 
     @Override
@@ -534,7 +534,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     }
 
     @Override
-    public CompletableFuture<Set<ContextDefinition<?>>> getUsedContextTypes() {
+    public CompletableFuture<Set<ContextDefinition<?>>> usedContextTypes() {
         return getState().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
             ImmutableSet.Builder<ContextDefinition<?>> build = ImmutableSet.builder();
             for (final ContextDefinition<?> def : this.contextTypes.values()) {
@@ -571,13 +571,13 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     }
 
     @Override
-    public List<ContextDefinition<?>> getRegisteredContextTypes() {
+    public List<ContextDefinition<?>> registeredContextTypes() {
         return ImmutableList.copyOf(this.contextTypes.values());
     }
 
     @Override
     @Nullable
-    public ContextDefinition<?> getContextDefinition(final String definitionKey, final boolean allowFallbacks) {
+    public ContextDefinition<?> contextDefinition(final String definitionKey, final boolean allowFallbacks) {
         @Nullable ContextDefinition<?> ret = this.contextTypes.get(definitionKey);
         if (ret == null && allowFallbacks) {
             ContextDefinition<?> fallback = new SimpleContextDefinition.Fallback(definitionKey);

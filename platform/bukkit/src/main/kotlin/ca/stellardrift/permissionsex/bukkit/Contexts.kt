@@ -36,7 +36,7 @@ object WorldContextDefinition : ContextDefinition<String>("world") {
     override fun matches(ownVal: String, testVal: String): Boolean = ownVal.equals(testVal, ignoreCase = true)
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
-        (subject.associatedObject as? Player)?.also { consumer.accept(it.world.name) }
+        (subject.associatedObject() as? Player)?.also { consumer.accept(it.world.name) }
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<String> {
@@ -47,14 +47,14 @@ object WorldContextDefinition : ContextDefinition<String>("world") {
 object DimensionContextDefinition :
     EnumContextDefinition<World.Environment>("dimension", World.Environment::class.java) {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<World.Environment>) {
-        (subject.associatedObject as? Player)?.also { consumer.accept(it.world.environment) }
+        (subject.associatedObject() as? Player)?.also { consumer.accept(it.world.environment) }
     }
 }
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        (subject.associatedObject as? Player)?.run {
+        (subject.associatedObject() as? Player)?.run {
             address?.address?.apply {
                 consumer.accept(IpSet.only(this))
             }

@@ -37,7 +37,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     private val data = PEXSubjectData(baked.data(), collection.plugin)
     private val transientData = PEXSubjectData(baked.transientData(), collection.plugin)
 
-    private val ref: SubjectReference = this.baked.identifier as SubjectReference
+    private val ref: SubjectReference = this.baked.identifier() as SubjectReference
     private val activeContexts: CachingValue<ActiveContextsHolder>
 
     private data class ActiveContextsHolder(val spongeContexts: Set<Context>, val pexContexts: ContextSet)
@@ -45,7 +45,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     init {
         this.activeContexts = collection.plugin.tickBasedCachingValue(1L) {
             time.getActiveContexts.time {
-                val pexContexts = baked.activeContexts
+                val pexContexts = baked.activeContexts()
                 val spongeContexts: MutableSet<Context> = pexContexts.toSponge()
                 val spongeContextsAccum: MutableSet<Context> = mutableSetOf()
                 for (spongeCalc in this.collection.plugin.contextCalculators) {
@@ -80,7 +80,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun getCommandSource(): Optional<CommandSource> {
-        val associated = this.baked.associatedObject
+        val associated = this.baked.associatedObject()
         return if (associated is CommandSource) associated.optionally() else Optional.empty()
     }
 
@@ -98,12 +98,12 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun getOption(contexts: Set<Context>, key: String): Optional<String> {
         return this.time.getOption.time {
-            baked.getOption(contexts.toPex(this.manager), key)
+            baked.option(contexts.toPex(this.manager), key)
         }
     }
 
     override fun getOption(key: String): Optional<String> {
-        return baked.getOption(activePexContexts, key)
+        return baked.option(activePexContexts, key)
     }
 
     override fun hasPermission(contexts: Set<Context>, permission: String): Boolean {
@@ -111,12 +111,12 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun hasPermission(permission: String): Boolean {
-        return baked.getPermission(activePexContexts, permission) > 0
+        return baked.permission(activePexContexts, permission) > 0
     }
 
     override fun getPermissionValue(contexts: Set<Context>, permission: String): Tristate {
         return time.getPermission.time {
-            val ret = baked.getPermission(contexts.toPex(manager), permission)
+            val ret = baked.permission(contexts.toPex(manager), permission)
             when {
                 ret == 0 -> Tristate.UNDEFINED
                 ret > 0 -> Tristate.TRUE
@@ -126,7 +126,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun isChildOf(parent: SubjectReference): Boolean {
-        return baked.parents.contains(immutableMapEntry(parent.collectionIdentifier, parent.subjectIdentifier))
+        return baked.parents().contains(immutableMapEntry(parent.collectionIdentifier, parent.subjectIdentifier))
     }
 
     override fun isChildOf(contexts: Set<Context>, parent: SubjectReference): Boolean {
@@ -134,7 +134,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents.map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), containingCollection.plugin) }
+        return baked.parents().map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), containingCollection.plugin) }
     }
 
     val activePexContexts: ContextSet
@@ -146,7 +146,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
-            this.baked.getParents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), this.containingCollection.plugin) }
+            this.baked.parents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), this.containingCollection.plugin) }
         }
     }
 

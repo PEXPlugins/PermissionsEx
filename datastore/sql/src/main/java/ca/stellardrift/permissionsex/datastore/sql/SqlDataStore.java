@@ -371,8 +371,8 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 if (inheritance instanceof SqlContextInheritance) {
                     sqlInheritance = (SqlContextInheritance) inheritance;
                 } else {
-                    sqlInheritance = new SqlContextInheritance(HashTreePMap.from(inheritance.getAllParents()), TreePVector.singleton((dao_, inheritance_) -> {
-                        for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.getAllParents().entrySet()) {
+                    sqlInheritance = new SqlContextInheritance(HashTreePMap.from(inheritance.allParents()), TreePVector.singleton((dao_, inheritance_) -> {
+                        for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.allParents().entrySet()) {
                             dao_.setContextInheritance(ent.getKey(), ent.getValue());
                         }
                     }));

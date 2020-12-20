@@ -65,7 +65,7 @@ object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSou
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Identifier>) {
-        (subject.associatedObject as? ServerPlayerEntity)?.apply {
+        (subject.associatedObject() as? ServerPlayerEntity)?.apply {
             consumer.accept(serverWorld.registryKey.value)
         }
     }
@@ -84,7 +84,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Identifier>) {
-        (subject.associatedObject as?ServerPlayerEntity)?.apply {
+        (subject.associatedObject() as?ServerPlayerEntity)?.apply {
             val key = world.registryManager.dimensionTypes.getId(world.dimension)
             if (key != null) {
                 consumer.accept(key)
@@ -93,7 +93,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
-        return (subject.associatedObject as? Entity)?.run {
+        return (subject.associatedObject() as? Entity)?.run {
             if (entityWorld is ServerWorld) {
                 entityWorld.server?.registryManager?.dimensionTypes?.ids
             } else {
@@ -111,7 +111,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip"), CommandSo
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        ((subject.associatedObject as? ServerPlayerEntity)?.networkHandler?.connection?.address as? InetSocketAddress)?.run {
+        ((subject.associatedObject() as? ServerPlayerEntity)?.networkHandler?.connection?.address as? InetSocketAddress)?.run {
             consumer.accept(IpSet.only(address))
         }
     }
@@ -119,7 +119,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip"), CommandSo
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSourceContextDefinition<IpSet> {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        (subject.associatedObject as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
+        (subject.associatedObject() as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
     }
 
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<IpSet>) {
@@ -134,7 +134,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSour
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost"), CommandSourceContextDefinition<String> {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
-        (subject.associatedObject as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
+        (subject.associatedObject() as? ServerPlayerEntity)?.apply { accumulate(this, consumer) }
     }
 
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<String>) {
@@ -151,7 +151,7 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport"), Command
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Int>) {
-        (subject.associatedObject as? ServerPlayerEntity)?.apply { accumulate(this, consumer::accept) }
+        (subject.associatedObject() as? ServerPlayerEntity)?.apply { accumulate(this, consumer::accept) }
     }
 
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<Int>) {

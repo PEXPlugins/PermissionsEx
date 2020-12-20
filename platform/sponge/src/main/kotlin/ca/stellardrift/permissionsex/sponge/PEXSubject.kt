@@ -34,7 +34,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     private val data = PEXSubjectData(baked.data(), this)
     private val transientData = PEXSubjectData(baked.transientData(), this)
 
-    private val ref: SubjectReference = this.baked.identifier.asSponge(collection.service)
+    private val ref: SubjectReference = this.baked.identifier().asSponge(collection.service)
     private val activeContexts: CachingValue<ActiveContextsHolder>
 
     private data class ActiveContextsHolder(val spongeContexts: Set<Context>, val pexContexts: ContextSet)
@@ -42,7 +42,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     init {
         this.activeContexts = collection.service.tickBasedCachingValue(1L) {
             time.getActiveContexts.time {
-                val pexContexts = baked.activeContexts
+                val pexContexts = baked.activeContexts()
                 val spongeContexts: MutableSet<Context> = pexContexts.toSponge()
                 val spongeContextsAccum: MutableSet<Context> = mutableSetOf()
                 for (spongeCalc in this.collection.service.contextCalculators) {
@@ -90,12 +90,12 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
 
     override fun getOption(contexts: Set<Context>, key: String): Optional<String> {
         return this.time.getOption.time {
-            baked.getOption(contexts.toPex(this.manager), key)
+            baked.option(contexts.toPex(this.manager), key)
         }
     }
 
     override fun getOption(key: String): Optional<String> {
-        return baked.getOption(activePexContexts, key)
+        return baked.option(activePexContexts, key)
     }
 
     override fun hasPermission(contexts: Set<Context>, permission: String): Boolean {
@@ -103,12 +103,12 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     }
 
     override fun hasPermission(permission: String): Boolean {
-        return baked.getPermission(activePexContexts, permission) > 0
+        return baked.permission(activePexContexts, permission) > 0
     }
 
     override fun getPermissionValue(contexts: Set<Context>, permission: String): Tristate {
         return time.getPermission.time {
-            val ret = baked.getPermission(contexts.toPex(manager), permission)
+            val ret = baked.permission(contexts.toPex(manager), permission)
             when {
                 ret == 0 -> Tristate.UNDEFINED
                 ret > 0 -> Tristate.TRUE
@@ -118,7 +118,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     }
 
     override fun isChildOf(parent: SubjectReference): Boolean {
-        return baked.parents.contains(parent.asPex(containingCollection.service))
+        return baked.parents().contains(parent.asPex(containingCollection.service))
     }
 
     override fun isChildOf(contexts: Set<Context>, parent: SubjectReference): Boolean {
@@ -126,7 +126,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents.map { manager.deserializeSubjectRef(it).asSponge(containingCollection.service) }
+        return baked.parents().map { manager.deserializeSubjectRef(it).asSponge(containingCollection.service) }
     }
 
     val activePexContexts: ContextSet
@@ -138,7 +138,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
-            this.baked.getParents(contexts.toPex(this.manager))
+            this.baked.parents(contexts.toPex(this.manager))
                 .map { manager.deserializeSubjectRef(it).asSponge(this.containingCollection.service) }
         }
     }

@@ -69,7 +69,7 @@ abstract class MessageFormatter(
 
     operator fun <I> SubjectRef<I>.unaryPlus() = subject(this)
 
-    fun subject(subject: CalculatedSubject) = subject(subject.identifier)
+    fun subject(subject: CalculatedSubject) = subject(subject.identifier())
 
     operator fun CalculatedSubject.unaryPlus() = subject(this)
 
@@ -85,7 +85,7 @@ abstract class MessageFormatter(
         var name = subject.friendlyName
         if (name == null) {
             try {
-                name = subjType.persistentData().getData(subject.identifier(), null).get()
+                name = subjType.persistentData().data(subject.identifier(), null).get()
                     .getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]
             } catch (e: ExecutionException) {
                 throw RuntimeException(e)

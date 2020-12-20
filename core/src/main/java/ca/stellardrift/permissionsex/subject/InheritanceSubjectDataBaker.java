@@ -69,7 +69,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
             @Nullable ContextValue<?> context;
             while ((context = inProgressContexts.poll()) != null) {
                 if (contexts.add(context)) {
-                    inProgressContexts.addAll(inheritance.getParents(context));
+                    inProgressContexts.addAll(inheritance.parents(context));
                 }
             }
 
@@ -79,7 +79,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     @Override
     public CompletableFuture<BakedSubjectData> bake(CalculatedSubjectImpl<?> data, Set<ContextValue<?>> activeContexts) {
-        final SubjectRef<?> subject = data.getIdentifier();
+        final SubjectRef<?> subject = data.identifier();
         return processContexts(data.getManager(), activeContexts)
                 .thenCompose(processedContexts -> {
                     final BakeState state = new BakeState(data, processedContexts);
@@ -104,16 +104,16 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
 
     private <I> CompletableFuture<Void> visitSubject(BakeState state, SubjectRef<I> subject, Multiset<SubjectRef<?>> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
-            state.pex.logger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.tr(state.base.getIdentifier(), subject));
+            state.pex.logger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.tr(state.base.identifier(), subject));
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);
         SubjectTypeCollectionImpl<I> type = state.pex.subjects(subject.type());
-        return type.persistentData().getData(subject.identifier(), state.base).thenCombine(type.transientData().getData(subject.identifier(), state.base), (persistent, transientData) -> {
+        return type.persistentData().data(subject.identifier(), state.base).thenCombine(type.transientData().data(subject.identifier(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
 
             for (Set<ContextValue<?>> combo : processContexts(persistent.getActiveContexts(), transientData.getActiveContexts(), state)) {
-                if (type.getType().transientHasPriority()) {
+                if (type.type().transientHasPriority()) {
                     ret = visitSubjectSingle(state, transientData, ret, combo, visitedSubjects, inheritanceLevel);
                     ret = visitSubjectSingle(state, persistent, ret, combo, visitedSubjects, inheritanceLevel);
                 } else {

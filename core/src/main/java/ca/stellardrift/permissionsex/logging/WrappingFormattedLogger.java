@@ -45,27 +45,27 @@ public class WrappingFormattedLogger implements FormattedLogger {
     }
 
     @Override
-    public Locale getLogLocale() {
+    public Locale logLocale() {
         return Locale.getDefault();
     }
 
     @Override
-    public Locale getLogLocale(final @Nullable Marker marker) {
-        return getLogLocale();
+    public Locale logLocale(final @Nullable Marker marker) {
+        return logLocale();
     }
 
     @Override
-    public @Nullable String getPrefix() {
+    public @Nullable String prefix() {
         return this.prefix;
     }
 
     @Override
-    public void setPrefix(final @Nullable String prefix) {
+    public void prefix(final @Nullable String prefix) {
         this.prefix = prefix;
     }
 
     @Override
-    public ComponentSerializer<Component, ?, String> getSerializer() {
+    public ComponentSerializer<Component, ?, String> serializer() {
         if (supportsFormatting) {
             return LegacyComponentSerializer.legacySection();
         } else {
@@ -75,7 +75,7 @@ public class WrappingFormattedLogger implements FormattedLogger {
 
     @Override
     public String formatText(Component component, @org.checkerframework.checker.nullness.qual.Nullable Marker marker) {
-        return getSerializer().serialize(PEXComponentRenderer.INSTANCE.render(component, getLogLocale(marker)));
+        return serializer().serialize(PEXComponentRenderer.INSTANCE.render(component, logLocale(marker)));
     }
 
     private String applyPrefix(String input) {

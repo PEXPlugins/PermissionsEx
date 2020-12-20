@@ -92,7 +92,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
-        logger().prefix = "[${container.metadata.name}] "
+        logger().prefix("[${container.metadata.name}] ")
 
         logger().info(Messages.MOD_LOAD_SUCCESS.tr(container.metadata.version.friendlyString))
         ServerLifecycleEvents.SERVER_STARTING.register(ServerLifecycleEvents.ServerStarting { init(it) })
@@ -179,7 +179,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
-                (newSubj.associatedObject as? ServerPlayerEntity)?.apply {
+                (newSubj.associatedObject() as? ServerPlayerEntity)?.apply {
                     server.execute {
                         server.playerManager.sendCommandTree(this)
                     }

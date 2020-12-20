@@ -38,7 +38,7 @@ internal fun getDeleteCommand(pex: PermissionsEx<*>): CommandSpec {
                 args: CommandContext
             ) {
                 val subject = subjectOrSelf(src, args)
-                src.checkSubjectPermission(subject.identifier, "permissionsex.delete")
+                src.checkSubjectPermission(subject.identifier(), "permissionsex.delete")
                 val cache =
                     if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData() else subject.data()
                 cache.isRegistered()

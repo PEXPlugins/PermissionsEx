@@ -162,7 +162,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         event.provider = PermissionProvider {
             val func = PEXPermissionFunction(this, it)
             if (this._manager != null) {
-                func.subject.identifier
+                func.subject.identifier()
             }
             func
         }

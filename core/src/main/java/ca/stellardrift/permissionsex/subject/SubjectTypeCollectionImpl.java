@@ -47,9 +47,9 @@ public class SubjectTypeCollectionImpl<I> implements SubjectTypeCollection<I> {
                             SubjectRef.subject(this.type, key),
                             this);
 
-                    return persistentData.getReference(key, false)
+                    return persistentData.referenceTo(key, false)
                             .thenCombine(
-                                    transientData.getReference(key, false),
+                                    transientData.referenceTo(key, false),
                                     (persistentRef, transientRef) -> {
                                         subj.initialize(persistentRef, transientRef);
                                         return subj;
@@ -58,7 +58,7 @@ public class SubjectTypeCollectionImpl<I> implements SubjectTypeCollection<I> {
     }
 
     @Override
-    public SubjectType<I> getType() {
+    public SubjectType<I> type() {
         return this.type;
     }
 
@@ -69,7 +69,7 @@ public class SubjectTypeCollectionImpl<I> implements SubjectTypeCollection<I> {
     }
 
     @Override
-    public Collection<CalculatedSubject> getActiveSubjects() {
+    public Collection<CalculatedSubject> activeSubjects() {
         return Collections.unmodifiableCollection(this.cache.synchronous().asMap().values());
     }
 
@@ -122,7 +122,7 @@ public class SubjectTypeCollectionImpl<I> implements SubjectTypeCollection<I> {
     }
 
     @Override
-    public Stream<I> getAllIdentifiers() {
+    public Stream<I> allIdentifiers() {
         return Stream.concat(
                 this.persistentData.getAllIdentifiers(),
                 this.transientData.getAllIdentifiers())

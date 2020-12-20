@@ -54,7 +54,7 @@ fun String.toLocale(): Locale {
 class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.manager) {
 
     override val <I> SubjectRef<I>.friendlyName: String?
-        get() = (cmd.pex.manager.subjects(type()).type.getAssociatedObject(identifier()) as? CommandSender)?.name
+        get() = (cmd.pex.manager.subjects(type()).type().getAssociatedObject(identifier()) as? CommandSender)?.name
 }
 
 /**
@@ -77,7 +77,7 @@ class BukkitCommander internal constructor(
         get() = if (commandSource is Player) getLocale(commandSource) else Locale.getDefault()
 
     override val subjectIdentifier: SubjectRef<*>?
-        get() = if (commandSource is Player) SubjectRef.subject(pex.userSubjects.type, commandSource.uniqueId) else null
+        get() = if (commandSource is Player) SubjectRef.subject(pex.userSubjects.type(), commandSource.uniqueId) else null
 
     private val audience = this.pex.adventure.sender(this.commandSource)
 

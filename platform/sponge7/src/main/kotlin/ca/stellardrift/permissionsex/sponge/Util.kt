@@ -47,7 +47,7 @@ private fun <T> Context.toPex(def: ContextDefinition<T>): ContextValue<T>? {
 fun Set<Context>.toPex(manager: PermissionsEx<*>): ContextSet {
     val builder = ImmutableSet.builder<ContextValue<*>>()
     for (ctx in this) {
-        val def = manager.getContextDefinition(ctx.key, true)
+        val def = manager.contextDefinition(ctx.key, true)
             ?: throw IllegalStateException("A fallback context value was expected!")
         val ctxVal = ctx.toPex(def)
         if (ctxVal != null) {

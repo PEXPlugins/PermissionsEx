@@ -26,7 +26,7 @@ import java.util.function.Consumer
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        (subject.associatedObject as? Player)?.apply {
+        (subject.associatedObject() as? Player)?.apply {
             consumer.accept(IpSet.only(this.remoteAddress.address))
         }
     }
@@ -34,7 +34,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        (subject.associatedObject as? Player)?.apply {
+        (subject.associatedObject() as? Player)?.apply {
             virtualHost.ifPresent {
                 if (!it.isUnresolved) {
                     consumer.accept(IpSet.only(it.address))
@@ -46,7 +46,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip") {
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
-        (subject.associatedObject as? Player)?.apply {
+        (subject.associatedObject() as? Player)?.apply {
             virtualHost.ifPresent {
                 consumer.accept(it.hostString)
             }
@@ -59,7 +59,7 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport") {
     override fun deserialize(userValue: String): Int = userValue.toInt()
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Int>) {
-        (subject.associatedObject as? Player)?.apply {
+        (subject.associatedObject() as? Player)?.apply {
             virtualHost.ifPresent { consumer.accept(it.port) }
         }
     }

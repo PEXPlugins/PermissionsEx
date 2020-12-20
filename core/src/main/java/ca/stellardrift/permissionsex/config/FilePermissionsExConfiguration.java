@@ -46,7 +46,7 @@ import java.util.Map;
 /**
  * Configuration for PermissionsEx.
  *
- * <p>This is designed to be serialized with a Configurate {@link ObjectMapper}
+ * <p>This is designed to be serialized with a Configurate {@link ObjectMapper}.</p>
  */
 @ConfigSerializable
 public class FilePermissionsExConfiguration<T> implements PermissionsExConfiguration<T> {

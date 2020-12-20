@@ -28,19 +28,10 @@ import ca.stellardrift.permissionsex.commands.Messages.DEMOTE_SUCCESS
 import ca.stellardrift.permissionsex.commands.Messages.PROMOTE_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.PROMOTE_ERROR_ALREADY_AT_TOP
 import ca.stellardrift.permissionsex.commands.Messages.PROMOTE_SUCCESS
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_ADD_ERROR_RELATIVE_ON_OUTSIDE_SUBJECT
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_ADD_SUCCESS
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_ADD_SUCCESS_POSITION
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_BUTTON_ADD_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.RANKING_BUTTON_DELETE_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.RANKING_BUTTON_MOVE_DOWN_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.RANKING_BUTTON_MOVE_UP_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.RANKING_DESCRIPTION
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_ERROR_EMPTY_LADDER
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_PAGINATION_HEADER
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_PAGINATION_SUBTITLE
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_REMOVE_ERROR_NOT_IN_LADDER
-import ca.stellardrift.permissionsex.commands.Messages.RANKING_REMOVE_SUCCESS
 import ca.stellardrift.permissionsex.commands.commander.ButtonType
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
@@ -60,7 +51,6 @@ import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import ca.stellardrift.permissionsex.subject.SubjectRef.ToData
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
@@ -158,7 +148,7 @@ private fun MessageFormatter.deleteButton(
     return (-"-").button(
         ButtonType.NEGATIVE,
         RANKING_BUTTON_DELETE_DESCRIPTION.tr(),
-        "/pex rank ${rank.name} remove ${subject.key} ${subject.value}",
+        "/pex rank ${rank.name()} remove ${subject.key} ${subject.value}",
         true
     ).build()
 }
@@ -170,7 +160,7 @@ private fun MessageFormatter.moveDownButton(
     return (-"▼").button(
         ButtonType.NEUTRAL,
         RANKING_BUTTON_MOVE_DOWN_DESCRIPTION.tr(),
-        "/pex rank ${rank.name} add -r -1 ${subject.key} ${subject.value}",
+        "/pex rank ${rank.name()} add -r -1 ${subject.key} ${subject.value}",
         true
     ).build()
 }
@@ -182,7 +172,7 @@ private fun MessageFormatter.moveUpButton(
     return (-"▲").button(
         ButtonType.NEUTRAL,
         RANKING_BUTTON_MOVE_UP_DESCRIPTION.tr(),
-        "/pex rank ${rank.name} add -r 1 ${subject.key} ${subject.value}",
+        "/pex rank ${rank.name()} add -r 1 ${subject.key} ${subject.value}",
         true
     ).build()
 }
@@ -203,7 +193,7 @@ internal fun getRankingCommand(pex: PermissionsEx<*>) =
             fallback { src, args ->
                 val ladder = args[rankLadderArg].join()
                 val ranksList = mutableListOf<Component>()
-                val rawRanks: List<Map.Entry<String, String>> = ladder.ranks.reversed()
+                val rawRanks: List<Map.Entry<String, String>> = ladder.ranks().reversed()
                 src.formatter.apply {
                     when (rawRanks.size) {
                         1 -> {
@@ -247,11 +237,11 @@ internal fun getRankingCommand(pex: PermissionsEx<*>) =
                     }
                     src.msgPaginated(
                         RANKING_PAGINATION_HEADER(
-                            ladder.name,
+                            ladder.name(),
                             (-"+").button(
                                 ButtonType.POSITIVE,
                                 RANKING_BUTTON_ADD_DESCRIPTION(),
-                                "/pex rank ${ladder.name} add ",
+                                "/pex rank ${ladder.name()} add ",
                                 false
                             )
                         ),
@@ -284,23 +274,23 @@ private fun getRankAddChildCommand(
             ) {
                 val ladder = args[rankLadderArg].join()
                 val toAdd = args[subject]
-                src.checkSubjectPermission(toAdd, "permissionsex.rank.add.${ladder.name}")
+                src.checkSubjectPermission(toAdd, "permissionsex.rank.add.${ladder.name()}")
                 val position = args.getOne<Int>(COMMON_ARGS_POSITION)
                 if (position != null) {
                     var addPosition = position
                     if (args.hasAny("r")) {
-                        val currentIndex = ladder.indexOfRank(toAdd)
+                        val currentIndex = ladder.indexOf(toAdd)
                         if (currentIndex == -1) {
                             throw CommandException(RANKING_ADD_ERROR_RELATIVE_ON_OUTSIDE_SUBJECT())
                         }
                         addPosition =
                             if (currentIndex + addPosition > 1) addPosition + 1 else addPosition // If we are adding to later, we need to add after the next rank (otherwise we end up staying in the same place)
                     }
-                    pex.ladders.set(ladder.name, ladder.addRankAt(toAdd, addPosition)).thenMessageSubject(src) { send ->
+                    pex.ladders.set(ladder.name(), ladder.with(toAdd, addPosition)).thenMessageSubject(src) { send ->
                         send(RANKING_ADD_SUCCESS_POSITION(+toAdd, ladder.toComponent(), +addPosition.toString()))
                     }
                 } else {
-                    pex.ladders.set(ladder.name, ladder.addRank(toAdd))
+                    pex.ladders.set(ladder.name(), ladder.with(toAdd))
                         .thenMessageSubject(src) { send ->
                             send(RANKING_ADD_SUCCESS(+toAdd, ladder.toComponent()))
                         }
@@ -321,14 +311,14 @@ private fun getRankRemoveCommand(
             override fun execute(src: Commander, args: CommandContext) {
                 val ladder = args[rankLadderArg].join()
                 val toRemove = args[subject]
-                src.checkSubjectPermission(toRemove, "permissionsex.rank.remove." + ladder.name)
-                val newLadder = ladder.removeRank(toRemove)
+                src.checkSubjectPermission(toRemove, "permissionsex.rank.remove." + ladder.name())
+                val newLadder = ladder.without(toRemove)
                 if (newLadder === ladder) {
                     throw CommandException(
                         RANKING_REMOVE_ERROR_NOT_IN_LADDER(src.formatter.subject(toRemove), ladder.toComponent())
                     )
                 } else {
-                    pex.ladders.set(ladder.name, newLadder)
+                    pex.ladders.set(ladder.name(), newLadder)
                         .thenMessageSubject(src) { send ->
                             send(RANKING_REMOVE_SUCCESS(+toRemove, ladder.toComponent()))
                         }

@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  */
 public class SimpleContextDefinition extends ContextDefinition<String> {
 
-    public SimpleContextDefinition(final String name) {
+    protected SimpleContextDefinition(final String name) {
         super(name);
     }
 

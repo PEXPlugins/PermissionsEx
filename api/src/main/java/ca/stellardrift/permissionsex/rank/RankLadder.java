@@ -41,7 +41,7 @@ public interface RankLadder extends ComponentLike {
      * @return The ladder's name
      * @since 2.0.0
      */
-    String getName();
+    String name();
 
     /**
      * Promote the given subject data on this rank ladder in the given context.
@@ -93,7 +93,7 @@ public interface RankLadder extends ComponentLike {
      * @return a rank ladder instance with the appropriate changes
      * @since 2.0.0
      */
-    RankLadder addRank(Map.Entry<String, String> subject);
+    RankLadder with(Map.Entry<String, String> subject);
 
 
     /**
@@ -104,15 +104,15 @@ public interface RankLadder extends ComponentLike {
      * @param index The point to add the rank at. Must be on the range [0, getRanks().size()]
      * @return a rank ladder instance with the appropriate changes
      */
-    RankLadder addRankAt(Map.Entry<String, String> subject, int index);
+    RankLadder with(Map.Entry<String, String> subject, int index);
 
     /**
-     * Get the index of this rank in the current ladder. This index is the index of the rank in {@link #getRanks()}.
+     * Get the index of this rank in the current ladder. This index is the index of the rank in {@link #ranks()}.
      *
      * @param subject The rank to find the index of
      * @return The index of the rank, or -1 if the rank is not present.
      */
-    int indexOfRank(Map.Entry<String, String> subject);
+    int indexOf(Map.Entry<String, String> subject);
 
     /**
      * Remove the given rank from this rank ladder.
@@ -120,12 +120,12 @@ public interface RankLadder extends ComponentLike {
      * @param subject The rank to remove
      * @return A new ladder without the given rank, or this if the rank was not contained in this ladder
      */
-    RankLadder removeRank(Map.Entry<String, String> subject);
+    RankLadder without(Map.Entry<String, String> subject);
 
     /**
      * Provides a way to iterate through ranks currently active in this ladder.
      * @return A list of ranks present in the ladder. This list is immutable.
      */
-    List<? extends Map.Entry<String,String>> getRanks();
+    List<? extends Map.Entry<String,String>> ranks();
 
 }

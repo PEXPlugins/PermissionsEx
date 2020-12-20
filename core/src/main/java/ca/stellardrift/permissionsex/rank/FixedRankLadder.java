@@ -32,12 +32,12 @@ public class FixedRankLadder extends AbstractRankLadder {
     }
 
     @Override
-    public List<? extends Entry<String, String>> getRanks() {
+    public List<? extends Entry<String, String>> ranks() {
         return this.ranks;
     }
 
     @Override
     protected RankLadder newWithRanks(List<Entry<String, String>> ents) {
-        return new FixedRankLadder(getName(), ents);
+        return new FixedRankLadder(name(), ents);
     }
 }

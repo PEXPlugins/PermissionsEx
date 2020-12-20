@@ -69,7 +69,7 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
 
     override val subjectIdentifier: SubjectRef<*>?
         get() = when (src) {
-                    is Player -> SubjectRef.subject(pex.users.type, src.uniqueId)
+                    is Player -> SubjectRef.subject(pex.users.type(), src.uniqueId)
                     else -> IDENT_SERVER_CONSOLE
                 }
 

@@ -76,14 +76,14 @@ public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
                         .buildAsync((key, executor) -> dataStore.getData(this.type.name(), this.type.serializeIdentifier(key), clearListener(key))));
         if (oldCache != null) {
             oldCache.synchronous().asMap().forEach((k, v) -> {
-                    getData(k, null).thenAccept(data -> listeners.call(k, data));
+                    data(k, null).thenAccept(data -> listeners.call(k, data));
                     // TODO: Not ignore this somehow? Add a listener in to the backend?
             });
         }
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> getData(final I identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
+    public CompletableFuture<ImmutableSubjectData> data(final I identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
         requireNonNull(identifier, "identifier");
 
         CompletableFuture<ImmutableSubjectData> ret = cache.get().get(identifier);
@@ -96,14 +96,14 @@ public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
     }
 
     @Override
-    public CompletableFuture<ToDataSubjectRefImpl<I>> getReference(final I identifier) {
-        return getReference(identifier, true);
+    public CompletableFuture<ToDataSubjectRefImpl<I>> referenceTo(final I identifier) {
+        return referenceTo(identifier, true);
     }
 
     @Override
-    public CompletableFuture<ToDataSubjectRefImpl<I>> getReference(final I identifier, final boolean strongListeners) {
+    public CompletableFuture<ToDataSubjectRefImpl<I>> referenceTo(final I identifier, final boolean strongListeners) {
         final ToDataSubjectRefImpl<I> ref = new ToDataSubjectRefImpl<>(identifier, this, strongListeners);
-        return getData(identifier, ref).thenApply(data -> {
+        return data(identifier, ref).thenApply(data -> {
             ref.data.set(data);
             return ref;
         });
@@ -111,7 +111,7 @@ public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
 
     @Override
     public CompletableFuture<ImmutableSubjectData> update(final I identifier, final UnaryOperator<ImmutableSubjectData> action) {
-        return getData(identifier, null)
+        return data(identifier, null)
                 .thenCompose(data -> {
                     ImmutableSubjectData newData = action.apply(data);
                     if (data != newData) {
@@ -193,7 +193,7 @@ public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
     }
 
     @Override
-    public SubjectType<I> getType() {
+    public SubjectType<I> type() {
         return this.type;
     }
 

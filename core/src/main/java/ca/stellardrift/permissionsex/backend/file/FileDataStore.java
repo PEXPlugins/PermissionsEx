@@ -386,7 +386,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         ConfigurationNode childNode = getRankLaddersNode().node(identifier.toLowerCase());
         childNode.raw(null);
         if (ladder != null) {
-            for (Map.Entry<String, String> rank : ladder.getRanks()) {
+            for (Map.Entry<String, String> rank : ladder.ranks()) {
                 childNode.appendListNode().raw(Util.subjectToString(rank));
             }
         }

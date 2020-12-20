@@ -51,7 +51,7 @@ inline fun <reified T : Any> Optional<*>.cast(): Optional<T> {
 fun <T> T?.optionally(): Optional<T> = Optional.ofNullable(this)
 
 inline fun <reified T> CalculatedSubject.option(key: String): T? {
-    val ret = getOption(key).orElse(null)
+    val ret = option(key).orElse(null)
     return TypeSerializerCollection.defaults().get(T::class.java)?.deserialize(T::class.java, BasicConfigurationNode.root().raw(ret))
 }
 

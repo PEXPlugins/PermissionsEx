@@ -55,11 +55,11 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
     }
 
     override fun isPermissionSet(name: String): Boolean {
-        return getPermissionValue(pexSubject.activeContexts, name.toLowerCase(Locale.ROOT)) != 0
+        return getPermissionValue(pexSubject.activeContexts(), name.toLowerCase(Locale.ROOT)) != 0
     }
 
     private fun getPermissionValue(contexts: Set<ContextValue<*>>, permission: String): Int {
-        var ret = getPermissionValue0(pexSubject.getPermissions(contexts), permission)
+        var ret = getPermissionValue0(pexSubject.permissions(contexts), permission)
         if (ret == 0) {
             for (meta in METAPERMISSIONS) {
                 val match = meta.matchAgainst.matchEntire(permission)
@@ -111,7 +111,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
     }
 
     override fun hasPermission(perm: String): Boolean {
-        return getPermissionValue(pexSubject.activeContexts, perm.toLowerCase(Locale.ROOT)) > 0
+        return getPermissionValue(pexSubject.activeContexts(), perm.toLowerCase(Locale.ROOT)) > 0
     }
 
     override fun hasPermission(perm: Permission): Boolean {
@@ -187,9 +187,9 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
     }
 
     override fun getEffectivePermissions(): Set<PermissionAttachmentInfo> {
-        val activeContexts = pexSubject.activeContexts
+        val activeContexts = pexSubject.activeContexts()
         return sequence {
-            pexSubject.getPermissions(activeContexts).asMap().forEach { (perm, value) ->
+            pexSubject.permissions(activeContexts).asMap().forEach { (perm, value) ->
                 yield(PermissionAttachmentInfo(player, perm, null, value > 0))
             }
 
@@ -213,24 +213,24 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
              */
             object : Metapermission(Regex("groups?\\.(?<name>.+)")) {
                 override fun isMatch(result: MatchResult, subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Boolean {
-                    return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, result.groups["name"]!!.value) in subj.getParents(contexts)
+                    return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, result.groups["name"]!!.value) in subj.parents(contexts)
                 }
 
                 override fun getValues(subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Sequence<String> {
-                    return subj.getParents(contexts).asSequence()
+                    return subj.parents(contexts).asSequence()
                         .filter { (key, _) -> key == PermissionsEngine.SUBJECTS_GROUP }
                         .flatMap { (_, value) -> sequenceOf("group.$value", "groups.$value") }
                 }
             },
             object : Metapermission(Regex("options\\.(?<key>.*)\\.(?<value>.*)")) {
                 override fun isMatch(result: MatchResult, subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Boolean {
-                    return subj.getOption(contexts, result.groups["key"]!!.value)
+                    return subj.option(contexts, result.groups["key"]!!.value)
                         .map { it == result.groups["value"]!!.value }
                         .orElse(false)
                 }
 
                 override fun getValues(subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Sequence<String> {
-                    return subj.getOptions(contexts).asSequence()
+                    return subj.options(contexts).asSequence()
                         .map { (key, value) -> "options.$key.$value" }
                 }
             },
@@ -253,13 +253,13 @@ internal abstract class Metapermission(
 private class SpecificOptionMetapermission(private val option: String) :
     Metapermission(Regex(Regex.escape(option) + "\\.(?<value>.+)")) {
     override fun isMatch(result: MatchResult, subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Boolean {
-        return subj.getOption(contexts, option)
+        return subj.option(contexts, option)
             .map { it == result.groups["value"]?.value }
             .orElse(false)
     }
 
     override fun getValues(subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Sequence<String> {
-        val ret = subj.getOptions(contexts)[option]
+        val ret = subj.options(contexts)[option]
         return if (ret == null) emptySequence() else sequenceOf("$option.$ret")
     }
 }

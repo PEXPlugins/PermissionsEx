@@ -40,7 +40,7 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
         (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
     override val subjectIdentifier: SubjectRef<*>?
         get() = when (src) {
-            is ProxiedPlayer -> SubjectRef.subject(pex.users.type, src.uniqueId)
+            is ProxiedPlayer -> SubjectRef.subject(pex.users.type(), src.uniqueId)
             else -> IDENT_SERVER_CONSOLE
         }
 

@@ -32,13 +32,13 @@ public class SqlRankLadder extends AbstractRankLadder {
     }
 
     @Override
-    public List<SubjectRef> getRanks() {
+    public List<SubjectRef> ranks() {
         return entries;
     }
 
     @Override
     protected RankLadder newWithRanks(List<Map.Entry<String, String>> ents) {
-        return new SqlRankLadder(getName(), ents.stream()
+        return new SqlRankLadder(name(), ents.stream()
                 .map(ent -> ent instanceof SubjectRef ? (SubjectRef) ent : SubjectRef.unresolved(ent.getKey(), ent.getValue()))
                 .collect(GuavaCollectors.toImmutableList()));
     }

@@ -755,9 +755,9 @@ public abstract class SqlDao implements AutoCloseable {
             if (ladder == null) {
                 ranks = ImmutableList.of();
             } else if (ladder instanceof SqlRankLadder) {
-                ranks = ((SqlRankLadder) ladder).getRanks();
+                ranks = ((SqlRankLadder) ladder).ranks();
             } else {
-                ranks = Lists.transform(ladder.getRanks(), rank -> rank instanceof SubjectRef ? (SubjectRef) rank : SubjectRef.unresolved(rank.getKey(), rank.getValue()));
+                ranks = Lists.transform(ladder.ranks(), rank -> rank instanceof SubjectRef ? (SubjectRef) rank : SubjectRef.unresolved(rank.getKey(), rank.getValue()));
             }
 
             try (PreparedStatement delete = prepareStatement(getDeleteRankLadderQuery());

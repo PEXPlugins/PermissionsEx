@@ -299,11 +299,11 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     override fun getUserSubjects(): PEXSubjectCollection<UUID> {
-        return this.getSubjects(this.mcManager.users().type)
+        return this.getSubjects(this.mcManager.users().type())
     }
 
     override fun getGroupSubjects(): PEXSubjectCollection<String> {
-        return this.getSubjects(this.mcManager.groups().type)
+        return this.getSubjects(this.mcManager.groups().type())
     }
 
     override fun getDefaults(): PEXSubject {

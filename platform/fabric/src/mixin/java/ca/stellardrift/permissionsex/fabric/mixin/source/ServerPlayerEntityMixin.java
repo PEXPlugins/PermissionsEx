@@ -42,7 +42,7 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity implements Pe
     @NotNull
     @Override
     public SubjectType<UUID> getPermType() {
-        return PermissionsExMod.INSTANCE.getMcManager().users().getType();
+        return PermissionsExMod.INSTANCE.getMcManager().users().type();
     }
 
     @NotNull

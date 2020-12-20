@@ -109,7 +109,7 @@ class PEXSubjectCollection<I> private constructor(private val type: SubjectType<
 
     override fun getAllIdentifiers(): CompletableFuture<Set<String>> {
         return CompletableFuture.completedFuture(
-            implCache.allIdentifiers
+            implCache.allIdentifiers()
                 .map { this.type.serializeIdentifier(it) }
                 .collect(Collectors.toSet()))
     }
@@ -144,13 +144,13 @@ class PEXSubjectCollection<I> private constructor(private val type: SubjectType<
         contexts: Set<Context>?,
         permission: String
     ): CompletableFuture<Map<SubjectReference, Boolean>> {
-        val raw = implCache.allIdentifiers
+        val raw = implCache.allIdentifiers()
         val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { implCache[it] }.collect(Collectors.toList()).toTypedArray()
         return CompletableFuture.allOf(*futures).thenApply(java.util.function.Function { _: Void? ->
             futures.asSequence()
                 .map { it.join() }
                 .map {
-                    val perm = it.getPermission(contexts?.toPex(service.manager) ?: it.activeContexts, permission)
+                    val perm = it.permission(contexts?.toPex(service.manager) ?: it.activeContexts(), permission)
                     var bPerm: Boolean? = null
                     if (perm > 0) {
                         bPerm = true
@@ -160,7 +160,7 @@ class PEXSubjectCollection<I> private constructor(private val type: SubjectType<
                     if (bPerm == null) {
                         null
                     } else {
-                        Pair(it.identifier as SubjectReference, bPerm)
+                        Pair(it.identifier() as SubjectReference, bPerm)
                     }
                 }
                 .filterNotNull()

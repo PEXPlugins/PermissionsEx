@@ -233,7 +233,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
-                (newSubj.associatedObject as? ServerPlayer)?.apply {
+                (newSubj.associatedObject() as? ServerPlayer)?.apply {
                     world.engine.scheduler.submit(Task.builder()
                         .plugin(container)
                         .execute(Runnable {
@@ -358,12 +358,12 @@ class PermissionsExService internal constructor(private val server: Server, priv
 
     override fun getUserSubjects(): PEXSubjectCollection<UUID> {
         // TODO: error handling
-        return this.getCollection(plugin.mcManager.users().type)
+        return this.getCollection(plugin.mcManager.users().type())
     }
 
     override fun getGroupSubjects(): PEXSubjectCollection<String> {
         // TODO: error handling
-        return this.getCollection(plugin.mcManager.groups().type)
+        return this.getCollection(plugin.mcManager.groups().type())
     }
 
     override fun getDefaults(): PEXSubject {

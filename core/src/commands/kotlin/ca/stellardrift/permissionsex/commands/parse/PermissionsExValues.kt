@@ -150,7 +150,7 @@ private class ContextCommandValue(private val pex: PermissionsEx<*>) : Value<Con
             throw args.createError(CONTEXT_ERROR_FORMAT.tr())
         }
         val def =
-            pex.getContextDefinition(contextSplit[0])
+            pex.contextDefinition(contextSplit[0])
                 ?: throw args.createError(CONTEXT_ERROR_TYPE.tr(contextSplit[0]))
         return toCtxValue(def, contextSplit[1]) ?: throw args.createError(CONTEXT_ERROR_VALUE.tr(context))
     }

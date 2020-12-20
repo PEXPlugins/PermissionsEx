@@ -140,7 +140,7 @@ class LuckPermsFileDataStore constructor(properties: StoreProperties<Config>) : 
 
     override fun setContextInheritanceInternal(contextInheritance: ContextInheritance?): CompletableFuture<ContextInheritance> {
             val inherit = if (contextInheritance != null && contextInheritance !is LuckPermsContextInheritance) {
-                LuckPermsContextInheritance(contextInheritance.allParents)
+                LuckPermsContextInheritance(contextInheritance.allParents())
             } else {
                 contextInheritance as LuckPermsContextInheritance?
             }
@@ -181,7 +181,7 @@ class LuckPermsFileDataStore constructor(properties: StoreProperties<Config>) : 
             newLadder is LuckPermsTrack -> newLadder
             newLadder != null -> LuckPermsTrack(
                 ladder,
-                newLadder.ranks.filter { it.key == SUBJECTS_GROUP }.map { it.value })
+                newLadder.ranks().filter { it.key == SUBJECTS_GROUP }.map { it.value })
             else -> null
         }
 
@@ -306,11 +306,11 @@ fun contextParentsFromConfig(node: ConfigurationNode): LuckPermsContextInheritan
  */
 class LuckPermsContextInheritance(private val contextParents: Map<ContextValue<*>, List<ContextValue<*>>>) :
     ContextInheritance {
-    override fun getParents(context: ContextValue<*>): List<ContextValue<*>>? {
+    override fun parents(context: ContextValue<*>): List<ContextValue<*>>? {
         return contextParents[context]
     }
 
-    override fun setParents(context: ContextValue<*>, parents: List<ContextValue<*>>?): LuckPermsContextInheritance {
+    override fun parents(context: ContextValue<*>, parents: List<ContextValue<*>>?): LuckPermsContextInheritance {
         require(context.key().equals("world", ignoreCase = true))
         return if (parents == null) {
             LuckPermsContextInheritance(contextParents - context)
@@ -326,7 +326,7 @@ class LuckPermsContextInheritance(private val contextParents: Map<ContextValue<*
         }
     }
 
-    override fun getAllParents(): Map<ContextValue<*>, List<ContextValue<*>>> {
+    override fun allParents(): Map<ContextValue<*>, List<ContextValue<*>>> {
         return contextParents
     }
 
@@ -351,14 +351,14 @@ class LuckPermsTrack internal constructor(name: String, val groups: List<String>
 
     constructor(name: String) : this(name, listOf())
 
-    override fun getRanks(): List<Map.Entry<String, String>> {
+    override fun ranks(): List<Map.Entry<String, String>> {
         return this.groups.map { immutableMapEntry(SUBJECTS_GROUP, it) }
     }
 
     override fun newWithRanks(ents: List<Map.Entry<String, String>>): LuckPermsTrack {
-        return LuckPermsTrack(this.name, ents.map { (k, v) ->
+        return LuckPermsTrack(this.name(), ents.map { (k, v) ->
             if (k != SUBJECTS_GROUP) {
-                throw PermissionsException(Messages.ERROR_INVALID_TRACK.tr(k, this.name))
+                throw PermissionsException(Messages.ERROR_INVALID_TRACK.tr(k, this.name()))
             }
             v
         })

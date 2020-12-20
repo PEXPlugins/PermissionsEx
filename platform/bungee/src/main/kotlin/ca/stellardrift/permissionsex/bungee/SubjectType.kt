@@ -28,7 +28,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        (subject.associatedObject as? ProxiedPlayer)?.apply {
+        (subject.associatedObject() as? ProxiedPlayer)?.apply {
             val address = socketAddress as? InetSocketAddress ?: return
             consumer.accept(IpSet.only(address.address))
         }
@@ -37,7 +37,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
-        (subject.associatedObject as? ProxiedPlayer)?.apply {
+        (subject.associatedObject() as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.hostName?.apply(consumer::accept)
         }
     }
@@ -45,7 +45,7 @@ object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
 
 object LocalIpContextDefinition : IpSetContextDefinition("localip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
-        (subject.associatedObject as? ProxiedPlayer)?.apply {
+        (subject.associatedObject() as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.address?.run {
                 IpSet.only(this)
             }?.apply(consumer::accept)
@@ -59,7 +59,7 @@ object LocalPortContextDefiniiton : ContextDefinition<Int>("localport") {
     override fun matches(ownVal: Int, testVal: Int): Boolean = ownVal == testVal
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<Int>) {
-        (subject.associatedObject as? ProxiedPlayer)?.apply {
+        (subject.associatedObject() as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.port?.apply(consumer::accept)
         }
     }

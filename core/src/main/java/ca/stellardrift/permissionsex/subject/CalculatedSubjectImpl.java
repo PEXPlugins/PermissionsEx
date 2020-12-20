@@ -75,7 +75,7 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
         this.transientRef = transientRef;
         this.activeContexts = CachingValue.timeBased(50L, () -> {
             Set<ContextValue<?>> acc = new HashSet<>();
-            for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
+            for (ContextDefinition<?> contextDefinition : getManager().registeredContextTypes()) {
                 handleAccumulateSingle(contextDefinition, acc);
             }
             return acc;
@@ -83,12 +83,12 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     @Override
-    public SubjectRef<I> getIdentifier() {
+    public SubjectRef<I> identifier() {
         return identifier;
     }
 
     @Override
-    public SubjectTypeCollectionImpl<I> getType() {
+    public SubjectTypeCollectionImpl<I> containingType() {
         return this.type;
     }
 
@@ -108,19 +108,19 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     @Override
-    public NodeTree getPermissions(Set<ContextValue<?>> contexts) {
+    public NodeTree permissions(Set<ContextValue<?>> contexts) {
         return getData(contexts).getPermissions();
     }
 
     @Override
-    public Map<String, String> getOptions(Set<ContextValue<?>> contexts) {
+    public Map<String, String> options(Set<ContextValue<?>> contexts) {
         return getData(contexts).getOptions();
     }
 
     @Override
-    public List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> contexts) {
+    public List<Map.Entry<String, String>> parents(Set<ContextValue<?>> contexts) {
         List<Map.Entry<String, String>> parents = getData(contexts).getParents();
-        getManager().getNotifier().onParentCheck(getIdentifier(), contexts, parents);
+        getManager().getNotifier().onParentCheck(identifier(), contexts, parents);
         return parents;
     }
 
@@ -133,7 +133,7 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     @Override
-    public Set<ContextValue<?>> getActiveContexts() {
+    public Set<ContextValue<?>> activeContexts() {
         if (this.activeContexts == null) {
             throw new IllegalStateException("This subject has not yet been initialized! This is normally done before the future provided by PEX completes.");
         }
@@ -141,8 +141,8 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     @Override
-    public CompletableFuture<Set<ContextValue<?>>> getUsedContextValues() {
-        return getManager().getUsedContextTypes().thenApply(defs -> {
+    public CompletableFuture<Set<ContextValue<?>>> usedContextValues() {
+        return getManager().usedContextTypes().thenApply(defs -> {
             Set<ContextValue<?>> acc = new HashSet<>();
             defs.forEach(def -> handleAccumulateSingle(def, acc));
             return acc;
@@ -154,33 +154,33 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     @Override
-    public int getPermission(Set<ContextValue<?>> contexts, String permission) {
-        int ret = getPermissions(contexts).get(Objects.requireNonNull(permission, "permission"));
-        getManager().getNotifier().onPermissionCheck(getIdentifier(), contexts, permission, ret);
+    public int permission(Set<ContextValue<?>> contexts, String permission) {
+        int ret = permissions(contexts).get(Objects.requireNonNull(permission, "permission"));
+        getManager().getNotifier().onPermissionCheck(identifier(), contexts, permission, ret);
         return ret;
     }
 
     @Override
     public boolean hasPermission(Set<ContextValue<?>> contexts, String permission) {
-        final int perm = getPermission(contexts, permission);
+        final int perm = permission(contexts, permission);
         if (perm == 0) {
-            return getType().getType().undefinedPermissionValue(this.identifier.identifier());
+            return containingType().type().undefinedPermissionValue(this.identifier.identifier());
         } else {
             return perm > 0;
         }
     }
 
     @Override
-    public Optional<String> getOption(Set<ContextValue<?>> contexts, String option) {
-        final @Nullable String val = getOptions(contexts).get(Objects.requireNonNull(option, "option"));
-        getManager().getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
+    public Optional<String> option(Set<ContextValue<?>> contexts, String option) {
+        final @Nullable String val = options(contexts).get(Objects.requireNonNull(option, "option"));
+        getManager().getNotifier().onOptionCheck(identifier(), contexts, option, val);
         return Optional.ofNullable(val);
     }
 
     @Override
-    public ConfigurationNode getOptionNode(Set<ContextValue<?>> contexts, String option) {
-        String val = getOptions(contexts).get(Objects.requireNonNull(option, "option"));
-        getManager().getNotifier().onOptionCheck(getIdentifier(), contexts, option, val);
+    public ConfigurationNode optionNode(Set<ContextValue<?>> contexts, String option) {
+        String val = options(contexts).get(Objects.requireNonNull(option, "option"));
+        getManager().getNotifier().onOptionCheck(identifier(), contexts, option, val);
         return BasicConfigurationNode.root().raw(val);
     }
 
@@ -200,8 +200,8 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     @Override
-    public @Nullable Object getAssociatedObject() {
-        return this.type.getType().getAssociatedObject(this.identifier.identifier());
+    public @Nullable Object associatedObject() {
+        return this.type.type().getAssociatedObject(this.identifier.identifier());
     }
 
     @Override
@@ -218,11 +218,11 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     public void accept(ImmutableSubjectData newData) {
         data.synchronous().invalidateAll();
         getManager().loadedSubjectTypes().stream()
-                .flatMap(type -> type.getActiveSubjects().stream())
+                .flatMap(type -> type.activeSubjects().stream())
                 .map(it -> (CalculatedSubjectImpl<?>) it)
                 .filter(subj -> {
                     for (Set<ContextValue<?>> ent : subj.getCachedContexts()) {
-                        if (subj.getParents(ent).contains(this.identifier)) {
+                        if (subj.parents(ent).contains(this.identifier)) {
                             return true;
                         }
                     }

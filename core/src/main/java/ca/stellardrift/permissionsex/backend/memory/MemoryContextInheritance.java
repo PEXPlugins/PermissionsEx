@@ -46,7 +46,7 @@ public class MemoryContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public List<ContextValue<?>> getParents(ContextValue<?> context) {
+    public List<ContextValue<?>> parents(ContextValue<?> context) {
         final List<String> inheritance = contextInheritance.get(ctxToString(context));
         if (inheritance == null) {
             return Collections.emptyList();
@@ -56,14 +56,14 @@ public class MemoryContextInheritance implements ContextInheritance {
     }
 
     @Override
-    public ContextInheritance setParents(ContextValue<?> context, List<ContextValue<?>> parents) {
+    public ContextInheritance parents(ContextValue<?> context, List<ContextValue<?>> parents) {
         final Map<String, List<String>> newData = new HashMap<>(contextInheritance);
         newData.put(ctxToString(context), ImmutableList.copyOf(Lists.transform(ImmutableList.copyOf(parents), MemoryContextInheritance::ctxToString)));
         return newCopy(newData);
     }
 
     @Override
-    public Map<ContextValue<?>, List<ContextValue<?>>> getAllParents() {
+    public Map<ContextValue<?>, List<ContextValue<?>>> allParents() {
         ImmutableMap.Builder<ContextValue<?>, List<ContextValue<?>>> ret = ImmutableMap.builder();
         for (Map.Entry<String, List<String>> entry : contextInheritance.entrySet()) {
             ret.put(ctxFromString(entry.getKey()), Lists.transform(entry.getValue(), MemoryContextInheritance::ctxFromString));
@@ -80,7 +80,7 @@ public class MemoryContextInheritance implements ContextInheritance {
             return ((MemoryContextInheritance) inheritance);
         } else {
             Map<String, List<String>> data = new HashMap<>();
-            for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance.getAllParents().entrySet()) {
+            for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance.allParents().entrySet()) {
                 data.put(ctxToString(ent.getKey()), Lists.transform(ent.getValue(), MemoryContextInheritance::ctxToString));
             }
             return new MemoryContextInheritance(data);
