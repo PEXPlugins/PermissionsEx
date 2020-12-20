@@ -19,20 +19,19 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.CommandBlockItem;
+import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(EntityArgumentType.class)
-public class MixinEntityArgumentType {
-
-    @Redirect(method = "listSuggestions", at = @At(value= "INVOKE",
-            target = RedirectTargets.COMMAND_SOURCE_HAS_PERM_LEVEL))
-    public boolean commandSourceHasSelectorPermission(CommandSource source, int level) {
-        return !(source instanceof ServerCommandSource)
-                || PermissionsExHooks.hasPermission(((ServerCommandSource) source), MinecraftPermissions.USE_SELECTOR);
+@Mixin(CommandBlockItem.class)
+public class CommandBlockItemMixin {
+    @Redirect(method = "getPlacementState",
+            at = @At(value="INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
+    public boolean canPlaceCommandBlock(PlayerEntity player) {
+        return !(player instanceof ServerPlayerEntity) || PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_PLACE);
     }
+
 }

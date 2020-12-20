@@ -35,15 +35,10 @@ import java.util.function.Predicate;
  * @param <T> Argument builder type
  */
 @Mixin(value = ArgumentBuilder.class, remap = false)
-public abstract class MixinArgumentBuilder<S, T extends ArgumentBuilder<S, T>> {
-    @Shadow
-    protected abstract T getThis();
-
-    @Shadow
-    private Predicate<S> requirement;
-
-    @Shadow
-    private CommandNode<S> target;
+public abstract class ArgumentBuilderMixin<S, T extends ArgumentBuilder<S, T>> {
+    @Shadow protected abstract T getThis();
+    @Shadow private Predicate<S> requirement;
+    @Shadow private CommandNode<S> target;
 
 
     /**
@@ -82,8 +77,8 @@ public abstract class MixinArgumentBuilder<S, T extends ArgumentBuilder<S, T>> {
             return name;
         } else {
             final ArgumentBuilder<S, T> build = getThis();
-            if (build instanceof LiteralArgumentBuilder) {
-                return ((LiteralArgumentBuilder) build).getLiteral();
+            if (build instanceof LiteralArgumentBuilder<?>) {
+                return ((LiteralArgumentBuilder<?>) build).getLiteral();
             }
         }
         return null;

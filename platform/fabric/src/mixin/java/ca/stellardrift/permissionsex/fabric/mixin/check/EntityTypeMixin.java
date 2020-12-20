@@ -19,26 +19,23 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.CommandBlockExecutor;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.PlayerManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(CommandBlockExecutor.class)
-public class MixinCommandBlockExecutor {
-    @Redirect(method = "interact", at = @At(value = "INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
-    public boolean canInteractWithMinecart(PlayerEntity player) {
-        if (!player.isCreative()) {
-            return false;
-        }
-
-        if (player instanceof ServerPlayerEntity && !PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
-            ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseScreenS2CPacket());
-            return false;
-        }
-        return true;
+@Mixin(EntityType.class)
+public class EntityTypeMixin {
+    @Redirect(method = "loadFromEntityTag", at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP))
+    private static boolean canLoadRestrictedEntityData(PlayerManager self, GameProfile profile, World world, PlayerEntity player, Entity spawnedEntity, CompoundTag data) {
+        final Identifier entityType = EntityType.getId(spawnedEntity.getType());
+        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.LOAD_ENTITY_DATA + "." + entityType.getNamespace() + "." + entityType.getPath());
     }
 }

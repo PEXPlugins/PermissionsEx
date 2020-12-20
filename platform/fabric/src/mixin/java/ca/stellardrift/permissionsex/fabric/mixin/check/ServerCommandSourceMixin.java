@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import static ca.stellardrift.permissionsex.fabric.PermissionsExHooks.hasPermission;
 
 @Mixin(ServerCommandSource.class)
-public class MixinServerCommandSource {
+public class ServerCommandSourceMixin {
 
     @Redirect(method = "sendToOps",
             at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP))

@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerPlayerInteractionManager.class)
-public class MixinServerPlayerInteractionManager {
+public class ServerPlayerInteractionManagerMixin {
     @Shadow
     public ServerWorld world;
 

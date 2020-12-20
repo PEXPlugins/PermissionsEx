@@ -21,7 +21,7 @@ import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.fabric.mixin.AccessorServerCommandSource
+import ca.stellardrift.permissionsex.fabric.mixin.ServerCommandSourceAccess
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
@@ -36,8 +36,10 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.platform.fabric.AdventureCommandSourceStack
+import net.kyori.adventure.platform.fabric.PlayerLocales
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.command.CommandManager.argument
 import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
@@ -132,11 +134,16 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     override val manager: PermissionsEx<*> = PermissionsExMod.manager
     override val name: String get() = src.name
     override val locale: Locale get() {
-        return (output.audience() as? LocaleHolder)?.locale ?: Locale.getDefault()
+        val output = (output as ServerCommandSourceAccess).`accessor$output`()
+        return if (output is PlayerEntity) {
+            PlayerLocales.locale(output)
+        } else {
+            Locale.getDefault();
+        }
     }
     override val subjectIdentifier: SubjectRef<*>?
         get() {
-            return if (src is IPermissionCommandSource<*>) {
+            return if (src is PermissionCommandSourceBridge<*>) {
                 src.asReference()
             } else {
                 null
@@ -145,7 +152,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun hasPermission(permission: String): Boolean {
-        return if (src is IPermissionCommandSource<*>) {
+        return if (src is PermissionCommandSourceBridge<*>) {
             src.hasPermission(permission)
         } else {
             src.hasPermissionLevel(src.minecraftServer.opPermissionLevel)
@@ -154,11 +161,11 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
 
     override fun hasPermission(permission: Permission): Boolean {
         var ret = 0
-        if (src is IPermissionCommandSource<*>) {
-            ret = (src as IPermissionCommandSource<*>).asCalculatedSubject().getPermission(permission.value)
+        if (src is PermissionCommandSourceBridge<*>) {
+            ret = (src as PermissionCommandSourceBridge<*>).asCalculatedSubject().getPermission(permission.value)
         }
         if (ret == 0) { // op status
-            ret = (src as AccessorServerCommandSource).level
+            ret = (src as ServerCommandSourceAccess).level
         }
         if (ret == 0) { // permission def value
             ret = permission.default

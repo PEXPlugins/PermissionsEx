@@ -16,39 +16,26 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
+import ca.stellardrift.permissionsex.fabric.FabricDefinitions;
+import ca.stellardrift.permissionsex.fabric.PermissionCommandSourceBridge;
 import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
-import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
-import net.minecraft.text.Text;
-import net.minecraft.world.CommandBlockExecutor;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import net.minecraft.server.rcon.RconCommandOutput;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(CommandBlockExecutor.class)
-public class MixinCommandBlockExecutor implements IPermissionCommandSource<String> {
-    private volatile @MonotonicNonNull CalculatedSubject permissionsex$subject;
-
-    @Shadow
-    private Text customName;
-
+/**
+ * Class is misnamed in Fabric -- this is actually the command output for rcon connections
+ */
+@Mixin(RconCommandOutput.class)
+public class RconCommandOutputMixin implements PermissionCommandSourceBridge<String> {
     @Override
     public @NotNull SubjectType<String> getPermType() {
-        return PermissionsExMod.INSTANCE.getCommandBlockSubjectType();
+        return PermissionsExMod.INSTANCE.getSystemSubjectType();
     }
 
     @Override
     public @NotNull String getPermIdentifier() {
-        return this.customName.asString();
-    }
-
-    @Override
-    public @NotNull CalculatedSubject asCalculatedSubject() {
-        if (this.permissionsex$subject == null) {
-            return this.permissionsex$subject = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
-        }
-        return this.permissionsex$subject;
+        return FabricDefinitions.IDENTIFIER_RCON;
     }
 }

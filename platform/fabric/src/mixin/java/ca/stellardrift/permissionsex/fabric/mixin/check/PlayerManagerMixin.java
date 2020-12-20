@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerManager.class)
-public abstract class MixinPlayerManager {
+public abstract class PlayerManagerMixin {
 
     @Shadow protected abstract void sendCommandTree(ServerPlayerEntity player, int opLevel);
 

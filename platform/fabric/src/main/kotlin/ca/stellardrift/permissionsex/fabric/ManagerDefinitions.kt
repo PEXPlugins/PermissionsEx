@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
-import ca.stellardrift.permissionsex.fabric.mixin.AccessorMinecraftServer
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
@@ -97,7 +96,7 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
         return (subject.associatedObject as? Entity)?.run {
             if (entityWorld is ServerWorld) {
-                (entityWorld.server as? AccessorMinecraftServer)?.registryManager?.dimensionTypes?.ids
+                entityWorld.server?.registryManager?.dimensionTypes?.ids
             } else {
                 null
             }

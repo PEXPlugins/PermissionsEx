@@ -19,26 +19,23 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
-import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.DebugStickItem;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(DebugStickItem.class)
-public class MixinDebugStickItem {
+@Mixin(BlockItem.class)
+public abstract class BlockItemMixin {
 
-    @Redirect(method = "use", at = @At(value = "INVOKE",
-            target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
-    public boolean canUseDebugStick(PlayerEntity ply, PlayerEntity unused, BlockState block,
-                                    WorldAccess world, BlockPos pos, boolean isRightClick, ItemStack heldItem) {
-        Identifier usedBlock = Registry.BLOCK.getId(block.getBlock());
-        return PermissionsExHooks.hasPermission(ply, MinecraftPermissions.makeSpecific(MinecraftPermissions.DEBUG_STICK_USE, usedBlock));
+    @Redirect(method = "writeTagToBlockEntity", at = @At(value = "INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
+    private static boolean canCopyData(PlayerEntity player, World world, PlayerEntity unused, BlockPos pos, ItemStack stack) {
+        Identifier block = BlockEntityType.getId(world.getBlockEntity(pos).getType());
+        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.makeSpecific(MinecraftPermissions.LOAD_BLOCK_ITEM_DATA, block));
     }
 }

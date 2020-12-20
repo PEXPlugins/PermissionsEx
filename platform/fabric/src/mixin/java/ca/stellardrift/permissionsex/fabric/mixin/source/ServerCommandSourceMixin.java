@@ -49,7 +49,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @Mixin(ServerCommandSource.class)
-public abstract class MixinServerCommandSource implements IPermissionCommandSource<Object> {
+public abstract class ServerCommandSourceMixin implements PermissionCommandSourceBridge<Object> {
 
     @Shadow @Final
     private CommandOutput output;
@@ -110,23 +110,23 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public @NotNull SubjectType<Object> getPermType() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<Object>) output).getPermType()
+        return output instanceof PermissionCommandSourceBridge ? ((PermissionCommandSourceBridge<Object>) output).getPermType()
                 : (SubjectType) PermissionsExMod.INSTANCE.getSystemSubjectType();
     }
 
     @Override
     public @NotNull Object getPermIdentifier() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<?>) output).getPermIdentifier() : simpleName;
+        return output instanceof PermissionCommandSourceBridge ? ((PermissionCommandSourceBridge<?>) output).getPermIdentifier() : simpleName;
     }
 
     @Override
     public boolean hasPermission(@NotNull String perm) {
-        return (output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<?>) output).asCalculatedSubject() : asCalculatedSubject()).hasPermission(getActiveContexts(), perm);
+        return (output instanceof PermissionCommandSourceBridge ? ((PermissionCommandSourceBridge<?>) output).asCalculatedSubject() : asCalculatedSubject()).hasPermission(getActiveContexts(), perm);
     }
 
     @Override
     public @NotNull CalculatedSubject asCalculatedSubject() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<?>) output).asCalculatedSubject()
+        return output instanceof PermissionCommandSourceBridge ? ((PermissionCommandSourceBridge<?>) output).asCalculatedSubject()
                 : PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
     }
 

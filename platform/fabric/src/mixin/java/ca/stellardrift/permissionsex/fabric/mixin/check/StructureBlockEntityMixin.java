@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(StructureBlockBlockEntity.class)
-public class MixinStructureBlockBlockEntity {
+public class StructureBlockEntityMixin {
     @Redirect(method = "openScreen", at = @At(value = "INVOKE", target = "net.minecraft.entity.player.PlayerEntity.isCreativeLevelTwoOp()Z"))
     public boolean canViewStructureBlock(PlayerEntity player) {
         if (player instanceof ServerPlayerEntity

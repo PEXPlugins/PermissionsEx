@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 @Mixin(ClientConnection.class)
-public class MixinClientConnection implements IVirtualHostHolder {
+public class ClientConnectionMixin implements IVirtualHostHolder {
     @Shadow
     private Channel channel;
 

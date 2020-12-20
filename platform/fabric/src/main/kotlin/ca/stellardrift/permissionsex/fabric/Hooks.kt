@@ -107,7 +107,7 @@ interface IVirtualHostHolder {
 @JvmField
 val LOCAL_HOST: InetSocketAddress = InetSocketAddress(InetAddress.getLocalHost(), 25565)
 
-interface IPermissionCommandSource<I> {
+interface PermissionCommandSourceBridge<I> {
     @JvmDefault
     fun hasPermission(perm: String): Boolean {
         return asCalculatedSubject().hasPermission(perm)
@@ -133,14 +133,14 @@ interface IPermissionCommandSource<I> {
     val permIdentifier: I
 }
 
-interface IServerCommandSource {
-    fun withPermissionOverride(override: IPermissionCommandSource<*>?): ServerCommandSource
-    fun getPermissionOverride(): IPermissionCommandSource<*>?
+interface ServerCommandSourceBridge {
+    fun withPermissionOverride(override: PermissionCommandSourceBridge<*>?): ServerCommandSource
+    fun permissionOverride(): PermissionCommandSourceBridge<*>?
 }
 
 fun <T : Any> commandPermissionCheck(permission: String): Predicate<T> {
     return Predicate {
-        if (it is IPermissionCommandSource<*>) {
+        if (it is PermissionCommandSourceBridge<*>) {
             it.hasPermission(permission)
         } else {
             false
@@ -158,7 +158,7 @@ fun ServerCommandSource.hasPermission(perm: String): Boolean {
 
 @JvmOverloads
 fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean {
-    return if (this is IPermissionCommandSource<*>) {
+    return if (this is PermissionCommandSourceBridge<*>) {
         hasPermission(perm)
     } else {
         hasPermissionLevel(fallbackOpLevel)
@@ -171,8 +171,4 @@ fun GameProfile.hasPermission(perm: String): Boolean {
         return false
     }
     return PermissionsExMod.mcManager.users()[this.id].join().hasPermission(perm)
-}
-
-internal interface LocaleHolder {
-    val locale: Locale?
 }

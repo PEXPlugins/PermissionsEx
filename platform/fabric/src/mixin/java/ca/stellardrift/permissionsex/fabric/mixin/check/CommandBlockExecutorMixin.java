@@ -19,26 +19,26 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
-import net.minecraft.command.EntitySelector;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.CommandBlockExecutor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(EntitySelector.class)
-public class MixinEntitySelector {
+@Mixin(CommandBlockExecutor.class)
+public class CommandBlockExecutorMixin {
+    @Redirect(method = "interact", at = @At(value = "INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
+    public boolean canInteractWithMinecart(PlayerEntity player) {
+        if (!player.isCreative()) {
+            return false;
+        }
 
-    /**
-     * Redirect op level selector usage check to a permission
-     *
-     * @param src The source requesting this permission
-     * @param permissionLevel Generally 2, unused
-     * @return Permission result
-     */
-    @Redirect(method = "checkSourcePermission",
-            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL))
-    public boolean commandSourceHasPermission(ServerCommandSource src, int permissionLevel) {
-        return PermissionsExHooks.hasPermission(src, MinecraftPermissions.USE_SELECTOR);
+        if (player instanceof ServerPlayerEntity && !PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
+            ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseScreenS2CPacket());
+            return false;
+        }
+        return true;
     }
-
 }

@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(DedicatedPlayerManager.class)
-public class MixinDedicatedPlayerManager {
+public class DedicatedPlayerManagerMixin {
     /**
      * Replace operator check with permission check for server player limit
      *

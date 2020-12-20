@@ -14,13 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric.mixin.source;
+package ca.stellardrift.permissionsex.fabric.mixin;
 
-import net.minecraft.network.packet.c2s.play.ClientSettingsC2SPacket;
+import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ClientSettingsC2SPacket.class)
-public interface AccessorClientSettingsC2SPacket {
-    @Accessor String getLanguage();
+@Mixin(HandshakeC2SPacket.class)
+public interface HandshakeC2SPacketAccess {
+    @Accessor("address")
+    String address();
+
+    @Accessor("port")
+    int port();
+
 }

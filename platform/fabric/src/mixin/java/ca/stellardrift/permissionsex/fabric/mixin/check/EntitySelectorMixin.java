@@ -19,23 +19,26 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.command.EntitySelector;
+import net.minecraft.server.command.ServerCommandSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(BlockItem.class)
-public abstract class MixinBlockItem {
+@Mixin(EntitySelector.class)
+public class EntitySelectorMixin {
 
-    @Redirect(method = "writeTagToBlockEntity", at = @At(value = "INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
-    private static boolean canCopyData(PlayerEntity player, World world, PlayerEntity unused, BlockPos pos, ItemStack stack) {
-        Identifier block = BlockEntityType.getId(world.getBlockEntity(pos).getType());
-        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.makeSpecific(MinecraftPermissions.LOAD_BLOCK_ITEM_DATA, block));
+    /**
+     * Redirect op level selector usage check to a permission
+     *
+     * @param src The source requesting this permission
+     * @param permissionLevel Generally 2, unused
+     * @return Permission result
+     */
+    @Redirect(method = "checkSourcePermission",
+            at = @At(value = "INVOKE", target = RedirectTargets.SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL))
+    public boolean commandSourceHasPermission(ServerCommandSource src, int permissionLevel) {
+        return PermissionsExHooks.hasPermission(src, MinecraftPermissions.USE_SELECTOR);
     }
+
 }

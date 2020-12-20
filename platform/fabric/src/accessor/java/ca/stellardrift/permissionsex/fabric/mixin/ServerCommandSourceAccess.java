@@ -14,27 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
+package ca.stellardrift.permissionsex.fabric.mixin;
 
-import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile;
-import com.mojang.authlib.GameProfile;
+import net.minecraft.server.command.CommandOutput;
+import net.minecraft.server.command.ServerCommandSource;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-import java.util.UUID;
+@Mixin(ServerCommandSource.class)
+public interface ServerCommandSourceAccess {
+    @Accessor("level")
+    int getLevel();
 
-@Mixin(value = GameProfile.class, remap = false)
-public abstract class MixinGameProfile implements MinecraftProfile {
-    @Shadow
-    public abstract String getName();
-
-    @Shadow
-    public abstract UUID getId();
-
-    @Override
-    public String name() {
-        return this.getName();
-    }
-
-    // uuid() is implemented by adventure-platform-fabric
+    @Accessor("output")
+    CommandOutput accessor$output();
 }

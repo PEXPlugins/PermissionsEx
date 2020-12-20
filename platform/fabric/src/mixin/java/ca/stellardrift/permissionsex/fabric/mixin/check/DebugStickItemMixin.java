@@ -19,19 +19,26 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.CommandBlockItem;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.item.DebugStickItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.WorldAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(CommandBlockItem.class)
-public class MixinCommandBlockItem {
-    @Redirect(method = "getPlacementState",
-            at = @At(value="INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
-    public boolean canPlaceCommandBlock(PlayerEntity player) {
-        return !(player instanceof ServerPlayerEntity) || PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_PLACE);
-    }
+@Mixin(DebugStickItem.class)
+public class DebugStickItemMixin {
 
+    @Redirect(method = "use", at = @At(value = "INVOKE",
+            target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
+    public boolean canUseDebugStick(PlayerEntity ply, PlayerEntity unused, BlockState block,
+                                    WorldAccess world, BlockPos pos, boolean isRightClick, ItemStack heldItem) {
+        Identifier usedBlock = Registry.BLOCK.getId(block.getBlock());
+        return PermissionsExHooks.hasPermission(ply, MinecraftPermissions.makeSpecific(MinecraftPermissions.DEBUG_STICK_USE, usedBlock));
+    }
 }

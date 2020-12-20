@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import static ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER;
 
 @Mixin(MinecraftDedicatedServer.class)
-public class MixinDedicatedServer {
+public class DedicatedServerMixin {
 
     /**
      * If we have no users defined, don't enable spawn protection -- equivalent to no ops check

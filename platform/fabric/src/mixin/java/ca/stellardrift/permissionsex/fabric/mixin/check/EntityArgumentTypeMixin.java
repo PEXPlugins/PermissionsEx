@@ -19,23 +19,20 @@ package ca.stellardrift.permissionsex.fabric.mixin.check;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import ca.stellardrift.permissionsex.fabric.RedirectTargets;
-import com.mojang.authlib.GameProfile;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.PlayerManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.server.command.ServerCommandSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(EntityType.class)
-public class MixinEntityType {
-    @Redirect(method = "loadFromEntityTag", at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP))
-    private static boolean canLoadRestrictedEntityData(PlayerManager self, GameProfile profile, World world, PlayerEntity player, Entity spawnedEntity, CompoundTag data) {
-        final Identifier entityType = EntityType.getId(spawnedEntity.getType());
-        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.LOAD_ENTITY_DATA + "." + entityType.getNamespace() + "." + entityType.getPath());
+@Mixin(EntityArgumentType.class)
+public class EntityArgumentTypeMixin {
+
+    @Redirect(method = "listSuggestions", at = @At(value= "INVOKE",
+            target = RedirectTargets.COMMAND_SOURCE_HAS_PERM_LEVEL))
+    public boolean commandSourceHasSelectorPermission(CommandSource source, int level) {
+        return !(source instanceof ServerCommandSource)
+                || PermissionsExHooks.hasPermission(((ServerCommandSource) source), MinecraftPermissions.USE_SELECTOR);
     }
 }

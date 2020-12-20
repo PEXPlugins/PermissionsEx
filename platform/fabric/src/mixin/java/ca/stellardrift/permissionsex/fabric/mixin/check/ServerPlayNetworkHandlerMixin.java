@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerPlayNetworkHandler.class)
-public class MixinServerPlayNetworkHandler {
+public class ServerPlayNetworkHandlerMixin {
 
     @Shadow
     public ServerPlayerEntity player;

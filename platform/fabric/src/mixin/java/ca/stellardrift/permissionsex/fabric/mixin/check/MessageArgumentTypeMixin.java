@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(MessageArgumentType.class)
-public class MixinMessageArgumentType {
+public class MessageArgumentTypeMixin {
 
     @Redirect(method = "getMessage", at = @At(value = "INVOKE",
             target = RedirectTargets.SERVER_COMMAND_SOURCE_HAS_PERM_LEVEL))
