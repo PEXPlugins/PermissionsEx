@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static ca.stellardrift.permissionsex.Messages.*;
 
 /**
  * Configuration for PermissionsEx. This is designed to be serialized with a Configurate {@link ObjectMapper}
@@ -82,14 +81,14 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
 
         void validate() throws PEBKACException {
             if (this.backends.isEmpty()) {
-                throw new PEBKACException(CONFIG_ERROR_NO_BACKENDS.toComponent());
+                throw new PEBKACException(Messages.CONFIG_ERROR_NO_BACKENDS.tr());
             }
             if (this.defaultBackend == null) {
-                throw new PEBKACException(CONFIG_ERROR_NO_DEFAULT.toComponent());
+                throw new PEBKACException(Messages.CONFIG_ERROR_NO_DEFAULT.tr());
             }
 
             if (!this.backends.containsKey(this.defaultBackend)) {
-                throw new PEBKACException(CONFIG_ERROR_INVALID_DEFAULT.toComponent(defaultBackend, backends.keySet()));
+                throw new PEBKACException(Messages.CONFIG_ERROR_INVALID_DEFAULT.tr(defaultBackend, backends.keySet()));
             }
         }
 
@@ -217,7 +216,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     public static ConfigurationNode loadDefaultConfiguration() throws ConfigurateException {
         final URL defaultConfig = FilePermissionsExConfiguration.class.getResource("default.conf");
         if (defaultConfig == null) {
-            throw new Error(new PermissionsException(CONFIG_ERROR_DEFAULT_CONFIG.toComponent()));
+            throw new Error(new PermissionsException(Messages.CONFIG_ERROR_DEFAULT_CONFIG.tr()));
         }
         HoconConfigurationLoader fallbackLoader = HoconConfigurationLoader.builder()
                 .defaultOptions(FilePermissionsExConfiguration::decorateOptions)

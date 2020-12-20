@@ -1,6 +1,8 @@
 import ca.stellardrift.build.localization.LocalizationExtension
+import ca.stellardrift.build.localization.TemplateType
 import net.kyori.indra.sonatypeSnapshots
 import net.ltgt.gradle.errorprone.errorprone
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 plugins {
     id("ca.stellardrift.opinionated")
@@ -54,7 +56,14 @@ dependencies {
 // If we have localization plugin, configure it
 plugins.withId("ca.stellardrift.localization") {
     extensions.configure(LocalizationExtension::class.java) {
-        templateFile.set(rootProject.file("etc/messages-template.kt.tmpl"))
+        templateType.set(TemplateType.JAVA)
+        templateFile.set(rootProject.file("etc/messages-template.java.tmpl"))
+    }
+
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        extensions.configure(KotlinJvmProjectExtension::class) {
+            sourceSets.named("main") { kotlin.srcDirs(tasks.named("generateLocalization")) }
+        }
     }
 }
 

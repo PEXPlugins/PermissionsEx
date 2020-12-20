@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.util.command
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import com.google.common.base.Strings
 import java.util.Locale
 import net.kyori.adventure.audience.Audience
@@ -35,7 +35,7 @@ class TestCommander(override val manager: PermissionsEx<*>) : Commander {
     override val locale: Locale
         get() = Locale.ROOT
 
-    override val subjectIdentifier: SubjectIdentifier?
+    override val subjectIdentifier: SubjectRef<*>?
         get() = null
     override val messageColor: TextColor
         get() = NamedTextColor.DARK_GREEN

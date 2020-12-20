@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.commands.parse;
 
-import ca.stellardrift.permissionsex.commands.CommonMessages;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
@@ -80,14 +79,14 @@ public class QuotedStringParser {
 
     private int peek() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.toComponent());
+            throw createException(Messages.ERROR_PARSE_BUFFEROVERRUN.tr());
         }
         return buffer.codePointAt(index + 1);
     }
 
     private int next() throws ArgumentParseException {
         if (!hasMore()) {
-            throw createException(CommonMessages.ERROR_PARSE_BUFFEROVERRUN.toComponent());
+            throw createException(Messages.ERROR_PARSE_BUFFEROVERRUN.tr());
         }
         return buffer.codePointAt(++index);
     }
@@ -123,7 +122,7 @@ public class QuotedStringParser {
         // Consume the start quotation character
         int nextCodePoint = next();
         if (nextCodePoint != startQuotation) {
-            throw createException(CommonMessages.ERROR_PARSE_NOTQUOTE.toComponent(nextCodePoint, startQuotation));
+            throw createException(Messages.ERROR_PARSE_NOTQUOTE.tr(nextCodePoint, startQuotation));
         }
 
         while (true) {
@@ -131,7 +130,7 @@ public class QuotedStringParser {
                 if (lenient) {
                     return;
                 } else {
-                    throw createException(CommonMessages.ERROR_PARSE_UNTERMINATED_QUOTED.toComponent());
+                    throw createException(Messages.ERROR_PARSE_UNTERMINATED_QUOTED.tr());
                 }
             }
             nextCodePoint = next();

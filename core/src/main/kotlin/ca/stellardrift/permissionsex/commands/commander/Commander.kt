@@ -17,7 +17,6 @@
 package ca.stellardrift.permissionsex.commands.commander
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
@@ -132,7 +131,7 @@ interface Commander : ForwardingAudience.Single {
         if (!hasPermission("$basePermission.${subject.key}.${subject.value}") &&
                 (subject != subjectIdentifier || !hasPermission("$basePermission.own"))
         ) {
-            throw CommandException(Messages.EXECUTOR_ERROR_NO_PERMISSION())
+            throw CommandException(Messages.EXECUTOR_ERROR_NO_PERMISSION.tr())
         }
     }
 }

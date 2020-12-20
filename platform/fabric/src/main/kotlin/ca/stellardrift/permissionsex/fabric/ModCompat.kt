@@ -35,7 +35,7 @@ class PEXWorldEditProvider : FabricPermissionsProvider {
     @Subscribe
     fun onPlatformReady(event: PlatformReadyEvent) {
         FabricWorldEdit.inst.permissionsProvider = this
-        PermissionsExMod.logger().info(Messages.INTEGRATION_REGISTER_SUCCESS("WorldEdit"))
+        PermissionsExMod.logger().info(Messages.INTEGRATION_REGISTER_SUCCESS.tr("WorldEdit"))
     }
 }
 

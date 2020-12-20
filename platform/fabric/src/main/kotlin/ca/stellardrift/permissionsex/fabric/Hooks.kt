@@ -166,7 +166,7 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
 
 fun GameProfile.hasPermission(perm: String): Boolean {
     if (this.id == null) {
-        PermissionsExMod.logger().error(Messages.GAMEPROFILE_ERROR_INCOMPLETE(this.name))
+        PermissionsExMod.logger().error(Messages.GAMEPROFILE_ERROR_INCOMPLETE.tr(this.name))
         return false
     }
     return PermissionsExMod.mcManager.users()[this.id].join().hasPermission(perm)

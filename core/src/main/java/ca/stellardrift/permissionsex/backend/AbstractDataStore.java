@@ -223,7 +223,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
                         .thenCompose(newData -> setData(oldType, oldIdentifier, null))
                         .thenApply(inp -> (Void) null);
             } else {
-                return Util.<Void>failedFuture(new PermissionsException(Messages.DATASTORE_MOVE_ERROR.toComponent()));
+                return Util.<Void>failedFuture(new PermissionsException(Messages.DATASTORE_MOVE_ERROR.tr()));
             }
 
         }).thenCompose(future -> future);
@@ -235,7 +235,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
         try {
             node.set(this.properties.config());
         } catch (SerializationException e) {
-            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.toComponent(node.key()), e);
+            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.tr(node.key()), e);
         }
         return this.properties.factory().name();
     }
@@ -274,7 +274,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
                 final C dataStoreConfig = config.get(this.configType);
                 return this.newInstanceSupplier.apply(StoreProperties.of(identifier, dataStoreConfig, this));
             } catch (SerializationException e) {
-                throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.toComponent(identifier), e);
+                throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.tr(identifier), e);
             }
         }
     }

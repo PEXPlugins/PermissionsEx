@@ -84,7 +84,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
         }
 
         if (manager.debugMode()) {
-            manager.logger().info(Messages.SUPERPERMS_CHECK_NOTIFY(permission, player.name, contexts, ret))
+            manager.logger().info(Messages.SUPERPERMS_CHECK_NOTIFY.tr(permission, player.name, contexts, ret))
         }
         return ret
     }

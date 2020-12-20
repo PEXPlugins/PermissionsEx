@@ -17,7 +17,6 @@
 package ca.stellardrift.permissionsex.commands.commander
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
@@ -109,7 +108,7 @@ abstract class MessageFormatter(
             this += subject.type().name() decorated TextDecoration.BOLD
             this += space()
             this += nameText
-            hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT()))
+            hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.tr()))
             clickEvent(ClickEvent.runCommand(transformCommand("/pex ${subject.type().name()} $serializedIdent info")))
         }
     }

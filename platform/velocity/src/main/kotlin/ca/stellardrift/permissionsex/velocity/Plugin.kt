@@ -111,7 +111,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
                 .playerProvider { server.getPlayer(it).orElse(null) }
                 .build()
         } catch (e: Exception) {
-            logger.error(Messages.PLUGIN_INIT_ERROR(), e)
+            logger.error(Messages.PLUGIN_INIT_ERROR.tr(), e)
             return
         }
         manager.subjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.identifier()) {
@@ -133,7 +133,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
                 .build()
             server.commandManager.register(meta, VelocityCommand(this, it))
         }
-        logger.info(Messages.PLUGIN_INIT_SUCCESS(ProjectData.NAME, ProjectData.VERSION))
+        logger.info(Messages.PLUGIN_INIT_SUCCESS.tr(ProjectData.NAME, ProjectData.VERSION))
     }
 
     @Subscribe
@@ -146,10 +146,10 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: Exception) {
-            logger.error(Messages.PLUGIN_DISABLE_TIMEOUT())
+            logger.error(Messages.PLUGIN_DISABLE_TIMEOUT.tr())
             exec.shutdownNow()
         }
-        logger.info(Messages.PLUGIN_DISABLE_SUCCESS(ProjectData.NAME, ProjectData.VERSION))
+        logger.info(Messages.PLUGIN_DISABLE_SUCCESS.tr(ProjectData.NAME, ProjectData.VERSION))
     }
 
     @Subscribe

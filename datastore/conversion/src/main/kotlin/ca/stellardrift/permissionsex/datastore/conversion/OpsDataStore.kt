@@ -21,9 +21,6 @@ import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.Messages.OPS_DESCRIPTION
-import ca.stellardrift.permissionsex.backend.Messages.OPS_ERROR_NO_FILE
-import ca.stellardrift.permissionsex.backend.Messages.OPS_NAME
 import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData
 import ca.stellardrift.permissionsex.context.ContextInheritance
@@ -58,7 +55,7 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
     companion object : Factory<OpsDataStore, Config>("ops", Config::class.java, ::OpsDataStore), DataStoreFactory.Convertable {
 
         override fun friendlyName(): Component {
-            return OPS_NAME()
+            return Messages.OPS_NAME.tr()
         }
 
         override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
@@ -67,7 +64,7 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
                 TreePVector.singleton(
                     ConversionResult.builder()
                     .store(OpsDataStore(StoreProperties.of("ops", Config(opsFile.fileName.toString()), this)))
-                    .description(OPS_DESCRIPTION())
+                    .description(Messages.OPS_DESCRIPTION.tr())
                     .build())
             } else {
                 TreePVector.empty()
@@ -89,7 +86,7 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
         }
 
         if (!Files.exists(file)) {
-            manager.logger().warn(OPS_ERROR_NO_FILE())
+            manager.logger().warn(Messages.OPS_ERROR_NO_FILE.tr())
         }
 
         this.configListener = WatchServiceListener.builder()

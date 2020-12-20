@@ -136,7 +136,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @Listener
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
     fun onPreInit(event: ConstructPluginEvent) {
-        logger.info(Messages.PLUGIN_INIT_BEGIN(ProjectData.NAME, ProjectData.VERSION))
+        logger.info(Messages.PLUGIN_INIT_BEGIN.tr(ProjectData.NAME, ProjectData.VERSION))
         try {
             convertFromBukkit()
             convertFromLegacySpongeName()
@@ -159,7 +159,7 @@ class PermissionsExPlugin @Inject internal constructor(
                 }
                 .build()
         } catch (e: Exception) {
-            throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(ProjectData.NAME), e))
+            throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(ProjectData.NAME), e))
         }
 
         manager.subjects(systemSubjectType)
@@ -182,9 +182,9 @@ class PermissionsExPlugin @Inject internal constructor(
             "deop" to "minecraft.command.deop").forEach { (alias, perm) ->
             event.register(container, command(alias) {
                 permission = Permission(perm, null, 0)
-                description = Messages.COMMANDS_FAKE_OP_DESCRIPTION()
-                args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER())
-                executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR()) }
+                description = Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr()
+                args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER.tr())
+                executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR.tr()) }
             })
         }
 
@@ -197,17 +197,17 @@ class PermissionsExPlugin @Inject internal constructor(
     fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {
         try {
             this.mcManager.users()[event.profile.uniqueId].exceptionally {
-                logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, it.message ?: "<unknown>"), it)
+                logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.tr(event.profile.name, event.profile.uniqueId, it.message ?: "<unknown>"), it)
                 null
             }
         } catch (e: Exception) {
-            logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR(event.profile.name, event.profile.uniqueId, e.message ?: "<unknown>"), e)
+            logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.tr(event.profile.name, event.profile.uniqueId, e.message ?: "<unknown>"), e)
         }
     }
 
     @Listener
     fun disable(event: StoppingEngineEvent<Server>) {
-        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN(ProjectData.NAME))
+        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN.tr(ProjectData.NAME))
         this.service = null
         this._manager?.close()
     }
@@ -254,7 +254,7 @@ class PermissionsExPlugin @Inject internal constructor(
     private fun convertFromBukkit() {
         val bukkitConfigPath = Paths.get("plugins/PermissionsEx")
         if (Files.isDirectory(bukkitConfigPath) && configDir.isEmptyDirectory()) {
-            logger.info(Messages.MIGRATION_BUKKIT_BEGIN())
+            logger.info(Messages.MIGRATION_BUKKIT_BEGIN.tr())
             Files.move(bukkitConfigPath, configDir, StandardCopyOption.REPLACE_EXISTING)
         }
         val bukkitConfigFile = configDir.resolve("config.yml")
@@ -275,7 +275,7 @@ class PermissionsExPlugin @Inject internal constructor(
                 configDir.resolve("ninja.leaping.permissionsex.conf"),
                 configDir.resolve("${ProjectData.ARTIFACT_ID}.conf")
             )
-            logger.info(Messages.MIGRATION_LEGACY_SPONGE_SUCCESS(configDir.toString()))
+            logger.info(Messages.MIGRATION_LEGACY_SPONGE_SUCCESS.tr(configDir.toString()))
         }
     }
 
@@ -306,7 +306,7 @@ class PermissionsExPlugin @Inject internal constructor(
         return try {
             sql.getDataSource(container, url)
         } catch (e: SQLException) {
-            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR(url), e)
+            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR.tr(url), e)
             null
         }
     }

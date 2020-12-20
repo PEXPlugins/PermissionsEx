@@ -63,16 +63,16 @@ class CallbackController {
 
     fun createCommand(): CommandSpec {
         return command("callback", "cb") {
-            val uid = uuid() key Messages.COMMAND_ARG_TYPE_CALLBACK_ID()
+            val uid = uuid() key Messages.COMMAND_ARG_TYPE_CALLBACK_ID.tr()
             args = uid
-            description = Messages.COMMAND_CALLBACK_DESCRIPTION()
+            description = Messages.COMMAND_CALLBACK_DESCRIPTION.tr()
             executor { src, args ->
                 val callbackId = args[uid]
                 val userCallbacks = knownCallbacks[src.mapKey]
                 val callback = userCallbacks?.get(callbackId)
                 when {
-                    callback == null -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_UNKNOWN_ID(callbackId))
-                    callback.source.mapKey != src.mapKey -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_ONLY_OWN_ALLOWED())
+                    callback == null -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_UNKNOWN_ID.tr(callbackId))
+                    callback.source.mapKey != src.mapKey -> throw CommandException(Messages.COMMAND_CALLBACK_ERROR_ONLY_OWN_ALLOWED.tr())
                     else -> try {
                         callback()
                     } finally {

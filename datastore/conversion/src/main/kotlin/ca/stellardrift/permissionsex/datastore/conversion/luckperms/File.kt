@@ -18,7 +18,6 @@ package ca.stellardrift.permissionsex.datastore.conversion.luckperms
 
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
-import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_ERROR_INVALID_TRACK
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.DataStore
@@ -359,7 +358,7 @@ class LuckPermsTrack internal constructor(name: String, val groups: List<String>
     override fun newWithRanks(ents: List<Map.Entry<String, String>>): LuckPermsTrack {
         return LuckPermsTrack(this.name, ents.map { (k, v) ->
             if (k != SUBJECTS_GROUP) {
-                throw PermissionsException(LUCKPERMS_ERROR_INVALID_TRACK(k, this.name))
+                throw PermissionsException(Messages.ERROR_INVALID_TRACK.tr(k, this.name))
             }
             v
         })

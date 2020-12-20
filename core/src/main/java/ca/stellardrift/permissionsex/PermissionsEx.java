@@ -329,7 +329,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
             initialize(config);
             // TODO: Throw reload event to cache any relevant subject types
         } catch (IOException e) {
-            throw new PEBKACException(CONFIG_ERROR_LOAD.toComponent(e.getLocalizedMessage()));
+            throw new PEBKACException(CONFIG_ERROR_LOAD.tr(e.getLocalizedMessage()));
         }
     }
 
@@ -347,11 +347,11 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         try {
             newState.config.save();
         } catch (IOException e) {
-            throw new PermissionsLoadingException(CONFIG_ERROR_SAVE.toComponent(), e);
+            throw new PermissionsLoadingException(CONFIG_ERROR_SAVE.tr(), e);
         }
 
         if (shouldAnnounceImports) {
-            this.logger().warn(CONVERSION_BANNER.toComponent());
+            this.logger().warn(CONVERSION_BANNER.tr());
         }
 
         PVector<ConversionResult> allResults = TreePVector.empty();
@@ -364,9 +364,9 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
             PVector<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
-                    this.logger().info(CONVERSION_PLUGINHEADER.toComponent(prov.friendlyName()));
+                    this.logger().info(CONVERSION_PLUGINHEADER.tr(prov.friendlyName()));
                     for (ConversionResult result : res) {
-                        this.logger().info(CONVERSION_INSTANCE.toComponent(result.description(), result.store().getName()));
+                        this.logger().info(CONVERSION_INSTANCE.tr(result.description(), result.store().getName()));
                     }
                 }
                 allResults = allResults.plusAll(res);
@@ -395,7 +395,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
 
         // Migrate over legacy subject data
         newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS.name(), SUBJECTS_DEFAULTS.name(), SUBJECTS_DEFAULTS.name()).thenRun(() -> {
-            this.logger().info(CONVERSION_RESULT_SUCCESS.toComponent());
+            this.logger().info(CONVERSION_RESULT_SUCCESS.tr());
         });
     }
 

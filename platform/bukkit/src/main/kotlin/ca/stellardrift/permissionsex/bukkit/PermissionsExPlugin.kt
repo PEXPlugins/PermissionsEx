@@ -154,7 +154,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;*/
         } catch (e: Exception) {
-            logger.error(Messages.ERROR_ON_ENABLE(description.name), e)
+            logger.error(Messages.ERROR_ON_ENABLE.tr(description.name), e)
             server.pluginManager.disablePlugin(this)
             return
         }
@@ -202,7 +202,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         try {
             executorService.awaitTermination(20, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
-            logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT())
+            logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT.tr())
             executorService.shutdownNow()
         }
         this.adventure.close()
@@ -212,7 +212,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     private fun onPlayerPreLogin(event: AsyncPlayerPreLoginEvent) {
         userSubjects[event.uniqueId]
             .exceptionally { e ->
-                logger.warn(Messages.ERROR_LOAD_PRELOGIN(event.name, event.uniqueId.toString(), e.message!!), e)
+                logger.warn(Messages.ERROR_LOAD_PRELOGIN.tr(event.name, event.uniqueId.toString(), e.message!!), e)
                 null
             }
     }
@@ -295,19 +295,16 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
                 }
             }
             if (!found) {
-                logger.warn(Messages.SUPERPERMS_INJECT_NO_INJECTOR())
+                logger.warn(Messages.SUPERPERMS_INJECT_NO_INJECTOR.tr())
             } else if (!success) {
-                logger.warn(Messages.SUPERPERMS_INJECT_ERROR_GENERIC(player.name))
+                logger.warn(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.tr(player.name))
             }
             permissible.recalculatePermissions()
             if (success && manager.debugMode()) {
-                logger.info(Messages.SUPERPERMS_INJECT_SUCCESS())
+                logger.info(Messages.SUPERPERMS_INJECT_SUCCESS.tr())
             }
         } catch (e: Throwable) {
-            logger.error(
-                Messages.SUPERPERMS_INJECT_ERROR_GENERIC(player.name),
-                e
-            )
+            logger.error(Messages.SUPERPERMS_INJECT_ERROR_GENERIC.tr(player.name), e)
         }
     }
 
@@ -333,9 +330,9 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
                 }
             }
             if (!success) {
-                logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR(player.name))
+                logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR.tr(player.name))
             } else if (_manager?.engine()?.debugMode() == true) {
-                logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS(player.name))
+                logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS.tr(player.name))
             }
         } catch (e: Throwable) {
             e.printStackTrace()

@@ -134,7 +134,7 @@ class PermissionsExPlugin : Plugin(), Listener {
         try {
             this.users.load(event.connection.uniqueId)
         } catch (e: Exception) {
-            logger.warn(Messages.ERROR_LOAD_LOGIN(event.connection.name, event.connection.uniqueId), e)
+            logger.warn(Messages.ERROR_LOAD_LOGIN.tr(event.connection.name, event.connection.uniqueId), e)
         }
     }
 
@@ -144,7 +144,7 @@ class PermissionsExPlugin : Plugin(), Listener {
             manager.callbackController.clearOwnedBy(event.player.uniqueId)
             this.users.uncache(event.player.uniqueId)
         } catch (e: Exception) {
-            logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
+            logger.warn(Messages.ERROR_LOAD_LOGOUT.tr(event.player.name, event.player.uniqueId))
         }
     }
 }

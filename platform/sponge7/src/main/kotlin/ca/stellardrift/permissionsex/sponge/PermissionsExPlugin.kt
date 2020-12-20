@@ -146,7 +146,7 @@ class PermissionsExPlugin @Inject internal constructor(
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
     fun onPreInit(event: GamePreInitializationEvent) {
         timings = Timings(this)
-        logger.info(Messages.PLUGIN_INIT_BEGIN(PomData.NAME, PomData.VERSION))
+        logger.info(Messages.PLUGIN_INIT_BEGIN.tr(PomData.NAME, PomData.VERSION))
         sql = services.provide(SqlService::class.java)
         try {
             convertFromBukkit()
@@ -166,7 +166,7 @@ class PermissionsExPlugin @Inject internal constructor(
                 }
                 .build()
         } catch (e: Exception) {
-            throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(PomData.NAME), e))
+            throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(PomData.NAME), e))
         }
         defaults = loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS.name())
             .thenCompose { coll -> coll.loadSubject(
@@ -185,16 +185,16 @@ class PermissionsExPlugin @Inject internal constructor(
             services.setProvider(this, PermissionService::class.java, this)
         } else {
             _manager?.close()
-            throw PEBKACException(Messages.PLUGIN_INIT_ERROR_OTHER_PROVIDER_INSTALLED())
+            throw PEBKACException(Messages.PLUGIN_INIT_ERROR_OTHER_PROVIDER_INSTALLED.tr())
         }
     }
 
     private fun registerFakeOpCommand(alias: String, permission: String) {
         command(alias) {
             this.permission = Permission(permission, null, 0)
-            description = Messages.COMMANDS_FAKE_OP_DESCRIPTION()
-            args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER())
-            executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR()) }
+            description = Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr()
+            args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER.tr())
+            executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR.tr()) }
         }.register()
     }
 
@@ -204,7 +204,7 @@ class PermissionsExPlugin @Inject internal constructor(
             this.mcManager.users()[event.profile.uniqueId]
         } catch (e: Exception) {
             logger.warn(
-                Messages.EVENT_CLIENT_AUTH_ERROR.invoke(
+                Messages.EVENT_CLIENT_AUTH_ERROR.tr(
                     event.profile.name,
                     event.profile.uniqueId,
                     e.message!!
@@ -215,7 +215,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     @Listener
     fun disable(event: GameStoppedServerEvent) {
-        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN(PomData.NAME))
+        logger.debug(Messages.PLUGIN_SHUTDOWN_BEGIN.tr(PomData.NAME))
         this._manager?.close()
     }
 
@@ -251,7 +251,7 @@ class PermissionsExPlugin @Inject internal constructor(
     private fun convertFromBukkit() {
         val bukkitConfigPath = Paths.get("plugins/PermissionsEx")
         if (Files.isDirectory(bukkitConfigPath) && isDirectoryEmpty(configDir)) {
-            logger.info(Messages.MIGRATION_BUKKIT_BEGIN())
+            logger.info(Messages.MIGRATION_BUKKIT_BEGIN.tr())
             Files.move(bukkitConfigPath, configDir, StandardCopyOption.REPLACE_EXISTING)
         }
         val bukkitConfigFile = configDir.resolve("config.yml")
@@ -273,7 +273,7 @@ class PermissionsExPlugin @Inject internal constructor(
                 configDir.resolve("ninja.leaping.permissionsex.conf"),
                 configDir.resolve("${PomData.ARTIFACT_ID}.conf")
             )
-            logger.info(Messages.MIGRATION_LEGACY_SPONGE_SUCCESS(configDir.toString()))
+            logger.info(Messages.MIGRATION_LEGACY_SPONGE_SUCCESS.tr(configDir.toString()))
         }
     }
 
@@ -392,7 +392,7 @@ class PermissionsExPlugin @Inject internal constructor(
         } else try {
             sql.get().getDataSource(this, url)
         } catch (e: SQLException) {
-            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR(url), e)
+            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR.tr(url), e)
             null
         }
     }

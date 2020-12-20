@@ -17,7 +17,6 @@
 @file:JvmName("Utilities")
 package ca.stellardrift.permissionsex.util
 
-import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandException
@@ -78,10 +77,10 @@ fun CompletableFuture<*>.thenMessageSubject(
                     src.error(err.component)
                 } else {
                     src.error(err) { send ->
-                        send(Messages.EXECUTOR_ERROR_ASYNC_TASK(err.javaClass.simpleName, err.message
+                        send(Messages.EXECUTOR_ERROR_ASYNC_TASK.tr(err.javaClass.simpleName, err.message
                                 ?: "null"))
                     }
-                    src.formatter.pex.logger().error(Messages.EXECUTOR_ERROR_ASYNC_TASK_CONSOLE(src.name), err)
+                    src.formatter.pex.logger().error(Messages.EXECUTOR_ERROR_ASYNC_TASK_CONSOLE.tr(src.name), err)
                 }
                 null
             }

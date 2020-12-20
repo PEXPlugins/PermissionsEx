@@ -39,7 +39,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static ca.stellardrift.permissionsex.Messages.*;
 import static ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT;
 import static java.util.Objects.requireNonNull;
 
@@ -142,7 +141,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                             }
                         }).collect(Collectors.toSet());
                 if (!toConvert.isEmpty()) {
-                    engine.logger().info(UUIDCONVERSION_BEGIN.toComponent());
+                    engine.logger().info(Messages.UUIDCONVERSION_BEGIN.tr());
                 } else {
                     return CompletableFuture.completedFuture(0L);
                 }
@@ -156,7 +155,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                                     Mono.fromCompletionStage(store.isRegistered(SUBJECTS_USER, lookupName.toLowerCase(Locale.ROOT))), (a, b) -> a || b);
                             return Mono.zip(newRegistered, oldRegistered, (n, o) -> {
                                 if (n) {
-                                    this.engine.logger().warn(UUIDCONVERSION_ERROR_DUPLICATE.toComponent(newIdentifier));
+                                    this.engine.logger().warn(Messages.UUIDCONVERSION_ERROR_DUPLICATE.tr(newIdentifier));
                                     return false;
                                 } else {
                                     return o;
@@ -174,14 +173,14 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                         }).count().toFuture();
             }).thenAccept(result -> {
                 if (result != null && result > 0) {
-                    engine.logger().info(UUIDCONVERSION_END.toComponent(result));
+                    engine.logger().info(Messages.UUIDCONVERSION_END.tr(result));
                 }
             }).exceptionally(t -> {
-                engine.logger().error(UUIDCONVERSION_ERROR_GENERAL.toComponent(), t);
+                engine.logger().error(Messages.UUIDCONVERSION_ERROR_GENERAL.tr(), t);
                 return null;
             });
         } catch (final UnknownHostException ex) {
-            engine.logger().warn(UUIDCONVERSION_ERROR_DNS.toComponent());
+            engine.logger().warn(Messages.UUIDCONVERSION_ERROR_DNS.tr());
         }
     }
 

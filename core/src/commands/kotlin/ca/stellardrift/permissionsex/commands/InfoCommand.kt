@@ -20,7 +20,6 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages.INFO_ACTIVE_CONTEXTS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_ACTIVE_USED_CONTEXTS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_ASSOCIATED_OBJECT
-import ca.stellardrift.permissionsex.commands.Messages.INFO_DESCRIPTION
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS
 import ca.stellardrift.permissionsex.commands.Messages.INFO_HEADER_OPTIONS_TRANSIENT
@@ -34,7 +33,6 @@ import ca.stellardrift.permissionsex.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.command
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.TranslatableProvider
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.toComponent

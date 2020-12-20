@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.CommonMessages.ERROR_CHILDREN_STATE
-import ca.stellardrift.permissionsex.commands.CommonMessages.ERROR_CHILDREN_UNKNOWN
 import ca.stellardrift.permissionsex.commands.commander.Commander
+import ca.stellardrift.permissionsex.commands.parse.Messages.ERROR_CHILDREN_STATE
+import ca.stellardrift.permissionsex.commands.parse.Messages.ERROR_CHILDREN_UNKNOWN
 import ca.stellardrift.permissionsex.commands.parse.StructuralArguments.optional
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryPlus
@@ -99,7 +99,7 @@ class ChildCommandBuilder {
                         fallback(src, args)
                         return@outer
                     } else {
-                        throw CommandException(ERROR_CHILDREN_STATE(key))
+                        throw CommandException(ERROR_CHILDREN_STATE.tr(key))
                     }
             spec.checkPermission(src)
             spec.executor?.invoke(src, args)
@@ -116,7 +116,7 @@ class ChildCommandElement internal constructor(private val children: Map<String,
         context: CommandContext
     ) {
         val key = args.next().toLowerCase(Locale.ROOT)
-        val spec = children[key] ?: throw args.createError(ERROR_CHILDREN_UNKNOWN(key))
+        val spec = children[key] ?: throw args.createError(ERROR_CHILDREN_UNKNOWN.tr(key))
         context.putArg(this.key, spec)
         spec.parse(args, context)
     }

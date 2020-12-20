@@ -18,7 +18,6 @@ package ca.stellardrift.permissionsex.backend.file;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.backend.ConversionUtils;
-import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ScopedConfigurationNode;
@@ -162,7 +161,7 @@ public class SchemaMigrations {
                                 }
                                 permission = ConversionUtils.convertLegacyPermission(permission);
                                 if (permission.contains("*")) {
-                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.toComponent(configurationNode.path()));
+                                    logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.tr(configurationNode.path()));
                                 }
                                 configurationNode.node(permission).raw(value);
                             }

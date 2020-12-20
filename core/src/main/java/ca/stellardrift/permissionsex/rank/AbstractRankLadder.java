@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.rank;
 
-import ca.stellardrift.permissionsex.commands.Messages;
 import com.google.common.collect.ImmutableList;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
@@ -182,7 +181,7 @@ public abstract class AbstractRankLadder implements RankLadder {
     public final Component asComponent() {
         return Component.text(build -> build.content(getName())
                 .decoration(TextDecoration.BOLD, true)
-                .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.toComponent()))
+                .hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT.tr()))
                 .clickEvent(ClickEvent.runCommand("/pex rank " + getName())));
     }
 }

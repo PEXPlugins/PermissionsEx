@@ -1,0 +1,12 @@
+package $packageName;
+
+import ca.stellardrift.permissionsex.util.TranslatableProvider;
+
+final class ${className} {
+    private static final String BUNDLE_NAME = "${bundleName}";
+<%   def propPattern = ~/[.-]/ %><% for (prop in keys) { %><% def propKey = propPattern.matcher(prop.toUpperCase()).replaceAll("_") %>
+    public static final TranslatableProvider ${propKey} = new TranslatableProvider(BUNDLE_NAME, "${prop}");<% }  %>
+
+    private ${className}() {
+    }
+}

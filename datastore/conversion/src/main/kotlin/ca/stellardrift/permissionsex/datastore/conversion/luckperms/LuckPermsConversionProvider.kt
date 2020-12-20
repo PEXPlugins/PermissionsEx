@@ -19,9 +19,6 @@ package ca.stellardrift.permissionsex.datastore.conversion.luckperms
 import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.backend.AbstractDataStore
-import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_DESCRIPTION_FILE_COMBINED
-import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_DESCRIPTION_FILE_SEPARATE
-import ca.stellardrift.permissionsex.backend.Messages.LUCKPERMS_NAME
 import ca.stellardrift.permissionsex.datastore.ConversionResult
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory
 import ca.stellardrift.permissionsex.datastore.StoreProperties
@@ -40,7 +37,7 @@ class LuckPermsConversionProvider : AbstractDataStore.Factory<LuckPermsFileDataS
 ), DataStoreFactory.Convertable {
     private val formatNames = enumValues<ConfigFormat>()
 
-    override fun friendlyName(): Component = LUCKPERMS_NAME()
+    override fun friendlyName(): Component = Messages.NAME.tr()
 
     override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
         val luckBaseDir = (pex as PermissionsEx<*>).baseDirectory().parent.resolve("LuckPerms")
@@ -51,14 +48,14 @@ class LuckPermsConversionProvider : AbstractDataStore.Factory<LuckPermsFileDataS
                 if (Files.isDirectory(configDir.resolve("groups"))) {
                     result = result + ConversionResult.builder()
                         .store(make(format, false))
-                        .description(LUCKPERMS_DESCRIPTION_FILE_SEPARATE(format.name))
+                        .description(Messages.DESCRIPTION_FILE_SEPARATE.tr(format.name))
                         .build()
                 }
 
                 if (Files.isRegularFile(configDir.resolve("groups.${format.extension}"))) {
                     result = result + ConversionResult.builder()
                         .store(make(format, true))
-                        .description(LUCKPERMS_DESCRIPTION_FILE_COMBINED(format.name))
+                        .description(Messages.DESCRIPTION_FILE_COMBINED.tr(format.name))
                         .build()
                 }
             }

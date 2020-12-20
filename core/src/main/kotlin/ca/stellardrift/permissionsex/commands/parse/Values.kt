@@ -16,11 +16,6 @@
  */
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.CHOICES_ERROR_INVALID
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.ENUM_ERROR_INVALID
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.INTEGER_ERROR_FORMAT
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.LITERAL_ERROR_INVALID
-import ca.stellardrift.permissionsex.commands.ArgumentKeys.UUID_ERROR_FORMAT
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.join
 import ca.stellardrift.permissionsex.util.unaryPlus
@@ -43,7 +38,7 @@ fun none() = object : CommandElement() {
 fun <T> choices(values: Map<String, T>, description: Component, valuesInUsage: Boolean = values.size < 5) = object : Value<T>(description) {
     override fun parse(args: CommandArgs): T {
         return values[args.next()]
-            ?: throw args.createError(CHOICES_ERROR_INVALID(values.keys.toString()))
+            ?: throw args.createError(Messages.CHOICES_ERROR_INVALID.tr(values.keys.toString()))
     }
 
     override fun tabComplete(
@@ -80,7 +75,7 @@ private object IntVal : Value<Int>(+"any integer, in base 10") {
         try {
             return input.toInt()
         } catch (ex: NumberFormatException) {
-            throw args.createError(INTEGER_ERROR_FORMAT(input))
+            throw args.createError(Messages.INTEGER_ERROR_FORMAT.tr(input))
         }
     }
 }
@@ -93,7 +88,7 @@ private object Uuid : Value<UUID>(+"a UUID in RFC format") {
         try {
             return UUID.fromString(input)
         } catch (ex: IllegalArgumentException) {
-            throw args.createError(UUID_ERROR_FORMAT(input))
+            throw args.createError(Messages.UUID_ERROR_FORMAT.tr(input))
         }
     }
 }
@@ -137,13 +132,16 @@ private val BOOLEAN: Value<Boolean> = choices(
 
 fun boolean(): Value<Boolean> = BOOLEAN
 
-inline fun <reified T : Enum<T>> enum() = object : Value<T>(+"values of ${T::class.simpleName}") {
+inline fun <reified T : Enum<T>> enum(): Value<T> = EnumArgument(+"values of ${T::class.simpleName}", { enumValueOf<T>(it) }, { enumValues<T>().asSequence() })
+
+@PublishedApi
+internal class EnumArgument<T : Enum<T>>(desc: Component, private val parser: (String) -> T, private val values: () -> Sequence<T>) : Value<T>(desc) {
     override fun parse(args: CommandArgs): T {
         val arg = args.next().toUpperCase()
         try {
-            return enumValueOf(arg)
+            return parser(arg)
         } catch (ex: IllegalArgumentException) {
-            throw args.createError(ENUM_ERROR_INVALID(arg))
+            throw args.createError(Messages.ENUM_ERROR_INVALID.tr(arg))
         }
     }
 
@@ -151,7 +149,7 @@ inline fun <reified T : Enum<T>> enum() = object : Value<T>(+"values of ${T::cla
         src: Commander,
         args: CommandArgs
     ): Sequence<String> {
-        val options = enumValues<T>().asSequence().map { it.name }
+        val options = values().map { it.name }
         args.nextIfPresent()?.run {
             return options.filter { it.startsWith(this, true) }
         }
@@ -193,7 +191,7 @@ fun <V> literal(vararg elements: String, putValue: V): Value<V> = object : Value
         for (arg in elements) {
             val current = args.next()
             if (!current.equals(arg, ignoreCase = true)) {
-                throw args.createError(LITERAL_ERROR_INVALID(current, arg))
+                throw args.createError(Messages.LITERAL_ERROR_INVALID.tr(current, arg))
             }
         }
         return putValue

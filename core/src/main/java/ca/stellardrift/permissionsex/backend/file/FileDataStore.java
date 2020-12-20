@@ -17,7 +17,6 @@
 package ca.stellardrift.permissionsex.backend.file;
 
 import ca.stellardrift.permissionsex.backend.AbstractDataStore;
-import ca.stellardrift.permissionsex.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.datastore.StoreProperties;
@@ -61,7 +60,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static ca.stellardrift.permissionsex.backend.Messages.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDataStore.Config> {
@@ -113,7 +111,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         ret.updates().subscribe(this::refresh);
 
         ret.errors().subscribe(e -> {
-            getManager().logger().error(FILE_ERROR_AUTORELOAD.toComponent(e.getKey(), e.getValue().getLocalizedMessage()));
+            getManager().logger().error(Messages.FILE_ERROR_AUTORELOAD.tr(e.getKey(), e.getValue().getLocalizedMessage()));
         });
 
         return ret;
@@ -129,7 +127,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             try {
                 this.listeners.call(key, getDataSync(key.getKey(), key.getValue()));
             } catch (PermissionsLoadingException e) {
-                getManager().logger().error(FILE_ERROR_SUBJECT_AUTORELOAD.toComponent(key.getKey(), key.getValue()));
+                getManager().logger().error(Messages.FILE_ERROR_SUBJECT_AUTORELOAD.tr(key.getKey(), key.getValue()));
             }
         });
 
@@ -139,7 +137,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         this.contextInheritanceListeners.getAllKeys().forEach(key ->
                 this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
 
-        getManager().logger().info(FILE_RELOAD_AUTO.toComponent(config().file));
+        getManager().logger().info(Messages.FILE_RELOAD_AUTO.tr(config().file));
     }
 
     private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> legacyLoader, String formatName) throws PermissionsLoadingException {
@@ -151,7 +149,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             permissionsConfig.save(legacyLoader.load());
             Files.move(legacyPermissionsFile, legacyPermissionsFile.resolveSibling(legacyPermissionsFile.getFileName().toString() + ".legacy-backup"));
         } catch (final IOException e) {
-            throw new PermissionsLoadingException(FILE_ERROR_LEGACY_MIGRATION.toComponent(formatName, legacyPermissionsFile), e);
+            throw new PermissionsLoadingException(Messages.FILE_ERROR_LEGACY_MIGRATION.tr(formatName, legacyPermissionsFile), e);
         }
         return permissionsFile;
     }
@@ -178,7 +176,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             try {
                 permissionsConfig = createLoader(permissionsFile);
             } catch (final ConfigurateException e) {
-                throw new PermissionsLoadingException(FILE_ERROR_LOAD.toComponent(permissionsFile), e);
+                throw new PermissionsLoadingException(Messages.FILE_ERROR_LOAD.tr(permissionsFile), e);
             }
         }
 
@@ -192,7 +190,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             } catch (PermissionsLoadingException e) {
                 throw e;
             } catch (Exception e) {
-                throw new PermissionsLoadingException(FILE_ERROR_INITIAL_DATA.toComponent(), e);
+                throw new PermissionsLoadingException(Messages.FILE_ERROR_INITIAL_DATA.tr(), e);
             }
             return false;
         } else {
@@ -203,11 +201,11 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
                 versionUpdater.apply(node);
                 int endVersion = permissionsConfig.get("schema-version").getInt();
                 if (endVersion > startVersion) {
-                    getManager().logger().info(FILE_SCHEMA_MIGRATION_SUCCESS.toComponent(permissionsFile, startVersion, endVersion));
+                    getManager().logger().info(Messages.FILE_SCHEMA_MIGRATION_SUCCESS.tr(permissionsFile, startVersion, endVersion));
                     permissionsConfig.save(node);
                 }
             } catch (final ConfigurateException ex) {
-                throw new PermissionsLoadingException(FILE_ERROR_SCHEMA_MIGRATION_SAVE.toComponent(), ex);
+                throw new PermissionsLoadingException(Messages.FILE_ERROR_SCHEMA_MIGRATION_SAVE.tr(), ex);
             }
             return true;
         }
@@ -261,7 +259,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         try {
             return FileSubjectData.fromNode(getSubjectsNode().node(type, identifier));
         } catch (SerializationException e) {
-            throw new PermissionsLoadingException(FILE_ERROR_DESERIALIZE_SUBJECT.toComponent(), e);
+            throw new PermissionsLoadingException(Messages.FILE_ERROR_DESERIALIZE_SUBJECT.tr(), e);
         }
     }
 

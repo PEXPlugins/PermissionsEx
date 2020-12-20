@@ -53,7 +53,7 @@ dependencies {
     modCompileOnly("com.sk89q.worldedit:worldedit-core:7.2.0") { isTransitive = false }
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.25.1+build.416-1.16")
-    modImplementation("net.fabricmc:fabric-language-kotlin:1.4.0+build.1")
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.4.21+build.1")
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
     })

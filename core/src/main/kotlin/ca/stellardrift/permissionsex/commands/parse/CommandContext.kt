@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.util.TranslatableProvider
 import net.kyori.adventure.text.Component
@@ -40,7 +39,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     }
 
     fun <T> getAll(key: TranslatableProvider): Collection<T> {
-        return getAll(key.key)
+        return getAll(key.key())
     }
 
     fun <T> getOne(key: Component): T? {
@@ -63,7 +62,7 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     }
 
     fun <T> getOne(key: TranslatableProvider): T? {
-        return getOne(key.key)
+        return getOne(key.key())
     }
 
     fun putArg(key: Component, value: Any) = putArg(key.toContextKey(), value)
@@ -75,20 +74,20 @@ class CommandContext(val spec: CommandSpec, val rawInput: String) {
     @Throws(CommandException::class)
     fun checkPermission(commander: Commander, permission: String) {
         if (!commander.hasPermission(permission)) {
-            throw CommandException(CommonMessages.ERROR_PERMISSION.invoke())
+            throw CommandException(Messages.ERROR_PERMISSION.tr())
         }
     }
 
     operator fun contains(key: Component): Boolean = parsedArgs.containsKey(key.toContextKey())
     operator fun contains(key: String): Boolean = parsedArgs.containsKey(key)
-    operator fun contains(key: TranslatableProvider): Boolean = parsedArgs.containsKey(key.key)
+    operator fun contains(key: TranslatableProvider): Boolean = parsedArgs.containsKey(key.key())
 
     fun hasAny(key: String): Boolean {
         return parsedArgs.containsKey(key)
     }
 
     fun hasAny(key: TranslatableProvider): Boolean {
-        return parsedArgs.containsKey(key.key)
+        return parsedArgs.containsKey(key.key())
     }
 }
 

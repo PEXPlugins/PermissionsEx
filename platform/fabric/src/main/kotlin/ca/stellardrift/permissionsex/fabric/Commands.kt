@@ -94,8 +94,8 @@ class PEXBrigadierCommand(private val spec: CommandSpec) : Predicate<ServerComma
             val args = getString(context, "args")
             this.spec.process(cmd, args)
         } catch (e: Exception) {
-            PermissionsExMod.logger().error(Messages.COMMAND_ERROR_CONSOLE(spec.aliases[0], context.source.name), e)
-            cmd.error(Messages.COMMAND_ERROR_TO_SENDER(spec.aliases[0]), e)
+            PermissionsExMod.logger().error(Messages.COMMAND_ERROR_CONSOLE.tr(spec.aliases[0], context.source.name), e)
+            cmd.error(Messages.COMMAND_ERROR_TO_SENDER.tr(spec.aliases[0]), e)
         }
         return 1
     }
@@ -107,8 +107,8 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec) : Command<ServerC
         try {
             this.spec.process(cmd, "")
         } catch (e: Exception) {
-            PermissionsExMod.logger().error(Messages.COMMAND_ERROR_CONSOLE(spec.aliases[0], context.source.name), e)
-            cmd.error(Messages.COMMAND_ERROR_TO_SENDER(spec.aliases[0]), e)
+            PermissionsExMod.logger().error(Messages.COMMAND_ERROR_CONSOLE.tr(spec.aliases[0], context.source.name), e)
+            cmd.error(Messages.COMMAND_ERROR_TO_SENDER.tr(spec.aliases[0]), e)
         }
         return 1
     }

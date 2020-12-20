@@ -17,6 +17,10 @@ tasks.processResources {
     expand("project" to project)
 }
 
+tasks.javadoc {
+    enabled = false
+}
+
 val pexRelocationRoot: String by project
 val shadowJar = tasks.named("shadowJar", ShadowJar::class) {
     inputs.property("pexRelocationRoot", pexRelocationRoot)
@@ -33,6 +37,7 @@ val shadowJar = tasks.named("shadowJar", ShadowJar::class) {
     // Process service files
     mergeServiceFiles()
 }
+
 tasks.assemble {
     dependsOn(shadowJar)
 }

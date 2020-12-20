@@ -20,9 +20,6 @@ import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_DESCRIPTION
-import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_ERROR_NO_DIR
-import ca.stellardrift.permissionsex.backend.Messages.GROUPMANAGER_NAME
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.datastore.ConversionResult
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory
@@ -86,7 +83,7 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
     override fun initializeInternal(): Boolean {
         val rootFile = config().groupManagerRoot
         if (!Files.isDirectory(rootFile)) {
-            throw PermissionsLoadingException(GROUPMANAGER_ERROR_NO_DIR(rootFile))
+            throw PermissionsLoadingException(Messages.ERROR_NO_DIR.tr(rootFile))
         }
         try {
             config = getLoader(rootFile.resolve("config.yml")).load()
@@ -195,7 +192,7 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
 
     @AutoService(DataStoreFactory::class)
     companion object : Factory<GroupManagerDataStore, Config>("groupmanager", Config::class.java, ::GroupManagerDataStore), DataStoreFactory.Convertable {
-        override fun friendlyName() = GROUPMANAGER_NAME()
+        override fun friendlyName() = Messages.NAME.tr()
 
         override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
             val gmBaseDir = (pex as PermissionsEx<*>).baseDirectory().parent.resolve("GroupManager")
@@ -203,7 +200,7 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
                 TreePVector.singleton(
                     ConversionResult.builder()
                     .store(GroupManagerDataStore(StoreProperties.of("gm-file", Config(), this)))
-                    .description(GROUPMANAGER_DESCRIPTION())
+                    .description(Messages.DESCRIPTION.tr())
                     .build())
             } else {
                 TreePVector.empty()

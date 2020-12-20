@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.CommonMessages
 import net.kyori.adventure.text.Component
 
 /**
@@ -43,7 +42,7 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
     @Throws(ArgumentParseException::class)
     fun peek(): String {
         if (!hasNext()) {
-            throw createError(CommonMessages.ERROR_ARGUMENTS_NOTENOUGH.invoke())
+            throw createError(Messages.ERROR_ARGUMENTS_NOTENOUGH.tr())
         }
         return args[position + 1].value
     }
@@ -51,7 +50,7 @@ class CommandArgs(val raw: String, private var _args: MutableList<SingleArg>) {
     @Throws(ArgumentParseException::class)
     operator fun next(): String {
         if (!hasNext()) {
-            throw createError(CommonMessages.ERROR_ARGUMENTS_NOTENOUGH.invoke())
+            throw createError(Messages.ERROR_ARGUMENTS_NOTENOUGH.tr())
         }
         return args[++position].value
     }

@@ -17,6 +17,7 @@
  */
 plugins {
     id("pex-component")
+    id("ca.stellardrift.localization")
 }
 
 useImmutables()

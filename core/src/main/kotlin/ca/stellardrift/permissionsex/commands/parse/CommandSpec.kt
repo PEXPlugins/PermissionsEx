@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.commands.parse
 
-import ca.stellardrift.permissionsex.commands.CommonMessages
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.util.unaryMinus
@@ -47,9 +46,9 @@ data class CommandSpec internal constructor(
             executor(commander, args)
         } catch (ex: CommandException) {
             commander.error(ex.component, null)
-            commander.error(CommonMessages.USAGE(getUsage(commander)), null)
+            commander.error(Messages.USAGE.tr(getUsage(commander)), null)
         } catch (t: Throwable) {
-            commander.error(CommonMessages.ERROR_GENERAL(t.message!!), t)
+            commander.error(Messages.ERROR_GENERAL.tr(t.message!!), t)
             t.printStackTrace()
         }
     }
@@ -57,7 +56,7 @@ data class CommandSpec internal constructor(
     @Throws(CommandException::class)
     fun checkPermission(commander: Commander) {
         if (!hasPermission(commander)) {
-            throw CommandException(CommonMessages.ERROR_PERMISSION.invoke())
+            throw CommandException(Messages.ERROR_PERMISSION.tr())
         }
     }
 
@@ -81,7 +80,7 @@ data class CommandSpec internal constructor(
         this.args.parse(args, context)
         if (args.hasNext()) {
             args.next()
-            throw args.createError(CommonMessages.ERROR_ARGUMENTS_TOOMANY.invoke())
+            throw args.createError(Messages.ERROR_ARGUMENTS_TOOMANY.tr())
         }
     }
 

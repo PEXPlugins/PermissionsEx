@@ -17,7 +17,6 @@
 package ca.stellardrift.permissionsex.sponge.command
 
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.sponge.Messages
 import ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
 import ca.stellardrift.permissionsex.sponge.register
 import ca.stellardrift.permissionsex.util.optionally
@@ -53,7 +52,7 @@ class PEXCommandRegistrar internal constructor(private val plugin: PermissionsEx
     override fun handledType(): TypeToken<CommandSpec> = type
 
     private operator fun get(mapping: CommandMapping): CommandSpec {
-        return commands[mapping.primaryAlias] ?: throw CommandException(Messages.COMMANDS_REGISTRAR_ERROR_UNKNOWN(mapping.primaryAlias))
+        return commands[mapping.primaryAlias] ?: throw CommandException(Messages.COMMANDS_REGISTRAR_ERROR_UNKNOWN.tr(mapping.primaryAlias))
     }
 
     override fun register(container: PluginContainer, command: CommandSpec, primaryAlias: String, vararg secondaryAliases: String): CommandMapping {

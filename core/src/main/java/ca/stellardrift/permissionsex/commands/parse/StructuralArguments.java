@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.util.GuavaStartsWithPredicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,8 +30,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNLONG;
-import static ca.stellardrift.permissionsex.commands.ArgumentKeys.FLAG_ERROR_UNKNOWNSHORT;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.space;
 
@@ -333,7 +330,7 @@ public class StructuralArguments {
                 if (element == null) {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
-                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.toComponent(longFlag));
+                            throw args.createError(Messages.FLAG_ERROR_UNKNOWNLONG.tr(longFlag));
                         case ACCEPT_NONVALUE:
                             context.putArg(longFlag, value);
                             break;
@@ -349,7 +346,7 @@ public class StructuralArguments {
                 if (element == null) {
                     switch (unknownLongFlagBehavior) {
                         case ERROR:
-                            throw args.createError(FLAG_ERROR_UNKNOWNLONG.toComponent(longFlag));
+                            throw args.createError(Messages.FLAG_ERROR_UNKNOWNLONG.tr(longFlag));
                         case ACCEPT_NONVALUE:
                             context.putArg(longFlag, true);
                             break;
@@ -379,7 +376,7 @@ public class StructuralArguments {
                                 return false;
                             } // fall-through
                         case ERROR:
-                            throw args.createError(FLAG_ERROR_UNKNOWNSHORT.toComponent(flagChar));
+                            throw args.createError(Messages.FLAG_ERROR_UNKNOWNSHORT.tr(flagChar));
                         case ACCEPT_NONVALUE:
                             context.putArg(flagChar, true);
                     }

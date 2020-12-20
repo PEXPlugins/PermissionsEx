@@ -27,7 +27,7 @@ import org.spongepowered.configurate.serialize.TypeSerializer
  * A supplier that makes values lazy-init
  */
 object SupplierSerializer : TypeSerializer<Supplier<*>> {
-    override fun deserialize(type: Type, value: ConfigurationNode): Supplier<*>? {
+    override fun deserialize(type: Type, value: ConfigurationNode): Supplier<*> {
         if (type !is ParameterizedType) {
             throw SerializationException("Raw types are not supported for a supplier")
         }

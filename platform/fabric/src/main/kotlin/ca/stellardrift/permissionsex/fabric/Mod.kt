@@ -94,7 +94,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger().prefix = "[${container.metadata.name}] "
 
-        logger().info(Messages.MOD_LOAD_SUCCESS(container.metadata.version.friendlyString))
+        logger().info(Messages.MOD_LOAD_SUCCESS.tr(container.metadata.version.friendlyString))
         ServerLifecycleEvents.SERVER_STARTING.register(ServerLifecycleEvents.ServerStarting { init(it) })
         ServerLifecycleEvents.SERVER_STOPPED.register(ServerLifecycleEvents.ServerStopped { shutdown() })
 
@@ -126,7 +126,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
                 .opProvider { gameInstance.userCache.getByUuid(it)?.let(gameInstance.playerManager::isOperator) ?: false }
                 .build()
         } catch (e: Exception) {
-            logger().error(Messages.MOD_ENABLE_ERROR(), e)
+            logger().error(Messages.MOD_ENABLE_ERROR.tr(), e)
             server.stop(false)
             return
         }
@@ -148,7 +148,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             manager.registerCommandsTo { cmd -> registerCommand(cmd, it.dispatcher) }
         }
 
-        logger().info(Messages.MOD_ENABLE_SUCCESS(container.metadata.version))
+        logger().info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
     }
 
     private fun shutdown() {
@@ -161,7 +161,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         try {
             this.exec.awaitTermination(10, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
-            logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT())
+            logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
             this.exec.shutdownNow()
         }
     }
@@ -223,8 +223,8 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun logUnredirectedPermissionsCheck(method: String) {
-        logger().warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method))
-        logger().debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK(method), Exception("call chain"))
+        logger().warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK.tr(method))
+        logger().debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK.tr(method), Exception("call chain"))
     }
 }
 

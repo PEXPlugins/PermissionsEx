@@ -53,7 +53,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     @Override
     public void onPermissionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         if (this.filterPredicate.test(permission)) {
-            logger.info(CHECK_PERMISSION.toComponent(permission, contexts, stringIdentifier(subject), value));
+            logger.info(CHECK_PERMISSION.tr(permission, contexts, stringIdentifier(subject), value));
         }
         delegate.onPermissionCheck(subject, contexts, permission, value);
     }
@@ -61,14 +61,14 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     @Override
     public void onOptionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String option, String value) {
         if (this.filterPredicate.test(option)) {
-            logger.info(CHECK_OPTION.toComponent(option, contexts, stringIdentifier(subject), value));
+            logger.info(CHECK_OPTION.tr(option, contexts, stringIdentifier(subject), value));
         }
         delegate.onOptionCheck(subject, contexts, option, value);
     }
 
     @Override
     public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
-        logger.info(Messages.CHECK_PARENT.toComponent(contexts, stringIdentifier(subject), parents));
+        logger.info(Messages.CHECK_PARENT.tr(contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }
 }

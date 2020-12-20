@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.backend.file;
 
-import ca.stellardrift.permissionsex.backend.Messages;
 import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
@@ -38,7 +37,7 @@ public final class FileSubjectData extends MemorySubjectData {
         if (node.isList()) {
             for (ConfigurationNode child : node.childrenList()) {
                 if (!child.isMap()) {
-                    throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.toComponent());
+                    throw new PermissionsLoadingException(Messages.FILE_LOAD_CONTEXT.tr());
                 }
                 Set<ContextValue<?>> contexts = contextsFrom(child);
                 DataEntry value = MAPPER.load(child);
