@@ -19,13 +19,14 @@ package ca.stellardrift.permissionsex.subject;
 import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.data.SubjectDataReference;
+import ca.stellardrift.permissionsex.data.ToDataSubjectRefImpl;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.CachingValues;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.ImmutableSet;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -45,20 +46,24 @@ import java.util.function.Consumer;
 /**
  * This is a holder that maintains the current subject data state
  */
-public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, CalculatedSubject {
+public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>, CalculatedSubject {
     private final SubjectDataBaker baker;
-    private final Map.Entry<String, String> identifier;
-    private final SubjectTypeImpl type;
-    private SubjectDataReference ref, transientRef;
+    private final SubjectRef<I> identifier;
+    private final SubjectTypeCollectionImpl<I> type;
+    private @MonotonicNonNull ToDataSubjectRefImpl<I> ref;
+    private @MonotonicNonNull ToDataSubjectRefImpl<I> transientRef;
 
     private final AsyncLoadingCache<Set<ContextValue<?>>, BakedSubjectData> data;
     private final Set<Consumer<CalculatedSubject>> updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private CachingValue<Set<ContextValue<?>>> activeContexts;
+    private @MonotonicNonNull CachingValue<Set<ContextValue<?>>> activeContexts;
 
-    CalculatedSubjectImpl(SubjectDataBaker baker, Map.Entry<String, String> identifier, SubjectTypeImpl type) {
-        this.baker = Objects.requireNonNull(baker, "baker");
-        this.identifier = Objects.requireNonNull(identifier, "identifier");
-        this.type = Objects.requireNonNull(type, "type");
+    CalculatedSubjectImpl(
+            final SubjectDataBaker baker,
+            final SubjectRef<I> identifier,
+            final SubjectTypeCollectionImpl<I> type) {
+        this.baker = baker;
+        this.identifier = identifier;
+        this.type = type;
         this.data = Caffeine.newBuilder()
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
@@ -66,7 +71,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
                 .buildAsync((key, executor) -> this.baker.bake(CalculatedSubjectImpl.this, key));
     }
 
-    void initialize(SubjectDataReference persistentRef, SubjectDataReference transientRef) {
+    void initialize(ToDataSubjectRefImpl<I> persistentRef, ToDataSubjectRefImpl<I> transientRef) {
         this.ref = persistentRef;
         this.transientRef = transientRef;
         this.activeContexts = CachingValues.cachedByTime(50L, () -> {
@@ -79,12 +84,12 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
     }
 
     @Override
-    public Map.Entry<String, String> getIdentifier() {
+    public SubjectRef<I> getIdentifier() {
         return identifier;
     }
 
     @Override
-    public SubjectTypeImpl getType() {
+    public SubjectTypeCollectionImpl<I> getType() {
         return this.type;
     }
 
@@ -130,7 +135,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
 
     @Override
     public Set<ContextValue<?>> getActiveContexts() {
-        if (activeContexts == null) {
+        if (this.activeContexts == null) {
             throw new IllegalStateException("This subject has not yet been initialized! This is normally done before the future provided by PEX completes.");
         }
         return new HashSet<>(activeContexts.get());
@@ -146,9 +151,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
     }
 
     private <T> void handleAccumulateSingle(ContextDefinition<T> def, Set<ContextValue<?>> acc) {
-        def.accumulateCurrentValues(this, val -> {
-            acc.add(def.createValue(val));
-        });
+        def.accumulateCurrentValues(this, val -> acc.add(def.createValue(val)));
     }
 
     @Override
@@ -162,7 +165,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
     public boolean hasPermission(Set<ContextValue<?>> contexts, String permission) {
         final int perm = getPermission(contexts, permission);
         if (perm == 0) {
-            return getType().getTypeInfo().undefinedPermissionValue(this.identifier.getValue());
+            return getType().getType().undefinedPermissionValue(this.identifier.identifier());
         } else {
             return perm > 0;
         }
@@ -188,18 +191,18 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
      * @return A reference to the persistent data of this subject
      */
     @Override
-    public SubjectDataReference data() {
+    public ToDataSubjectRefImpl<I> data() {
         return this.ref;
     }
 
     @Override
-    public SubjectDataReference transientData() {
+    public ToDataSubjectRefImpl<I> transientData() {
         return this.transientRef;
     }
 
     @Override
     public @Nullable Object getAssociatedObject() {
-        return this.type.getTypeInfo().getAssociatedObject(this.identifier.getValue());
+        return this.type.getType().getAssociatedObject(this.identifier.identifier());
     }
 
     @Override
@@ -217,7 +220,7 @@ public class CalculatedSubjectImpl implements Consumer<ImmutableSubjectData>, Ca
         data.synchronous().invalidateAll();
         getManager().loadedSubjectTypes().stream()
                 .flatMap(type -> type.getActiveSubjects().stream())
-                .map(it -> (CalculatedSubjectImpl) it)
+                .map(it -> (CalculatedSubjectImpl<?>) it)
                 .filter(subj -> {
                     for (Set<ContextValue<?>> ent : subj.getCachedContexts()) {
                         if (subj.getParents(ent).contains(this.identifier)) {

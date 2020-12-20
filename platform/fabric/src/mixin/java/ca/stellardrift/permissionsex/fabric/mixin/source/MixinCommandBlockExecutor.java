@@ -19,36 +19,36 @@ package ca.stellardrift.permissionsex.fabric.mixin.source;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
 import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import net.minecraft.text.Text;
 import net.minecraft.world.CommandBlockExecutor;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import static ca.stellardrift.permissionsex.fabric.FabricDefinitions.SUBJECTS_COMMAND_BLOCK;
-
 @Mixin(CommandBlockExecutor.class)
-public class MixinCommandBlockExecutor implements IPermissionCommandSource {
-    private volatile CalculatedSubject subj;
+public class MixinCommandBlockExecutor implements IPermissionCommandSource<String> {
+    private volatile @MonotonicNonNull CalculatedSubject permissionsex$subject;
 
     @Shadow
     private Text customName;
 
     @Override
-    public @NotNull String getPermType() {
-        return SUBJECTS_COMMAND_BLOCK;
+    public @NotNull SubjectType<String> getPermType() {
+        return PermissionsExMod.INSTANCE.getCommandBlockSubjectType();
     }
 
     @Override
     public @NotNull String getPermIdentifier() {
-        return customName.asString();
+        return this.customName.asString();
     }
 
     @Override
     public @NotNull CalculatedSubject asCalculatedSubject() {
-        if (subj == null) {
-            return subj = PermissionsExMod.INSTANCE.getManager().subjectType(getPermType()).get(getPermIdentifier()).join();
+        if (this.permissionsex$subject == null) {
+            return this.permissionsex$subject = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
         }
-        return subj;
+        return this.permissionsex$subject;
     }
 }

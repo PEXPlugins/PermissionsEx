@@ -16,12 +16,12 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
 import ca.stellardrift.permissionsex.fabric.LocaleHolder;
 import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
 import ca.stellardrift.permissionsex.fabric.UtilKt;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.c2s.play.ClientSettingsC2SPacket;
@@ -36,10 +36,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(ServerPlayerEntity.class)
-public abstract class MixinServerPlayerEntity extends PlayerEntity implements LocaleHolder, IPermissionCommandSource {
+public abstract class MixinServerPlayerEntity extends PlayerEntity implements LocaleHolder, IPermissionCommandSource<UUID> {
 
     private Locale permissionsex$clientLocale = null;
 
@@ -57,14 +58,14 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
 
     @NotNull
     @Override
-    public String getPermType() {
-        return PermissionsEngine.SUBJECTS_USER;
+    public SubjectType<UUID> getPermType() {
+        return PermissionsExMod.INSTANCE.getMcManager().users().getType();
     }
 
     @NotNull
     @Override
-    public String getPermIdentifier() {
-        return getGameProfile().getId().toString();
+    public UUID getPermIdentifier() {
+        return getUuid();
     }
 
     @NotNull
@@ -74,7 +75,7 @@ public abstract class MixinServerPlayerEntity extends PlayerEntity implements Lo
         if (ret != null) {
             return ret;
         }
-        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().subjectType(getPermType()).get(getPermIdentifier()).join();
+        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
         permSubject.set(updated);
         return updated;
     }

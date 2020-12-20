@@ -34,7 +34,7 @@ import ca.stellardrift.permissionsex.datastore.StoreProperties
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
-import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -54,7 +54,6 @@ import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEn
 
 /**
  * An extremely rudimentary data store that allows importing data from a server ops list.
- *
  */
 class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataStore, OpsDataStore.Config>(props) {
     companion object : Factory<OpsDataStore, Config>("ops", Config::class.java, ::OpsDataStore), DataStoreFactory.Convertable {
@@ -112,7 +111,8 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
     private fun reload(node: ConfigurationNode, notify: Boolean = true) {
         this.opsList = node.getList(OpsListEntry::class.java, listOf())
         if (notify) {
-            (manager.subjectType(SUBJECTS_USER) as SubjectTypeImpl).update(this)
+            // TODO: Reimplement notification
+            // (manager.subjects() as SubjectTypeCollectionImpl<*>).update(this)
         }
     }
 

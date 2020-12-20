@@ -59,14 +59,12 @@ import ca.stellardrift.permissionsex.commands.parse.rankLadder
 import ca.stellardrift.permissionsex.commands.parse.subject
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.rank.RankLadder
-import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectRef.ToData
 import ca.stellardrift.permissionsex.util.join
-import ca.stellardrift.permissionsex.util.plus
 import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent
 import ca.stellardrift.permissionsex.util.unaryMinus
-import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 import net.kyori.adventure.text.Component
@@ -91,7 +89,7 @@ fun getPromoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: SubjectRef = getDataRef(src, args, "permissionsex.promote")
+                val ref: ToData = getDataRef(src, args, "permissionsex.promote")
                 // ." + ladderF); // TODO: Re-add permissions checks for ladders
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName = AtomicReference<RankLadder>()
@@ -130,7 +128,7 @@ fun getDemoteCommand(pex: PermissionsEx<*>) =
                     if (args.hasAny(COMMON_ARGS_RANK_LADDER)) args.getOne(
                         COMMON_ARGS_RANK_LADDER
                     )!! else pex.ladders["default", null]
-                val ref: SubjectRef = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
+                val ref: ToData = getDataRef(src, args, "permissionsex.demote") // ." + ladder);
                 val contexts = args.getAll<ContextValue<*>>(COMMON_ARGS_CONTEXT).toSet()
                 val ladderName =
                     AtomicReference<RankLadder>()

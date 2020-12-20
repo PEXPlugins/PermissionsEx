@@ -194,8 +194,8 @@ public class SchemaMigrations {
                     }
 
                     if (!defaultSubjects.isEmpty()) {
-                        SubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEngine.SUBJECTS_FALLBACK, PermissionsEngine.SUBJECTS_USER);
-                        List<Segment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
+                        final SubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEngine.SUBJECTS_FALLBACK.name(), PermissionsEngine.SUBJECTS_USER);
+                        final List<Segment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
                         for (Map.Entry<String, List<SubjectRef>> ent : defaultSubjects.entrySet()) {
                             Segment seg = null;
                             if (!segments.isEmpty()) {

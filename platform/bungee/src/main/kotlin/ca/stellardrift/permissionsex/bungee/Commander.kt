@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
@@ -40,9 +41,9 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
     override val name: String get() = src.name
     override val locale: Locale get() =
         (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
-    override val subjectIdentifier: SubjectIdentifier?
+    override val subjectIdentifier: SubjectRef<*>?
         get() = when (src) {
-            is ProxiedPlayer -> subjectIdentifier(PermissionsEngine.SUBJECTS_USER, src.uniqueId.toString())
+            is ProxiedPlayer -> SubjectRef.subject(pex.users.type, src.uniqueId)
             else -> IDENT_SERVER_CONSOLE
         }
 
@@ -57,8 +58,8 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
 
 class BungeePluginMessageFormatter(val sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = NamedTextColor.YELLOW) {
 
-    override val SubjectIdentifier.friendlyName: String? get() {
-        return (sender.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
+    override val <I> SubjectRef<I>.friendlyName: String? get() {
+        return (type().getAssociatedObject(identifier()) as? CommandSender)?.name
     }
 
     /**

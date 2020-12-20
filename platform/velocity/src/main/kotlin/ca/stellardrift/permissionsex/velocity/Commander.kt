@@ -16,15 +16,13 @@
  */
 package ca.stellardrift.permissionsex.velocity
 
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import com.google.common.collect.Maps
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
@@ -63,17 +61,18 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
 
     override val name: String
         get() =
-            (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.value
+            (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.identifier()
 
     override val locale: Locale
         get() =
             (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
 
-    override val subjectIdentifier: SubjectIdentifier?
+    override val subjectIdentifier: SubjectRef<*>?
         get() = when (src) {
-                    is Player -> Maps.immutableEntry(SUBJECTS_USER, src.uniqueId.toString())
+                    is Player -> SubjectRef.subject(pex.users.type, src.uniqueId)
                     else -> IDENT_SERVER_CONSOLE
                 }
+
     override val messageColor: TextColor get() = NamedTextColor.GOLD
 
     override fun hasPermission(permission: String): Boolean {

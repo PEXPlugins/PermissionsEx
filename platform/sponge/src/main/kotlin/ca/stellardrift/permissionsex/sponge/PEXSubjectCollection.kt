@@ -18,7 +18,8 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
+import ca.stellardrift.permissionsex.subject.SubjectType
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -33,29 +34,27 @@ import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectCollection
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.util.Tristate
+import java.util.stream.Collectors
 
 /**
  * Subject collection
  */
-class PEXSubjectCollection private constructor(private val identifier: String, internal val service: PermissionsExService) :
+class PEXSubjectCollection<I> private constructor(private val type: SubjectType<I>, internal val service: PermissionsExService) :
     SubjectCollection {
-    val type: SubjectTypeImpl = service.manager.subjectType(identifier)
+    val implCache: SubjectTypeCollectionImpl<I> = service.manager.subjects(type)
     private lateinit var defaults: PEXSubject
-    private val subjectCache: AsyncLoadingCache<String, PEXSubject>
-
-    init {
-        subjectCache = Caffeine.newBuilder().executor(service.manager.asyncExecutor())
-            .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
-    }
+    private val subjectCache: AsyncLoadingCache<String, PEXSubject> = Caffeine.newBuilder()
+        .executor(service.manager.asyncExecutor())
+        .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
 
     companion object {
-        internal fun load(identifier: String, service: PermissionsExService): CompletableFuture<PEXSubjectCollection> {
+        internal fun <I> load(identifier: SubjectType<I>, service: PermissionsExService): CompletableFuture<PEXSubjectCollection<I>> {
             val ret = PEXSubjectCollection(identifier, service)
             val defaultFuture =
                 if (identifier == PermissionsEngine.SUBJECTS_DEFAULTS) {
-                    ret.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS)
+                    ret.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS.name())
                 } else {
-                    service.loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS).thenCompose { it.loadSubject(identifier) }
+                    service.loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS.name()).thenCompose { it.loadSubject(identifier.name()) }
                 }
             return defaultFuture.thenApply {
                 ret.defaults = it as PEXSubject
@@ -65,13 +64,11 @@ class PEXSubjectCollection private constructor(private val identifier: String, i
     }
 
     override fun getIdentifier(): String {
-        return identifier
+        return type.name()
     }
 
     override fun getIdentifierValidityPredicate(): Predicate<String> {
-        return Predicate { name: String ->
-            type.typeInfo.isNameValid(name)
-        }
+        return Predicate(this.type::isIdentifierValid)
     }
 
     override fun getSubject(identifier: String): Optional<Subject> {
@@ -86,7 +83,7 @@ class PEXSubjectCollection private constructor(private val identifier: String, i
     }
 
     override fun hasSubject(identifier: String): CompletableFuture<Boolean> {
-        return type.persistentData().isRegistered(identifier)
+        return implCache.persistentData().isRegistered(this.type.parseIdentifier(identifier))
     }
 
     override fun loadSubject(identifier: String): CompletableFuture<Subject> {
@@ -102,22 +99,23 @@ class PEXSubjectCollection private constructor(private val identifier: String, i
     }
 
     override fun newSubjectReference(subjectIdentifier: String): SubjectReference {
-        return PEXSubjectReference(subjectIdentifier, identifier, service)
+        return PEXSubjectReference(this.type, this.type.parseIdentifier(subjectIdentifier), service)
     }
 
     override fun suggestUnload(identifier: String) {
         subjectCache.synchronous().invalidate(identifier)
-        type.uncache(identifier)
+        implCache.uncache(this.type.parseIdentifier(identifier))
     }
 
     override fun getAllIdentifiers(): CompletableFuture<Set<String>> {
-        return CompletableFuture.completedFuture(type.allIdentifiers)
+        return CompletableFuture.completedFuture(
+            implCache.allIdentifiers
+                .map { this.type.serializeIdentifier(it) }
+                .collect(Collectors.toSet()))
     }
 
     override fun getLoadedSubjects(): Collection<Subject> {
-        return ImmutableSet.copyOf<Subject>(
-            activeSubjects
-        )
+        return ImmutableSet.copyOf<Subject>(activeSubjects)
     }
 
     val activeSubjects: Iterable<PEXSubject>
@@ -146,8 +144,8 @@ class PEXSubjectCollection private constructor(private val identifier: String, i
         contexts: Set<Context>?,
         permission: String
     ): CompletableFuture<Map<SubjectReference, Boolean>> {
-        val raw = type.allIdentifiers
-        val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { type[it] }.toTypedArray()
+        val raw = implCache.allIdentifiers
+        val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { implCache[it] }.collect(Collectors.toList()).toTypedArray()
         return CompletableFuture.allOf(*futures).thenApply(java.util.function.Function { _: Void? ->
             futures.asSequence()
                 .map { it.join() }
@@ -180,6 +178,6 @@ class PEXSubjectCollection private constructor(private val identifier: String, i
     }
 
     fun getCalculatedSubject(identifier: String): CompletableFuture<CalculatedSubject> {
-        return type[identifier]
+        return implCache[this.type.parseIdentifier(identifier)]
     }
 }

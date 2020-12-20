@@ -30,6 +30,7 @@ import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,6 +53,7 @@ import net.md_5.bungee.event.EventPriority
 import org.slf4j.impl.JDK14LoggerAdapter
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
+import java.util.UUID
 
 class PermissionsExPlugin : Plugin(), Listener {
     internal lateinit var logger: FormattedLogger private set
@@ -73,6 +75,12 @@ class PermissionsExPlugin : Plugin(), Listener {
         return WrappingFormattedLogger.of(adapter.newInstance(super.getLogger()), false)
     }
 
+    val users: SubjectTypeCollection<UUID>
+        get() = this._manager!!.users()
+
+    val groups: SubjectTypeCollection<String>
+        get() = this._manager!!.groups()
+
     override fun onEnable() {
         this.logger = createLogger()
         this.dataPath = dataFolder.toPath()
@@ -86,15 +94,20 @@ class PermissionsExPlugin : Plugin(), Listener {
         }.build()
 
         try {
-            this._manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), BungeeImplementationInterface(this)))
+            this._manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
+                .implementationInterface(BungeeImplementationInterface(this))
+                .playerProvider { proxy.getPlayer(it) }
+                .cachedUuidResolver { proxy.getPlayer(it)?.uniqueId } // bungee only supports online players
+                .build()
         } catch (e: Exception) {
             logger.error("Unable to load PermissionsEx!", e)
             return
         }
-        this.manager.subjectType(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
-        manager.subjectType(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
+
+        manager.subjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.identifier()) {
             it.setDefaultValue(PermissionsEx.GLOBAL_CONTEXT, 1)
         }
+
         this.manager.registerContextDefinitions(ProxyContextDefinition.INSTANCE, RemoteIpContextDefinition,
             LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
 
@@ -120,7 +133,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun cachePlayer(event: LoginEvent) {
         try {
-            manager.subjectType(SUBJECTS_USER).load(event.connection.uniqueId.toString())
+            this.users.load(event.connection.uniqueId)
         } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGIN(event.connection.name, event.connection.uniqueId), e)
         }
@@ -130,7 +143,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     fun unloadPlayer(event: PlayerDisconnectEvent) {
         try {
             manager.callbackController.clearOwnedBy(event.player.uniqueId)
-            manager.subjectType(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
+            this.users.uncache(event.player.uniqueId)
         } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGOUT(event.player.name, event.player.uniqueId))
         }
@@ -138,13 +151,13 @@ class PermissionsExPlugin : Plugin(), Listener {
 }
 
 fun CommandSender.toCalculatedSubject(): CalculatedSubject {
-    return (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin).manager.subjectType(when (this) {
-        is ProxiedPlayer -> SUBJECTS_USER
-        else -> IDENT_SERVER_CONSOLE.key
-    })[when (this) {
-        is ProxiedPlayer -> uniqueId.toString()
-        else -> IDENT_SERVER_CONSOLE.value
-    }].join()
+    val plugin = (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin);
+
+    return if (this is ProxiedPlayer) {
+        plugin.users[uniqueId]
+    } else {
+        plugin.manager.subjects(SUBJECTS_SYSTEM)[IDENT_SERVER_CONSOLE.identifier()]
+    }.join()
 }
 
 class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : ImplementationInterface {

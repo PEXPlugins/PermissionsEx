@@ -131,8 +131,8 @@ fun createRootCommand(pex: PermissionsEx<*>): CommandSpec {
                     val subjectType = args.getOne<String>(COMMON_ARGS_SUBJECT_TYPE)!!
                     args.checkPermission(src, "permissionsex.list.$subjectType")
                     val cache =
-                        if (args.hasAny(COMMON_ARGS_TRANSIENT)) pex.subjectType(subjectType)
-                            .transientData() else pex.subjectType(
+                        if (args.hasAny(COMMON_ARGS_TRANSIENT)) pex.subjects(subjectType)
+                            .transientData() else pex.subjects(
                             subjectType
                         ).persistentData()
                     var iter = cache.allIdentifiers.asSequence()

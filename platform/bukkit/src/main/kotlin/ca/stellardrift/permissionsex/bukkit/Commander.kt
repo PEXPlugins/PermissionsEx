@@ -23,6 +23,7 @@ import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
@@ -53,10 +54,10 @@ fun String.toLocale(): Locale {
     }
 }
 
-class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.pex.manager) {
+class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.manager) {
 
-    override val Map.Entry<String, String>.friendlyName: String?
-        get() = (cmd.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? CommandSender)?.name
+    override val <I> SubjectRef<I>.friendlyName: String?
+        get() = (cmd.pex.manager.subjects(type()).type.getAssociatedObject(identifier()) as? CommandSender)?.name
 }
 
 /**
@@ -67,7 +68,7 @@ class BukkitCommander internal constructor(
     private val commandSource: CommandSender
 ) : Commander {
     override val manager: PermissionsEx<*>
-        get() = pex.manager
+        get() = pex.manager as PermissionsEx<*>
     override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(this)
     override val name: String
         get() = commandSource.name
@@ -78,13 +79,8 @@ class BukkitCommander internal constructor(
     override val locale: Locale
         get() = if (commandSource is Player) getLocale(commandSource) else Locale.getDefault()
 
-    override val subjectIdentifier: SubjectIdentifier?
-        get() = if (commandSource is Player) {
-                subjectIdentifier(
-                    PermissionsEngine.SUBJECTS_USER,
-                    commandSource.uniqueId.toString()
-                )
-        } else null
+    override val subjectIdentifier: SubjectRef<*>?
+        get() = if (commandSource is Player) SubjectRef.subject(pex.userSubjects.type, commandSource.uniqueId) else null
 
     private val audience = this.pex.adventure.sender(this.commandSource)
 

@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.logging;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
@@ -29,8 +30,8 @@ import java.util.Set;
  * @since 2.0.0
  */
 public interface PermissionCheckNotifier {
-    void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value);
-    void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, @Nullable String value);
-    void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents);
+    void onPermissionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String permission, int value);
+    void onOptionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String option, @Nullable String value);
+    void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents);
 
 }

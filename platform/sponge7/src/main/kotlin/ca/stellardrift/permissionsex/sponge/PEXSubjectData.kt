@@ -32,7 +32,7 @@ import org.spongepowered.api.util.Tristate
 /**
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
-class PEXSubjectData(private val data: SubjectRef, private val plugin: PermissionsExPlugin) : SubjectData {
+class PEXSubjectData(private val data: SubjectRef.ToData<*>, private val plugin: PermissionsExPlugin) : SubjectData {
     private val parentsCache: ConcurrentMap<ContextSet, List<SubjectReference>> = ConcurrentHashMap()
 
     init {

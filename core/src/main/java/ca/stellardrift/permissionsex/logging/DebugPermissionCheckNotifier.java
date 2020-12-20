@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.logging;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -41,8 +42,8 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
         this.filterPredicate = filterPredicate == null ? x -> true : filterPredicate;
     }
 
-    private String stringIdentifier(Map.Entry<String, String> identifier) {
-        return identifier.getKey() + " " + identifier.getValue();
+    private <I> String stringIdentifier(SubjectRef<I> identifier) {
+        return identifier.type().name() + " " + identifier.type().serializeIdentifier(identifier.identifier());
     }
 
     public PermissionCheckNotifier getDelegate() {
@@ -50,7 +51,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value) {
+    public void onPermissionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         if (this.filterPredicate.test(permission)) {
             logger.info(CHECK_PERMISSION.toComponent(permission, contexts, stringIdentifier(subject), value));
         }
@@ -58,7 +59,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value) {
+    public void onOptionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String option, String value) {
         if (this.filterPredicate.test(option)) {
             logger.info(CHECK_OPTION.toComponent(option, contexts, stringIdentifier(subject), value));
         }
@@ -66,7 +67,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
         logger.info(Messages.CHECK_PARENT.toComponent(contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }

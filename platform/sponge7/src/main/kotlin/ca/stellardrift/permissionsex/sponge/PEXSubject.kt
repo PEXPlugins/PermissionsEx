@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.ContextSet
+import ca.stellardrift.permissionsex.util.optionally
 import java.util.Objects
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -28,11 +29,12 @@ import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.util.Tristate
+import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 /**
  * Permissions subject implementation
  */
-class PEXSubject(private val baked: CalculatedSubject, private val collection: PEXSubjectCollection) : Subject {
+class PEXSubject(private val baked: CalculatedSubject, private val collection: PEXSubjectCollection<*>) : Subject {
     private val data = PEXSubjectData(baked.data(), collection.plugin)
     private val transientData = PEXSubjectData(baked.transientData(), collection.plugin)
 
@@ -80,10 +82,10 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun getCommandSource(): Optional<CommandSource> {
         val associated = this.baked.associatedObject
-        return if (associated is CommandSource) Optional.of(associated) else Optional.empty()
+        return if (associated is CommandSource) associated.optionally() else Optional.empty()
     }
 
-    override fun getContainingCollection(): PEXSubjectCollection {
+    override fun getContainingCollection(): PEXSubjectCollection<*> {
         return this.collection
     }
 
@@ -125,7 +127,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun isChildOf(parent: SubjectReference): Boolean {
-        return baked.parents.contains(PEXSubjectReference.of(parent, containingCollection.plugin))
+        return baked.parents.contains(immutableMapEntry(parent.collectionIdentifier, parent.subjectIdentifier))
     }
 
     override fun isChildOf(contexts: Set<Context>, parent: SubjectReference): Boolean {
@@ -133,7 +135,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents.map { PEXSubjectReference.of(it, containingCollection.plugin) }
+        return baked.parents.map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), containingCollection.plugin) }
     }
 
     val activePexContexts: ContextSet
@@ -145,7 +147,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
-            this.baked.getParents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(it, this.containingCollection.plugin) }
+            this.baked.getParents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), this.containingCollection.plugin) }
         }
     }
 
@@ -161,7 +163,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     companion object {
-        fun load(identifier: String, collection: PEXSubjectCollection): CompletableFuture<PEXSubject> {
+        fun load(identifier: String, collection: PEXSubjectCollection<*>): CompletableFuture<PEXSubject> {
             return collection.getCalculatedSubject(identifier)
                 .thenApply { baked: CalculatedSubject -> PEXSubject(baked, collection) }
         }

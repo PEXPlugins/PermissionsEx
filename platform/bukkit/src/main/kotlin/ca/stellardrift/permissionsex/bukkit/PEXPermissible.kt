@@ -41,8 +41,8 @@ import org.bukkit.plugin.Plugin
  */
 internal class PEXPermissible(private val player: Player, private val plugin: PermissionsExPlugin) : PermissibleBase(player) {
 
-    val manager: PermissionsEx<BukkitConfiguration> = plugin.manager
-    private val pexSubject: CalculatedSubject = manager.subjectType(PermissionsEngine.SUBJECTS_USER)[player.uniqueId.toString()].get()
+    val manager: PermissionsEngine = plugin.manager
+    private val pexSubject: CalculatedSubject = plugin.userSubjects[player.uniqueId].get()
     var previousPermissible: Permissible? = null
     private val attachments: MutableSet<PEXPermissionAttachment> = mutableSetOf()
 
@@ -74,7 +74,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
          * This only takes into account the permission directly being checked having a default set to FALSE or NOT_OP, and not any parents.
          * I believe this is incorrect, but the real-world impacts are likely minor -zml
          */
-        if (ret == 0 && manager.config.platformConfig.fallbackOp) {
+        if (ret == 0 && plugin.manager.config.platformConfig.fallbackOp) {
             val perm = plugin.permissionList?.get(permission)
             if (perm == null) {
                 ret = if (isOp) 1 else 0
@@ -126,7 +126,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
         val attach = PEXPermissionAttachment(plugin, player, this)
         pexSubject.transientData()
             .update {
-                it.addParent(PermissionsEx.GLOBAL_CONTEXT, ATTACHMENT_TYPE, attach.identifier)
+                it.addParent(PermissionsEx.GLOBAL_CONTEXT, attach)
             }
             .thenRun { this.attachments.add(attach) }
         return attach
@@ -135,7 +135,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
     fun removeAttachmentInternal(attach: PEXPermissionAttachment): Boolean {
         pexSubject.transientData()
             .update {
-                it.removeParent(PermissionsEx.GLOBAL_CONTEXT, ATTACHMENT_TYPE, attach.identifier)
+                it.removeParent(PermissionsEx.GLOBAL_CONTEXT, attach)
             }
             .thenRun {
                 attach.removalCallback?.attachmentRemoved(attach)
@@ -179,8 +179,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
                     setOf(
                         BeforeTimeContextDefinition.createValue(ZonedDateTime.now().plus(ticks * 50.toLong(), ChronoUnit.MILLIS))
                     ),
-                    ATTACHMENT_TYPE,
-                    attach.identifier
+                    attach
                 )
             }
             .thenRun { this.attachments.add(attach) }

@@ -16,55 +16,20 @@
  */
 package ca.stellardrift.permissionsex.velocity
 
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
-import com.google.common.collect.Maps
 import com.velocitypowered.api.permission.PermissionFunction
 import com.velocitypowered.api.permission.PermissionSubject
 import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.proxy.Player
-import java.util.UUID
-
-class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<Player>(
-    SUBJECTS_USER
-) {
-    override fun isNameValid(name: String): Boolean {
-        return try {
-            UUID.fromString(name)
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    override fun getAliasForName(name: String): String? {
-        return try {
-            UUID.fromString(name)
-            null
-        } catch (e: Exception) {
-            plugin.server.getPlayer(name).orElse(null)?.run { uniqueId.toString() }
-        }
-    }
-
-    override fun getAssociatedObject(identifier: String): Player? {
-        return try {
-            val id = UUID.fromString(identifier)
-            plugin.server.getPlayer(id).orElse(null)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
-    }
-}
 
 class PEXPermissionFunction(val plugin: PermissionsExPlugin, private val source: PermissionSubject) : PermissionFunction {
     val subject: CalculatedSubject by lazy {
-        val ident = when (source) {
-            is Player -> Maps.immutableEntry(SUBJECTS_USER, source.gameProfile.id.toString())
-            else -> IDENT_SERVER_CONSOLE
-        }
-        plugin.manager.subjectType(ident.key)[ident.value].join()
+        if (source is Player) {
+            plugin.users[source.uniqueId]
+        } else {
+            plugin.manager.subject(IDENT_SERVER_CONSOLE)
+        }.join()
     }
 
     override fun getPermissionValue(permission: String): Tristate {

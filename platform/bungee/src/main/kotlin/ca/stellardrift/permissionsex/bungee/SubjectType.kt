@@ -16,49 +16,15 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.net.InetSocketAddress
-import java.util.UUID
 import java.util.function.Consumer
 import net.md_5.bungee.api.connection.ProxiedPlayer
-
-class UserSubjectTypeDefinition(private val plugin: PermissionsExPlugin) : SubjectTypeDefinition<ProxiedPlayer>(
-    SUBJECTS_USER
-) {
-    override fun isNameValid(name: String): Boolean {
-        return try {
-            UUID.fromString(name)
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    override fun getAliasForName(name: String): String? {
-        return try {
-            UUID.fromString(name)
-            null
-        } catch (e: Exception) {
-            plugin.proxy.getPlayer(name)?.uniqueId?.toString()
-        }
-    }
-
-    override fun getAssociatedObject(identifier: String): ProxiedPlayer? {
-        return try {
-            val id = UUID.fromString(identifier)
-            plugin.proxy.getPlayer(id)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
-    }
-}
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 

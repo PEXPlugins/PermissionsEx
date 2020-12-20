@@ -18,7 +18,9 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
+import ca.stellardrift.permissionsex.subject.SubjectType
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -33,29 +35,28 @@ import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectCollection
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.util.Tristate
+import java.util.function.Function
+import java.util.stream.Collectors
 
 /**
  * Subject collection
  */
-class PEXSubjectCollection private constructor(private val identifier: String, val plugin: PermissionsExPlugin) :
+class PEXSubjectCollection<I> private constructor(private val identifier: SubjectType<I>, val plugin: PermissionsExPlugin) :
     SubjectCollection {
-    val type: SubjectTypeImpl = plugin.manager.subjectType(identifier)
+    val type: SubjectTypeCollection<I> = plugin.manager.subjects(identifier)
     private var defaults: PEXSubject? = null
-    private val subjectCache: AsyncLoadingCache<String, PEXSubject>
-
-    init {
-        subjectCache = Caffeine.newBuilder().executor(plugin.asyncExecutor())
-            .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
-    }
+    private val subjectCache: AsyncLoadingCache<String, PEXSubject> = Caffeine.newBuilder()
+        .executor(plugin.asyncExecutor())
+        .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
 
     companion object {
-        fun load(identifier: String, plugin: PermissionsExPlugin): CompletableFuture<PEXSubjectCollection> {
+        fun <I> load(identifier: SubjectType<I>, plugin: PermissionsExPlugin): CompletableFuture<PEXSubjectCollection<I>> {
             val ret = PEXSubjectCollection(identifier, plugin)
             val defaultFuture =
                 if (identifier == PermissionsEngine.SUBJECTS_DEFAULTS) {
-                    ret.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS)
+                    ret.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS.name())
                 } else {
-                    plugin.loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS).thenCompose { it.loadSubject(identifier) }
+                    plugin.loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS.name()).thenCompose { it.loadSubject(identifier.name()) }
                 }
             return defaultFuture.thenApply {
                 ret.defaults = it as PEXSubject?
@@ -65,13 +66,11 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
     }
 
     override fun getIdentifier(): String {
-        return identifier
+        return this.identifier.name()
     }
 
     override fun getIdentifierValidityPredicate(): Predicate<String> {
-        return Predicate { name: String ->
-            type.typeInfo.isNameValid(name)
-        }
+        return Predicate(this.identifier::isIdentifierValid)
     }
 
     override fun getSubject(identifier: String): Optional<Subject> {
@@ -86,7 +85,7 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
     }
 
     override fun hasSubject(identifier: String): CompletableFuture<Boolean> {
-        return type.persistentData().isRegistered(identifier)
+        return type.persistentData().isRegistered(this.identifier.parseIdentifier(identifier))
     }
 
     override fun loadSubject(identifier: String): CompletableFuture<Subject> {
@@ -102,22 +101,24 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
     }
 
     override fun newSubjectReference(subjectIdentifier: String): SubjectReference {
-        return PEXSubjectReference(subjectIdentifier, identifier, plugin)
+        return PEXSubjectReference(this.identifier, this.identifier.parseIdentifier(subjectIdentifier), plugin)
     }
 
     override fun suggestUnload(identifier: String) {
         subjectCache.synchronous().invalidate(identifier)
-        type.uncache(identifier)
+        type.uncache(this.identifier.parseIdentifier(identifier))
     }
 
     override fun getAllIdentifiers(): CompletableFuture<Set<String>> {
-        return CompletableFuture.completedFuture(type.allIdentifiers)
+        return CompletableFuture.completedFuture(
+            type.allIdentifiers
+            .map(this.identifier::serializeIdentifier)
+            .collect(Collectors.toSet())
+        )
     }
 
     override fun getLoadedSubjects(): Collection<Subject> {
-        return ImmutableSet.copyOf<Subject>(
-            activeSubjects
-        )
+        return ImmutableSet.copyOf<Subject>(activeSubjects)
     }
 
     val activeSubjects: Iterable<PEXSubject>
@@ -147,8 +148,8 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
         permission: String
     ): CompletableFuture<Map<SubjectReference, Boolean>> {
         val raw = type.allIdentifiers
-        val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { type[it] }.toTypedArray()
-        return CompletableFuture.allOf(*futures).thenApply(java.util.function.Function { _: Void? ->
+        val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { type[it] }.collect(Collectors.toList()).toTypedArray()
+        return CompletableFuture.allOf(*futures).thenApply(Function { _: Void? ->
             futures.asSequence()
                 .map { it.join() }
                 .map {
@@ -180,6 +181,6 @@ class PEXSubjectCollection private constructor(private val identifier: String, v
     }
 
     fun getCalculatedSubject(identifier: String): CompletableFuture<CalculatedSubject> {
-        return type[identifier]
+        return type[this.identifier.parseIdentifier(identifier)]
     }
 }

@@ -18,21 +18,39 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.data.SubjectDataReference
+import ca.stellardrift.permissionsex.data.ToDataSubjectRefImpl
+import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectType
 import java.util.UUID
 import org.bukkit.entity.Player
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionAttachment
 import org.bukkit.plugin.Plugin
 
-internal const val ATTACHMENT_TYPE = "attachment"
+internal val ATTACHMENT_TYPE = SubjectType.builder("attachment", UUID::class.java)
+    .serializedBy(UUID::toString)
+    .deserializedBy(UUID::fromString)
+    .build()
 
 /**
  * Permissions attachment that integrates with the PEX backend
  */
-internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private val perm: PEXPermissible) : PermissionAttachment(plugin, parent) {
-    val identifier = UUID.randomUUID().toString()
-    private var subjectData: SubjectDataReference
+internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private val perm: PEXPermissible) : PermissionAttachment(plugin, parent), SubjectRef<UUID> {
+    private val identifier = UUID.randomUUID()
+    private val subjectData: SubjectRef.ToData<UUID> =
+        perm.manager.subjects(ATTACHMENT_TYPE).transientData().getReference(identifier).join()
+
+    init {
+        subjectData.update { it.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", this.plugin.name) }
+    }
+
+    override fun type(): SubjectType<UUID> {
+        return ATTACHMENT_TYPE
+    }
+
+    override fun identifier(): UUID {
+        return this.identifier
+    }
 
     override fun getPermissions(): Map<String, Boolean> {
         return subjectData.get().getPermissions(PermissionsEx.GLOBAL_CONTEXT)
@@ -60,8 +78,4 @@ internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private v
         return perm.removeAttachmentInternal(this)
     }
 
-    init {
-        subjectData = perm.manager.subjectType(ATTACHMENT_TYPE).transientData().getReference(identifier).join()
-        subjectData.update { it.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", this.plugin.name) }
-    }
 }

@@ -16,7 +16,8 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectType
 import java.util.concurrent.CompletableFuture
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectReference
@@ -26,48 +27,48 @@ import org.spongepowered.api.service.permission.SubjectReference
  *
  * May return the same instance
  */
-internal fun SubjectIdentifier.asSponge(service: PermissionsExService): PEXSubjectReference {
-    return if (this is PEXSubjectReference) {
+internal fun <I> SubjectRef<I>.asSponge(service: PermissionsExService): PEXSubjectReference<I> {
+    return if (this is PEXSubjectReference<I>) {
         this
     } else {
-        PEXSubjectReference(this.key, this.value, service)
+        PEXSubjectReference(this.type(), this.identifier(), service)
     }
 }
 
 /**
- * Get the pex-internal representation of a subject reference. May or may not return the same instance
+ * Get the pex-internal representation of a subject reference.
+ *
+ * May or may not return the same instance.
  */
-internal fun SubjectReference.asPex(service: PermissionsExService): PEXSubjectReference {
-    return if (this is PEXSubjectReference) {
-        this
-    } else {
-        PEXSubjectReference(this.collectionIdentifier, this.subjectIdentifier, service)
+internal fun SubjectReference.asPex(service: PermissionsExService): PEXSubjectReference<*> {
+    if (this is PEXSubjectReference<*>) {
+        return this
     }
+    val type = service.subjectTypeFromIdentifier(this.collectionIdentifier)
+
+    return PEXSubjectReference(type, this.subjectIdentifier, service, true)
 }
 
-data class PEXSubjectReference internal constructor(
-    override val key: String,
-    override val value: String,
+data class PEXSubjectReference<I> internal constructor(
+    private val type: SubjectType<I>,
+    private val ident: I,
     private val service: PermissionsExService
-) : SubjectReference, MutableMap.MutableEntry<String, String> {
+) : SubjectReference, SubjectRef<I> {
+    override fun type(): SubjectType<I> = this.type
+    override fun identifier(): I = this.ident
 
-    init {
-        require(service.manager.subjectType(key).typeInfo.isNameValid(value)) { "Name '$value' was not a valid name for a subject in collection '$key'!" }
-    }
+    internal constructor(type: SubjectType<I>, serialized: String, service: PermissionsExService, resToAvoidAmbiguity: Boolean)
+            : this(type, type.parseIdentifier(serialized), service)
 
     override fun getCollectionIdentifier(): String {
-        return key
+        return this.type.name()
     }
 
     override fun getSubjectIdentifier(): String {
-        return value
+        return this.type.serializeIdentifier(this.ident)
     }
 
     override fun resolve(): CompletableFuture<Subject> {
-        return service.loadCollection(key).thenCompose { it.loadSubject(value) }
-    }
-
-    override fun setValue(newValue: String): String {
-        throw UnsupportedOperationException("immutable")
+        return service.loadCollection(this.type).thenCompose { it.loadSubject(this.subjectIdentifier) }
     }
 }

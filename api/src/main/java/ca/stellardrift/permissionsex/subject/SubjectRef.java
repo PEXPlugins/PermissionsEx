@@ -1,87 +1,138 @@
-/*
- * PermissionsEx
- * Copyright (C) zml and PermissionsEx contributors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package ca.stellardrift.permissionsex.subject;
 
 import ca.stellardrift.permissionsex.util.Change;
+import org.immutables.value.Value;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-public interface SubjectRef {
-    /**
-     * Get the current subject data.
-     *
-     * @return The current data
-     * @since 2.0.0
-     */
-    ImmutableSubjectData get();
+/**
+ * A reference to a specific subject.
+ *
+ * @param <I> identifier type
+ * @since 2.0.0
+ */
+@Value.Immutable(builder = false)
+public interface SubjectRef<I> {
 
     /**
-     * Update the contained data based on the result of a function.
+     * Create a new subject reference.
      *
-     * @param modifierFunc The function that will be called to update the data
-     * @return A future completing when data updates have been written to the data store
+     * @param type the subject type's collection
+     * @param identifier the subject's identifier
+     * @param <I> the identifier type
+     * @return a new subject reference
      * @since 2.0.0
      */
-    CompletableFuture<Change<ImmutableSubjectData>> update(UnaryOperator<ImmutableSubjectData> modifierFunc);
+    static <I> SubjectRef<I> subject(final SubjectTypeCollection<I> type, final I identifier) {
+        return new SubjectRefImpl<>(type.getType(), identifier);
+    }
 
     /**
-     * Get whether or not this reference will hold strong references to stored listeners.
-     * If the return value  is false, registering a listener object with this reference will
-     * not prevent it from being garbage collected, so the listener must be held somewhere
-     * else for it to continue being called.
+     * Create a new subject reference.
      *
-     * @return Whether or not listeners are held strongly.
+     * @param type the subject's type
+     * @param identifier the subject's identifier
+     * @param <I> the identifier type
+     * @return a new subject reference
      * @since 2.0.0
      */
-    boolean holdsListenersStrongly();
+    static <I> SubjectRef<I> subject(final SubjectType<I> type, final I identifier) {
+        return new SubjectRefImpl<>(type, identifier);
+    }
 
     /**
-     * Register a listener to be called when an update is performed.
+     * Return a sanitized subject reference that can safely be used as a map key.
      *
-     * @param listener The listener to register
+     * @param existing the existing reference
+     * @param <I> the identifier type
+     * @return a sanitized reference
      * @since 2.0.0
      */
-    void onUpdate(Consumer<ImmutableSubjectData> listener);
+    static <I> SubjectRef<I> mapKeySafe(final SubjectRef<I> existing) {
+        if (existing instanceof SubjectRefImpl<?>) { // our own immutable reference
+            return existing;
+        } else {
+            return subject(existing.type(), existing.identifier());
+        }
+    }
 
     /**
-     * Get an identifier that can be used to refer to this subject.
+     * The subject's type
      *
-     * @return The subject's identifier
+     * @return the type referred to.
      * @since 2.0.0
      */
-    Map.Entry<String, String> getIdentifier();
+    @Value.Parameter
+    SubjectType<I> type();
 
     /**
-     * Confirm whether or not the subject data referenced is actually registered.
-     *
-     * @return a future completing with registration state
+     * An identifier
+     * @return the subject identifier
      * @since 2.0.0
      */
-    CompletableFuture<Boolean> isRegistered();
+    @Value.Parameter
+    I identifier();
 
     /**
-     * Remove the subject data referenced.
+     * A resolved reference to a subject's data in a specific collection.
      *
-     * @return A future completing with the previous data for this subject.
-     * @see SubjectDataCache#remove(String)
+     * @param <I> identifier type
      * @since 2.0.0
      */
-    CompletableFuture<ImmutableSubjectData> remove();
+    interface ToData<I> extends SubjectRef<I> {
+        /**
+         * Get the current subject data.
+         *
+         * @return The current data
+         * @since 2.0.0
+         */
+        ImmutableSubjectData get();
+
+        /**
+         * Update the contained data based on the result of a function.
+         *
+         * @param modifierFunc The function that will be called to update the data
+         * @return A future completing when data updates have been written to the data store
+         * @since 2.0.0
+         */
+        CompletableFuture<Change<ImmutableSubjectData>> update(UnaryOperator<ImmutableSubjectData> modifierFunc);
+
+        /**
+         * Get whether or not this reference will hold strong references to stored listeners.
+         * If the return value  is false, registering a listener object with this reference will
+         * not prevent it from being garbage collected, so the listener must be held somewhere
+         * else for it to continue being called.
+         *
+         * @return Whether or not listeners are held strongly.
+         * @since 2.0.0
+         */
+        boolean holdsListenersStrongly();
+
+        /**
+         * Register a listener to be called when an update is performed.
+         *
+         * @param listener The listener to register
+         * @since 2.0.0
+         */
+        void onUpdate(Consumer<ImmutableSubjectData> listener);
+
+        /**
+         * Confirm whether or not the subject data referenced is actually registered.
+         *
+         * @return a future completing with registration state
+         * @since 2.0.0
+         */
+        CompletableFuture<Boolean> isRegistered();
+
+        /**
+         * Remove the subject data referenced.
+         *
+         * @return A future completing with the previous data for this subject.
+         * @see SubjectDataCache#remove(Object)
+         * @since 2.0.0
+         */
+        CompletableFuture<ImmutableSubjectData> remove();
+    }
 }

@@ -20,8 +20,7 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import ca.stellardrift.permissionsex.util.colored
 import ca.stellardrift.permissionsex.util.component
 import ca.stellardrift.permissionsex.util.decorated
@@ -38,7 +37,6 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
-import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 enum class ButtonType {
     /**
@@ -68,21 +66,13 @@ abstract class MessageFormatter(
      */
     protected open fun transformCommand(cmd: String) = cmd
 
-    protected open val SubjectIdentifier.friendlyName: String? get() = null
+    protected open val <I> SubjectRef<I>.friendlyName: String? get() = null
 
-    fun subject(subject: Pair<String, String>): Component {
-        return subject(immutableMapEntry(subject.first, subject.second))
-    }
-
-    operator fun SubjectIdentifier.unaryPlus() = subject(this)
+    operator fun <I> SubjectRef<I>.unaryPlus() = subject(this)
 
     fun subject(subject: CalculatedSubject) = subject(subject.identifier)
 
     operator fun CalculatedSubject.unaryPlus() = subject(this)
-
-    fun subject(ref: SubjectRef) = subject(ref.identifier)
-
-    operator fun SubjectRef.unaryPlus() = subject(this)
 
     /**
      * Print the subject in a user-friendly manner. May link to the subject info printout
@@ -90,12 +80,13 @@ abstract class MessageFormatter(
      * @param subject The subject to show
      * @return the formatted value
      */
-    fun subject(subject: SubjectIdentifier): Component {
-        val subjType: SubjectTypeImpl = pex.subjectType(subject.key)
+    fun <I> subject(subject: SubjectRef<I>): Component {
+        val subjType: SubjectTypeCollection<I> = pex.subjects(subject.type())
+        val serializedIdent = subject.type().serializeIdentifier(subject.identifier())
         var name = subject.friendlyName
         if (name == null) {
             try {
-                name = subjType.persistentData().getData(subject.value, null).get()
+                name = subjType.persistentData().getData(subject.identifier(), null).get()
                     .getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]
             } catch (e: ExecutionException) {
                 throw RuntimeException(e)
@@ -106,20 +97,20 @@ abstract class MessageFormatter(
 
         val nameText = if (name != null) {
             component {
-                append(subject.value colored NamedTextColor.GRAY)
+                append(serializedIdent colored NamedTextColor.GRAY)
                 append(SLASH)
                 append(+name)
             }
         } else {
-            +subject.value
+            +serializedIdent
         }
 
         return component {
-            this += subject.key decorated TextDecoration.BOLD
+            this += subject.type().name() decorated TextDecoration.BOLD
             this += space()
             this += nameText
             hoverEvent(HoverEvent.showText(Messages.FORMATTER_BUTTON_INFO_PROMPT()))
-            clickEvent(ClickEvent.runCommand(transformCommand("/pex ${subject.key} ${subject.value} info")))
+            clickEvent(ClickEvent.runCommand(transformCommand("/pex ${subject.type().name()} $serializedIdent info")))
         }
     }
 

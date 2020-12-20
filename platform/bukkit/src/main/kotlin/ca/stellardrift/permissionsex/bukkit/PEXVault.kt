@@ -38,7 +38,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     override fun hasSuperPermsCompat(): Boolean = true
     override fun hasGroupSupport(): Boolean = true
 
-    override fun getGroups(): Array<String> = this.pex.groupSubjects.allIdentifiers.toTypedArray()
+    override fun getGroups(): Array<String> = this.pex.groupSubjects.allIdentifiers.toArray { arrayOfNulls<String>(it) }
 
     private fun <T> CompletableFuture<T>.getUnchecked(): T {
         return try {
@@ -54,12 +54,8 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
         return this.pex.groupSubjects[name].getUnchecked()
     }
 
-    fun getSubject(player: OfflinePlayer): CalculatedSubject {
-        return this.pex.userSubjects[player.uniqueId.toString()].getUnchecked()
-    }
-
-    fun getSubject(player: String): CalculatedSubject {
-        return this.pex.userSubjects[player].getUnchecked()
+    fun getUser(player: OfflinePlayer): CalculatedSubject {
+        return this.pex.userSubjects[player.uniqueId].getUnchecked()
     }
 
     fun contextsFrom(world: String?): Set<ContextValue<*>> {
@@ -119,7 +115,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     }
 
     override fun playerHas(world: String, player: OfflinePlayer, permission: String): Boolean {
-        val subj = getSubject(player)
+        val subj = getUser(player)
         val perm = subj.getPermission(contextsFrom(subj, world), permission)
         return when {
             perm > 0 -> true
@@ -129,7 +125,7 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     }
 
     override fun playerAdd(world: String, player: OfflinePlayer, permission: String): Boolean {
-        return !getSubject(player).data()
+        return !getUser(player).data()
             .update { it.setPermission(contextsFrom(world), permission, 1) }.isCancelled
     }
 
@@ -142,17 +138,17 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     }
 
     override fun playerAddTransient(worldName: String, player: OfflinePlayer, permission: String): Boolean {
-        return !getSubject(player).transientData()
+        return !getUser(player).transientData()
             .update { it.setPermission(contextsFrom(worldName), permission, 1) }.isCancelled
     }
 
     override fun playerRemoveTransient(worldName: String, player: OfflinePlayer, permission: String): Boolean {
-        return !getSubject(player).transientData()
+        return !getUser(player).transientData()
             .update { it.setPermission(contextsFrom(worldName), permission, 0) }.isCancelled
     }
 
     override fun playerRemove(world: String, player: OfflinePlayer, permission: String): Boolean {
-        return !getSubject(player).data()
+        return !getUser(player).data()
             .update { it.setPermission(contextsFrom(world), permission, 0) }.isCancelled
     }
 
@@ -165,24 +161,24 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     }
 
     override fun playerInGroup(world: String, player: OfflinePlayer, group: String): Boolean {
-        val subj = getSubject(player)
+        val subj = getUser(player)
         return subjectIdentifier(PermissionsEngine.SUBJECTS_GROUP, group) in subj.getParents(contextsFrom(subj, world))
     }
 
     override fun playerAddGroup(world: String, player: OfflinePlayer, group: String): Boolean {
-        return !getSubject(player).data()
+        return !getUser(player).data()
             .update { it.addParent(contextsFrom(world),
                 PermissionsEngine.SUBJECTS_GROUP, group) }.isCancelled
     }
 
     override fun playerRemoveGroup(world: String, player: OfflinePlayer, group: String): Boolean {
-        return !getSubject(player).data()
+        return !getUser(player).data()
             .update { it.removeParent(contextsFrom(world),
                 PermissionsEngine.SUBJECTS_GROUP, group) }.isCancelled
     }
 
     override fun getPlayerGroups(world: String, player: OfflinePlayer): Array<String> {
-        val subj = getSubject(player)
+        val subj = getUser(player)
         return subj.getParents(contextsFrom(subj, world))
             .mapNotNull { (key, value) ->
             if (key == PermissionsEngine.SUBJECTS_GROUP) value else null

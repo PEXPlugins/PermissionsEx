@@ -31,7 +31,7 @@ import org.spongepowered.api.util.Tristate
 /**
  * Permissions subject implementation
  */
-class PEXSubject(private val baked: CalculatedSubject, internal val collection: PEXSubjectCollection) : Subject {
+class PEXSubject(private val baked: CalculatedSubject, internal val collection: PEXSubjectCollection<*>) : Subject {
     private val data = PEXSubjectData(baked.data(), this)
     private val transientData = PEXSubjectData(baked.transientData(), this)
 
@@ -77,7 +77,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
         return true
     }
 
-    override fun getContainingCollection(): PEXSubjectCollection {
+    override fun getContainingCollection(): PEXSubjectCollection<*> {
         return this.collection
     }
 
@@ -127,7 +127,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents.map { it.asSponge(containingCollection.service) }
+        return baked.parents.map { manager.deserializeSubjectRef(it).asSponge(containingCollection.service) }
     }
 
     val activePexContexts: ContextSet
@@ -139,7 +139,8 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
-            this.baked.getParents(contexts.toPex(this.manager)).map { it.asSponge(this.containingCollection.service) }
+            this.baked.getParents(contexts.toPex(this.manager))
+                .map { manager.deserializeSubjectRef(it).asSponge(this.containingCollection.service) }
         }
     }
 
@@ -155,9 +156,9 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     }
 
     companion object {
-        fun load(identifier: String, collection: PEXSubjectCollection): CompletableFuture<PEXSubject> {
+        fun load(identifier: String, collection: PEXSubjectCollection<*>): CompletableFuture<PEXSubject> {
             return collection.getCalculatedSubject(identifier)
-                .thenApply { baked: CalculatedSubject -> PEXSubject(baked, collection) }
+                .thenApply { baked -> PEXSubject(baked, collection) }
         }
     }
 }

@@ -16,6 +16,8 @@
  */
 package ca.stellardrift.permissionsex.proxycommon;
 
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Map;
@@ -23,6 +25,9 @@ import java.util.Map;
 public final class ProxyCommon {
     private ProxyCommon() {}
 
-    public static final String SUBJECTS_SYSTEM = "system";
-    public static final Map.Entry<String, String> IDENT_SERVER_CONSOLE = UnmodifiableCollections.immutableMapEntry(SUBJECTS_SYSTEM, "Server");
+    private static final String SERVER_CONSOLE_NAME = "Server";
+    public static final SubjectType<String> SUBJECTS_SYSTEM = SubjectType.stringIdentBuilder("system")
+            .fixedEntries(UnmodifiableCollections.immutableMapEntry("Server", () -> null))
+            .build();
+    public static final SubjectRef<String> IDENT_SERVER_CONSOLE = SubjectRef.subject(SUBJECTS_SYSTEM, SERVER_CONSOLE_NAME);
 }

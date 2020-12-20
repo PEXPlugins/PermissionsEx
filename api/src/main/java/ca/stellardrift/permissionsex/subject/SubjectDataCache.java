@@ -20,32 +20,42 @@ import ca.stellardrift.permissionsex.datastore.DataStore;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * A cached view of the subject data within a particular {@link DataStore}.
  *
  * <p>Provides operations to manage querying, writing, and updating
  * {@link ImmutableSubjectData} objects.</p>
+ *
+ * @since 2.0.0
  */
-public interface SubjectDataCache {
+public interface SubjectDataCache<I> {
+    /**
+     * Get the subject type for this cache.
+     *
+     * @return the subject type this cache contains data for
+     * @since 2.0.0
+     */
+    SubjectType<I> getType();
+
     /**
      * Get data for a given subject.
      *
      * <p>This will return a data object even if the subject is not registered; the data object will
      * just be empty.</p>
      *
-     * <p>For most longer-lifetime use cases, {@link #getReference(String)} will be the preferred
+     * <p>For most longer-lifetime use cases, {@link #getReference(Object)} will be the preferred
      * method to get a reference to the latest subject data.</p>
      *
      * @param identifier The identifier of the subject to query
      * @param listener A callback that will be notified whenever a change is made to the data object
      * @return A future returning when the data is available
      */
-    CompletableFuture<ImmutableSubjectData> getData(String identifier, final @Nullable Consumer<ImmutableSubjectData> listener);
+    CompletableFuture<ImmutableSubjectData> getData(final I identifier, final @Nullable Consumer<ImmutableSubjectData> listener);
 
     /**
      * Get a reference to subject data for a given subject. The reference will update as changes are made to the backing
@@ -54,7 +64,7 @@ public interface SubjectDataCache {
      * @param identifier The identifier of the subject to get data for
      * @return A future returning with a full reference to the given subject's data.
      */
-    CompletableFuture<? extends SubjectRef> getReference(String identifier);
+    CompletableFuture<? extends SubjectRef.ToData<I>> getReference(final I identifier);
 
     /**
      * Get a reference to subject data for a given subject
@@ -63,7 +73,7 @@ public interface SubjectDataCache {
      * @param strongListeners Whether to hold listeners to this subject data even after they would be otherwise GC'd
      * @return A future completing with the subject data reference
      */
-    CompletableFuture<? extends SubjectRef> getReference(String identifier, boolean strongListeners);
+    CompletableFuture<? extends SubjectRef.ToData<I>> getReference(final I identifier, boolean strongListeners);
 
     /**
      * Update data for a given subject, acting on the latest data available.
@@ -73,21 +83,21 @@ public interface SubjectDataCache {
      * @param action     A function taking an old subject data instance and returning an updated one
      * @return A future completing with the latest subject data after modifications are made
      */
-    CompletableFuture<ImmutableSubjectData> update(String identifier, UnaryOperator<ImmutableSubjectData> action);
+    CompletableFuture<ImmutableSubjectData> update(final I identifier, final UnaryOperator<ImmutableSubjectData> action);
 
     /**
      * Load data (if any) known for the given identifier
      *
      * @param identifier The subject identifier
      */
-    void load(String identifier);
+    void load(final I identifier);
 
     /**
      * Remove a given subject identifier from the cache
      *
      * @param identifier The identifier of the subject to be removed
      */
-    void invalidate(String identifier);
+    void invalidate(final I identifier);
 
     /**
      * Enter all subjects of this type into cache
@@ -101,7 +111,7 @@ public interface SubjectDataCache {
      * @param identifier The identifier of the subject to check
      * @return A future returning whether the subject has data stored
      */
-    CompletableFuture<Boolean> isRegistered(String identifier);
+    CompletableFuture<Boolean> isRegistered(final I identifier);
 
     /**
      * Remove a subject from the backing data store
@@ -109,7 +119,7 @@ public interface SubjectDataCache {
      * @param identifier The identifier of the subject to remove
      * @return A future returning the previous subject data.
      */
-    CompletableFuture<ImmutableSubjectData> remove(String identifier);
+    CompletableFuture<ImmutableSubjectData> remove(final I identifier);
 
     /**
      * Set the data for {@code identifier}.
@@ -118,7 +128,7 @@ public interface SubjectDataCache {
      * @param newData data to set for the subject, {@code null} to clear all data.
      * @return a future completing with the newly set subject data.
      */
-    CompletableFuture<ImmutableSubjectData> set(String identifier, @Nullable ImmutableSubjectData newData);
+    CompletableFuture<ImmutableSubjectData> set(final I identifier, final @Nullable ImmutableSubjectData newData);
 
     /**
      * Add a listener to be notified on updates to the given subject
@@ -126,26 +136,19 @@ public interface SubjectDataCache {
      * @param identifier The identifier of the subject to receive notifications about
      * @param listener The callback function to notify
      */
-    void addListener(String identifier, Consumer<ImmutableSubjectData> listener);
-
-    /**
-     * Get the subject type identifier
-     *
-     * @return The identifier for this subject type
-     */
-    String getType();
+    void addListener(final I identifier, final Consumer<ImmutableSubjectData> listener);
 
     /**
      * Get a set of identifiers for all registered subjects of this type
      *
      * @return The set of identifiers
      */
-    Set<String> getAllIdentifiers();
+    Stream<I> getAllIdentifiers();
 
     /**
      * Get the identifier for the subject holding default data for subjects of this type
      *
      * @return The id for the default subject of this type
      */
-    Map.Entry<String, String> getDefaultIdentifier();
+    SubjectRef<String> getDefaultIdentifier();
 }

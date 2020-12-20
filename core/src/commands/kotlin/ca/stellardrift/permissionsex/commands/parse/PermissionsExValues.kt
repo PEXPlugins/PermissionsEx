@@ -32,7 +32,6 @@ import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.subjectIdentifier
 import ca.stellardrift.permissionsex.util.unaryPlus
 import java.util.concurrent.CompletableFuture
-import kotlin.streams.asSequence
 import net.kyori.adventure.text.Component
 
 fun contextTransientFlags(pex: PermissionsEx<*>): FlagCommandElementBuilder {
@@ -48,7 +47,7 @@ class SubjectTypeValue(private val pex: PermissionsEx<*>) : Value<String>(+"") {
     override fun parse(args: CommandArgs): String {
         val next = args.next()
         val subjectTypes = pex.knownSubjectTypes()
-        if (!subjectTypes.filter { it.startsWith(next, ignoreCase = true) }.findAny().isPresent) {
+        if (subjectTypes.firstOrNull { it.name().startsWith(next, ignoreCase = true) } == null) {
             throw args.createError(SUBJECTTYPE_ERROR_NOTATYPE.invoke(next))
         }
         return next
@@ -98,14 +97,14 @@ private class SubjectElement(
         } else {
             identifier = args.next()
         }
-        val subjType = pex.subjectType(type)
+        val subjType = pex.subjects(type)
         if (!subjType.isRegistered(identifier).join()) { // TODO: Async command elements
             val newIdentifier = subjType.typeInfo.getAliasForName(identifier)
             if (newIdentifier != null) {
                 identifier = newIdentifier
             }
         }
-        if (!subjType.typeInfo.isNameValid(identifier)) {
+        if (!subjType.typeInfo.isIdentifierValid(identifier)) {
             throw args.createError(SUBJECT_ERROR_NAMEINVALID.invoke(identifier, type))
         }
         return subjectIdentifier(type, identifier)
@@ -122,18 +121,18 @@ private class SubjectElement(
                 val argSplit = type.split(":", limit = 2).toTypedArray()
                 type = argSplit[0]
                 identifierSegment = argSplit[1]
-                val typeObj = pex.subjectType(type)
+                val typeObj = pex.subjects(type)
                 val allIdents = typeObj.allIdentifiers.asSequence()
                 (allIdents +
                         allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())
                     .filter { it.startsWith(identifierSegment, ignoreCase = true) }
-                    .map { "${typeObj.typeInfo.typeName()}:$it" }
+                    .map { "${typeObj.typeInfo.name()}:$it" }
             } else {
                 pex.knownSubjectTypes().asSequence()
                     .filter { it.startsWith(type, ignoreCase = true) }
             }
         }
-        val typeObj = pex.subjectType(type)
+        val typeObj = pex.subjects(type)
         val allIdents = typeObj.allIdentifiers.asSequence()
         return (allIdents +
                 allIdents.map { typeObj.typeInfo.getAliasForName(it) }.filterNotNull())

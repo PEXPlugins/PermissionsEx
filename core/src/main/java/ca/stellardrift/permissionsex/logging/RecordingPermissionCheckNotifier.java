@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.logging;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -35,7 +36,7 @@ public class RecordingPermissionCheckNotifier implements PermissionCheckNotifier
     private final Set<String> knownPermissions = sizeLimitedSet(MAX_SIZE);
     private final Set<String> knownOptions = sizeLimitedSet(MAX_SIZE);
 
-    private static <T> Set<T> sizeLimitedSet(int maxSize) {
+    private static <T> Set<T> sizeLimitedSet(final int maxSize) {
         return Collections.newSetFromMap(new LinkedHashMap<T, Boolean>() {
             private static final long serialVersionUID = 9025221898274056636L;
 
@@ -46,18 +47,18 @@ public class RecordingPermissionCheckNotifier implements PermissionCheckNotifier
         });
     }
     @Override
-    public void onPermissionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String permission, int value) {
+    public void onPermissionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String permission, int value) {
         knownPermissions.add(permission);
 
     }
 
     @Override
-    public void onOptionCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, String option, String value) {
+    public void onOptionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String option, String value) {
         knownOptions.add(option);
     }
 
     @Override
-    public void onParentCheck(Map.Entry<String, String> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
     }
 
     public Set<String> getKnownPermissions() {

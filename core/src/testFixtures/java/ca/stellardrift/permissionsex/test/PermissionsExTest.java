@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.PermissionsEx;
 import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,11 +29,18 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.UUID;
 
 /**
  * Abstract test for test classes wishing to test in cases requiring a permissions manager
  */
 public abstract class PermissionsExTest {
+    public static final SubjectType<String> SUBJECTS_GROUP = SubjectType.stringIdentBuilder("group").build();
+    public static final SubjectType<UUID> SUBJECTS_USER = SubjectType.builder("user", UUID.class)
+            .serializedBy(UUID::toString)
+            .deserializedBy(UUID::fromString)
+            .build();
+
     public Path tempFolder;
 
     private PermissionsEx<?> manager;
@@ -43,6 +51,10 @@ public abstract class PermissionsExTest {
         config.validate();
 
         manager = new PermissionsEx<>(config, new TestImplementationInterface(tempFolder.resolve(info.getDisplayName())));
+
+        // Register subject types
+        manager.subjects(SUBJECTS_GROUP);
+        manager.subjects(SUBJECTS_USER);
     }
 
     @AfterEach

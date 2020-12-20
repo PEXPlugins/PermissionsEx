@@ -32,14 +32,16 @@ import ca.stellardrift.permissionsex.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubjectImpl;
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition;
-import ca.stellardrift.permissionsex.subject.SubjectTypeImpl;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl;
 import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import org.jetbrains.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
@@ -54,27 +56,27 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.Messages.*;
-import static ca.stellardrift.permissionsex.commands.PermissionsExCommandsKt.createRootCommand;
-import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getDemoteCommand;
-import static ca.stellardrift.permissionsex.commands.RankingCommandsKt.getPromoteCommand;
 
 
 /**
  * The entry point to the PermissionsEx engine.
  *
- * The fastest way to get going with working with subjects is to access a subject type collection with {@link #subjectType(String)}
- * and request a {@link CalculatedSubjectImpl} to query data from. Directly working with
- * {@link SubjectDataReference}s is another option, preferable if most of the operations
- * being performed are writes, or querying data directly defined on a subject.
+ * <p>The fastest way to get going with working with subjects is to access a subject type collection
+ * with {@link #subjects(SubjectType)} and request a {@link CalculatedSubjectImpl} to query data
+ * from. Directly working with {@link ToDataSubjectRefImpl}s is another option, preferable if most
+ * of the operations being performed are writes, or querying data directly defined on a subject.</p>
  *
- * Keep in mind most of PEX's core data objects are immutable and must be resubmitted to their holders to apply updates.
- * Most write operations are done asynchronously, and futures are returned that complete when the backend is finished writing out data.
- * For larger operations, it can be useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce unnecessary writes to the backing data store in some cases.
+ * <p>Keep in mind most of PEX's core data objects are immutable and must be resubmitted to their
+ * holders to apply updates. Most write operations are done asynchronously, and futures are returned
+ * that complete when the backend is finished writing out data. For larger operations, it can be
+ * useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce
+ * unnecessary writes to the backing data store in some cases.</p>
  */
 public class PermissionsEx<P> implements ImplementationInterface, Consumer<ContextInheritance>, ContextDefinitionProvider, PermissionsEngine {
 
@@ -85,12 +87,24 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     private volatile PermissionCheckNotifier notifier = baseNotifier;
     private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
 
-    private final AtomicReference<State<P>> state = new AtomicReference<>();
-    private final ConcurrentMap<String, SubjectTypeImpl> subjectTypeCache = new ConcurrentHashMap<>();
-    private RankLadderCache rankLadderCache;
-    private volatile CompletableFuture<ContextInheritance> cachedInheritance;
+    private final AtomicReference<@Nullable State<P>> state = new AtomicReference<>();
+    private final ConcurrentMap<String, SubjectTypeCollectionImpl<?>> subjectTypeCache = new ConcurrentHashMap<>();
+    private @MonotonicNonNull RankLadderCache rankLadderCache;
+    private volatile @Nullable CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
     private final CallbackController callbackController;
+
+    public SubjectRef<?> deserializeSubjectRef(final Map.Entry<String, String> serialized) {
+        final @Nullable SubjectTypeCollectionImpl<?> existingCollection = this.subjectTypeCache.get(serialized.getKey());
+        if (existingCollection == null) {
+            throw new IllegalArgumentException("Unknown subject type " + serialized.getKey());
+        }
+        return deserialize(existingCollection.getType(), serialized.getValue());
+    }
+
+    private <I> SubjectRef<I> deserialize(final SubjectType<I> type, final String serializedIdent) {
+        return SubjectRef.subject(type, type.parseIdentifier(serializedIdent));
+    }
 
     private static class State<P> {
         private final PermissionsExConfiguration<P> config;
@@ -109,13 +123,15 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         this.transientData = MemoryDataStore.create("transient");
         this.transientData.initialize(this);
         this.callbackController = new CallbackController();
-        debugMode(config.isDebugEnabled());
-        registerContextDefinition(ServerTagContextDefinition.INSTANCE);
-        registerContextDefinition(BeforeTimeContextDefinition.INSTANCE);
-        registerContextDefinition(AfterTimeContextDefinition.INSTANCE);
-        initialize(config);
+        this.debugMode(config.isDebugEnabled());
+        this.registerContextDefinitions(
+                ServerTagContextDefinition.INSTANCE,
+                BeforeTimeContextDefinition.INSTANCE,
+                AfterTimeContextDefinition.INSTANCE);
+        this.initialize(config);
 
-        subjectType(SUBJECTS_DEFAULTS).setTypeInfo(SubjectTypeDefinition.of(SUBJECTS_DEFAULTS, false));
+        this.subjects(SUBJECTS_DEFAULTS);
+        this.subjects(SUBJECTS_FALLBACK);
     }
 
     /**
@@ -124,13 +140,16 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @param consumer Consumer to receive each command registration
      */
     public void registerCommandsTo(final Consumer<CommandSpec> consumer) {
+        /*
+        TODO: Restore commands (probably under cloud)
         consumer.accept(createRootCommand(this));
         consumer.accept(getPromoteCommand(this));
         consumer.accept(getDemoteCommand(this));
+         */
     }
 
     private State<P> getState() throws IllegalStateException {
-        State<P> ret = this.state.get();
+        final @Nullable State<P> ret = this.state.get();
         if (ret == null) {
             throw new IllegalStateException("Manager has already been closed!");
         }
@@ -148,9 +167,18 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @return The subject type collection
      */
     @Override
-    public SubjectTypeImpl subjectType(final String type) {
-        return subjectTypeCache.computeIfAbsent(type,
-                key -> new SubjectTypeImpl(this, type, new SubjectDataCacheImpl(type, getState().activeDataStore), new SubjectDataCacheImpl(type, transientData)));
+    public <I> SubjectTypeCollectionImpl<I> subjects(final SubjectType<I> type) {
+        @SuppressWarnings("unchecked")
+        final SubjectTypeCollectionImpl<I> collection = (SubjectTypeCollectionImpl<I>) this.subjectTypeCache.computeIfAbsent(type.name(),
+                key -> new SubjectTypeCollectionImpl<>(
+                        this,
+                        type,
+                        new SubjectDataCacheImpl<>(type, getState().activeDataStore),
+                        new SubjectDataCacheImpl<>(type, transientData)));
+        if (!type.equals(collection.getType())) {
+            throw new IllegalArgumentException("Provided subject type " + type + " is different from registered type " + collection.getType());
+        }
+        return collection;
     }
 
     /**
@@ -159,8 +187,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @return Unmodifiable view of the currently cached subject types
      */
     @Override
-    public Collection<SubjectTypeImpl> loadedSubjectTypes() {
-        return Collections.unmodifiableCollection(subjectTypeCache.values());
+    public Collection<SubjectTypeCollectionImpl<?>> loadedSubjectTypes() {
+        return Collections.unmodifiableCollection(this.subjectTypeCache.values());
     }
 
     /**
@@ -169,8 +197,14 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      *
      * @return A set of registered subject types
      */
-    public Stream<String> knownSubjectTypes() {
-        return getState().activeDataStore.getRegisteredTypes().stream(); // TODO
+    @Override
+    public Set<SubjectType<?>> knownSubjectTypes() {
+        return this.subjectTypeCache.values().stream().map(SubjectTypeCollectionImpl::getType).collect(Collectors.toSet());
+    }
+
+    @Override
+    public <V> CompletableFuture<V> doBulkOperation(Function<DataStore, CompletableFuture<V>> actor) {
+        return this.getState().activeDataStore.performBulkOperation(actor).thenCompose(it -> it);
     }
 
     /**
@@ -201,7 +235,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      */
     public CompletableFuture<Void> importDataFrom(String dataStoreIdentifier) {
         final State<P> state = getState();
-        final DataStore expected = state.config.getDataStore(dataStoreIdentifier);
+        final @Nullable DataStore expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
@@ -267,6 +301,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @param debug Whether to enable debug mode
      * @param filterPattern A pattern to filter which permissions are logged. Null for no filter.
      */
+    @Override
     public synchronized void debugMode(boolean debug, final @Nullable Pattern filterPattern) {
         if (debug) {
             if (this.notifier instanceof DebugPermissionCheckNotifier) {
@@ -353,14 +388,13 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
                 ((PEXContextDefinition<?>) ctxDef).update(newState.config);
             }
         });
-        subjectType("group").cacheAll();
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
             getContextInheritance(null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
         }
 
         // Migrate over legacy subject data
-        newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS, SUBJECTS_DEFAULTS).thenRun(() -> {
+        newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS.name(), SUBJECTS_DEFAULTS.name(), SUBJECTS_DEFAULTS.name()).thenRun(() -> {
             this.logger().info(CONVERSION_RESULT_SUCCESS.toComponent());
         });
     }
@@ -457,15 +491,17 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     }
 
     /**
-     * Get context inheritance data. The result of the future is immutable -- to take effect, the object returned by any
+     * Get context inheritance data.
+     *
+     * <p>The result of the future is immutable -- to take effect, the object returned by any
      * update methods in {@link ContextInheritance} must be passed to {@link #setContextInheritance(ContextInheritance)}.
      *  It follows that anybody else's changes will not appear in the returned inheritance object -- so if updates are
-     *  desired providing a callback function is important.
+     *  desired providing a callback function is important.</p>
      *
      * @param listener A callback function that will be triggered whenever there is a change to the context inheritance
      * @return A future providing the current context inheritance data
      */
-    public CompletableFuture<ContextInheritance> getContextInheritance(Consumer<ContextInheritance> listener) {
+    public CompletableFuture<ContextInheritance> getContextInheritance(final @Nullable Consumer<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
             this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
         }
@@ -542,7 +578,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     @Override
     @Nullable
     public ContextDefinition<?> getContextDefinition(final String definitionKey, final boolean allowFallbacks) {
-        ContextDefinition<?> ret = this.contextTypes.get(definitionKey);
+        @Nullable ContextDefinition<?> ret = this.contextTypes.get(definitionKey);
         if (ret == null && allowFallbacks) {
             ContextDefinition<?> fallback = new SimpleContextDefinition.Fallback(definitionKey);
             ret = this.contextTypes.putIfAbsent(definitionKey, fallback);

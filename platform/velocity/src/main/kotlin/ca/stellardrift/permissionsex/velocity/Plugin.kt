@@ -18,7 +18,6 @@ package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
@@ -29,6 +28,7 @@ import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOL
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent
@@ -46,6 +46,7 @@ import java.nio.file.Paths
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 import javax.inject.Inject
 import javax.sql.DataSource
 import org.slf4j.Logger
@@ -88,6 +89,12 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
 
     val manager: PermissionsEx<*> get() = requireNotNull(this._manager) { "PermissionsEx has not yet been initialized" }.engine()
 
+    val users: SubjectTypeCollection<UUID>
+        get() = this._manager!!.users()
+
+    val groups: SubjectTypeCollection<String>
+        get() = this._manager!!.groups()
+
     @Subscribe
     fun onProxyInit(event: ProxyInitializeEvent) {
         Files.createDirectories(dataPath)
@@ -98,18 +105,26 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
             .build()
 
         try {
-            this._manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this))
+            this._manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
+                .implementationInterface(this)
+                .cachedUuidResolver { server.getPlayer(it).orElse(null)?.uniqueId }
+                .playerProvider { server.getPlayer(it).orElse(null) }
+                .build()
         } catch (e: Exception) {
             logger.error(Messages.PLUGIN_INIT_ERROR(), e)
             return
         }
-        manager.subjectType(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(this)
-        manager.subjectType(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.value) {
+        manager.subjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.identifier()) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 
-        this.manager.registerContextDefinitions(ProxyContextDefinition.INSTANCE, RemoteIpContextDefinition,
-            LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefinition)
+        this.manager.registerContextDefinitions(
+            ProxyContextDefinition.INSTANCE,
+            RemoteIpContextDefinition,
+            LocalIpContextDefinition,
+            LocalHostContextDefinition,
+            LocalPortContextDefinition
+        )
 
         this.manager.registerCommandsTo {
             val aliases = it.aliases.map { alias -> "/$alias" }
@@ -156,7 +171,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
     @Subscribe
     fun uncachePlayer(event: DisconnectEvent) {
         manager.callbackController.clearOwnedBy(event.player.uniqueId)
-        manager.subjectType(SUBJECTS_USER).uncache(event.player.uniqueId.toString())
+        users.uncache(event.player.uniqueId)
     }
 }
 

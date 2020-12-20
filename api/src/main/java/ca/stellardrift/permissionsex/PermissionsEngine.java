@@ -16,15 +16,22 @@
  */
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
+import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -36,33 +43,69 @@ import java.util.stream.Stream;
 public interface PermissionsEngine {
     String SUBJECTS_USER = "user";
     String SUBJECTS_GROUP = "group";
-    String SUBJECTS_DEFAULTS = "default";
-    String SUBJECTS_FALLBACK = "fallback";
+
+    /**
+     * A subject type where subjects are
+     */
+    SubjectType<String> SUBJECTS_DEFAULTS = SubjectType.stringIdentBuilder("default")
+                        .transientHasPriority(false)
+                        .build();
+    SubjectType<String> SUBJECTS_FALLBACK = SubjectType.stringIdentBuilder("fallback").build();
 
     // -- Working with subject types -- //
 
     /**
      * Get a subject type by name.
      *
+     * <p>If this subject type has not been seen before, it will be registered.</p>
+     *
      * @param type the type identifier
      * @return a subject type instance, never null
+     * @since 2.0.0
      */
-    SubjectType subjectType(final String type);
+    <I> SubjectTypeCollection<I> subjects(final SubjectType<I> type);
+
+    /**
+     * Resolve a subject from a reference.
+     *
+     * @param reference the subject reference to resolve
+     * @param <I> identifier type
+     * @return a future providing the resolved subject
+     * @since 2.0.0
+     */
+    default <I> CompletableFuture<CalculatedSubject> subject(final SubjectRef<I> reference) {
+        return this.subjects(reference.type()).get(reference.identifier());
+    }
 
     /**
      * Get subject types with actively stored data.
      *
      * @return an unmodifiable view of the actively loaded subject types
      */
-    Collection<? extends SubjectType> loadedSubjectTypes();
+    Collection<? extends SubjectTypeCollection<?>> loadedSubjectTypes();
 
     /**
-     * Get all subject types that have data stored.
+     * Get all registered subject types
      *
      * @return a stream producing all subject types
      * @since 2.0.0
      */
-    Stream<String> knownSubjectTypes();
+    Set<SubjectType<?>> knownSubjectTypes();
+
+    /**
+     * Perform a low-level bulk operation.
+     *
+     * <p>This can be used for transforming subjects if the subject type definition changes, and
+     * any large data changes that require information that may no longer be valid with current
+     * subject type options.</p>
+     *
+     * <p>When possible, higher-level bulk query API (not yet written) should be used instead.</p>
+     *
+     * @param actor the action to perform
+     * @param <V> the result type
+     * @return a future completing with the result of the action
+     */
+    <V> CompletableFuture<V> doBulkOperation(final Function<DataStore, CompletableFuture<V>> actor);
 
     // -- Engine state -- //
 

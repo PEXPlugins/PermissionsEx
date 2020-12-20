@@ -26,7 +26,7 @@ import ca.stellardrift.permissionsex.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.CommandExecutor
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectRef.ToData
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import java.util.concurrent.ExecutionException
 
@@ -38,10 +38,10 @@ abstract class PermissionsExExecutor protected constructor(protected val pex: Pe
         return try {
             val argIdentifier = args.getOne<SubjectIdentifier>(COMMON_ARGS_SUBJECT)
             if (argIdentifier != null) {
-                pex.subjectType(argIdentifier.key)[argIdentifier.value].get()
+                pex.subjects(argIdentifier.key)[argIdentifier.value].get()
             } else {
                 val ret = src.subjectIdentifier ?: throw CommandException(EXECUTOR_ERROR_SUBJECT_REQUIRED())
-                pex.subjectType(ret.key)[ret.value].get()
+                pex.subjects(ret.key)[ret.value].get()
             }
         } catch (e: InterruptedException) {
             throw CommandException(EXECUTOR_ERROR_GETTING_SUBJECT(), e)
@@ -51,7 +51,7 @@ abstract class PermissionsExExecutor protected constructor(protected val pex: Pe
     }
 
     @Throws(CommandException::class)
-    protected fun getDataRef(src: Commander, args: CommandContext, permission: String): SubjectRef {
+    protected fun getDataRef(src: Commander, args: CommandContext, permission: String): ToData {
         val subject = subjectOrSelf(src, args)
         src.checkSubjectPermission(subject.identifier, permission)
         return if (args.hasAny(COMMON_ARGS_TRANSIENT)) subject.transientData() else subject.data()

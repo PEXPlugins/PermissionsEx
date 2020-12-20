@@ -20,9 +20,9 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.sponge.asPex
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.styled
-import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
@@ -49,11 +49,9 @@ internal class SpongeCommander(
         return cause.hasPermission(permission)
     }
 
-    override val subjectIdentifier: SubjectIdentifier?
-        get() = subjectIdentifier(
-                cause.containingCollection.identifier,
-                cause.identifier
-            )
+    override val subjectIdentifier: SubjectRef<*>?
+        get() = pex.service?.let { cause.asSubjectReference().asPex(it) }
+
     override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun msgPaginated(
@@ -79,6 +77,6 @@ internal class SpongeCommander(
 
 internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
-    override val SubjectIdentifier.friendlyName: String?
-        get() = (cmd.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? ServerPlayer)?.name // TODO: Named interface?
+    override val <I> SubjectRef<I>.friendlyName: String?
+        get() = (type().getAssociatedObject(identifier()) as? ServerPlayer)?.name // TODO: Named interface?
 }

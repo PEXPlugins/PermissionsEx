@@ -16,15 +16,23 @@
  */
 package ca.stellardrift.permissionsex.subject;
 
-import ca.stellardrift.permissionsex.context.ContextValue;
+/**
+ * An exception thrown when an identifier is provided that isn't valid for a subject type.
+ *
+ * @since 2.0.0
+ */
+public final class InvalidIdentifierException extends IllegalArgumentException {
+    private static final long serialVersionUID = 300758874983936090L;
 
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+    private final String unparsedIdentifier;
 
-public interface SubjectDataBaker {
-    CompletableFuture<BakedSubjectData> bake(CalculatedSubjectImpl<?> data, Set<ContextValue<?>> activeContexts);
+    public InvalidIdentifierException(final String unparsedIdentifier) {
+        super("Invalid subject identifier: " + unparsedIdentifier);
 
-    static SubjectDataBaker inheritance() {
-        return InheritanceSubjectDataBaker.INSTANCE;
+        this.unparsedIdentifier = unparsedIdentifier;
+    }
+
+    public String unparsedIdentifier() {
+        return this.unparsedIdentifier;
     }
 }

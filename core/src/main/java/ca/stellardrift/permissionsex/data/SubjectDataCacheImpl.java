@@ -19,39 +19,47 @@ package ca.stellardrift.permissionsex.data;
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.subject.InvalidIdentifierException;
+import ca.stellardrift.permissionsex.subject.SubjectDataCache;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.jetbrains.annotations.Nullable;
-import org.spongepowered.configurate.util.UnmodifiableCollections;
+import com.google.errorprone.annotations.concurrent.LazyInit;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Cache for subject data objects from a single data store.
  *
  */
-public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex.subject.SubjectDataCache {
-    private final String type;
-    private DataStore dataStore;
-    private final AtomicReference<AsyncLoadingCache<String, ImmutableSubjectData>> cache = new AtomicReference<>();
-    /**
-     * Holds cache listeners to prevent them from being garbage-collected
-     */
-    private final Map<String, Consumer<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
-    private final CacheListenerHolder<String, ImmutableSubjectData> listeners;
-    private final Map.Entry<String, String> defaultIdentifier;
+public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
+    private final SubjectType<I> type;
 
-    public SubjectDataCacheImpl(final String type, final DataStore dataStore) {
+    @LazyInit
+    private DataStore dataStore;
+    private final AtomicReference<AsyncLoadingCache<I, ImmutableSubjectData>> cache = new AtomicReference<>();
+    /**
+     * Holds cache listeners to prevent them from being garbage-collected.
+     */
+    private final Map<I, Consumer<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
+    private final CacheListenerHolder<I, ImmutableSubjectData> listeners;
+    private final SubjectRef<String> defaultIdentifier;
+
+    public SubjectDataCacheImpl(final SubjectType<I> type, final DataStore dataStore) {
         this.type = type;
         update(dataStore);
-        this.defaultIdentifier = UnmodifiableCollections.immutableMapEntry(PermissionsEngine.SUBJECTS_DEFAULTS, type);
+        this.defaultIdentifier = SubjectRef.subject(PermissionsEngine.SUBJECTS_DEFAULTS, type.name());
         this.listeners = new CacheListenerHolder<>();
     }
 
@@ -60,11 +68,12 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
      *
      * @param newDataStore The new data store to use
      */
+    @EnsuresNonNull("this.dataStore")
     public void update(final DataStore newDataStore) {
         this.dataStore = newDataStore;
-        AsyncLoadingCache<String, ImmutableSubjectData> oldCache = this.cache.getAndSet(Caffeine.newBuilder()
+        AsyncLoadingCache<I, ImmutableSubjectData> oldCache = this.cache.getAndSet(Caffeine.newBuilder()
                         .maximumSize(512)
-                        .buildAsync((key, executor) -> dataStore.getData(type, key, clearListener(key))));
+                        .buildAsync((key, executor) -> dataStore.getData(this.type.name(), this.type.serializeIdentifier(key), clearListener(key))));
         if (oldCache != null) {
             oldCache.synchronous().asMap().forEach((k, v) -> {
                     getData(k, null).thenAccept(data -> listeners.call(k, data));
@@ -74,8 +83,8 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> getData(final String identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
-        Objects.requireNonNull(identifier, "identifier");
+    public CompletableFuture<ImmutableSubjectData> getData(final I identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
+        requireNonNull(identifier, "identifier");
 
         CompletableFuture<ImmutableSubjectData> ret = cache.get().get(identifier);
         ret.thenRun(() -> {
@@ -87,13 +96,13 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
     }
 
     @Override
-    public CompletableFuture<SubjectDataReference> getReference(final String identifier) {
+    public CompletableFuture<ToDataSubjectRefImpl<I>> getReference(final I identifier) {
         return getReference(identifier, true);
     }
 
     @Override
-    public CompletableFuture<SubjectDataReference> getReference(final String identifier, final boolean strongListeners) {
-        final SubjectDataReference ref = new SubjectDataReference(identifier, this, strongListeners);
+    public CompletableFuture<ToDataSubjectRefImpl<I>> getReference(final I identifier, final boolean strongListeners) {
+        final ToDataSubjectRefImpl<I> ref = new ToDataSubjectRefImpl<>(identifier, this, strongListeners);
         return getData(identifier, ref).thenApply(data -> {
             ref.data.set(data);
             return ref;
@@ -101,7 +110,7 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> update(final String identifier, final UnaryOperator<ImmutableSubjectData> action) {
+    public CompletableFuture<ImmutableSubjectData> update(final I identifier, final UnaryOperator<ImmutableSubjectData> action) {
         return getData(identifier, null)
                 .thenCompose(data -> {
                     ImmutableSubjectData newData = action.apply(data);
@@ -114,15 +123,15 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
     }
 
     @Override
-    public void load(final String identifier) {
-        Objects.requireNonNull(identifier, "identifier");
+    public void load(final I identifier) {
+        requireNonNull(identifier, "identifier");
 
         cache.get().get(identifier);
     }
 
     @Override
-    public void invalidate(final String identifier) {
-        Objects.requireNonNull(identifier, "identifier");
+    public void invalidate(final I identifier) {
+        requireNonNull(identifier, "identifier");
 
         cache.get().synchronous().invalidate(identifier);
         cacheHolders.remove(identifier);
@@ -131,28 +140,32 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
 
     @Override
     public void cacheAll() {
-        for (String ident : dataStore.getAllIdentifiers(type)) {
-            cache.get().synchronous().refresh(ident);
+        for (String ident : dataStore.getAllIdentifiers(this.type.name())) {
+            try {
+                cache.get().synchronous().refresh(this.type.parseIdentifier(ident));
+            } catch (final InvalidIdentifierException ex) {
+                // TODO: log this
+            }
         }
     }
 
     @Override
-    public CompletableFuture<Boolean> isRegistered(final String identifier) {
-        Objects.requireNonNull(identifier, "identifier");
+    public CompletableFuture<Boolean> isRegistered(final I identifier) {
+        requireNonNull(identifier, "identifier");
 
-        return dataStore.isRegistered(type, identifier);
+        return dataStore.isRegistered(this.type.name(), this.type.serializeIdentifier(identifier));
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> remove(final String identifier) {
+    public CompletableFuture<ImmutableSubjectData> remove(final I identifier) {
         return set(identifier, null);
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> set(final String identifier, final @Nullable ImmutableSubjectData newData) {
-        Objects.requireNonNull(identifier, "identifier");
+    public CompletableFuture<ImmutableSubjectData> set(final I identifier, final @Nullable ImmutableSubjectData newData) {
+        requireNonNull(identifier, "identifier");
 
-        return dataStore.setData(type, identifier, newData);
+        return dataStore.setData(this.type.name(), this.type.serializeIdentifier(identifier), newData);
     }
 
     /**
@@ -162,7 +175,7 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
      * @param name The subject identifier
      * @return A caching function
      */
-    private Consumer<ImmutableSubjectData> clearListener(final String name) {
+    private Consumer<ImmutableSubjectData> clearListener(final I name) {
         Consumer<ImmutableSubjectData> ret = newData -> {
             cache.get().put(name, CompletableFuture.completedFuture(newData));
             listeners.call(name, newData);
@@ -172,25 +185,26 @@ public final class SubjectDataCacheImpl implements ca.stellardrift.permissionsex
     }
 
     @Override
-    public void addListener(final String identifier, final Consumer<ImmutableSubjectData> listener) {
-        Objects.requireNonNull(identifier, "identifier");
-        Objects.requireNonNull(listener, "listener");
+    public void addListener(final I identifier, final Consumer<ImmutableSubjectData> listener) {
+        requireNonNull(identifier, "identifier");
+        requireNonNull(listener, "listener");
 
         listeners.addListener(identifier, listener);
     }
 
     @Override
-    public String getType() {
-        return type;
+    public SubjectType<I> getType() {
+        return this.type;
     }
 
     @Override
-    public Set<String> getAllIdentifiers() {
-        return dataStore.getAllIdentifiers(type);
+    public Stream<I> getAllIdentifiers() {
+        return this.dataStore.getAllIdentifiers(type.name()).stream()
+                .map(this.type::parseIdentifier);
     }
 
     @Override
-    public Map.Entry<String, String> getDefaultIdentifier() {
-        return defaultIdentifier;
+    public SubjectRef<String> getDefaultIdentifier() {
+        return this.defaultIdentifier;
     }
 }

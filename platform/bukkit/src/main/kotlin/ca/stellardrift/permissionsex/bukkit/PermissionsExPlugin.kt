@@ -29,7 +29,7 @@ import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
-import ca.stellardrift.permissionsex.subject.SubjectTypeImpl
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
@@ -54,6 +54,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
+import java.util.UUID
 
 private val INJECTORS = arrayOf(
     ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
@@ -140,12 +141,15 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         try {
             val impl = BukkitImplementationInterface()
             dataFolder.mkdirs()
-            _manager = MinecraftPermissionsEx(PermissionsEx(
-                FilePermissionsExConfiguration.fromLoader(
+            _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(
                     configLoader,
                     BukkitConfiguration::class.java
-                ), impl
-            ))
+                ))
+                .implementationInterface(impl)
+                .opProvider { server.operators.contains(server.getOfflinePlayer(it)) }
+                .cachedUuidResolver { server.getOfflinePlayer(it)?.uniqueId } // TODO: is this correct?
+                .playerProvider(server::getPlayer)
+                .build()
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -163,10 +167,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             LocalHostContextDefinition,
             LocalPortContextDefinition
         )
-        manager.subjectType(PermissionsEngine.SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition(
-            PermissionsEngine.SUBJECTS_USER,
-            this
-        )
+
         server.pluginManager.registerEvents(this, this)
         subscriptionHandler = PEXPermissionSubscriptionMap.inject(this, server.pluginManager)
         permissionList = PermissionList.inject(this)
@@ -210,7 +211,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
 
     @EventHandler
     private fun onPlayerPreLogin(event: AsyncPlayerPreLoginEvent) {
-        userSubjects[event.uniqueId.toString()]
+        userSubjects[event.uniqueId]
             .exceptionally { e ->
                 logger.warn(Messages.ERROR_LOAD_PRELOGIN(event.name, event.uniqueId.toString(), e.message!!), e)
                 null
@@ -219,7 +220,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     private fun onPlayerLogin(event: PlayerLoginEvent) {
-        val identifier = event.player.uniqueId.toString()
+        val identifier = event.player.uniqueId
 
         // Spigot doesn't seem to store virtual host names, so we have to do it ourselves.
         // Hostnames are provided as <host>:<port>, and we don't need the port.
@@ -251,7 +252,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     private fun onPlayerLoginDeny(event: PlayerLoginEvent) {
         if (event.result != PlayerLoginEvent.Result.ALLOWED) {
             uninjectPermissible(event.player)
-            userSubjects.uncache(event.player.uniqueId.toString())
+            userSubjects.uncache(event.player.uniqueId)
         }
     }
 
@@ -259,7 +260,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     private fun onPlayerQuit(event: PlayerQuitEvent) {
         uninjectPermissible(event.player)
         this._manager?.engine()?.callbackController?.clearOwnedBy(event.player.uniqueId)
-        userSubjects.uncache(event.player.uniqueId.toString())
+        userSubjects.uncache(event.player.uniqueId)
     }
 
     /**
@@ -267,16 +268,16 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      *
      * @return The user subject collection
      */
-    val userSubjects: SubjectTypeImpl
-        get() = manager.subjectType(PermissionsEngine.SUBJECTS_USER)
+    val userSubjects: SubjectTypeCollection<UUID>
+        get() = this._manager!!.users()
 
     /**
      * Access group subjects
      *
      * @return The group subject collection
      */
-    val groupSubjects: SubjectTypeImpl
-        get() = manager.subjectType(PermissionsEngine.SUBJECTS_GROUP)
+    val groupSubjects: SubjectTypeCollection<String>
+        get() = this._manager!!.groups()
 
     private fun injectPermissible(player: Player) {
         try {

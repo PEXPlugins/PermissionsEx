@@ -21,12 +21,10 @@ import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.fabric.mixin.AccessorMinecraftServer
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
 import ca.stellardrift.permissionsex.util.IpSet
 import ca.stellardrift.permissionsex.util.IpSetContextDefinition
 import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.net.InetSocketAddress
-import java.util.UUID
 import java.util.function.Consumer
 import net.minecraft.entity.Entity
 import net.minecraft.server.command.ServerCommandSource
@@ -164,39 +162,4 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport"), Command
 
     private fun accumulate(ply: ServerPlayerEntity, consumer: Consumer<Int>) =
         consumer.accept((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.port)
-}
-
-class UserSubjectTypeDefinition : SubjectTypeDefinition<ServerPlayerEntity>("user") {
-    override fun isNameValid(name: String): Boolean {
-        return try {
-            UUID.fromString(name)
-            true
-        } catch (e: IllegalArgumentException) {
-            false
-        }
-    }
-
-    override fun getAliasForName(name: String): String? {
-        return try {
-            UUID.fromString(name)
-            null
-        } catch (e: IllegalArgumentException) {
-            PermissionsExMod.server.userCache.findByName(name)?.id?.toString()
-        }
-    }
-
-    override fun getAssociatedObject(identifier: String): ServerPlayerEntity? {
-        return try {
-            val uid = UUID.fromString(identifier)
-            PermissionsExMod.server.playerManager.getPlayer(uid)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
-    }
-
-    override fun undefinedPermissionValue(identifier: String): Boolean {
-        val player = getAssociatedObject(identifier) ?: return false
-
-        return PermissionsExMod.server.playerManager.isOperator(player.gameProfile)
-    }
 }

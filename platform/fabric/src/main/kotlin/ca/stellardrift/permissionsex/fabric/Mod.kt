@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.fabric
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_DEFAULTS
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
@@ -28,6 +27,8 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
+import ca.stellardrift.permissionsex.subject.SubjectType
+import com.google.common.collect.Maps.immutableEntry
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executor
@@ -59,14 +60,10 @@ private const val MOD_ID: String = "permissionsex"
 object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     val manager: PermissionsEx<*>
-    get() {
-        val temp = _manager?.engine()
-        if (temp != null) {
-            return temp
-        } else {
-            throw IllegalStateException("PermissionsEx has not yet been initialized!")
-        }
-    }
+        get() = requireNotNull(_manager?.engine()) { "PermissionsEx has not yet been initialized!" }
+    val mcManager: MinecraftPermissionsEx<*>
+        get() = requireNotNull(_manager) { "PermissionsEx has not yet been initialized!" }
+
     private var _manager: MinecraftPermissionsEx<*>? = null
     private lateinit var container: ModContainer
     private lateinit var dataDir: Path
@@ -77,6 +74,18 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private lateinit var _logger: FormattedLogger
     private val exec = Executors.newCachedThreadPool()
     private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
+
+    val systemSubjectType = SubjectType.stringIdentBuilder("system")
+        .fixedEntries(
+            immutableEntry("console", Supplier { this.server }),
+            immutableEntry(IDENTIFIER_RCON, Supplier { null })
+        )
+        .undefinedValues { true }
+        .build()
+
+    val commandBlockSubjectType = SubjectType.stringIdentBuilder("command-block")
+        .undefinedValues { this.server.opPermissionLevel <= 2}
+        .build()
 
     override fun onInitialize() {
         this._logger = WrappingFormattedLogger.of(LoggerFactory.getLogger(MOD_ID), false)
@@ -110,7 +119,12 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             .build()
 
         try {
-            _manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(loader), this))
+            _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(loader))
+                .implementationInterface(this)
+                .playerProvider { gameInstance.playerManager.getPlayer(it) }
+                .cachedUuidResolver { gameInstance.userCache.findByName(it)?.id }
+                .opProvider { gameInstance.userCache.getByUuid(it)?.let(gameInstance.playerManager::isOperator) ?: false }
+                .build()
         } catch (e: Exception) {
             logger().error(Messages.MOD_ENABLE_ERROR(), e)
             server.stop(false)
@@ -123,10 +137,12 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             LocalIpContextDefinition,
             LocalHostContextDefinition,
             LocalPortContextDefinition)
-        manager.subjectType(SUBJECTS_USER).typeInfo = UserSubjectTypeDefinition()
-        manager.subjectType(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
+        manager.subjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
+
+        manager.subjects(systemSubjectType)
+        manager.subjects(commandBlockSubjectType)
 
         gameInstance.commandManager?.also {
             manager.registerCommandsTo { cmd -> registerCommand(cmd, it.dispatcher) }
@@ -151,7 +167,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     }
 
     fun handlePlayerJoin(player: ServerPlayerEntity) {
-        manager.subjectType(SUBJECTS_USER).get(player.uuidAsString).thenAccept {
+        mcManager.users()[player.uuid].thenAccept {
             // Update name option
             it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
@@ -174,7 +190,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     fun handlePlayerQuit(player: ServerPlayerEntity) {
         _manager?.engine()?.callbackController?.clearOwnedBy(player.uuidAsString)
-        _manager?.engine()?.subjectType(SUBJECTS_USER)?.uncache(player.uuidAsString)
+        _manager?.users()?.uncache(player.uuid)
     }
 
     override fun baseDirectory(scope: BaseDirectoryScope): Path {

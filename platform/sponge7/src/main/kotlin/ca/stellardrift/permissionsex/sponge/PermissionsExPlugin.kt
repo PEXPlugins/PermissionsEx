@@ -31,7 +31,7 @@ import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
-import ca.stellardrift.permissionsex.subject.SubjectTypeDefinition
+import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -50,7 +50,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Predicate
 import java.util.function.Supplier
-import java.util.stream.Collectors
 import javax.sql.DataSource
 import net.kyori.adventure.platform.spongeapi.SpongeAudiences
 import org.slf4j.Logger
@@ -61,8 +60,6 @@ import org.spongepowered.api.event.game.GameReloadEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent
 import org.spongepowered.api.event.network.ClientConnectionEvent
-import org.spongepowered.api.event.network.ClientConnectionEvent.Auth
-import org.spongepowered.api.event.network.ClientConnectionEvent.Join
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.scheduler.Scheduler
 import org.spongepowered.api.service.ServiceManager
@@ -79,6 +76,7 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
 import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
+import java.util.UUID
 
 /**
  * PermissionsEx plugin
@@ -99,6 +97,11 @@ class PermissionsExPlugin @Inject internal constructor(
     val manager: PermissionsEx<*> get() {
         return _manager?.engine() ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
     }
+
+    internal val mcManager: MinecraftPermissionsEx<*> get() {
+        return _manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
+    }
+
     private val spongeExecutor = Executor { runnable: Runnable ->
         scheduler
             .createTaskBuilder()
@@ -112,15 +115,32 @@ class PermissionsExPlugin @Inject internal constructor(
         .build()
 
     internal val contextCalculators: MutableList<ContextCalculator<Subject>> = CopyOnWriteArrayList()
+    @Suppress("UNCHECKED_CAST") // whee
     private val subjectCollections = Caffeine.newBuilder().executor(spongeExecutor)
-        .buildAsync<String, PEXSubjectCollection> { type, _ ->
-            PEXSubjectCollection.load(type, this)
+        .buildAsync<SubjectType<*>, PEXSubjectCollection<*>> { type, _ ->
+            PEXSubjectCollection.load(type, this) as CompletableFuture<PEXSubjectCollection<*>>
         }
 
     private var defaults: PEXSubject? = null
     private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
     lateinit var timings: Timings
         private set
+
+    // Subject types defined by Sponge
+    val systemSubjectType = SubjectType.stringIdentBuilder(PermissionService.SUBJECTS_SYSTEM)
+        .fixedEntries(
+            immutableMapEntry("Server", Supplier { game.server.console }),
+            immutableMapEntry("RCON", Supplier { null })
+        )
+        .undefinedValues { true }
+        .build()
+
+    val roleTemplateSubjectType = SubjectType.stringIdentBuilder(PermissionService.SUBJECTS_ROLE_TEMPLATE)
+        .build()
+
+    val commandBlockSubjectType = SubjectType.stringIdentBuilder(PermissionService.SUBJECTS_COMMAND_BLOCK)
+        .undefinedValues { true }
+        .build()
 
     @Listener
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
@@ -132,22 +152,30 @@ class PermissionsExPlugin @Inject internal constructor(
             convertFromBukkit()
             convertFromLegacySpongeName()
             Files.createDirectories(configDir)
-            _manager = MinecraftPermissionsEx(PermissionsEx(FilePermissionsExConfiguration.fromLoader(configLoader), this))
+            _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
+                .implementationInterface(this)
+                .playerProvider(game.server::getPlayer)
+                .cachedUuidResolver resolved@{ name ->
+                    val res = game.server.gameProfileManager.cache
+                    for (profile in res.match(name)) {
+                        if (profile.name.isPresent && profile.name.get().equals(name, ignoreCase = true)) {
+                            return@resolved profile.uniqueId
+                        }
+                    }
+                    null
+                }
+                .build()
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL(PomData.NAME), e))
         }
-        defaults = loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS).thenCompose { coll -> coll.loadSubject(
-            PermissionsEngine.SUBJECTS_DEFAULTS
-        ) }
-            .get() as PEXSubject
-        manager.subjectType(PermissionService.SUBJECTS_SYSTEM).typeInfo = SubjectTypeDefinition.of(
-            PermissionService.SUBJECTS_SYSTEM,
-            { true },
-            immutableMapEntry("Server", Supplier { game.server.console }),
-            immutableMapEntry("RCON", Supplier { null })
-        )
-        manager.subjectType(PermissionService.SUBJECTS_USER).typeInfo =
-            UserSubjectTypeDefinition(PermissionService.SUBJECTS_USER, this)
+        defaults = loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS.name())
+            .thenCompose { coll -> coll.loadSubject(
+                PermissionsEngine.SUBJECTS_DEFAULTS.name()
+            ) }.get() as PEXSubject
+        manager.subjects(systemSubjectType)
+        manager.subjects(roleTemplateSubjectType)
+        manager.subjects(commandBlockSubjectType)
+
         registerFakeOpCommand("op", "minecraft.command.op")
         registerFakeOpCommand("deop", "minecraft.command.deop")
         manager.registerCommandsTo { it.register() }
@@ -171,9 +199,9 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     @Listener
-    fun cacheUserAsync(event: Auth) {
+    fun cacheUserAsync(event: ClientConnectionEvent.Auth) {
         try {
-            manager.subjectType(PermissionsEngine.SUBJECTS_USER)[event.profile.uniqueId.toString()]
+            this.mcManager.users()[event.profile.uniqueId]
         } catch (e: Exception) {
             logger.warn(
                 Messages.EVENT_CLIENT_AUTH_ERROR.invoke(
@@ -197,9 +225,9 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     @Listener
-    fun onPlayerJoin(event: Join) {
-        val identifier = event.targetEntity.identifier
-        val cache = this.manager.subjectType(PermissionsEngine.SUBJECTS_USER)
+    fun onPlayerJoin(event: ClientConnectionEvent.Join) {
+        val identifier = event.targetEntity.uniqueId
+        val cache = this.mcManager.users()
         cache.isRegistered(identifier).thenAccept { registered: Boolean ->
             if (registered) {
                 cache.persistentData().update(identifier) { input ->
@@ -257,24 +285,25 @@ class PermissionsExPlugin @Inject internal constructor(
         Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
 
-    override fun getUserSubjects(): PEXSubjectCollection {
-        return try {
-            subjectCollections[PermissionService.SUBJECTS_USER].get()
-        } catch (e: ExecutionException) {
-            throw RuntimeException(e)
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        }
+    internal fun subjectTypeFromIdentifier(identifier: String): SubjectType<*> {
+        val existing = this.manager.knownSubjectTypes().firstOrNull { it.name() == identifier }
+        if (existing != null) return existing
+
+        // There's nothing registered, but Sponge doesn't have a concept of types, so we'll create a fallback string type
+        return SubjectType.stringIdentBuilder(identifier).build()
     }
 
-    override fun getGroupSubjects(): PEXSubjectCollection {
-        return try {
-            subjectCollections[PermissionService.SUBJECTS_GROUP].get()
-        } catch (e: ExecutionException) {
-            throw RuntimeException(e)
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        }
+    internal fun <I> getSubjects(type: SubjectType<I>): PEXSubjectCollection<I> {
+        @Suppress("UNCHECKED_CAST")
+        return subjectCollections[type].join() as PEXSubjectCollection<I>
+    }
+
+    override fun getUserSubjects(): PEXSubjectCollection<UUID> {
+        return this.getSubjects(this.mcManager.users().type)
+    }
+
+    override fun getGroupSubjects(): PEXSubjectCollection<String> {
+        return this.getSubjects(this.mcManager.groups().type)
     }
 
     override fun getDefaults(): PEXSubject {
@@ -283,11 +312,15 @@ class PermissionsExPlugin @Inject internal constructor(
 
     override fun loadCollection(identifier: String): CompletableFuture<SubjectCollection> {
         @Suppress("UNCHECKED_CAST") // interface generics are unnecessarily strict
-        return subjectCollections[identifier] as CompletableFuture<SubjectCollection>
+        return subjectCollections[this.subjectTypeFromIdentifier(identifier)] as CompletableFuture<SubjectCollection>
+    }
+
+    fun loadCollection(identifier: SubjectType<*>): CompletableFuture<out SubjectCollection> {
+        return subjectCollections[identifier]
     }
 
     override fun getCollection(identifier: String): Optional<SubjectCollection> {
-        return subjectCollections.getIfPresent(identifier)?.join().optionally()
+        return subjectCollections.getIfPresent(this.subjectTypeFromIdentifier(identifier))?.join().optionally()
     }
 
     override fun hasCollection(identifier: String): CompletableFuture<Boolean> {
@@ -295,7 +328,7 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     override fun getLoadedCollections(): Map<String, SubjectCollection> {
-        return subjectCollections.synchronous().asMap()
+        return subjectCollections.synchronous().asMap().mapKeys { it.key.name() }
     }
 
     override fun getIdentifierValidityPredicate(): Predicate<String> {
@@ -303,11 +336,12 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     override fun getAllIdentifiers(): CompletableFuture<Set<String>> {
-        return CompletableFuture.completedFuture(manager.knownSubjectTypes().collect(Collectors.toSet()))
+        return CompletableFuture.completedFuture(manager.knownSubjectTypes().map { it.name() }.toSet())
     }
 
     override fun newSubjectReference(collectionIdentifier: String, subjectIdentifier: String): SubjectReference {
-        return createSubjectIdentifier(collectionIdentifier, subjectIdentifier)
+
+        return PEXSubjectReference.of(this.subjectTypeFromIdentifier(collectionIdentifier), subjectIdentifier, this)
     }
 
     override fun registerContextCalculator(calculator: ContextCalculator<Subject>) {
@@ -322,7 +356,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     fun registerDescription(description: PEXPermissionDescription, ranks: Map<String, Int>) {
         descriptions[description.id] = description
-        val coll = manager.subjectType(PermissionService.SUBJECTS_ROLE_TEMPLATE)
+        val coll = manager.subjects(roleTemplateSubjectType)
         for ((key, value) in ranks) {
             coll.transientData().update(key) { input ->
                 input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.id, value)
@@ -374,10 +408,6 @@ class PermissionsExPlugin @Inject internal constructor(
 
     fun CommandSpec.register() {
         game.commandManager.register(this@PermissionsExPlugin, PEXSpongeCommand(this, this@PermissionsExPlugin), aliases)
-    }
-
-    override fun createSubjectIdentifier(collection: String, ident: String): PEXSubjectReference {
-        return PEXSubjectReference(collection, ident, this)
     }
 
     /*override fun lookupMinecraftProfilesByName(

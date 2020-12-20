@@ -33,7 +33,7 @@ import org.spongepowered.api.util.Tristate
  * Wrapper around ImmutableSubjectData that writes to backend each change
  */
 class PEXSubjectData internal constructor(
-    private val data: SubjectRef,
+    private val data: SubjectRef.ToData<*>,
     private val subject: PEXSubject
 ) : SubjectData {
     private val parentsCache: ConcurrentMap<ContextSet, List<SubjectReference>> = ConcurrentHashMap()
@@ -132,11 +132,7 @@ class PEXSubjectData internal constructor(
         val parents: List<SubjectReference>
         synchronized(parentsCache) {
             val rawParents = data.get().getParents(contexts)
-            parents = if (rawParents == null) {
-                emptyList()
-            } else {
-                rawParents.map { (k, v) -> service.newSubjectReference(k, v) }
-            }
+            parents = rawParents?.map { (k, v) -> service.newSubjectReference(k, v) } ?: emptyList()
             val existingParents = parentsCache.putIfAbsent(contexts, parents)
             if (existingParents != null) {
                 return existingParents

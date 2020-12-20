@@ -130,9 +130,9 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      * </ul>
      */
     protected final void applyDefaultData() {
-        getData(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS, null)
+        getData(PermissionsEngine.SUBJECTS_DEFAULTS.name(), PermissionsEngine.SUBJECTS_DEFAULTS.name(), null)
                 .thenApply(data -> data.setDefaultValue(Collections.singleton(new ContextValue<>("localip", "127.0.0.1")), 1))
-                .thenCompose(data -> setData(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS, data));
+                .thenCompose(data -> setData(PermissionsEngine.SUBJECTS_DEFAULTS.name(), PermissionsEngine.SUBJECTS_DEFAULTS.name(), data));
     }
 
     protected abstract CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier);

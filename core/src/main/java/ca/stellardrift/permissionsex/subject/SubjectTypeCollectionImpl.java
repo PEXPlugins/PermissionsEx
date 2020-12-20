@@ -24,38 +24,41 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
-public class SubjectTypeImpl implements SubjectType {
+public class SubjectTypeCollectionImpl<I> implements SubjectTypeCollection<I> {
     private final PermissionsEx<?> pex;
-    private SubjectTypeDefinition<?> type;
-    private SubjectDataCacheImpl persistentData;
-    private SubjectDataCacheImpl transientData;
-    private final AsyncLoadingCache<String, CalculatedSubject> cache;
+    private final SubjectType<I> type;
+    private final SubjectDataCacheImpl<I> persistentData;
+    private final SubjectDataCacheImpl<I> transientData;
+    private final AsyncLoadingCache<I, CalculatedSubject> cache;
 
-    public SubjectTypeImpl(PermissionsEx<?> pex, String type, SubjectDataCacheImpl persistentData, SubjectDataCacheImpl transientData) {
+    public SubjectTypeCollectionImpl(PermissionsEx<?> pex, final SubjectType<I> type, SubjectDataCacheImpl<I> persistentData, SubjectDataCacheImpl<I> transientData) {
         this.pex = pex;
-        this.type = SubjectTypeDefinition.of(type);
+        this.type = type;
         this.persistentData = persistentData;
-        this.transientData = transientData; 
-        this.cache = Caffeine.newBuilder().executor(pex.asyncExecutor()).buildAsync((key, executor) -> {
-            CalculatedSubjectImpl subj = new CalculatedSubjectImpl(SubjectDataBaker.inheritance(), this.pex.createSubjectIdentifier(this.type.typeName(), key), SubjectTypeImpl.this);
-            return persistentData.getReference(key, false).thenCombine(transientData.getReference(key, false), (persistentRef, transientRef) -> {
-                subj.initialize(persistentRef, transientRef);
-                return subj;
-            });
-        });
+        this.transientData = transientData;
+        this.cache = Caffeine.newBuilder()
+                .executor(pex.asyncExecutor())
+                .buildAsync((key, executor) -> {
+                    CalculatedSubjectImpl<I> subj = new CalculatedSubjectImpl<>(
+                            SubjectDataBaker.inheritance(),
+                            SubjectRef.subject(this.type, key),
+                            this);
+
+                    return persistentData.getReference(key, false)
+                            .thenCombine(
+                                    transientData.getReference(key, false),
+                                    (persistentRef, transientRef) -> {
+                                        subj.initialize(persistentRef, transientRef);
+                                        return subj;
+                                    });
+                });
     }
 
     @Override
-    public void setTypeInfo(SubjectTypeDefinition<?> def) {
-        this.type = def;
-    }
-
-    @Override
-    public SubjectTypeDefinition<?> getTypeInfo() {
+    public SubjectType<I> getType() {
         return this.type;
     }
 
@@ -71,32 +74,24 @@ public class SubjectTypeImpl implements SubjectType {
     }
 
     @Override
-    public void uncache(final String identifier) {
-        if (!getTypeInfo().isNameValid(identifier)) {
-            throw new IllegalArgumentException("Provided name " + identifier + " is not valid for subjects of type " + this.type.typeName());
-        }
-
+    public void uncache(final I identifier) {
         this.persistentData.invalidate(identifier);
         this.transientData.invalidate(identifier);
         this.cache.synchronous().invalidate(identifier);
     }
 
     @Override
-    public CompletableFuture<CalculatedSubject> get(final String identifier) {
-        if (!getTypeInfo().isNameValid(identifier)) {
-            throw new IllegalArgumentException("Provided name " + identifier + " is not valid for subjects of type " + type.typeName());
-        }
-
+    public CompletableFuture<CalculatedSubject> get(final I identifier) {
         return this.cache.get(identifier);
     }
 
     @Override
-    public SubjectDataCacheImpl transientData() {
+    public SubjectDataCacheImpl<I> transientData() {
         return this.transientData;
     }
 
     @Override
-    public SubjectDataCacheImpl persistentData() {
+    public SubjectDataCacheImpl<I> persistentData() {
         return this.persistentData;
     }
 
@@ -115,22 +110,22 @@ public class SubjectTypeImpl implements SubjectType {
     }
 
     @Override
-    public void load(String identifier) {
+    public void load(final I identifier) {
         this.persistentData.load(identifier);
         this.transientData.load(identifier);
     }
 
     @Override
-    public CompletableFuture<Boolean> isRegistered(final String identifier) {
+    public CompletableFuture<Boolean> isRegistered(final I identifier) {
         return this.persistentData.isRegistered(identifier)
                 .thenCombine(this.transientData.isRegistered(identifier), Boolean::logicalAnd);
     }
 
     @Override
-    public Set<String> getAllIdentifiers() {
-        Set<String> ret = new HashSet<>();
-        ret.addAll(this.persistentData.getAllIdentifiers());
-        ret.addAll(this.transientData.getAllIdentifiers());
-        return ret;
+    public Stream<I> getAllIdentifiers() {
+        return Stream.concat(
+                this.persistentData.getAllIdentifiers(),
+                this.transientData.getAllIdentifiers())
+            .distinct();
     }
 }

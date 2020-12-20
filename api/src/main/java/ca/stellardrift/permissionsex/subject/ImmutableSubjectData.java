@@ -132,21 +132,24 @@ public interface ImmutableSubjectData {
     ImmutableSubjectData clearPermissions(Set<ContextValue<?>> contexts);
 
     /**
-     * Get an immutable map of parents in every context set. The map returned is from context set to a list of subject identifiers
+     * Get an immutable map of parents in every context set.
+     *
+     * <p>The map returned is from context set to a list of subject identifiers</p>
      *
      * @return An immutable map of all parents
      */
     Map<Set<ContextValue<?>>, List<Map.Entry<String, String>>> getAllParents();
 
     /**
-     * Get parents in a specific context
+     * Get parents in a specific context.
+     *
      * @param contexts The set of contexts to get parents in
      * @return An immutable list of parents. Empty list
      */
     List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> contexts);
 
     /**
-     * Add a single parent subject in a single context set
+     * Add a single parent subject in a single context set.
      *
      * @param contexts The context set to add a parent subject in
      * @param type The type of the parent subject being added
@@ -156,7 +159,19 @@ public interface ImmutableSubjectData {
     ImmutableSubjectData addParent(Set<ContextValue<?>> contexts, String type, String identifier);
 
     /**
-     * Remove a single parent subject in a single context set
+     * Add a single parent subject in a single context set.
+     *
+     * @param contexts The context set to add a parent subject in
+     * @param subject a reference to the subject that should be added as parent.
+     * @param <I> identifier type
+     * @return An updated subject data object
+     */
+    default <I> ImmutableSubjectData addParent(Set<ContextValue<?>> contexts, SubjectRef<I> subject) {
+        return addParent(contexts, subject.type().name(), subject.type().serializeIdentifier(subject.identifier()));
+    }
+
+    /**
+     * Remove a single parent subject in a single context set.
      *
      * @param contexts The context set to remove a parent subject in
      * @param type The type of the parent subject being removed
@@ -164,6 +179,18 @@ public interface ImmutableSubjectData {
      * @return An updated subject data object
      */
     ImmutableSubjectData removeParent(Set<ContextValue<?>> contexts, String type, String identifier);
+
+    /**
+     * Remove a single parent subject in a single context set.
+     *
+     * @param contexts the context set to remove a parent subject in
+     * @param subject a reference to the subject that should be added as parent.
+     * @param <I> identifier type
+     * @return an updated subject data object
+     */
+    default <I> ImmutableSubjectData removeParent(final Set<ContextValue<?>> contexts, final SubjectRef<I> subject) {
+        return removeParent(contexts, subject.type().name(), subject.type().serializeIdentifier(subject.identifier()));
+    }
 
     /**
      * Set the parents in a single context set to the provided list

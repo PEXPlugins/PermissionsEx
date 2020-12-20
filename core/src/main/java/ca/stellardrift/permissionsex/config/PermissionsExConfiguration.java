@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.config;
 
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.List;
  * Configuration for PermissionsEx
  */
 public interface PermissionsExConfiguration<PlatformType> {
-    DataStore getDataStore(String name);
+    @Nullable DataStore getDataStore(String name);
 
     DataStore getDefaultDataStore();
 

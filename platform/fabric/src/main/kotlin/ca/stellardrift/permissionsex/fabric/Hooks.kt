@@ -17,9 +17,10 @@
 @file:JvmName("PermissionsExHooks")
 package ca.stellardrift.permissionsex.fabric
 
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectType
 import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.builder.ArgumentBuilder
 import java.net.InetAddress
@@ -106,7 +107,7 @@ interface IVirtualHostHolder {
 @JvmField
 val LOCAL_HOST: InetSocketAddress = InetSocketAddress(InetAddress.getLocalHost(), 25565)
 
-interface IPermissionCommandSource {
+interface IPermissionCommandSource<I> {
     @JvmDefault
     fun hasPermission(perm: String): Boolean {
         return asCalculatedSubject().hasPermission(perm)
@@ -114,7 +115,7 @@ interface IPermissionCommandSource {
 
     @JvmDefault
     fun asCalculatedSubject(): CalculatedSubject {
-        return PermissionsExMod.manager.subjectType(permType)[permIdentifier].join()
+        return PermissionsExMod.manager.subjects(permType)[permIdentifier].join()
     }
 
     @JvmDefault
@@ -122,18 +123,24 @@ interface IPermissionCommandSource {
         return asCalculatedSubject().activeContexts
     }
 
-    val permType: String
-    val permIdentifier: String
+    /**
+     * Get a reference pointing to this subject.
+     */
+    @JvmDefault
+    fun asReference(): SubjectRef<I> = SubjectRef.subject(this.permType, this.permIdentifier)
+
+    val permType: SubjectType<I>
+    val permIdentifier: I
 }
 
 interface IServerCommandSource {
-    fun withPermissionOverride(override: IPermissionCommandSource?): ServerCommandSource
-    fun getPermissionOverride(): IPermissionCommandSource?
+    fun withPermissionOverride(override: IPermissionCommandSource<*>?): ServerCommandSource
+    fun getPermissionOverride(): IPermissionCommandSource<*>?
 }
 
 fun <T : Any> commandPermissionCheck(permission: String): Predicate<T> {
     return Predicate {
-        if (it is IPermissionCommandSource) {
+        if (it is IPermissionCommandSource<*>) {
             it.hasPermission(permission)
         } else {
             false
@@ -151,7 +158,7 @@ fun ServerCommandSource.hasPermission(perm: String): Boolean {
 
 @JvmOverloads
 fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean {
-    return if (this is IPermissionCommandSource) {
+    return if (this is IPermissionCommandSource<*>) {
         hasPermission(perm)
     } else {
         hasPermissionLevel(fallbackOpLevel)
@@ -163,7 +170,7 @@ fun GameProfile.hasPermission(perm: String): Boolean {
         PermissionsExMod.logger().error(Messages.GAMEPROFILE_ERROR_INCOMPLETE(this.name))
         return false
     }
-    return PermissionsExMod.manager.subjectType(SUBJECTS_USER)[this.id.toString()].join().hasPermission(perm)
+    return PermissionsExMod.mcManager.users()[this.id].join().hasPermission(perm)
 }
 
 internal interface LocaleHolder {

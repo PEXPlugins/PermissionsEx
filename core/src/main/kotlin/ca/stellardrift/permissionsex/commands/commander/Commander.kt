@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.commands.commander
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.Messages
 import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.PEXComponentRenderer
 import ca.stellardrift.permissionsex.util.SubjectIdentifier
 import ca.stellardrift.permissionsex.util.component
@@ -40,7 +41,7 @@ interface Commander : ForwardingAudience.Single {
     val manager: PermissionsEx<*>
     val name: String
     val locale: Locale
-    val subjectIdentifier: SubjectIdentifier?
+    val subjectIdentifier: SubjectRef<*>?
     val messageColor: TextColor
 
     fun hasPermission(permission: String): Boolean

@@ -528,7 +528,7 @@ private class LuckPermsSubjectData(val permissions: Set<LuckPermsDefinition<Bool
     }
 
     override fun getAllDefaultValues(): Map<Set<ContextValue<*>>, Int> {
-        return permissions.filter { it.key == "*" }.groupBy({ it.contexts }, { it.value.asInteger() }).mapValues { (_, v) -> v.maxBy { it.absoluteValue } ?: 0 }
+        return permissions.filter { it.key == "*" }.groupBy({ it.contexts }, { it.value.asInteger() }).mapValues { (_, v) -> v.maxByOrNull { it.absoluteValue } ?: 0 }
     }
 
     override fun getActiveContexts(): Set<Set<ContextValue<*>>> {

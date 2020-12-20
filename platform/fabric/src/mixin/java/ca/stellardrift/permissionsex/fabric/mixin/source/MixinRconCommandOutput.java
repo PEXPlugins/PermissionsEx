@@ -18,6 +18,8 @@ package ca.stellardrift.permissionsex.fabric.mixin.source;
 
 import ca.stellardrift.permissionsex.fabric.FabricDefinitions;
 import ca.stellardrift.permissionsex.fabric.IPermissionCommandSource;
+import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import net.minecraft.server.rcon.RconCommandOutput;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,16 +28,14 @@ import org.spongepowered.asm.mixin.Mixin;
  * Class is misnamed in Fabric -- this is actually the command output for rcon connections
  */
 @Mixin(RconCommandOutput.class)
-public class MixinRconCommandOutput implements IPermissionCommandSource {
-    @NotNull
+public class MixinRconCommandOutput implements IPermissionCommandSource<String> {
     @Override
-    public String getPermType() {
-        return FabricDefinitions.SUBJECTS_SYSTEM;
+    public @NotNull SubjectType<String> getPermType() {
+        return PermissionsExMod.INSTANCE.getSystemSubjectType();
     }
 
-    @NotNull
     @Override
-    public String getPermIdentifier() {
+    public @NotNull String getPermIdentifier() {
         return FabricDefinitions.IDENTIFIER_RCON;
     }
 }

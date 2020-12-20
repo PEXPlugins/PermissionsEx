@@ -19,9 +19,8 @@ package ca.stellardrift.permissionsex.sponge
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.styled
-import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
@@ -51,11 +50,11 @@ internal class SpongeCommander(
     override val locale: Locale
         get() = commandSource.locale
 
-    override val subjectIdentifier: SubjectIdentifier?
-        get() = subjectIdentifier(
-                commandSource.containingCollection.identifier,
-                commandSource.identifier
-            )
+    override val subjectIdentifier: SubjectRef<*>
+        get() = PEXSubjectReference.of(
+            commandSource.asSubjectReference(),
+            pex
+        )
     override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun msgPaginated(
@@ -84,6 +83,6 @@ internal class SpongeCommander(
 
 internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
-    override val SubjectIdentifier.friendlyName: String?
-        get() = (cmd.pex.manager.subjectType(key).typeInfo.getAssociatedObject(value) as? CommandSource)?.name
+    override val <I> SubjectRef<I>.friendlyName: String?
+        get() = (this.type().getAssociatedObject(this.identifier()) as? CommandSource)?.name
 }

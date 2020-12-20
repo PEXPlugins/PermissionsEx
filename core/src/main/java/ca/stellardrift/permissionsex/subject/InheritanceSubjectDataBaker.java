@@ -24,6 +24,7 @@ import ca.stellardrift.permissionsex.util.Util;
 import ca.stellardrift.permissionsex.util.glob.GlobParseException;
 import ca.stellardrift.permissionsex.util.glob.Globs;
 import com.google.common.collect.*;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -49,11 +50,11 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         private int defaultValue;
 
         // State objects
-        private final CalculatedSubjectImpl base;
+        private final CalculatedSubjectImpl<?> base;
         private final PermissionsEx<?> pex;
         private final Set<ContextValue<?>> activeContexts;
 
-        private BakeState(CalculatedSubjectImpl base, Set<ContextValue<?>> activeContexts) {
+        private BakeState(CalculatedSubjectImpl<?> base, Set<ContextValue<?>> activeContexts) {
             this.base = base;
             this.activeContexts = activeContexts;
             this.pex = base.getManager();
@@ -65,7 +66,7 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
             // Step one: calculate context inheritance
             Queue<ContextValue<?>> inProgressContexts = new ArrayDeque<>(rawContexts);
             Set<ContextValue<?>> contexts = new HashSet<>();
-            ContextValue<?> context;
+            @Nullable ContextValue<?> context;
             while ((context = inProgressContexts.poll()) != null) {
                 if (contexts.add(context)) {
                     inProgressContexts.addAll(inheritance.getParents(context));
@@ -77,42 +78,42 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
     }
 
     @Override
-    public CompletableFuture<BakedSubjectData> bake(CalculatedSubjectImpl data, Set<ContextValue<?>> activeContexts) {
-        final Map.Entry<String, String> subject = data.getIdentifier();
+    public CompletableFuture<BakedSubjectData> bake(CalculatedSubjectImpl<?> data, Set<ContextValue<?>> activeContexts) {
+        final SubjectRef<?> subject = data.getIdentifier();
         return processContexts(data.getManager(), activeContexts)
                 .thenCompose(processedContexts -> {
                     final BakeState state = new BakeState(data, processedContexts);
 
-                    final Multiset<Entry<String, String>> visitedSubjects = HashMultiset.create();
+                    final Multiset<SubjectRef<?>> visitedSubjects = HashMultiset.create();
                     CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
 
-                    if (state.parents.isEmpty() && state.combinedPermissions.isEmpty() && state.options.isEmpty() && state.defaultValue == 0 && !(subject.getKey().equals(PermissionsEngine.SUBJECTS_FALLBACK)
-                            && subject.getValue().equals(PermissionsEngine.SUBJECTS_FALLBACK))) { // If we have no data, include the fallback subject
-                        ret = ret.thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEngine.SUBJECTS_FALLBACK, subject.getKey()), visitedSubjects, 0));
+                    if (state.parents.isEmpty() && state.combinedPermissions.isEmpty() && state.options.isEmpty() && state.defaultValue == 0 && !(subject.type().equals(PermissionsEngine.SUBJECTS_FALLBACK)
+                            && subject.identifier().equals(PermissionsEngine.SUBJECTS_FALLBACK.name()))) { // If we have no data, include the fallback subject
+                        ret = ret.thenCompose(none -> visitSubject(state, SubjectRef.subject(PermissionsEngine.SUBJECTS_FALLBACK, subject.type().name()), visitedSubjects, 0));
                     }
 
-                    Entry<String, String> defIdentifier = data.data().getCache().getDefaultIdentifier();
+                    final SubjectRef<String> defIdentifier = data.data().getCache().getDefaultIdentifier();
                     if (!subject.equals(defIdentifier)) {
                         ret = ret.thenCompose(none -> visitSubject(state, defIdentifier, visitedSubjects, 1))
-                            .thenCompose(none -> visitSubject(state, Maps.immutableEntry(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS), visitedSubjects, 2)); // Force in global defaults
+                            .thenCompose(none -> visitSubject(state, SubjectRef.subject(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS.name()), visitedSubjects, 2)); // Force in global defaults
                     }
                     return ret.thenApply(none -> state);
 
                 }).thenApply(state -> new BakedSubjectData(NodeTree.of(state.combinedPermissions, state.defaultValue), ImmutableList.copyOf(state.parents), ImmutableMap.copyOf(state.options)));
     }
 
-    private CompletableFuture<Void> visitSubject(BakeState state, Map.Entry<String, String> subject, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
+    private <I> CompletableFuture<Void> visitSubject(BakeState state, SubjectRef<I> subject, Multiset<SubjectRef<?>> visitedSubjects, int inheritanceLevel) {
         if (visitedSubjects.count(subject) > CIRCULAR_INHERITANCE_THRESHOLD) {
             state.pex.logger().warn(Messages.BAKER_ERROR_CIRCULAR_INHERITANCE.toComponent(state.base.getIdentifier(), subject));
             return Util.emptyFuture();
         }
         visitedSubjects.add(subject);
-        SubjectTypeImpl type = state.pex.subjectType(subject.getKey());
-        return type.persistentData().getData(subject.getValue(), state.base).thenCombine(type.transientData().getData(subject.getValue(), state.base), (persistent, transientData) -> {
+        SubjectTypeCollectionImpl<I> type = state.pex.subjects(subject.type());
+        return type.persistentData().getData(subject.identifier(), state.base).thenCombine(type.transientData().getData(subject.identifier(), state.base), (persistent, transientData) -> {
             CompletableFuture<Void> ret = Util.emptyFuture();
 
             for (Set<ContextValue<?>> combo : processContexts(persistent.getActiveContexts(), transientData.getActiveContexts(), state)) {
-                if (type.getTypeInfo().transientHasPriority()) {
+                if (type.getType().transientHasPriority()) {
                     ret = visitSubjectSingle(state, transientData, ret, combo, visitedSubjects, inheritanceLevel);
                     ret = visitSubjectSingle(state, persistent, ret, combo, visitedSubjects, inheritanceLevel);
                 } else {
@@ -172,22 +173,34 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                 && value.definition().matches(value, ((ContextValue<T>) other).getParsedValue(value.definition()));
     }
 
-    private CompletableFuture<Void> visitSubjectSingle(BakeState state, ImmutableSubjectData data, CompletableFuture<Void> initial, Set<ContextValue<?>> activeCombo, Multiset<Entry<String, String>> visitedSubjects, int inheritanceLevel) {
+    private CompletableFuture<Void> visitSubjectSingle(
+            BakeState state,
+            ImmutableSubjectData data,
+            CompletableFuture<Void> initial,
+            Set<ContextValue<?>> activeCombo,
+            Multiset<SubjectRef<?>> visitedSubjects,
+            int inheritanceLevel) {
         initial = initial.thenRun(() -> visitSingle(state, data, activeCombo, inheritanceLevel));
-        for (Entry<String, String> parent : data.getParents(activeCombo)) {
-            initial = initial.thenCompose(none -> visitSubject(state, parent, visitedSubjects, inheritanceLevel + 1));
+        for (final Map.Entry<String, String> parent : data.getParents(activeCombo)) {
+            final SubjectRef<?> ref = state.pex.deserializeSubjectRef(parent);
+            initial = initial.thenCompose(none -> visitSubject(state, ref, visitedSubjects, inheritanceLevel + 1));
         }
         return initial;
     }
 
-    private void putPermIfNecessary(BakeState state, String perm, int val) {
-        Integer existing = state.combinedPermissions.get(perm);
+    private void putPermIfNecessary(final BakeState state, final String perm, final int val) {
+        final Integer existing = state.combinedPermissions.get(perm);
         if (existing == null || Math.abs(val) > Math.abs(existing)) {
             state.combinedPermissions.put(perm, val);
         }
     }
 
-    private void visitSingle(BakeState state, ImmutableSubjectData data, Set<ContextValue<?>> specificCombination, int inheritanceLevel) {
+    private void visitSingle(
+            final BakeState state,
+            final ImmutableSubjectData data,
+            final Set<ContextValue<?>> specificCombination,
+            final int inheritanceLevel) {
+
         for (Map.Entry<String, Integer> ent : data.getPermissions(specificCombination).entrySet()) {
             String perm = ent.getKey();
             if (ent.getKey().startsWith("#")) { // Prefix to exclude from inheritance
@@ -207,8 +220,8 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
         }
 
         state.parents.addAll(data.getParents(specificCombination).stream()
-            .map(ent -> state.pex.createSubjectIdentifier(ent.getKey(), ent.getValue()))
-            .collect(Collectors.toList()));
+                .map(ent -> Maps.immutableEntry(ent.getKey(), ent.getValue())) // TODO: change this?
+                .collect(Collectors.toList()));
 
         for (Map.Entry<String, String> ent : data.getOptions(specificCombination).entrySet()) {
             if (!state.options.containsKey(ent.getKey())) {

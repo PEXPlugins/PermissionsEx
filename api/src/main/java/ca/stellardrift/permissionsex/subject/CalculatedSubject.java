@@ -36,14 +36,14 @@ public interface CalculatedSubject {
      *
      * @return The identifier
      */
-    Map.Entry<String, String> getIdentifier();
+    SubjectRef<?> getIdentifier();
 
     /**
      * Get the subject type holding this calculated subject.
      *
      * @return The subject type
      */
-    SubjectType getType();
+    SubjectTypeCollection<?> getType();
 
     /**
      * Get the permissions tree in this subject's active contexts.
@@ -212,19 +212,19 @@ public interface CalculatedSubject {
      *
      * @return A reference to the persistent data of this subject
      */
-    SubjectRef data();
+    SubjectRef.ToData<?> data();
 
     /**
      * Access this subject's transient data.
      *
      * @return A reference to the transient data of this subject
      */
-    SubjectRef transientData();
+    SubjectRef.ToData<?> transientData();
 
     /**
      * Get a native object associated with this subject.
      *
-     * <p>This object is provided by the {@link SubjectTypeDefinition} responsible for this
+     * <p>This object is provided by the {@link SubjectType} responsible for this
      * subject's type.</p>
      *
      * @return a native object

@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.commands.parse.CommandException
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.commands.parse.command
 import ca.stellardrift.permissionsex.commands.parse.uuid
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -49,7 +50,8 @@ class CallbackController {
         return "/pex cb $id"
     }
 
-    private val Commander.mapKey: String get() = (this.subjectIdentifier?.value ?: name).toLowerCase(Locale.ROOT)
+    @Suppress("UNCHECKED_CAST")
+    private val Commander.mapKey: String get() = ((this.subjectIdentifier as SubjectRef<Any>?)?.let { it.type().serializeIdentifier(it.identifier()) } ?: name).toLowerCase(Locale.ROOT)
 
     fun clearOwnedBy(name: String) {
         knownCallbacks.remove(name)

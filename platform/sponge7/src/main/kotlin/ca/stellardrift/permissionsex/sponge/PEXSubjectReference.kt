@@ -16,48 +16,51 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
+import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.subject.SubjectRef
+import ca.stellardrift.permissionsex.subject.SubjectType
 import java.util.concurrent.CompletableFuture
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectReference
 
-data class PEXSubjectReference internal constructor(
-    override val key: String,
-    override val value: String,
+data class PEXSubjectReference<I> internal constructor(
+    private val type: SubjectType<I>,
+    private val ident: I,
     private val pex: PermissionsExPlugin
-) : SubjectReference, MutableMap.MutableEntry<String, String> {
-
-    init {
-        require(pex.manager.subjectType(key).typeInfo.isNameValid(value)) { "Name '$value' was not a valid name for a subject in collection '$key'!" }
-    }
+) : SubjectReference, SubjectRef<I> {
+    override fun type(): SubjectType<I> = this.type
+    override fun identifier(): I = this.ident
 
     override fun getCollectionIdentifier(): String {
-        return key
+        return this.type.name()
     }
 
     override fun getSubjectIdentifier(): String {
-        return value
+        return this.type.serializeIdentifier(this.ident)
     }
 
     override fun resolve(): CompletableFuture<Subject> {
-        return pex.loadCollection(key).thenCompose { it.loadSubject(value) }
-    }
-
-    override fun setValue(newValue: String): String {
-        throw UnsupportedOperationException("immutable")
+        return pex.loadCollection(this.type).thenCompose { it.loadSubject(this.subjectIdentifier) }
     }
 
     companion object {
-        fun of(input: Map.Entry<String, String>, pex: PermissionsExPlugin): PEXSubjectReference {
-            return if (input is PEXSubjectReference) {
+        fun <I> of(input: SubjectRef<I>, pex: PermissionsExPlugin): PEXSubjectReference<I> {
+            return if (input is PEXSubjectReference<I>) {
                 input
-            } else PEXSubjectReference(input.key, input.value, pex)
+            } else PEXSubjectReference(input.type(), input.identifier(), pex)
         }
 
-        fun of(input: SubjectReference, pex: PermissionsExPlugin): PEXSubjectReference {
-            if (input is PEXSubjectReference) {
+        fun of(input: SubjectReference, pex: PermissionsExPlugin): PEXSubjectReference<*> {
+            if (input is PEXSubjectReference<*>) {
                 return input
             }
-            return PEXSubjectReference(input.collectionIdentifier, input.subjectIdentifier, pex)
+            val type = pex.subjectTypeFromIdentifier(input.collectionIdentifier)
+
+            return of(type, input.subjectIdentifier, pex)
+        }
+
+        internal fun <I> of(type: SubjectType<I>, serialized: String, pex: PermissionsExPlugin): PEXSubjectReference<I> {
+            return PEXSubjectReference(type, type.parseIdentifier(serialized), pex)
         }
     }
 }

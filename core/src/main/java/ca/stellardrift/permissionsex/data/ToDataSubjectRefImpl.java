@@ -18,12 +18,11 @@ package ca.stellardrift.permissionsex.data;
 
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.Change;
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,9 +35,9 @@ import java.util.function.UnaryOperator;
  *
  * @since 2.0.0
  */
-public class SubjectDataReference implements Consumer<ImmutableSubjectData>, SubjectRef {
-    private final String identifier;
-    private final SubjectDataCacheImpl cache;
+public class ToDataSubjectRefImpl<I> implements Consumer<ImmutableSubjectData>, SubjectRef.ToData<I> {
+    private final I identifier;
+    private final SubjectDataCacheImpl<I> cache;
     private final Set<Consumer<ImmutableSubjectData>> updateListeners;
     final AtomicReference<ImmutableSubjectData> data = new AtomicReference<>();
     private final boolean strongListeners;
@@ -52,15 +51,25 @@ public class SubjectDataReference implements Consumer<ImmutableSubjectData>, Sub
      * @param cache The cache to get data from and listen for changes from
      * @param strongListeners Whether or not to hold strong references to listeners registered
      */
-    SubjectDataReference(String identifier, SubjectDataCacheImpl cache, boolean strongListeners) {
+    ToDataSubjectRefImpl(final I identifier, final SubjectDataCacheImpl<I> cache, final boolean strongListeners) {
         this.identifier = identifier;
         this.cache = cache;
         this.strongListeners = strongListeners;
         if (strongListeners) {
-            updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
+            this.updateListeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
         } else {
-            updateListeners = Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).makeMap());
+            this.updateListeners = Collections.newSetFromMap(new MapMaker().weakKeys().concurrencyLevel(10).makeMap());
         }
+    }
+
+    @Override
+    public SubjectType<I> type() {
+        return this.cache.getType();
+    }
+
+    @Override
+    public I identifier() {
+        return this.identifier;
     }
 
     @Override
@@ -106,13 +115,8 @@ public class SubjectDataReference implements Consumer<ImmutableSubjectData>, Sub
      *
      * @return The cache holding this data
      */
-    public SubjectDataCacheImpl getCache() {
+    public SubjectDataCacheImpl<I> getCache() {
         return cache;
-    }
-
-    @Override
-    public Map.Entry<String, String> getIdentifier() {
-        return Maps.immutableEntry(getCache().getType(), this.identifier);
     }
 
     @Override

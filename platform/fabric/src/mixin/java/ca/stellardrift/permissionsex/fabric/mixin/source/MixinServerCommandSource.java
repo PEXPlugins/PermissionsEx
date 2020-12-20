@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.CachingValue;
 import ca.stellardrift.permissionsex.util.CachingValues;
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +49,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @Mixin(ServerCommandSource.class)
-public abstract class MixinServerCommandSource implements IPermissionCommandSource {
+public abstract class MixinServerCommandSource implements IPermissionCommandSource<Object> {
 
     @Shadow @Final
     private CommandOutput output;
@@ -63,6 +64,7 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
     public abstract MinecraftServer getMinecraftServer();
 
     @Shadow @Final private MinecraftServer server;
+
     private CachingValue<Set<ContextValue<?>>> activeContexts;
 
     @Inject(method = "<init>(Lnet/minecraft/server/command/CommandOutput;Lnet/minecraft/util/math/Vec3d;" +
@@ -105,32 +107,31 @@ public abstract class MixinServerCommandSource implements IPermissionCommandSour
         }
     }
 
-    @NotNull
     @Override
-    public String getPermType() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).getPermType() : FabricDefinitions.SUBJECTS_SYSTEM;
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public @NotNull SubjectType<Object> getPermType() {
+        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<Object>) output).getPermType()
+                : (SubjectType) PermissionsExMod.INSTANCE.getSystemSubjectType();
     }
 
-    @NotNull
     @Override
-    public String getPermIdentifier() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).getPermIdentifier() : simpleName;
+    public @NotNull Object getPermIdentifier() {
+        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<?>) output).getPermIdentifier() : simpleName;
     }
 
     @Override
     public boolean hasPermission(@NotNull String perm) {
-        return (output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : asCalculatedSubject()).hasPermission(getActiveContexts(), perm);
+        return (output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<?>) output).asCalculatedSubject() : asCalculatedSubject()).hasPermission(getActiveContexts(), perm);
     }
 
-    @NotNull
     @Override
-    public CalculatedSubject asCalculatedSubject() {
-        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource) output).asCalculatedSubject() : PermissionsExMod.INSTANCE.getManager().subjectType(getPermType()).get(getPermIdentifier()).join();
+    public @NotNull CalculatedSubject asCalculatedSubject() {
+        return output instanceof IPermissionCommandSource ? ((IPermissionCommandSource<?>) output).asCalculatedSubject()
+                : PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
     }
 
-    @NotNull
     @Override
-    public Set<ContextValue<?>> getActiveContexts() {
+    public @NotNull Set<ContextValue<?>> getActiveContexts() {
         return activeContexts.get();
     }
 }

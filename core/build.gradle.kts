@@ -27,6 +27,19 @@ plugins {
     id("ca.stellardrift.localization")
 }
 
+// Disable commands compilation while refactoring is in progress
+val commands by sourceSets.registering {
+    val main = sourceSets.main.get()
+    compileClasspath += main.compileClasspath
+    runtimeClasspath += main.runtimeClasspath
+
+    dependencies.add(implementationConfigurationName, main.output)
+
+    tasks.named(getCompileTaskName("kotlin")).configure {
+        enabled = false
+    }
+}
+
 useAutoService()
 useImmutables()
 dependencies {
