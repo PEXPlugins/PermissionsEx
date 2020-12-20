@@ -133,8 +133,24 @@ interface PermissionCommandSourceBridge<I> {
 }
 
 interface ServerCommandSourceBridge {
-    fun withPermissionOverride(override: PermissionCommandSourceBridge<*>?): ServerCommandSource
-    fun permissionOverride(): PermissionCommandSourceBridge<*>?
+    /**
+     * Apply a permission subject override for a [ServerCommandSource].
+     */
+    fun withSubjectOverride(override: SubjectRef<*>?): ServerCommandSource
+
+    /**
+     * Set a new override on an existing [ServerCommandSource].
+     *
+     * Internal use only
+     *
+     * [withSubjectOverride] should probably be used instead.
+     */
+    fun subjectOverride(ref: SubjectRef<*>?)
+
+    /**
+     * Get the subject override for a [ServerCommandSource]
+     */
+    fun subjectOverride(): SubjectRef<*>?
 }
 
 fun <T : Any> commandPermissionCheck(permission: String): Predicate<T> {

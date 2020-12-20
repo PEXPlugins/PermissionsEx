@@ -16,10 +16,20 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin;
 
+import com.mojang.brigadier.ResultConsumer;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
+import net.minecraft.entity.Entity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.Vec3d;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(ServerCommandSource.class)
 public interface ServerCommandSourceAccess {
@@ -28,4 +38,22 @@ public interface ServerCommandSourceAccess {
 
     @Accessor("output")
     CommandOutput accessor$output();
+
+    @Invoker("<init>")
+    static ServerCommandSource invoker$new(
+            final CommandOutput output,
+            final Vec3d pos,
+            final Vec2f rot,
+            final ServerWorld world,
+            final int level,
+            final String simpleName,
+            final Text name,
+            final MinecraftServer server,
+            final @Nullable Entity entity,
+            final boolean silent,
+            final ResultConsumer<ServerCommandSource> consumer,
+            final EntityAnchorArgumentType.EntityAnchor entityAnchor
+    ) {
+        throw new AssertionError();
+    }
 }

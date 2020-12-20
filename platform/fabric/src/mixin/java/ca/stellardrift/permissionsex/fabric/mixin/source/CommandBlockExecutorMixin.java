@@ -29,10 +29,9 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(CommandBlockExecutor.class)
 public class CommandBlockExecutorMixin implements PermissionCommandSourceBridge<String> {
-    private volatile @MonotonicNonNull CalculatedSubject permissionsex$subject;
+    private volatile @MonotonicNonNull CalculatedSubject pex$subject;
 
-    @Shadow
-    private Text customName;
+    @Shadow private Text customName;
 
     @Override
     public @NotNull SubjectType<String> getPermType() {
@@ -46,9 +45,9 @@ public class CommandBlockExecutorMixin implements PermissionCommandSourceBridge<
 
     @Override
     public @NotNull CalculatedSubject asCalculatedSubject() {
-        if (this.permissionsex$subject == null) {
-            return this.permissionsex$subject = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
+        if (this.pex$subject == null) {
+            return this.pex$subject = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
         }
-        return this.permissionsex$subject;
+        return this.pex$subject;
     }
 }

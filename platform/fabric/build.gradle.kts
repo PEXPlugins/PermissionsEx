@@ -47,7 +47,7 @@ dependencies {
     shade("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1") { isTransitive = false }
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.6:v2")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.7:v2")
     modImplementation("net.fabricmc:fabric-loader:0.10.8")
     modCompileOnly("com.sk89q.worldedit:worldedit-fabric-mc1.16.3:7.2.0") { isTransitive = false }
     modCompileOnly("com.sk89q.worldedit:worldedit-core:7.2.0") { isTransitive = false }
