@@ -17,15 +17,12 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import ca.stellardrift.permissionsex.util.SubjectIdentifier
-import ca.stellardrift.permissionsex.util.subjectIdentifier
 import java.util.Locale
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.format.NamedTextColor

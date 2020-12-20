@@ -18,7 +18,6 @@ package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
@@ -34,6 +33,7 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.UUID
 import java.util.concurrent.Executor
 import java.util.logging.Logger
 import javax.sql.DataSource
@@ -53,7 +53,6 @@ import net.md_5.bungee.event.EventPriority
 import org.slf4j.impl.JDK14LoggerAdapter
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
-import java.util.UUID
 
 class PermissionsExPlugin : Plugin(), Listener {
     internal lateinit var logger: FormattedLogger private set
@@ -151,7 +150,7 @@ class PermissionsExPlugin : Plugin(), Listener {
 }
 
 fun CommandSender.toCalculatedSubject(): CalculatedSubject {
-    val plugin = (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin);
+    val plugin = (ProxyServer.getInstance().pluginManager.getPlugin("PermissionsEx") as PermissionsExPlugin)
 
     return if (this is ProxiedPlayer) {
         plugin.users[uniqueId]

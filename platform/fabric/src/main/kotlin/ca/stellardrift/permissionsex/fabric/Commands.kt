@@ -138,7 +138,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
         return if (output is PlayerEntity) {
             PlayerLocales.locale(output)
         } else {
-            Locale.getDefault();
+            Locale.getDefault()
         }
     }
     override val subjectIdentifier: SubjectRef<*>?

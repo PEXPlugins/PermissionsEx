@@ -84,7 +84,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         .build()
 
     val commandBlockSubjectType = SubjectType.stringIdentBuilder("command-block")
-        .undefinedValues { this.server.opPermissionLevel <= 2}
+        .undefinedValues { this.server.opPermissionLevel <= 2 }
         .build()
 
     override fun onInitialize() {

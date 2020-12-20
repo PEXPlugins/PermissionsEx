@@ -43,10 +43,10 @@ import com.velocitypowered.api.proxy.ProxyServer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.UUID
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.UUID
 import javax.inject.Inject
 import javax.sql.DataSource
 import org.slf4j.Logger

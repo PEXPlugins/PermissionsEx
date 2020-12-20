@@ -25,7 +25,6 @@ import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.builder.ArgumentBuilder
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.util.Locale
 import java.util.function.Predicate
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.command.ServerCommandSource

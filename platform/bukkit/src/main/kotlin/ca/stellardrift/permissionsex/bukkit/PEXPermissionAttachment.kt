@@ -18,7 +18,6 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.data.ToDataSubjectRefImpl
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.subject.SubjectType
 import java.util.UUID
@@ -77,5 +76,4 @@ internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private v
         subjectData.update { null }
         return perm.removeAttachmentInternal(this)
     }
-
 }

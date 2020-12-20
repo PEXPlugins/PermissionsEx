@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
-import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPermissibleInjector
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
@@ -34,6 +33,7 @@ import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 import java.sql.SQLException
+import java.util.UUID
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -54,7 +54,6 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
-import java.util.UUID
 
 private val INJECTORS = arrayOf(
     ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),

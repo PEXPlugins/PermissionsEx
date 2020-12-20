@@ -356,7 +356,6 @@ class PermissionsExService internal constructor(private val server: Server, priv
             .get() as PEXSubject
     private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
 
-
     override fun getUserSubjects(): PEXSubjectCollection<UUID> {
         // TODO: error handling
         return this.getCollection(plugin.mcManager.users().type)
@@ -383,7 +382,6 @@ class PermissionsExService internal constructor(private val server: Server, priv
         @Suppress("UNCHECKED_CAST")
         return subjectCollections[type] as CompletableFuture<PEXSubjectCollection<I>>
     }
-
 
     override fun loadCollection(identifier: String): CompletableFuture<SubjectCollection> {
         @Suppress("UNCHECKED_CAST") // interface generics are unnecessarily strict

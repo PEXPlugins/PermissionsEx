@@ -20,7 +20,6 @@ import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
-import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -29,14 +28,14 @@ import com.google.common.collect.ImmutableSet
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
+import java.util.function.Function
 import java.util.function.Predicate
+import java.util.stream.Collectors
 import org.spongepowered.api.service.context.Context
 import org.spongepowered.api.service.permission.Subject
 import org.spongepowered.api.service.permission.SubjectCollection
 import org.spongepowered.api.service.permission.SubjectReference
 import org.spongepowered.api.util.Tristate
-import java.util.function.Function
-import java.util.stream.Collectors
 
 /**
  * Subject collection

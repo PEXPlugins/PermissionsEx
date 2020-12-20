@@ -43,6 +43,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.sql.SQLException
 import java.util.Optional
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -76,7 +77,6 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
 import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
-import java.util.UUID
 
 /**
  * PermissionsEx plugin

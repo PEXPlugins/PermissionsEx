@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.subject.SubjectType
 import java.util.concurrent.CompletableFuture

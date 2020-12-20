@@ -34,7 +34,6 @@ import ca.stellardrift.permissionsex.datastore.StoreProperties
 import ca.stellardrift.permissionsex.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
-import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
