@@ -31,6 +31,7 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -42,10 +43,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static ca.stellardrift.permissionsex.context.ContextDefinitionKt.cSet;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SubjectDataBakerTest extends PermissionsExTest {
+
+    static Set<ContextValue<?>> cSet(final ContextValue<?>... values) {
+        return ImmutableSet.copyOf(values);
+    }
 
     /**
      * Arrangement:
@@ -127,7 +131,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     public void testContextCalculation() throws ExecutionException, InterruptedException {
         ContextDefinition<String> worldCtx = WorldContextDefinition.INSTANCE,
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
-        ContextDefinition<ZonedDateTime> beforeTimeCtx = BeforeTimeContextDefinition.INSTANCE;
+        ContextDefinition<ZonedDateTime> beforeTimeCtx = TimeContextDefinition.BEFORE_TIME;
 
         CalculatedSubject subject = getManager().subjects(SUBJECTS_GROUP).get("a").get();
         subject.data().update(data -> {

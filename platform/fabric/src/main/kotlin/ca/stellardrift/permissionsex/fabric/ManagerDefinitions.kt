@@ -18,11 +18,10 @@
 package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
+import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
-import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.net.InetSocketAddress
 import java.util.function.Consumer
 import net.minecraft.entity.Entity
@@ -107,13 +106,13 @@ object DimensionContextDefinition : IdentifierContextDefinition("dimension"), Co
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip"), CommandSourceContextDefinition<IpSet> {
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<IpSet>) {
         source.ifPlayer { (it.networkHandler.connection.address as? InetSocketAddress)
-            ?.run { consumer.accept(IpSet.fromAddrPrefix(address, address.maxPrefixLength)) }
+            ?.run { consumer.accept(IpSet.only(address)) }
         }
     }
 
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         ((subject.associatedObject as? ServerPlayerEntity)?.networkHandler?.connection?.address as? InetSocketAddress)?.run {
-            consumer.accept(IpSet.fromAddrPrefix(address, address.maxPrefixLength))
+            consumer.accept(IpSet.only(address))
         }
     }
 }
@@ -129,7 +128,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSour
 
     private fun accumulate(ply: ServerPlayerEntity, consumer: Consumer<IpSet>) =
         consumer.accept((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.address.run {
-            IpSet.fromAddrPrefix(this, this.maxPrefixLength)
+            IpSet.only(this)
         })
 }
 

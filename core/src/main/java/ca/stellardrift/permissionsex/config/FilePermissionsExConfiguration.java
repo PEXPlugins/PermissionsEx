@@ -32,7 +32,9 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
+import org.spongepowered.configurate.util.CheckedSupplier;
 
 import java.io.IOException;
 import java.net.URL;
@@ -114,7 +116,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     public static TypeSerializerCollection.Builder populateSerializers(TypeSerializerCollection.Builder coll) {
         return coll
                 .register(DataStore.class, new DataStoreSerializer())
-                .register(new TypeToken<Supplier<?>>() {}, SupplierSerializer.INSTANCE)
+                .register(new TypeToken<CheckedSupplier<?, SerializationException>>() {}, SupplierSerializer.INSTANCE)
                 .registerAnnotatedObjects(ObjectMapper.factoryBuilder()
                         .addNodeResolver(NodeResolver.onlyWithSetting())
                         .build());

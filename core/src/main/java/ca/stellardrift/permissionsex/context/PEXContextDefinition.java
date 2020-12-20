@@ -14,15 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.context
+package ca.stellardrift.permissionsex.context;
 
-import ca.stellardrift.permissionsex.config.PermissionsExConfiguration
-import com.google.common.collect.ImmutableSet
+import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
 
-fun cSet(vararg contexts: ContextValue<*>): Set<ContextValue<*>> {
-    return ImmutableSet.copyOf(contexts)
-}
+public abstract class PEXContextDefinition<V> extends ContextDefinition<V> {
 
-abstract class PEXContextDefinition<T> internal constructor(name: String) : ContextDefinition<T>(name) {
-    abstract fun update(config: PermissionsExConfiguration<*>)
+    PEXContextDefinition(final String name) {
+        super(name);
+    }
+
+    public abstract void update(PermissionsExConfiguration<?> config);
 }

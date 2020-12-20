@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.data.ToDataSubjectRefImpl;
 import ca.stellardrift.permissionsex.util.CachingValue;
-import ca.stellardrift.permissionsex.util.CachingValues;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -74,7 +73,7 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     void initialize(ToDataSubjectRefImpl<I> persistentRef, ToDataSubjectRefImpl<I> transientRef) {
         this.ref = persistentRef;
         this.transientRef = transientRef;
-        this.activeContexts = CachingValues.cachedByTime(50L, () -> {
+        this.activeContexts = CachingValue.timeBased(50L, () -> {
             Set<ContextValue<?>> acc = new HashSet<>();
             for (ContextDefinition<?> contextDefinition : getManager().getRegisteredContextTypes()) {
                 handleAccumulateSingle(contextDefinition, acc);

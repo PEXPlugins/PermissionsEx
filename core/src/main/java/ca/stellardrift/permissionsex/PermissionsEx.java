@@ -126,8 +126,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         this.debugMode(config.isDebugEnabled());
         this.registerContextDefinitions(
                 ServerTagContextDefinition.INSTANCE,
-                BeforeTimeContextDefinition.INSTANCE,
-                AfterTimeContextDefinition.INSTANCE);
+                TimeContextDefinition.BEFORE_TIME,
+                TimeContextDefinition.AFTER_TIME);
         this.initialize(config);
 
         this.subjects(SUBJECTS_DEFAULTS);

@@ -22,7 +22,6 @@ import ca.stellardrift.permissionsex.fabric.*;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.CachingValue;
-import ca.stellardrift.permissionsex.util.CachingValues;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.brigadier.ResultConsumer;
 import kotlin.jvm.functions.Function0;
@@ -47,6 +46,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @Mixin(ServerCommandSource.class)
 public abstract class ServerCommandSourceMixin implements PermissionCommandSourceBridge<Object> {
@@ -77,7 +77,7 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
                                ResultConsumer<ServerCommandSource> resultConsumer_1,
                                EntityAnchorArgumentType.EntityAnchor entityAnchorArgumentType$EntityAnchor_1,
                                CallbackInfo ci) {
-        final Function0<Set<ContextValue<?>>> updater = () -> {
+        final Supplier<Set<ContextValue<?>>> updater = () -> {
             if (!PermissionsExMod.INSTANCE.getAvailable()) {
                 return ImmutableSet.of();
             }
@@ -89,7 +89,7 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
             return ImmutableSet.copyOf(accumulator);
         };
         if (server == null) {
-            activeContexts = CachingValues.cachedByTime(50L, updater);
+            activeContexts = CachingValue.timeBased(50L, updater);
         } else {
             activeContexts = UtilKt.tickCachedValue(minecraftServer_1, 1L, updater);
         }

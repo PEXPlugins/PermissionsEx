@@ -19,8 +19,8 @@ package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.context.BeforeTimeContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
+import ca.stellardrift.permissionsex.context.TimeContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.NodeTree
 import ca.stellardrift.permissionsex.util.subjectIdentifier
@@ -177,7 +177,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
             .update {
                 it.addParent(
                     setOf(
-                        BeforeTimeContextDefinition.createValue(ZonedDateTime.now().plus(ticks * 50.toLong(), ChronoUnit.MILLIS))
+                        TimeContextDefinition.BEFORE_TIME.createValue(ZonedDateTime.now().plus(ticks * 50.toLong(), ChronoUnit.MILLIS))
                     ),
                     attach
                 )

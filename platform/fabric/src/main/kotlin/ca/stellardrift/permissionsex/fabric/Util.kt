@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.fabric
 
 import ca.stellardrift.permissionsex.util.CachingValue
 import java.util.Locale
+import java.util.function.Supplier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
@@ -39,7 +40,7 @@ fun String.asMCLocale(): Locale {
     }
 }
 
-fun <Value> tickCachedValue(server: MinecraftServer, maxDelta: Long, update: () -> Value): CachingValue<Value> {
+fun <Value> tickCachedValue(server: MinecraftServer, maxDelta: Long, update: Supplier<Value>): CachingValue<Value> {
     return CachingValue({ server.ticks.toLong() }, maxDelta, update)
 }
 

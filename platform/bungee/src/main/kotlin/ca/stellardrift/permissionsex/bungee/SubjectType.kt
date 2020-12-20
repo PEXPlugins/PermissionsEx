@@ -17,11 +17,10 @@
 package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
+import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
-import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.maxPrefixLength
 import java.net.InetSocketAddress
 import java.util.function.Consumer
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -31,7 +30,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
             val address = socketAddress as? InetSocketAddress ?: return
-            consumer.accept(IpSet.fromAddrPrefix(address.address, address.address.maxPrefixLength))
+            consumer.accept(IpSet.only(address.address))
         }
     }
 }
@@ -48,7 +47,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? ProxiedPlayer)?.apply {
             pendingConnection.virtualHost?.address?.run {
-                IpSet.fromAddrPrefix(this, this.maxPrefixLength)
+                IpSet.only(this)
             }?.apply(consumer::accept)
         }
     }

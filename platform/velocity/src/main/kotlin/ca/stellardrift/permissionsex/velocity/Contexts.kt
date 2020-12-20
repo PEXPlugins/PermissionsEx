@@ -17,18 +17,17 @@
 package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
+import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
-import ca.stellardrift.permissionsex.util.IpSetContextDefinition
-import ca.stellardrift.permissionsex.util.maxPrefixLength
 import com.velocitypowered.api.proxy.Player
 import java.util.function.Consumer
 
 object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<IpSet>) {
         (subject.associatedObject as? Player)?.apply {
-            consumer.accept(IpSet.fromAddrPrefix(this.remoteAddress.address, this.remoteAddress.address.maxPrefixLength))
+            consumer.accept(IpSet.only(this.remoteAddress.address))
         }
     }
 }
@@ -38,7 +37,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip") {
         (subject.associatedObject as? Player)?.apply {
             virtualHost.ifPresent {
                 if (!it.isUnresolved) {
-                    consumer.accept(IpSet.fromAddrPrefix(it.address, it.address.maxPrefixLength))
+                    consumer.accept(IpSet.only(it.address))
                 }
             }
         }
