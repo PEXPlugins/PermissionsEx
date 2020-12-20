@@ -129,7 +129,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testContextCalculation() throws ExecutionException, InterruptedException {
-        ContextDefinition<String> worldCtx = WorldContextDefinition.INSTANCE,
+        ContextDefinition<String> worldCtx = WORLD_CONTEXT,
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
         ContextDefinition<ZonedDateTime> beforeTimeCtx = TimeContextDefinition.BEFORE_TIME;
 
@@ -216,11 +216,5 @@ public class SubjectDataBakerTest extends PermissionsExTest {
         };
     }
 
-    private static class WorldContextDefinition extends SimpleContextDefinition {
-        public static final WorldContextDefinition INSTANCE = new WorldContextDefinition();
-
-        private WorldContextDefinition() {
-            super("world");
-        }
-    }
+    private static final SimpleContextDefinition WORLD_CONTEXT = SimpleContextDefinition.context("world", (s, a) -> {});
 }
