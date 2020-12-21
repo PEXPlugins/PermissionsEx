@@ -21,54 +21,53 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NodeTreeTest {
 
     @Test
-    public void testAsMap() {
+    void testAsMap() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);
         testPermissions.put("generate", 1);
         testPermissions.put("generate.thunderstorm.explosive", -1);
 
-        NodeTree oldTree = NodeTree.of(testPermissions);
-
+        final NodeTree oldTree = NodeTree.of(testPermissions);
         assertEquals(testPermissions, oldTree.asMap());
     }
 
     @Test
-    public void testWithValue() {
+    void testWithValue() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);
         testPermissions.put("generate", 1);
         testPermissions.put("generate.thunderstorm.explosive", -1);
 
-        NodeTree oldTree = NodeTree.of(testPermissions);
+        final NodeTree oldTree = NodeTree.of(testPermissions);
         assertEquals(-1, oldTree.get("generate.thunderstorm.explosive"));
-        NodeTree newTree = oldTree.withValue("generate.thunderstorm.explosive", 1);
+        final NodeTree newTree = oldTree.withValue("generate.thunderstorm.explosive", 1);
         assertEquals(-1, oldTree.get("generate.thunderstorm.explosive"));
         assertEquals(1, newTree.get("generate.thunderstorm.explosive"));
     }
 
     @Test
-    public void testWithAll() {
+    void testWithAll() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);
         testPermissions.put("generate", 1);
         testPermissions.put("generate.thunderstorm.explosive", -1);
 
-        NodeTree oldTree = NodeTree.of(testPermissions);
+        final NodeTree oldTree = NodeTree.of(testPermissions);
 
         final Map<String, Integer> newPermissions = new HashMap<>();
         newPermissions.put("generate.sunset.red", 1);
         newPermissions.put("generate.thunderstorm.explosive", 0);
         newPermissions.put("something.new", -1);
 
-        NodeTree newTree = oldTree.withAll(newPermissions);
+        final NodeTree newTree = oldTree.withAll(newPermissions);
 
         assertEquals(-1, oldTree.get("generate.sunset.red"));
         assertEquals(1, newTree.get("generate.sunset.red"));
@@ -81,14 +80,14 @@ public class NodeTreeTest {
     }
 
     @Test
-    public void testCreateFromValues() {
+    void testCreateFromValues() {
         final Map<String, Integer> testPermissions = new HashMap<>();
         testPermissions.put("generate.rainbow", 1);
         testPermissions.put("generate.sunset", -1);
         testPermissions.put("generate", 1);
         testPermissions.put("generate.thunderstorm.explosive", -1);
 
-        NodeTree nodes = NodeTree.of(testPermissions, 0);
+        final NodeTree nodes = NodeTree.of(testPermissions, 0);
 
         assertEquals(1, nodes.get("generate.rainbow"));
         assertEquals(1, nodes.get("generate.rainbow.double"));
@@ -97,5 +96,23 @@ public class NodeTreeTest {
         assertEquals(1, nodes.get("generate.thunderstorm"));
         assertEquals(-1, nodes.get("generate.thunderstorm.explosive"));
         assertEquals(0, nodes.get("random.perm"));
+    }
+
+    @Test
+    void testAnyInPrefix() {
+        final Map<String, Integer> testPermissions = new HashMap<>();
+        testPermissions.put("my.action.user.one", 1);
+        testPermissions.put("my.action.group", -1);
+        testPermissions.put("my.hopes.user.a", -1);
+        testPermissions.put("my.hopes.user", 1);
+        testPermissions.put("my.hopes", 1);
+
+        final NodeTree nodes = NodeTree.of(testPermissions);
+
+        assertTrue(nodes.anyInPrefixMatching("my.action", n -> n > 0));
+        assertFalse(nodes.anyInPrefixMatching("my.action.group", n -> n > 0));
+        assertFalse(nodes.anyInPrefixMatching("my.hopes.user.a", n -> n > 0));
+
+        assertFalse(nodes.anyInPrefixMatching("unrelated", n -> n > 0));
     }
 }

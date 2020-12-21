@@ -16,9 +16,14 @@
  */
 package ca.stellardrift.permissionsex.util;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
 /**
@@ -66,17 +71,17 @@ public final class NodeTree {
      * @return The newly created node tree
      * @since 2.0.0
      */
-    public static NodeTree of(Map<String, Integer> values, int defaultValue) {
-        NodeTree newTree = new NodeTree(defaultValue);
+    public static NodeTree of(final Map<String, Integer> values, final int defaultValue) {
+        final NodeTree newTree = new NodeTree(defaultValue);
         for (Map.Entry<String, Integer> value : values.entrySet()) {
-            String[] parts = SPLIT_REGEX.split(value.getKey().toLowerCase());
+            final String[] parts = SPLIT_REGEX.split(value.getKey().toLowerCase(Locale.ROOT));
             Node currentNode = newTree.rootNode;
             for (String part : parts) {
                 if (currentNode.children.containsKey(part)) {
                     currentNode = currentNode.children.get(part);
                 } else {
-                    Node newNode = new Node(new HashMap<>());
-                    currentNode.children.put(part, newNode);
+                    Node newNode = new Node();
+                    currentNode.putChild(part, newNode);
                     currentNode = newNode;
                 }
             }
@@ -92,21 +97,65 @@ public final class NodeTree {
      * @return The int value for the given node
      * @since 2.0.0
      */
-    public int get(String node) {
-        String[] parts = SPLIT_REGEX.split(node.toLowerCase());
+    public int get(final String node) {
+        final String[] parts = SPLIT_REGEX.split(node.toLowerCase(Locale.ROOT));
         Node currentNode = this.rootNode;
         int lastUndefinedVal = this.rootNode.value;
-        for (String str : parts) {
-            if (!currentNode.children.containsKey(str)) {
+        for (final String part : parts) {
+            if (!currentNode.children.containsKey(part)) {
                 break;
             }
-            currentNode = currentNode.children.get(str);
+            currentNode = currentNode.children.get(part);
             if (Math.abs(currentNode.value) >= Math.abs(lastUndefinedVal)) {
                 lastUndefinedVal = currentNode.value;
             }
         }
         return lastUndefinedVal;
+    }
 
+    /**
+     * Return whether the node {@code prefix} or any of its children match the predicate {@code test}.
+     *
+     * @param prefix the prefix to test
+     * @param test the test function
+     * @return if any values return true
+     */
+    public boolean anyInPrefixMatching(final String prefix, final IntPredicate test) {
+        final String[] parts = SPLIT_REGEX.split(prefix.toLowerCase(Locale.ROOT));
+        Node currentNode = this.rootNode;
+        int lastUndefinedVal = this.rootNode.value;
+
+        // Resolve prefix
+        for (final String part : parts) {
+            if (!currentNode.children.containsKey(part)) {
+                return test.test(lastUndefinedVal);
+            }
+            currentNode = currentNode.children.get(part);
+            if (Math.abs(currentNode.value) >= Math.abs(lastUndefinedVal)) {
+                lastUndefinedVal = currentNode.value;
+            }
+        }
+
+        // If there are no children overridden, test on the prefix
+        if (currentNode.children.isEmpty()) {
+            return test.test(lastUndefinedVal);
+        }
+
+        // Now visit all children, stopping on first match
+        // search breadth-first
+        final ArrayDeque<Node> toVisit = new ArrayDeque<>(currentNode.children.size() * 2);
+        toVisit.addAll(currentNode.children.values());
+
+        @Nullable Node current;
+        while ((current = toVisit.poll()) != null) {
+            // compute the value based on maximum of prefix's value or leaf value
+            if (Math.abs(current.value) >= Math.abs(lastUndefinedVal) && test.test(current.value)) {
+                return true;
+            }
+
+            toVisit.addAll(current.children.values());
+        }
+        return false;
     }
 
     /**
@@ -117,17 +166,17 @@ public final class NodeTree {
      */
     public Map<String, Integer> asMap() {
         final Map<String, Integer> ret = new HashMap<>();
-        for (Map.Entry<String, Node> ent : this.rootNode.children.entrySet()) {
+        for (final Map.Entry<String, Node> ent : this.rootNode.children.entrySet()) {
             populateMap(ret, ent.getKey(), ent.getValue());
         }
         return Collections.unmodifiableMap(ret);
     }
 
-    private void populateMap(Map<String, Integer> values, String prefix, Node currentNode) {
+    private void populateMap(final Map<String, Integer> values, final String prefix, final Node currentNode) {
         if (currentNode.value != 0) {
             values.put(prefix, currentNode.value);
         }
-        for (Map.Entry<String, Node> ent : currentNode.children.entrySet()) {
+        for (final Map.Entry<String, Node> ent : currentNode.children.entrySet()) {
             populateMap(values, prefix + '.' + ent.getKey(), ent.getValue());
         }
     }
@@ -140,16 +189,16 @@ public final class NodeTree {
      * @return The new, modified node tree
      * @since 2.0.0
      */
-    public NodeTree withValue(String node, int value) {
+    public NodeTree withValue(final String node, final int value) {
         String[] parts = SPLIT_REGEX.split(node.toLowerCase());
         Node newRoot = new Node(new HashMap<>(this.rootNode.children));
         Node newPtr = newRoot;
-        Node currentPtr = this.rootNode;
+        @Nullable Node currentPtr = this.rootNode;
 
-        newPtr.value = currentPtr == null ? 0 : currentPtr.value;
+        newPtr.value = currentPtr.value;
         for (String part : parts) {
-            Node oldChild = currentPtr == null ? null : currentPtr.children.get(part);
-            Node newChild = new Node(oldChild != null ? new HashMap<>(oldChild.children) : new HashMap<String, Node>());
+            final @Nullable Node oldChild = currentPtr == null ? null : currentPtr.children.get(part);
+            final Node newChild = new Node(oldChild != null ? new HashMap<>(oldChild.children) : new HashMap<>());
             newPtr.children.put(part, newChild);
             currentPtr = oldChild;
             newPtr = newChild;
@@ -180,11 +229,24 @@ public final class NodeTree {
 
     static class Node {
 
-        final Map<String, Node> children;
+        private static final Map<String, Node> EMPTY = Collections.emptyMap();
+
+        Map<String, Node> children;
         int value = 0;
 
-        private Node(Map<String, Node> children) {
+        Node(Map<String, Node> children) {
             this.children = children;
+        }
+
+        Node() {
+            this.children = EMPTY;
+        }
+
+        void putChild(final String path, final Node child) {
+            if (this.children == EMPTY) {
+                this.children = new HashMap<>();
+            }
+            this.children.put(path, child);
         }
 
         @Override
