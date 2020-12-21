@@ -87,6 +87,19 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         .undefinedValues { this.server.opPermissionLevel <= 2 }
         .build()
 
+    init {
+        Runtime.getRuntime().addShutdownHook(Thread {
+            this.exec.shutdown()
+            try {
+                this.exec.awaitTermination(10, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+                logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
+                this.exec.shutdownNow()
+            }
+        })
+    }
+
+
     override fun onInitialize() {
         this._logger = WrappingFormattedLogger.of(LoggerFactory.getLogger(MOD_ID), false)
         this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
@@ -156,13 +169,6 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         if (manager != null) {
             manager.close()
             _manager = null
-        }
-        this.exec.shutdown()
-        try {
-            this.exec.awaitTermination(10, TimeUnit.SECONDS)
-        } catch (e: InterruptedException) {
-            logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
-            this.exec.shutdownNow()
         }
     }
 
