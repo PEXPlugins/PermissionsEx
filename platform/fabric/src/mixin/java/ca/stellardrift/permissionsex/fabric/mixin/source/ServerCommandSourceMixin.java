@@ -47,7 +47,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -99,6 +98,7 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
             }
             return ImmutableSet.copyOf(accumulator);
         };
+        // TODO: This causes issues with function contexts, since the context may change multiple times in a single tick for a certain subject.
         if (this.server == null) {
             this.pex$activeContexts = CachingValue.timeBased(50L, updater);
         } else {
@@ -118,16 +118,9 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
         }
     }
 
-    // TODO: slice appears to not restrict
-    @Inject(method = "*", at = @At("RETURN"), slice = @Slice(
-            from = @At(value = "INVOKE", target = "Lnet/minecraft/server/command/ServerCommandSource;<init>(Lnet/minecraft/server/command/CommandOutput;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec2f;Lnet/minecraft/server/world/ServerWorld;ILjava/lang/String;Lnet/minecraft/text/Text;Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/entity/Entity;ZLcom/mojang/brigadier/ResultConsumer;Lnet/minecraft/command/argument/EntityAnchorArgumentType$EntityAnchor;)V"),
-            to = @At("TAIL")
-    ))
-    private void pex$applySubjectOverride(final CallbackInfoReturnable<Object> cir) {
-        final Object ret = cir.getReturnValue();
-        if (ret instanceof ServerCommandSource) {
-            ((ServerCommandSourceBridge) ret).subjectOverride(this.subjectOverride());
-        }
+    @Inject(method = "*", at = @At("WITHER_MUTATOR"))
+    private void pex$applySubjectOverride(final CallbackInfoReturnable<ServerCommandSource> cir) {
+        ((ServerCommandSourceBridge) cir.getReturnValue()).subjectOverride(this.subjectOverride());
     }
 
     // PermissionCommandSourceBridge //

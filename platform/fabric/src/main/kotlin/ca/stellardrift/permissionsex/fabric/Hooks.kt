@@ -187,3 +187,17 @@ fun GameProfile.hasPermission(perm: String): Boolean {
     }
     return PermissionsExMod.mcManager.users()[this.id].join().hasPermission(perm)
 }
+
+/**
+ * Get the subject override to be used for permission checks instead of delegating to the output.
+ */
+fun ServerCommandSource.subjectOverride(): SubjectRef<*>? {
+    return (this as ServerCommandSourceBridge).subjectOverride()
+}
+
+/**
+ * Create a new command source
+ */
+fun ServerCommandSource.withSubjectOverride(subj: SubjectRef<*>): ServerCommandSource {
+    return (this as ServerCommandSourceBridge).withSubjectOverride(subj)
+}

@@ -23,6 +23,8 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.fabric.impl.FunctionContextDefinition
+import ca.stellardrift.permissionsex.fabric.impl.PreLaunchHacks
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
@@ -44,15 +46,17 @@ import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.Identifier
+import net.minecraft.util.InvalidIdentifierException
 import net.minecraft.util.WorldSavePath
 import org.slf4j.LoggerFactory
+import org.spongepowered.asm.mixin.MixinEnvironment
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 
 class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
         PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message")
         // PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.PermissionsEx")
-        // TODO: Why is Adventure loading in app ClassLoader and not Knot, can we fix this in Loom?
     }
 }
 
@@ -67,13 +71,12 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
     private var _manager: MinecraftPermissionsEx<*>? = null
     private lateinit var container: ModContainer
     private lateinit var dataDir: Path
-    lateinit var server: MinecraftServer private set
+    internal var server: MinecraftServer? = null
 
     val available get() = _manager != null
 
     private lateinit var _logger: FormattedLogger
     private val exec = Executors.newCachedThreadPool()
-    private val commands = mutableSetOf<Supplier<Set<CommandSpec>>>()
 
     val systemSubjectType = SubjectType.stringIdentBuilder("system")
         .fixedEntries(
@@ -83,33 +86,47 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         .undefinedValues { true }
         .build()
 
+    // TODO: How can we represent permission level two for command blocks and functions
     val commandBlockSubjectType = SubjectType.stringIdentBuilder("command-block")
-        .undefinedValues { this.server.opPermissionLevel <= 2 }
+        .undefinedValues { true }
         .build()
 
-    init {
-        Runtime.getRuntime().addShutdownHook(Thread {
-            this.exec.shutdown()
+    val functionSubjectType = SubjectType.builder("function", Identifier::class.java)
+        .serializedBy(Identifier::toString)
+        .deserializedBy {
             try {
-                this.exec.awaitTermination(10, TimeUnit.SECONDS)
-            } catch (e: InterruptedException) {
-                logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
-                this.exec.shutdownNow()
+                Identifier(it)
+            } catch (ex: InvalidIdentifierException) {
+                throw ca.stellardrift.permissionsex.subject.InvalidIdentifierException(it)
             }
-        })
-    }
-
+        }
+        .undefinedValues { true }
+        .build()
 
     override fun onInitialize() {
+        // Load all mixins in development
+        if (FabricLoader.getInstance().isDevelopmentEnvironment) {
+            MixinEnvironment.getDefaultEnvironment().audit()
+        }
+
         this._logger = WrappingFormattedLogger.of(LoggerFactory.getLogger(MOD_ID), false)
         this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger().prefix("[${container.metadata.name}] ")
 
-        logger().info(Messages.MOD_LOAD_SUCCESS.tr(container.metadata.version.friendlyString))
-        ServerLifecycleEvents.SERVER_STARTING.register(ServerLifecycleEvents.ServerStarting { init(it) })
-        ServerLifecycleEvents.SERVER_STOPPED.register(ServerLifecycleEvents.ServerStopped { shutdown() })
+        this._manager = this.createManager()
+        registerEvents()
+        logger().info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
+    }
+
+    private fun registerEvents() {
+        ServerLifecycleEvents.SERVER_STARTING.register {
+            this.server = it
+        }
+        ServerLifecycleEvents.SERVER_STOPPED.register {
+            this.server = null
+        }
 
         // TODO: expose these commands earlier?
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
@@ -122,8 +139,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
         registerWorldEdit()
     }
 
-    private fun init(gameInstance: MinecraftServer) {
-        this.server = gameInstance
+    private fun createManager(): MinecraftPermissionsEx<*> {
         Files.createDirectories(dataDir)
 
         val loader = HoconConfigurationLoader.builder()
@@ -131,44 +147,57 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
             .build()
 
-        try {
-            _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(loader))
+        val manager = try {
+            MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(loader))
                 .implementationInterface(this)
-                .playerProvider { gameInstance.playerManager.getPlayer(it) }
-                .cachedUuidResolver { gameInstance.userCache.findByName(it)?.id }
-                .opProvider { gameInstance.userCache.getByUuid(it)?.let(gameInstance.playerManager::isOperator) ?: false }
+                .playerProvider { this.server?.playerManager?.getPlayer(it) }
+                .cachedUuidResolver { this.server?.userCache?.findByName(it)?.id }
+                .opProvider {
+                    val server = this.server ?: return@opProvider false
+                    server.userCache.getByUuid(it)?.let(server.playerManager::isOperator) ?: false
+                }
                 .build()
         } catch (e: Exception) {
             logger().error(Messages.MOD_ENABLE_ERROR.tr(), e)
-            server.stop(false)
-            return
+            System.exit(1)
+            throw IllegalStateException(e)
+            // TODO: throw another exception here?
         }
 
-        manager.registerContextDefinitions(WorldContextDefinition,
+        manager.engine().registerContextDefinitions(
+            WorldContextDefinition,
             DimensionContextDefinition,
             RemoteIpContextDefinition,
             LocalIpContextDefinition,
             LocalHostContextDefinition,
-            LocalPortContextDefinition)
-        manager.subjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
+            LocalPortContextDefinition,
+            FunctionContextDefinition)
+        manager.engine().subjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 
-        manager.subjects(systemSubjectType)
-        manager.subjects(commandBlockSubjectType)
+        manager.engine().subjects(systemSubjectType)
+        manager.engine().subjects(commandBlockSubjectType)
+        manager.engine().subjects(functionSubjectType)
 
-        gameInstance.commandManager?.also {
-            manager.registerCommandsTo { cmd -> registerCommand(cmd, it.dispatcher) }
-        }
-
-        logger().info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
+        return manager
     }
 
-    private fun shutdown() {
+    fun shutdown() {
         val manager = _manager
         if (manager != null) {
             manager.close()
             _manager = null
+        }
+
+        if (!this.exec.isShutdown) {
+            this.exec.shutdown()
+            try {
+                this.exec.awaitTermination(10, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+                logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
+                this.exec.shutdownNow()
+            }
         }
     }
 
@@ -204,7 +233,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             BaseDirectoryScope.CONFIG -> dataDir
             BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDir.resolve("mods")
             BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDir
-            BaseDirectoryScope.WORLDS -> server.getSavePath(WorldSavePath.ROOT)
+            BaseDirectoryScope.WORLDS -> this.server?.getSavePath(WorldSavePath.ROOT) ?: throw IllegalStateException("Tried to access worlds directory without an active server")
         }
     }
 

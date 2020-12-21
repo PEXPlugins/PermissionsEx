@@ -1,6 +1,7 @@
 {
   "required": true,
   "package": "ca.stellardrift.permissionsex.fabric.mixin",
+  "plugin": "ca.stellardrift.permissionsex.fabric.impl.PermissionsExMixinsPlugin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "check.ArgumentBuilderMixin",
@@ -22,10 +23,15 @@
     "check.StructureBlockEntityMixin",
     "lifecycle.ClientConnectionMixin",
     "lifecycle.GameProfileMixin",
+    "lifecycle.MinecraftClientMixin",
+    "lifecycle.MinecraftDedicatedServerMixin",
     "lifecycle.PlayerManagerMixin",
     "lifecycle.ServerHandshakeNetworkHandlerMixin",
     "lifecycle.ServerPlayNetworkHandlerMixin",
     "source.CommandBlockExecutorMixin",
+    "source.CommandFunctionFunctionElementMixin",
+    "source.CommandFunctionManagerMixin",
+    "source.FunctionLoaderMixin",
     "source.RconCommandOutputMixin",
     "source.ServerCommandSourceMixin",
     "source.ServerPlayerEntityMixin"

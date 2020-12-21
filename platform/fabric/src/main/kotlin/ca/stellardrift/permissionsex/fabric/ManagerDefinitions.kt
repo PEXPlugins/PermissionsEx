@@ -31,7 +31,6 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
 
 const val SUBJECTS_SYSTEM = "system"
-const val SUBJECTS_COMMAND_BLOCK = "commandblock"
 const val IDENTIFIER_RCON = "rcon"
 
 /**
@@ -42,7 +41,7 @@ interface CommandSourceContextDefinition<T> {
     fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<T>)
 }
 
-abstract class IdentifierContextDefinition(name: String) : ContextDefinition<Identifier>(name) {
+abstract class IdentifierContextDefinition internal constructor(name: String) : ContextDefinition<Identifier>(name) {
     override fun serialize(canonicalValue: Identifier): String {
         return canonicalValue.toString()
     }
@@ -71,13 +70,14 @@ object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSou
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
-        return PermissionsExMod.server.worlds.map { it.registryKey.value }.toSet()
+        val server = PermissionsExMod.server ?: return emptySet()
+        return server.worlds.map { it.registryKey.value }.toSet()
     }
 }
 
 object DimensionContextDefinition : IdentifierContextDefinition("dimension"), CommandSourceContextDefinition<Identifier> {
     override fun accumulateCurrentValues(source: ServerCommandSource, consumer: Consumer<Identifier>) {
-        val dimension = source.world.registryManager.dimensionTypes.getId(source.world.dimension)
+        val dimension = source.world?.registryManager?.dimensionTypes?.getId(source.world.dimension)
         if (dimension != null) {
             consumer.accept(dimension)
         }

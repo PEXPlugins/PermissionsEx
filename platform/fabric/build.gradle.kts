@@ -3,6 +3,7 @@ import ca.stellardrift.build.configurate.ConfigFormats
 import ca.stellardrift.build.configurate.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
+import org.jetbrains.kotlin.backend.common.atMostOne
 
 /*
  * PermissionsEx
@@ -26,6 +27,15 @@ plugins {
     id("pex-platform")
     id("ca.stellardrift.opinionated.fabric")
     id("ca.stellardrift.localization")
+}
+
+repositories {
+    maven("https://files.minecraftforge.net/maven/") {
+        name = "forge"
+        content {
+            includeGroup("net.minecraftforge")
+        }
+    }
 }
 
 val shade: Configuration by configurations.creating
@@ -60,12 +70,39 @@ dependencies {
     modImplementation(include("ca.stellardrift:confabricate:2.0.0+4.0.0") {
         exclude("com.google.code.gson")
     })
+
+    runtimeOnly("net.minecraftforge:forgeflower:1.5.478.18")
 }
 
 tasks.withType(ProcessResources::class).configureEach {
     filesMatching("*.yml") {
         convertFormat(ConfigFormats.YAML, ConfigFormats.JSON)
         name = "${name.removeSuffix(".yml")}.json"
+    }
+}
+
+tasks.withType(net.fabricmc.loom.task.AbstractRunTask::class).configureEach {
+    // Midxin debug options
+    jvmArgs(
+        "-Dmixin.debug.verbose=true",
+        // "-Dmixin.debug.export=true",
+        // "-Dmixin.debug.export.decompile.async=false",
+        "-Dmixin.dumpTargetOnFailure=true",
+        "-Dmixin.checks.interfaces=true"
+    )
+
+    // Configure mixin agent
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        // Resolve the Mixin configuration
+        // Java agent: the jar file for mixin
+        val mixinJar = configurations.runtimeClasspath.get().resolvedConfiguration
+            .getFiles { it.name == "sponge-mixin" && it.group == "net.fabricmc" }
+            .atMostOne()
+        if (mixinJar != null) {
+            listOf("-javaagent:$mixinJar")
+        } else {
+            emptyList()
+        }
     }
 }
 
