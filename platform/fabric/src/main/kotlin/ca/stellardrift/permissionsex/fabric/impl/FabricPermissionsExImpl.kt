@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric
+package ca.stellardrift.permissionsex.fabric.impl
 
 import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.ImplementationInterface
@@ -23,20 +23,24 @@ import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
-import ca.stellardrift.permissionsex.fabric.impl.FunctionContextDefinition
-import ca.stellardrift.permissionsex.fabric.impl.PreLaunchHacks
+import ca.stellardrift.permissionsex.fabric.DimensionContextDefinition
+import ca.stellardrift.permissionsex.fabric.LocalHostContextDefinition
+import ca.stellardrift.permissionsex.fabric.LocalIpContextDefinition
+import ca.stellardrift.permissionsex.fabric.LocalPortContextDefinition
+import ca.stellardrift.permissionsex.fabric.RemoteIpContextDefinition
+import ca.stellardrift.permissionsex.fabric.WorldContextDefinition
+import ca.stellardrift.permissionsex.fabric.commandBlockSubjectType
+import ca.stellardrift.permissionsex.fabric.functionSubjectType
+import ca.stellardrift.permissionsex.fabric.systemSubjectType
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
-import ca.stellardrift.permissionsex.subject.SubjectType
-import com.google.common.collect.Maps.immutableEntry
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.function.Supplier
 import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback
@@ -46,8 +50,6 @@ import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.Identifier
-import net.minecraft.util.InvalidIdentifierException
 import net.minecraft.util.WorldSavePath
 import org.slf4j.LoggerFactory
 import org.spongepowered.asm.mixin.MixinEnvironment
@@ -61,7 +63,7 @@ class PreLaunchInjector : PreLaunchEntrypoint {
 }
 
 private const val MOD_ID: String = "permissionsex"
-object PermissionsExMod : ImplementationInterface, ModInitializer {
+object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
 
     val manager: PermissionsEx<*>
         get() = requireNotNull(_manager?.engine()) { "PermissionsEx has not yet been initialized!" }
@@ -77,31 +79,6 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
 
     private lateinit var _logger: FormattedLogger
     private val exec = Executors.newCachedThreadPool()
-
-    val systemSubjectType = SubjectType.stringIdentBuilder("system")
-        .fixedEntries(
-            immutableEntry("console", Supplier { this.server }),
-            immutableEntry(IDENTIFIER_RCON, Supplier { null })
-        )
-        .undefinedValues { true }
-        .build()
-
-    // TODO: How can we represent permission level two for command blocks and functions
-    val commandBlockSubjectType = SubjectType.stringIdentBuilder("command-block")
-        .undefinedValues { true }
-        .build()
-
-    val functionSubjectType = SubjectType.builder("function", Identifier::class.java)
-        .serializedBy(Identifier::toString)
-        .deserializedBy {
-            try {
-                Identifier(it)
-            } catch (ex: InvalidIdentifierException) {
-                throw ca.stellardrift.permissionsex.subject.InvalidIdentifierException(it)
-            }
-        }
-        .undefinedValues { true }
-        .build()
 
     override fun onInitialize() {
         // Load all mixins in development
@@ -172,7 +149,7 @@ object PermissionsExMod : ImplementationInterface, ModInitializer {
             LocalHostContextDefinition,
             LocalPortContextDefinition,
             FunctionContextDefinition)
-        manager.engine().subjects(SUBJECTS_DEFAULTS).transientData().update(SUBJECTS_SYSTEM) {
+        manager.engine().subjects(SUBJECTS_DEFAULTS).transientData().update(systemSubjectType.name()) {
             it.setDefaultValue(GLOBAL_CONTEXT, 1)
         }
 

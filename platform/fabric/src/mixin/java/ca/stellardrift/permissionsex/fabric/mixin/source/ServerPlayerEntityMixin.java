@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.PermissionCommandSourceBridge;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
+import ca.stellardrift.permissionsex.fabric.impl.PermissionCommandSourceBridge;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import com.mojang.authlib.GameProfile;
@@ -42,7 +42,7 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity implements Pe
     @NotNull
     @Override
     public SubjectType<UUID> getPermType() {
-        return PermissionsExMod.INSTANCE.getMcManager().users().type();
+        return FabricPermissionsEx.getUserSubjectType();
     }
 
     @NotNull
@@ -58,7 +58,7 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity implements Pe
         if (ret != null) {
             return ret;
         }
-        CalculatedSubject updated = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
+        CalculatedSubject updated = FabricPermissionsEx.getEngine().subjects(getPermType()).get(getPermIdentifier()).join();
         permSubject.set(updated);
         return updated;
     }

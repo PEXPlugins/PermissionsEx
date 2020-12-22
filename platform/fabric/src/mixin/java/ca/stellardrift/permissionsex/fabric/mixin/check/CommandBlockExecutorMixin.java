@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -35,7 +35,7 @@ public class CommandBlockExecutorMixin {
             return false;
         }
 
-        if (player instanceof ServerPlayerEntity && !PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
+        if (player instanceof ServerPlayerEntity && !FabricPermissionsEx.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
             ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseScreenS2CPacket());
             return false;
         }

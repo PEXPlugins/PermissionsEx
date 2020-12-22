@@ -14,10 +14,10 @@ license: Apache v2.0
 
 entrypoints:
     preLaunch:
-    - value: ca.stellardrift.permissionsex.fabric.PreLaunchInjector
+    - value: ca.stellardrift.permissionsex.fabric.impl.PreLaunchInjector
     main:
     - adapter: kotlin
-      value: ca.stellardrift.permissionsex.fabric.PermissionsExMod
+      value: ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl
 
 mixins:
 - permissionsex.accessor.mixins.json

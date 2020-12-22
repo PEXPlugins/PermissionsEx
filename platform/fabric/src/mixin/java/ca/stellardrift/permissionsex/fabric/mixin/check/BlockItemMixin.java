@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
@@ -36,6 +36,6 @@ public abstract class BlockItemMixin {
     @Redirect(method = "writeTagToBlockEntity", at = @At(value = "INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
     private static boolean canCopyData(PlayerEntity player, World world, PlayerEntity unused, BlockPos pos, ItemStack stack) {
         Identifier block = BlockEntityType.getId(world.getBlockEntity(pos).getType());
-        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.makeSpecific(MinecraftPermissions.LOAD_BLOCK_ITEM_DATA, block));
+        return FabricPermissionsEx.hasPermission(player, MinecraftPermissions.makeSpecific(MinecraftPermissions.LOAD_BLOCK_ITEM_DATA, block));
     }
 }

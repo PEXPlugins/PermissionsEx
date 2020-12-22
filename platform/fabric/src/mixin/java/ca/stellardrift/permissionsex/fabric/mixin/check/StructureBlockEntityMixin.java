@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
 import net.minecraft.block.entity.StructureBlockBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket;
@@ -31,7 +31,7 @@ public class StructureBlockEntityMixin {
     @Redirect(method = "openScreen", at = @At(value = "INVOKE", target = "net.minecraft.entity.player.PlayerEntity.isCreativeLevelTwoOp()Z"))
     public boolean canViewStructureBlock(PlayerEntity player) {
         if (player instanceof ServerPlayerEntity
-                && !PermissionsExHooks.hasPermission(player, MinecraftPermissions.STRUCTURE_BLOCK_VIEW)) {
+                && !FabricPermissionsEx.hasPermission(player, MinecraftPermissions.STRUCTURE_BLOCK_VIEW)) {
             ((ServerPlayerEntity) player).networkHandler.sendPacket(new CloseScreenS2CPacket());
             return false;
         }

@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.PermissionCommandSourceBridge;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
+import ca.stellardrift.permissionsex.fabric.impl.PermissionCommandSourceBridge;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import net.minecraft.text.Text;
@@ -35,7 +35,7 @@ public class CommandBlockExecutorMixin implements PermissionCommandSourceBridge<
 
     @Override
     public @NotNull SubjectType<String> getPermType() {
-        return PermissionsExMod.INSTANCE.getCommandBlockSubjectType();
+        return FabricPermissionsEx.getCommandBlockSubjectType();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class CommandBlockExecutorMixin implements PermissionCommandSourceBridge<
     @Override
     public @NotNull CalculatedSubject asCalculatedSubject() {
         if (this.pex$subject == null) {
-            return this.pex$subject = PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
+            return this.pex$subject = FabricPermissionsEx.getEngine().subjects(getPermType()).get(getPermIdentifier()).join();
         }
         return this.pex$subject;
     }

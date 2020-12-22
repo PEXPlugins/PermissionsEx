@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.dedicated.DedicatedPlayerManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,11 +38,11 @@ public class DedicatedPlayerManagerMixin {
      */
     @Overwrite
     public boolean canBypassPlayerLimit(GameProfile profile) {
-        return PermissionsExHooks.hasPermission(profile, MinecraftPermissions.BYPASS_PLAYER_LIMIT);
+        return FabricPermissionsEx.hasPermission(profile, MinecraftPermissions.BYPASS_PLAYER_LIMIT);
     }
 
     @Redirect(method = "isWhitelisted", at = @At(value = "INVOKE", target = RedirectTargets.DEDICATED_PLAYER_MANAGER_IS_OP))
     public boolean canBypassWhitelist(DedicatedPlayerManager manager, GameProfile profile) {
-        return PermissionsExHooks.hasPermission(profile, MinecraftPermissions.BYPASS_WHITELIST);
+        return FabricPermissionsEx.hasPermission(profile, MinecraftPermissions.BYPASS_WHITELIST);
     }
 }

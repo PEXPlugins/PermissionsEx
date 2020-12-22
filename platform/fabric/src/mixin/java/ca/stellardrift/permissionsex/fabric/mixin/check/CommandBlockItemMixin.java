@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.CommandBlockItem;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -31,7 +31,7 @@ public class CommandBlockItemMixin {
     @Redirect(method = "getPlacementState",
             at = @At(value="INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
     public boolean canPlaceCommandBlock(PlayerEntity player) {
-        return !(player instanceof ServerPlayerEntity) || PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_PLACE);
+        return !(player instanceof ServerPlayerEntity) || FabricPermissionsEx.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_PLACE);
     }
 
 }

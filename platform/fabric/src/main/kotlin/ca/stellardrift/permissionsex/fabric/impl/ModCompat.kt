@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric
+package ca.stellardrift.permissionsex.fabric.impl
 
+import ca.stellardrift.permissionsex.fabric.hasPermission
 import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.event.platform.PlatformReadyEvent
 import com.sk89q.worldedit.fabric.FabricPermissionsProvider
@@ -35,7 +36,7 @@ class PEXWorldEditProvider : FabricPermissionsProvider {
     @Subscribe
     fun onPlatformReady(event: PlatformReadyEvent) {
         FabricWorldEdit.inst.permissionsProvider = this
-        PermissionsExMod.logger().info(Messages.INTEGRATION_REGISTER_SUCCESS.tr("WorldEdit"))
+        FabricPermissionsExImpl.logger().info(Messages.INTEGRATION_REGISTER_SUCCESS.tr("WorldEdit"))
     }
 }
 

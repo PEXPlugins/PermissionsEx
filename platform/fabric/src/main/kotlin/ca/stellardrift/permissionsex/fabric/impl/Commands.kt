@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric
+package ca.stellardrift.permissionsex.fabric.impl
 
 import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.commands.commander.Commander
 import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.commands.commander.Permission
 import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.fabric.hasPermission
 import ca.stellardrift.permissionsex.fabric.mixin.ServerCommandSourceAccess
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import com.mojang.brigadier.Command
@@ -94,7 +95,7 @@ class PEXBrigadierCommand(private val spec: CommandSpec) : Predicate<ServerComma
             val args = getString(context, "args")
             this.spec.process(cmd, args)
         } catch (e: Exception) {
-            PermissionsExMod.logger().error(Messages.COMMAND_ERROR_CONSOLE.tr(spec.aliases[0], context.source.name), e)
+            FabricPermissionsExImpl.logger().error(Messages.COMMAND_ERROR_CONSOLE.tr(spec.aliases[0], context.source.name), e)
             cmd.error(Messages.COMMAND_ERROR_TO_SENDER.tr(spec.aliases[0]), e)
         }
         return 1
@@ -107,7 +108,7 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec) : Command<ServerC
         try {
             this.spec.process(cmd, "")
         } catch (e: Exception) {
-            PermissionsExMod.logger().error(Messages.COMMAND_ERROR_CONSOLE.tr(spec.aliases[0], context.source.name), e)
+            FabricPermissionsExImpl.logger().error(Messages.COMMAND_ERROR_CONSOLE.tr(spec.aliases[0], context.source.name), e)
             cmd.error(Messages.COMMAND_ERROR_TO_SENDER.tr(spec.aliases[0]), e)
         }
         return 1
@@ -131,7 +132,7 @@ internal fun ServerCommandSource.asCommander(): Commander {
 
 class FabricCommander(private val src: ServerCommandSource) : Commander {
     private val output = src as AdventureCommandSourceStack
-    override val manager: PermissionsEx<*> = PermissionsExMod.manager
+    override val manager: PermissionsEx<*> = FabricPermissionsExImpl.manager
     override val name: String get() = src.name
     override val locale: Locale get() {
         val output = (output as ServerCommandSourceAccess).`accessor$output`()

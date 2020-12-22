@@ -20,6 +20,9 @@ package ca.stellardrift.permissionsex.fabric
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
+import ca.stellardrift.permissionsex.fabric.impl.ClientConnectionBridge
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl
+import ca.stellardrift.permissionsex.fabric.impl.ifPlayer
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.IpSet
 import java.net.InetSocketAddress
@@ -30,7 +33,6 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
 
-const val SUBJECTS_SYSTEM = "system"
 const val IDENTIFIER_RCON = "rcon"
 
 /**
@@ -70,7 +72,7 @@ object WorldContextDefinition : IdentifierContextDefinition("world"), CommandSou
     }
 
     override fun suggestValues(subject: CalculatedSubject): Set<Identifier> {
-        val server = PermissionsExMod.server ?: return emptySet()
+        val server = FabricPermissionsExImpl.server ?: return emptySet()
         return server.worlds.map { it.registryKey.value }.toSet()
     }
 }
@@ -127,7 +129,7 @@ object LocalIpContextDefinition : IpSetContextDefinition("localip"), CommandSour
     }
 
     private fun accumulate(ply: ServerPlayerEntity, consumer: Consumer<IpSet>) =
-        consumer.accept((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.address.run {
+        consumer.accept((ply.networkHandler.connection as ClientConnectionBridge).virtualHost.address.run {
             IpSet.only(this)
         })
 }
@@ -142,7 +144,7 @@ object LocalHostContextDefinition : SimpleContextDefinition("localhost"), Comman
     }
 
     private fun accumulate(ply: ServerPlayerEntity, consumer: Consumer<String>) =
-        consumer.accept((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.hostString)
+        consumer.accept((ply.networkHandler.connection as ClientConnectionBridge).virtualHost.hostString)
 }
 
 object LocalPortContextDefinition : ContextDefinition<Int>("localport"), CommandSourceContextDefinition<Int> {
@@ -159,5 +161,5 @@ object LocalPortContextDefinition : ContextDefinition<Int>("localport"), Command
     }
 
     private fun accumulate(ply: ServerPlayerEntity, consumer: Consumer<Int>) =
-        consumer.accept((ply.networkHandler.connection as IVirtualHostHolder).virtualHost.port)
+        consumer.accept((ply.networkHandler.connection as ClientConnectionBridge).virtualHost.port)
 }

@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
-import ca.stellardrift.permissionsex.fabric.ServerCommandSourceBridge;
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
+import ca.stellardrift.permissionsex.fabric.impl.ServerCommandSourceBridge;
 import ca.stellardrift.permissionsex.fabric.impl.FunctionContextDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import com.mojang.brigadier.CommandDispatcher;
@@ -44,7 +44,7 @@ public class FunctionLoaderMixin {
         final ArrayDeque<Identifier> runningFunctions = FunctionContextDefinition.INSTANCE.getCurrentFunctions$fabric().get();
         runningFunctions.add(id);
         try {
-            return CommandFunction.create(id, dispatcher, ((ServerCommandSourceBridge) source).withSubjectOverride(SubjectRef.subject(PermissionsExMod.INSTANCE.getFunctionSubjectType(), id)), lines);
+            return CommandFunction.create(id, dispatcher, ((ServerCommandSourceBridge) source).withSubjectOverride(SubjectRef.subject(FabricPermissionsEx.getFunctionSubjectType(), id)), lines);
         } finally {
             runningFunctions.removeLast();
         }

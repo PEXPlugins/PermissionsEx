@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,6 +28,6 @@ public class MinecraftClientMixin {
 
     @Inject(method = "close", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/model/BakedModelManager;close()V"))
     private void pex$fireShutdown(final CallbackInfo ci) {
-        PermissionsExMod.INSTANCE.shutdown();
+        FabricPermissionsExImpl.INSTANCE.shutdown();
     }
 }

@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerManagerMixin {
 
     @Inject(method = "onPlayerConnect", at = @At("HEAD"))
-    public void handlePlayerConnect(ClientConnection clientConnection, ServerPlayerEntity player, CallbackInfo ci) {
-        PermissionsExMod.INSTANCE.handlePlayerJoin(player);
+    public void handlePlayerConnect(final ClientConnection clientConnection, final ServerPlayerEntity player, final CallbackInfo ci) {
+        FabricPermissionsExImpl.INSTANCE.handlePlayerJoin(player);
     }
 }

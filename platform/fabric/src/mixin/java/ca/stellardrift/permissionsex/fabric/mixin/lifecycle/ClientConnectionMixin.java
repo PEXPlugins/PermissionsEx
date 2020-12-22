@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.IVirtualHostHolder;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
+import ca.stellardrift.permissionsex.fabric.impl.Bridges;
+import ca.stellardrift.permissionsex.fabric.impl.ClientConnectionBridge;
 import io.netty.channel.Channel;
 import net.minecraft.network.ClientConnection;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 @Mixin(ClientConnection.class)
-public class ClientConnectionMixin implements IVirtualHostHolder {
+public class ClientConnectionMixin implements ClientConnectionBridge {
     @Shadow
     private Channel channel;
 
@@ -37,23 +37,23 @@ public class ClientConnectionMixin implements IVirtualHostHolder {
     @NotNull
     @Override
     public InetSocketAddress getVirtualHost() {
-        if (virtualHost == null) {
+        if (this.virtualHost == null) {
             SocketAddress tempAddress = channel.localAddress();
             if (tempAddress instanceof InetSocketAddress) {
                 return ((InetSocketAddress) tempAddress);
             } else {
-                return PermissionsExHooks.LOCAL_HOST;
+                return Bridges.LOCAL_HOST;
             }
         } else {
-            return virtualHost;
+            return this.virtualHost;
         }
     }
 
     @Override
-    public void setVirtualHost(@NotNull InetSocketAddress inetSocketAddress) {
-        if (virtualHost != null) {
+    public void setVirtualHost(final @NotNull InetSocketAddress address) {
+        if (this.virtualHost != null) {
             throw new IllegalStateException("Virtual host can only be set once per connection!");
         }
-        this.virtualHost = inetSocketAddress;
+        this.virtualHost = address;
     }
 }

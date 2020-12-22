@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,7 +31,7 @@ public class ServerPlayNetworkHandlerMixin {
     public ServerPlayerEntity player;
 
     @Inject(method = "onDisconnected", at = @At("TAIL"))
-    public void handlePlayerQuit(CallbackInfo ci) {
-        PermissionsExMod.INSTANCE.handlePlayerQuit(this.player);
+    public void handlePlayerQuit(final CallbackInfo ci) {
+        FabricPermissionsExImpl.INSTANCE.handlePlayerQuit(this.player);
     }
 }

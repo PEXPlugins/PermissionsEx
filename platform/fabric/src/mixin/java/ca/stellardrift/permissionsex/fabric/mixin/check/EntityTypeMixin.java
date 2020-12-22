@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -36,6 +36,6 @@ public class EntityTypeMixin {
     @Redirect(method = "loadFromEntityTag", at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP))
     private static boolean canLoadRestrictedEntityData(PlayerManager self, GameProfile profile, World world, PlayerEntity player, Entity spawnedEntity, CompoundTag data) {
         final Identifier entityType = EntityType.getId(spawnedEntity.getType());
-        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.LOAD_ENTITY_DATA + "." + entityType.getNamespace() + "." + entityType.getPath());
+        return FabricPermissionsEx.hasPermission(player, MinecraftPermissions.LOAD_ENTITY_DATA + "." + entityType.getNamespace() + "." + entityType.getPath());
     }
 }

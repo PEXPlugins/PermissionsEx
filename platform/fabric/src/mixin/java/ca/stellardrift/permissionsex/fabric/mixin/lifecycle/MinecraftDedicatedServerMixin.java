@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,6 +28,6 @@ public class MinecraftDedicatedServerMixin {
 
     @Inject(method = "shutdown", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Util;shutdownExecutors()V"))
     private void pex$fireShutdown(final CallbackInfo ci) {
-        PermissionsExMod.INSTANCE.shutdown();
+        FabricPermissionsExImpl.INSTANCE.shutdown();
     }
 }

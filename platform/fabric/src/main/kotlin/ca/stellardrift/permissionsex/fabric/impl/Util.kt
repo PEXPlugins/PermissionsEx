@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric
+package ca.stellardrift.permissionsex.fabric.impl
 
 import ca.stellardrift.permissionsex.util.CachingValue
 import java.util.function.Supplier

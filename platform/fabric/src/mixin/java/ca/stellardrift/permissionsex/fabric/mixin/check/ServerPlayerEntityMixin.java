@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.JigsawBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -40,7 +40,7 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity {
 
     @Inject(method = "openCommandBlockScreen", at = @At("HEAD"), cancellable = true)
     public void onOpenCommandBlock(CallbackInfo ci) {
-        if (!PermissionsExHooks.hasPermission(this, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
+        if (!FabricPermissionsEx.hasPermission(this, MinecraftPermissions.COMMAND_BLOCK_VIEW)) {
             ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseScreenS2CPacket()); // Close command block gui
             ci.cancel();
         }
@@ -48,7 +48,7 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity {
 
     @Override
     public void openJigsawScreen(JigsawBlockEntity jigsaw) {
-        if (!PermissionsExHooks.hasPermission(this, MinecraftPermissions.JIGSAW_BLOCK_VIEW)) {
+        if (!FabricPermissionsEx.hasPermission(this, MinecraftPermissions.JIGSAW_BLOCK_VIEW)) {
             ((ServerPlayerEntity) (Object) this).networkHandler.sendPacket(new CloseScreenS2CPacket()); // Close command block gui
         }
     }
@@ -57,13 +57,13 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity {
 
     @Override
     public boolean isCreativeLevelTwoOp() {
-        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#isCreativeLevelTwoOp");
+        FabricPermissionsExImpl.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#isCreativeLevelTwoOp");
         return super.isCreativeLevelTwoOp();
     }
 
     @Override
     public boolean hasPermissionLevel(int level) {
-        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#hasPermissionLevel");
+        FabricPermissionsExImpl.INSTANCE.logUnredirectedPermissionsCheck("ServerPlayerEntity#hasPermissionLevel");
         return super.hasPermissionLevel(level);
     }
 }

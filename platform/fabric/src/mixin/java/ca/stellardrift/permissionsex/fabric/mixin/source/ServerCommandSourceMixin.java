@@ -19,10 +19,11 @@ package ca.stellardrift.permissionsex.fabric.mixin.source;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.fabric.CommandSourceContextDefinition;
-import ca.stellardrift.permissionsex.fabric.PermissionCommandSourceBridge;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
-import ca.stellardrift.permissionsex.fabric.ServerCommandSourceBridge;
-import ca.stellardrift.permissionsex.fabric.UtilKt;
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
+import ca.stellardrift.permissionsex.fabric.impl.PermissionCommandSourceBridge;
+import ca.stellardrift.permissionsex.fabric.impl.ServerCommandSourceBridge;
+import ca.stellardrift.permissionsex.fabric.impl.UtilKt;
 import ca.stellardrift.permissionsex.fabric.mixin.ServerCommandSourceAccess;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
@@ -88,12 +89,12 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
                                            EntityAnchorArgumentType.EntityAnchor entityAnchorArgumentType$EntityAnchor_1,
                                            CallbackInfo ci) {
         final Supplier<Set<ContextValue<?>>> updater = () -> {
-            if (!PermissionsExMod.INSTANCE.getAvailable()) {
+            if (!FabricPermissionsExImpl.INSTANCE.getAvailable()) {
                 return ImmutableSet.of();
             }
             final Set<ContextValue<?>> accumulator = new HashSet<>();
             final CalculatedSubject subj = asCalculatedSubject();
-            for (ContextDefinition<?> def : PermissionsExMod.INSTANCE.getManager().registeredContextTypes()) {
+            for (ContextDefinition<?> def : FabricPermissionsExImpl.INSTANCE.getManager().registeredContextTypes()) {
                 pex$handleSingleCtx(subj, def, accumulator);
             }
             return ImmutableSet.copyOf(accumulator);
@@ -133,7 +134,7 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
         } else if (this.output instanceof PermissionCommandSourceBridge<?>) {
             return ((PermissionCommandSourceBridge<Object>) this.output).getPermType();
         } else {
-            return (SubjectType) PermissionsExMod.INSTANCE.getSystemSubjectType();
+            return (SubjectType) FabricPermissionsEx.getSystemSubjectType();
         }
     }
 
@@ -156,7 +157,7 @@ public abstract class ServerCommandSourceMixin implements PermissionCommandSourc
     @Override
     public @NotNull CalculatedSubject asCalculatedSubject() {
         return this.output instanceof PermissionCommandSourceBridge && this.pex$subjectOverride == null ? ((PermissionCommandSourceBridge<?>) this.output).asCalculatedSubject()
-                : PermissionsExMod.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
+                : FabricPermissionsExImpl.INSTANCE.getManager().subjects(getPermType()).get(getPermIdentifier()).join();
     }
 
     @Override

@@ -17,8 +17,8 @@
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static ca.stellardrift.permissionsex.fabric.PermissionsExHooks.hasPermission;
+import static ca.stellardrift.permissionsex.fabric.FabricPermissionsEx.hasPermission;
 
 @Mixin(ServerCommandSource.class)
 public class ServerCommandSourceMixin {
@@ -49,7 +49,7 @@ public class ServerCommandSourceMixin {
 
     @Inject(method = "hasPermissionLevel", at = @At("HEAD"))
     private void logUncheckedPermission(final int level, final CallbackInfoReturnable<Boolean> ci) {
-        PermissionsExMod.INSTANCE.logUnredirectedPermissionsCheck("ServerCommandSource#hasPermissionLevel");
+        FabricPermissionsExImpl.INSTANCE.logUnredirectedPermissionsCheck("ServerCommandSource#hasPermissionLevel");
     }
 
 }

@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.EntityType;
 import net.minecraft.server.PlayerManager;
@@ -39,56 +39,56 @@ public class ServerPlayNetworkHandlerMixin {
     @Redirect(method = "onQueryEntityNbt",
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_HAS_PERMISSION_LEVEL))
     public boolean canQueryEntityNbt(ServerPlayerEntity entity, int permLevel) {
-        return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.QUERY_ENTITY_NBT, permLevel);
+        return FabricPermissionsEx.hasPermission(entity, MinecraftPermissions.QUERY_ENTITY_NBT, permLevel);
     }
 
     @Redirect(method = "onQueryBlockNbt",
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_HAS_PERMISSION_LEVEL))
     public boolean canQueryBlockNbt(ServerPlayerEntity entity, int permLevel) {
-        return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.QUERY_BLOCK_NBT, permLevel);
+        return FabricPermissionsEx.hasPermission(entity, MinecraftPermissions.QUERY_BLOCK_NBT, permLevel);
     }
 
     @Redirect(method = {"onUpdateDifficulty", "onUpdateDifficultyLock"},
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_PLAYER_HAS_PERMISSION_LEVEL))
     public boolean canUpdateDifficulty(ServerPlayerEntity entity, int permLevel) {
-        return PermissionsExHooks.hasPermission(entity, MinecraftPermissions.UPDATE_DIFFICULTY, permLevel);
+        return FabricPermissionsEx.hasPermission(entity, MinecraftPermissions.UPDATE_DIFFICULTY, permLevel);
     }
 
     @Redirect(method = {"onGameMessage", "method_31286"}, // 1.16.3, 1.16.4
             at = @At(value = "INVOKE", target = RedirectTargets.PLAYER_MANAGER_IS_OP), allow = 1)
     public boolean canBypassSpamLimit(PlayerManager manager, GameProfile profile) {
-        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.BYPASS_CHAT_SPAM);
+        return FabricPermissionsEx.hasPermission(player, MinecraftPermissions.BYPASS_CHAT_SPAM);
     }
 
     @Redirect(method = "onVehicleMove",
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_NETWORK_HANDLER_IS_HOST))
     public boolean canVehicleMoveTooFast(ServerPlayNetworkHandler self) {
         final Identifier vehicleIdent = EntityType.getId(self.player.getRootVehicle().getType());
-        return PermissionsExHooks.hasPermission(self.player,
+        return FabricPermissionsEx.hasPermission(self.player,
                 MinecraftPermissions.BYPASS_MOVE_SPEED_VEHICLE + "." + vehicleIdent.getNamespace() + "." + vehicleIdent.getPath());
     }
 
     @Redirect(method = "onPlayerMove",
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_NETWORK_HANDLER_IS_HOST))
     public boolean canPlayerMoveTooFast(ServerPlayNetworkHandler self) {
-        return PermissionsExHooks.hasPermission(self.player, MinecraftPermissions.BYPASS_MOVE_SPEED_PLAYER);
+        return FabricPermissionsEx.hasPermission(self.player, MinecraftPermissions.BYPASS_MOVE_SPEED_PLAYER);
     }
 
     @Redirect(method = {"onUpdateCommandBlock", "onUpdateCommandBlockMinecart"},
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_IS_CREATIVE_LEVEL_TWO_OP))
     public boolean canUpdateCommandBlock(ServerPlayerEntity player) {
-        return player.isCreative() && PermissionsExHooks.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_EDIT);
+        return player.isCreative() && FabricPermissionsEx.hasPermission(player, MinecraftPermissions.COMMAND_BLOCK_EDIT);
     }
 
     @Redirect(method = "onStructureBlockUpdate",
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_IS_CREATIVE_LEVEL_TWO_OP))
     public boolean canUpdateStructureBlock(ServerPlayerEntity player) {
-        return player.isCreative() && PermissionsExHooks.hasPermission(player, MinecraftPermissions.STRUCTURE_BLOCK_EDIT);
+        return player.isCreative() && FabricPermissionsEx.hasPermission(player, MinecraftPermissions.STRUCTURE_BLOCK_EDIT);
     }
 
     @Redirect(method = "onJigsawUpdate",
             at = @At(value = "INVOKE", target = RedirectTargets.SERVER_IS_CREATIVE_LEVEL_TWO_OP))
     public boolean canUpdateJigsaw(ServerPlayerEntity player) {
-        return player.isCreative() && PermissionsExHooks.hasPermission(player, MinecraftPermissions.JIGSAW_BLOCK_EDIT);
+        return player.isCreative() && FabricPermissionsEx.hasPermission(player, MinecraftPermissions.JIGSAW_BLOCK_EDIT);
     }
 }

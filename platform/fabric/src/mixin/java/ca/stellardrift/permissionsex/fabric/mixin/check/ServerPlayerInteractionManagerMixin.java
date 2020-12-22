@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import net.minecraft.block.*;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
@@ -48,6 +48,6 @@ public class ServerPlayerInteractionManagerMixin {
         } else {
             return false;
         }
-        return PermissionsExHooks.hasPermission(player, permission);
+        return FabricPermissionsEx.hasPermission(player, permission);
     }
 }

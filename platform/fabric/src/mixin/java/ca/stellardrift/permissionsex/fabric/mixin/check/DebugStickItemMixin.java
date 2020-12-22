@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.DebugStickItem;
@@ -39,6 +39,6 @@ public class DebugStickItemMixin {
     public boolean canUseDebugStick(PlayerEntity ply, PlayerEntity unused, BlockState block,
                                     WorldAccess world, BlockPos pos, boolean isRightClick, ItemStack heldItem) {
         Identifier usedBlock = Registry.BLOCK.getId(block.getBlock());
-        return PermissionsExHooks.hasPermission(ply, MinecraftPermissions.makeSpecific(MinecraftPermissions.DEBUG_STICK_USE, usedBlock));
+        return FabricPermissionsEx.hasPermission(ply, MinecraftPermissions.makeSpecific(MinecraftPermissions.DEBUG_STICK_USE, usedBlock));
     }
 }

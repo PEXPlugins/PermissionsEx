@@ -17,8 +17,8 @@
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
 import ca.stellardrift.permissionsex.fabric.FabricDefinitions;
-import ca.stellardrift.permissionsex.fabric.PermissionCommandSourceBridge;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
+import ca.stellardrift.permissionsex.fabric.impl.PermissionCommandSourceBridge;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import net.minecraft.server.rcon.RconCommandOutput;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.Mixin;
 public class RconCommandOutputMixin implements PermissionCommandSourceBridge<String> {
     @Override
     public @NotNull SubjectType<String> getPermType() {
-        return PermissionsExMod.INSTANCE.getSystemSubjectType();
+        return FabricPermissionsEx.getSystemSubjectType();
     }
 
     @Override

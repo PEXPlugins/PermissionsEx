@@ -16,22 +16,20 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import ca.stellardrift.permissionsex.fabric.impl.FunctionContextDefinition;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.function.CommandFunction;
 import net.minecraft.server.function.CommandFunctionManager;
 import net.minecraft.util.Identifier;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -48,9 +46,9 @@ public abstract class CommandFunctionManagerMixin {
     // executeAll: perform our own iteration
     @Inject(method = "method_29460", at = @At(value = "INVOKE", target = "Ljava/util/Collection;iterator()Ljava/util/Iterator;"))
     private void pex$executeFunctionsWithSubject(final Collection<CommandFunction> functions, final Identifier tagName, final CallbackInfo ci) {
-        final ServerCommandSource source = PermissionsExHooks.withSubjectOverride(
+        final ServerCommandSource source = FabricPermissionsEx.withSubjectOverride(
                 this.shadow$getTaggedFunctionSource(),
-                SubjectRef.subject(PermissionsExMod.INSTANCE.getFunctionSubjectType(), tagName));
+                SubjectRef.subject(FabricPermissionsEx.getFunctionSubjectType(), tagName));
 
         for (final CommandFunction function : functions) {
             this.shadow$execute(function, source);

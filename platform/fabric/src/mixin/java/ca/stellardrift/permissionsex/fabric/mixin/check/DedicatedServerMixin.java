@@ -16,10 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
+import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
-import ca.stellardrift.permissionsex.fabric.PermissionsExHooks;
-import ca.stellardrift.permissionsex.fabric.PermissionsExMod;
-import ca.stellardrift.permissionsex.fabric.RedirectTargets;
+import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.OperatorList;
@@ -30,8 +29,6 @@ import net.minecraft.util.math.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import static ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER;
 
 @Mixin(MinecraftDedicatedServer.class)
 public class DedicatedServerMixin {
@@ -45,7 +42,7 @@ public class DedicatedServerMixin {
     @Redirect(method = "isSpawnProtected",
             at = @At(value = "INVOKE", target = RedirectTargets.OPERATOR_LIST_IS_EMPTY))
     public boolean isSpawnProtectionIgnored(OperatorList ops) {
-        return !PermissionsExMod.INSTANCE.getMcManager().users().persistentData().getAllIdentifiers().findAny().isPresent();
+        return !FabricPermissionsEx.getEngine().subjects(FabricPermissionsEx.getUserSubjectType()).persistentData().getAllIdentifiers().findAny().isPresent();
     }
 
     /*
@@ -54,6 +51,6 @@ public class DedicatedServerMixin {
     @Redirect(method = "isSpawnProtected",
             at = @At(value = "INVOKE", target = RedirectTargets.DEDICATED_PLAYER_MANAGER_IS_OP))
     public boolean isSpawnProtectionBypassed(DedicatedPlayerManager manager, GameProfile profile, ServerWorld world, BlockPos buildPosition, PlayerEntity player) {
-        return PermissionsExHooks.hasPermission(player, MinecraftPermissions.BYPASS_SPAWN_PROTECTION);
+        return FabricPermissionsEx.hasPermission(player, MinecraftPermissions.BYPASS_SPAWN_PROTECTION);
     }
 }
