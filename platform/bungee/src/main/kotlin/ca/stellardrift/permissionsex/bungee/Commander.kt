@@ -28,8 +28,10 @@ import net.kyori.adventure.text.format.TextColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
-class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: CommandSender) :
-    Commander {
+internal class BungeeCommander(
+    internal val pex: PermissionsExPlugin,
+    private val src: CommandSender
+) : Commander {
     override val messageColor: TextColor = NamedTextColor.GOLD
     private val audience = pex.adventure.sender(src)
     override val manager: PermissionsEx<*>
@@ -53,7 +55,7 @@ class BungeeCommander(internal val pex: PermissionsExPlugin, private val src: Co
     }
 }
 
-class BungeePluginMessageFormatter(val sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = NamedTextColor.YELLOW) {
+internal class BungeePluginMessageFormatter(sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = NamedTextColor.YELLOW) {
 
     override val <I> SubjectRef<I>.friendlyName: String? get() {
         return (type().getAssociatedObject(identifier()) as? CommandSender)?.name

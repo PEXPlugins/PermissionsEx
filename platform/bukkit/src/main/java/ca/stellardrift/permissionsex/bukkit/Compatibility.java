@@ -25,7 +25,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Locale;
 
-public class Compatibility {
+class Compatibility {
     private static final @Nullable MethodHandle locale;
     private static final boolean localeOnSpigot;
 

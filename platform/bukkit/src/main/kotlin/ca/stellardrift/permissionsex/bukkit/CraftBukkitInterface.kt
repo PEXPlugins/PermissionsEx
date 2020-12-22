@@ -43,7 +43,7 @@ private var VERSION: String? = Bukkit.getServer().javaClass.let { serverClass ->
  * @param simpleName The name of the class without the "org.bukkit.craftbukkit" prefix
  * @return The versioned class name, or `null` if not CraftBukkit.
  */
-fun getCraftClassName(simpleName: String): String? {
+internal fun getCraftClassName(simpleName: String): String? {
     return if (VERSION == null) {
         null
     } else CRAFTBUKKIT_PREFIX + VERSION + simpleName
@@ -55,7 +55,7 @@ fun getCraftClassName(simpleName: String): String? {
  * @param name The name of the class without the "org.bukkit.craftbukkit" prefix
  * @return The versioned class, or `null` if not CraftBukkit
  */
-fun getCraftClass(name: String): Class<*>? {
+internal fun getCraftClass(name: String): Class<*>? {
     return if (VERSION == null) {
         null
     } else try {

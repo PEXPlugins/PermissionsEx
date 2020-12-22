@@ -31,7 +31,7 @@ import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 
-class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
+internal class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
 
     override fun execute(source: CommandSource, args: Array<out String>) {
         val src = VelocityCommander(pex, source)
@@ -53,7 +53,7 @@ class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec
     }
 }
 
-class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
+internal class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
     Commander {
     override val manager: PermissionsEx<*>
         get() = pex.manager
@@ -84,7 +84,7 @@ class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: 
     }
 }
 
-class VelocityMessageFormatter(vCmd: VelocityCommander) :
+internal class VelocityMessageFormatter(vCmd: VelocityCommander) :
     MessageFormatter(vCmd, vCmd.pex.manager, NamedTextColor.YELLOW) {
     override fun transformCommand(cmd: String) = "/$cmd"
 }

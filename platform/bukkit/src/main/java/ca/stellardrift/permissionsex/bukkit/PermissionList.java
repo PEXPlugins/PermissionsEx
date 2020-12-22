@@ -38,7 +38,7 @@ import java.util.Map;
  */
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class PermissionList extends HashMap<String, Permission> {
+class PermissionList extends HashMap<String, Permission> {
     private static final long serialVersionUID = 5211930944081173317L;
 
     private static FieldReplacer<PluginManager, Map> INJECTOR;

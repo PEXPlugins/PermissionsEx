@@ -75,7 +75,7 @@ internal class SpongeCommander(
     }
 }
 
-internal class SpongeMessageFormatter(private val cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
+internal class SpongeMessageFormatter(private cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
 
     override val <I> SubjectRef<I>.friendlyName: String?
         get() = (type().getAssociatedObject(identifier()) as? ServerPlayer)?.name // TODO: Named interface?

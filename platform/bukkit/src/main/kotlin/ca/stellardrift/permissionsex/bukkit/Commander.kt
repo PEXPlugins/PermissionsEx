@@ -40,7 +40,7 @@ import org.bukkit.entity.Player
  * @param mcLocaleString The locale string, in the format provided by the Minecraft client
  * @return A Locale object matching the provided locale string
  */
-fun String.toLocale(): Locale {
+internal fun String.toLocale(): Locale {
     val parts = this.split("_", limit = 3)
     return when (parts.size) {
         0 -> Locale.getDefault()
@@ -51,7 +51,7 @@ fun String.toLocale(): Locale {
     }
 }
 
-class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.manager) {
+internal class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.manager) {
 
     override val <I> SubjectRef<I>.friendlyName: String?
         get() = (cmd.pex.manager.subjects(type()).type().getAssociatedObject(identifier()) as? CommandSender)?.name
@@ -60,7 +60,7 @@ class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatte
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
-class BukkitCommander internal constructor(
+internal class BukkitCommander internal constructor(
     internal val pex: PermissionsExPlugin,
     private val commandSource: CommandSender
 ) : Commander {

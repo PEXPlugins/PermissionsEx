@@ -23,7 +23,10 @@ import com.velocitypowered.api.permission.PermissionSubject
 import com.velocitypowered.api.permission.Tristate
 import com.velocitypowered.api.proxy.Player
 
-class PEXPermissionFunction(val plugin: PermissionsExPlugin, private val source: PermissionSubject) : PermissionFunction {
+internal class PEXPermissionFunction(
+    private val plugin: PermissionsExPlugin,
+    private val source: PermissionSubject
+) : PermissionFunction {
     val subject: CalculatedSubject by lazy {
         if (source is Player) {
             plugin.users[source.uniqueId]

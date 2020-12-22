@@ -22,7 +22,7 @@ import java.lang.reflect.Field;
 /**
  * A type-safe reference to a declared field in a class.
  */
-public class FieldReplacer<I, V> {
+class FieldReplacer<I, V> {
     private final Class<V> requiredType;
     private final Field field;
 

@@ -60,7 +60,7 @@ class WorldGuardRegionContext(private val plugin: WorldGuardPlugin) : SimpleCont
     }
 }
 
-fun detectWorldGuard(plugin: PermissionsExPlugin) {
+internal fun detectWorldGuard(plugin: PermissionsExPlugin) {
     val wgPlugin = plugin.server.pluginManager.getPlugin("WorldGuard")
     if (wgPlugin != null) {
         try {
@@ -74,7 +74,7 @@ fun detectWorldGuard(plugin: PermissionsExPlugin) {
     }
 }
 
-fun detectVault(plugin: PermissionsExPlugin) {
+internal fun detectVault(plugin: PermissionsExPlugin) {
     if (plugin.server.pluginManager.isPluginEnabled("Vault")) {
         val vault = PEXVault(plugin)
         plugin.server.servicesManager.apply {

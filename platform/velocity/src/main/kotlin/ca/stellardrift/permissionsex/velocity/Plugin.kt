@@ -56,8 +56,11 @@ private val SERVER_PATH = Paths.get(".")
 private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
 
 @Plugin(id = ProjectData.ARTIFACT_ID, name = ProjectData.NAME, version = ProjectData.VERSION, description = ProjectData.DESCRIPTION)
-class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val server: ProxyServer, @DataDirectory private val dataPath: Path) :
-    ImplementationInterface {
+class PermissionsExPlugin @Inject constructor(
+    rawLogger: Logger,
+    private val server: ProxyServer,
+    @DataDirectory private val dataPath: Path
+) : ImplementationInterface {
 
     private val exec = Executors.newCachedThreadPool()
 
@@ -176,7 +179,7 @@ class PermissionsExPlugin @Inject constructor(rawLogger: Logger, internal val se
     }
 }
 
-fun Int.asTristate(): Tristate {
+internal fun Int.asTristate(): Tristate {
     return when {
         this < 0 -> Tristate.FALSE
         this > 0 -> Tristate.TRUE

@@ -159,7 +159,7 @@ fun CommandSender.toCalculatedSubject(): CalculatedSubject {
     }.join()
 }
 
-class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) :
+internal class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) :
     ImplementationInterface {
 
     private val exec = Executor { task ->
@@ -191,7 +191,7 @@ class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) :
     }
 }
 
-class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission?.value, *wrapped.aliases.drop(1).map { "/$it" }.toTypedArray()), TabExecutor {
+internal class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission?.value, *wrapped.aliases.drop(1).map { "/$it" }.toTypedArray()), TabExecutor {
     override fun onTabComplete(sender: CommandSender, args: Array<out String>): Iterable<String> {
         return wrapped.tabComplete(BungeeCommander(pex, sender), args.joinToString(" "))
     }

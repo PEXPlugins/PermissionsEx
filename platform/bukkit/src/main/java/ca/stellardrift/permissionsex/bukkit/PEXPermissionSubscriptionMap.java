@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * PermissibleMap for the permissions subscriptions data in Bukkit's {@link PluginManager} so we can put in our own data too.
  */
-public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>> {
+class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>> {
 
     private static final long serialVersionUID = 4740875815040785091L;
 

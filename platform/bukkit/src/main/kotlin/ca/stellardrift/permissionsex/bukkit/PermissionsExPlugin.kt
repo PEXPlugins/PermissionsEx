@@ -93,11 +93,11 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     private lateinit var logger: FormattedLogger
 
     // Injections into superperms
-    var permissionList: PermissionList? = null
+    internal var permissionList: PermissionList? = null
         private set
 
     // Permissions subscriptions handling
-    var subscriptionHandler: PEXPermissionSubscriptionMap? = null
+    private var subscriptionHandler: PEXPermissionSubscriptionMap? = null
         private set
 
     // Location of plugin configuration data
