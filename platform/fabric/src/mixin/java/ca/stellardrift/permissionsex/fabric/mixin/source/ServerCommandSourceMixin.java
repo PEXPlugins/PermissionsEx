@@ -28,7 +28,7 @@ import ca.stellardrift.permissionsex.fabric.mixin.ServerCommandSourceAccess;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
-import ca.stellardrift.permissionsex.util.CachingValue;
+import ca.stellardrift.permissionsex.impl.util.CachingValue;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.brigadier.ResultConsumer;
 import net.minecraft.command.argument.EntityAnchorArgumentType;

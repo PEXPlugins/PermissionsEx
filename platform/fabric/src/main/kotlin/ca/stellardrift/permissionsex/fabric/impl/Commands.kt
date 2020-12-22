@@ -16,13 +16,13 @@
  */
 package ca.stellardrift.permissionsex.fabric.impl
 
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.commands.commander.Permission
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.fabric.hasPermission
 import ca.stellardrift.permissionsex.fabric.mixin.ServerCommandSourceAccess
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.commands.commander.Commander
+import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.impl.commands.commander.Permission
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher

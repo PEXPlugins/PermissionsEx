@@ -17,11 +17,11 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
-import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.commands.commander.Commander
+import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import java.util.Locale
 import net.kyori.adventure.audience.Audience

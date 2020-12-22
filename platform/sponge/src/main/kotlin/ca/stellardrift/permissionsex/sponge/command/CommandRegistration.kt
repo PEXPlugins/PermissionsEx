@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.sponge.command
 
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
 import ca.stellardrift.permissionsex.sponge.register
 import ca.stellardrift.permissionsex.util.optionally

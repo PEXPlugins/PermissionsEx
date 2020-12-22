@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
+import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile
 import com.google.common.collect.ImmutableSet
 import io.leangen.geantyref.TypeToken

@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.test;
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope;
-import ca.stellardrift.permissionsex.ImplementationInterface;
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope;
+import ca.stellardrift.permissionsex.impl.ImplementationInterface;
 import org.h2.jdbcx.JdbcDataSource;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;

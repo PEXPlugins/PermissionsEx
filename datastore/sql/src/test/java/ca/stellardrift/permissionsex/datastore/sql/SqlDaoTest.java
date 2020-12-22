@@ -18,8 +18,8 @@ package ca.stellardrift.permissionsex.datastore.sql;
 
 import ca.stellardrift.permissionsex.test.PermissionsExTest;
 import ca.stellardrift.permissionsex.datastore.DataStore;
-import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
-import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
+import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
+import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;

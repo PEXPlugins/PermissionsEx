@@ -17,10 +17,10 @@
 package ca.stellardrift.permissionsex.datastore.conversion.groupmanager
 
 import ca.stellardrift.permissionsex.PermissionsEngine
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.ConversionUtils
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.conversion.ReadOnlySubjectData
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.backend.ConversionUtils
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.kotlin.extensions.get
 import org.spongepowered.configurate.serialize.SerializationException

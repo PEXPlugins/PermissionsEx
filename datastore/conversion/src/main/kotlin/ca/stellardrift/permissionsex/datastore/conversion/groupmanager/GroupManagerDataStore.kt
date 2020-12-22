@@ -19,14 +19,14 @@ package ca.stellardrift.permissionsex.datastore.conversion.groupmanager
 import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.datastore.ConversionResult
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory
 import ca.stellardrift.permissionsex.datastore.StoreProperties
 import ca.stellardrift.permissionsex.datastore.conversion.ReadOnlyDataStore
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException
-import ca.stellardrift.permissionsex.rank.FixedRankLadder
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import com.google.auto.service.AutoService
@@ -114,7 +114,12 @@ class GroupManagerDataStore internal constructor(properties: StoreProperties<Con
     }
 
     override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
-        return completedFuture(FixedRankLadder(ladder, emptyList())) // GM does not have a concept of rank ladders
+        return completedFuture(
+            FixedRankLadder(
+                ladder,
+                emptyList()
+            )
+        ) // GM does not have a concept of rank ladders
     }
 
     override fun getContextInheritanceInternal(): CompletableFuture<ContextInheritance> {

@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.minecraft;
 
-import ca.stellardrift.permissionsex.ImplementationInterface;
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
+import ca.stellardrift.permissionsex.impl.ImplementationInterface;
+import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.minecraft.profile.ProfileApiResolver;
 import ca.stellardrift.permissionsex.subject.InvalidIdentifierException;
@@ -39,7 +39,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT;
+import static ca.stellardrift.permissionsex.impl.PermissionsEx.GLOBAL_CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 /**

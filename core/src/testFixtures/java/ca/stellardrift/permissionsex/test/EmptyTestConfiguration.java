@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.test;
 
-import ca.stellardrift.permissionsex.backend.memory.MemoryDataStore;
-import ca.stellardrift.permissionsex.config.EmptyPlatformConfiguration;
-import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
+import ca.stellardrift.permissionsex.impl.backend.memory.MemoryDataStore;
+import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
+import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import org.checkerframework.checker.nullness.qual.Nullable;
 

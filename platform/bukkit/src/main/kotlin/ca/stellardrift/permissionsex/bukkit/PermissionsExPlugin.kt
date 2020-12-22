@@ -17,14 +17,14 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope
-import ca.stellardrift.permissionsex.ImplementationInterface
-import ca.stellardrift.permissionsex.PermissionsEx
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPermissibleInjector
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
-import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
+import ca.stellardrift.permissionsex.impl.ImplementationInterface
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
-import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
@@ -140,7 +140,8 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         try {
             val impl = BukkitImplementationInterface()
             dataFolder.mkdirs()
-            _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(
+            _manager = MinecraftPermissionsEx.builder(
+                FilePermissionsExConfiguration.fromLoader(
                     configLoader,
                     BukkitConfiguration::class.java
                 ))
@@ -343,7 +344,8 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         server.onlinePlayers.forEach { player: Player -> uninjectPermissible(player) }
     }
 
-    private inner class BukkitImplementationInterface : ImplementationInterface {
+    private inner class BukkitImplementationInterface :
+        ImplementationInterface {
         override fun baseDirectory(scope: BaseDirectoryScope): Path {
             return when (scope) {
                 BaseDirectoryScope.CONFIG -> dataPath

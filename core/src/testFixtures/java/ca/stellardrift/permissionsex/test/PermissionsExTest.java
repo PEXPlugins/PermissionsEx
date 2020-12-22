@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.test;
 
-import ca.stellardrift.permissionsex.PermissionsEx;
-import ca.stellardrift.permissionsex.config.PermissionsExConfiguration;
+import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.subject.SubjectType;

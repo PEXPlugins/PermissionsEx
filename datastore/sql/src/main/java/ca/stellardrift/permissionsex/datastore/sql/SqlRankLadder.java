@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
-import ca.stellardrift.permissionsex.rank.AbstractRankLadder;
+import ca.stellardrift.permissionsex.impl.rank.AbstractRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.util.GuavaCollectors;
+import ca.stellardrift.permissionsex.impl.util.GuavaCollectors;
 
 import java.util.List;
 import java.util.Map;

@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.commands.parse.CommandException
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.util.optionally
 import java.util.Optional
 import org.spongepowered.api.command.CommandCallable

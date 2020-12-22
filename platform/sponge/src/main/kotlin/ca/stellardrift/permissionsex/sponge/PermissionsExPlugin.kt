@@ -16,25 +16,25 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope
-import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEngine
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.commander.Permission
-import ca.stellardrift.permissionsex.commands.parse.CommandException
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.commands.parse.command
-import ca.stellardrift.permissionsex.commands.parse.string
-import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
+import ca.stellardrift.permissionsex.impl.ImplementationInterface
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.commands.commander.Permission
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.impl.commands.parse.command
+import ca.stellardrift.permissionsex.impl.commands.parse.string
+import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
+import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.logging.FormattedLogger
-import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sponge.command.register
 import ca.stellardrift.permissionsex.sponge.command.registerRegistrar
 import ca.stellardrift.permissionsex.subject.SubjectType
-import ca.stellardrift.permissionsex.util.CachingValue
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
@@ -97,7 +97,8 @@ class PermissionsExPlugin @Inject internal constructor(
     internal val scheduler = game.asyncScheduler.createExecutor(container)
     private val logger = WrappingFormattedLogger.of(Log4jLogger(logger as ExtendedLogger, logger.name), true)
     private var _manager: MinecraftPermissionsEx<*>? = null
-    val manager: PermissionsEx<*> get() {
+    val manager: PermissionsEx<*>
+        get() {
         return _manager?.engine() ?: throw IllegalStateException("PermissionsEx Manager is not yet initialized, or there was an error loading the plugin!")
     }
 
@@ -448,7 +449,7 @@ class PermissionsExService internal constructor(private val server: Server, priv
 
     internal fun <V> tickBasedCachingValue(deltaTicks: Long, update: () -> V): CachingValue<V> {
         return CachingValue({
-                server.runningTimeTicks.toLong()
+            server.runningTimeTicks.toLong()
         }, deltaTicks, update)
     }
 }

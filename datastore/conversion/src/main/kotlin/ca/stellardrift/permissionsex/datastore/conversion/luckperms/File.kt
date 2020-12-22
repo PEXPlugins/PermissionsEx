@@ -17,13 +17,13 @@
 package ca.stellardrift.permissionsex.datastore.conversion.luckperms
 
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
-import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.DataStore
 import ca.stellardrift.permissionsex.datastore.StoreProperties
 import ca.stellardrift.permissionsex.exception.PermissionsException
-import ca.stellardrift.permissionsex.rank.AbstractRankLadder
+import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore
+import ca.stellardrift.permissionsex.impl.rank.AbstractRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.util.toCompletableFuture

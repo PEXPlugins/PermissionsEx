@@ -20,9 +20,9 @@ import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.datastore.sql.dao.LegacyMigration;
 import ca.stellardrift.permissionsex.datastore.sql.dao.SchemaMigration;
 import com.google.common.collect.Maps;
-import ca.stellardrift.permissionsex.backend.ConversionUtils;
+import ca.stellardrift.permissionsex.impl.backend.ConversionUtils;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.util.GuavaCollectors;
+import ca.stellardrift.permissionsex.impl.util.GuavaCollectors;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

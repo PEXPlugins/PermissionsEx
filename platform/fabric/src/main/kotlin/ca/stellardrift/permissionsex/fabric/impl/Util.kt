@@ -16,14 +16,18 @@
  */
 package ca.stellardrift.permissionsex.fabric.impl
 
-import ca.stellardrift.permissionsex.util.CachingValue
+import ca.stellardrift.permissionsex.impl.util.CachingValue
 import java.util.function.Supplier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 
 fun <Value> tickCachedValue(server: MinecraftServer, maxDelta: Long, update: Supplier<Value>): CachingValue<Value> {
-    return CachingValue({ server.ticks.toLong() }, maxDelta, update)
+    return CachingValue(
+        { server.ticks.toLong() },
+        maxDelta,
+        update
+    )
 }
 
 fun <R> ServerCommandSource.ifPlayer(operation: (ServerPlayerEntity) -> R): R? {

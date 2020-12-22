@@ -17,13 +17,13 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.EnumContextDefinition
-import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
+import ca.stellardrift.permissionsex.impl.PermissionsEx.GLOBAL_CONTEXT
+import ca.stellardrift.permissionsex.impl.context.IpSetContextDefinition
+import ca.stellardrift.permissionsex.impl.util.IpSet
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.IpSet
 import java.util.function.Consumer
 import org.bukkit.Bukkit
 import org.bukkit.World

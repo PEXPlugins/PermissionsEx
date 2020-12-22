@@ -16,19 +16,19 @@
  */
 package ca.stellardrift.permissionsex.datastore.conversion
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope
 import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
-import ca.stellardrift.permissionsex.backend.memory.MemorySubjectData
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.ConversionResult
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory
 import ca.stellardrift.permissionsex.datastore.StoreProperties
-import ca.stellardrift.permissionsex.rank.FixedRankLadder
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.backend.memory.MemoryContextInheritance
+import ca.stellardrift.permissionsex.impl.backend.memory.MemorySubjectData
+import ca.stellardrift.permissionsex.impl.rank.FixedRankLadder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import java.nio.file.Files
@@ -59,7 +59,8 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
         }
 
         override fun listConversionOptions(pex: PermissionsEngine): PVector<ConversionResult> {
-            val opsFile = (pex as PermissionsEx<*>).baseDirectory(BaseDirectoryScope.SERVER).resolve("ops.json")
+            val opsFile = (pex as PermissionsEx<*>).baseDirectory(
+                BaseDirectoryScope.SERVER).resolve("ops.json")
             return if (Files.exists(opsFile)) {
                 TreePVector.singleton(
                     ConversionResult.builder()
@@ -82,7 +83,8 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
 
     override fun initializeInternal(): Boolean {
         if (!this::file.isInitialized) {
-            file = (manager as PermissionsEx<*>).baseDirectory(BaseDirectoryScope.SERVER).resolve(config().fileName) // todo
+            file = (manager as PermissionsEx<*>).baseDirectory(
+                BaseDirectoryScope.SERVER).resolve(config().fileName) // todo
         }
 
         if (!Files.exists(file)) {
@@ -173,7 +175,12 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
     }
 
     override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
-        return completedFuture(FixedRankLadder(ladder, listOf()))
+        return completedFuture(
+            FixedRankLadder(
+                ladder,
+                listOf()
+            )
+        )
     }
 }
 

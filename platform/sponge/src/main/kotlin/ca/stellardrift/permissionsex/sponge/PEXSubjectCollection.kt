@@ -17,9 +17,9 @@
 package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.PermissionsEngine
+import ca.stellardrift.permissionsex.impl.subject.SubjectTypeCollectionImpl
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectType
-import ca.stellardrift.permissionsex.subject.SubjectTypeCollectionImpl
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine

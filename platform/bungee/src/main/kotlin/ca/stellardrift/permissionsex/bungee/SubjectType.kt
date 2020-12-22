@@ -17,10 +17,10 @@
 package ca.stellardrift.permissionsex.bungee
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
-import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
+import ca.stellardrift.permissionsex.impl.context.IpSetContextDefinition
+import ca.stellardrift.permissionsex.impl.util.IpSet
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.IpSet
 import java.net.InetSocketAddress
 import java.util.function.Consumer
 import net.md_5.bungee.api.connection.ProxiedPlayer

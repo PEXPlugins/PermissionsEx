@@ -29,8 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static ca.stellardrift.permissionsex.util.Util.appendImmutable;
-import static ca.stellardrift.permissionsex.util.Util.updateImmutable;
+import static ca.stellardrift.permissionsex.impl.util.Util.appendImmutable;
+import static ca.stellardrift.permissionsex.impl.util.Util.updateImmutable;
 
 class Segment {
     private volatile int id;

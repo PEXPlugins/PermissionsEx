@@ -17,7 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.subject.SubjectType
 import java.util.UUID

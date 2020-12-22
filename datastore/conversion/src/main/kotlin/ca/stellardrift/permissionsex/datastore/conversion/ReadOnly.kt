@@ -16,14 +16,14 @@
  */
 package ca.stellardrift.permissionsex.datastore.conversion
 
-import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.DataStore
 import ca.stellardrift.permissionsex.datastore.StoreProperties
+import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore
+import ca.stellardrift.permissionsex.impl.util.Util
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.Util
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 

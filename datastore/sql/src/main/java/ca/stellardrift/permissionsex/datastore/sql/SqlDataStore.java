@@ -16,13 +16,13 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
-import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.datastore.sql.dao.H2SqlDao;
 import ca.stellardrift.permissionsex.datastore.sql.dao.MySqlDao;
 import ca.stellardrift.permissionsex.datastore.sql.dao.SchemaMigration;
-import ca.stellardrift.permissionsex.backend.AbstractDataStore;
+import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.context.ContextInheritance;

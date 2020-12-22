@@ -16,6 +16,8 @@
  */
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope;
+import ca.stellardrift.permissionsex.impl.ImplementationInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

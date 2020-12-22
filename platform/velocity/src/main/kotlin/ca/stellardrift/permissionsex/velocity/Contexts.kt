@@ -17,10 +17,10 @@
 package ca.stellardrift.permissionsex.velocity
 
 import ca.stellardrift.permissionsex.context.ContextDefinition
-import ca.stellardrift.permissionsex.context.IpSetContextDefinition
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition
+import ca.stellardrift.permissionsex.impl.context.IpSetContextDefinition
+import ca.stellardrift.permissionsex.impl.util.IpSet
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.IpSet
 import com.velocitypowered.api.proxy.Player
 import java.util.function.Consumer
 

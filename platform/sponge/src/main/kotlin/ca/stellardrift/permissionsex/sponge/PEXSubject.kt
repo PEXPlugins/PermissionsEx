@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.PermissionsEx
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
-import ca.stellardrift.permissionsex.util.CachingValue
 import java.util.Objects
 import java.util.Optional
 import java.util.concurrent.CompletableFuture

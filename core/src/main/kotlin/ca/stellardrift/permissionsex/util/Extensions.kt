@@ -17,9 +17,9 @@
 @file:JvmName("Utilities")
 package ca.stellardrift.permissionsex.util
 
-import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.commands.parse.CommandException
+import ca.stellardrift.permissionsex.impl.commands.commander.Commander
+import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import java.util.Optional
 import java.util.concurrent.CompletableFuture

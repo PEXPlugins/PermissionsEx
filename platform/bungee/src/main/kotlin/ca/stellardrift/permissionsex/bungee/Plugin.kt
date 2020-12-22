@@ -16,13 +16,13 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope
-import ca.stellardrift.permissionsex.ImplementationInterface
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
+import ca.stellardrift.permissionsex.impl.ImplementationInterface
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
-import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
@@ -159,7 +159,8 @@ fun CommandSender.toCalculatedSubject(): CalculatedSubject {
     }.join()
 }
 
-class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) : ImplementationInterface {
+class BungeeImplementationInterface(private val plugin: PermissionsExPlugin) :
+    ImplementationInterface {
 
     private val exec = Executor { task ->
         plugin.proxy.scheduler.runAsync(plugin, task)

@@ -17,11 +17,11 @@
 package ca.stellardrift.permissionsex.datastore.conversion.luckperms
 
 import ca.stellardrift.permissionsex.PermissionsEngine
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.backend.AbstractDataStore
 import ca.stellardrift.permissionsex.datastore.ConversionResult
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory
 import ca.stellardrift.permissionsex.datastore.StoreProperties
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore
 import com.google.auto.service.AutoService
 import java.nio.file.Files
 import java.util.Locale

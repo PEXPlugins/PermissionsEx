@@ -16,13 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.impl
 
-import ca.stellardrift.permissionsex.BaseDirectoryScope
-import ca.stellardrift.permissionsex.ImplementationInterface
 import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_DEFAULTS
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.PermissionsEx.GLOBAL_CONTEXT
-import ca.stellardrift.permissionsex.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.fabric.DimensionContextDefinition
 import ca.stellardrift.permissionsex.fabric.LocalHostContextDefinition
 import ca.stellardrift.permissionsex.fabric.LocalIpContextDefinition
@@ -32,8 +26,14 @@ import ca.stellardrift.permissionsex.fabric.WorldContextDefinition
 import ca.stellardrift.permissionsex.fabric.commandBlockSubjectType
 import ca.stellardrift.permissionsex.fabric.functionSubjectType
 import ca.stellardrift.permissionsex.fabric.systemSubjectType
+import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
+import ca.stellardrift.permissionsex.impl.ImplementationInterface
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.PermissionsEx.GLOBAL_CONTEXT
+import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
+import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
-import ca.stellardrift.permissionsex.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import java.nio.file.Files
@@ -58,7 +58,7 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
         PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message")
-        // PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.PermissionsEx")
+        // PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.impl.PermissionsEx")
     }
 }
 

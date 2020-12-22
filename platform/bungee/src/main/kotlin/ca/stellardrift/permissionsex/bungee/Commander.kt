@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
-import ca.stellardrift.permissionsex.PermissionsEx
-import ca.stellardrift.permissionsex.commands.commander.Commander
-import ca.stellardrift.permissionsex.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.impl.commands.commander.Commander
+import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import java.util.Locale

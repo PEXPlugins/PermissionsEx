@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.datastore.conversion.groupmanager
 
-import ca.stellardrift.permissionsex.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
+import ca.stellardrift.permissionsex.impl.backend.memory.MemoryContextInheritance
 import java.util.ArrayList
 import org.spongepowered.configurate.ConfigurationNode
 
