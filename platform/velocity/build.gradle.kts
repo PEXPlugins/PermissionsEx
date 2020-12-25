@@ -1,8 +1,3 @@
-
-import ca.stellardrift.build.common.minecraft
-import ca.stellardrift.build.common.velocityReleases
-import ca.stellardrift.build.common.velocitySnapshots
-
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -26,12 +21,6 @@ plugins {
     kotlin("kapt")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
-}
-
-repositories {
-    minecraft()
-    velocityReleases()
-    velocitySnapshots()
 }
 
 dependencies {

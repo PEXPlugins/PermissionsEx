@@ -1,16 +1,9 @@
-import ca.stellardrift.build.common.engineHub
-import ca.stellardrift.build.common.pex
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("pex-component")
     id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
-}
-
-repositories {
-    pex()
-    engineHub()
 }
 
 tasks.processResources {

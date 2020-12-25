@@ -1,5 +1,4 @@
 
-import ca.stellardrift.build.common.sponge
 import ca.stellardrift.build.configurate.ConfigFormats
 import ca.stellardrift.build.configurate.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -27,10 +26,6 @@ plugins {
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
     id("ca.stellardrift.configurate-transformations")
-}
-
-repositories {
-    sponge()
 }
 
 dependencies {

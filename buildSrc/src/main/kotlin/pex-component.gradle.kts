@@ -1,6 +1,5 @@
 import ca.stellardrift.build.localization.LocalizationExtension
 import ca.stellardrift.build.localization.TemplateType
-import net.kyori.indra.sonatypeSnapshots
 import net.ltgt.gradle.errorprone.errorprone
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
@@ -11,9 +10,15 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
-    sonatypeSnapshots()
-    jcenter()
+    maven("https://repo.stellardrift.ca/repository/stable/") {
+        name = "stellardrift"
+        mavenContent { releasesOnly() }
+    }
+
+    maven("https://repo.stellardrift.ca/repository/snapshots/") {
+        name = "stellardrift"
+        mavenContent { snapshotsOnly() }
+    }
 }
 
 indra {
@@ -40,6 +45,8 @@ indra {
         }
     }
     publishAllTo("pex", "https://repo.glaremasters.me/repository/permissionsex/")
+    publishReleasesTo("stellardrift", "https://repo.stellardrift.ca/repository/releases/")
+    publishSnapshotsTo("stellardrift", "https://repo.stellardrift.ca/repository/snapshots/")
 }
 
 opinionated {

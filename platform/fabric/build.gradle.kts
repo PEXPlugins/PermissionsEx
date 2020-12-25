@@ -29,15 +29,6 @@ plugins {
     id("ca.stellardrift.localization")
 }
 
-repositories {
-    maven("https://files.minecraftforge.net/maven/") {
-        name = "forge"
-        content {
-            includeGroup("net.minecraftforge")
-        }
-    }
-}
-
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 

@@ -1,7 +1,6 @@
 import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
 import ca.stellardrift.build.common.gpl3
-import ca.stellardrift.build.common.spigot
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -14,16 +13,6 @@ plugins {
     id("pex-platform")
     id("ca.stellardrift.localization")
     id("kr.entree.spigradle")
-}
-
-repositories {
-    spigot()
-    maven(url = "https://jitpack.io/") {
-        name = "jitpack"
-        content {
-            includeGroup("com.github.MilkBowl")
-        }
-    }
 }
 
 indra {
@@ -64,8 +53,10 @@ dependencies {
 
     // provided at runtime
     shadow(spigot(spigotVersion))
-    shadow("com.github.MilkBowl:VaultAPI:1.7")
-    shadow("com.sk89q.worldguard:worldguard-bukkit:7.0.4")
+    shadow("net.milkbowl.vault:VaultAPI:1.7")
+    shadow("com.sk89q.worldguard:worldguard-bukkit:7.0.4") {
+        exclude(group = "org.bstats")
+    }
     shadow("com.h2database:h2:1.4.200")
 }
 

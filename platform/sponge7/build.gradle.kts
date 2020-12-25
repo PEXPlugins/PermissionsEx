@@ -1,6 +1,5 @@
 
 import ca.stellardrift.build.common.adventure
-import ca.stellardrift.build.common.sponge
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 /*
@@ -26,10 +25,6 @@ plugins {
     id("ca.stellardrift.templating")
     id("pex-platform")
     kotlin("kapt")
-}
-
-repositories {
-    sponge()
 }
 
 dependencies {

@@ -2,7 +2,6 @@
 import ca.stellardrift.build.common.adventure
 import ca.stellardrift.build.common.configurate
 import kr.entree.spigradle.kotlin.bungeecord
-import net.kyori.indra.sonatypeSnapshots
 
 /*
  * PermissionsEx
@@ -26,10 +25,6 @@ plugins {
     id("pex-platform")
     id("ca.stellardrift.localization")
     id("kr.entree.spigradle.bungee")
-}
-
-repositories {
-    sonatypeSnapshots()
 }
 
 dependencies {
