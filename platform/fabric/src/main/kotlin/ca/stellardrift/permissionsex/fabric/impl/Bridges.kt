@@ -25,6 +25,9 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import net.minecraft.server.command.ServerCommandSource
 
+/**
+ * Common targets for permission check redirects.
+ */
 object RedirectTargets {
     const val SERVER_IS_CREATIVE_LEVEL_TWO_OP = "net.minecraft.server.network.ServerPlayerEntity.isCreativeLevelTwoOp()Z"
     const val IS_CREATIVE_LEVEL_TWO_OP = "net.minecraft.entity.player.PlayerEntity.isCreativeLevelTwoOp()Z"
@@ -40,7 +43,8 @@ object RedirectTargets {
 
 interface ClientConnectionBridge {
     /**
-     * The hostname a client used to connect to this server
+     * The hostname a client used to connect to this server.
+     *
      * May be *unresolved* if the provided hostname could not be resolved
      */
     var virtualHost: InetSocketAddress

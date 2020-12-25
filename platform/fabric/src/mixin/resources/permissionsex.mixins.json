@@ -23,11 +23,8 @@
     "check.StructureBlockEntityMixin",
     "lifecycle.ClientConnectionMixin",
     "lifecycle.GameProfileMixin",
-    "lifecycle.MinecraftClientMixin",
     "lifecycle.MinecraftDedicatedServerMixin",
-    "lifecycle.PlayerManagerMixin",
     "lifecycle.ServerHandshakeNetworkHandlerMixin",
-    "lifecycle.ServerPlayNetworkHandlerMixin",
     "source.CommandBlockExecutorMixin",
     "source.CommandFunctionFunctionElementMixin",
     "source.CommandFunctionManagerMixin",
@@ -35,6 +32,9 @@
     "source.RconCommandOutputMixin",
     "source.ServerCommandSourceMixin",
     "source.ServerPlayerEntityMixin"
+  ],
+  "client": [
+    "lifecycle.MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -45,6 +45,7 @@ import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
@@ -58,7 +59,6 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
         PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message")
-        // PreLaunchHacks.hackilyLoadForMixin("ca.stellardrift.permissionsex.impl.PermissionsEx")
     }
 }
 
@@ -104,8 +104,15 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPED.register {
             this.server = null
         }
+        ServerPlayConnectionEvents.INIT.register { handler, _ ->
+           handlePlayerJoin(handler.player)
+        }
+        ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
+            val manager = this._manager ?: return@register
+            manager.engine().callbackController.clearOwnedBy(handler.player.uuidAsString)
+            manager.users().uncache(handler.player.uuid)
+        }
 
-        // TODO: expose these commands earlier?
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
             if (this._manager != null) {
                 this._manager?.engine()?.registerCommandsTo {
@@ -183,26 +190,17 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             // Update name option
             it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
-                    it.data().update { data ->
-                        data.setOption(GLOBAL_CONTEXT, "name", player.name.asString())
-                    }
+                    it.data().update { it.setOption(GLOBAL_CONTEXT, "name", player.name.asString()) }
                 }
             }
 
             // Add listener to re-send command tree on a permission update
             it.registerListener { newSubj ->
                 (newSubj.associatedObject() as? ServerPlayerEntity)?.apply {
-                    server.execute {
-                        server.playerManager.sendCommandTree(this)
-                    }
+                    server.execute { server.playerManager.sendCommandTree(this) }
                 }
             }
         }
-    }
-
-    fun handlePlayerQuit(player: ServerPlayerEntity) {
-        _manager?.engine()?.callbackController?.clearOwnedBy(player.uuidAsString)
-        _manager?.users()?.uncache(player.uuid)
     }
 
     override fun baseDirectory(scope: BaseDirectoryScope): Path {
