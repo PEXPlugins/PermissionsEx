@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.impl.backend.memory;
 
+import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.datastore.DataStore;
@@ -24,21 +25,21 @@ import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.impl.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.impl.util.GuavaCollectors;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -46,6 +47,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
 /**
  * A data store backed entirely in memory
@@ -95,13 +99,13 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
-        final Map.Entry<String, String> key = Maps.immutableEntry(type, identifier);
+    public CompletableFuture<ImmutableSubjectData> getDataInternal(final String type, final String identifier) {
+        final Map.Entry<String, String> key = immutableMapEntry(type, identifier);
         ImmutableSubjectData ret = data.get(key);
         if (ret == null) {
             ret = new MemorySubjectData();
             if (config().track) {
-                final ImmutableSubjectData existingData = data.putIfAbsent(key, ret);
+                final @Nullable ImmutableSubjectData existingData = data.putIfAbsent(key, ret);
                 if (existingData != null) {
                     ret = existingData;
                 }
@@ -111,9 +115,9 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     @Override
-    public CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, ImmutableSubjectData data) {
+    public CompletableFuture<ImmutableSubjectData> setDataInternal(final String type, final String identifier, final ImmutableSubjectData data) {
         if (config().track) {
-            this.data.put(Maps.immutableEntry(type, identifier), data);
+            this.data.put(immutableMapEntry(type, identifier), data);
         }
         return completedFuture(data);
     }
@@ -122,7 +126,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     protected CompletableFuture<RankLadder> getRankLadderInternal(String name) {
         RankLadder ladder = rankLadders.get(name.toLowerCase());
         if (ladder == null) {
-            ladder = new FixedRankLadder(name, ImmutableList.<Map.Entry<String, String>>of());
+            ladder = new FixedRankLadder(name, PCollections.vector());
         }
         return completedFuture(ladder);
     }
@@ -139,39 +143,41 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
 
     @Override
     public CompletableFuture<Boolean> isRegistered(String type, String identifier) {
-        return completedFuture(data.containsKey(Maps.immutableEntry(type, identifier)));
+        return completedFuture(data.containsKey(immutableMapEntry(type, identifier)));
     }
 
     @Override
-    public Set<String> getAllIdentifiers(final String type) {
+    public Stream<String> getAllIdentifiers(final String type) {
         return data.keySet().stream()
                 .filter(inp -> inp.getKey().equals(type))
-                .map(Map.Entry::getValue)
-                .collect(GuavaCollectors.toImmutableSet());
+                .map(Map.Entry::getValue);
     }
 
     @Override
     public Set<String> getRegisteredTypes() {
-        return ImmutableSet.copyOf(Iterables.transform(data.keySet(), Map.Entry::getKey));
+        return this.data.keySet().stream()
+                .map(Map.Entry::getKey)
+                .collect(PCollections.toPSet());
     }
 
     @Override
     public CompletableFuture<Set<String>> getDefinedContextKeys() {
         return CompletableFuture.completedFuture(data.values().stream()
-                .flatMap(data -> data.getActiveContexts().stream())
+                .flatMap(data -> data.activeContexts().stream())
                 .flatMap(Collection::stream)
                 .map(ContextValue::key)
                 .collect(Collectors.toSet()));
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
-        return Iterables.unmodifiableIterable(data.entrySet());
+    public Stream<Map.Entry<SubjectRef<?>, ImmutableSubjectData>> getAll() {
+        return this.data.entrySet().stream()
+                .map(entry -> immutableMapEntry(((PermissionsEx<?>) this.getManager()).deserializeSubjectRef(entry.getKey()), entry.getValue()));
     }
 
     @Override
-    public Iterable<String> getAllRankLadders() {
-        return ImmutableSet.copyOf(rankLadders.keySet());
+    public Stream<String> getAllRankLadders() {
+        return this.rankLadders.keySet().stream();
     }
 
     @Override
@@ -185,7 +191,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     @Override
-    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(ContextInheritance inheritance) {
+    public CompletableFuture<ContextInheritance> setContextInheritanceInternal(final ContextInheritance inheritance) {
         this.inheritance = inheritance;
         return completedFuture(this.inheritance);
     }

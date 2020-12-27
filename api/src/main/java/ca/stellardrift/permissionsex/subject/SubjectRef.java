@@ -16,9 +16,12 @@
  */
 package ca.stellardrift.permissionsex.subject;
 
+import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.util.Change;
+import io.leangen.geantyref.TypeToken;
 import org.immutables.value.Value;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -31,6 +34,7 @@ import java.util.function.UnaryOperator;
  */
 @Value.Immutable(builder = false)
 public interface SubjectRef<I> {
+    TypeToken<SubjectRef<?>> TYPE = new TypeToken<SubjectRef<?>>() {};
 
     /**
      * Create a new subject reference.
@@ -124,6 +128,18 @@ public interface SubjectRef<I> {
          * @since 2.0.0
          */
         CompletableFuture<Change<ImmutableSubjectData>> update(UnaryOperator<ImmutableSubjectData> modifierFunc);
+
+        /**
+         * Update a single segment of the contained data based on the provided operator.
+         *
+         * @param contexts the contexts to update in
+         * @param modifierFunc the function that will be called to update the data
+         * @return A future completing when data updates have been written to the data store
+         * @since 2.0.0
+         */
+        default CompletableFuture<Change<ImmutableSubjectData>> update(final Set<ContextValue<?>> contexts, UnaryOperator<Segment> modifierFunc) {
+            return this.update(data -> data.withSegment(contexts, modifierFunc));
+        }
 
         /**
          * Get whether or not this reference will hold strong references to stored listeners.

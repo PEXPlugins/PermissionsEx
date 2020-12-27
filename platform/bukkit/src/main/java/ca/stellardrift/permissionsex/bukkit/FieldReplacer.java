@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ internal class PEXVaultChat(private val perms: PEXVault) : Chat(perms) {
 
     override fun setGroupInfoString(world: String, name: String, key: String, value: String?) {
         perms.getGroup(name).data()
-            .update { it.setOption(perms.contextsFrom(world), key, value) }
+            .update(perms.contextsFrom(world)) { it.withOption(key, value) }
     }
 
     override fun getPlayerInfoString(world: String, player: OfflinePlayer, node: String, defaultValue: String?): String? {
@@ -46,7 +46,7 @@ internal class PEXVaultChat(private val perms: PEXVault) : Chat(perms) {
 
     override fun setPlayerInfoString(world: String, player: OfflinePlayer, node: String, value: String?) {
         perms.getUser(player).data()
-            .update { it.setOption(perms.contextsFrom(world), node, value) }
+            .update(perms.contextsFrom(world)) { it.withOption(node, value) }
     }
 
     // -- Passthrough methods

@@ -25,16 +25,10 @@ import ca.stellardrift.permissionsex.impl.commands.Messages.COMMON_ARGS_RANK_LAD
 import ca.stellardrift.permissionsex.impl.commands.Messages.COMMON_ARGS_SUBJECT
 import ca.stellardrift.permissionsex.impl.commands.Messages.DEMOTE_DESCRIPTION
 import ca.stellardrift.permissionsex.impl.commands.Messages.DEMOTE_ERROR_NOT_ON_LADDER
-import ca.stellardrift.permissionsex.impl.commands.Messages.DEMOTE_SUCCESS
 import ca.stellardrift.permissionsex.impl.commands.Messages.PROMOTE_DESCRIPTION
 import ca.stellardrift.permissionsex.impl.commands.Messages.PROMOTE_ERROR_ALREADY_AT_TOP
-import ca.stellardrift.permissionsex.impl.commands.Messages.PROMOTE_SUCCESS
-import ca.stellardrift.permissionsex.impl.commands.Messages.RANKING_BUTTON_DELETE_DESCRIPTION
-import ca.stellardrift.permissionsex.impl.commands.Messages.RANKING_BUTTON_MOVE_DOWN_DESCRIPTION
-import ca.stellardrift.permissionsex.impl.commands.Messages.RANKING_BUTTON_MOVE_UP_DESCRIPTION
 import ca.stellardrift.permissionsex.impl.commands.Messages.RANKING_DESCRIPTION
 import ca.stellardrift.permissionsex.impl.commands.commander.ButtonType
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
 import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.impl.commands.parse.ChildCommandBuilder
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandContext
@@ -59,7 +53,6 @@ import ca.stellardrift.permissionsex.util.unaryMinus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.Component.text
 
 // Promotion and demotion along existing rank ladders
 

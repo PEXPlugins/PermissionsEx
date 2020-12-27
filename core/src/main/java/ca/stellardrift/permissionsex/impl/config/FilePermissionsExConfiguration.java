@@ -19,10 +19,14 @@ package ca.stellardrift.permissionsex.impl.config;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import io.leangen.geantyref.TypeFactory;
 import io.leangen.geantyref.TypeToken;
 import kotlin.Unit;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.pcollections.PSet;
+import org.pcollections.PStack;
+import org.pcollections.PVector;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
@@ -94,9 +98,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
                 throw new PEBKACException(Messages.CONFIG_ERROR_INVALID_DEFAULT.tr(defaultBackend, backends.keySet()));
             }
         }
-
     }
-
 
     protected FilePermissionsExConfiguration(ConfigurationLoader<?> loader, ConfigurationNode node, Class<T> platformConfigClass) {
         this.loader = loader;
@@ -116,6 +118,12 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
      */
     public static TypeSerializerCollection.Builder populateSerializers(TypeSerializerCollection.Builder coll) {
         return coll
+                // Collection types
+                .register(new TypeToken<PVector<?>>() {}, new PCollectionSerializer<>(PCollections::vector))
+                .register(new TypeToken<PSet<?>>() {}, new PCollectionSerializer<>(PCollections::set))
+                .register(new TypeToken<PStack<?>>() {}, new PCollectionSerializer<>(PCollections::stack))
+                .register(PMapSerializer.TYPE, PMapSerializer.INSTANCE)
+                // PEX's own object
                 .register(DataStore.class, new DataStoreSerializer())
                 .register(new TypeToken<CheckedSupplier<?, SerializationException>>() {}, SupplierSerializer.INSTANCE)
                 .registerAnnotatedObjects(ObjectMapper.factoryBuilder()

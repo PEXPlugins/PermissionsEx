@@ -1,3 +1,5 @@
+import ca.stellardrift.build.common.adventure
+
 /*
  * PermissionsEx
  * Copyright (C) zml and PermissionsEx contributors
@@ -26,6 +28,7 @@ dependencies {
 
     api(project(":api"))
     api(project(":core"))
+    implementation(adventure("text-serializer-plain"))
     compileOnlyApi("org.immutables:gson:$immutablesVersion")
     implementation("io.projectreactor:reactor-core:3.4.0")
     implementation(project(":datastore:sql")) // todo: once core deps are extracted, this module should be a dep of core

@@ -23,20 +23,22 @@ import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition;
 import ca.stellardrift.permissionsex.datastore.ConversionResult;
 import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.impl.backend.memory.MemoryDataStore;
-import ca.stellardrift.permissionsex.impl.commands.CallbackController;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.impl.context.PEXContextDefinition;
 import ca.stellardrift.permissionsex.impl.context.ServerTagContextDefinition;
 import ca.stellardrift.permissionsex.impl.context.TimeContextDefinition;
-import ca.stellardrift.permissionsex.impl.data.CacheListenerHolder;
-import ca.stellardrift.permissionsex.impl.data.RankLadderCache;
-import ca.stellardrift.permissionsex.impl.data.SubjectDataCacheImpl;
-import ca.stellardrift.permissionsex.impl.data.ToDataSubjectRefImpl;
+import ca.stellardrift.permissionsex.impl.util.CacheListenerHolder;
+import ca.stellardrift.permissionsex.impl.rank.RankLadderCache;
+import ca.stellardrift.permissionsex.impl.subject.SubjectDataCacheImpl;
+import ca.stellardrift.permissionsex.impl.subject.ToDataSubjectRefImpl;
 import ca.stellardrift.permissionsex.impl.logging.DebugPermissionCheckNotifier;
+import ca.stellardrift.permissionsex.impl.subject.LazySubjectRef;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.impl.logging.RecordingPermissionCheckNotifier;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
@@ -46,10 +48,6 @@ import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.impl.subject.SubjectTypeCollectionImpl;
 import ca.stellardrift.permissionsex.impl.util.Util;
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.PVector;
@@ -59,7 +57,12 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -72,6 +75,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static ca.stellardrift.permissionsex.impl.Messages.*;
+import static java.util.Objects.requireNonNull;
 
 
 /**
@@ -88,7 +92,11 @@ import static ca.stellardrift.permissionsex.impl.Messages.*;
  * useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce
  * unnecessary writes to the backing data store in some cases.</p>
  */
-public class PermissionsEx<P> implements ImplementationInterface, Consumer<ContextInheritance>, ContextDefinitionProvider, PermissionsEngine {
+public class PermissionsEx<P> implements ImplementationInterface,
+        Consumer<ContextInheritance>,
+        ContextDefinitionProvider,
+        PermissionsEngine,
+        DataStoreContext {
 
     private final FormattedLogger logger;
     private final ImplementationInterface impl;
@@ -102,19 +110,6 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     private @MonotonicNonNull RankLadderCache rankLadderCache;
     private volatile @Nullable CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
-    private final CallbackController callbackController;
-
-    public SubjectRef<?> deserializeSubjectRef(final Map.Entry<String, String> serialized) {
-        final @Nullable SubjectTypeCollectionImpl<?> existingCollection = this.subjectTypeCache.get(serialized.getKey());
-        if (existingCollection == null) {
-            throw new IllegalArgumentException("Unknown subject type " + serialized.getKey());
-        }
-        return deserialize(existingCollection.type(), serialized.getValue());
-    }
-
-    private <I> SubjectRef<I> deserialize(final SubjectType<I> type, final String serializedIdent) {
-        return SubjectRef.subject(type, type.parseIdentifier(serializedIdent));
-    }
 
     private static class State<P> {
         private final PermissionsExConfiguration<P> config;
@@ -132,7 +127,6 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         this.logger = WrappingFormattedLogger.of(impl.logger(), false);
         this.transientData = MemoryDataStore.create("transient");
         this.transientData.initialize(this);
-        this.callbackController = new CallbackController();
         this.debugMode(config.isDebugEnabled());
         this.registerContextDefinitions(
                 ServerTagContextDefinition.INSTANCE,
@@ -142,20 +136,6 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
 
         this.subjects(SUBJECTS_DEFAULTS);
         this.subjects(SUBJECTS_FALLBACK);
-    }
-
-    /**
-     * Pass all PermissionsEx commands to the provided consumer for registration.
-     *
-     * @param consumer Consumer to receive each command registration
-     */
-    public void registerCommandsTo(final Consumer<CommandSpec> consumer) {
-        /*
-        TODO: Restore commands (probably under cloud)
-        consumer.accept(createRootCommand(this));
-        consumer.accept(getPromoteCommand(this));
-        consumer.accept(getDemoteCommand(this));
-         */
     }
 
     private State<P> getState() throws IllegalStateException {
@@ -212,6 +192,32 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         return this.subjectTypeCache.values().stream().map(SubjectTypeCollectionImpl::type).collect(Collectors.toSet());
     }
 
+    public SubjectRef<?> deserializeSubjectRef(final Map.Entry<String, String> serialized) {
+        return deserializeSubjectRef(serialized.getKey(), serialized.getValue());
+    }
+
+    @Override
+    public SubjectRef<?> deserializeSubjectRef(final String type, final String name) {
+        final @Nullable SubjectTypeCollectionImpl<?> existingCollection = this.subjectTypeCache.get(type);
+        if (existingCollection == null) {
+            throw new IllegalArgumentException("Unknown subject type " + type);
+        }
+        return deserialize(existingCollection.type(), name);
+    }
+
+    @Override
+    public SubjectRef<?> lazySubjectRef(String type, String identifier) {
+        return new LazySubjectRef(
+                this,
+                requireNonNull(type, "type"),
+                requireNonNull(identifier, "identifier")
+        );
+    }
+
+    private <I> SubjectRef<I> deserialize(final SubjectType<I> type, final String serializedIdent) {
+        return SubjectRef.subject(type, type.parseIdentifier(serializedIdent));
+    }
+
     @Override
     public <V> CompletableFuture<V> doBulkOperation(Function<DataStore, CompletableFuture<V>> actor) {
         return this.getState().activeDataStore.performBulkOperation(actor).thenCompose(it -> it);
@@ -243,7 +249,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @param dataStoreIdentifier The identifier of the backend to import from
      * @return A future that completes once the import operation is complete
      */
-    public CompletableFuture<Void> importDataFrom(String dataStoreIdentifier) {
+    public CompletableFuture<?> importDataFrom(String dataStoreIdentifier) {
         final State<P> state = getState();
         final @Nullable DataStore expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
@@ -252,11 +258,11 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         return importDataFrom(expected);
     }
 
-    public CompletableFuture<Void> importDataFrom(ConversionResult conversion) {
+    public CompletableFuture<?> importDataFrom(ConversionResult conversion) {
         return importDataFrom(conversion.store());
     }
 
-    private CompletableFuture<Void> importDataFrom(DataStore expected) {
+    private CompletableFuture<?> importDataFrom(DataStore expected) {
         final State<P> state = getState();
         try {
             expected.initialize(this);
@@ -265,14 +271,13 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         }
 
         return state.activeDataStore.performBulkOperation(store -> {
-            CompletableFuture<Void> ret = CompletableFuture.allOf(Iterables.toArray(Iterables.transform(expected.getAll(),
-                    input -> store.setData(input.getKey().getKey(), input.getKey().getValue(), input.getValue())), CompletableFuture.class))
-                    .thenCombine(expected.getContextInheritance(null).thenCompose(store::setContextInheritance), (v, a) -> null);
-            for (String ladder : expected.getAllRankLadders()) {
-                ret = ret.thenCombine(expected.getRankLadder(ladder, null).thenCompose(ladderObj -> store.setRankLadder(ladder, ladderObj)), (v, a) -> null);
-            }
-            return ret;
-        }).thenCompose(val -> Util.failableFuture(val::get));
+            CompletableFuture<?> result = CompletableFuture.allOf(expected.getAll().map(subject -> store.setData(subject.getKey(), subject.getValue())).toArray(CompletableFuture[]::new)); // subjects
+            result = result.thenCombine(expected.getContextInheritance(null).thenCompose(store::setContextInheritance), (a, b) -> a); // context inheritance
+            result = expected.getAllRankLadders()
+                    .map(ladder -> expected.getRankLadder(ladder, null).thenCompose(ladderData -> store.setRankLadder(ladder, ladderData))) // combine all rank ladder futures
+                    .reduce(result, (existing, next) -> existing.thenCombine(next, (v, a) -> null), (one, two) -> one.thenCombine(two, (v, a) -> null));
+            return result;
+        }).thenCompose(x -> x);
     }
 
     /**
@@ -371,12 +376,12 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
             }
             final DataStoreFactory.Convertable prov = ((DataStoreFactory.Convertable) convertable);
 
-            PVector<ConversionResult> res = prov.listConversionOptions(this);
+            List<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
                     this.logger().info(CONVERSION_PLUGINHEADER.tr(prov.friendlyName()));
                     for (ConversionResult result : res) {
-                        this.logger().info(CONVERSION_INSTANCE.tr(result.description(), result.store().getName()));
+                        this.logger().info(CONVERSION_INSTANCE.tr(result.description(), result.store().name()));
                     }
                 }
                 allResults = allResults.plusAll(res);
@@ -400,7 +405,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
         });
         if (this.cachedInheritance != null) {
             this.cachedInheritance = null;
-            getContextInheritance(null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
+            contextInheritance((Consumer<ContextInheritance>) null).thenAccept(inheritance -> this.cachedInheritanceListeners.call(true, inheritance));
         }
 
         // Migrate over legacy subject data
@@ -432,15 +437,6 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
 
     public List<ConversionResult> getAvailableConversions() {
         return getState().availableConversions;
-    }
-
-    /**
-     * Get the command callback controller for this permissions instance
-     *
-     * @return The callback controller
-     */
-    public CallbackController getCallbackController() {
-        return this.callbackController;
     }
 
     @Override
@@ -477,18 +473,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     }
 
     @Override
-    public Set<CommandSpec> getImplementationSubcommands() {
-        return impl.getImplementationSubcommands();
-    }
-
-    @Override
-    public String getVersion() {
-        return impl.getVersion();
-    }
-
-    @Override
-    public Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
-        return impl.createSubjectIdentifier(collection, ident);
+    public String version() {
+        return impl.version();
     }
 
     /**
@@ -496,7 +482,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      *
      * @return The current configuration object
      */
-    public PermissionsExConfiguration<P> getConfig() {
+    public PermissionsExConfiguration<P> config() {
         return getState().config;
     }
 
@@ -504,14 +490,15 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * Get context inheritance data.
      *
      * <p>The result of the future is immutable -- to take effect, the object returned by any
-     * update methods in {@link ContextInheritance} must be passed to {@link #setContextInheritance(ContextInheritance)}.
+     * update methods in {@link ContextInheritance} must be passed to {@link #contextInheritance(ContextInheritance)}.
      *  It follows that anybody else's changes will not appear in the returned inheritance object -- so if updates are
      *  desired providing a callback function is important.</p>
      *
      * @param listener A callback function that will be triggered whenever there is a change to the context inheritance
      * @return A future providing the current context inheritance data
      */
-    public CompletableFuture<ContextInheritance> getContextInheritance(final @Nullable Consumer<ContextInheritance> listener) {
+    @Override
+    public CompletableFuture<ContextInheritance> contextInheritance(final @Nullable Consumer<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
             this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
         }
@@ -528,7 +515,8 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
      * @param newInheritance The modified inheritance object
      * @return A future containing the latest context inheritance object
      */
-    public CompletableFuture<ContextInheritance> setContextInheritance(ContextInheritance newInheritance) {
+    @Override
+    public CompletableFuture<ContextInheritance> contextInheritance(ContextInheritance newInheritance) {
         return getState().activeDataStore.setContextInheritance(newInheritance);
     }
 
@@ -546,20 +534,20 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
     @Override
     public CompletableFuture<Set<ContextDefinition<?>>> usedContextTypes() {
         return getState().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
-            ImmutableSet.Builder<ContextDefinition<?>> build = ImmutableSet.builder();
+            final Set<ContextDefinition<?>> build = new HashSet<>();
             for (final ContextDefinition<?> def : this.contextTypes.values()) {
                 if (persist.contains(def.name()) || trans.contains(def.name())) {
                     build.add(def);
                 }
             }
-           return build.build();
+           return Collections.unmodifiableSet(build);
         });
     }
 
     @Override
     public <T> boolean registerContextDefinition(ContextDefinition<T> contextDefinition) {
         if (contextDefinition instanceof PEXContextDefinition<?> && this.state.get() != null) {
-            ((PEXContextDefinition<T>) contextDefinition).update(getConfig());
+            ((PEXContextDefinition<T>) contextDefinition).update(config());
         }
        final @Nullable ContextDefinition<?> possibleOut =  this.contextTypes.putIfAbsent(contextDefinition.name(), contextDefinition);
         if (possibleOut instanceof SimpleContextDefinition.Fallback) {
@@ -582,7 +570,7 @@ public class PermissionsEx<P> implements ImplementationInterface, Consumer<Conte
 
     @Override
     public List<ContextDefinition<?>> registeredContextTypes() {
-        return ImmutableList.copyOf(this.contextTypes.values());
+        return PCollections.asVector(this.contextTypes.values());
     }
 
     @Override

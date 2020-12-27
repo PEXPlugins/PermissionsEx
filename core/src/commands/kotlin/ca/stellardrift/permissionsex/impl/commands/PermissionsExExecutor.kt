@@ -21,7 +21,6 @@ import ca.stellardrift.permissionsex.impl.commands.Messages.COMMON_ARGS_SUBJECT
 import ca.stellardrift.permissionsex.impl.commands.Messages.COMMON_ARGS_TRANSIENT
 import ca.stellardrift.permissionsex.impl.commands.Messages.EXECUTOR_ERROR_GETTING_SUBJECT
 import ca.stellardrift.permissionsex.impl.commands.Messages.EXECUTOR_ERROR_SUBJECT_REQUIRED
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandExecutor

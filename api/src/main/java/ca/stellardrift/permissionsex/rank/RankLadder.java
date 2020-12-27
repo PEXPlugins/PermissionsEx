@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.rank;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import net.kyori.adventure.text.ComponentLike;
 
 import java.util.List;
@@ -93,7 +94,7 @@ public interface RankLadder extends ComponentLike {
      * @return a rank ladder instance with the appropriate changes
      * @since 2.0.0
      */
-    RankLadder with(Map.Entry<String, String> subject);
+    RankLadder with(SubjectRef<?> subject);
 
 
     /**
@@ -104,7 +105,7 @@ public interface RankLadder extends ComponentLike {
      * @param index The point to add the rank at. Must be on the range [0, getRanks().size()]
      * @return a rank ladder instance with the appropriate changes
      */
-    RankLadder with(Map.Entry<String, String> subject, int index);
+    RankLadder with(SubjectRef<?> subject, int index);
 
     /**
      * Get the index of this rank in the current ladder. This index is the index of the rank in {@link #ranks()}.
@@ -112,7 +113,7 @@ public interface RankLadder extends ComponentLike {
      * @param subject The rank to find the index of
      * @return The index of the rank, or -1 if the rank is not present.
      */
-    int indexOf(Map.Entry<String, String> subject);
+    int indexOf(SubjectRef<?> subject);
 
     /**
      * Remove the given rank from this rank ladder.
@@ -120,12 +121,12 @@ public interface RankLadder extends ComponentLike {
      * @param subject The rank to remove
      * @return A new ladder without the given rank, or this if the rank was not contained in this ladder
      */
-    RankLadder without(Map.Entry<String, String> subject);
+    RankLadder without(SubjectRef<?> subject);
 
     /**
      * Provides a way to iterate through ranks currently active in this ladder.
      * @return A list of ranks present in the ladder. This list is immutable.
      */
-    List<? extends Map.Entry<String,String>> ranks();
+    List<? extends SubjectRef<?>> ranks();
 
 }

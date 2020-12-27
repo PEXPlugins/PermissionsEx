@@ -32,7 +32,7 @@ public final class EmptyTestConfiguration implements PermissionsExConfiguration<
 
     @Override
      public DataStore getDataStore(final @Nullable String name) {
-        if (Objects.equals(name, defaultDataStore.getName())) {
+        if (Objects.equals(name, defaultDataStore.name())) {
             return this.defaultDataStore;
         } else {
             throw new IllegalArgumentException("Unknown data store " + name);

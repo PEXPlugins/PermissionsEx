@@ -32,6 +32,5 @@ import java.util.Set;
 public interface PermissionCheckNotifier {
     void onPermissionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String permission, int value);
     void onOptionCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, String option, @Nullable String value);
-    void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents);
-
+    void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<SubjectRef<?>> parents);
 }

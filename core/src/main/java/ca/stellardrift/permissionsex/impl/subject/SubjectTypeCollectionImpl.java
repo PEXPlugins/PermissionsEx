@@ -18,7 +18,6 @@ package ca.stellardrift.permissionsex.impl.subject;
 
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.datastore.DataStore;
-import ca.stellardrift.permissionsex.impl.data.SubjectDataCacheImpl;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;

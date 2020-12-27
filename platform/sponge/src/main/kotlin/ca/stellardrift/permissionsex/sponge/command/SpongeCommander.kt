@@ -16,21 +16,18 @@
  */
 package ca.stellardrift.permissionsex.sponge.command
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
-import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
 import ca.stellardrift.permissionsex.sponge.asPex
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import ca.stellardrift.permissionsex.util.styled
-import java.util.Locale
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.text
+import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
 import org.spongepowered.api.command.CommandCause
-import org.spongepowered.api.entity.living.player.server.ServerPlayer
-import org.spongepowered.api.util.locale.LocaleSource
+import org.spongepowered.api.util.Nameable
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
@@ -39,33 +36,24 @@ internal class SpongeCommander(
     val pex: PermissionsExPlugin,
     private val cause: CommandCause
 ) : Commander {
-    override val manager: PermissionsEx<*>
-        get() = pex.manager
-    override val formatter: SpongeMessageFormatter = SpongeMessageFormatter(this)
-    override val name: String = cause.subject.friendlyIdentifier.orElse(cause.subject.identifier)
-    override val locale: Locale = cause.first(LocaleSource::class.java).map { it.locale }.orElse(Locale.getDefault())
+    private val formatter: SpongeMessageFormatter = SpongeMessageFormatter(pex)
 
     override fun hasPermission(permission: String): Boolean {
         return cause.hasPermission(permission)
     }
 
-    override val subjectIdentifier: SubjectRef<*>?
-        get() = pex.service?.let { cause.asSubjectReference().asPex(it) }
-
-    override val messageColor: TextColor = NamedTextColor.DARK_AQUA
-
-    override fun msgPaginated(
+    override fun sendPaginated(
         title: Component,
         header: Component?,
-        text: Iterable<Component>
+        text: Iterable<ComponentLike>
     ) {
         val build = pex.game.serviceProvider.paginationService().builder()
         formatter.apply {
-            build.title(title.styled { header().hl() })
+            build.title(title.style { header(hl(it)) })
             if (header != null) {
                 build.header(header.color(NamedTextColor.GRAY))
             }
-            build.contents(text.map { it.colorIfAbsent(messageColor) })
+            build.contents(text.map { it.asComponent().colorIfAbsent(formatter().responseColor()) })
                 .sendTo(cause.audience)
         }
     }
@@ -73,10 +61,23 @@ internal class SpongeCommander(
     override fun audience(): Audience {
         return this.cause.audience
     }
+
+    override fun name(): Component {
+        return text(cause.subject.friendlyIdentifier.orElse(cause.subject.identifier))
+    }
+
+    override fun subjectIdentifier(): SubjectRef<*>? {
+        return pex.service?.let { cause.asSubjectReference().asPex(it) }
+    }
+
+    override fun formatter(): MessageFormatter {
+        return this.formatter // TODO: use plugin
+    }
 }
 
-internal class SpongeMessageFormatter(cmd: SpongeCommander) : MessageFormatter(cmd, cmd.pex.manager) {
+internal class SpongeMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager) {
 
-    override val <I> SubjectRef<I>.friendlyName: String?
-        get() = (type().getAssociatedObject(identifier()) as? ServerPlayer)?.name // TODO: Named interface?
+    override fun <I> friendlyName(reference: SubjectRef<I>): String? {
+        return (reference.type().getAssociatedObject(reference.identifier()) as? Nameable)?.name
+    }
 }

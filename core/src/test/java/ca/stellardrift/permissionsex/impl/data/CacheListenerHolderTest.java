@@ -17,7 +17,7 @@
 package ca.stellardrift.permissionsex.impl.data;
 
 
-import ca.stellardrift.permissionsex.impl.data.CacheListenerHolder;
+import ca.stellardrift.permissionsex.impl.util.CacheListenerHolder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;

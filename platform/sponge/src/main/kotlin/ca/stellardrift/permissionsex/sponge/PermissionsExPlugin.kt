@@ -22,18 +22,11 @@ import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
 import ca.stellardrift.permissionsex.impl.ImplementationInterface
 import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Permission
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.impl.commands.parse.command
-import ca.stellardrift.permissionsex.impl.commands.parse.string
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
-import ca.stellardrift.permissionsex.sponge.command.register
-import ca.stellardrift.permissionsex.sponge.command.registerRegistrar
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -65,7 +58,6 @@ import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.lifecycle.ConstructPluginEvent
 import org.spongepowered.api.event.lifecycle.ProvideServiceEvent
 import org.spongepowered.api.event.lifecycle.RefreshGameEvent
-import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent
 import org.spongepowered.api.event.network.ServerSideConnectionEvent
 import org.spongepowered.api.profile.GameProfileCache
@@ -129,11 +121,6 @@ class PermissionsExPlugin @Inject internal constructor(
         .undefinedValues { true }
         .build()
 
-    init {
-        // setup command registrar
-        registerRegistrar(this)
-    }
-
     @Listener
     @Throws(PEBKACException::class, InterruptedException::class, ExecutionException::class)
     fun onPreInit(event: ConstructPluginEvent) {
@@ -176,7 +163,7 @@ class PermissionsExPlugin @Inject internal constructor(
         }
     }
 
-    @Listener
+    /* @Listener
     fun registerCommands(event: RegisterCommandEvent<CommandSpec>) {
         // fake op commands
         mapOf("op" to "minecraft.command.op",
@@ -192,7 +179,7 @@ class PermissionsExPlugin @Inject internal constructor(
         this.manager.registerCommandsTo {
             event.register(this.container, it)
         }
-    }
+    }*/
 
     @Listener
     fun cacheUserAsync(event: ServerSideConnectionEvent.Auth) {
@@ -227,7 +214,7 @@ class PermissionsExPlugin @Inject internal constructor(
             it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
                     it.data().update { data ->
-                        data.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.player.name)
+                        data.withSegment(PermissionsEx.GLOBAL_CONTEXT) { it.withOption("name", event.player.name) }
                     }
                 }
             }
@@ -247,7 +234,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     @Listener
     fun onPlayerQuit(event: ServerSideConnectionEvent.Disconnect) {
-        manager.callbackController.clearOwnedBy(event.player.uniqueId)
+        mcManager.callbackController().clearOwnedBy(event.player.uniqueId)
         service?.userSubjects?.suggestUnload(event.player.identifier)
     }
 
@@ -334,7 +321,7 @@ class PermissionsExPlugin @Inject internal constructor(
             }
     }*/
 
-    override fun getVersion(): String {
+    override fun version(): String {
         return ProjectData.VERSION
     }
 }
@@ -431,7 +418,7 @@ class PermissionsExService internal constructor(private val server: Server, priv
         val coll = manager.subjects(plugin.roleTemplateSubjectType)
         for ((key, value) in ranks) {
             coll.transientData().update(key) { input ->
-                input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.id, value)
+                input.withSegment(PermissionsEx.GLOBAL_CONTEXT) { it.withPermission(description.id, value) }
             }.get()
         }
     }

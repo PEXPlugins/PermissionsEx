@@ -170,14 +170,14 @@ public class SchemaMigrationsTest extends PermissionsExTest {
             try (PreparedStatement stmt = dao.prepareStatement("SELECT id FROM {}subjects")) {
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    SubjectRef ref = dao.getSubjectRef(rs.getInt(1)).get();
-                    final String out = String.format("Subject %s:%s", ref.getType(), ref.getIdentifier());
+                    SqlSubjectRef ref = dao.getSubjectRef(rs.getInt(1)).get();
+                    final String out = String.format("Subject %s:%s", ref.rawType(), ref.rawIdentifier());
                     System.out.println(out);
                     final char[] outLine = new char[out.length()];
                     Arrays.fill(outLine, '=');;
                     System.out.println(outLine);
 
-                    for (Segment seg : dao.getSegments(ref)) {
+                    for (SqlSegment seg : dao.getSegments(ref)) {
                         System.out.println(seg);
                     }
                 }

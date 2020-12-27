@@ -21,9 +21,6 @@ import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.impl.commands.Messages.COMMON_ARGS_CONTEXT
 import ca.stellardrift.permissionsex.impl.commands.Messages.OPTION_ARG_KEY
 import ca.stellardrift.permissionsex.impl.commands.Messages.OPTION_ARG_VALUE
-import ca.stellardrift.permissionsex.impl.commands.Messages.OPTION_SUCCESS_SET
-import ca.stellardrift.permissionsex.impl.commands.Messages.OPTION_SUCCESS_UNSET
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
 import ca.stellardrift.permissionsex.impl.commands.parse.StructuralArguments.optional
@@ -31,7 +28,6 @@ import ca.stellardrift.permissionsex.impl.commands.parse.command
 import ca.stellardrift.permissionsex.impl.commands.parse.option
 import ca.stellardrift.permissionsex.impl.commands.parse.string
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
-import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent
 

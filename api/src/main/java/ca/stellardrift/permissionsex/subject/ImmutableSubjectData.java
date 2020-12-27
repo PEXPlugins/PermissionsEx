@@ -16,262 +16,122 @@
  */
 package ca.stellardrift.permissionsex.subject;
 
+import ca.stellardrift.permissionsex.context.ContextDefinitionProvider;
 import ca.stellardrift.permissionsex.context.ContextValue;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * The core subject data interface.
  *
- * <p>This class is an immutable holder for all of a single subject's data.</p>
+ * <p>This class is an immutable holder for all of a single subject's data. No inherited data is
+ * included, and no context calculations are performed when querying objects of this class.</p>
  *
- * <p>No inherited data is included, and no context calculations are performed when querying objects of this class.</p>
+ * <p>The global context is represented by an empty set
+ * ({@link ContextDefinitionProvider#GLOBAL_CONTEXT}), not a null value.</p>
  *
- * <p>he global context is represented by an empty set, not a null value.</p>
+ * @since 2.0.0
  */
 public interface ImmutableSubjectData {
-    /**
-     * Query all options registered, as a map from context combination to map of key to value
-     *
-     * @return All options registered, or an empty map
-     */
-    Map<Set<ContextValue<?>>, Map<String, String>> getAllOptions();
 
     /**
-     * Get options registered in a single context set.
+     * Get all non-empty segments associated with this subject.
      *
-     * @param contexts The contexts to check in
-     * @return The options, as an immutable map
+     * @return all segments
+     * @since 2.0.0
      */
-    Map<String, String> getOptions(Set<ContextValue<?>> contexts);
+    Map<? extends Set<ContextValue<?>>, Segment> segments();
 
     /**
-     * Return a new subject data object with updated option information
+     * Apply a transformation to every segment contained in this subject.
      *
-     * @param contexts The contexts to set this option in
-     * @param key The key of the option to set. Must be unique.
-     * @param value The value to set attached to the key
-     * @return An updated data object
+     * @param transformer action to apply
+     * @return the modified subject data
+     * @since 2.0.0
      */
-    ImmutableSubjectData setOption(Set<ContextValue<?>> contexts, String key, String value);
+    ImmutableSubjectData withSegments(final BiFunction<Set<ContextValue<?>>, Segment, Segment> transformer);
 
     /**
-     * Return a new subject data object with an entirely new set of options
+     * Apply a transformation to the segment at the provided contexts.
      *
-     * @param contexts The contexts to set these options in
-     * @param values The options to set
-     * @return An updated data object
+     * <p>If no segment is present at {@code contexts}, an empty segment will be used as the
+     * input value.</p>
+     *
+     * @param contexts the contexts to modify at
+     * @param operation the operation to perform
+     * @return an updated subject data
+     * @since 2.0.0
      */
-    ImmutableSubjectData setOptions(Set<ContextValue<?>> contexts, Map<String, String> values);
+    ImmutableSubjectData withSegment(final Set<ContextValue<?>> contexts, final UnaryOperator<Segment> operation);
 
     /**
-     * Return a new subject data object with no options set in the given contexts
+     * Return a map derived from all segments in this data, transformed by {@code mapper}.
      *
-     * @param contexts The contexts to set these options in
-     * @return A new subject data object with no options information in the provided contexts.
+     * @param mapper the mapper
+     * @param <V> the output value type
+     * @return the map
+     * @since 2.0.0
      */
-    ImmutableSubjectData clearOptions(Set<ContextValue<?>> contexts);
+    <V> Map<Set<ContextValue<?>>, V> mapSegmentValues(final Function<Segment, V> mapper);
 
     /**
-     * Return a new subject data object with no options set.
+     * Get a value derived from a single segment.
      *
-     * @return A new subject data object with no options information.
+     * @param contexts the contexts to query the segment from
+     * @param mapper the transformation
+     * @param <V> the output value type
+     * @return the transformed value, or null if no segment was present at the context
+     * @since 2.0.0
      */
-    ImmutableSubjectData clearOptions();
+    <V> @Nullable V mapSegment(final Set<ContextValue<?>> contexts, final Function<Segment, V> mapper);
 
     /**
-     * Get all permissions data in this subject
+     * Get a segment at the specified coordinates.
      *
-     * @return an immutable map from context set to map of permission to value
+     * @param contexts the context coordinates for the segment
+     * @return the segment at the coordinates, or an empty segment if none is present
+     * @since 2.0.0
      */
-    Map<Set<ContextValue<?>>, Map<String, Integer>> getAllPermissions();
+    Segment segment(final Set<ContextValue<?>> contexts);
 
     /**
-     * Get permissions data for a single context in this subject
+     * Make an updated subject data with the segment applied at the specified context set.
      *
-     * @param contexts The context set to get data fort
-     * @return an immutable map from permission to value
+     * @param contexts contexts to set at
+     * @param segment the segment to set
+     * @return an updated subject data
+     * @since 2.0.0
      */
-    Map<String, Integer> getPermissions(Set<ContextValue<?>> contexts);
+    ImmutableSubjectData withSegment(final Set<ContextValue<?>> contexts, final Segment segment);
 
     /**
-     * Set a single permission to a specific value. Values greater than zero evaluate to true,
-     * values less than zero evaluate to false, and equal to zero will unset the permission. Higher absolute values carry more weight.
-     *
-     * @param contexts The contexts to set this permission in
-     * @param permission The permission to set
-     * @param value The value. Zero to unset.
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData setPermission(Set<ContextValue<?>> contexts, String permission, int value);
-
-    /**
-     * Set all permissions in a single context set
-     *
-     * @param contexts The context set
-     * @param values A map from permissions to their values
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData setPermissions(Set<ContextValue<?>> contexts, Map<String, Integer> values);
-
-    /**
-     * Return an updated subject data object with all permissions in every context set unset.
-     *
-     * @return The updated subject data object
-     */
-    ImmutableSubjectData clearPermissions();
-
-    /**
-     * Return an updated subject data object with all permissions in a given context set unset.
-     *
-     * @param contexts The context set to unset permissions in
-     * @return The updated subject data object
-     */
-    ImmutableSubjectData clearPermissions(Set<ContextValue<?>> contexts);
-
-    /**
-     * Get an immutable map of parents in every context set.
-     *
-     * <p>The map returned is from context set to a list of subject identifiers</p>
-     *
-     * @return An immutable map of all parents
-     */
-    Map<Set<ContextValue<?>>, List<Map.Entry<String, String>>> getAllParents();
-
-    /**
-     * Get parents in a specific context.
-     *
-     * @param contexts The set of contexts to get parents in
-     * @return An immutable list of parents. Empty list
-     */
-    List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> contexts);
-
-    /**
-     * Add a single parent subject in a single context set.
-     *
-     * @param contexts The context set to add a parent subject in
-     * @param type The type of the parent subject being added
-     * @param identifier The identifier of the parent subject being added
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData addParent(Set<ContextValue<?>> contexts, String type, String identifier);
-
-    /**
-     * Add a single parent subject in a single context set.
-     *
-     * @param contexts The context set to add a parent subject in
-     * @param subject a reference to the subject that should be added as parent.
-     * @param <I> identifier type
-     * @return An updated subject data object
-     */
-    default <I> ImmutableSubjectData addParent(Set<ContextValue<?>> contexts, SubjectRef<I> subject) {
-        return addParent(contexts, subject.type().name(), subject.type().serializeIdentifier(subject.identifier()));
-    }
-
-    /**
-     * Remove a single parent subject in a single context set.
-     *
-     * @param contexts The context set to remove a parent subject in
-     * @param type The type of the parent subject being removed
-     * @param identifier The identifier of the parent subject being removed
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData removeParent(Set<ContextValue<?>> contexts, String type, String identifier);
-
-    /**
-     * Remove a single parent subject in a single context set.
-     *
-     * @param contexts the context set to remove a parent subject in
-     * @param subject a reference to the subject that should be added as parent.
-     * @param <I> identifier type
-     * @return an updated subject data object
-     */
-    default <I> ImmutableSubjectData removeParent(final Set<ContextValue<?>> contexts, final SubjectRef<I> subject) {
-        return removeParent(contexts, subject.type().name(), subject.type().serializeIdentifier(subject.identifier()));
-    }
-
-    /**
-     * Set the parents in a single context set to the provided list
-     *
-     * @param contexts The set of contexts to update the parents in
-     * @param parents The parents that will be written in the given context
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData setParents(Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents);
-
-    /**
-     * Remove all parents from this subject data object
-     *
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData clearParents();
-
-    /**
-     * Remove every parent in the provided context set from this subject data object
-     *
-     * @param contexts The contexts to remove parents in
-     * @return The updated subject data object
-     */
-    ImmutableSubjectData clearParents(Set<ContextValue<?>> contexts);
-
-    /**
-     * Get the fallback permissions value in a given context set. This is the value that will be returned for permissions
-     * that do not match anything more specific
-     *
-     * @param contexts The context set to query the default value in
-     * @return The default value in the given context set, or 0 if none is set.
-     */
-    int getDefaultValue(Set<ContextValue<?>> contexts);
-
-    /**
-     * Set the fallback permission value in a given context set
-     *
-     * @param contexts The context set to apply the given default value in
-     * @param defaultValue The default value to apply. A default value of 0 is equivalent to unset
-     * @return An updated subject data object
-     */
-    ImmutableSubjectData setDefaultValue(Set<ContextValue<?>> contexts, int defaultValue);
-
-    /**
-     * Get every default value set in this subject data entry
-     *
-     * @return A map from context set to default value
-     */
-    Map<Set<ContextValue<?>>, Integer> getAllDefaultValues();
-
-    /**
-     * Gets the contexts we have data for
+     * Gets the contexts with data set in this subject.
      *
      * @return An immutable set of all sets of contexts with data stored
+     * @since 2.0.0
      */
-    Set<Set<ContextValue<?>>> getActiveContexts();
+    Set<? extends Set<ContextValue<?>>> activeContexts();
 
     /**
      * Create a new subject data instance, applying all data from {@code other}.
      *
-     * <p>This will <em>add</em> to existing data, rather than overwriting</p>
+     * <p>This will <em>add</em> to existing data, rather than overwriting.</p>
      *
      * @param other source to add from
      * @return a modified subject data
+     * @since 2.0.0
      */
     default ImmutableSubjectData mergeFrom(final ImmutableSubjectData other) {
         ImmutableSubjectData output = this;
-        for (Map.Entry<Set<ContextValue<?>>, Map<String, Integer>> ent : other.getAllPermissions().entrySet()) {
-            output = output.setPermissions(ent.getKey(), ent.getValue());
-        }
-        for (Map.Entry<Set<ContextValue<?>>, Map<String, String>> ent : other.getAllOptions().entrySet()) {
-            output = output.setOptions(ent.getKey(), ent.getValue());
-        }
-        for (Map.Entry<Set<ContextValue<?>>, List<Map.Entry<String, String>>> ent : other.getAllParents().entrySet()) {
-            output = output.setParents(ent.getKey(), ent.getValue());
-        }
-        for (Map.Entry<Set<ContextValue<?>>, Integer> ent : other.getAllDefaultValues().entrySet()) {
-            output = output.setDefaultValue(ent.getKey(), ent.getValue());
+        for (final Map.Entry<? extends Set<ContextValue<?>>, Segment> entry : other.segments().entrySet()) {
+            output = output.withSegment(entry.getKey(), output.segment(entry.getKey()).mergeFrom(entry.getValue()));
         }
         return output;
-
     }
 
 }

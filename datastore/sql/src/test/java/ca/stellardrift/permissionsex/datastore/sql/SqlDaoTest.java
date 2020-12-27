@@ -16,6 +16,8 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
+import ca.stellardrift.permissionsex.impl.util.PCollections;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.test.PermissionsExTest;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
@@ -24,13 +26,11 @@ import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.Assertions;
 import org.pcollections.HashTreePSet;
-import org.pcollections.TreePVector;
-import org.spongepowered.configurate.serialize.SerializationException;
+import org.pcollections.PSet;
+import org.pcollections.PVector;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,9 +71,9 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @BeforeEach
     @Override
-    public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {
+    public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException {
         Path testDir = tempDir.resolve(info.getDisplayName() + "-dao");
-        final String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));
+        final String jdbcUrl = this.jdbcUrl.replaceAll("\\{base}", testDir.toAbsolutePath().toString().replace('\\', '/'));
         sqlStore.setConnectionUrl(jdbcUrl);
         sqlStore.setPrefix("pextest" + COUNTER.getAndIncrement());
         super.setUp(info, tempDir);
@@ -115,11 +114,11 @@ public class SqlDaoTest extends PermissionsExTest {
 
             @Override
             public List<String> getServerTags() {
-                return ImmutableList.of();
+                return PCollections.vector();
             }
 
             @Override
-            public void validate() throws PEBKACException {
+            public void validate() {
             }
 
             @Override
@@ -128,7 +127,7 @@ public class SqlDaoTest extends PermissionsExTest {
             }
 
             @Override
-            public PermissionsExConfiguration<EmptyPlatformConfiguration> reload() throws IOException {
+            public PermissionsExConfiguration<EmptyPlatformConfiguration> reload() {
                 return this;
             }
         };
@@ -162,15 +161,15 @@ public class SqlDaoTest extends PermissionsExTest {
     public void testGetOrCreateSubjectRef() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
             assertFalse(dao.getSubjectRef("group", "admin").isPresent());
-            SubjectRef created = dao.getOrCreateSubjectRef("group", "admin");
-            SubjectRef fetched = dao.getSubjectRef("group", "admin").get();
-            assertEquals(created.getId(), fetched.getId());
+            SqlSubjectRef<?> created = dao.getOrCreateSubjectRef("group", "admin");
+            SqlSubjectRef<?> fetched = dao.getSubjectRef("group", "admin").get();
+            assertEquals(created.id(), fetched.id());
 
-            SubjectRef couldBeCreated = dao.getOrCreateSubjectRef("group", "admin");
-            assertEquals(created.getId(), couldBeCreated.getId());
+            SqlSubjectRef<?> couldBeCreated = dao.getOrCreateSubjectRef("group", "admin");
+            assertEquals(created.id(), couldBeCreated.id());
 
-            SubjectRef gottenById = dao.getSubjectRef(created.getId()).get();
-            assertEquals(created.getId(), gottenById.getId());
+            SqlSubjectRef<?> gottenById = dao.getSubjectRef(created.id()).get();
+            assertEquals(created.id(), gottenById.id());
             assertEquals(created, gottenById);
         }
     }
@@ -178,14 +177,14 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testRemoveSubject() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef first = dao.getOrCreateSubjectRef("group", "one");
-            SubjectRef second = dao.getOrCreateSubjectRef("group", "two");
+            SqlSubjectRef<?> first = dao.getOrCreateSubjectRef("group", "one");
+            SqlSubjectRef<?> second = dao.getOrCreateSubjectRef("group", "two");
 
             assertTrue(dao.removeSubject("group", "one"));
-            assertFalse(dao.getSubjectRef(first.getType(), first.getIdentifier()).isPresent());
+            assertFalse(dao.getSubjectRef(first.rawType(), first.rawIdentifier()).isPresent());
 
             assertTrue(dao.removeSubject(second));
-            assertFalse(dao.getSubjectRef(second.getId()).isPresent());
+            assertFalse(dao.getSubjectRef(second.id()).isPresent());
         }
     }
 
@@ -197,7 +196,7 @@ public class SqlDaoTest extends PermissionsExTest {
             dao.getOrCreateSubjectRef("user", UUID.randomUUID().toString());
             dao.getOrCreateSubjectRef("default", "user");
             dao.getOrCreateSubjectRef("system", "console");
-            assertEquals(ImmutableSet.of("group", "user", "default", "system"), dao.getRegisteredTypes());
+            assertEquals(PCollections.set("group", "user", "default", "system"), dao.getRegisteredTypes());
         }
     }
 
@@ -210,21 +209,21 @@ public class SqlDaoTest extends PermissionsExTest {
             dao.getOrCreateSubjectRef("default", "default");
             dao.getOrCreateSubjectRef("system", "console");
 
-            assertEquals(ImmutableSet.of("one", "two"), dao.getAllIdentifiers("group"));
-            assertEquals(ImmutableSet.of("user", "default"), dao.getAllIdentifiers("default"));
+            assertEquals(PCollections.set("one", "two"), dao.getAllIdentifiers("group"));
+            assertEquals(PCollections.set("user", "default"), dao.getAllIdentifiers("default"));
         }
     }
 
     @Test
     public void testAddRemoveSegment() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
+            SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("group", "one");
             assertTrue(dao.getSegments(subject).isEmpty());
 
-            Segment seg = dao.addSegment(subject);
-            List<Segment> segments = dao.getSegments(subject);
+            SqlSegment seg = dao.addSegment(subject);
+            List<SqlSegment> segments = dao.getSegments(subject);
             assertFalse(segments.isEmpty());
-            assertEquals(seg.getId(), segments.get(0).getId());
+            assertEquals(seg.id(), segments.get(0).id());
 
             assertTrue(dao.removeSegment(seg));
             assertTrue(dao.getSegments(subject).isEmpty());
@@ -234,22 +233,22 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testContexts() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef subject = dao.getOrCreateSubjectRef("test", "contexts");
+            final SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("test", "contexts");
 
-            Segment testSeg = dao.addSegment(subject);
-            assertTrue(testSeg.getContexts().isEmpty());
+            SqlSegment testSeg = dao.addSegment(subject);
+            assertTrue(testSeg.contexts().isEmpty());
             assertTrue(dao.getUsedContextKeys().isEmpty());
 
-            final Set<ContextValue<?>> contexts = ImmutableSet.of(new ContextValue<String>("world", "DIM-1"),
+            final PSet<ContextValue<?>> contexts = PCollections.set(new ContextValue<String>("world", "DIM-1"),
                     new ContextValue<String>("server-tag", "minigames"));
             dao.setContexts(testSeg, contexts);
             testSeg = dao.getSegments(subject).get(0);
-            assertEquals(contexts, testSeg.getContexts());
-            assertEquals(ImmutableSet.of("world", "server-tag"), dao.getUsedContextKeys());
+            assertEquals(contexts, testSeg.contexts());
+            assertEquals(PCollections.set("world", "server-tag"), dao.getUsedContextKeys());
 
-            dao.setContexts(testSeg, ImmutableSet.of());
+            dao.setContexts(testSeg, PCollections.set());
             testSeg = dao.getSegments(subject).get(0);
-            assertTrue(testSeg.getContexts().isEmpty());
+            assertTrue(testSeg.contexts().isEmpty());
             assertTrue(dao.getUsedContextKeys().isEmpty());
 
         }
@@ -258,51 +257,51 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testOptions() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
-            Segment seg = dao.addSegment(subject);
-            assertFalse(seg.getOptions().containsKey("test"));
+            SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("group", "one");
+            SqlSegment seg = dao.addSegment(subject);
+            assertFalse(seg.options().containsKey("test"));
 
             // Set individually
             dao.setOption(seg, "test", "potato");
             dao.setOption(seg, "test2", "orange");
             dao.setOption(seg, "test", "pear");
             seg = dao.getSegments(subject).get(0); // Probably not the most efficient, but having extra code paths just for testing is a bad idea (maybe a get options/etc?)
-            assertEquals("pear", seg.getOptions().get("test"));
-            assertEquals("orange", seg.getOptions().get("test2"));
+            assertEquals("pear", seg.options().get("test"));
+            assertEquals("orange", seg.options().get("test2"));
 
             // Bulk set
             dao.setOptions(seg, ImmutableMap.of("direction", "left", "speed", "vroom"));
             seg = dao.getSegments(subject).get(0);
-            assertFalse(seg.getOptions().containsKey("test"));
-            assertFalse(seg.getOptions().containsKey("test2"));
-            assertEquals("left", seg.getOptions().get("direction"));
-            assertEquals("vroom", seg.getOptions().get("speed"));
+            assertFalse(seg.options().containsKey("test"));
+            assertFalse(seg.options().containsKey("test2"));
+            assertEquals("left", seg.options().get("direction"));
+            assertEquals("vroom", seg.options().get("speed"));
 
             // Clear a single option
             dao.clearOption(seg, "direction");
             seg = dao.getSegments(subject).get(0);
-            assertFalse(seg.getOptions().containsKey("direction"));
-            assertEquals("vroom", seg.getOptions().get("speed"));
+            assertFalse(seg.options().containsKey("direction"));
+            assertEquals("vroom", seg.options().get("speed"));
 
             // Working through the Segment object
             seg = seg.withOption("test", "potato")
                     .withOption("direction", "north");
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
-            assertEquals("potato", seg.getOptions().get("test"));
-            assertEquals("vroom", seg.getOptions().get("speed"));
-            assertEquals("north", seg.getOptions().get("direction"));
+            assertEquals("potato", seg.options().get("test"));
+            assertEquals("vroom", seg.options().get("speed"));
+            assertEquals("north", seg.options().get("direction"));
 
             seg = seg.withoutOptions();
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
-            assertTrue(seg.getOptions().isEmpty());
+            assertTrue(seg.options().isEmpty());
 
             seg = seg.withOptions(ImmutableMap.of("absorbency", "high", "color", "yellow"));
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
-            assertEquals("high", seg.getOptions().get("absorbency"));
-            assertEquals("yellow", seg.getOptions().get("color"));
+            assertEquals("high", seg.options().get("absorbency"));
+            assertEquals("yellow", seg.options().get("color"));
 
             seg = seg.withOptions(ImmutableMap.of("absorbency", "high", "color", "yellow"))
                     .withoutOptions()
@@ -310,59 +309,59 @@ public class SqlDaoTest extends PermissionsExTest {
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
 
-            assertEquals(1, seg.getOptions().size());
-            assertEquals("orange", seg.getOptions().get("test"));
+            assertEquals(1, seg.options().size());
+            assertEquals("orange", seg.options().get("test"));
         }
     }
 
     @Test
     public void testPermissions() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            SubjectRef subject = dao.getOrCreateSubjectRef("group", "one");
-            Segment seg = dao.addSegment(subject);
-            assertFalse(seg.getPermissions().containsKey("test.first"));
+            SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("group", "one");
+            SqlSegment seg = dao.addSegment(subject);
+            assertFalse(seg.permissions().containsKey("test.first"));
 
             // Set individually
             dao.setPermission(seg, "test.first", 1);
             dao.setPermission(seg, "test.second", 5);
             dao.setPermission(seg, "test.first", -1);
             seg = dao.getSegments(subject).get(0); // Probably not the most efficient, but having extra code paths just for testing is a bad idea (maybe a get options/etc?)
-            assertEquals(-1, seg.getPermissions().get("test.first").intValue());
-            assertEquals(5, seg.getPermissions().get("test.second").intValue());
+            assertEquals(-1, seg.permissions().get("test.first").intValue());
+            assertEquals(5, seg.permissions().get("test.second").intValue());
 
             // Bulk set
             dao.setPermissions(seg, ImmutableMap.of("test.steering", 1, "test.acceleration", -1));
             seg = dao.getSegments(subject).get(0);
-            assertFalse(seg.getPermissions().containsKey("test.first"));
-            assertFalse(seg.getPermissions().containsKey("test.second"));
-            assertEquals(1, seg.getPermissions().get("test.steering").intValue());
-            assertEquals(-1, seg.getPermissions().get("test.acceleration").intValue());
+            assertFalse(seg.permissions().containsKey("test.first"));
+            assertFalse(seg.permissions().containsKey("test.second"));
+            assertEquals(1, seg.permissions().get("test.steering").intValue());
+            assertEquals(-1, seg.permissions().get("test.acceleration").intValue());
 
             // Clear a single option
             dao.clearPermission(seg, "test.steering");
             seg = dao.getSegments(subject).get(0);
-            assertFalse(seg.getPermissions().containsKey("test.steering"));
-            assertEquals(-1, seg.getPermissions().get("test.acceleration").intValue());
+            assertFalse(seg.permissions().containsKey("test.steering"));
+            assertEquals(-1, seg.permissions().get("test.acceleration").intValue());
 
             // Working through the Segment object
             seg = seg.withPermission("test.first", -2)
                     .withPermission("test.steering", 1);
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
-            assertEquals(-2, seg.getPermissions().get("test.first").intValue());
-            assertEquals(-1, seg.getPermissions().get("test.acceleration").intValue());
-            assertEquals(1, seg.getPermissions().get("test.steering").intValue());
+            assertEquals(-2, seg.permissions().get("test.first").intValue());
+            assertEquals(-1, seg.permissions().get("test.acceleration").intValue());
+            assertEquals(1, seg.permissions().get("test.steering").intValue());
 
             seg = seg.withoutPermissions();
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
-            assertTrue(seg.getPermissions().isEmpty());
+            assertTrue(seg.permissions().isEmpty());
 
             seg = seg.withPermissions(ImmutableMap.of("test.absorb", 42, "test.color.change", -4));
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
-            assertEquals(42, seg.getPermissions().get("test.absorb").intValue());
-            assertEquals(-4, seg.getPermissions().get("test.color.change").intValue());
+            assertEquals(42, seg.permissions().get("test.absorb").intValue());
+            assertEquals(-4, seg.permissions().get("test.color.change").intValue());
 
             seg = seg.withPermissions(ImmutableMap.of("test.absorb", 42, "test.color.change", -4))
                     .withoutPermissions()
@@ -370,85 +369,85 @@ public class SqlDaoTest extends PermissionsExTest {
             seg.doUpdates(dao);
             seg = dao.getSegments(subject).get(0);
 
-            assertEquals(1, seg.getPermissions().size());
-            assertEquals(2, seg.getPermissions().get("test.first").intValue());
+            assertEquals(1, seg.permissions().size());
+            assertEquals(2, seg.permissions().get("test.first").intValue());
         }
     }
 
     @Test
     public void testParents() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef member = dao.getOrCreateSubjectRef("group", "member"),
+            final SqlSubjectRef<?> member = dao.getOrCreateSubjectRef("group", "member"),
                     vip = dao.getOrCreateSubjectRef("group", "vip"),
                     potato = dao.getOrCreateSubjectRef("group", "potato"),
                     guest = dao.getOrCreateSubjectRef("group", "guest"),
                     novice = dao.getOrCreateSubjectRef("group", "novice");
 
-            Segment vipSeg = dao.addSegment(vip);
-            assertTrue(vipSeg.getParents().isEmpty());
+            SqlSegment vipSeg = dao.addSegment(vip);
+            assertTrue(vipSeg.parents().isEmpty());
             dao.addParent(vipSeg, member);
             vipSeg = dao.getSegments(vip).get(0);
-            assertTrue(vipSeg.getParents().contains(member));
+            assertTrue(vipSeg.parents().contains(member));
 
             dao.removeParent(vipSeg, member);
             vipSeg = dao.getSegments(vip).get(0);
-            assertEquals(0, vipSeg.getParents().size());
+            assertEquals(0, vipSeg.parents().size());
 
-            dao.setParents(vipSeg, TreePVector.<SubjectRef>empty().plus(guest).plus(novice));
+            dao.setParents(vipSeg, PCollections.vector(guest, novice));
             vipSeg = dao.getSegments(vip).get(0);
-            assertEquals(2, vipSeg.getParents().size());
-            assertTrue(vipSeg.getParents().contains(guest));
-            assertTrue(vipSeg.getParents().contains(novice));
+            assertEquals(2, vipSeg.parents().size());
+            assertTrue(vipSeg.parents().contains(guest));
+            assertTrue(vipSeg.parents().contains(novice));
 
             vipSeg = vipSeg.withoutParents();
             vipSeg.doUpdates(dao);
             vipSeg = dao.getSegments(vip).get(0);
-            assertEquals(0, vipSeg.getParents().size());
+            assertEquals(0, vipSeg.parents().size());
 
 
-            vipSeg = vipSeg.withAddedParent(potato);
+            vipSeg = vipSeg.plusParent(potato);
             vipSeg.doUpdates(dao);
             vipSeg = dao.getSegments(vip).get(0);
-            assertEquals(1, vipSeg.getParents().size());
-            assertTrue(vipSeg.getParents().contains(potato));
+            assertEquals(1, vipSeg.parents().size());
+            assertTrue(vipSeg.parents().contains(potato));
 
-            vipSeg = vipSeg.withAddedParent(member);
+            vipSeg = vipSeg.plusParent(member);
             vipSeg.doUpdates(dao);
             vipSeg = dao.getSegments(vip).get(0);
-            assertEquals(2, vipSeg.getParents().size());
-            assertTrue(vipSeg.getParents().contains(potato));
-            assertTrue(vipSeg.getParents().contains(member));
+            assertEquals(2, vipSeg.parents().size());
+            assertTrue(vipSeg.parents().contains(potato));
+            assertTrue(vipSeg.parents().contains(member));
 
-            final SubjectRef unallocatedGroup = SubjectRef.unresolved("group", "unresolved");
+            final SqlSubjectRef<?> unallocatedGroup = SqlSubjectRef.unresolved(this.getManager(), "group", "unresolved");
             assertTrue(unallocatedGroup.isUnallocated());
 
             // Test unallocated
             dao.addParent(vipSeg, unallocatedGroup);
             assertFalse(unallocatedGroup.isUnallocated());
             vipSeg = dao.getSegments(vip).get(0);
-            assertTrue(vipSeg.getParents().contains(unallocatedGroup));
+            assertTrue(vipSeg.parents().contains(unallocatedGroup));
         }
     }
 
     @Test
     public void testSetDefaultValue() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef subject = dao.getOrCreateSubjectRef("test", "defvalue");
-            Segment newSeg = Segment.unallocated().withDefaultValue(5);
+            final SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("test", "defvalue");
+            SqlSegment newSeg = SqlSegment.unallocated().withFallbackPermission(5);
             dao.allocateSegment(subject, newSeg);
 
-            Segment testSeg = dao.getSegments(subject).get(0);
-            assertEquals(5, testSeg.getPermissionDefault().intValue());
+            SqlSegment testSeg = dao.getSegments(subject).get(0);
+            assertEquals(5, testSeg.fallbackPermission());
 
-            testSeg = testSeg.withDefaultValue(-4);
+            testSeg = testSeg.withFallbackPermission(-4);
             testSeg.doUpdates(dao);
             testSeg = dao.getSegments(subject).get(0);
-            assertEquals(-4, testSeg.getPermissionDefault().intValue());
+            assertEquals(-4, testSeg.fallbackPermission());
 
-            testSeg = testSeg.withDefaultValue(null);
+            testSeg = testSeg.withFallbackPermission(0);
             testSeg.doUpdates(dao);
             testSeg = dao.getSegments(subject).get(0);
-            assertNull(testSeg.getPermissionDefault());
+            assertEquals(0, testSeg.fallbackPermission());
         }
     }
 
@@ -456,8 +455,8 @@ public class SqlDaoTest extends PermissionsExTest {
     public void testContextInheritance() throws SQLException {
         final ContextValue<String> worldNether = new ContextValue<>("world", "DIM-1"),
                 serverMinigames = new ContextValue<>("server-tag", "minigames");
-        final List<ContextValue<?>> worldNetherParents = TreePVector.singleton(new ContextValue<String>("world", "world")),
-                serverTagMinigamesParents = TreePVector.<ContextValue<?>>singleton(new ContextValue<>("server-tag", "adventure")).plus(new ContextValue<>("world", "minigames"));
+        final PVector<ContextValue<?>> worldNetherParents = PCollections.vector(new ContextValue<String>("world", "world")),
+                serverTagMinigamesParents = PCollections.vector(new ContextValue<>("server-tag", "adventure"), new ContextValue<>("world", "minigames"));
 
         try (SqlDao dao = sqlStore.getDao()) {
             // resolve, set, set to null, add new
@@ -482,7 +481,7 @@ public class SqlDaoTest extends PermissionsExTest {
     @Test
     public void testRankLadder() throws SQLException {
         try (SqlDao dao = sqlStore.getDao()) {
-            final SubjectRef member = dao.getOrCreateSubjectRef("group", "member"),
+            final SqlSubjectRef<?> member = dao.getOrCreateSubjectRef("group", "member"),
                     vip = dao.getOrCreateSubjectRef("group", "vip"),
                     potato = dao.getOrCreateSubjectRef("group", "potato"),
                     guest = dao.getOrCreateSubjectRef("group", "guest"),
@@ -494,17 +493,17 @@ public class SqlDaoTest extends PermissionsExTest {
 
             dao.setRankLadder("test1", dao.getRankLadder("test1").with(guest).with(novice).with(member).with(vip));
             RankLadder testLadder = dao.getRankLadder("test1");
-            Assertions.assertEquals(ImmutableList.of(guest, novice, member, vip), testLadder.ranks());
+            Assertions.assertEquals(PCollections.<SubjectRef<?>>vector(guest, novice, member, vip), testLadder.ranks());
 
             dao.setRankLadder("test1", dao.getRankLadder("another").with(potato));
             testLadder = dao.getRankLadder("test1");
-            Assertions.assertEquals(ImmutableList.of(potato), testLadder.ranks());
+            Assertions.assertEquals(PCollections.vector(potato), testLadder.ranks());
 
             assertEquals(HashTreePSet.singleton("test1"), dao.getAllRankLadderNames());
 
             dao.setRankLadder("test1", null);
             testLadder = dao.getRankLadder("test1");
-            assertEquals(ImmutableSet.of(), dao.getAllRankLadderNames());
+            assertEquals(PCollections.set(), dao.getAllRankLadderNames());
             assertTrue(testLadder.ranks().isEmpty());
         }
 

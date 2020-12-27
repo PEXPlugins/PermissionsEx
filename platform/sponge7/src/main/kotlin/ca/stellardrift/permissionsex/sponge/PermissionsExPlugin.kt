@@ -22,11 +22,6 @@ import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
 import ca.stellardrift.permissionsex.impl.ImplementationInterface
 import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Permission
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
-import ca.stellardrift.permissionsex.impl.commands.parse.command
-import ca.stellardrift.permissionsex.impl.commands.parse.string
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.impl.util.CachingValue
@@ -179,7 +174,6 @@ class PermissionsExPlugin @Inject internal constructor(
 
         registerFakeOpCommand("op", "minecraft.command.op")
         registerFakeOpCommand("deop", "minecraft.command.deop")
-        manager.registerCommandsTo { it.register() }
 
         // Registering the PEX service *must* occur after the plugin has been completely initialized
         if (!services.isRegistered(PermissionService::class.java)) {
@@ -191,12 +185,12 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     private fun registerFakeOpCommand(alias: String, permission: String) {
-        command(alias) {
+        /*command(alias) {
             this.permission = Permission(permission, null, 0)
             description = Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr()
             args = string().key(Messages.COMMANDS_FAKE_OP_ARG_USER.tr())
             executor { _, _ -> throw CommandException(Messages.COMMANDS_FAKE_OP_ERROR.tr()) }
-        }.register()
+        }.register()*/
     }
 
     @Listener
@@ -232,10 +226,12 @@ class PermissionsExPlugin @Inject internal constructor(
         cache.isRegistered(identifier).thenAccept { registered: Boolean ->
             if (registered) {
                 cache.persistentData().update(identifier) { input ->
-                    if (event.targetEntity.name == input.getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]) {
-                        return@update input
-                    } else {
-                        return@update input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.targetEntity.name)
+                    input.withSegment(PermissionsEngine.GLOBAL_CONTEXT) {
+                        if (event.targetEntity.name == it.options()["name"]) {
+                            it
+                        } else {
+                            it.withOption("name", event.targetEntity.name)
+                        }
                     }
                 }
             }
@@ -244,7 +240,7 @@ class PermissionsExPlugin @Inject internal constructor(
 
     @Listener
     fun onPlayerQuit(event: ClientConnectionEvent.Disconnect) {
-        manager.callbackController.clearOwnedBy(event.targetEntity.uniqueId)
+        mcManager.callbackController().clearOwnedBy(event.targetEntity.uniqueId)
         userSubjects.suggestUnload(event.targetEntity.identifier)
     }
 
@@ -360,7 +356,7 @@ class PermissionsExPlugin @Inject internal constructor(
         val coll = manager.subjects(roleTemplateSubjectType)
         for ((key, value) in ranks) {
             coll.transientData().update(key) { input ->
-                input.setPermission(PermissionsEx.GLOBAL_CONTEXT, description.id, value)
+                input.withSegment(PermissionsEx.GLOBAL_CONTEXT) { it.withPermission(description.id, value) }
             }.get()
         }
     }
@@ -407,10 +403,6 @@ class PermissionsExPlugin @Inject internal constructor(
         return spongeExecutor
     }
 
-    fun CommandSpec.register() {
-        game.commandManager.register(this@PermissionsExPlugin, PEXSpongeCommand(this, this@PermissionsExPlugin), aliases)
-    }
-
     /*override fun lookupMinecraftProfilesByName(
         names: Iterable<String>,
         action: Function<MinecraftProfile, CompletableFuture<Void>>
@@ -422,7 +414,7 @@ class PermissionsExPlugin @Inject internal constructor(
             }
     }*/
 
-    override fun getVersion(): String {
+    override fun version(): String {
         return PomData.VERSION
     }
 

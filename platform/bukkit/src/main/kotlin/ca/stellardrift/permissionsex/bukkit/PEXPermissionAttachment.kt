@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.context.ContextDefinitionProvider.GLOBAL_CONTEXT
 import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.subject.SubjectType
@@ -40,7 +41,7 @@ internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private v
         perm.manager.subjects(ATTACHMENT_TYPE).transientData().referenceTo(identifier).join()
 
     init {
-        subjectData.update { it.setOption(PermissionsEx.GLOBAL_CONTEXT, "plugin", this.plugin.name) }
+        subjectData.update(GLOBAL_CONTEXT) { it.withOption("plugin", this.plugin.name) }
     }
 
     override fun type(): SubjectType<UUID> {
@@ -52,21 +53,21 @@ internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private v
     }
 
     override fun getPermissions(): Map<String, Boolean> {
-        return subjectData.get().getPermissions(PermissionsEx.GLOBAL_CONTEXT)
+        return subjectData.get().segment(PermissionsEx.GLOBAL_CONTEXT).permissions()
             .mapValues { (_, v) -> v > 0 }
     }
 
     override fun setPermission(name: String, value: Boolean) {
-        subjectData.update {
-            it.setPermission(PermissionsEx.GLOBAL_CONTEXT, name, if (value) 1 else -1)
+        subjectData.update(GLOBAL_CONTEXT) {
+            it.withPermission(name, if (value) 1 else -1)
         }
     }
 
     override fun setPermission(perm: Permission, value: Boolean) = setPermission(perm.name, value)
 
     override fun unsetPermission(name: String) {
-        subjectData.update {
-            it.setPermission(PermissionsEx.GLOBAL_CONTEXT, name, 0)
+        subjectData.update(GLOBAL_CONTEXT) {
+            it.withPermission(name, 0)
         }
     }
 

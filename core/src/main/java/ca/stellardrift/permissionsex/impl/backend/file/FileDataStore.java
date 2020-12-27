@@ -16,21 +16,25 @@
  */
 package ca.stellardrift.permissionsex.impl.backend.file;
 
+import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.impl.backend.memory.MemoryContextInheritance;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.impl.config.SubjectRefSerializer;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.impl.rank.FixedRankLadder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.impl.util.Util;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -59,8 +63,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
 public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDataStore.Config> {
     static final String KEY_RANK_LADDERS = "rank-ladders";
@@ -78,7 +84,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     }
 
 
-    private @MonotonicNonNull WatchServiceListener reloadService;
+    private @Nullable WatchServiceListener reloadService;
     private @MonotonicNonNull ConfigurationReference<BasicConfigurationNode> permissionsConfig;
     private final AtomicInteger saveSuppressed = new AtomicInteger();
     private final AtomicBoolean dirty = new AtomicBoolean();
@@ -90,6 +96,8 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     private ConfigurationReference<BasicConfigurationNode> createLoader(Path file) throws ConfigurateException {
         Function<Path, ConfigurationLoader<? extends BasicConfigurationNode>> loaderFunc = path -> GsonConfigurationLoader.builder()
                 .defaultOptions(o -> {
+                    o = o.serializers(s -> FilePermissionsExConfiguration.populateSerializers(s)
+                            .register(SubjectRefSerializer.TYPE, new SubjectRefSerializer(((PermissionsEx<?>) this.getManager()), null)));
                     if (config().alphabetizeEntries) {
                         return o.mapFactory(MapFactories.sortedNatural());
                     } else {
@@ -102,17 +110,16 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
                 .build();
 
         ConfigurationReference<BasicConfigurationNode> ret;
-        if (reloadService != null) {
-            ret = reloadService.listenToConfiguration(loaderFunc, file);
+        if (this.reloadService != null) {
+            ret = this.reloadService.listenToConfiguration(loaderFunc, file);
         } else {
             ret = ConfigurationReference.fixed(loaderFunc.apply(file));
         }
 
         ret.updates().subscribe(this::refresh);
 
-        ret.errors().subscribe(e -> {
-            getManager().logger().error(Messages.FILE_ERROR_AUTORELOAD.tr(e.getKey(), e.getValue().getLocalizedMessage()));
-        });
+        ret.errors().subscribe(e ->
+                getManager().logger().error(Messages.FILE_ERROR_AUTORELOAD.tr(e.getKey(), e.getValue().getLocalizedMessage())));
 
         return ret;
     }
@@ -264,7 +271,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     }
 
     @Override
-    protected CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, final ImmutableSubjectData data) {
+    protected CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, final @Nullable ImmutableSubjectData data) {
         try {
             if (data == null) {
                 getSubjectsNode().node(type, identifier).raw(null);
@@ -293,9 +300,10 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public Set<String> getAllIdentifiers(String type) {
-        return (Set) getSubjectsNode().node(type).childrenMap().keySet();
+    public Stream<String> getAllIdentifiers(String type) {
+        return getSubjectsNode().node(type)
+                .childrenMap().keySet().stream()
+                .map(Objects::toString);
     }
 
     @Override
@@ -304,7 +312,6 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
                 .filter(ent -> ent.getValue().isMap())
                 .map(Map.Entry::getKey)
                 .map(Object::toString)
-                .distinct()
                 .collect(Collectors.toSet()));
     }
 
@@ -315,28 +322,16 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
                 .flatMap(subjectNode -> subjectNode.childrenList().stream()) // list of segments
                 .flatMap(segmentNode -> segmentNode.node(FileSubjectData.KEY_CONTEXTS).childrenMap().entrySet().stream()) // list of contexts
                 .map(ctx -> ctx.getKey().toString()) // of context objets
-                .collect(Collectors.toSet())); // to a list
+                .collect(PCollections.toPSet())); // to a set
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
-        /*return getSubjectsNode().getChildrenMap().keySet().stream()
-                .filter(i -> i != null)
-                .flatMap(type -> {
+    public Stream<Map.Entry<SubjectRef<?>, ImmutableSubjectData>> getAll() {
+        return getSubjectsNode().childrenMap().keySet().stream() // all subject types
+                .flatMap(type -> { // for each subject type
                     final String typeStr = type.toString();
-                    return getAll(typeStr)
-                            .stream()
-                            .map(ent -> Maps.immutableEntry(Maps.immutableEntry(typeStr, ent.getKey()), ent.getValue()));
-                })
-                .collect(GuavaCollectors.toImmutableSet());*/
-        return Iterables.concat(Iterables.transform(getSubjectsNode().childrenMap().keySet(), type -> {
-            if (type == null) {
-                return null;
-            }
-            final String typeStr = type.toString();
-
-            return Iterables.transform(getAll(typeStr), input2 -> Maps.immutableEntry(Maps.immutableEntry(type.toString(), input2.getKey()), input2.getValue()));
-        }));
+                    return getAll(typeStr).map(pair -> immutableMapEntry(((PermissionsEx<?>) this.getManager()).deserializeSubjectRef(typeStr, pair.getKey()), pair.getValue()));
+                });
     }
 
     private ConfigurationNode getRankLaddersNode() {
@@ -344,15 +339,23 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     }
 
     @Override
-    public Iterable<String> getAllRankLadders() {
-        return Iterables.unmodifiableIterable(Iterables.transform(getRankLaddersNode().childrenMap().keySet(), Object::toString));
+    public Stream<String> getAllRankLadders() {
+        return getRankLaddersNode().childrenMap().keySet()
+                .stream()
+                .map(Object::toString);
     }
 
     @Override
     public CompletableFuture<RankLadder> getRankLadderInternal(String ladder) {
         return completedFuture(new FixedRankLadder(ladder, getRankLaddersNode().node(ladder.toLowerCase()).childrenList().stream()
-                .map(node -> Util.subjectFromString(Objects.requireNonNull(node.getString())))
-                .collect(Collectors.toList())));
+                .map(node -> {
+                    try {
+                        return node.get(SubjectRef.TYPE);
+                    } catch (final SerializationException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                })
+                .collect(PCollections.toPVector())));
     }
 
     @Override
@@ -382,26 +385,30 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
     }
 
     @Override
-    public CompletableFuture<RankLadder> setRankLadderInternal(String identifier, RankLadder ladder) {
+    public CompletableFuture<RankLadder> setRankLadderInternal(final String identifier, final @Nullable RankLadder ladder) {
         ConfigurationNode childNode = getRankLaddersNode().node(identifier.toLowerCase());
-        childNode.raw(null);
-        if (ladder != null) {
-            for (Map.Entry<String, String> rank : ladder.ranks()) {
-                childNode.appendListNode().raw(Util.subjectToString(rank));
+        try {
+            childNode.raw(null);
+            if (ladder != null) {
+                for (final SubjectRef<?> rank : ladder.ranks()) {
+                    childNode.appendListNode().set(SubjectRef.TYPE, rank);
+                }
             }
+        } catch (final SerializationException ex) {
+            return Util.failedFuture(ex);
         }
-        dirty.set(true);
+        this.dirty.set(true);
         return save().thenApply(none -> ladder);
     }
 
     @Override
-    protected <T> T performBulkOperationSync(Function<DataStore, T> function) throws Exception {
-        saveSuppressed.getAndIncrement();
+    protected <T> T performBulkOperationSync(final Function<DataStore, T> function) throws Exception {
+        this.saveSuppressed.getAndIncrement();
         T ret;
         try {
             ret = function.apply(this);
         } finally {
-            saveSuppressed.getAndDecrement();
+            this.saveSuppressed.getAndDecrement();
         }
         saveSync();
         return ret;

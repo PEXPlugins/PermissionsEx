@@ -16,6 +16,8 @@
  */
 package ca.stellardrift.permissionsex;
 
+import ca.stellardrift.permissionsex.context.ContextDefinitionProvider;
+import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
@@ -31,6 +33,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -39,10 +42,13 @@ import java.util.regex.Pattern;
  *
  * @since 2.0.0
  */
-public interface PermissionsEngine {
+public interface PermissionsEngine extends ContextDefinitionProvider {
+    @Deprecated
     String SUBJECTS_USER = "user";
+    @Deprecated
     String SUBJECTS_GROUP = "group";
 
+    // TODO: make these SubjectType<?> values... somehow? will these need to become instance fields of the engine?
     /**
      * A subject type where subjects are
      */
@@ -105,6 +111,42 @@ public interface PermissionsEngine {
      * @return a future completing with the result of the action
      */
     <V> CompletableFuture<V> doBulkOperation(final Function<DataStore, CompletableFuture<V>> actor);
+
+    /**
+     * Get the current context inheritance.
+     *
+     * <p>No update listener will be registered</p>
+     *
+     * @return a future providing the current context inheritance data
+     * @see #contextInheritance(Consumer) for more details on context inheritance
+     * @since 2.0.0
+     */
+    default CompletableFuture<ContextInheritance> contextInheritance() {
+        return this.contextInheritance((Consumer<ContextInheritance>) null);
+    }
+
+    /**
+     * Get context inheritance data.
+     *
+     * <p>The result of the future is immutable -- to take effect, the object returned by any
+     * update methods in {@link ContextInheritance} must be passed to {@link #contextInheritance(ContextInheritance)}.
+     *  It follows that anybody else's changes will not appear in the returned inheritance object -- so if updates are
+     *  desired providing a callback function is important.</p>
+     *
+     * @param listener A callback function that will be triggered whenever there is a change to the context inheritance
+     * @return A future providing the current context inheritance data
+     * @since 2.0.0
+     */
+    CompletableFuture<ContextInheritance> contextInheritance(final @Nullable Consumer<ContextInheritance> listener);
+
+    /**
+     * Update the context inheritance when values have been changed
+     *
+     * @param newInheritance The modified inheritance object
+     * @return A future containing the latest context inheritance object
+     * @since 2.0.0
+     */
+    CompletableFuture<ContextInheritance> contextInheritance(ContextInheritance newInheritance);
 
     // -- Engine state -- //
 

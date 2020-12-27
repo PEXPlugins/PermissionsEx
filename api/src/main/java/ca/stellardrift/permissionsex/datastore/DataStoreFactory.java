@@ -19,10 +19,10 @@ package ca.stellardrift.permissionsex.datastore;
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.pcollections.PVector;
 import org.spongepowered.configurate.ConfigurationNode;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -94,9 +94,9 @@ public interface DataStoreFactory {
          * Return a list of all possible conversion options for this data store.
          *
          * @param pex the permissions engine instance
-         * @return possible conversion results
+         * @return an unmodifiable list of possible conversion results
          * @since 2.0.0
          */
-        PVector<ConversionResult> listConversionOptions(final PermissionsEngine pex);
+        List<ConversionResult> listConversionOptions(final PermissionsEngine pex);
     }
 }

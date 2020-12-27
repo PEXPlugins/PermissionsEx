@@ -16,10 +16,10 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
+import ca.stellardrift.permissionsex.context.ContextDefinitionProvider
 import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
 import ca.stellardrift.permissionsex.impl.ImplementationInterface
 import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
@@ -44,10 +44,8 @@ import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.event.LoginEvent
 import net.md_5.bungee.api.event.PermissionCheckEvent
 import net.md_5.bungee.api.event.PlayerDisconnectEvent
-import net.md_5.bungee.api.plugin.Command
 import net.md_5.bungee.api.plugin.Listener
 import net.md_5.bungee.api.plugin.Plugin
-import net.md_5.bungee.api.plugin.TabExecutor
 import net.md_5.bungee.event.EventHandler
 import net.md_5.bungee.event.EventPriority
 import org.slf4j.impl.JDK14LoggerAdapter
@@ -61,6 +59,7 @@ class PermissionsExPlugin : Plugin(), Listener {
 
     private var _manager: MinecraftPermissionsEx<*>? = null
     val manager: PermissionsEx<*> get() = requireNotNull(_manager) { "PermissionsEx has not yet been initialized" }.engine()
+    val mcManager: MinecraftPermissionsEx<*> get() = requireNotNull(_manager) { "PermissionsEx has not yet been initialized" }
 
     /**
      * Because of Bukkit's special logging fun, we have to get an slf4j wrapper using specifically the logger that Bukkit provides us...
@@ -104,15 +103,17 @@ class PermissionsExPlugin : Plugin(), Listener {
         }
 
         manager.subjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.identifier()) {
-            it.setDefaultValue(PermissionsEx.GLOBAL_CONTEXT, 1)
+            it.withSegment(ContextDefinitionProvider.GLOBAL_CONTEXT) { it.withFallbackPermission(1) }
         }
 
-        this.manager.registerContextDefinitions(ProxyContextDefinition.INSTANCE, RemoteIpContextDefinition,
-            LocalIpContextDefinition, LocalHostContextDefinition, LocalPortContextDefiniiton)
+        this.manager.registerContextDefinitions(
+            ProxyContextDefinition.INSTANCE,
+            RemoteIpContextDefinition,
+            LocalIpContextDefinition,
+            LocalHostContextDefinition,
+            LocalPortContextDefiniiton
+        )
 
-        this.manager.registerCommandsTo {
-            proxy.pluginManager.registerCommand(this, PEXBungeeCommand(this, it))
-        }
         this.proxy.pluginManager.registerListener(this, this)
     }
 
@@ -141,7 +142,7 @@ class PermissionsExPlugin : Plugin(), Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun unloadPlayer(event: PlayerDisconnectEvent) {
         try {
-            manager.callbackController.clearOwnedBy(event.player.uniqueId)
+            mcManager.callbackController().clearOwnedBy(event.player.uniqueId)
             this.users.uncache(event.player.uniqueId)
         } catch (e: Exception) {
             logger.warn(Messages.ERROR_LOAD_LOGOUT.tr(event.player.name, event.player.uniqueId))
@@ -186,17 +187,7 @@ internal class BungeeImplementationInterface(private val plugin: PermissionsExPl
         return exec
     }
 
-    override fun getVersion(): String {
+    override fun version(): String {
         return plugin.description.version
-    }
-}
-
-internal class PEXBungeeCommand(private val pex: PermissionsExPlugin, private val wrapped: CommandSpec) : Command("/${wrapped.aliases.first()}", wrapped.permission?.value, *wrapped.aliases.drop(1).map { "/$it" }.toTypedArray()), TabExecutor {
-    override fun onTabComplete(sender: CommandSender, args: Array<out String>): Iterable<String> {
-        return wrapped.tabComplete(BungeeCommander(pex, sender), args.joinToString(" "))
-    }
-
-    override fun execute(sender: CommandSender, args: Array<out String>) {
-        wrapped.process(BungeeCommander(pex, sender), args.joinToString(" "))
     }
 }

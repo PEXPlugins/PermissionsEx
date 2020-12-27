@@ -134,7 +134,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents().map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), containingCollection.plugin) }
+        return baked.parents().map { PEXSubjectReference.of(it, containingCollection.plugin) }
     }
 
     val activePexContexts: ContextSet
@@ -146,7 +146,7 @@ class PEXSubject(private val baked: CalculatedSubject, private val collection: P
 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
-            this.baked.parents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(this.manager.deserializeSubjectRef(it), this.containingCollection.plugin) }
+            this.baked.parents(contexts.toPex(this.manager)).map { PEXSubjectReference.of(it, this.containingCollection.plugin) }
         }
     }
 

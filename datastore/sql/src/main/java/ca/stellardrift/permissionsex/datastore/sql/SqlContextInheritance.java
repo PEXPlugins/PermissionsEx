@@ -18,34 +18,34 @@ package ca.stellardrift.permissionsex.datastore.sql;
 
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.PMap;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SqlContextInheritance implements ContextInheritance {
-    private final PMap<ContextValue<?>, List<ContextValue<?>>> inheritance;
+    private final PMap<ContextValue<?>, PVector<ContextValue<?>>> inheritance;
     private final AtomicReference<PVector<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>>> updatesToPerform = new AtomicReference<>();
 
-    SqlContextInheritance(final PMap<ContextValue<?>, List<ContextValue<?>>> inheritance) {
+    SqlContextInheritance(final PMap<ContextValue<?>, PVector<ContextValue<?>>> inheritance) {
         this(inheritance, TreePVector.empty());
     }
 
-    SqlContextInheritance(final PMap<ContextValue<?>, List<ContextValue<?>>> inheritance, final PVector<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
+    SqlContextInheritance(final PMap<ContextValue<?>, PVector<ContextValue<?>>> inheritance, final PVector<CheckedBiConsumer<SqlDao, SqlContextInheritance, SQLException>> updates) {
         this.inheritance = inheritance;
         this.updatesToPerform.set(updates);
     }
 
     @Override
-    public List<ContextValue<?>> parents(ContextValue<?> context) {
-        List<ContextValue<?>> ret = inheritance.get(context);
-        return ret == null ? Collections.emptyList() : ret;
+    public PVector<ContextValue<?>> parents(ContextValue<?> context) {
+        PVector<ContextValue<?>> ret = this.inheritance.get(context);
+        return ret == null ? PCollections.vector() : ret;
     }
 
     @Override
@@ -55,8 +55,9 @@ public class SqlContextInheritance implements ContextInheritance {
                 dao.setContextInheritance(context, null);
             }));
         } else {
-            return new SqlContextInheritance(this.inheritance.plus(context, parents), this.updatesToPerform.get().plus((dao, inherit) -> {
-                List<ContextValue<?>> newParents = inherit.parents(context);
+            final PVector<ContextValue<?>> pParent = PCollections.asVector(parents);
+            return new SqlContextInheritance(this.inheritance.plus(context, pParent), this.updatesToPerform.get().plus((dao, inherit) -> {
+                final PVector<ContextValue<?>> newParents = inherit.parents(context);
                 if (!newParents.isEmpty()) {
                     dao.setContextInheritance(context, newParents);
                 }
@@ -66,7 +67,7 @@ public class SqlContextInheritance implements ContextInheritance {
 
     @Override
     public Map<ContextValue<?>, List<ContextValue<?>>> allParents() {
-        return inheritance;
+        return PCollections.narrow(this.inheritance);
     }
 
     void doUpdate(SqlDao dao) throws SQLException {

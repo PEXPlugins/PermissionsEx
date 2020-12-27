@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 package ca.stellardrift.permissionsex.bukkit;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
+import ca.stellardrift.permissionsex.legacy.LegacyConversions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -143,7 +144,7 @@ class PermissionList extends HashMap<String, Permission> {
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
             plugin.getManager().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
                     .transientData()
-                    .update(PermissionsEngine.SUBJECTS_USER, input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1));
+                    .update(LegacyConversions.SUBJECTS_USER, input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1)));
         }
         return super.put(k, v);
     }
@@ -157,7 +158,7 @@ class PermissionList extends HashMap<String, Permission> {
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
                 plugin.getManager().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
                         .transientData()
-                        .update(PermissionsEngine.SUBJECTS_USER, input -> input.setPermission(PermissionsEx.GLOBAL_CONTEXT, ret.getName(), 0));
+                        .update(LegacyConversions.SUBJECTS_USER, input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(ret.getName(), 0)));
             }
         }
         return ret;

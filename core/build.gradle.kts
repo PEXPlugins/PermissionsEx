@@ -49,6 +49,7 @@ dependencies {
 
     api(project(":api"))
 
+    api(project(":impl-blocks:legacy"))
     api(platform(configurate("bom", configurateVersion)))
     api(configurate("gson"))
     api(configurate("hocon"))

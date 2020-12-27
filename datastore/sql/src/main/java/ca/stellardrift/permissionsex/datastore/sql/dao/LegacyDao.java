@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.datastore.sql.dao;
 
 import ca.stellardrift.permissionsex.datastore.sql.SqlDao;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  */
 public class LegacyDao {
     public static final LegacyDao INSTANCE = new LegacyDao();
-    private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
+    private static final Pattern TABLE_PATTERN = Pattern.compile("\\{([^}]+)}");
 
     protected LegacyDao() {
     }
@@ -87,7 +88,7 @@ public class LegacyDao {
         }
     }
 
-    public String getOption(SqlDao dao, String name, LegacyMigration.Type type, String world, String option) throws SQLException {
+    public @Nullable String getOption(SqlDao dao, String name, LegacyMigration.Type type, final @Nullable String world, String option) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(dao, getSelectOptionQuery())) {
             stmt.setString(1, name);
             stmt.setInt(2, type.ordinal());

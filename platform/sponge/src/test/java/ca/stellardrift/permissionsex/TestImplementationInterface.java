@@ -61,7 +61,7 @@ public class TestImplementationInterface implements ImplementationInterface {
     }
 
     @Override
-    public String getVersion() {
+    public String version() {
         return "test";
     }
 }

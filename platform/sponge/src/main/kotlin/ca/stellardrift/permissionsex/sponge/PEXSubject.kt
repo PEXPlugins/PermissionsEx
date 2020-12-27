@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import java.util.Objects
@@ -65,7 +65,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
         return Optional.empty()
     }
 
-    val manager: PermissionsEx<*>
+    val manager: PermissionsEngine
         get() = collection.service.manager
 
     override fun asSubjectReference(): SubjectReference {
@@ -126,7 +126,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     }
 
     override fun getParents(): List<SubjectReference> {
-        return baked.parents().map { manager.deserializeSubjectRef(it).asSponge(containingCollection.service) }
+        return baked.parents().map { it.asSponge(containingCollection.service) }
     }
 
     val activePexContexts: ContextSet
@@ -139,7 +139,7 @@ class PEXSubject(private val baked: CalculatedSubject, internal val collection: 
     override fun getParents(contexts: Set<Context>): List<SubjectReference> {
         return this.time.getParents.time {
             this.baked.parents(contexts.toPex(this.manager))
-                .map { manager.deserializeSubjectRef(it).asSponge(this.containingCollection.service) }
+                .map { it.asSponge(this.containingCollection.service) }
         }
     }
 

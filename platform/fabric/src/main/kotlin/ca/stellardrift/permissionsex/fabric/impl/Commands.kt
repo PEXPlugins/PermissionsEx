@@ -16,37 +16,20 @@
  */
 package ca.stellardrift.permissionsex.fabric.impl
 
-import ca.stellardrift.permissionsex.fabric.hasPermission
 import ca.stellardrift.permissionsex.fabric.mixin.ServerCommandSourceAccess
-import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
-import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.impl.commands.commander.Permission
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
+import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
+import ca.stellardrift.permissionsex.minecraft.command.Permission
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import com.mojang.brigadier.Command
-import com.mojang.brigadier.CommandDispatcher
-import com.mojang.brigadier.arguments.StringArgumentType.getString
-import com.mojang.brigadier.arguments.StringArgumentType.greedyString
-import com.mojang.brigadier.context.CommandContext as BrigadierCommandContext
-import com.mojang.brigadier.suggestion.SuggestionProvider
-import com.mojang.brigadier.suggestion.Suggestions
-import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import java.util.Locale
-import java.util.concurrent.CompletableFuture
-import java.util.function.Predicate
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.platform.fabric.AdventureCommandSourceStack
-import net.kyori.adventure.platform.fabric.PlayerLocales
-import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.server.command.CommandManager.argument
-import net.minecraft.server.command.CommandManager.literal
+import net.kyori.adventure.platform.fabric.FabricServerAudiences
+import net.kyori.adventure.text.Component
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.util.Nameable
 
-fun registerCommand(spec: CommandSpec, dispatch: CommandDispatcher<ServerCommandSource>) {
+/*fun registerCommand(spec: CommandSpec, dispatch: CommandDispatcher<ServerCommandSource>) {
     val cmdCallbacks = PEXBrigadierCommand(spec)
     val noArgsCallbacks = PEXNoArgsBrigadierCommand(spec)
     val cmdNode = dispatch.register(literal(spec.aliases[0])
@@ -123,7 +106,7 @@ class PEXNoArgsBrigadierCommand(private val spec: CommandSpec) : Command<ServerC
         }
         return builder.buildFuture() // todo actually run async? - for commands api refactor
     }
-}
+}*/
 
 @Suppress("UNCHECKED_CAST")
 internal fun ServerCommandSource.asCommander(): Commander {
@@ -132,25 +115,6 @@ internal fun ServerCommandSource.asCommander(): Commander {
 
 class FabricCommander(private val src: ServerCommandSource) : Commander {
     private val output = src as AdventureCommandSourceStack
-    override val manager: PermissionsEx<*> = FabricPermissionsExImpl.manager
-    override val name: String get() = src.name
-    override val locale: Locale get() {
-        val output = (output as ServerCommandSourceAccess).`accessor$output`()
-        return if (output is PlayerEntity) {
-            PlayerLocales.locale(output)
-        } else {
-            Locale.getDefault()
-        }
-    }
-    override val subjectIdentifier: SubjectRef<*>?
-        get() {
-            return if (src is PermissionCommandSourceBridge<*>) {
-                src.asReference()
-            } else {
-                null
-            }
-        }
-    override val messageColor: TextColor = NamedTextColor.DARK_AQUA
 
     override fun hasPermission(permission: String): Boolean {
         return if (src is PermissionCommandSourceBridge<*>) {
@@ -163,26 +127,41 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     override fun hasPermission(permission: Permission): Boolean {
         var ret = 0
         if (src is PermissionCommandSourceBridge<*>) {
-            ret = (src as PermissionCommandSourceBridge<*>).asCalculatedSubject().permission(permission.value)
+            ret = (src as PermissionCommandSourceBridge<*>).asCalculatedSubject().permission(permission.value())
         }
         if (ret == 0) { // op status
             ret = (src as ServerCommandSourceAccess).level
         }
         if (ret == 0) { // permission def value
-            ret = permission.default
+            ret = permission.defaultValue()
         }
         return ret > 0
     }
 
-    override val formatter: MessageFormatter = FabricMessageFormatter(this)
     override fun audience(): Audience {
         return this.output
     }
+
+    override fun name(): Component {
+        return FabricServerAudiences.of(this.src.minecraftServer).toAdventure(this.src.displayName)
+    }
+
+    override fun subjectIdentifier(): SubjectRef<*>? {
+        return if (src is PermissionCommandSourceBridge<*>) {
+            src.asReference()
+        } else {
+            null
+        }
+    }
+
+    override fun formatter(): MessageFormatter {
+        return FabricPermissionsExImpl.formatter!!
+    }
 }
 
-class FabricMessageFormatter constructor(src: FabricCommander) :
-    MessageFormatter(src, src.manager) {
+class FabricMessageFormatter constructor(manager: MinecraftPermissionsEx<*>) : MessageFormatter(manager) {
 
-    override val <I> SubjectRef<I>.friendlyName: String?
-        get() = (type().getAssociatedObject(identifier()) as? Nameable)?.name?.asString()
+    override fun <I> friendlyName(reference: SubjectRef<I>): String? {
+        return (reference.type().getAssociatedObject(reference.identifier()) as? Nameable)?.name?.asString()
+    }
 }

@@ -16,64 +16,19 @@
  */
 package ca.stellardrift.permissionsex.velocity
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
-import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import com.velocitypowered.api.command.Command
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
-import java.util.Locale
 import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
 
-internal class VelocityCommand(private val pex: PermissionsExPlugin, val cmd: CommandSpec) : Command {
-
-    override fun execute(source: CommandSource, args: Array<out String>) {
-        val src = VelocityCommander(pex, source)
-        cmd.process(src, args.joinToString(" "))
-    }
-
-    override fun suggest(source: CommandSource, currentArgs: Array<out String>): List<String> {
-        val src = VelocityCommander(pex, source)
-        return cmd.tabComplete(src, currentArgs.joinToString(" "))
-    }
-
-    override fun hasPermission(source: CommandSource, args: Array<out String>): Boolean {
-        return try {
-            cmd.checkPermission(VelocityCommander(pex, source))
-            true
-        } catch (e: CommandException) {
-            false
-        }
-    }
-}
-
-internal class VelocityCommander(internal val pex: PermissionsExPlugin, private val src: CommandSource) :
-    Commander {
-    override val manager: PermissionsEx<*>
-        get() = pex.manager
-    override val formatter = VelocityMessageFormatter(this)
-
-    override val name: String
-        get() =
-            (src as? Player)?.username ?: IDENT_SERVER_CONSOLE.identifier()
-
-    override val locale: Locale
-        get() =
-            (src as? Player)?.playerSettings?.locale ?: Locale.getDefault()
-
-    override val subjectIdentifier: SubjectRef<*>?
-        get() = when (src) {
-                    is Player -> SubjectRef.subject(pex.users.type(), src.uniqueId)
-                    else -> IDENT_SERVER_CONSOLE
-                }
-
-    override val messageColor: TextColor get() = NamedTextColor.GOLD
+internal class VelocityCommander(private val pex: PermissionsExPlugin, private val src: CommandSource) : Commander {
+    private val formatter = VelocityMessageFormatter(pex)
 
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
@@ -82,9 +37,24 @@ internal class VelocityCommander(internal val pex: PermissionsExPlugin, private 
     override fun audience(): Audience {
         return this.src
     }
+
+    override fun name(): Component {
+        return text((src as? Player)?.username ?: IDENT_SERVER_CONSOLE.identifier())
+    }
+
+    override fun subjectIdentifier(): SubjectRef<*>? {
+        return when (src) {
+            is Player -> SubjectRef.subject(pex.users.type(), src.uniqueId)
+            else -> IDENT_SERVER_CONSOLE
+        }
+    }
+
+    override fun formatter(): MessageFormatter {
+        return this.formatter
+    }
 }
 
-internal class VelocityMessageFormatter(vCmd: VelocityCommander) :
-    MessageFormatter(vCmd, vCmd.pex.manager, NamedTextColor.YELLOW) {
+internal class VelocityMessageFormatter(plugin: PermissionsExPlugin) :
+    MessageFormatter(plugin.mcManager, NamedTextColor.GOLD, NamedTextColor.YELLOW) {
     override fun transformCommand(cmd: String) = "/$cmd"
 }

@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,85 +17,48 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.bukkit.Compatibility.getLocale
-import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
-import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
+import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import java.util.Locale
 import net.kyori.adventure.audience.Audience
-import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
-import org.bukkit.command.Command
-import org.bukkit.command.CommandExecutor
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.text
 import org.bukkit.command.CommandSender
-import org.bukkit.command.TabExecutor
 import org.bukkit.entity.Player
 
-/**
- * Take a locale string provided from a minecraft client and attempt to parse it as a locale.
- * These are not strictly compliant with the iso standard, so we try to make things a bit more normalized.
- *
- * @param mcLocaleString The locale string, in the format provided by the Minecraft client
- * @return A Locale object matching the provided locale string
- */
-internal fun String.toLocale(): Locale {
-    val parts = this.split("_", limit = 3)
-    return when (parts.size) {
-        0 -> Locale.getDefault()
-        1 -> Locale(parts[0])
-        2 -> Locale(parts[0], parts[1])
-        3 -> Locale(parts[0], parts[1], parts[2])
-        else -> throw IllegalArgumentException("Provided locale '$this' was not in a valid format!")
+internal class BukkitMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager) {
+
+    override fun <I : Any?> friendlyName(reference: SubjectRef<I>): String? {
+        return (reference.type().getAssociatedObject(reference.identifier()) as? CommandSender)?.name
     }
-}
-
-internal class BukkitMessageFormatter(private val cmd: BukkitCommander) : MessageFormatter(cmd, cmd.manager) {
-
-    override val <I> SubjectRef<I>.friendlyName: String?
-        get() = (cmd.pex.manager.subjects(type()).type().getAssociatedObject(identifier()) as? CommandSender)?.name
 }
 
 /**
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
 internal class BukkitCommander internal constructor(
-    internal val pex: PermissionsExPlugin,
+    private val pex: PermissionsExPlugin,
     private val commandSource: CommandSender
 ) : Commander {
-    override val manager: PermissionsEx<*>
-        get() = pex.manager
-    override val formatter: BukkitMessageFormatter = BukkitMessageFormatter(this)
-    override val name: String
-        get() = commandSource.name
-    override val messageColor: TextColor = NamedTextColor.DARK_AQUA
+    private val formatter: BukkitMessageFormatter = BukkitMessageFormatter(pex)
 
     override fun hasPermission(permission: String): Boolean = commandSource.hasPermission(permission)
-
-    override val locale: Locale
-        get() = if (commandSource is Player) getLocale(commandSource) else Locale.getDefault()
-
-    override val subjectIdentifier: SubjectRef<*>?
-        get() = if (commandSource is Player) SubjectRef.subject(pex.userSubjects.type(), commandSource.uniqueId) else null
 
     private val audience = this.pex.adventure.sender(this.commandSource)
 
     override fun audience(): Audience {
         return this.audience
     }
-}
 
-/**
- * Wrapper class between PEX commands and the Bukkit command class
- */
-class PEXBukkitCommand(private val command: CommandSpec, private val plugin: PermissionsExPlugin) : CommandExecutor, TabExecutor {
-    override fun onCommand(sender: CommandSender, command: Command, alias: String, args: Array<String>): Boolean {
-        this.command.process(BukkitCommander(plugin, sender), args.joinToString(" "))
-        return true
+    override fun name(): Component {
+        return text(commandSource.name)
     }
 
-    override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<String>): List<String> {
-        return this.command.tabComplete(BukkitCommander(plugin, sender), args.joinToString(" "))
+    override fun subjectIdentifier(): SubjectRef<*>? {
+        return if (commandSource is Player) SubjectRef.subject(pex.userSubjects.type(), commandSource.uniqueId) else null
+    }
+
+    override fun formatter(): MessageFormatter {
+        return this.formatter
     }
 }

@@ -16,56 +16,126 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.impl.util.Util;
+import ca.stellardrift.permissionsex.subject.Segment;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.pcollections.PMap;
+import org.pcollections.PSet;
+import org.pcollections.PStack;
+import org.pcollections.PVector;
 
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * Data for SQL-backed subjects
  */
 class SqlSubjectData implements ImmutableSubjectData {
-    private final SubjectRef subject;
-    private final Map<Set<ContextValue<?>>, Segment> segments;
-    private final AtomicReference<List<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>>> updatesToPerform = new AtomicReference<>();
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static final AtomicReferenceFieldUpdater<SqlSubjectData, PVector<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>>> UPDATES_MUTATOR = (AtomicReferenceFieldUpdater) AtomicReferenceFieldUpdater.newUpdater(SqlSubjectData.class, PVector.class, "updatesToPerform");
+    private final SqlSubjectRef<?> subject;
+    private final PMap<PSet<ContextValue<?>>, SqlSegment> segments;
+    private volatile PVector<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updatesToPerform;
 
-    SqlSubjectData(SubjectRef subject) {
-        this(subject, ImmutableMap.of(), null);
+    SqlSubjectData(final SqlSubjectRef<?> subject) {
+        this(subject, PCollections.map(), PCollections.vector());
     }
 
-    SqlSubjectData(SubjectRef subject, Map<Set<ContextValue<?>>, Segment> segments, List<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
+    SqlSubjectData(final SqlSubjectRef<?> subject, final PMap<PSet<ContextValue<?>>, SqlSegment> segments, final PVector<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates) {
         this.subject = subject;
         this.segments = segments;
-        this.updatesToPerform.set(updates);
+        this.updatesToPerform = updates;
     }
 
-    protected final SqlSubjectData newWithUpdate(Map<Set<ContextValue<?>>, Segment> segments, CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
-        return new SqlSubjectData(subject, segments, Util.appendImmutable(this.updatesToPerform.get(), updateFunc));
+    protected final SqlSubjectData newWithUpdate(PMap<PSet<ContextValue<?>>, SqlSegment> segments, CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc) {
+        return new SqlSubjectData(subject, segments, this.updatesToPerform.plus(updateFunc));
     }
 
-    protected final SqlSubjectData newWithUpdated(Set<ContextValue<?>> key, Segment val) {
-        CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> updateFunc;
-        if (val.isEmpty()) { // then remove segment
-            if (val.isUnallocated()) {
-                updateFunc = (dao, data) -> {};
-            } else {
-                updateFunc = (dao, data) -> dao.removeSegment(val);
+    @Override
+    public Map<Set<ContextValue<?>>, Segment> segments() {
+        return PCollections.narrow(this.segments);
+    }
+
+    @Override
+    public ImmutableSubjectData withSegments(BiFunction<Set<ContextValue<?>>, Segment, Segment> transformer) {
+        PMap<PSet<ContextValue<?>>, SqlSegment> segments = this.segments;
+        PStack<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates = PCollections.stack();
+
+        for (final Map.Entry<PSet<ContextValue<?>>, SqlSegment> entry : this.segments.entrySet()) {
+            SqlSegment modified = SqlSegment.from(entry.getKey(), transformer.apply(entry.getKey(), entry.getValue()));
+            if (modified != entry.getValue()) {
+                segments = segments.plus(entry.getKey(), modified);
+                updates = updates.plus(makeUpdater(entry.getKey(), modified));
             }
-        } else if (val.isUnallocated()) { // create new segment
-            updateFunc = (dao, data) -> {
-                Segment seg = data.segments.get(key);
+        }
+
+        if (segments != this.segments) {
+            return new SqlSubjectData(this.subject, segments, this.updatesToPerform.plusAll(updates));
+        } else {
+            return this;
+        }
+    }
+
+    @Override
+    public ImmutableSubjectData withSegment(final Set<ContextValue<?>> rawContexts, final UnaryOperator<Segment> operation) {
+        final PSet<ContextValue<?>> contexts = PCollections.asSet(rawContexts);
+        final SqlSegment input = this.segment(contexts);
+        final SqlSegment output = SqlSegment.from(contexts, operation.apply(input));
+        if (input != output) {
+            return withSegment(contexts, output);
+        } else {
+            return this;
+        }
+    }
+
+    @Override
+    public <V> Map<Set<ContextValue<?>>, V> mapSegmentValues(final Function<Segment, V> mapper) {
+        return PCollections.asMap(this.segments, (k, v) -> k, (k, v) -> mapper.apply(v));
+    }
+
+    @Override
+    public <V> @Nullable V mapSegment(final Set<ContextValue<?>> contexts, final Function<Segment, V> mapper) {
+        final SqlSegment segment = this.segments.get(PCollections.asSet(contexts));
+        if (segment != null) {
+            return mapper.apply(segment);
+        }
+        return null;
+    }
+
+    @Override
+    public SqlSegment segment(final Set<ContextValue<?>> contexts) {
+        final PSet<ContextValue<?>> pContexts = PCollections.asSet(contexts);
+        SqlSegment res = this.segments.get(pContexts);
+        if (res == null) {
+            res = SqlSegment.unallocated(pContexts);
+        }
+        return res;
+    }
+
+    @Override
+    public ImmutableSubjectData withSegment(final Set<ContextValue<?>> rawContexts, final Segment rawSegment) {
+        final PSet<ContextValue<?>> contexts = PCollections.asSet(rawContexts);
+        final SqlSegment segment = SqlSegment.from(contexts, rawSegment);
+        return newWithUpdate(this.segments.plus(contexts, segment), makeUpdater(contexts, segment));
+    }
+
+    private CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> makeUpdater(final PSet<ContextValue<?>> contexts, final SqlSegment segment) {
+        if (segment.empty()) { // then remove segment
+            if (segment.isUnallocated()) {
+                return (dao, data) -> {};
+            } else {
+                return (dao, data) -> dao.removeSegment(segment);
+            }
+        } else if (segment.isUnallocated()) { // create new segment
+            return (dao, data) -> {
+                SqlSegment seg = data.segments.get(contexts);
                 if (seg != null) {
                     if (seg.isUnallocated()) {
                         seg.popUpdates();
@@ -76,221 +146,20 @@ class SqlSubjectData implements ImmutableSubjectData {
                 }
             };
         } else { // just run updates
-            updateFunc = (dao, data) -> {
-                val.doUpdates(dao);
-            };
-        }
-        return newWithUpdate(Util.updateImmutable(segments, immutSet(key), val), updateFunc);
-    }
-
-    private Segment getSegmentOrNew(Set<ContextValue<?>> segments) {
-        Segment res = this.segments.get(segments);
-        if (res == null) {
-            res = Segment.unallocated(segments);
-        }
-        return res;
-    }
-
-    private <E> ImmutableSet<E> immutSet(Set<E> set) {
-        return ImmutableSet.copyOf(set);
-    }
-
-    @Override
-    public Map<Set<ContextValue<?>>, Map<String, String>> getAllOptions() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getOptions()), el -> el != null);
-    }
-
-    @Override
-    public Map<String, String> getOptions(Set<ContextValue<?>> segments) {
-        final Segment entry = this.segments.get(segments);
-        return entry == null || entry.getOptions() == null ? Collections.emptyMap() : entry.getOptions();
-    }
-
-    @Override
-    public ImmutableSubjectData setOption(Set<ContextValue<?>> segments, String key, String value) {
-        if (value == null) {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withoutOption(key));
-        } else {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withOption(key, value));
+            return (dao, data) -> segment.doUpdates(dao);
         }
     }
 
     @Override
-    public ImmutableSubjectData setOptions(Set<ContextValue<?>> segments, Map<String, String> values) {
-        return newWithUpdated(segments, getSegmentOrNew(segments).withOptions(values));
+    public Set<Set<ContextValue<?>>> activeContexts() {
+        return this.segments().keySet();
     }
 
-    @Override
-    public ImmutableSubjectData clearOptions(Set<ContextValue<?>> segments) {
-        if (!this.segments.containsKey(segments)) {
-            return this;
-        }
-        return newWithUpdated(segments, getSegmentOrNew(segments).withoutOptions());
-    }
-
-    @Override
-    public ImmutableSubjectData clearOptions() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        Map<Set<ContextValue<?>>, Segment> newValue = Maps.transformValues(this.segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.withoutOptions());
-        return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    private CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> createBulkUpdateFunc(Collection<Set<ContextValue<?>>> keys) {
-        return (dao, data) -> {
-            for (Set<ContextValue<?>> key : keys) {
-                Segment seg = data.segments.get(key);
-                if (seg != null) {
-                    if (seg.isEmpty()) {
-                        dao.removeSegment(seg);
-                    } else {
-                        seg.doUpdates(dao);
-                    }
-                }
-            }
-        };
-    }
-
-    @Override
-    public Map<Set<ContextValue<?>>, Map<String, Integer>> getAllPermissions() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getPermissions()), o -> o != null);
-    }
-
-    @Override
-    public Map<String, Integer> getPermissions(Set<ContextValue<?>> set) {
-        final Segment entry = this.segments.get(set);
-        return entry == null || entry.getPermissions()== null ? Collections.emptyMap() : entry.getPermissions();
-    }
-
-    @Override
-    public ImmutableSubjectData setPermission(Set<ContextValue<?>> segments, String permission, int value) {
-        if (value == 0) {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withoutPermission(permission));
-        } else {
-            return newWithUpdated(segments, getSegmentOrNew(segments).withPermission(permission, value));
-        }
-    }
-
-    @Override
-    public ImmutableSubjectData setPermissions(Set<ContextValue<?>> segments, Map<String, Integer> values) {
-        return newWithUpdated(segments, getSegmentOrNew(segments).withPermissions(values));
-    }
-
-    @Override
-    public ImmutableSubjectData clearPermissions() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        Map<Set<ContextValue<?>>, Segment> newValue = Maps.transformValues(this.segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.withoutPermissions());
-        return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    @Override
-    public ImmutableSubjectData clearPermissions(Set<ContextValue<?>> segments) {
-        if (!this.segments.containsKey(segments)) {
-            return this;
-        }
-        return newWithUpdated(segments, getSegmentOrNew(segments).withoutPermissions());
-
-    }
-
-    @Override
-    public Map<Set<ContextValue<?>>, List<Map.Entry<String, String>>> getAllParents() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getParents() == null ? null : ImmutableList.copyOf(dataEntry.getParents())), v -> v != null);
-    }
-
-    @Override
-    public List<Map.Entry<String, String>> getParents(Set<ContextValue<?>> segments) {
-        Segment ent = this.segments.get(segments);
-        return ent == null || ent.getParents() == null ? Collections.emptyList() : ImmutableList.copyOf(ent.getParents());
-    }
-
-    @Override
-    public ImmutableSubjectData addParent(Set<ContextValue<?>> segments, String type, String ident) {
-        Segment entry = getSegmentOrNew(segments);
-        final SubjectRef parentIdent = SubjectRef.unresolved(type, ident);
-        if (entry.getParents() != null && entry.getParents().contains(parentIdent)) {
-            return this;
-        }
-        return newWithUpdated(segments, entry.withAddedParent(parentIdent));
-    }
-
-    @Override
-    public ImmutableSubjectData removeParent(Set<ContextValue<?>> segments, String type, String identifier) {
-        Segment ent = this.segments.get(segments);
-        if (ent == null) {
-            return this;
-        }
-
-        final SubjectRef parentIdent = SubjectRef.unresolved(type, identifier);
-        if (ent.getParents() == null || !ent.getParents().contains(parentIdent)) {
-            return this;
-        }
-        return newWithUpdated(segments, ent.withRemovedParent(parentIdent));
-    }
-
-    @Override
-    public ImmutableSubjectData setParents(Set<ContextValue<?>> segments, List<Map.Entry<String, String>> parents) {
-        Segment entry = getSegmentOrNew(segments);
-        return newWithUpdated(segments, entry.withParents(Lists.transform(parents, ent -> ent instanceof SubjectRef ? (SubjectRef) ent : SubjectRef.unresolved(ent.getKey(), ent.getValue()))));
-    }
-
-    @Override
-    public ImmutableSubjectData clearParents() {
-        if (this.segments.isEmpty()) {
-            return this;
-        }
-
-        Map<Set<ContextValue<?>>, Segment> newValue = Maps.transformValues(this.segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.withoutParents());
-        return newWithUpdate(newValue, createBulkUpdateFunc(newValue.keySet()));
-    }
-
-    @Override
-    public ImmutableSubjectData clearParents(Set<ContextValue<?>> segments) {
-        if (!this.segments.containsKey(segments)) {
-            return this;
-        }
-        return newWithUpdated(segments, getSegmentOrNew(segments).withoutParents());
-    }
-
-    @Override
-    public int getDefaultValue(Set<ContextValue<?>> segments) {
-        Segment ent = this.segments.get(segments);
-        return ent == null || ent.getPermissionDefault() == null ? 0 : ent.getPermissionDefault();
-    }
-
-    @Override
-    public ImmutableSubjectData setDefaultValue(Set<ContextValue<?>> segments, int defaultValue) {
-        return newWithUpdated(segments, getSegmentOrNew(segments).withDefaultValue(defaultValue));
-    }
-
-    @Override
-    public Set<Set<ContextValue<?>>> getActiveContexts() {
-        return segments.keySet();
-    }
-
-    @Override
-    public Map<Set<ContextValue<?>>, Integer> getAllDefaultValues() {
-        return Maps.filterValues(Maps.transformValues(segments,
-                dataEntry -> dataEntry == null ? null : dataEntry.getPermissionDefault()), v -> v != null);
-    }
-
-    public void doUpdates(SqlDao dao) throws SQLException {
+    public void doUpdates(final SqlDao dao) throws SQLException {
         dao.executeInTransaction(() -> {
-            List<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates = this.updatesToPerform.getAndSet(null);
-            if (updates != null) {
-                for (CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> func : updates) {
-                    func.accept(dao, this);
-                }
+            final PVector<CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException>> updates = UPDATES_MUTATOR.getAndSet(this, PCollections.vector());
+            for (final CheckedBiConsumer<SqlDao, SqlSubjectData, SQLException> func : updates) {
+                func.accept(dao, this);
             }
             return null;
         });

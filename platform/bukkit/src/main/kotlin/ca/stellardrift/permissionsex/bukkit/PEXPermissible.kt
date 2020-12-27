@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,11 @@
 package ca.stellardrift.permissionsex.bukkit
 
 import ca.stellardrift.permissionsex.PermissionsEngine
+import ca.stellardrift.permissionsex.context.ContextDefinitionProvider
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.impl.context.TimeContextDefinition
+import ca.stellardrift.permissionsex.impl.util.PCollections
+import ca.stellardrift.permissionsex.legacy.LegacyConversions
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.util.NodeTree
 import java.time.ZonedDateTime
@@ -74,7 +76,7 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
          * This only takes into account the permission directly being checked having a default set to FALSE or NOT_OP, and not any parents.
          * I believe this is incorrect, but the real-world impacts are likely minor -zml
          */
-        if (ret == 0 && plugin.manager.config.platformConfig.fallbackOp) {
+        if (ret == 0 && plugin.manager.config().platformConfig.fallbackOp) {
             val perm = plugin.permissionList?.get(permission)
             if (perm == null) {
                 ret = if (isOp) 1 else 0
@@ -125,8 +127,8 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
     override fun addAttachment(plugin: Plugin): PermissionAttachment {
         val attach = PEXPermissionAttachment(plugin, player, this)
         pexSubject.transientData()
-            .update {
-                it.addParent(PermissionsEx.GLOBAL_CONTEXT, attach)
+            .update(ContextDefinitionProvider.GLOBAL_CONTEXT) {
+                it.plusParent(attach)
             }
             .thenRun { this.attachments.add(attach) }
         return attach
@@ -134,8 +136,8 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
 
     fun removeAttachmentInternal(attach: PEXPermissionAttachment): Boolean {
         pexSubject.transientData()
-            .update {
-                it.removeParent(PermissionsEx.GLOBAL_CONTEXT, attach)
+            .update(ContextDefinitionProvider.GLOBAL_CONTEXT) {
+                it.minusParent(attach)
             }
             .thenRun {
                 attach.removalCallback?.attachmentRemoved(attach)
@@ -174,13 +176,10 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
     ): PermissionAttachment {
         val attach = PEXPermissionAttachment(plugin, player, this)
         pexSubject.transientData()
-            .update {
-                it.addParent(
-                    setOf(
-                        TimeContextDefinition.BEFORE_TIME.createValue(ZonedDateTime.now().plus(ticks * 50.toLong(), ChronoUnit.MILLIS))
-                    ),
-                    attach
-                )
+            .update(PCollections.set<ContextValue<*>>(
+                TimeContextDefinition.BEFORE_TIME.createValue(ZonedDateTime.now().plus(ticks * 50.toLong(), ChronoUnit.MILLIS))
+            )) {
+                it.plusParent(attach)
             }
             .thenRun { this.attachments.add(attach) }
         return attach
@@ -218,8 +217,8 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
 
                 override fun getValues(subj: CalculatedSubject, contexts: Set<ContextValue<*>>): Sequence<String> {
                     return subj.parents(contexts).asSequence()
-                        .filter { (key, _) -> key == PermissionsEngine.SUBJECTS_GROUP }
-                        .flatMap { (_, value) -> sequenceOf("group.$value", "groups.$value") }
+                        .filter { ref -> ref.type().name() == LegacyConversions.SUBJECTS_GROUP }
+                        .flatMap { ref -> sequenceOf("group.${ref.serializedIdentifier()}", "groups.${ref.serializedIdentifier()}") }
                 }
             },
             object : Metapermission(Regex("options\\.(?<key>.*)\\.(?<value>.*)")) {

@@ -17,8 +17,6 @@
 package ca.stellardrift.permissionsex.datastore.conversion
 
 import ca.stellardrift.permissionsex.PermissionsEngine
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_GROUP
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_USER
 import ca.stellardrift.permissionsex.context.ContextInheritance
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.ConversionResult
@@ -29,6 +27,7 @@ import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.impl.backend.memory.MemoryContextInheritance
 import ca.stellardrift.permissionsex.impl.backend.memory.MemorySubjectData
 import ca.stellardrift.permissionsex.impl.rank.FixedRankLadder
+import ca.stellardrift.permissionsex.legacy.LegacyConversions
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import java.nio.file.Files
@@ -47,6 +46,7 @@ import org.spongepowered.configurate.objectmapping.meta.Setting
 import org.spongepowered.configurate.reference.ConfigurationReference
 import org.spongepowered.configurate.reference.WatchServiceListener
 import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
+import java.util.stream.Stream
 
 /**
  * An extremely rudimentary data store that allows importing data from a server ops list.
@@ -122,28 +122,28 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
         return completedFuture(BlankContextInheritance())
     }
 
-    override fun getAll(): Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
+    override fun getAll(): Stream<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> {
         return opsList.map {
-            immutableMapEntry(immutableMapEntry(SUBJECTS_USER, it.uuid.toString()), it)
+            immutableMapEntry(immutableMapEntry(LegacyConversions.SUBJECTS_USER, it.uuid.toString()), it)
         }
     }
 
     override fun getRegisteredTypes(): Set<String> {
         return setOf(
-            SUBJECTS_USER,
-            SUBJECTS_GROUP
+            LegacyConversions.SUBJECTS_USER,
+            LegacyConversions.SUBJECTS_GROUP
         )
     }
 
-    override fun getAllIdentifiers(type: String): Set<String> {
+    override fun getAllIdentifiers(type: String): Stream<String> {
         return when (type) {
             /*SUBJECTS_GROUP -> {
                 setOf("op4", "op3", "op2", "op1")
             }*/
-            SUBJECTS_USER -> {
+            LegacyConversions.SUBJECTS_USER -> {
                 opsList.map { it.uuid.toString() }.toSet()
             }
-            else -> setOf()
+            else -> Stream.of()
         }
     }
 
@@ -159,7 +159,7 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
 
     override fun getDataInternal(type: String, identifier: String): CompletableFuture<ImmutableSubjectData> {
         return completedFuture(when (type) {
-            SUBJECTS_USER -> {
+            LegacyConversions.SUBJECTS_USER -> {
                 opsList.find { it.uuid.toString().equals(identifier, ignoreCase = true) } ?: BlankSubjectData()
             }
             else -> BlankSubjectData()
@@ -171,16 +171,11 @@ class OpsDataStore(props: StoreProperties<Config>) : ReadOnlyDataStore<OpsDataSt
     }
 
     override fun isRegistered(type: String, identifier: String): CompletableFuture<Boolean> {
-        return completedFuture(type == SUBJECTS_USER && opsList.find { it.uuid.toString().equals(identifier, ignoreCase = true) } != null)
+        return completedFuture(type == LegacyConversions.SUBJECTS_USER && opsList.find { it.uuid.toString().equals(identifier, ignoreCase = true) } != null)
     }
 
     override fun getRankLadderInternal(ladder: String): CompletableFuture<RankLadder> {
-        return completedFuture(
-            FixedRankLadder(
-                ladder,
-                listOf()
-            )
-        )
+        return completedFuture(FixedRankLadder(ladder, listOf()))
     }
 }
 
@@ -205,13 +200,13 @@ internal data class OpsListEntry(
 
     override fun getParents(contexts: Set<ContextValue<*>>): List<Map.Entry<String, String>> {
         return if (level > 0 && filterContexts(contexts)) {
-            listOf(immutableMapEntry(SUBJECTS_GROUP, "op$level"))
+            listOf(immutableMapEntry(LegacyConversions.SUBJECTS_GROUP, "op$level"))
         } else {
             listOf()
         }
     }
 
-    override fun getActiveContexts(): Set<Set<ContextValue<*>>> {
+    override fun activeContexts(): Set<Set<ContextValue<*>>> {
         return if (level > 0) {
             setOf(setOf())
         } else {

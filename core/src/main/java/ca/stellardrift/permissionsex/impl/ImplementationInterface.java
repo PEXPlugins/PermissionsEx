@@ -16,16 +16,13 @@
  */
 package ca.stellardrift.permissionsex.impl;
 
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec;
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 
 /**
@@ -73,20 +70,11 @@ public interface ImplementationInterface {
     Executor asyncExecutor();
 
     /**
-     * Get commands that the implementation wants to register as a child of the {@code /pex} command
-     *
-     * @return The desired subcommands, or an empty set
-     */
-    default Set<CommandSpec> getImplementationSubcommands() {
-        return Collections.emptySet();
-    }
-
-    /**
      * Return the version number attached to this implementation of PEX
      *
      * @return The currently running version
      */
-    String getVersion();
+    String version();
 
     /**
      * Return a function that supplies an implementation-dependent variant of a subject reference
@@ -96,6 +84,6 @@ public interface ImplementationInterface {
      * @return The identifier for a certain subject
      */
      default Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
-        return Maps.immutableEntry(collection, ident);
+        return UnmodifiableCollections.immutableMapEntry(collection, ident);
      }
 }

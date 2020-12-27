@@ -86,7 +86,7 @@ public interface CalculatedSubject {
      *
      * @return The list of parents that apply to this subject
      */
-    default List<Map.Entry<String, String>> parents() {
+    default List<SubjectRef<?>> parents() {
         return parents(activeContexts());
     }
 
@@ -96,7 +96,7 @@ public interface CalculatedSubject {
      * @param contexts The contexts to check
      * @return The list of parents that apply to this subject
      */
-    List<Map.Entry<String, String>> parents(Set<ContextValue<?>> contexts);
+    List<SubjectRef<?>> parents(Set<ContextValue<?>> contexts);
 
     Set<ContextValue<?>> activeContexts();
 

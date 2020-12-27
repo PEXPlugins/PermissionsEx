@@ -54,7 +54,7 @@ public class PermissionsException extends Exception {
     }
 
     public Component getComponent() {
-        return this.message == null ? NULL : message;
+        return this.message == null ? NULL : this.message;
     }
 
     public String getLocalizedMessage(Locale locale) {

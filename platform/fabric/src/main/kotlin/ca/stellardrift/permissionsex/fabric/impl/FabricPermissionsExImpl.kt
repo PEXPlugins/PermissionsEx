@@ -30,7 +30,6 @@ import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
 import ca.stellardrift.permissionsex.impl.ImplementationInterface
 import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.impl.PermissionsEx.GLOBAL_CONTEXT
-import ca.stellardrift.permissionsex.impl.commands.parse.CommandSpec
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
@@ -43,7 +42,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
@@ -74,6 +72,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
     private lateinit var container: ModContainer
     private lateinit var dataDir: Path
     internal var server: MinecraftServer? = null
+    internal var formatter: FabricMessageFormatter? = null
 
     val available get() = _manager != null
 
@@ -93,6 +92,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
         logger().prefix("[${container.metadata.name}] ")
 
         this._manager = this.createManager()
+        this.formatter = FabricMessageFormatter(this._manager!!)
         registerEvents()
         logger().info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
     }
@@ -105,21 +105,14 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             this.server = null
         }
         ServerPlayConnectionEvents.INIT.register { handler, _ ->
-           handlePlayerJoin(handler.player)
+            handlePlayerJoin(handler.player)
         }
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
             val manager = this._manager ?: return@register
-            manager.engine().callbackController.clearOwnedBy(handler.player.uuidAsString)
+            manager.callbackController().clearOwnedBy(handler.player.uuidAsString)
             manager.users().uncache(handler.player.uuid)
         }
 
-        CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
-            if (this._manager != null) {
-                this._manager?.engine()?.registerCommandsTo {
-                    registerCommand(it, dispatcher)
-                }
-            }
-        })
         registerWorldEdit()
     }
 
@@ -157,7 +150,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             LocalPortContextDefinition,
             FunctionContextDefinition)
         manager.engine().subjects(SUBJECTS_DEFAULTS).transientData().update(systemSubjectType.name()) {
-            it.setDefaultValue(GLOBAL_CONTEXT, 1)
+            it.withSegment(GLOBAL_CONTEXT) { it.withFallbackPermission(1) }
         }
 
         manager.engine().subjects(systemSubjectType)
@@ -190,7 +183,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             // Update name option
             it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
-                    it.data().update { it.setOption(GLOBAL_CONTEXT, "name", player.name.asString()) }
+                    it.data().update { it.withSegment(GLOBAL_CONTEXT) { it.withOption("name", player.name.asString()) } }
                 }
             }
 
@@ -224,11 +217,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
         return exec
     }
 
-    override fun getImplementationSubcommands(): Set<CommandSpec> {
-        return emptySet()
-    }
-
-    override fun getVersion(): String {
+    override fun version(): String {
         return container.metadata.version.friendlyString
     }
 

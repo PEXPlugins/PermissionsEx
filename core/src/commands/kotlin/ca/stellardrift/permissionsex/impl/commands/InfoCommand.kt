@@ -27,17 +27,12 @@ import ca.stellardrift.permissionsex.impl.commands.Messages.INFO_HEADER_OPTIONS_
 import ca.stellardrift.permissionsex.impl.commands.Messages.INFO_HEADER_PARENTS_TRANSIENT
 import ca.stellardrift.permissionsex.impl.commands.Messages.INFO_HEADER_PERMISSIONS
 import ca.stellardrift.permissionsex.impl.commands.Messages.INFO_HEADER_PERMISSIONS_TRANSIENT
-import ca.stellardrift.permissionsex.impl.commands.Messages.INFO_PERMISSIONS_DEFAULT
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
 import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
 import ca.stellardrift.permissionsex.impl.commands.parse.command
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.util.TranslatableProvider
-import ca.stellardrift.permissionsex.util.join
-import ca.stellardrift.permissionsex.util.plus
-import ca.stellardrift.permissionsex.util.toComponent
 import ca.stellardrift.permissionsex.util.unaryPlus
 import net.kyori.adventure.text.BuildableComponent
 import net.kyori.adventure.text.Component

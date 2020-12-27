@@ -16,35 +16,14 @@
  */
 package ca.stellardrift.permissionsex.impl.util;
 
-import ca.stellardrift.permissionsex.PermissionsEngine;
 import org.spongepowered.configurate.util.CheckedFunction;
 import org.spongepowered.configurate.util.CheckedSupplier;
-import org.spongepowered.configurate.util.UnmodifiableCollections;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class Util {
-    public static Map.Entry<String, String> subjectFromString(String input) {
-        String[] entries = input.split(":", 2);
-        if (entries.length == 1) {
-            return UnmodifiableCollections.immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, entries[0]);
-        } else {
-            return UnmodifiableCollections.immutableMapEntry(entries[0], entries[1]);
-        }
-
-    }
-
-    public static String subjectToString(Map.Entry<String, String> input) {
-        return input.getKey() + ":" + input.getValue();
-    }
-
     /**
      * Given an {@link Optional} of an unknown type, safely cast it to the expected type.
      * If the optional is not of the required type, an empty optional is returned.
@@ -69,7 +48,7 @@ public class Util {
         EMPTY_FUTURE.complete(null);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T> CompletableFuture<T> emptyFuture() {
         return (CompletableFuture) EMPTY_FUTURE;
     }
@@ -99,28 +78,5 @@ public class Util {
 
         });
         return ret;
-    }
-
-    public static <K, V> Map<K, V> updateImmutable(Map<K, V> input, K newKey, V newVal) {
-        if (input == null) {
-            return Collections.singletonMap(newKey, newVal);
-        }
-        Map<K, V> ret = new HashMap<>(input);
-        if (newVal == null) {
-            ret.remove(newKey);
-        } else {
-            ret.put(newKey, newVal);
-        }
-        return Collections.unmodifiableMap(ret);
-    }
-
-    public static <T> List<T> appendImmutable(List<T> input, T entry) {
-        if (input == null) {
-            return Collections.singletonList(entry);
-        }
-        final List<T> ret = new ArrayList<>(input.size() + 1);
-        ret.addAll(input);
-        ret.add(entry);
-        return Collections.unmodifiableList(ret);
     }
 }

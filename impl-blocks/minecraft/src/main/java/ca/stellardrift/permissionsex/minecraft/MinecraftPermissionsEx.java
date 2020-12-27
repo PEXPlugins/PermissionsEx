@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.impl.ImplementationInterface;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.minecraft.command.CallbackController;
 import ca.stellardrift.permissionsex.minecraft.profile.ProfileApiResolver;
 import ca.stellardrift.permissionsex.subject.InvalidIdentifierException;
 import ca.stellardrift.permissionsex.subject.SubjectType;
@@ -55,6 +56,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
     private final SubjectType<UUID> users;
     private final SubjectType<String> groups;
     private final ProfileApiResolver resolver;
+    private final CallbackController callbacks;
 
     /**
      * Create a new builder for a Minecraft permissions engine.
@@ -70,6 +72,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
     MinecraftPermissionsEx(final Builder<T> builder) throws PermissionsLoadingException {
         this.engine = new PermissionsEx<>(builder.config, builder.implementation);
         this.resolver = ProfileApiResolver.resolver(this.engine.asyncExecutor());
+        this.callbacks = new CallbackController();
         final Predicate<UUID> opProvider = builder.opProvider;
         this.users = SubjectType.builder(SUBJECTS_USER, UUID.class)
                 .serializedBy(UUID::toString)
@@ -123,12 +126,22 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         return this.engine.subjects(this.groups);
     }
 
+    /**
+     * Get the command callback controller for this permissions instance
+     *
+     * @return The callback controller
+     */
+    public CallbackController callbackController() {
+        return this.callbacks;
+    }
+
+
     private void convertUuids() {
         try {
             InetAddress.getByName("api.mojang.com");
             // Low-lever operation
             this.engine.doBulkOperation(store -> {
-                Set<String> toConvert = store.getAllIdentifiers(SUBJECTS_USER).stream()
+                Set<String> toConvert = store.getAllIdentifiers(SUBJECTS_USER)
                         .filter(ident -> {
                             if (ident.length() != 36) {
                                 return true;
@@ -164,7 +177,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                         }).flatMap(profile -> {
                             final String newIdentifier = profile.uuid().toString();
                             return Mono.fromCompletionStage(store.getData(SUBJECTS_USER, profile.name(), null)
-                                    .thenCompose(oldData -> store.setData(SUBJECTS_USER, newIdentifier, oldData.setOption(GLOBAL_CONTEXT, "name", profile.name()))
+                                    .thenCompose(oldData -> store.setData(SUBJECTS_USER, newIdentifier, oldData.withSegment(GLOBAL_CONTEXT, s -> s.withOption("name", profile.name())))
                                             .thenAccept(result -> store.setData(SUBJECTS_USER, profile.name(), null)
                                                     .exceptionally(t -> {
                                                         t.printStackTrace();

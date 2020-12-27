@@ -17,7 +17,7 @@
 package ca.stellardrift.permissionsex.impl.backend.file;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
-import ca.stellardrift.permissionsex.impl.backend.ConversionUtils;
+import ca.stellardrift.permissionsex.legacy.LegacyConversions;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ScopedConfigurationNode;
@@ -159,7 +159,7 @@ public class SchemaMigrations {
                                     configurationNode.parent().node("permissions-default").set(value);
                                     continue;
                                 }
-                                permission = ConversionUtils.convertLegacyPermission(permission);
+                                permission = LegacyConversions.convertLegacyPermission(permission);
                                 if (permission.contains("*")) {
                                     logger.warn(Messages.FILE_CONVERSION_ILLEGAL_CHAR.tr(configurationNode.path()));
                                 }
@@ -191,7 +191,7 @@ public class SchemaMigrations {
                             if (!defaultNode.virtual()) {
                                 if (defaultNode.getBoolean()) {
                                     ConfigurationNode addToNode = null;
-                                    final ConfigurationNode defaultsParent = valueAtPath.parent().parent().parent().node("fallbacks", PermissionsEngine.SUBJECTS_USER);
+                                    final ConfigurationNode defaultsParent = valueAtPath.parent().parent().parent().node("fallbacks", LegacyConversions.SUBJECTS_USER);
                                     final Object contexts = valueAtPath.node(FileSubjectData.KEY_CONTEXTS).raw();
                                     for (ConfigurationNode node : defaultsParent.childrenList()) {
                                         if (Objects.equals(node.node(FileSubjectData.KEY_CONTEXTS).raw(), contexts)) {

@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
+import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
 import ca.stellardrift.permissionsex.datastore.StoreProperties;
@@ -26,13 +27,15 @@ import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableMap;
-import org.pcollections.HashTreePMap;
-import org.pcollections.TreePVector;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.pcollections.PMap;
+import org.pcollections.PSet;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
@@ -43,7 +46,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static ca.stellardrift.permissionsex.datastore.sql.SchemaMigrations.VERSION_LATEST;
 
@@ -66,6 +69,10 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
 
     SqlDataStore(final StoreProperties<Config> properties) {
         super(properties);
+    }
+
+    PermissionsEx<?> manager() {
+        return (PermissionsEx<?>) this.getManager();
     }
 
     @AutoService(DataStoreFactory.class)
@@ -112,17 +119,18 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     private final ConcurrentMap<String, String> queryPrefixCache = new ConcurrentHashMap<>();
-    private final ThreadLocal<SqlDao> heldDao = new ThreadLocal<>();
-    private final Map<String, CheckedFunction<SqlDataStore, SqlDao, SQLException>> daoImplementations = ImmutableMap.of("mysql", MySqlDao::new, "h2", H2SqlDao::new);
+    private final ThreadLocal<@Nullable SqlDao> heldDao = new ThreadLocal<>();
+    private final PMap<String, CheckedFunction<SqlDataStore, SqlDao, SQLException>> daoImplementations = PCollections.<String, CheckedFunction<SqlDataStore, SqlDao, SQLException>>map("mysql", MySqlDao::new)
+            .plus("h2", H2SqlDao::new);
     private CheckedFunction<SqlDataStore, SqlDao, SQLException> daoFactory;
     private DataSource sql;
 
     SqlDao getDao() throws SQLException {
-        SqlDao dao = heldDao.get();
+        final @Nullable SqlDao dao = this.heldDao.get();
         if (dao != null) {
             return dao;
         }
-        return daoFactory.apply(this);
+        return this.daoFactory.apply(this);
     }
 
     @Override
@@ -219,11 +227,11 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     protected CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
-                Optional<SubjectRef> ref = dao.getSubjectRef(type, identifier);
+                final Optional<SqlSubjectRef<?>> ref = dao.getSubjectRef(type, identifier);
                 if (ref.isPresent()) {
                     return getDataForRef(dao, ref.get());
                 } else {
-                    return new SqlSubjectData(SubjectRef.unresolved(type, identifier));
+                    return new SqlSubjectData(SqlSubjectRef.unresolved(this.manager(), type, identifier));
                 }
             } catch (SQLException e) {
                 throw new PermissionsLoadingException(Messages.ERROR_LOADING.tr(type, identifier));
@@ -231,14 +239,14 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
         });
     }
 
-    private SqlSubjectData getDataForRef(SqlDao dao, SubjectRef ref) throws SQLException {
-        List<Segment> segments = dao.getSegments(ref);
-        Map<Set<ContextValue<?>>, Segment> contexts = new HashMap<>();
-        for (Segment segment : segments) {
-            contexts.put(segment.getContexts(), segment);
+    private SqlSubjectData getDataForRef(SqlDao dao, SqlSubjectRef<?> ref) throws SQLException {
+        List<SqlSegment> segments = dao.getSegments(ref);
+        PMap<PSet<ContextValue<?>>, SqlSegment> contexts = PCollections.map();
+        for (SqlSegment segment : segments) {
+            contexts = contexts.plus(segment.contexts(), segment);
         }
 
-        return new SqlSubjectData(ref, contexts, null);
+        return new SqlSubjectData(ref, contexts, PCollections.vector());
 
     }
 
@@ -251,7 +259,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
         } else {
             return runAsync(() -> {
                 try (SqlDao dao = getDao()) {
-                    SubjectRef ref = dao.getOrCreateSubjectRef(type, identifier);
+                    SqlSubjectRef<?> ref = dao.getOrCreateSubjectRef(type, identifier);
                     SqlSubjectData newData = getDataForRef(dao, ref);
                     newData = (SqlSubjectData) newData.mergeFrom(data);
                     newData.doUpdates(dao);
@@ -277,11 +285,11 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     @Override
-    public Set<String> getAllIdentifiers(String type) {
+    public Stream<String> getAllIdentifiers(String type) {
         try (SqlDao dao = getDao()) {
-            return dao.getAllIdentifiers(type);
+            return dao.getAllIdentifiers(type).stream(); // TODO
         } catch (SQLException e) {
-            return Collections.emptySet();
+            return Stream.of();
         }
     }
 
@@ -305,15 +313,15 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     @Override
-    public Iterable<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> getAll() {
+    public Stream<Map.Entry<SubjectRef<?>, ImmutableSubjectData>> getAll() {
         try (SqlDao dao = getDao()) {
-            Set<Map.Entry<Map.Entry<String, String>, ImmutableSubjectData>> builder = new HashSet<>();
-            for (SubjectRef ref : dao.getAllSubjectRefs()) {
+            Set<Map.Entry<SubjectRef<?>, ImmutableSubjectData>> builder = new HashSet<>();
+            for (SqlSubjectRef<?> ref : dao.getAllSubjectRefs()) {
                 builder.add(UnmodifiableCollections.immutableMapEntry(ref, getDataForRef(dao, ref)));
             }
-            return Collections.unmodifiableSet(builder);
+            return builder.stream();
         } catch (SQLException e) {
-            return Collections.emptySet();
+            return Stream.of();
         }
     }
 
@@ -327,7 +335,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     @Override
-    protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
+    protected CompletableFuture<RankLadder> setRankLadderInternal(final String ladder, final @Nullable RankLadder newLadder) {
         return runAsync(() -> {
             try (SqlDao dao = getDao()) {
                 dao.setRankLadder(ladder, newLadder);
@@ -337,11 +345,11 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     @Override
-    public Iterable<String> getAllRankLadders() {
+    public Stream<String> getAllRankLadders() {
         try (SqlDao dao = getDao()) {
-            return dao.getAllRankLadderNames();
+            return dao.getAllRankLadderNames().stream();
         } catch (SQLException e) {
-            return Collections.emptySet();
+            return Stream.of();
         }
     }
 
@@ -371,11 +379,13 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 if (inheritance instanceof SqlContextInheritance) {
                     sqlInheritance = (SqlContextInheritance) inheritance;
                 } else {
-                    sqlInheritance = new SqlContextInheritance(HashTreePMap.from(inheritance.allParents()), TreePVector.singleton((dao_, inheritance_) -> {
-                        for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.allParents().entrySet()) {
-                            dao_.setContextInheritance(ent.getKey(), ent.getValue());
-                        }
-                    }));
+                    sqlInheritance = new SqlContextInheritance(
+                            PCollections.asMap(inheritance.allParents(), (k, v) -> k, (k, v) -> PCollections.asVector(v)),
+                            PCollections.vector((dao_, inheritance_) -> {
+                                for (Map.Entry<ContextValue<?>, List<ContextValue<?>>> ent : inheritance_.allParents().entrySet()) {
+                                    dao_.setContextInheritance(ent.getKey(), PCollections.asVector(ent.getValue()));
+                                }
+                            }));
                 }
                 sqlInheritance.doUpdate(dao);
             }

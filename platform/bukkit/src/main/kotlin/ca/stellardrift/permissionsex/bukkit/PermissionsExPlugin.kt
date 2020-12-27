@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassNameRegexPermissibleInjector
 import ca.stellardrift.permissionsex.bukkit.PermissibleInjector.ClassPresencePermissibleInjector
 import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
@@ -89,6 +90,14 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
      */
     val manager: PermissionsEx<BukkitConfiguration>
         get() = (requireNotNull(_manager) { "PermissionsEx is not currently initialized!" }).engine()
+
+    /**
+     * Access the Minecraft PEX engine
+     *
+     * @return The engine
+     */
+    val mcManager: MinecraftPermissionsEx<BukkitConfiguration>
+        get() = (requireNotNull(_manager) { "PermissionsEx is not currently initialized!" })
 
     private lateinit var logger: FormattedLogger
 
@@ -174,15 +183,6 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         injectAllPermissibles()
         detectWorldGuard(this)
         detectVault(this)
-
-        manager.registerCommandsTo {
-            val cmd = getCommand(it.aliases[0])
-            if (cmd != null) {
-                val bukkitCommand = PEXBukkitCommand(it, this@PermissionsExPlugin)
-                cmd.setExecutor(bukkitCommand)
-                cmd.tabCompleter = bukkitCommand
-            }
-        }
     }
 
     override fun onDisable() {
@@ -225,16 +225,18 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         // Spigot doesn't seem to store virtual host names, so we have to do it ourselves.
         // Hostnames are provided as <host>:<port>, and we don't need the port.
         userSubjects.transientData().update(identifier) {
-            it.setOption(PermissionsEx.GLOBAL_CONTEXT, "hostname", event.hostname.substringBeforeLast(":"))
+            it.withSegment(PermissionsEngine.GLOBAL_CONTEXT) { it.withOption("hostname", event.hostname.substringBeforeLast(":")) }
         }
         userSubjects.isRegistered(identifier)
             .thenAccept { registered ->
                 if (registered) {
                     userSubjects.persistentData().update(identifier) { input: ImmutableSubjectData ->
-                        if (event.player.name != input.getOptions(PermissionsEx.GLOBAL_CONTEXT)["name"]) {
-                            input.setOption(PermissionsEx.GLOBAL_CONTEXT, "name", event.player.name)
-                        } else {
-                            input
+                        input.withSegment(PermissionsEngine.GLOBAL_CONTEXT) {
+                            if (event.player.name != it.options()["name"]) {
+                                it.withOption("name", event.player.name)
+                            } else {
+                                it
+                            }
                         }
                     }
                 }
@@ -259,7 +261,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     private fun onPlayerQuit(event: PlayerQuitEvent) {
         uninjectPermissible(event.player)
-        this._manager?.engine()?.callbackController?.clearOwnedBy(event.player.uniqueId)
+        this._manager?.callbackController()?.clearOwnedBy(event.player.uniqueId)
         userSubjects.uncache(event.player.uniqueId)
     }
 
@@ -370,7 +372,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
             return executorService
         }
 
-        override fun getVersion(): String {
+        override fun version(): String {
             return description.version
         }
 

@@ -1,7 +1,6 @@
 {
   "required": true,
   "package": "ca.stellardrift.permissionsex.fabric.mixin",
-  "plugin": "ca.stellardrift.permissionsex.fabric.impl.PermissionsExMixinsPlugin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "check.ArgumentBuilderMixin",
@@ -37,6 +36,9 @@
     "lifecycle.MinecraftClientMixin"
   ],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 1,
+    "injectionPoints": [
+      "ca.stellardrift.permissionsex.fabric.impl.WitherMutator"
+    ]
   }
 }

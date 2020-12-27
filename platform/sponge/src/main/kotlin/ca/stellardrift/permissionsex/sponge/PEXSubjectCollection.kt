@@ -41,7 +41,7 @@ import org.spongepowered.api.util.Tristate
  */
 class PEXSubjectCollection<I> private constructor(private val type: SubjectType<I>, internal val service: PermissionsExService) :
     SubjectCollection {
-    val implCache: SubjectTypeCollectionImpl<I> = service.manager.subjects(type)
+    private val implCache: SubjectTypeCollectionImpl<I> = service.manager.subjects(type)
     private lateinit var defaults: PEXSubject
     private val subjectCache: AsyncLoadingCache<String, PEXSubject> = Caffeine.newBuilder()
         .executor(service.manager.asyncExecutor())
@@ -145,7 +145,8 @@ class PEXSubjectCollection<I> private constructor(private val type: SubjectType<
         permission: String
     ): CompletableFuture<Map<SubjectReference, Boolean>> {
         val raw = implCache.allIdentifiers()
-        val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { implCache[it] }.collect(Collectors.toList()).toTypedArray()
+        val futures: Array<CompletableFuture<CalculatedSubject>> = raw.map { this.implCache[it] }
+            .toArray { arrayOfNulls<CompletableFuture<CalculatedSubject>>(it) }
         return CompletableFuture.allOf(*futures).thenApply(java.util.function.Function { _: Void? ->
             futures.asSequence()
                 .map { it.join() }
@@ -178,6 +179,6 @@ class PEXSubjectCollection<I> private constructor(private val type: SubjectType<
     }
 
     fun getCalculatedSubject(identifier: String): CompletableFuture<CalculatedSubject> {
-        return implCache[this.type.parseIdentifier(identifier)]
+        return this.implCache[this.type.parseIdentifier(identifier)]
     }
 }

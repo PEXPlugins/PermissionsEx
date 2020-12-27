@@ -16,7 +16,9 @@
  */
 package ca.stellardrift.permissionsex.impl.rank;
 
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.rank.RankLadder;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
@@ -25,20 +27,20 @@ import java.util.List;
 import static java.util.Map.Entry;
 
 public class FixedRankLadder extends AbstractRankLadder {
-    private final PVector<Entry<String, String>> ranks;
+    private final PVector<SubjectRef<?>> ranks;
 
-    public FixedRankLadder(String name, List<Entry<String, String>> ranks) {
+    public FixedRankLadder(String name, List<SubjectRef<?>> ranks) {
         super(name);
-        this.ranks = TreePVector.from(ranks);
+        this.ranks = PCollections.asVector(ranks);
     }
 
     @Override
-    public List<? extends Entry<String, String>> ranks() {
+    public PVector<SubjectRef<?>> ranks() {
         return this.ranks;
     }
 
     @Override
-    protected RankLadder newWithRanks(List<Entry<String, String>> ents) {
+    protected RankLadder newWithRanks(final PVector<SubjectRef<?>> ents) {
         return new FixedRankLadder(name(), ents);
     }
 }

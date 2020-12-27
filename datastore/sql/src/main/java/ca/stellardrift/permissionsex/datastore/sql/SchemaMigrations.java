@@ -19,21 +19,24 @@ package ca.stellardrift.permissionsex.datastore.sql;
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.datastore.sql.dao.LegacyMigration;
 import ca.stellardrift.permissionsex.datastore.sql.dao.SchemaMigration;
-import com.google.common.collect.Maps;
-import ca.stellardrift.permissionsex.impl.backend.ConversionUtils;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
+import ca.stellardrift.permissionsex.legacy.LegacyConversions;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.impl.util.GuavaCollectors;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.pcollections.PVector;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
 /**
  * Schema migrations for the SQL database
@@ -74,16 +77,16 @@ public class SchemaMigrations {
                 }
             }
 
-            Map<String, List<SubjectRef>> defaultSubjects = new HashMap<>();
-            Map<String, List<Map.Entry<SubjectRef, Integer>>> tempRankLadders = new HashMap<>();
+            Map<String, List<SqlSubjectRef<?>>> defaultSubjects = new HashMap<>();
+            Map<String, List<Map.Entry<SqlSubjectRef<?>, Integer>>> tempRankLadders = new HashMap<>();
 
             try (PreparedStatement select = dao.prepareStatement("SELECT type, name FROM {}permissions_entity_old")) {
                 ResultSet rs = select.executeQuery();
                 while (rs.next()) {
-                    SubjectRef ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
-                    Segment currentSeg = null;
-                    String currentWorld = null;
-                    Map<String, Segment> worldSegments = new HashMap<>();
+                    final SqlSubjectRef<?> ref = dao.getOrCreateSubjectRef(LegacyMigration.Type.values()[rs.getInt(1)].name().toLowerCase(), rs.getString(2));
+                    @Nullable SqlSegment currentSeg = null;
+                    @Nullable String currentWorld = null;
+                    Map<String, SqlSegment> worldSegments = new HashMap<>();
                     try (PreparedStatement selectPermissionsOptions = dao.prepareStatement("SELECT id, permission, world, value FROM {}permissions_old WHERE type=? AND name=? ORDER BY world, id DESC")) {
                         selectPermissionsOptions.setInt(1, rs.getInt(1));
                         selectPermissionsOptions.setString(2, rs.getString(2));
@@ -91,10 +94,11 @@ public class SchemaMigrations {
                         ResultSet perms = selectPermissionsOptions.executeQuery();
                         Map<String, Integer> newPerms = new HashMap<>();
                         Map<String, String> options = new HashMap<>();
-                        String rank = null, rankLadder = null;
+                        @Nullable String rank = null;
+                        @Nullable String rankLadder = null;
                         int defaultVal = 0;
                         while (perms.next()) {
-                            String worldChecked = perms.getString(3);
+                            @Nullable String worldChecked = perms.getString(3);
                             if (worldChecked != null && worldChecked.isEmpty()) {
                                 worldChecked = null;
                             }
@@ -114,7 +118,7 @@ public class SchemaMigrations {
                                     }
                                 }
                                 currentWorld = worldChecked;
-                                currentSeg = Segment.unallocated(currentWorld == null ? Collections.emptySet() : Collections.singleton(new ContextValue<String>("world", currentWorld)));
+                                currentSeg = SqlSegment.unallocated(currentWorld == null ? PCollections.set() : PCollections.set(new ContextValue<String>("world", currentWorld)));
                                 dao.allocateSegment(ref, currentSeg);
                                 worldSegments.put(currentWorld, currentSeg);
                             }
@@ -130,7 +134,7 @@ public class SchemaMigrations {
                                     defaultVal = val;
                                     continue;
                                 }
-                                key = ConversionUtils.convertLegacyPermission(key);
+                                key = LegacyConversions.convertLegacyPermission(key);
                                 newPerms.put(key, val);
                             } else {
                                 if (currentWorld == null) {
@@ -142,9 +146,9 @@ public class SchemaMigrations {
                                             rankLadder = value;
                                         }
                                         if (rank != null && rankLadder != null) {
-                                            List<Map.Entry<SubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
+                                            List<Map.Entry<SqlSubjectRef<?>, Integer>> ladder = tempRankLadders.computeIfAbsent(rankLadder, ign -> new ArrayList<>());
                                             try {
-                                                ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
+                                                ladder.add(immutableMapEntry(ref, Integer.parseInt(rank)));
                                             } catch (IllegalArgumentException ignore) {
                                                 // non-integer rank TODO maybe warn
                                             }
@@ -173,9 +177,9 @@ public class SchemaMigrations {
                                 dao.setDefaultValue(currentSeg, defaultVal);
                             }
                             if (rank != null) {
-                                List<Map.Entry<SubjectRef, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
+                                List<Map.Entry<SqlSubjectRef<?>, Integer>> ladder = tempRankLadders.computeIfAbsent("default", ign -> new ArrayList<>());
                                 try {
-                                    ladder.add(Maps.immutableEntry(ref, Integer.parseInt(rank)));
+                                    ladder.add(immutableMapEntry(ref, Integer.parseInt(rank)));
                                 } catch (IllegalArgumentException ex) {
                                     // non-integer rank TODO maybe warn
                                 }
@@ -184,27 +188,27 @@ public class SchemaMigrations {
                         }
                     }
 
-                    for (Map.Entry<String, List<Map.Entry<SubjectRef, Integer>>> ent : tempRankLadders.entrySet()) {
-                        List<SubjectRef> ladder = ent.getValue().stream()
+                    for (Map.Entry<String, List<Map.Entry<SqlSubjectRef<?>, Integer>>> ent : tempRankLadders.entrySet()) {
+                        PVector<SubjectRef<?>> ladder = ent.getValue().stream()
                                 .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
                                 .map(Map.Entry::getKey)
-                                .collect(GuavaCollectors.toImmutableList());
+                                .collect(PCollections.toPVector());
                         dao.setRankLadder(ent.getKey(), new SqlRankLadder(ent.getKey(), ladder));
 
                     }
 
                     if (!defaultSubjects.isEmpty()) {
-                        final SubjectRef defaultSubj = dao.getOrCreateSubjectRef(PermissionsEngine.SUBJECTS_FALLBACK.name(), PermissionsEngine.SUBJECTS_USER);
-                        final List<Segment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
-                        for (Map.Entry<String, List<SubjectRef>> ent : defaultSubjects.entrySet()) {
-                            Segment seg = null;
+                        final SqlSubjectRef<?> defaultSubj = dao.getOrCreateSubjectRef(PermissionsEngine.SUBJECTS_FALLBACK.name(), LegacyConversions.SUBJECTS_USER);
+                        final List<SqlSegment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
+                        for (Map.Entry<String, List<SqlSubjectRef<?>>> ent : defaultSubjects.entrySet()) {
+                            SqlSegment seg = null;
                             if (!segments.isEmpty()) {
-                                for (Segment segment : segments) {
-                                    if (ent.getKey() == null && segment.getContexts().isEmpty()) {
+                                for (SqlSegment segment : segments) {
+                                    if (ent.getKey() == null && segment.contexts().isEmpty()) {
                                         seg = segment;
                                         break;
-                                    } else if (segment.getContexts().size() == 1) {
-                                        ContextValue<?> ctx = segment.getContexts().iterator().next();
+                                    } else if (segment.contexts().size() == 1) {
+                                        ContextValue<?> ctx = segment.contexts().iterator().next();
                                         if (ctx.key().equals("world") && ctx.rawValue().equals(ent.getKey())) {
                                             seg = segment;
                                             break;
@@ -213,7 +217,7 @@ public class SchemaMigrations {
                                 }
                             }
                             if (seg == null) {
-                                seg = Segment.unallocated(ent.getKey() == null ? Collections.emptySet() : Collections.singleton(new ContextValue<String>("world", ent.getKey())));
+                                seg = SqlSegment.unallocated(ent.getKey() == null ? PCollections.set() : PCollections.set(new ContextValue<String>("world", ent.getKey())));
                                 dao.allocateSegment(defaultSubj, seg);
                                 segments.add(seg);
                             }
@@ -226,7 +230,7 @@ public class SchemaMigrations {
                         selectInheritance.setInt(2, rs.getInt(1));
 
                         ResultSet inheritance = selectInheritance.executeQuery();
-                        Deque<SubjectRef> newInheritance = new ArrayDeque<>();
+                        Deque<SqlSubjectRef<?>> newInheritance = new ArrayDeque<>();
                         while (inheritance.next()) {
                             if (currentSeg == null || !Objects.equals(inheritance.getString(3), currentWorld)) {
                                 if (currentSeg != null && !newInheritance.isEmpty()) {
@@ -236,12 +240,12 @@ public class SchemaMigrations {
                                 currentWorld = inheritance.getString(3);
                                 currentSeg = worldSegments.get(currentWorld);
                                 if (currentSeg == null) {
-                                    currentSeg = Segment.unallocated(currentWorld == null ? Collections.emptySet() : Collections.singleton(new ContextValue<String>("world", currentWorld)));
+                                    currentSeg = SqlSegment.unallocated(currentWorld == null ? PCollections.set() : PCollections.set(new ContextValue<String>("world", currentWorld)));
                                     dao.allocateSegment(ref, currentSeg);
                                     worldSegments.put(currentWorld, currentSeg);
                                 }
                             }
-                            newInheritance.add(dao.getOrCreateSubjectRef(PermissionsEngine.SUBJECTS_GROUP, inheritance.getString(2)));
+                            newInheritance.add(dao.getOrCreateSubjectRef(LegacyConversions.SUBJECTS_GROUP, inheritance.getString(2)));
                         }
                         if (currentSeg != null && !newInheritance.isEmpty()) {
                             dao.setParents(currentSeg, newInheritance);

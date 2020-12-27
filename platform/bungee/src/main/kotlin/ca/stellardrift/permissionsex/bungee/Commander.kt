@@ -16,49 +16,38 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
-import ca.stellardrift.permissionsex.impl.commands.commander.MessageFormatter
+import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import java.util.Locale
 import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
 internal class BungeeCommander(
-    internal val pex: PermissionsExPlugin,
+    private val pex: PermissionsExPlugin,
     private val src: CommandSender
 ) : Commander {
-    override val messageColor: TextColor = NamedTextColor.GOLD
     private val audience = pex.adventure.sender(src)
-    override val manager: PermissionsEx<*>
-        get() = pex.manager
-    override val formatter = BungeePluginMessageFormatter(this)
-    override val name: String get() = src.name
-    override val locale: Locale get() =
-        (src as? ProxiedPlayer)?.locale ?: Locale.getDefault()
-    override val subjectIdentifier: SubjectRef<*>?
-        get() = when (src) {
-            is ProxiedPlayer -> SubjectRef.subject(pex.users.type(), src.uniqueId)
-            else -> IDENT_SERVER_CONSOLE
-        }
+    private val formatter = BungeePluginMessageFormatter(pex)
 
-    override fun audience(): Audience {
-        return this.audience
+    override fun audience(): Audience = this.audience
+    override fun name(): Component = text(src.name)
+    override fun subjectIdentifier(): SubjectRef<*> = when (this.src) {
+        is ProxiedPlayer -> SubjectRef.subject(pex.users.type(), src.uniqueId)
+        else -> IDENT_SERVER_CONSOLE
     }
-
-    override fun hasPermission(permission: String): Boolean {
-        return src.hasPermission(permission)
-    }
+    override fun formatter(): MessageFormatter = this.formatter
+    override fun hasPermission(permission: String): Boolean = this.src.hasPermission(permission)
 }
 
-internal class BungeePluginMessageFormatter(sender: BungeeCommander) : MessageFormatter(sender, sender.pex.manager, hlColor = NamedTextColor.YELLOW) {
+internal class BungeePluginMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager, NamedTextColor.GOLD, NamedTextColor.YELLOW) {
 
-    override val <I> SubjectRef<I>.friendlyName: String? get() {
-        return (type().getAssociatedObject(identifier()) as? CommandSender)?.name
+    override fun <I> friendlyName(reference: SubjectRef<I>): String? {
+        return (reference.type().getAssociatedObject(reference.identifier()) as? CommandSender)?.name
     }
 
     /**

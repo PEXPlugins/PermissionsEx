@@ -86,10 +86,13 @@ We aim to replace every op check in vanilla \(i.e. unmodded\) Minecraft with a p
 * Command blocks are represented as `commandblock:<name>`, where the default command block name is `@`
 * Sign representation has not been decided yet
 * RCON connections are represented as `system:Recon` \(Yes, that is `Recon` -- that's what the Rcon command source is named internally.\)
+* Functions executed through tags `#minecraft:tick` and `#minecraft:load` tags are represented as `function:minecraft:tick` and `function:minecraft:load` respectively
+
+NOTE: functions currently only perform permissions checks when they're loaded, not on individual executions. This needs to be resolved for function permissions to actually be useful.
 
 ### Other mods
 
-* We provide a permissions resolver for [WorldEdit](https://enginehub.org/worldedit) so its commands check PermissionsEx for permissions
+* We provide a permission resolver for [WorldEdit](https://enginehub.org/worldedit) so its commands check PermissionsEx for permissions
 
 ### Developer information
 
@@ -118,5 +121,6 @@ PEX provides a significant level of integration into Fabric. This provides some 
 
 #### Client checks op for
 
-* F3 Debug toggle creative/spectator 
+* F3 Debug toggle creative/spectator
+* Debug stick and other technical blocks
 

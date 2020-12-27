@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.impl.subject;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.impl.data.ToDataSubjectRefImpl;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
@@ -27,7 +27,6 @@ import ca.stellardrift.permissionsex.impl.util.CachingValue;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.collect.ImmutableSet;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -107,22 +106,22 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
      */
     private BakedSubjectData getData(Set<ContextValue<?>> contexts) {
         Objects.requireNonNull(contexts, "contexts");
-        return data.synchronous().get(ImmutableSet.copyOf(contexts));
+        return data.synchronous().get(PCollections.asSet(contexts));
     }
 
     @Override
     public NodeTree permissions(Set<ContextValue<?>> contexts) {
-        return getData(contexts).getPermissions();
+        return getData(contexts).permissions();
     }
 
     @Override
     public Map<String, String> options(Set<ContextValue<?>> contexts) {
-        return getData(contexts).getOptions();
+        return getData(contexts).options();
     }
 
     @Override
-    public List<Map.Entry<String, String>> parents(Set<ContextValue<?>> contexts) {
-        List<Map.Entry<String, String>> parents = getData(contexts).getParents();
+    public List<SubjectRef<?>> parents(Set<ContextValue<?>> contexts) {
+        List<SubjectRef<?>> parents = getData(contexts).parents();
         getManager().getNotifier().onParentCheck(identifier(), contexts, parents);
         return parents;
     }
@@ -140,7 +139,7 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
         if (this.activeContexts == null) {
             throw new IllegalStateException("This subject has not yet been initialized! This is normally done before the future provided by PEX completes.");
         }
-        return new HashSet<>(activeContexts.get());
+        return new HashSet<>(this.activeContexts.get());
     }
 
     @Override

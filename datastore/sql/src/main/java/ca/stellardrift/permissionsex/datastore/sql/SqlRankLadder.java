@@ -17,29 +17,28 @@
 package ca.stellardrift.permissionsex.datastore.sql;
 
 import ca.stellardrift.permissionsex.impl.rank.AbstractRankLadder;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.rank.RankLadder;
-import ca.stellardrift.permissionsex.impl.util.GuavaCollectors;
-
-import java.util.List;
-import java.util.Map;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import org.pcollections.PVector;
 
 public class SqlRankLadder extends AbstractRankLadder {
-    private final List<SubjectRef> entries;
+    private final PVector<SubjectRef<?>> entries;
 
-    public SqlRankLadder(String name, List<SubjectRef> entries) {
+    public SqlRankLadder(String name, PVector<SubjectRef<?>> entries) {
         super(name);
         this.entries = entries;
     }
 
     @Override
-    public List<SubjectRef> ranks() {
-        return entries;
+    public PVector<SubjectRef<?>> ranks() {
+        return this.entries;
     }
 
     @Override
-    protected RankLadder newWithRanks(List<Map.Entry<String, String>> ents) {
+    protected RankLadder newWithRanks(final PVector<SubjectRef<?>> ents) {
         return new SqlRankLadder(name(), ents.stream()
-                .map(ent -> ent instanceof SubjectRef ? (SubjectRef) ent : SubjectRef.unresolved(ent.getKey(), ent.getValue()))
-                .collect(GuavaCollectors.toImmutableList()));
+                .map(SqlSubjectRef::from)
+                .collect(PCollections.toPVector()));
     }
 }

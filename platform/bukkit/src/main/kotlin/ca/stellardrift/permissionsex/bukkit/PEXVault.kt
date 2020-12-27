@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,15 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
-import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
+import ca.stellardrift.permissionsex.subject.SubjectRef
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
-import org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry
 
 internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
     init {
@@ -106,12 +105,12 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun groupAdd(world: String, name: String, permission: String): Boolean {
         return !getGroup(name).data()
-            .update { it.setPermission(contextsFrom(world), permission, 1) }.isCancelled
+            .update(contextsFrom(world)) { it.withPermission(permission, 1) }.isCancelled
     }
 
     override fun groupRemove(world: String, name: String, permission: String): Boolean {
         return !getGroup(name).data()
-            .update { it.setPermission(contextsFrom(world), permission, 0) }.isCancelled
+            .update(contextsFrom(world)) { it.withPermission(permission, 0) }.isCancelled
     }
 
     override fun playerHas(world: String, player: OfflinePlayer, permission: String): Boolean {
@@ -120,13 +119,13 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
         return when {
             perm > 0 -> true
             perm < 0 -> false
-            else -> this.pex.manager.config.platformConfig.fallbackOp && player.isOp
+            else -> this.pex.manager.config().platformConfig.fallbackOp && player.isOp
         }
     }
 
     override fun playerAdd(world: String, player: OfflinePlayer, permission: String): Boolean {
         return !getUser(player).data()
-            .update { it.setPermission(contextsFrom(world), permission, 1) }.isCancelled
+            .update(contextsFrom(world)) { it.withPermission(permission, 1) }.isCancelled
     }
 
     override fun playerAddTransient(player: OfflinePlayer, permission: String): Boolean {
@@ -139,17 +138,17 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun playerAddTransient(worldName: String, player: OfflinePlayer, permission: String): Boolean {
         return !getUser(player).transientData()
-            .update { it.setPermission(contextsFrom(worldName), permission, 1) }.isCancelled
+            .update(contextsFrom(worldName)) { it.withPermission(permission, 1) }.isCancelled
     }
 
     override fun playerRemoveTransient(worldName: String, player: OfflinePlayer, permission: String): Boolean {
         return !getUser(player).transientData()
-            .update { it.setPermission(contextsFrom(worldName), permission, 0) }.isCancelled
+            .update(contextsFrom(worldName)) { it.withPermission(permission, 0) }.isCancelled
     }
 
     override fun playerRemove(world: String, player: OfflinePlayer, permission: String): Boolean {
         return !getUser(player).data()
-            .update { it.setPermission(contextsFrom(world), permission, 0) }.isCancelled
+            .update(contextsFrom(world)) { it.withPermission(permission, 0) }.isCancelled
     }
 
     override fun playerRemoveTransient(player: Player, permission: String): Boolean {
@@ -162,26 +161,24 @@ internal class PEXVault(val pex: PermissionsExPlugin) : Permission() {
 
     override fun playerInGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         val subj = getUser(player)
-        return immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, group) in subj.parents(contextsFrom(subj, world))
+        return SubjectRef.subject(this.pex.groupSubjects, group) in subj.parents(contextsFrom(subj, world))
     }
 
     override fun playerAddGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         return !getUser(player).data()
-            .update { it.addParent(contextsFrom(world),
-                PermissionsEngine.SUBJECTS_GROUP, group) }.isCancelled
+            .update(contextsFrom(world)) { it.plusParent(this.pex.groupSubjects.type(), group) }.isCancelled
     }
 
     override fun playerRemoveGroup(world: String, player: OfflinePlayer, group: String): Boolean {
         return !getUser(player).data()
-            .update { it.removeParent(contextsFrom(world),
-                PermissionsEngine.SUBJECTS_GROUP, group) }.isCancelled
+            .update(contextsFrom(world)) { it.minusParent(this.pex.groupSubjects.type(), group) }.isCancelled
     }
 
     override fun getPlayerGroups(world: String, player: OfflinePlayer): Array<String> {
         val subj = getUser(player)
         return subj.parents(contextsFrom(subj, world))
-            .mapNotNull { (key, value) ->
-            if (key == PermissionsEngine.SUBJECTS_GROUP) value else null
+            .mapNotNull { ref ->
+            if (ref.type() == this.pex.groupSubjects) ref.serializedIdentifier() else null
         }.toTypedArray()
     }
 

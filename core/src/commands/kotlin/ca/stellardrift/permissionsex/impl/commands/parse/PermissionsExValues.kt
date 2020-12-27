@@ -25,7 +25,6 @@ import ca.stellardrift.permissionsex.impl.commands.ArgumentKeys.CONTEXT_ERROR_VA
 import ca.stellardrift.permissionsex.impl.commands.ArgumentKeys.SUBJECTTYPE_ERROR_NOTATYPE
 import ca.stellardrift.permissionsex.impl.commands.ArgumentKeys.SUBJECT_ERROR_NAMEINVALID
 import ca.stellardrift.permissionsex.impl.commands.Messages
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
 import ca.stellardrift.permissionsex.impl.commands.parse.StructuralArguments.FlagCommandElementBuilder
 import ca.stellardrift.permissionsex.rank.RankLadder
 import ca.stellardrift.permissionsex.util.SubjectIdentifier

@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
+import ca.stellardrift.permissionsex.subject.Segment
 import ca.stellardrift.permissionsex.subject.SubjectRef
 import ca.stellardrift.permissionsex.util.Change
 import java.util.concurrent.CompletableFuture
@@ -56,23 +57,23 @@ class PEXSubjectData internal constructor(
     }
 
     override fun getAllOptions(): Map<Set<Context>, Map<String, String>> {
-        return data.get().allOptions.keysToSponge()
+        return data.get().mapSegmentValues(Segment::options).keysToSponge()
     }
 
     override fun getOptions(contexts: Set<Context>): Map<String, String> {
-        return data.get().getOptions(contexts.toPex(service.manager))
+        return data.get().segment(contexts.toPex(service.manager)).options()
     }
 
     override fun setOption(contexts: Set<Context>, key: String, value: String?): CompletableFuture<Boolean> {
-        return data.update { it.setOption(contexts.toPex(service.manager), key, value) }.boolSuccess()
+        return data.update(contexts.toPex(service.manager)) { it.withOption(key, value) }.boolSuccess()
     }
 
     override fun clearOptions(contexts: Set<Context>): CompletableFuture<Boolean> {
-        return data.update { it.clearOptions(contexts.toPex(service.manager)) }.boolSuccess()
+        return data.update(contexts.toPex(service.manager)) { it.withoutOptions() }.boolSuccess()
     }
 
     override fun clearOptions(): CompletableFuture<Boolean> {
-        return data.update { obj: ImmutableSubjectData -> obj.clearOptions() }.boolSuccess()
+        return data.update { it.withSegments { _, segment -> segment.withoutOptions() } }.boolSuccess()
     }
 
     override fun getSubject(): Subject {
@@ -84,13 +85,13 @@ class PEXSubjectData internal constructor(
     }
 
     override fun getAllPermissions(): Map<Set<Context>, Map<String, Boolean>> {
-        return data.get().allPermissions
-            .keysToSponge()
-            .mapValues { (_, v) -> v.mapValues { it.value > 0 } }
+        return data.get().mapSegmentValues {
+            it.permissions().mapValues { (_, v) -> v > 0 }
+        }.keysToSponge()
     }
 
     override fun getPermissions(contexts: Set<Context>): Map<String, Boolean> {
-        return data.get().getPermissions(contexts.toPex(service.manager))
+        return data.get().segment(contexts.toPex(service.manager)).permissions()
             .mapValues { (_, v) -> v > 0 }
     }
 
@@ -101,20 +102,20 @@ class PEXSubjectData internal constructor(
             Tristate.UNDEFINED -> 0
             else -> throw IllegalStateException("Unknown tristate provided $state")
         }
-        return data.update { it.setPermission(contexts.toPex(service.manager), permission, value) }.thenApply { true }
+        return data.update(contexts.toPex(service.manager)) { it.withPermission(permission, value) }.thenApply { true }
     }
 
     override fun clearPermissions(): CompletableFuture<Boolean> {
-        return data.update { it.clearPermissions() }.boolSuccess()
+        return data.update { it.withSegments { _, segment -> segment.withoutPermissions() } }.boolSuccess()
     }
 
     override fun clearPermissions(contexts: Set<Context>): CompletableFuture<Boolean> {
-        return data.update { it.clearPermissions(contexts.toPex(service.manager)) }.boolSuccess()
+        return data.update(contexts.toPex(service.manager)) { it.withoutPermissions() }.boolSuccess()
     }
 
     override fun getAllParents(): Map<Set<Context>, List<SubjectReference>> {
         synchronized(parentsCache) {
-            data.get().activeContexts.forEach { getParentsInternal(it) }
+            data.get().activeContexts().forEach { getParentsInternal(it) }
             return parentsCache.keysToSponge()
         }
     }
@@ -130,8 +131,8 @@ class PEXSubjectData internal constructor(
         }
         val parents: List<SubjectReference>
         synchronized(parentsCache) {
-            val rawParents = data.get().getParents(contexts)
-            parents = rawParents?.map { (k, v) -> service.newSubjectReference(k, v) } ?: emptyList()
+            val rawParents = data.get().segment(contexts).parents()
+            parents = rawParents?.map { it.asSponge(this.service) } ?: emptyList()
             val existingParents = parentsCache.putIfAbsent(contexts, parents)
             if (existingParents != null) {
                 return existingParents
@@ -141,24 +142,20 @@ class PEXSubjectData internal constructor(
     }
 
     override fun addParent(contexts: Set<Context>, subject: SubjectReference): CompletableFuture<Boolean> {
-        subject.asPex(service) // validate subject reference
-        return data.update {
-            it.addParent(contexts.toPex(service.manager), subject.collectionIdentifier, subject.subjectIdentifier)
-        }.boolSuccess()
+        val ref = subject.asPex(service) // validate subject reference
+        return data.update(contexts.toPex(service.manager)) { it.plusParent(ref) }.boolSuccess()
     }
 
     override fun removeParent(set: Set<Context>, subject: SubjectReference): CompletableFuture<Boolean> {
-        return data.update {
-            it.removeParent(set.toPex(service.manager), subject.collectionIdentifier, subject.subjectIdentifier)
-        }.boolSuccess()
+        return data.update(set.toPex(service.manager)) { it.minusParent(subject.asPex(service)) }.boolSuccess()
     }
 
     override fun clearParents(): CompletableFuture<Boolean> {
-        return data.update { it.clearParents() }.boolSuccess()
+        return data.update { it.withSegments { _, segment -> segment.withoutParents() } }.boolSuccess()
     }
 
     override fun clearParents(set: Set<Context>): CompletableFuture<Boolean> {
-        return data.update { it.clearParents(set.toPex(service.manager)) }.boolSuccess()
+        return data.update(set.toPex(service.manager)) { it.withoutParents() }.boolSuccess()
     }
 }
 

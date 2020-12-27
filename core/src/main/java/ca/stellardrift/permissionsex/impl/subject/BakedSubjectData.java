@@ -16,39 +16,41 @@
  */
 package ca.stellardrift.permissionsex.impl.subject;
 
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.util.NodeTree;
-import com.google.common.base.Preconditions;
 
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Represents subject data that has had its hierarchy and contexts flattened
  */
-class BakedSubjectData {
+final class BakedSubjectData {
     private final NodeTree permissions;
-    private final List<Map.Entry<String, String>> parents;
+    private final List<SubjectRef<?>> parents;
     private final Map<String, String> options;
 
-    public BakedSubjectData(NodeTree permissions, List<Map.Entry<String, String>> parents, Map<String, String> options) {
-        Preconditions.checkNotNull(permissions, "permissions");
-        Preconditions.checkNotNull(parents, "parents");
-        Preconditions.checkNotNull(options, "options");
+    BakedSubjectData(final NodeTree permissions, final List<SubjectRef<?>> parents, final Map<String, String> options) {
+        requireNonNull(permissions, "permissions");
+        requireNonNull(parents, "parents");
+        requireNonNull(options, "options");
         this.permissions = permissions;
         this.parents = parents;
         this.options = options;
     }
 
-    public NodeTree getPermissions() {
-        return permissions;
+    public NodeTree permissions() {
+        return this.permissions;
     }
 
-    public List<Map.Entry<String, String>> getParents() {
-        return parents;
+    public List<SubjectRef<?>> parents() {
+        return this.parents;
     }
 
-    public Map<String, String> getOptions() {
-        return options;
+    public Map<String, String> options() {
+        return this.options;
     }
 
     @Override
@@ -56,29 +58,28 @@ class BakedSubjectData {
         if (this == other) return true;
         if (!(other instanceof BakedSubjectData)) return false;
 
-        BakedSubjectData that = (BakedSubjectData) other;
-
-        if (!options.equals(that.options)) return false;
-        if (!parents.equals(that.parents)) return false;
-        if (!permissions.equals(that.permissions)) return false;
+        final BakedSubjectData that = (BakedSubjectData) other;
+        if (!this.options.equals(that.options)) return false;
+        if (!this.parents.equals(that.parents)) return false;
+        if (!this.permissions.equals(that.permissions)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = permissions.hashCode();
-        result = 31 * result + parents.hashCode();
-        result = 31 * result + options.hashCode();
+        int result = this.permissions.hashCode();
+        result = 31 * result + this.parents.hashCode();
+        result = 31 * result + this.options.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
         return "BakedSubjectData{" +
-                "permissions=" + permissions +
-                ", parents=" + parents +
-                ", options=" + options +
+                "permissions=" + this.permissions +
+                ", parents=" + this.parents +
+                ", options=" + this.options +
                 '}';
     }
 }

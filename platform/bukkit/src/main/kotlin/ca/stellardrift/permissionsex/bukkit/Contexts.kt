@@ -1,6 +1,6 @@
 /*
  * PermissionsEx - a permissions plugin for your server ecosystem
- * Copyright © 2020 zml [at] stellardrift [dot] ca and PermissionsEx contributors
+ * Copyright © 2021 zml [at] stellardrift [dot] ca and PermissionsEx contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ object RemoteIpContextDefinition : IpSetContextDefinition("remoteip") {
 
 object LocalHostContextDefinition : SimpleContextDefinition("localhost") {
     override fun accumulateCurrentValues(subject: CalculatedSubject, consumer: Consumer<String>) {
-        subject.transientData().get().getOptions(GLOBAL_CONTEXT)["hostname"]?.apply(consumer::accept)
+        subject.transientData().get().segment(GLOBAL_CONTEXT).options()["hostname"]?.apply(consumer::accept)
     }
 }
 

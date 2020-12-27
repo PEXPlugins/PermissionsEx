@@ -20,7 +20,7 @@ import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.datastore.conversion.ReadOnlySubjectData
 import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.backend.ConversionUtils
+import ca.stellardrift.permissionsex.legacy.LegacyConversions
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.kotlin.extensions.get
 import org.spongepowered.configurate.serialize.SerializationException
@@ -54,7 +54,7 @@ class GroupManagerSubjectData(
     }
 
     override fun getAllOptions(): Map<Set<ContextValue<*>>, Map<String, String>> {
-        return activeContexts.associateWith { getOptions(it) }
+        return activeContexts().associateWith { getOptions(it) }
             .filterValues { it.isNotEmpty() }
     }
 
@@ -68,7 +68,7 @@ class GroupManagerSubjectData(
     }
 
     override fun getAllPermissions(): Map<Set<ContextValue<*>>, Map<String, Int>> {
-        return activeContexts.associateWith { getPermissions(it) }
+        return activeContexts().associateWith { getPermissions(it) }
             .filterValues { it.isNotEmpty() }
     }
 
@@ -86,14 +86,14 @@ class GroupManagerSubjectData(
                 value = -1
                 perm = perm.substring(1)
             }
-            perm = ConversionUtils.convertLegacyPermission(perm)
+            perm = LegacyConversions.convertLegacyPermission(perm)
             ret[perm] = value
         }
         return ret
     }
 
     override fun getAllParents(): Map<Set<ContextValue<*>>, List<Map.Entry<String, String>>> {
-        return activeContexts.associateWith { getParents(it) }
+        return activeContexts().associateWith { getParents(it) }
             .filterValues { it.isNotEmpty() }
     }
 
@@ -126,7 +126,7 @@ class GroupManagerSubjectData(
         return 0
     }
 
-    override fun getActiveContexts(): Set<Set<ContextValue<*>>> {
+    override fun activeContexts(): Set<Set<ContextValue<*>>> {
         val activeContextsBuilder = mutableSetOf<Set<ContextValue<*>>>()
         if (getNodeForContexts(PermissionsEx.GLOBAL_CONTEXT) != null) {
             activeContextsBuilder.add(PermissionsEx.GLOBAL_CONTEXT)
@@ -143,7 +143,7 @@ class GroupManagerSubjectData(
     }
 
     override fun getAllDefaultValues(): Map<Set<ContextValue<*>>, Int> {
-        return activeContexts.associateWith { getDefaultValue(it) }
+        return activeContexts().associateWith { getDefaultValue(it) }
             .filterValues { it != 0 }
     }
 }

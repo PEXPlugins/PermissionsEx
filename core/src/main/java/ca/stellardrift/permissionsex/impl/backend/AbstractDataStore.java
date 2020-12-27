@@ -19,7 +19,7 @@ package ca.stellardrift.permissionsex.impl.backend;
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
-import ca.stellardrift.permissionsex.impl.data.CacheListenerHolder;
+import ca.stellardrift.permissionsex.impl.util.CacheListenerHolder;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
@@ -29,7 +29,6 @@ import ca.stellardrift.permissionsex.datastore.StoreProperties;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.impl.util.Util;
-import com.google.common.collect.Iterables;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -43,6 +42,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -64,7 +64,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return this.properties.identifier();
     }
 
@@ -131,7 +131,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      */
     protected final void applyDefaultData() {
         getData(PermissionsEngine.SUBJECTS_DEFAULTS.name(), PermissionsEngine.SUBJECTS_DEFAULTS.name(), null)
-                .thenApply(data -> data.setDefaultValue(Collections.singleton(new ContextValue<>("localip", "127.0.0.1")), 1))
+                .thenApply(data -> data.withSegment(Collections.singleton(new ContextValue<>("localip", "127.0.0.1")), s -> s.withFallbackPermission(1)))
                 .thenCompose(data -> setData(PermissionsEngine.SUBJECTS_DEFAULTS.name(), PermissionsEngine.SUBJECTS_DEFAULTS.name(), data));
     }
 
@@ -140,10 +140,10 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     protected abstract CompletableFuture<ImmutableSubjectData> setDataInternal(String type, String identifier, @Nullable ImmutableSubjectData data);
 
     @Override
-    public final Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(final String type) {
+    public final Stream<Map.Entry<String, ImmutableSubjectData>> getAll(final String type) {
         requireNonNull(type, "type");
-        return Iterables.transform(getAllIdentifiers(type),
-                input -> UnmodifiableCollections.immutableMapEntry(input, getData(type, input, null).join()));
+        return getAllIdentifiers(type)
+                .map(id -> UnmodifiableCollections.immutableMapEntry(id, getData(type, id, null).join()));
     }
 
     @Override

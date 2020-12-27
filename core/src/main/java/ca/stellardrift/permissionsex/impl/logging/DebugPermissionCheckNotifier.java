@@ -69,7 +69,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     }
 
     @Override
-    public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<SubjectRef<?>> parents) {
         logger.info(Messages.CHECK_PARENT.tr(contexts, stringIdentifier(subject), parents));
         delegate.onParentCheck(subject, contexts, parents);
     }

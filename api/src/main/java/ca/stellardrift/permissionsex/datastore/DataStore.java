@@ -21,14 +21,18 @@ import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 
 /**
@@ -48,7 +52,7 @@ public interface DataStore {
      *
      * @return The name of the current data store instance.
      */
-    String getName();
+    String name();
 
     /**
      * Activate this data store from the required data.
@@ -81,6 +85,20 @@ public interface DataStore {
     CompletableFuture<ImmutableSubjectData> getData(String type, String identifier, @Nullable Consumer<ImmutableSubjectData> listener);
 
     /**
+     * Loads the data at the specified type and identifier.
+     *
+     * <p>Implementations of this method do not need to perform any caching.</p>
+     *
+     * @param subject The identity of the subject data is being set for
+     * @param listener The update listener for this subject
+     * @return The relevant subject data
+     * @since 2.0.0
+     */
+    default CompletableFuture<ImmutableSubjectData> getData(final SubjectRef<?> subject, final @Nullable Consumer<ImmutableSubjectData> listener) {
+        return getData(subject.type().name(), subject.serializedIdentifier(), listener);
+    }
+
+    /**
      * Sets the data at the specified type and identifier.
      *
      * @param type The type of subject data is being fetched for
@@ -90,6 +108,17 @@ public interface DataStore {
      * @since 2.0.0
      */
     CompletableFuture<ImmutableSubjectData> setData(String type, String identifier, @Nullable ImmutableSubjectData data);
+    /**
+     * Sets the data at the specified type and identifier.
+     *
+     * @param subject The identity of the subject data is being set for
+     * @param data The data to commit to this backend. This being null deletes any data for the given subject
+     * @return A future that can be used to listen for completion of writing the changed data
+     * @since 2.0.0
+     */
+    default CompletableFuture<ImmutableSubjectData> setData(final SubjectRef<?> subject, final @Nullable ImmutableSubjectData data) {
+        return setData(subject.type().name(), subject.serializedIdentifier(), data);
+    }
 
     /**
      * Move data from one subject to another
@@ -104,7 +133,19 @@ public interface DataStore {
     CompletableFuture<Void> moveData(String oldType, String oldIdentifier, String newType, String newIdentifier);
 
     /**
-     * Return if the given subject has any data stored in this backend.
+     * Move data from one subject to another
+     *
+     * @param from the old subject
+     * @param to the new subject
+     * @return A future that will complete when the move is complete
+     * @since 2.0.0
+     */
+    default CompletableFuture<Void> moveData(final SubjectRef<?> from, final SubjectRef<?> to) {
+        return moveData(from.type().name(), from.serializedIdentifier(), to.type().name(), to.serializedIdentifier());
+    }
+
+    /**
+     * Return if the given subject has any data stored in this store.
      *
      * @param type The subject's type
      * @param identifier The subject's identifier
@@ -114,12 +155,36 @@ public interface DataStore {
     CompletableFuture<Boolean> isRegistered(String type, String identifier);
 
     /**
-     * Get all data for subjects of the specified type. This {@link Iterable} may be filled asynchronously
+     * Return if the given subject has any data stored in this store.
+     *
+     * @param subject the subject to check
+     * @return whether any data is stored
+     * @since 2.0.0
+     */
+    default CompletableFuture<Boolean> isRegistered(final SubjectRef<?> subject) {
+        return isRegistered(subject.type().name(), subject.serializedIdentifier());
+    }
+
+    /**
+     * Get all data for subjects of the specified type. This {@link Stream} may be filled asynchronously
      * @param type The type to get all data for
      * @return An iterable providing data
      * @since 2.0.0
      */
-    Iterable<Map.Entry<String, ImmutableSubjectData>> getAll(String type);
+    Stream<Map.Entry<String, ImmutableSubjectData>> getAll(String type);
+
+    /**
+     * Get all data for subjects of the specified type. This {@link Stream} may be filled asynchronously.
+     *
+     * @param type The type to get all data for
+     * @return An iterable providing data
+     * @since 2.0.0
+     */
+     default <I> Stream<Map.Entry<I, ImmutableSubjectData>> getAll(final SubjectType<I> type) {
+         return this.getAll(type.name())
+                 .map(entry -> UnmodifiableCollections.immutableMapEntry(type.parseIdentifier(entry.getKey()), entry.getValue()));
+
+     }
 
     /**
      * Get all subject identifiers for subjects of the given type.
@@ -128,7 +193,7 @@ public interface DataStore {
      * @return The registered identifiers of subjects of type {@code type}
      * @since 2.0.0
      */
-    Set<String> getAllIdentifiers(String type);
+    Stream<String> getAllIdentifiers(String type);
 
     /**
      * Return all subject types that contain data
@@ -162,7 +227,7 @@ public interface DataStore {
      * @return An iterable containing all subjects
      * @since 2.0.0
      */
-    Iterable<Map.Entry<Map.Entry<String,String>,ImmutableSubjectData>> getAll();
+    Stream<Map.Entry<SubjectRef<?>, ImmutableSubjectData>> getAll();
 
     /**
      * Perform a bulk operation on this data store. While this operation is in progress, all writes must be suppressed
@@ -183,7 +248,7 @@ public interface DataStore {
      * @return The names of all rank ladders
      * @since 2.0.0
      */
-    Iterable<String> getAllRankLadders();
+    Stream<String> getAllRankLadders();
 
     /**
      * Get a specific rank ladder, with a possible update listener.

@@ -21,15 +21,11 @@ import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.impl.commands.Messages.COMMON_ARGS_CONTEXT
 import ca.stellardrift.permissionsex.impl.commands.Messages.PERMISSION_ARG_KEY
 import ca.stellardrift.permissionsex.impl.commands.Messages.PERMISSION_ARG_PERMISSION_VALUE
-import ca.stellardrift.permissionsex.impl.commands.Messages.PERMISSION_DEFAULT_SUCCESS
-import ca.stellardrift.permissionsex.impl.commands.Messages.PERMISSION_SUCCESS
-import ca.stellardrift.permissionsex.impl.commands.commander.Commander
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandContext
 import ca.stellardrift.permissionsex.impl.commands.parse.CommandException
 import ca.stellardrift.permissionsex.impl.commands.parse.command
 import ca.stellardrift.permissionsex.impl.commands.parse.permission
 import ca.stellardrift.permissionsex.impl.commands.parse.permissionValue
-import ca.stellardrift.permissionsex.util.styled
 import ca.stellardrift.permissionsex.util.thenMessageSubject
 import ca.stellardrift.permissionsex.util.toComponent
 

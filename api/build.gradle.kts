@@ -9,11 +9,12 @@ useCheckerFramework()
 useImmutables()
 
 dependencies {
-    val configurateVersion: String by project
     val adventureVersion: String by project
+    val configurateVersion: String by project
+    val pCollectionsVersion: String by project
     val slf4jVersion: String by project
 
-    api("org.pcollections:pcollections:3.1.4")
+    api("org.pcollections:pcollections:$pCollectionsVersion")
     api(adventure("api", adventureVersion))
     implementation(adventure("text-serializer-plain", adventureVersion))
     api(configurate("core", configurateVersion))

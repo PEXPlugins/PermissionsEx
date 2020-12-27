@@ -17,23 +17,24 @@
 package ca.stellardrift.permissionsex.impl.data;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
+import ca.stellardrift.permissionsex.context.ContextDefinition;
+import ca.stellardrift.permissionsex.context.ContextValue;
+import ca.stellardrift.permissionsex.context.SimpleContextDefinition;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.context.ServerTagContextDefinition;
 import ca.stellardrift.permissionsex.impl.context.TimeContextDefinition;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.test.PermissionsExTest;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.impl.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
-import ca.stellardrift.permissionsex.context.*;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.impl.subject.SubjectTypeCollectionImpl;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -50,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SubjectDataBakerTest extends PermissionsExTest {
 
     static Set<ContextValue<?>> cSet(final ContextValue<?>... values) {
-        return ImmutableSet.copyOf(values);
+        return PCollections.set(values);
     }
 
     /**
@@ -62,13 +63,13 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      * ignored inheritance permission in child has effect in both
      */
     @Test
-    public void testIgnoredInheritancePermissions() throws ExecutionException, PermissionsLoadingException, InterruptedException {
+    public void testIgnoredInheritancePermissions() throws ExecutionException, InterruptedException {
         SubjectTypeCollectionImpl<String> groupCache = getManager().subjects(SUBJECTS_GROUP);
-        CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.parent", 1)).thenApply(data -> parent)).get();
-        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, parentS.identifier())
-                .setPermission(PermissionsEx.GLOBAL_CONTEXT, "#test.permission.child", 1)
+        CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(PermissionsEx.GLOBAL_CONTEXT, old -> old.withPermission("#test.permission.parent", 1)).thenApply(data -> parent)).get();
+        CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(PermissionsEngine.GLOBAL_CONTEXT, old -> old.plusParent(parentS.identifier())
+                .withPermission("#test.permission.child", 1)
         ).thenApply(data -> child)).get();
-        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(old -> old.addParent(PermissionsEx.GLOBAL_CONTEXT, childS.identifier())).thenApply(data -> subject)).get();
+        CalculatedSubject subjectS = groupCache.get("subject").thenCompose(subject -> subject.data().update(PermissionsEx.GLOBAL_CONTEXT, old -> old.plusParent(childS.identifier())).thenApply(data -> subject)).get();
 
         assertEquals(1, parentS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
         assertEquals(1, childS.permissions(PermissionsEx.GLOBAL_CONTEXT).get("test.permission.parent"));
@@ -79,13 +80,13 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
     @Test
     public void testFallbackSubject() {
-        getManager().subjects(PermissionsEngine.SUBJECTS_FALLBACK).transientData().update(PermissionsEngine.SUBJECTS_USER, old -> old.setPermission(PermissionsEx.GLOBAL_CONTEXT, "messages.welcome", 1)).join();
+        getManager().subjects(PermissionsEngine.SUBJECTS_FALLBACK).transientData().update(PermissionsEngine.SUBJECTS_USER, old -> old.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission("messages.welcome", 1))).join();
 
         CalculatedSubject subject = getManager().subjects(SUBJECTS_USER).get(UUID.randomUUID()).join();
 
         assertTrue(subject.hasPermission("messages.welcome")); // we are inheriting from fallback
 
-        subject.transientData().update(data -> data.addParent(PermissionsEx.GLOBAL_CONTEXT, PermissionsEngine.SUBJECTS_GROUP, "member")).join();
+        subject.transientData().update(PermissionsEngine.GLOBAL_CONTEXT, data -> data.plusParent(SUBJECTS_GROUP, "member")).join();
 
         assertFalse(subject.hasPermission("messages.welcome")); // now that we have data stored for the subject, we no longer inherit from fallback.
     }
@@ -131,19 +132,16 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testContextCalculation() throws ExecutionException, InterruptedException {
-        ContextDefinition<String> worldCtx = WORLD_CONTEXT,
+        final ContextDefinition<String> worldCtx = WORLD_CONTEXT,
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
-        ContextDefinition<ZonedDateTime> beforeTimeCtx = TimeContextDefinition.BEFORE_TIME;
+        final ContextDefinition<ZonedDateTime> beforeTimeCtx = TimeContextDefinition.BEFORE_TIME;
 
         CalculatedSubject subject = getManager().subjects(SUBJECTS_GROUP).get("a").get();
-        subject.data().update(data -> {
-            return data.setPermissions(cSet(worldCtx.createValue("nether")), ImmutableMap.of("some.perm", 1, "some.meme", -1))
-                    .setPermissions(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(nowUtc().plus(2, ChronoUnit.DAYS))), ImmutableMap.of("some.meme", 1, "some.cat", 1))
-                    .setPermission(cSet(worldCtx.createValue("nether"), serverTypeCtx.createValue("bad")), "some.day", 1)
-                    .setPermission(cSet(serverTypeCtx.createValue("good")), "some.year", 1)
-                    .setPermission(PermissionsEx.GLOBAL_CONTEXT, "some.world", 1);
-
-        }).join();
+        subject.data().update(data -> data.withSegment(cSet(worldCtx.createValue("nether")), c -> c.withPermissions(ImmutableMap.of("some.perm", 1, "some.meme", -1)))
+                .withSegment(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(nowUtc().plus(2, ChronoUnit.DAYS))), s -> s.withPermissions(ImmutableMap.of("some.meme", 1, "some.cat", 1)))
+                .withSegment(cSet(worldCtx.createValue("nether"), serverTypeCtx.createValue("bad")), s -> s.withPermission("some.day", 1))
+                .withSegment(cSet(serverTypeCtx.createValue("good")), s -> s.withPermission("some.year", 1))
+                .withSegment(PermissionsEngine.GLOBAL_CONTEXT, s -> s.withPermission("some.world", 1))).join();
 
         Set<ContextValue<?>> activeSetA = cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(nowUtc()), serverTypeCtx.createValue("good"));
         Set<ContextValue<?>> activeSetB = cSet(worldCtx.createValue("nether"));
@@ -203,7 +201,6 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
             @Override
             public void validate() throws PEBKACException {
-
             }
 
             @Override

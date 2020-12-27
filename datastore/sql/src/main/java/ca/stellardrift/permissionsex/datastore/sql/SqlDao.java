@@ -18,15 +18,14 @@ package ca.stellardrift.permissionsex.datastore.sql;
 
 import ca.stellardrift.permissionsex.datastore.sql.dao.LegacyDao;
 import ca.stellardrift.permissionsex.datastore.sql.dao.LegacyMigration;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
+import org.pcollections.PSet;
+import org.pcollections.PVector;
 import org.spongepowered.configurate.util.CheckedSupplier;
 
 import java.io.BufferedReader;
@@ -257,7 +256,7 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void setGlobalParameter(String key, String value) throws SQLException {
+    public void setGlobalParameter(String key, final @Nullable String value) throws SQLException {
         if (value == null) {
             try (PreparedStatement stmt = prepareStatement(getDeleteGlobalParameterQuery())) {
                 stmt.setString(1, key);
@@ -272,7 +271,7 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public Optional<SubjectRef> getSubjectRef(int id) throws SQLException {
+    public Optional<SqlSubjectRef<?>> getSubjectRef(int id) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getGetSubjectRefIdQuery())) {
             stmt.setInt(1, id);
             ResultSet res = stmt.executeQuery();
@@ -280,11 +279,11 @@ public abstract class SqlDao implements AutoCloseable {
             if (!res.next()) {
                 return Optional.empty();
             }
-            return Optional.of(new SubjectRef(id, res.getString(1), res.getString(2)));
+            return Optional.of(new SqlSubjectRef<>(this.ds.manager(), id, res.getString(1), res.getString(2)));
         }
     }
 
-    public Optional<SubjectRef> getSubjectRef(String type, String name) throws SQLException {
+    public Optional<SqlSubjectRef<?>> getSubjectRef(String type, String name) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getGetSubjectRefTypeNameQuery())) {
             stmt.setString(1, type);
             stmt.setString(2, name);
@@ -293,13 +292,13 @@ public abstract class SqlDao implements AutoCloseable {
             if (!res.next()) {
                 return Optional.empty();
             }
-            return Optional.of(new SubjectRef(res.getInt(1), type, name));
+            return Optional.of(new SqlSubjectRef<>(this.ds.manager(), res.getInt(1), type, name));
         }
     }
 
-    public boolean removeSubject(SubjectRef ref) throws SQLException {
+    public boolean removeSubject(SqlSubjectRef<?> ref) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteSubjectIdQuery())) {
-            stmt.setInt(1, ref.getId());
+            stmt.setInt(1, ref.id());
             return stmt.executeUpdate() > 0;
         }
     }
@@ -312,28 +311,28 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public SubjectRef getOrCreateSubjectRef(String type, String name) throws SQLException {
-        final SubjectRef ret = SubjectRef.unresolved(type, name);
+    public SqlSubjectRef<?> getOrCreateSubjectRef(String type, String name) throws SQLException {
+        final SqlSubjectRef<?> ret = SqlSubjectRef.unresolved(this.ds.manager(), type, name);
         allocateSubjectRef(ret);
         return ret;
     }
 
-    public void allocateSubjectRef(SubjectRef ref) throws SQLException {
+    public void allocateSubjectRef(final SqlSubjectRef<?> ref) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement stmt = prepareStatement(getGetSubjectRefTypeNameQuery())) {
-                stmt.setString(1, ref.getType());
-                stmt.setString(2, ref.getIdentifier());
+                stmt.setString(1, ref.rawType());
+                stmt.setString(2, ref.rawIdentifier());
                 ResultSet res = stmt.executeQuery();
                 if (res.next()) {
-                    ref.setId(res.getInt(1));
+                    ref.id(res.getInt(1));
                 } else {
                     try (PreparedStatement addStatement = prepareStatement(getInsertSubjectTypeNameQuery(), Statement.RETURN_GENERATED_KEYS)) {
-                        addStatement.setString(1, ref.getType());
-                        addStatement.setString(2, ref.getIdentifier());
+                        addStatement.setString(1, ref.rawType());
+                        addStatement.setString(2, ref.rawIdentifier());
                         addStatement.executeUpdate();
                         res = addStatement.getGeneratedKeys();
                         res.next();
-                        ref.setId(res.getInt(1));
+                        ref.id(res.getInt(1));
                     }
                 }
             }
@@ -341,29 +340,29 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public int getIdAllocating(SubjectRef ref) throws SQLException {
+    public int getIdAllocating(final SqlSubjectRef<?> ref) throws SQLException {
         if (ref.isUnallocated()) {
             allocateSubjectRef(ref);
         }
-        return ref.getId();
+        return ref.id();
     }
 
 
-    private Set<ContextValue<?>> getSegmentContexts(int segmentId) throws SQLException {
+    private PSet<ContextValue<?>> getSegmentContexts(final int segmentId) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectContextsSegmentQuery())) {
             stmt.setInt(1, segmentId);
-            ImmutableSet.Builder<ContextValue<?>> res = ImmutableSet.builder();
+            PSet<ContextValue<?>> result = PCollections.set();
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                res.add(new ContextValue<>(rs.getString(1), rs.getString(2)));
+                result = result.plus(new ContextValue<>(rs.getString(1), rs.getString(2)));
             }
-            return res.build();
+            return result;
         }
     }
 
-    public List<Segment> getSegments(SubjectRef ref) throws SQLException {
-        ImmutableList.Builder<Segment> result = ImmutableList.builder();
+    public List<SqlSegment> getSegments(SqlSubjectRef<?> ref) throws SQLException {
+        PVector<SqlSegment> result = PCollections.vector();
         try (PreparedStatement stmt = prepareStatement(getSelectSegmentsSubjectQuery())) {
             stmt.setInt(1, getIdAllocating(ref));
             ResultSet rs = stmt.executeQuery();
@@ -371,18 +370,18 @@ public abstract class SqlDao implements AutoCloseable {
             while (rs.next()) {
                 final int id = rs.getInt(1);
                 Number permDef = (Number) rs.getObject(2);
-                Set<ContextValue<?>> contexts = getSegmentContexts(id);
+                PSet<ContextValue<?>> contexts = getSegmentContexts(id);
 
-                ImmutableMap.Builder<String, Integer> permValues = ImmutableMap.builder();
-                ImmutableMap.Builder<String, String> optionValues = ImmutableMap.builder();
-                ImmutableList.Builder<SubjectRef> inheritanceValues = ImmutableList.builder();
+                PMap<String, Integer> permValues = PCollections.map();
+                PMap<String, String> optionValues = PCollections.map();
+                PVector<SqlSubjectRef<?>> inheritanceValues = PCollections.vector();
 
                 try (PreparedStatement permStmt = prepareStatement(getSelectPermissionsSegmentQuery())) {
                     permStmt.setInt(1, id);
 
                     ResultSet segmentRs = permStmt.executeQuery();
                     while (segmentRs.next()) {
-                        permValues.put(segmentRs.getString(1), segmentRs.getInt(2));
+                        permValues = permValues.plus(segmentRs.getString(1), segmentRs.getInt(2));
                     }
                 }
 
@@ -391,7 +390,7 @@ public abstract class SqlDao implements AutoCloseable {
 
                     ResultSet segmentRs = optStmt.executeQuery();
                     while (segmentRs.next()) {
-                        optionValues.put(segmentRs.getString(1), segmentRs.getString(2));
+                        optionValues = optionValues.plus(segmentRs.getString(1), segmentRs.getString(2));
                     }
                 }
 
@@ -400,44 +399,44 @@ public abstract class SqlDao implements AutoCloseable {
 
                     ResultSet segmentRs = inheritStmt.executeQuery();
                     while (segmentRs.next()) {
-                        inheritanceValues.add(new SubjectRef(segmentRs.getInt(3), segmentRs.getString(4), segmentRs.getString(5)));
+                        inheritanceValues = inheritanceValues.plus(new SqlSubjectRef<>(this.ds.manager(), segmentRs.getInt(3), segmentRs.getString(4), segmentRs.getString(5)));
                     }
                 }
 
-                result.add(new Segment(id, contexts, permValues.build(), optionValues.build(), inheritanceValues.build(), permDef == null ? null : permDef.intValue(), null));
+                result = result.plus(new SqlSegment(id, contexts, permValues, optionValues, inheritanceValues, permDef == null ? null : permDef.intValue(), PCollections.vector()));
 
             }
         }
-        return result.build();
+        return result;
     }
 
-    public Segment addSegment(SubjectRef ref) throws SQLException { // TODO: Is this method useful?
-        Segment segment = Segment.unallocated();
+    public SqlSegment addSegment(final SqlSubjectRef<?> ref) throws SQLException { // TODO: Is this method useful?
+        final SqlSegment segment = SqlSegment.unallocated();
         allocateSegment(ref, segment);
         return segment;
     }
 
-    public void updateFullSegment(SubjectRef ref, Segment segment) throws SQLException {
+    public void updateFullSegment(SqlSubjectRef<?> ref, SqlSegment segment) throws SQLException {
         executeInTransaction(() -> {
             allocateSegment(ref, segment);
-            setContexts(segment, segment.getContexts());
-            setOptions(segment, segment.getOptions());
-            setParents(segment, segment.getParents());
-            setPermissions(segment, segment.getPermissions());
-            setDefaultValue(segment, segment.getPermissionDefault());
+            setContexts(segment, segment.contexts());
+            setOptions(segment, segment.options());
+            setParents(segment, segment.parents());
+            setPermissions(segment, segment.permissions());
+            setDefaultValue(segment, segment.fallbackPermission());
             return null;
         });
     }
 
-    public void setContexts(Segment seg, Set<ContextValue<?>> contexts) throws SQLException {
+    public void setContexts(SqlSegment seg, PSet<ContextValue<?>> contexts) throws SQLException {
         // Update contexts
         executeInTransaction(() -> {
             try (PreparedStatement delete = prepareStatement(getDeleteContextQuery());
                  PreparedStatement insert = prepareStatement(getInsertContextQuery())) {
-                delete.setInt(1, seg.getId());
+                delete.setInt(1, seg.id());
                 delete.executeUpdate();
 
-                insert.setInt(1, seg.getId());
+                insert.setInt(1, seg.id());
 
                 for (ContextValue<?> context : contexts) {
                     insert.setString(2, context.key());
@@ -451,30 +450,30 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void allocateSegment(SubjectRef subject, Segment val) throws SQLException {
+    public void allocateSegment(SqlSubjectRef<?> subject, SqlSegment val) throws SQLException {
         if (!val.isUnallocated()) {
             return;
         }
 
         try (PreparedStatement stmt = prepareStatement(getInsertSegmentQuery(), Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, getIdAllocating(subject));
-            if (val.getPermissionDefault() == null) {
+            if (val.fallbackPermission() == 0) {
                 stmt.setNull(2, Types.INTEGER);
             } else {
-                stmt.setInt(2, val.getPermissionDefault());
+                stmt.setInt(2, val.fallbackPermission());
             }
 
             stmt.executeUpdate();
             ResultSet res = stmt.getGeneratedKeys();
             res.next();
-            val.setId(res.getInt(1));
+            val.id(res.getInt(1));
         }
-        setContexts(val, val.getContexts());
+        setContexts(val, val.contexts());
     }
 
-    public boolean removeSegment(Segment segment) throws SQLException {
+    public boolean removeSegment(SqlSegment segment) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteSegmentIdQuery())) {
-            stmt.setInt(1, segment.getId());
+            stmt.setInt(1, segment.id());
             return stmt.executeUpdate() > 0;
         }
     }
@@ -484,26 +483,26 @@ public abstract class SqlDao implements AutoCloseable {
             stmt.setString(1, type);
 
             ResultSet rs = stmt.executeQuery();
-            ImmutableSet.Builder<String> ret = ImmutableSet.builder();
+            PSet<String> ret = PCollections.set();
 
             while (rs.next()) {
-                ret.add(rs.getString(1));
+                ret = ret.plus(rs.getString(1));
             }
 
 
-            return ret.build();
+            return ret;
         }
     }
 
     public Set<String> getRegisteredTypes() throws SQLException {
         try (ResultSet rs = prepareStatement(getSelectSubjectTypesQuery()).executeQuery()) {
-            ImmutableSet.Builder<String> ret = ImmutableSet.builder();
+            PSet<String> ret = PCollections.set();
 
             while (rs.next()) {
-                ret.add(rs.getString(1));
+                ret = ret.plus(rs.getString(1));
             }
 
-            return ret.build();
+            return ret;
         }
     }
 
@@ -552,23 +551,23 @@ public abstract class SqlDao implements AutoCloseable {
         return conn.getMetaData().getTables(null, null, this.ds.getTableName(table).toUpperCase(), null).next(); // Upper-case for H2
     }
 
-    public void clearOption(Segment segment, String option) throws SQLException {
+    public void clearOption(SqlSegment segment, String option) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteOptionKeyQuery())) {
-            stmt.setInt(1, segment.getId());
+            stmt.setInt(1, segment.id());
             stmt.setString(2, option);
             stmt.executeUpdate();
         }
     }
 
-    public void setOptions(Segment seg, Map<String, String> options) throws SQLException {
+    public void setOptions(final SqlSegment seg, final @Nullable Map<String, String> options) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeleteOptionsQuery());
                  PreparedStatement ins = prepareStatement(getInsertOptionUpdatingQuery())) {
-                del.setInt(1, seg.getId());
+                del.setInt(1, seg.id());
                 del.executeUpdate();
 
                 if (options != null) {
-                    ins.setInt(1, seg.getId());
+                    ins.setInt(1, seg.id());
                     for (Map.Entry<String, String> ent : options.entrySet()) {
                         ins.setString(2, ent.getKey());
                         ins.setString(3, ent.getValue());
@@ -581,18 +580,18 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public void setOption(Segment segment, String key, String value) throws SQLException {
+    public void setOption(SqlSegment segment, String key, String value) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getInsertOptionUpdatingQuery())) {
-            stmt.setInt(1, segment.getId());
+            stmt.setInt(1, segment.id());
             stmt.setString(2, key);
             stmt.setString(3, value);
             stmt.executeUpdate();
         }
     }
 
-    public void setPermission(Segment segment, String permission, int value) throws SQLException {
+    public void setPermission(SqlSegment segment, String permission, int value) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getInsertPermissionUpdatingQuery())) {
-            stmt.setInt(1, segment.getId());
+            stmt.setInt(1, segment.id());
             stmt.setString(2, permission);
             stmt.setInt(3, value);
             stmt.executeUpdate();
@@ -600,23 +599,23 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void clearPermission(Segment segment, String permission) throws SQLException {
+    public void clearPermission(SqlSegment segment, String permission) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeletePermissionKeyQuery())) {
-            stmt.setInt(1, segment.getId());
+            stmt.setInt(1, segment.id());
             stmt.setString(2, permission);
             stmt.executeUpdate();
         }
     }
 
-    public void setPermissions(Segment segment, Map<String, Integer> permissions) throws SQLException {
+    public void setPermissions(final SqlSegment segment, final @Nullable Map<String, Integer> permissions) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeletePermissionsQuery());
                  PreparedStatement ins = prepareStatement(getInsertPermissionUpdatingQuery())) {
-                del.setInt(1, segment.getId());
+                del.setInt(1, segment.id());
                 del.executeUpdate();
 
                 if (permissions != null) {
-                    ins.setInt(1, segment.getId());
+                    ins.setInt(1, segment.id());
                     for (Map.Entry<String, Integer> ent : permissions.entrySet()) {
                         ins.setString(2, ent.getKey());
                         ins.setInt(3, ent.getValue());
@@ -629,44 +628,44 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public void setDefaultValue(Segment segment, Integer permissionDefault) throws SQLException {
+    public void setDefaultValue(final SqlSegment segment, final @Nullable Integer permissionDefault) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getUpdatePermissionDefaultQuery())) {
-            if (permissionDefault == null) {
+            if (permissionDefault == null || permissionDefault == 0) {
                 stmt.setNull(1, Types.INTEGER);
             } else {
                 stmt.setInt(1, permissionDefault);
             }
-            stmt.setInt(2, segment.getId());
+            stmt.setInt(2, segment.id());
             stmt.executeUpdate();
         }
     }
 
-    public void addParent(Segment seg, SubjectRef parent) throws SQLException {
+    public void addParent(SqlSegment seg, SqlSubjectRef<?> parent) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getInsertInheritanceQuery())) {
-            stmt.setInt(1, seg.getId());
+            stmt.setInt(1, seg.id());
             stmt.setInt(2, getIdAllocating(parent));
             stmt.executeUpdate();
         }
     }
 
-    public void removeParent(Segment segment, SubjectRef parent) throws SQLException {
+    public void removeParent(SqlSegment segment, SqlSubjectRef<?> parent) throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getDeleteInheritanceParentQuery())) {
-            stmt.setInt(1, segment.getId());
+            stmt.setInt(1, segment.id());
             stmt.setInt(2, getIdAllocating(parent));
             stmt.executeUpdate();
         }
     }
 
-    public void setParents(Segment segment, Iterable<SubjectRef> parents) throws SQLException {
+    public void setParents(SqlSegment segment, final @Nullable Iterable<SqlSubjectRef<?>> parents) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement del = prepareStatement(getDeleteInheritanceQuery());
                  PreparedStatement ins = prepareStatement(getInsertInheritanceQuery())) {
-                del.setInt(1, segment.getId());
+                del.setInt(1, segment.id());
                 del.executeUpdate();
 
                 if (parents != null) {
-                    ins.setInt(1, segment.getId());
-                    for (SubjectRef ent : parents) {
+                    ins.setInt(1, segment.id());
+                    for (SqlSubjectRef<?> ent : parents) {
                         ins.setInt(2, getIdAllocating(ent));
                         ins.addBatch();
                     }
@@ -679,9 +678,9 @@ public abstract class SqlDao implements AutoCloseable {
 
     public SqlContextInheritance getContextInheritance() throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectContextInheritanceQuery())) {
-            PMap<ContextValue<?>, List<ContextValue<?>>> ret = HashTreePMap.empty();
-            ContextValue<?> current = null;
-            ImmutableList.@Nullable Builder<ContextValue<?>> builder = null;
+            PMap<ContextValue<?>, PVector<ContextValue<?>>> ret = PCollections.map();
+            @Nullable ContextValue<?> current = null;
+            PVector<ContextValue<?>> builder = PCollections.vector();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 final String childKey = rs.getString(1),
@@ -689,17 +688,17 @@ public abstract class SqlDao implements AutoCloseable {
                         parentKey = rs.getString(3),
                         parentValue = rs.getString(4);
                 if (current == null || !childKey.equals(current.key()) || !childValue.equals(current.rawValue())) {
-                    if (current != null && builder != null) {
-                        ret = ret.plus(current, builder.build());
+                    if (current != null && !builder.isEmpty()) {
+                        ret = ret.plus(current, builder);
                     }
                     current = new ContextValue<>(childKey, childValue);
-                    builder = ImmutableList.builder();
+                    builder = PCollections.vector();
                 }
-                builder.add(new ContextValue<>(parentKey, parentValue));
+                builder = builder.plus(new ContextValue<>(parentKey, parentValue));
             }
 
             if (current != null) {
-                ret = ret.plus(current, builder.build());
+                ret = ret.plus(current, builder);
             }
 
             return new SqlContextInheritance(ret);
@@ -707,7 +706,7 @@ public abstract class SqlDao implements AutoCloseable {
 
     }
 
-    public void setContextInheritance(ContextValue<?> child, List<ContextValue<?>> parents) throws SQLException {
+    public void setContextInheritance(final ContextValue<?> child, final @Nullable PVector<ContextValue<?>> parents) throws SQLException {
         executeInTransaction(() -> {
             try (PreparedStatement delete = prepareStatement(getDeleteContextInheritanceQuery());
             PreparedStatement insert = prepareStatement(getInsertContextInheritanceQuery())) {
@@ -731,15 +730,15 @@ public abstract class SqlDao implements AutoCloseable {
     }
 
     public RankLadder getRankLadder(String name) throws SQLException {
-        ImmutableList.Builder<SubjectRef> elements = ImmutableList.builder();
+        PVector<SubjectRef<?>> elements = PCollections.vector();
         try (PreparedStatement stmt = prepareStatement(getSelectRankLadderQuery())) {
             stmt.setString(1, name);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                elements.add(new SubjectRef(rs.getInt(2), rs.getString(3), rs.getString(4)));
+                elements = elements.plus(new SqlSubjectRef<>(this.ds.manager(), rs.getInt(2), rs.getString(3), rs.getString(4)));
             }
         }
-        return new SqlRankLadder(name, elements.build());
+        return new SqlRankLadder(name, elements);
     }
 
     public boolean hasEntriesForRankLadder(String name) throws SQLException {
@@ -749,15 +748,13 @@ public abstract class SqlDao implements AutoCloseable {
         }
     }
 
-    public void setRankLadder(String name, RankLadder ladder) throws SQLException {
+    public void setRankLadder(String name, final @Nullable RankLadder ladder) throws SQLException {
         executeInTransaction(() -> {
-            List<SubjectRef> ranks;
+            final List<? extends SubjectRef<?>> ranks;
             if (ladder == null) {
-                ranks = ImmutableList.of();
-            } else if (ladder instanceof SqlRankLadder) {
-                ranks = ((SqlRankLadder) ladder).ranks();
+                ranks = PCollections.vector();
             } else {
-                ranks = Lists.transform(ladder.ranks(), rank -> rank instanceof SubjectRef ? (SubjectRef) rank : SubjectRef.unresolved(rank.getKey(), rank.getValue()));
+                ranks = ladder.ranks();
             }
 
             try (PreparedStatement delete = prepareStatement(getDeleteRankLadderQuery());
@@ -767,7 +764,8 @@ public abstract class SqlDao implements AutoCloseable {
 
                 if (ladder != null) {
                     insert.setString(1, name);
-                    for (SubjectRef ref : ranks) {
+                    for (final SubjectRef<?> plain : ranks) {
+                        final SqlSubjectRef<?> ref = SqlSubjectRef.from(plain);
                         insert.setInt(2, getIdAllocating(ref));
                         insert.addBatch();
                     }
@@ -778,36 +776,36 @@ public abstract class SqlDao implements AutoCloseable {
         });
     }
 
-    public Iterable<String> getAllRankLadderNames() throws SQLException {
+    public Set<String> getAllRankLadderNames() throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectAllRankLadderNamesQuery())) {
-            ImmutableSet.Builder<String> ret = ImmutableSet.builder();
+            PSet<String> ret = PCollections.set();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                ret.add(rs.getString(1));
+                ret = ret.plus(rs.getString(1));
             }
-            return ret.build();
+            return ret;
         }
     }
 
-    public Iterable<SubjectRef> getAllSubjectRefs() throws SQLException {
+    public Iterable<SqlSubjectRef<?>> getAllSubjectRefs() throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectAllSubjectsQuery())) {
-            ImmutableSet.Builder<SubjectRef> ret = ImmutableSet.builder();
+            PSet<SqlSubjectRef<?>> ret = PCollections.set();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                ret.add(new SubjectRef(rs.getInt(1), rs.getString(2), rs.getString(3)));
+                ret = ret.plus(new SqlSubjectRef<>(this.ds.manager(), rs.getInt(1), rs.getString(2), rs.getString(3)));
             }
-            return ret.build();
+            return ret;
         }
     }
 
     public Set<String> getUsedContextKeys() throws SQLException {
         try (PreparedStatement stmt = prepareStatement(getSelectAllContextKeysUniqueQuery())){
-            ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+            PSet<String> builder = PCollections.set();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                builder.add(rs.getString(1));
+                builder = builder.plus(rs.getString(1));
             }
-            return builder.build();
+            return builder;
         }
     }
 
@@ -844,8 +842,8 @@ public abstract class SqlDao implements AutoCloseable {
         if (hasTable("global")) { // Current
             return getGlobalParameter(SqlConstants.OPTION_SCHEMA_VERSION).map(Integer::valueOf).orElse(SqlConstants.VERSION_PRE_VERSIONING);
         } else if (legacy().hasTable(this, "permissions")) { // Legacy option
-            String ret = legacy().getOption(this, "system", LegacyMigration.Type.WORLD, null, "schema-version");
-            return ret == null ? SqlConstants.VERSION_PRE_VERSIONING : Integer.valueOf(ret);
+            final @Nullable String ret = legacy().getOption(this, "system", LegacyMigration.Type.WORLD, null, "schema-version");
+            return ret == null ? SqlConstants.VERSION_PRE_VERSIONING : Integer.parseInt(ret);
         } else {
             return SqlConstants.VERSION_NOT_INITIALIZED;
         }

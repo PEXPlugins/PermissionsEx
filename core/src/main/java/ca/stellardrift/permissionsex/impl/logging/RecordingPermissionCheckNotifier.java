@@ -59,7 +59,7 @@ public class RecordingPermissionCheckNotifier implements PermissionCheckNotifier
     }
 
     @Override
-    public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<Map.Entry<String, String>> parents) {
+    public void onParentCheck(SubjectRef<?> subject, Set<ContextValue<?>> contexts, List<SubjectRef<?>> parents) {
     }
 
     public Set<String> getKnownPermissions() {

@@ -32,6 +32,12 @@ public final class InvalidIdentifierException extends IllegalArgumentException {
         this.unparsedIdentifier = unparsedIdentifier;
     }
 
+    /**
+     * Get the provided input that was supposed to be parsed.
+     *
+     * @return the original input
+     * @since 2.0.0
+     */
     public String unparsedIdentifier() {
         return this.unparsedIdentifier;
     }

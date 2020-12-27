@@ -19,47 +19,10 @@ package ca.stellardrift.permissionsex.fabric.impl
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.MethodInsnNode
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo
 import org.spongepowered.asm.mixin.injection.InjectionPoint
 import org.spongepowered.asm.mixin.injection.struct.InjectionPointData
-
-/**
- * A config plugin that will just apply our own injection point
- */
-class PermissionsExMixinsPlugin : IMixinConfigPlugin {
-    override fun onLoad(mixinPackage: String) {
-        InjectionPoint.register(WitherMutator::class.java)
-    }
-
-    // Default implementations of other methods
-
-    override fun getRefMapperConfig(): String? = null
-    override fun shouldApplyMixin(targetClassName: String, mixinClassName: String): Boolean = true
-    override fun acceptTargets(myTargets: MutableSet<String>, otherTargets: MutableSet<String>) = Unit
-    override fun getMixins(): List<String> = listOf()
-
-    override fun preApply(
-        targetClassName: String,
-        targetClass: ClassNode,
-        mixinClassName: String,
-        mixinInfo: IMixinInfo
-    ) {
-        // no-op
-    }
-
-    override fun postApply(
-        targetClassName: String,
-        targetClass: ClassNode,
-        mixinClassName: String,
-        mixinInfo: IMixinInfo
-    ) {
-        // no-op
-    }
-}
 
 private const val METHOD_CONSTRUCTOR = "<init>"
 

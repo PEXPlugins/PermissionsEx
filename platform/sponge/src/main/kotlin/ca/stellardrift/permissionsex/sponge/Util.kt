@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
+import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
-import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile
 import com.google.common.collect.ImmutableSet
 import io.leangen.geantyref.TypeToken
@@ -45,7 +45,7 @@ private fun <T> Context.toPex(def: ContextDefinition<T>): ContextValue<T>? {
     return if (value == null) null else def.createValue(value)
 }
 
-fun Set<Context>.toPex(manager: PermissionsEx<*>): ContextSet {
+fun Set<Context>.toPex(manager: PermissionsEngine): ContextSet {
     val builder = ImmutableSet.builder<ContextValue<*>>()
     for (ctx in this) {
         val def = manager.contextDefinition(ctx.key, true)

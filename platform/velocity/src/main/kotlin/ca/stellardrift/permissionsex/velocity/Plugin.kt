@@ -83,7 +83,7 @@ class PermissionsExPlugin @Inject constructor(
         return exec
     }
 
-    override fun getVersion(): String {
+    override fun version(): String {
         return ProjectData.VERSION
     }
 
@@ -92,6 +92,7 @@ class PermissionsExPlugin @Inject constructor(
     private var _manager: MinecraftPermissionsEx<*>? = null
 
     val manager: PermissionsEx<*> get() = requireNotNull(this._manager) { "PermissionsEx has not yet been initialized" }.engine()
+    val mcManager: MinecraftPermissionsEx<*> get() = requireNotNull(this._manager) { "PermissionsEx has not yet been initialized" }
 
     val users: SubjectTypeCollection<UUID>
         get() = this._manager!!.users()
@@ -119,7 +120,7 @@ class PermissionsExPlugin @Inject constructor(
             return
         }
         manager.subjects(SUBJECTS_SYSTEM).transientData().update(IDENT_SERVER_CONSOLE.identifier()) {
-            it.setDefaultValue(GLOBAL_CONTEXT, 1)
+            it.withSegment(GLOBAL_CONTEXT) { s -> s.withFallbackPermission(1) }
         }
 
         this.manager.registerContextDefinitions(
@@ -130,13 +131,6 @@ class PermissionsExPlugin @Inject constructor(
             LocalPortContextDefinition
         )
 
-        this.manager.registerCommandsTo {
-            val aliases = it.aliases.map { alias -> "/$alias" }
-            val meta = server.commandManager.metaBuilder(aliases.first())
-                .aliases(*aliases.subList(1, aliases.size).toTypedArray())
-                .build()
-            server.commandManager.register(meta, VelocityCommand(this, it))
-        }
         logger.info(Messages.PLUGIN_INIT_SUCCESS.tr(ProjectData.NAME, ProjectData.VERSION))
     }
 
@@ -174,7 +168,7 @@ class PermissionsExPlugin @Inject constructor(
 
     @Subscribe
     fun uncachePlayer(event: DisconnectEvent) {
-        manager.callbackController.clearOwnedBy(event.player.uniqueId)
+        this._manager!!.callbackController().clearOwnedBy(event.player.uniqueId)
         users.uncache(event.player.uniqueId)
     }
 }
