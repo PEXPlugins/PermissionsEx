@@ -35,6 +35,7 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
+import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executor
@@ -44,6 +45,7 @@ import javax.sql.DataSource
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
+import net.fabricmc.fabric.api.util.TriState
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
@@ -111,6 +113,19 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             val manager = this._manager ?: return@register
             manager.callbackController().clearOwnedBy(handler.player.uuidAsString)
             manager.users().uncache(handler.player.uuid)
+        }
+
+        PermissionCheckEvent.EVENT.register { source, permission ->
+            if (source is PermissionCommandSourceBridge<*>) {
+                val value = source.asCalculatedSubject().permission(source.activeContexts, permission)
+                when {
+                    value > 0 -> TriState.TRUE
+                    value < 0 -> TriState.FALSE
+                    else -> TriState.DEFAULT
+                }
+            } else {
+                TriState.DEFAULT
+            }
         }
 
         registerWorldEdit()

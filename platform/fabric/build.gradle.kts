@@ -63,6 +63,7 @@ dependencies {
     modImplementation(include("ca.stellardrift:confabricate:2.0.1") {
         exclude("com.google.code.gson")
     })
+    modImplementation(include("me.lucko:fabric-permissions-api:0.1-SNAPSHOT")!!)
 
     runtimeOnly("net.minecraftforge:forgeflower:1.5.478.18")
 }
