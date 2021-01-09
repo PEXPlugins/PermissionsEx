@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.velocity
 
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
@@ -29,8 +30,6 @@ import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor
 
 internal class VelocityCommander(private val pex: PermissionsExPlugin, internal val src: CommandSource) : Commander {
-    private val formatter = VelocityMessageFormatter(pex)
-
     override fun hasPermission(permission: String): Boolean {
         return src.hasPermission(permission)
     }
@@ -51,11 +50,11 @@ internal class VelocityCommander(private val pex: PermissionsExPlugin, internal 
     }
 
     override fun formatter(): MessageFormatter {
-        return this.formatter
+        return this.pex.mcManager.messageFormatter()
     }
 }
 
-internal class VelocityMessageFormatter(plugin: PermissionsExPlugin) :
-    MessageFormatter(plugin.mcManager, NamedTextColor.GOLD, NamedTextColor.YELLOW) {
+internal class VelocityMessageFormatter(manager: MinecraftPermissionsEx<*>) :
+    MessageFormatter(manager, NamedTextColor.GOLD, NamedTextColor.YELLOW) {
     override fun transformCommand(cmd: String) = "$PROXY_COMMAND_PREFIX$cmd"
 }

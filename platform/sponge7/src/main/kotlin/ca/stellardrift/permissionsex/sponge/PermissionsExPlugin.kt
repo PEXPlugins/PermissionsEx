@@ -29,11 +29,12 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
 import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.Permission
 import ca.stellardrift.permissionsex.sponge.command.SpongeApi7CommandManager
 import ca.stellardrift.permissionsex.sponge.command.SpongeApi7MetaKeys
 import ca.stellardrift.permissionsex.subject.SubjectType
-import ca.stellardrift.permissionsex.util.optionally
 import cloud.commandframework.arguments.standard.StringArgument
+import cloud.commandframework.permission.CommandPermission
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
 import java.io.IOException
@@ -168,13 +169,21 @@ class PermissionsExPlugin @Inject internal constructor(
                     null
                 }
                 .commands { coord ->
-                    SpongeApi7CommandManager(
+                    object : SpongeApi7CommandManager<Commander>(
                         this.container,
                         coord,
                         { SpongeCommander(this, it) },
                         { (it as SpongeCommander).commandSource }
-                    )
+                    ) {
+                        override fun hasPermission(sender: Commander, permission: CommandPermission): Boolean {
+                            if (permission is Permission) {
+                                return sender.hasPermission(permission)
+                            }
+                            return super.hasPermission(sender, permission)
+                        }
+                    }
                 }
+                .messageFormatter(::SpongeMessageFormatter)
                 .commandContributor(this::registerFakeOpCommand)
                 .build()
         } catch (e: Exception) {
@@ -188,7 +197,6 @@ class PermissionsExPlugin @Inject internal constructor(
         manager.subjects(roleTemplateSubjectType)
         manager.subjects(commandBlockSubjectType)
 
-
         // Registering the PEX service *must* occur after the plugin has been completely initialized
         if (!services.isRegistered(PermissionService::class.java)) {
             services.setProvider(this, PermissionService::class.java, this)
@@ -201,7 +209,7 @@ class PermissionsExPlugin @Inject internal constructor(
     private fun registerFakeOpCommand(ctx: CommandRegistrationContext) {
         val userArgument = StringArgument.of<Commander>("user")
         fun register(name: String, permission: String) {
-            ctx.register(ctx.rootBuilder(name)
+            ctx.register(ctx.absoluteBuilder(name)
                 .argument(userArgument)
                 .permission(permission)
                 .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())

@@ -17,6 +17,7 @@
  */
 package ca.stellardrift.permissionsex.bukkit
 
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.subject.SubjectRef
@@ -26,7 +27,7 @@ import net.kyori.adventure.text.Component.text
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-internal class BukkitMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager) {
+internal class BukkitMessageFormatter(manager: MinecraftPermissionsEx<*>) : MessageFormatter(manager) {
 
     override fun <I : Any?> friendlyName(reference: SubjectRef<I>): String? {
         return (reference.type().getAssociatedObject(reference.identifier()) as? CommandSender)?.name
@@ -40,7 +41,6 @@ internal class BukkitCommander internal constructor(
     private val pex: PermissionsExPlugin,
     internal val commandSource: CommandSender
 ) : Commander {
-    private val formatter: BukkitMessageFormatter = BukkitMessageFormatter(pex)
 
     override fun hasPermission(permission: String): Boolean = commandSource.hasPermission(permission)
 
@@ -59,6 +59,6 @@ internal class BukkitCommander internal constructor(
     }
 
     override fun formatter(): MessageFormatter {
-        return this.formatter
+        return this.pex.mcManager.messageFormatter()
     }
 }

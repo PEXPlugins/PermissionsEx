@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.util.optionally
 import java.util.HashMap
 import java.util.Optional
 import java.util.concurrent.CompletableFuture

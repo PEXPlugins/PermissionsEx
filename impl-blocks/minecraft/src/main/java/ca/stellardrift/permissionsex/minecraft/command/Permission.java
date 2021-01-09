@@ -38,19 +38,19 @@ import static java.util.Objects.requireNonNull;
 @Value.Immutable(builder = false)
 public abstract class Permission implements CommandPermission {
 
-    static Permission of(final String permission) {
+    public static Permission of(final String permission) {
         return of(permission, Component.empty(), 0);
     }
 
-    static Permission of(final String permission, final Component description) {
+    public static Permission of(final String permission, final Component description) {
         return of(permission, description, 0);
     }
 
-    static Permission of(final String permission, final Component component, final int defaultValue) {
+    public static Permission of(final String permission, final Component component, final int defaultValue) {
         return new PermissionImpl(permission, component, defaultValue);
     }
 
-    static Permission pex(final String value) {
+    public static Permission pex(final String value) {
         return new PermissionImpl("permissionsex." + value, Component.empty(), 0);
     }
 

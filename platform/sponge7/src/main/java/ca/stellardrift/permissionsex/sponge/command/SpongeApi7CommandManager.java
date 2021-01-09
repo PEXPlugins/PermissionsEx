@@ -35,7 +35,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <C> the command source type
  */
-public final class SpongeApi7CommandManager<C> extends CommandManager<C> {
+public class SpongeApi7CommandManager<C> extends CommandManager<C> {
 
     private final PluginContainer owningPlugin;
     private final Function<CommandSource, C> forwardMapper;
@@ -54,10 +54,12 @@ public final class SpongeApi7CommandManager<C> extends CommandManager<C> {
      *                                    {@link AsynchronousCommandExecutionCoordinator}
      */
     @SuppressWarnings("unchecked")
-    public SpongeApi7CommandManager(final @NonNull PluginContainer container,
-                                       final @NonNull Function<CommandTree<C>, CommandExecutionCoordinator<C>> commandExecutionCoordinator,
-                                       final Function<CommandSource, C> forwardMapper,
-                                       final Function<C, CommandSource> reverseMapper) {
+    public SpongeApi7CommandManager(
+        final @NonNull PluginContainer container,
+        final @NonNull Function<CommandTree<C>, CommandExecutionCoordinator<C>> commandExecutionCoordinator,
+        final Function<CommandSource, C> forwardMapper,
+        final Function<C, CommandSource> reverseMapper
+    ) {
         super(commandExecutionCoordinator, new SpongePluginRegistrationHandler<>());
         this.owningPlugin = requireNonNull(container, "container");
         this.forwardMapper = requireNonNull(forwardMapper, "forwardMapper");
@@ -86,4 +88,5 @@ public final class SpongeApi7CommandManager<C> extends CommandManager<C> {
     PluginContainer getOwningPlugin() {
         return this.owningPlugin;
     }
+
 }

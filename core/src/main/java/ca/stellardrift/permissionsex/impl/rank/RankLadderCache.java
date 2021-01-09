@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.impl.util.CacheListenerHolder;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -33,7 +34,7 @@ import java.util.stream.Stream;
 /**
  * Access information about rank ladders.
  */
-public class RankLadderCache {
+public class RankLadderCache implements ca.stellardrift.permissionsex.rank.RankLadderCollection {
     private final DataStore dataStore;
     private final AsyncLoadingCache<String, RankLadder> cache;
     private final Map<String, Consumer<RankLadder>> cacheHolders = new ConcurrentHashMap<>();
@@ -43,7 +44,7 @@ public class RankLadderCache {
         this(null, dataStore);
     }
 
-    public RankLadderCache(final RankLadderCache existing, final DataStore dataStore) {
+    public RankLadderCache(final @Nullable RankLadderCache existing, final DataStore dataStore) {
         this.dataStore = dataStore;
         cache = Caffeine.newBuilder()
                 .maximumSize(256)
@@ -58,7 +59,8 @@ public class RankLadderCache {
         }
     }
 
-    public CompletableFuture<RankLadder> get(String identifier, Consumer<RankLadder> listener) {
+    @Override
+    public CompletableFuture<RankLadder> get(final String identifier, final @Nullable Consumer<RankLadder> listener) {
         Objects.requireNonNull(identifier, "identifier");
 
         CompletableFuture<RankLadder> ret = cache.get(identifier);
@@ -70,6 +72,7 @@ public class RankLadderCache {
         return ret;
     }
 
+    @Override
     public CompletableFuture<RankLadder> update(final String identifier, final UnaryOperator<RankLadder> updateFunc) {
         return cache.get(identifier)
                 .thenCompose(oldLadder -> {
@@ -87,7 +90,7 @@ public class RankLadderCache {
         cache.synchronous().refresh(identifier);
     }
 
-    public void invalidate(String identifier) {
+    public void invalidate(final String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
         cache.synchronous().invalidate(identifier);
@@ -95,6 +98,7 @@ public class RankLadderCache {
         listeners.removeAll(identifier);
     }
 
+    @Override
     public CompletableFuture<Boolean> has(String identifier) {
         Objects.requireNonNull(identifier, "identifier");
 
@@ -105,6 +109,7 @@ public class RankLadderCache {
         }
     }
 
+    @Override
     public CompletableFuture<RankLadder> set(String identifier, RankLadder newData) {
         Objects.requireNonNull(identifier, "identifier");
 
@@ -120,6 +125,7 @@ public class RankLadderCache {
         return ret;
     }
 
+    @Override
     public void addListener(String identifier, Consumer<RankLadder> listener) {
         Objects.requireNonNull(identifier, "identifier");
         Objects.requireNonNull(listener, "listener");
@@ -127,7 +133,8 @@ public class RankLadderCache {
         listeners.addListener(identifier, listener);
     }
 
-    public Stream<String> getAll() {
+    @Override
+    public Stream<String> names() {
         return dataStore.getAllRankLadders();
     }
 }

@@ -66,4 +66,36 @@ public final class LazySubjectRef implements SubjectRef<Object> {
         }
         return this.resolved = this.pex.deserializeSubjectRef(this.type, this.ident);
     }
+
+    @Override
+    public int hashCode() {
+        return this.resolved().hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (other instanceof LazySubjectRef) {
+            final LazySubjectRef that = (LazySubjectRef) other;
+            if (this.resolved != null || that.resolved != null) {
+                return this.resolved().equals(that.resolved());
+            } else {
+                return this.type.equals(that.type)
+                    && this.ident.equals(that.ident);
+            }
+        } else if (other instanceof SubjectRef<?>) {
+            return this.resolved().equals(other);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "LazySubjectRef{"
+            + "type=" + this.type
+            + ", identifier=" + this.ident
+            + ", resolved=" + this.resolved
+            + '}';
+    }
+
 }

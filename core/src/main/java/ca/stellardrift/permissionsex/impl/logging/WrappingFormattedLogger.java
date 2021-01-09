@@ -17,11 +17,11 @@
 package ca.stellardrift.permissionsex.impl.logging;
 
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
-import ca.stellardrift.permissionsex.util.PEXComponentRenderer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
+import net.kyori.adventure.translation.GlobalTranslator;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
@@ -76,11 +76,11 @@ public class WrappingFormattedLogger implements FormattedLogger {
 
     @Override
     public String formatText(Component component, @org.checkerframework.checker.nullness.qual.Nullable Marker marker) {
-        return serializer().serialize(PEXComponentRenderer.INSTANCE.render(component, logLocale(marker)));
+        return serializer().serialize(GlobalTranslator.render(component, logLocale(marker)));
     }
 
     private String applyPrefix(String input) {
-        final String prefix = this.prefix;
+        final @Nullable String prefix = this.prefix;
         return prefix == null ? input : (prefix + input);
     }
 

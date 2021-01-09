@@ -39,10 +39,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 
 final class CloudCommandCallable<C> implements CommandCallable {
+
     private static final Text MESSAGE_INTERNAL_ERROR = Text.of(TextColors.RED,
-            "An internal error occurred while attempting to perform this command.");
+        "An internal error occurred while attempting to perform this command.");
     private static final Text MESSAGE_NO_PERMS = Text.of(TextColors.RED,
-            "I'm sorry, but you do not have permission to perform this command. "
+        "I'm sorry, but you do not have permission to perform this command. "
             + "Please contact the server administrators if you believe that this is in error.");
     private static final Text MESSAGE_UNKNOWN_COMMAND = Text.of("Unknown command. Type \"/help\" for help.");
 
@@ -50,99 +51,106 @@ final class CloudCommandCallable<C> implements CommandCallable {
     private final Command<C> cloudCommand;
     private final SpongeApi7CommandManager<C> manager;
 
-    public CloudCommandCallable(final CommandArgument<?, ?> command,
-                                final Command<C> cloudCommand,
-                                final SpongeApi7CommandManager<C> manager) {
+    CloudCommandCallable(
+        final CommandArgument<?, ?> command,
+        final Command<C> cloudCommand,
+        final SpongeApi7CommandManager<C> manager
+    ) {
         this.command = command;
         this.cloudCommand = cloudCommand;
         this.manager = manager;
     }
 
     @Override
-    public CommandResult process(CommandSource source, String arguments) {
-            final C cloudSender = this.manager.getCommandSourceMapper().apply(source);
-            this.manager.executeCommand(cloudSender, this.command.getName() + " " + arguments)
-                    .whenComplete((result, throwable) -> {
-                        if (throwable != null) {
-                            if (throwable instanceof CompletionException) {
-                                throwable = throwable.getCause();
-                            }
-                            final Throwable finalThrowable = throwable;
-                            if (throwable instanceof InvalidSyntaxException) {
-                                this.manager.handleException(cloudSender,
-                                        InvalidSyntaxException.class,
-                                        (InvalidSyntaxException) throwable, (c, e) ->
-                                                source.sendMessage(Text.of(TextColors.RED,
-                                                        "Invalid Command Syntax. Correct command syntax is: ",
-                                                        Text.of(TextColors.GRAY, ((InvalidSyntaxException) finalThrowable).getCorrectSyntax())))
-                                );
-                            } else if (throwable instanceof InvalidCommandSenderException) {
-                                this.manager.handleException(cloudSender,
-                                        InvalidCommandSenderException.class,
-                                        (InvalidCommandSenderException) throwable, (c, e) ->
-                                                source.sendMessage(Text.of(TextColors.RED, finalThrowable.getMessage()))
-                                );
-                            } else if (throwable instanceof NoPermissionException) {
-                                this.manager.handleException(cloudSender,
-                                        NoPermissionException.class,
-                                        (NoPermissionException) throwable, (c, e) ->
-                                                source.sendMessage(MESSAGE_NO_PERMS)
-                                );
-                            } else if (throwable instanceof NoSuchCommandException) {
-                                this.manager.handleException(cloudSender,
-                                        NoSuchCommandException.class,
-                                        (NoSuchCommandException) throwable, (c, e) ->
-                                                source.sendMessage(MESSAGE_UNKNOWN_COMMAND)
-                                );
-                            } else if (throwable instanceof ArgumentParseException) {
-                                this.manager.handleException(cloudSender,
-                                        ArgumentParseException.class,
-                                        (ArgumentParseException) throwable, (c, e) ->
-                                                source.sendMessage(Text.of("Invalid Command Argument: ",
-                                                        Text.of(TextColors.GRAY,
-                                                                finalThrowable.getCause().getMessage())))
-                                );
-                            } else if (throwable instanceof CommandExecutionException) {
-                                this.manager.handleException(cloudSender,
-                                        CommandExecutionException.class,
-                                        (CommandExecutionException) throwable, (c, e) -> {
-                                            source.sendMessage(MESSAGE_INTERNAL_ERROR);
-                                            this.manager.getOwningPlugin().getLogger().error(
-                                                    "Exception executing command handler",
-                                                    finalThrowable.getCause()
-                                            );
-                                        }
-                                );
-                            } else {
+    public CommandResult process(final CommandSource source, final String arguments) {
+        final C cloudSender = this.manager.getCommandSourceMapper().apply(source);
+        this.manager.executeCommand(cloudSender, this.command.getName() + " " + arguments)
+            .whenComplete((result, throwable) -> {
+                if (throwable != null) {
+                    if (throwable instanceof CompletionException) {
+                        throwable = throwable.getCause();
+                    }
+                    final Throwable finalThrowable = throwable;
+                    if (throwable instanceof InvalidSyntaxException) {
+                        this.manager.handleException(cloudSender,
+                            InvalidSyntaxException.class,
+                            (InvalidSyntaxException) throwable, (c, e) ->
+                                source.sendMessage(Text.of(TextColors.RED,
+                                    "Invalid Command Syntax. Correct command syntax is: ",
+                                    Text.of(TextColors.GRAY, ((InvalidSyntaxException) finalThrowable).getCorrectSyntax())))
+                        );
+                    } else if (throwable instanceof InvalidCommandSenderException) {
+                        this.manager.handleException(cloudSender,
+                            InvalidCommandSenderException.class,
+                            (InvalidCommandSenderException) throwable, (c, e) ->
+                                source.sendMessage(Text.of(TextColors.RED, finalThrowable.getMessage()))
+                        );
+                    } else if (throwable instanceof NoPermissionException) {
+                        this.manager.handleException(cloudSender,
+                            NoPermissionException.class,
+                            (NoPermissionException) throwable, (c, e) ->
+                                source.sendMessage(MESSAGE_NO_PERMS)
+                        );
+                    } else if (throwable instanceof NoSuchCommandException) {
+                        this.manager.handleException(cloudSender,
+                            NoSuchCommandException.class,
+                            (NoSuchCommandException) throwable, (c, e) ->
+                                source.sendMessage(MESSAGE_UNKNOWN_COMMAND)
+                        );
+                    } else if (throwable instanceof ArgumentParseException) {
+                        this.manager.handleException(cloudSender,
+                            ArgumentParseException.class,
+                            (ArgumentParseException) throwable, (c, e) ->
+                                source.sendMessage(Text.of("Invalid Command Argument: ",
+                                    Text.of(TextColors.GRAY,
+                                        finalThrowable.getCause().getMessage())))
+                        );
+                    } else if (throwable instanceof CommandExecutionException) {
+                        this.manager.handleException(cloudSender,
+                            CommandExecutionException.class,
+                            (CommandExecutionException) throwable, (c, e) -> {
                                 source.sendMessage(MESSAGE_INTERNAL_ERROR);
                                 this.manager.getOwningPlugin().getLogger().error(
-                                        "An unhandled exception was thrown during command execution",
-                                        throwable
+                                    "Exception executing command handler",
+                                    finalThrowable.getCause()
                                 );
                             }
-                        }
-                    });
+                        );
+                    } else {
+                        source.sendMessage(MESSAGE_INTERNAL_ERROR);
+                        this.manager.getOwningPlugin().getLogger().error(
+                            "An unhandled exception was thrown during command execution",
+                            throwable
+                        );
+                    }
+                }
+            });
         return CommandResult.success();
     }
 
     @Override
-    public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
+    public List<String> getSuggestions(final CommandSource source, final String arguments, final @Nullable Location<World> targetPosition) {
         return this.manager.suggest(this.manager.getCommandSourceMapper().apply(source), this.command.getName() + " " + arguments);
     }
 
     @Override
-    public boolean testPermission(CommandSource source) {
+    public boolean testPermission(final CommandSource source) {
         // TODO: We check if any permissions match, need to have some sort of CommandPermission.test(predicate);
         return source.hasPermission(cloudCommand.getCommandPermission().toString());
     }
 
     @Override
-    public Optional<Text> getShortDescription(CommandSource source) {
+    public Optional<Text> getShortDescription(final CommandSource source) {
+        final Optional<Text> richDesc = this.cloudCommand.getCommandMeta().get(SpongeApi7MetaKeys.RICH_DESCRIPTION);
+        if (richDesc.isPresent()) {
+            return richDesc;
+        }
+
         return this.cloudCommand.getCommandMeta().get(CommandMeta.DESCRIPTION).map(Text::of);
     }
 
     @Override
-    public Optional<Text> getHelp(CommandSource source) {
+    public Optional<Text> getHelp(final CommandSource source) {
         final Optional<Text> possible = this.cloudCommand.getCommandMeta().get(CommandMeta.LONG_DESCRIPTION).map(Text::of);
         if (!possible.isPresent()) {
             return this.cloudCommand.getCommandMeta().get(CommandMeta.DESCRIPTION).map(Text::of);
@@ -151,10 +159,11 @@ final class CloudCommandCallable<C> implements CommandCallable {
     }
 
     @Override
-    public Text getUsage(CommandSource source) {
+    public Text getUsage(final CommandSource source) {
         return Text.of(this.manager.getCommandSyntaxFormatter().apply(
-                this.cloudCommand.getArguments(),
-                this.manager.getCommandTree().getNamedNode(this.command.getName())
+            this.cloudCommand.getArguments(),
+            this.manager.getCommandTree().getNamedNode(this.command.getName())
         ));
     }
+
 }

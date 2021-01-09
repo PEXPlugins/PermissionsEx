@@ -24,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public class PEXCommandPreprocessor implements CommandPreprocessor<Commander> {
 
     public static final String PEX_MANAGER = "permissionsex:manager";
+    public static final String PEX_ENGINE = "permissionsex:engine";
 
     private final MinecraftPermissionsEx<?> manager;
 
@@ -34,5 +35,6 @@ public class PEXCommandPreprocessor implements CommandPreprocessor<Commander> {
     @Override
     public void accept(@NonNull CommandPreprocessingContext<Commander> ctx) {
         ctx.getCommandContext().store(PEX_MANAGER, this.manager);
+        ctx.getCommandContext().store(PEX_ENGINE, this.manager.engine());
     }
 }

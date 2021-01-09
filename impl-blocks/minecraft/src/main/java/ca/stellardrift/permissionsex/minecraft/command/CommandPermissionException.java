@@ -14,9 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("Utilities")
-package ca.stellardrift.permissionsex.util
+package ca.stellardrift.permissionsex.minecraft.command;
 
-import java.util.Optional
+public final class CommandPermissionException extends CommandException {
+    private static final long serialVersionUID = 6825582153629314194L;
 
-fun <T> T?.optionally(): Optional<T> = Optional.ofNullable(this)
+    private final String checkedPermission;
+
+    public CommandPermissionException(final String checkedPermission) {
+        super(Messages.EXECUTOR_ERROR_NO_PERMISSION.tr());
+        this.checkedPermission = checkedPermission;
+    }
+
+    public String checkedPermission() {
+        return this.checkedPermission;
+    }
+
+}

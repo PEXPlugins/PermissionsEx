@@ -9,4 +9,12 @@ final class ${className} {
 
     private ${className}() {
     }
+
+    static {
+        TranslatableProvider.registerAllTranslations(
+            BUNDLE_NAME,
+            TranslatableProvider.knownLocales(${className}.class, BUNDLE_NAME),
+            ${className}.class.getClassLoader()
+        );
+    }
 }

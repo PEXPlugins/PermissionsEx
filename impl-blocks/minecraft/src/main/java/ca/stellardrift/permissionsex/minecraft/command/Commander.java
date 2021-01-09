@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.minecraft.command;
 
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.audience.MessageType;
@@ -59,6 +60,8 @@ public interface Commander extends ForwardingAudience.Single {
     /**
      * A formatter providing formatting options for messages sent to this commander.
      *
+     * <p>This is usually the same message formatter exposed in {@link MinecraftPermissionsEx#messageFormatter()}.</p>
+     *
      * @return the formatter
      */
     MessageFormatter formatter();
@@ -76,6 +79,18 @@ public interface Commander extends ForwardingAudience.Single {
 
     default boolean hasPermission(final Permission permission) {
         return this.hasPermission(permission.value());
+    }
+
+    default void checkPermission(final String permission) throws CommandPermissionException {
+        if (!hasPermission(permission)) {
+            throw new CommandPermissionException(permission);
+        }
+    }
+
+    default void checkPermission(final Permission permission) throws CommandPermissionException {
+        if (!hasPermission(permission)) {
+            throw new CommandPermissionException(permission.value());
+        }
     }
 
     /**
@@ -141,15 +156,22 @@ public interface Commander extends ForwardingAudience.Single {
     }
 
     default void sendPaginated(
-            final Component title,
+            final ComponentLike title,
             final Iterable<? extends ComponentLike> lines
     ) {
         this.sendPaginated(title, null, lines);
     }
 
+    /**
+     * Send a paginated list to the user
+     *
+     * @param title a title
+     * @param header a header/subtitle
+     * @param lines the lines to send
+     */
     default void sendPaginated(
-            final Component title,
-            final @Nullable Component header,
+            final ComponentLike title,
+            final @Nullable ComponentLike header,
             final Iterable<? extends ComponentLike> lines
     ) {
         final Component marker = Component.text("#");

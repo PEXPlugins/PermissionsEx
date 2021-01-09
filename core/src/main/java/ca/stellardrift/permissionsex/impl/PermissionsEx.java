@@ -44,6 +44,7 @@ import ca.stellardrift.permissionsex.impl.logging.RecordingPermissionCheckNotifi
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.impl.subject.CalculatedSubjectImpl;
+import ca.stellardrift.permissionsex.rank.RankLadderCollection;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.impl.subject.SubjectTypeCollectionImpl;
@@ -239,7 +240,8 @@ public class PermissionsEx<P> implements ImplementationInterface,
      *
      * @return Access to rank ladders
      */
-    public RankLadderCache getLadders() {
+    @Override
+    public RankLadderCollection ladders() {
         return this.rankLadderCache;
     }
 

@@ -23,21 +23,7 @@ import ca.stellardrift.build.common.configurate
 plugins {
     id("pex-component")
     `java-test-fixtures`
-    id("ca.stellardrift.opinionated.kotlin")
     id("ca.stellardrift.localization")
-}
-
-// Disable commands compilation while refactoring is in progress
-val commands by sourceSets.registering {
-    val main = sourceSets.main.get()
-    compileClasspath += main.compileClasspath
-    runtimeClasspath += main.runtimeClasspath
-
-    dependencies.add(implementationConfigurationName, main.output)
-
-    tasks.named(getCompileTaskName("kotlin")).configure {
-        enabled = false
-    }
 }
 
 useAutoService()
@@ -48,14 +34,12 @@ dependencies {
     val slf4jVersion: String by project
 
     api(project(":api"))
-
     api(project(":impl-blocks:legacy"))
+
     api(platform(configurate("bom", configurateVersion)))
     api(configurate("gson"))
     api(configurate("hocon"))
     implementation(configurate("yaml"))
-    implementation(configurate("extra-kotlin")) { isTransitive = false }
-    implementation(kotlin("reflect"))
     implementation("com.github.ben-manes.caffeine:caffeine:2.8.6") {
         exclude("com.google.errorprone")
     }

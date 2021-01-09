@@ -25,6 +25,7 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.Permission
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
@@ -35,11 +36,13 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import cloud.commandframework.CommandTree
 import cloud.commandframework.bungee.BungeeCommandManager
 import cloud.commandframework.execution.CommandExecutionCoordinator
+import cloud.commandframework.permission.CommandPermission
 import java.lang.reflect.Constructor
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.Executor
+import java.util.function.Function
 import java.util.logging.Logger
 import javax.sql.DataSource
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences
@@ -56,7 +59,6 @@ import net.md_5.bungee.event.EventPriority
 import org.slf4j.impl.JDK14LoggerAdapter
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
-import java.util.function.Function
 
 class PermissionsExPlugin : Plugin(), Listener {
     internal lateinit var logger: FormattedLogger private set
@@ -85,12 +87,21 @@ class PermissionsExPlugin : Plugin(), Listener {
     val groups: SubjectTypeCollection<String>
         get() = this._manager!!.groups()
 
-    private fun createCommandManager(execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>): BungeeCommandManager<Commander> {
-        return BungeeCommandManager(this,
+    private fun createCommandManager(
+        execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>
+    ): BungeeCommandManager<Commander> {
+        return object : BungeeCommandManager<Commander>(this,
             execCoord,
             { sender -> BungeeCommander(this, sender) },
             { commander -> (commander as BungeeCommander).src }
-        )
+        ) {
+            override fun hasPermission(sender: Commander, permission: CommandPermission): Boolean {
+                if (permission is Permission) {
+                    return sender.hasPermission(permission)
+                }
+                return super.hasPermission(sender, permission)
+            }
+        }
     }
 
     override fun onEnable() {
@@ -109,6 +120,7 @@ class PermissionsExPlugin : Plugin(), Listener {
             this._manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
                 .implementationInterface(BungeeImplementationInterface(this))
                 .commands(this::createCommandManager, ProxyCommon.PROXY_COMMAND_PREFIX)
+                .messageFormatter(::BungeePluginMessageFormatter)
                 .playerProvider { proxy.getPlayer(it) }
                 .cachedUuidResolver { proxy.getPlayer(it)?.uniqueId } // bungee only supports online players
                 .build()
@@ -186,7 +198,8 @@ internal class BungeeImplementationInterface(private val plugin: PermissionsExPl
             BaseDirectoryScope.CONFIG -> plugin.dataPath
             BaseDirectoryScope.JAR -> plugin.proxy.pluginsFolder.toPath()
             BaseDirectoryScope.SERVER -> plugin.proxy.pluginsFolder.parentFile.toPath()
-            BaseDirectoryScope.WORLDS -> plugin.proxy.pluginsFolder.parentFile.toPath() // proxies don't have worlds... so this will just be the server dir
+            // proxies don't have worlds... so this will just be the server dir
+            BaseDirectoryScope.WORLDS -> plugin.proxy.pluginsFolder.parentFile.toPath()
         }
     }
 

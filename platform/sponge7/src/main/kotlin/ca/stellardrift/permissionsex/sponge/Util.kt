@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinition
 import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.impl.PermissionsEx
 import com.google.common.collect.ImmutableSet
+import java.util.Optional
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.spongeapi.SpongeComponentSerializer
 import org.spongepowered.api.service.context.Context
@@ -56,3 +57,5 @@ fun Set<Context>.toPex(manager: PermissionsEx<*>): ContextSet {
     }
     return builder.build()
 }
+
+fun <T> T?.optionally(): Optional<T> = Optional.ofNullable(this)

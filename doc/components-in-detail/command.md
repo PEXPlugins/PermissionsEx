@@ -98,6 +98,12 @@ applied if the reload is successful.
 Print detailed information on the version of PermissionsEx that is currently running. If
 the `verbose` option is provided, more detailed information on base directories will be printed.
 
+### `/pex|permissions <type> list`
+
+**Description:** List all subjects of a certain type
+
+**Permission:** `permissionsex.list.<type>`
+
 ### `/pex|permissionsex <type> <subject> delete [--transient|-t]`
 
 **Description:**: Delete all data for a subject
@@ -171,3 +177,8 @@ when no more specific node matches.
 
 This value is roughly equivalent to the `*` permission formerly used, but will not override 
 permissions specifically set to `false`.
+
+
+### `/promote`
+
+### `/demote`

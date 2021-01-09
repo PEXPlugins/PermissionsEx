@@ -60,7 +60,8 @@ public final class TimeContextDefinition extends PEXContextDefinition<ZonedDateT
             }
         }
 
-        throw new IllegalArgumentException("Could not deserialize time from input " + userValue + " using any known methods.");
+        return null;
+        // throw new IllegalArgumentException("Could not deserialize time from input " + userValue + " using any known methods.");
     }
 
     @Override

@@ -29,8 +29,8 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
 import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.sponge.command.SpongeMessageFormatter
 import ca.stellardrift.permissionsex.subject.SubjectType
-import ca.stellardrift.permissionsex.util.optionally
 import cloud.commandframework.arguments.standard.StringArgument
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
@@ -93,9 +93,8 @@ class PermissionsExPlugin @Inject internal constructor(
     private val logger = WrappingFormattedLogger.of(Log4jLogger(logger as ExtendedLogger, logger.name), true)
     private var _manager: MinecraftPermissionsEx<*>? = null
     val manager: PermissionsEx<*>
-        get() {
-        return _manager?.engine() ?: throw IllegalStateException("PermissionsEx Manager is not yet initialized, or there was an error loading the plugin!")
-    }
+        get() = _manager?.engine()
+            ?: throw IllegalStateException("PermissionsEx Manager is not yet initialized, or there was an error loading the plugin!")
 
     internal val mcManager: MinecraftPermissionsEx<*> get() {
         return this._manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
@@ -149,6 +148,7 @@ class PermissionsExPlugin @Inject internal constructor(
                     }
                 }
                 .commandContributor(this::registerFakeOpCommand)
+                .messageFormatter(::SpongeMessageFormatter)
                 .build()
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(ProjectData.NAME), e))
@@ -170,7 +170,7 @@ class PermissionsExPlugin @Inject internal constructor(
     private fun registerFakeOpCommand(ctx: CommandRegistrationContext) {
         val userArgument = StringArgument.of<Commander>("user")
         fun register(name: String, permission: String) {
-            ctx.register(ctx.rootBuilder(name)
+            ctx.register(ctx.absoluteBuilder(name)
                 .argument(userArgument)
                 .permission(permission)
                 // .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())

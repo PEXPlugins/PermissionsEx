@@ -20,7 +20,6 @@ import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
-import ca.stellardrift.permissionsex.util.optionally
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.collect.ImmutableMap

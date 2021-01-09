@@ -16,10 +16,10 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.subject.SubjectRef
-import ca.stellardrift.permissionsex.util.styled
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.text
@@ -35,7 +35,6 @@ internal class SpongeCommander(
     val pex: PermissionsExPlugin,
     internal val commandSource: CommandSource
 ) : Commander {
-    private val formatter = SpongeMessageFormatter(pex)
     private val audience = pex.adventure.receiver(commandSource)
 
     override fun hasPermission(permission: String): Boolean {
@@ -43,18 +42,18 @@ internal class SpongeCommander(
     }
 
     override fun sendPaginated(
-        title: Component,
-        header: Component?,
+        title: ComponentLike,
+        header: ComponentLike?,
         text: Iterable<ComponentLike>
     ) {
         val build =
             pex.game.serviceManager.provide(
                 PaginationService::class.java
             ).get().builder()
-        formatter.apply {
-            build.title(title.styled { header(hl(this)) }.toSponge())
+        formatter().apply {
+            build.title(title.asComponent().style { header(hl(it)) }.toSponge())
             if (header != null) {
-                build.header(header.color(NamedTextColor.GRAY).toSponge())
+                build.header(header.asComponent().color(NamedTextColor.GRAY).toSponge())
             }
             build.contents(text.map { it.asComponent().color(this.responseColor()).toSponge() })
                 .sendTo(commandSource)
@@ -69,7 +68,7 @@ internal class SpongeCommander(
         return text(commandSource.name)
     }
 
-    override fun subjectIdentifier(): SubjectRef<*>? {
+    override fun subjectIdentifier(): SubjectRef<*> {
         return PEXSubjectReference.of(
             commandSource.asSubjectReference(),
             pex
@@ -77,11 +76,11 @@ internal class SpongeCommander(
     }
 
     override fun formatter(): MessageFormatter {
-        return this.formatter
+        return this.pex.mcManager.messageFormatter()
     }
 }
 
-internal class SpongeMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager) {
+internal class SpongeMessageFormatter(manager: MinecraftPermissionsEx<*>) : MessageFormatter(manager) {
 
     override fun <I : Any?> friendlyName(reference: SubjectRef<I>): String? {
         return (reference.type().getAssociatedObject(reference.identifier()) as? CommandSource)?.name

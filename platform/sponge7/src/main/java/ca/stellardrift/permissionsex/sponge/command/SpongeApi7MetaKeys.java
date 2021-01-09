@@ -26,4 +26,5 @@ public final class SpongeApi7MetaKeys {
 
     public static final CommandMeta.Key<Text> RICH_DESCRIPTION = CommandMeta.Key.of(Text.class, "pex:sponge_rich_description");
     public static final CommandMeta.Key<Text> RICH_LONG_DESCRIPTION = CommandMeta.Key.of(Text.class, "pex:sponge_rich_long_description");
+
 }

@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class SpongePluginRegistrationHandler<C> implements CommandRegistrationHandler {
+
     private @MonotonicNonNull SpongeApi7CommandManager<C> manager;
     private final Map<CommandArgument<?, ?>, CloudCommandCallable<C>> registeredCommands = new HashMap<>();
 
@@ -47,15 +48,16 @@ class SpongePluginRegistrationHandler<C> implements CommandRegistrationHandler {
         }
 
         final CloudCommandCallable<C> callable = new CloudCommandCallable<>(
-                commandArgument,
-                (Command<C>) command,
-                this.manager);
+            commandArgument,
+            (Command<C>) command,
+            this.manager);
         this.registeredCommands.put(commandArgument, callable);
 
         return Sponge.getGame().getCommandManager().register(
-                this.manager.getOwningPlugin(),
-                callable,
-                ImmutableList.copyOf(commandArgument.getAliases())
+            this.manager.getOwningPlugin(),
+            callable,
+            ImmutableList.copyOf(commandArgument.getAliases())
         ).isPresent();
     }
+
 }

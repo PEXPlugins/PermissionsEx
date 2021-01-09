@@ -20,9 +20,12 @@ import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import cloud.commandframework.Command;
 import cloud.commandframework.CommandManager;
-import cloud.commandframework.meta.CommandMeta;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -32,7 +35,7 @@ public final class CommandRegistrationContext {
     private final String commandPrefix;
     private final CommandManager<Commander> commandManager;
     private final MinecraftPermissionsEx<?> manager;
-    private final Command.Builder<Commander> pexRoot;
+    private final Deque<Command.Builder<Commander>> builderStack = new ArrayDeque<>();
 
     public CommandRegistrationContext(
             final String commandPrefix,
@@ -41,10 +44,6 @@ public final class CommandRegistrationContext {
         this.commandPrefix = commandPrefix;
         this.manager = manager;
         this.commandManager = commandManager;
-
-        // TODO: Make the active base command pushable
-        this.pexRoot = this.rootBuilder("permissionsex", "pex")
-                .meta(CommandMeta.DESCRIPTION, "The command for controlling PermissionsEx");
     }
 
     public PermissionsEngine engine() {
@@ -55,17 +54,59 @@ public final class CommandRegistrationContext {
         return this.manager;
     }
 
-    /**
-     * Get the base command for PEX operations.
-     *
-     * @return the command
-     */
-    public Command.Builder<Commander> pex() {
-        return this.pexRoot;
+    public String commandPrefix() {
+        return this.commandPrefix;
     }
 
     public CommandManager<Commander> commandManager() {
         return this.commandManager;
+    }
+
+    /**
+     * Get the current command builder at the head of the command stack.
+     *
+     * @return the head of the stack
+     */
+    public Command.Builder<Commander> head() {
+        final Command.@Nullable Builder<Commander> head = this.builderStack.peek();
+        if (head == null) {
+            throw new IllegalStateException("Tried to peek command registration while stack was empty");
+        } else {
+            return head;
+        }
+    }
+
+    public void push(final Command.Builder<Commander> builder, final Consumer<CommandRegistrationContext> handler) {
+        final int startSize = this.builderStack.size();
+        this.builderStack.push(builder);
+        try {
+            handler.accept(this);
+        } finally {
+            this.builderStack.pop();
+            if (this.builderStack.size() != startSize) {
+                throw new IllegalStateException("Command registration stack corruption detected while popping " + builder.build());
+            }
+        }
+    }
+
+    public void push(final Consumer<CommandRegistrationContext> handler, final String primaryAlias, final String... aliases) {
+        push(this.head().literal(primaryAlias, aliases), handler);
+    }
+
+    /**
+     * Simple helper to register a subcommand of the PEX base command.
+     *
+     * @param maker a function that will add arguments to the PEX base command
+     * @param primaryAlias the primary alias for this subcommand
+     * @param aliases any other aliases
+     */
+    public Command<Commander> register(final Function<Command.Builder<Commander>, Command.Builder<Commander>> maker, final String primaryAlias, final String... aliases) {
+        final Command.@Nullable Builder<Commander> headBuilder = this.builderStack.peek();
+        if (headBuilder != null) {
+            return register(maker.apply(headBuilder.literal(primaryAlias, aliases)));
+        } else {
+            return register(maker.apply(absoluteBuilder(primaryAlias, aliases)));
+        }
     }
 
     /**
@@ -81,24 +122,13 @@ public final class CommandRegistrationContext {
     }
 
     /**
-     * Simple helper to register a subcommand of the PEX base command.
-     *
-     * @param maker a function that will add arguments to the PEX base command
-     * @param primaryAlias the primary alias for this subcommand
-     * @param aliases any other aliases
-     */
-    public Command<Commander> register(final Function<Command.Builder<Commander>, Command.Builder<Commander>> maker, final String primaryAlias, final String... aliases) {
-        return register(maker.apply(this.pexRoot.literal(primaryAlias, aliases)));
-    }
-
-    /**
      * Create a new command builder at the root of the tree.
      *
      * @param primaryAlias the primary command alias
      * @param aliases the aliases so tadd
      * @return the builder
      */
-    public Command.Builder<Commander> rootBuilder(String primaryAlias, String... aliases) {
+    public Command.Builder<Commander> absoluteBuilder(String primaryAlias, String... aliases) {
         if (!this.commandPrefix.isEmpty()) {
             primaryAlias = this.commandPrefix + primaryAlias;
             aliases = Arrays.copyOf(aliases, aliases.length);

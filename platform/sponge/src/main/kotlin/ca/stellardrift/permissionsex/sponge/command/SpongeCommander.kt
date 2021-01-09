@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.sponge.command
 
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.sponge.PermissionsExPlugin
@@ -33,25 +34,24 @@ import org.spongepowered.api.util.Nameable
  * An abstraction over the Sponge CommandSource that handles PEX-specific message formatting and localization
  */
 internal class SpongeCommander(
-    val pex: PermissionsExPlugin,
+    private val pex: PermissionsExPlugin,
     private val cause: CommandCause
 ) : Commander {
-    private val formatter: SpongeMessageFormatter = SpongeMessageFormatter(pex)
 
     override fun hasPermission(permission: String): Boolean {
         return cause.hasPermission(permission)
     }
 
     override fun sendPaginated(
-        title: Component,
-        header: Component?,
+        title: ComponentLike,
+        header: ComponentLike?,
         text: Iterable<ComponentLike>
     ) {
         val build = pex.game.serviceProvider.paginationService().builder()
-        formatter.apply {
-            build.title(title.style { header(hl(it)) })
+        formatter().apply {
+            build.title(title.asComponent().style { header(hl(it)) })
             if (header != null) {
-                build.header(header.color(NamedTextColor.GRAY))
+                build.header(header.asComponent().color(NamedTextColor.GRAY))
             }
             build.contents(text.map { it.asComponent().colorIfAbsent(formatter().responseColor()) })
                 .sendTo(cause.audience)
@@ -71,11 +71,11 @@ internal class SpongeCommander(
     }
 
     override fun formatter(): MessageFormatter {
-        return this.formatter // TODO: use plugin
+        return this.pex.mcManager.messageFormatter()
     }
 }
 
-internal class SpongeMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager) {
+internal class SpongeMessageFormatter(manager: MinecraftPermissionsEx<*>) : MessageFormatter(manager) {
 
     override fun <I> friendlyName(reference: SubjectRef<I>): String? {
         return (reference.type().getAssociatedObject(reference.identifier()) as? Nameable)?.name

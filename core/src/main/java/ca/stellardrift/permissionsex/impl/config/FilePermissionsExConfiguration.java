@@ -22,7 +22,6 @@ import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
 import io.leangen.geantyref.TypeFactory;
 import io.leangen.geantyref.TypeToken;
-import kotlin.Unit;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.pcollections.PSet;
 import org.pcollections.PStack;
@@ -106,8 +105,8 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
         this.platformConfigClass = platformConfigClass;
     }
 
-    public static FilePermissionsExConfiguration<Unit> fromLoader(ConfigurationLoader<?> loader) throws ConfigurateException {
-        return fromLoader(loader, Unit.class);
+    public static FilePermissionsExConfiguration<?> fromLoader(ConfigurationLoader<?> loader) throws ConfigurateException {
+        return fromLoader(loader, Void.class);
     }
 
     /**
@@ -160,8 +159,8 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     @SuppressWarnings("unchecked") // manual type checking
     private void load() throws ConfigurateException {
         this.instance = (Instance<T>) this.node.get(TypeFactory.parameterizedClass(Instance.class, this.platformConfigClass));
-        if (this.platformConfigClass == Unit.class) {
-            this.instance.platform = (T) Unit.INSTANCE;
+        if (this.platformConfigClass == Void.class) {
+            this.instance.platform = null;
         } else {
             this.instance.platform = this.platformConfigNode().get(this.platformConfigClass);
         }
@@ -171,7 +170,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     @Override
     public void save() throws IOException {
         this.node.set(TypeFactory.parameterizedClass(Instance.class, this.platformConfigClass), this.instance);
-        if (this.platformConfigClass != Unit.class) {
+        if (this.platformConfigClass != Void.class) {
             platformConfigNode().set(this.platformConfigClass, this.instance.platform);
         }
 

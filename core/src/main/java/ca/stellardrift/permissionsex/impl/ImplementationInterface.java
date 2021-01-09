@@ -16,13 +16,12 @@
  */
 package ca.stellardrift.permissionsex.impl;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
-import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
@@ -54,13 +53,16 @@ public interface ImplementationInterface {
     Logger logger();
 
     /**
-     * Returns an appropriate data source for the implementation-dependent specificer {@code url}.
+     * Returns an appropriate data source for the implementation-dependent specifier {@code url}.
+     *
+     * <p>Implementations may allow this url to be an alias to an existing connection definition,
+     * rather than an actual URL.</p>
      *
      * @param url The specifier to get a data source for
      * @return The appropriate data source, or null if not supported
      * @throws SQLException If a connection to the provided database cannot be established
      */
-    DataSource dataSourceForUrl(String url) throws SQLException;
+    @Nullable DataSource dataSourceForUrl(String url) throws SQLException;
 
     /**
      * Get an executor to run tasks asynchronously on.
@@ -76,14 +78,4 @@ public interface ImplementationInterface {
      */
     String version();
 
-    /**
-     * Return a function that supplies an implementation-dependent variant of a subject reference
-     *
-     * @param collection subject collection
-     * @param ident specific identifier for a subject
-     * @return The identifier for a certain subject
-     */
-     default Map.Entry<String, String> createSubjectIdentifier(String collection, String ident) {
-        return UnmodifiableCollections.immutableMapEntry(collection, ident);
-     }
 }

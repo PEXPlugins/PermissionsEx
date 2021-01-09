@@ -158,7 +158,9 @@ internal class PEXPermissible(private val player: Player, private val plugin: Pe
         this.attachments.clear()
     }
 
-    override fun recalculatePermissions() { // We don't need this currently? Guess could clear cache somehow, but automated should get it right. well, except for people adding children to permissions -- that is just weird
+    // We don't need this currently? Guess could clear cache somehow, but automated should get it
+    // right. well, except for people adding children to permissions -- that is just weird
+    override fun recalculatePermissions() {
     }
 
     @Synchronized

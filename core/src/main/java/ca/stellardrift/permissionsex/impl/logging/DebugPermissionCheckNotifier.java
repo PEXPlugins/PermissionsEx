@@ -20,7 +20,7 @@ import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.logging.PermissionCheckNotifier;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
-import org.jetbrains.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class DebugPermissionCheckNotifier implements PermissionCheckNotifier {
     private final PermissionCheckNotifier delegate;
     private final Predicate<String> filterPredicate;
 
-    public DebugPermissionCheckNotifier(FormattedLogger logger, PermissionCheckNotifier delegate, @Nullable Predicate<String> filterPredicate) {
+    public DebugPermissionCheckNotifier(FormattedLogger logger, PermissionCheckNotifier delegate, final @Nullable Predicate<String> filterPredicate) {
         this.logger = logger;
         this.delegate = delegate;
         this.filterPredicate = filterPredicate == null ? x -> true : filterPredicate;

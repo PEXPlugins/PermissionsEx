@@ -25,6 +25,7 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.Permission
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.IDENT_SERVER_CONSOLE
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.PROXY_COMMAND_PREFIX
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon.SUBJECTS_SYSTEM
@@ -34,6 +35,7 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
 import cloud.commandframework.CommandManager
 import cloud.commandframework.CommandTree
 import cloud.commandframework.execution.CommandExecutionCoordinator
+import cloud.commandframework.permission.CommandPermission
 import cloud.commandframework.velocity.VelocityCommandManager
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
@@ -54,11 +56,11 @@ import java.util.UUID
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 import javax.inject.Inject
 import javax.sql.DataSource
 import org.slf4j.Logger
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
-import java.util.function.Function
 
 private val SERVER_PATH = Paths.get(".")
 private val PLUGINS_PATH = SERVER_PATH.resolve("plugins")
@@ -110,13 +112,20 @@ class PermissionsExPlugin @Inject constructor(
         get() = this._manager!!.groups()
 
     private fun createCommandManager(execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>): CommandManager<Commander> {
-        return VelocityCommandManager(
+        return object : VelocityCommandManager<Commander>(
             this.container,
             this.server,
             execCoord,
             { VelocityCommander(this, it) },
             { (it as VelocityCommander).src }
-        )
+        ) {
+            override fun hasPermission(sender: Commander, permission: CommandPermission): Boolean {
+                if (permission is Permission) {
+                    return sender.hasPermission(permission)
+                }
+                return super.hasPermission(sender, permission)
+            }
+        }
     }
 
     @Subscribe
@@ -134,6 +143,7 @@ class PermissionsExPlugin @Inject constructor(
                 .cachedUuidResolver { server.getPlayer(it).orElse(null)?.uniqueId }
                 .playerProvider { server.getPlayer(it).orElse(null) }
                 .commands(this::createCommandManager, PROXY_COMMAND_PREFIX)
+                .messageFormatter(::VelocityMessageFormatter)
                 .build()
         } catch (e: Exception) {
             logger.error(Messages.PLUGIN_INIT_ERROR.tr(), e)

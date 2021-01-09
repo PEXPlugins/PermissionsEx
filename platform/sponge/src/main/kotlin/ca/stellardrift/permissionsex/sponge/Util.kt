@@ -22,6 +22,7 @@ import ca.stellardrift.permissionsex.context.ContextValue
 import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile
 import com.google.common.collect.ImmutableSet
 import io.leangen.geantyref.TypeToken
+import java.util.Optional
 import java.util.UUID
 import org.spongepowered.api.event.Event
 import org.spongepowered.api.event.EventManager
@@ -61,3 +62,5 @@ fun Set<Context>.toPex(manager: PermissionsEngine): ContextSet {
 inline fun <reified E : Event> EventManager.register(plugin: PluginContainer, crossinline listener: (E) -> Unit) {
     registerListener(plugin, object : TypeToken<E>() {}) { listener(it) }
 }
+
+fun <T> T?.optionally(): Optional<T> = Optional.ofNullable(this)

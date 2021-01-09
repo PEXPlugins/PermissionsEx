@@ -24,6 +24,7 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import net.kyori.adventure.text.BuildableComponent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
+import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -40,9 +41,9 @@ import static net.kyori.adventure.text.Component.text;
 /**
  * Message formatting parameters for the current engine instance.
  */
-public abstract class MessageFormatter {
+public class MessageFormatter {
     public static final TextColor DEFAULT_MESSAGE_COLOR = NamedTextColor.DARK_AQUA;
-    public static final TextColor DEFAULT_HIGHLIGHT_COLOR = NamedTextColor.AQUA;
+    public static final TextColor DEFAULT_HIGHLIGHT_COLOR = TextColor.color(0x55cccc);
     public static final Component EQUALS_SIGN = text("=", NamedTextColor.GRAY);
     public static final Component SLASH = text("/");
 
@@ -55,11 +56,11 @@ public abstract class MessageFormatter {
      *
      * @param manager the permissions manager
      */
-    protected MessageFormatter(final MinecraftPermissionsEx<?> manager) {
+    public MessageFormatter(final MinecraftPermissionsEx<?> manager) {
         this(manager, DEFAULT_MESSAGE_COLOR, DEFAULT_HIGHLIGHT_COLOR);
     }
 
-    protected MessageFormatter(
+    public MessageFormatter(
             final MinecraftPermissionsEx<?> manager,
             final TextColor messageColor,
             final TextColor highlightColor) {
@@ -159,7 +160,7 @@ public abstract class MessageFormatter {
     public <C extends BuildableComponent<C, B>, B extends ComponentBuilder<C, B>> Component button(
             B builder,
             ButtonType type,
-            final @Nullable Component tooltip,
+            final @Nullable ComponentLike tooltip,
             final String command,
             final boolean execute
     ) {

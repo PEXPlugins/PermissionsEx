@@ -35,7 +35,11 @@ internal val ATTACHMENT_TYPE = SubjectType.builder("attachment", UUID::class.jav
 /**
  * Permissions attachment that integrates with the PEX backend
  */
-internal class PEXPermissionAttachment(plugin: Plugin, parent: Player, private val perm: PEXPermissible) : PermissionAttachment(plugin, parent), SubjectRef<UUID> {
+internal class PEXPermissionAttachment(
+    plugin: Plugin,
+    parent: Player,
+    private val perm: PEXPermissible
+) : PermissionAttachment(plugin, parent), SubjectRef<UUID> {
     private val identifier = UUID.randomUUID()
     private val subjectData: SubjectRef.ToData<UUID> =
         perm.manager.subjects(ATTACHMENT_TYPE).transientData().referenceTo(identifier).join()

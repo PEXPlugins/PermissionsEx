@@ -155,7 +155,7 @@ class FabricCommander(private val src: ServerCommandSource) : Commander {
     }
 
     override fun formatter(): MessageFormatter {
-        return FabricPermissionsExImpl.formatter!!
+        return FabricPermissionsExImpl.mcManager.messageFormatter()
     }
 }
 

@@ -17,8 +17,6 @@
 package ca.stellardrift.permissionsex.minecraft.command;
 
 import ca.stellardrift.permissionsex.subject.SubjectRef;
-import cloud.commandframework.Command;
-import cloud.commandframework.CommandManager;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.standard.UUIDArgument;
 import cloud.commandframework.meta.CommandMeta;

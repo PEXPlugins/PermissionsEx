@@ -16,21 +16,20 @@
  */
 package ca.stellardrift.permissionsex.minecraft.command;
 
+import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
 import cloud.commandframework.Command;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.StaticArgument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.util.ComponentMessageThrowable;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.reactive.Publisher;
-import org.spongepowered.configurate.reactive.Subscriber;
 
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
+import java.util.Set;
 
 import static net.kyori.adventure.text.Component.text;
 
@@ -38,6 +37,13 @@ import static net.kyori.adventure.text.Component.text;
  * Message creators for use in command output.
  */
 public final class Formats {
+    private static final Component BOOL_TRUE = Messages.FORMATTER_BOOLEAN_TRUE.bTr()
+        .color(NamedTextColor.GREEN)
+        .build();
+
+    private static final Component BOOL_FALSE = Messages.FORMATTER_BOOLEAN_FALSE.bTr()
+        .color(NamedTextColor.RED)
+        .build();
 
     private Formats() {
     }
@@ -68,6 +74,18 @@ public final class Formats {
                 .build();
     }
 
+    public static Component permissionValue(final int value) {
+        final NamedTextColor color;
+        if (value > 0) {
+            color = NamedTextColor.GREEN;
+        } else if (value < 0) {
+            color = NamedTextColor.RED;
+        } else {
+            color = NamedTextColor.GRAY;
+        }
+        return text(value, color);
+    }
+
     public static Component option(final String option, final String value) {
         return text()
                 .content(option)
@@ -76,21 +94,57 @@ public final class Formats {
                 .build();
     }
 
+    public static Component bool(final boolean value) {
+        return value ? BOOL_TRUE : BOOL_FALSE;
+    }
+
+    public static Component contexts(final Set<ContextValue<?>> contexts) {
+        if (contexts.isEmpty()) {
+            return Messages.COMMON_ARGS_CONTEXT_GLOBAL.tr();
+        } else {
+            return text(contexts.toString());
+        }
+    }
+
     /**
      * Format the specified command, filling in arguments as provided until the first unset
      * non-static argument is encountered.
      *
      * @param command the command to format
-     * @param arguments arguments to fill in
+     * @param placeholders arguments to fill in
      * @return the formatted command
      */
-    public static String formatCommand(final Command<?> command, final Map<CommandArgument<?, ?>, String> arguments) {
+    public static String formatCommand(final Command<?> command, final Map<CommandArgument<?, ?>, String> placeholders) {
+        return formatCommand(command.getArguments(), placeholders);
+    }
+
+    /**
+     * Format the specified command, filling in arguments as provided until the first unset
+     * non-static argument is encountered.
+     *
+     * @param command the command to format
+     * @param placeholders arguments to fill in
+     * @return the formatted command
+     */
+    public static String formatCommand(final Command.Builder<?> command, final Map<CommandArgument<?, ?>, String> placeholders) {
+        return formatCommand(command.build().getArguments(), placeholders); // TODO: can we do this without building the command?
+    }
+
+    /**
+     * Format the specified command, filling in arguments as provided until the first unset
+     * non-static argument is encountered.
+     *
+     * @param arguments the base arguments
+     * @param placeholders arguments to fill in
+     * @return the formatted command
+     */
+    private static String formatCommand(final List<? extends CommandArgument<?, ?>> arguments, final Map<CommandArgument<?, ?>, String> placeholders) {
         final StringBuilder builder = new StringBuilder("/");
-        for (final CommandArgument<?, ?> argument : command.getArguments()) {
+        for (final CommandArgument<?, ?> argument : arguments) {
             if (argument instanceof StaticArgument<?>) {
                 builder.append(argument.getName());
             } else {
-                final @Nullable String value = arguments.get(argument);
+                final @Nullable String value = placeholders.get(argument);
                 if (value == null) {
                     break;
                 }
@@ -116,65 +170,22 @@ public final class Formats {
         return formatCommand(command, PCollections.<CommandArgument<?, ?>, String>map(arg1, val1).plus(arg2, val2));
     }
 
-    /**
-     * To be used with {@link CompletableFuture#handle(BiFunction)}
-     */
-    public static <V, U> BiFunction<V, Throwable, U> messageSender(
-            final Commander src,
-            final Component message
-    ) {
-        return messageSender(src, send -> send.accept(message));
+    public static Component message(final Throwable throwable) {
+        if (throwable instanceof ComponentMessageThrowable) {
+            final @Nullable Component msg =  ((ComponentMessageThrowable) throwable).componentMessage();
+            return msg == null ? text("null") : msg;
+        } else {
+            return text(throwable.getMessage());
+        }
     }
 
-    /**
-     * Message a subject with the result of a completable future.
-     *
-     * <p>Intended to be used with {@link CompletableFuture#handle(BiFunction)}</p>
-     *
-     * @param src the commander to receive the response
-     * @param callback the callback to execute on completion
-     * @param <V> upstream input value
-     * @param <U> downstream output value. will always receive null
-     * @return a handler function for a future
-     */
-    public static <V, U> BiFunction<@Nullable V, @Nullable Throwable, U> messageSender(
-            final Commander src,
-            final Consumer<Consumer<Component>> callback
-    ) {
-
-        return (result, err) -> {
-            if (err != null) {
-                final Throwable cause = err.getCause();
-                if (err instanceof CompletionException && cause != null) {
-                    err = cause;
-                }
-                if (err instanceof CommandException) {
-                    src.error(((CommandException) err).componentMessage());
-                } else {
-                    // TODO: err.getMessage() can be null
-                    src.error(Messages.EXECUTOR_ERROR_ASYNC_TASK.tr(err.getClass().getSimpleName(), err.getMessage()), err);
-                    src.formatter().manager().engine().logger().error(Messages.EXECUTOR_ERROR_ASYNC_TASK_CONSOLE.tr(src.name()), err);
-                }
-            } else {
-                callback.accept(src::sendMessage);
-            }
-            return null;
-        };
+    public static TextColor lerp(final double pct, final TextColor from, final TextColor to) {
+        // https://github.com/KyoriPowered/adventure/pull/215
+        return TextColor.color(
+            Math.round(from.red() + pct * (to.red() - from.red())),
+            Math.round(from.green() + pct * (to.green() - from.green())),
+            Math.round(from.blue() + pct * (to.blue() - from.blue()))
+        );
     }
 
-    public static <V> CompletableFuture<V> toCompletableFuture(final Publisher<V> publisher) {
-        final CompletableFuture<V> ret = new CompletableFuture<>();
-        publisher.subscribe(new Subscriber<V>() {
-            @Override
-            public void submit(final V item) {
-                ret.complete(item);
-            }
-
-            @Override
-            public void onError(final Throwable ex) {
-                ret.completeExceptionally(ex);
-            }
-        });
-        return ret;
-    }
 }

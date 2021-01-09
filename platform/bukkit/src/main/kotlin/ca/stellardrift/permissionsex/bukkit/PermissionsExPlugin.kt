@@ -28,6 +28,7 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
+import ca.stellardrift.permissionsex.minecraft.command.Permission
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
@@ -35,6 +36,7 @@ import cloud.commandframework.CommandTree
 import cloud.commandframework.bukkit.CloudBukkitCapabilities
 import cloud.commandframework.execution.CommandExecutionCoordinator
 import cloud.commandframework.paper.PaperCommandManager
+import cloud.commandframework.permission.CommandPermission
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
@@ -43,6 +45,7 @@ import java.util.UUID
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 import javax.sql.DataSource
 import net.kyori.adventure.platform.bukkit.BukkitAudiences
 import org.bukkit.Bukkit
@@ -60,7 +63,6 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
-import java.util.function.Function
 
 private val INJECTORS = arrayOf(
     ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
@@ -142,13 +144,22 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
         }
     }
 
-    private fun createCommandManager(execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>): PaperCommandManager<Commander> {
-        val mgr = PaperCommandManager(
+    private fun createCommandManager(
+        execCoord: Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>
+    ): PaperCommandManager<Commander> {
+        val mgr = object : PaperCommandManager<Commander>(
             this,
             execCoord,
             { sender -> BukkitCommander(this, sender) },
             { commander -> (commander as BukkitCommander).commandSource }
-        )
+        ) {
+            override fun hasPermission(sender: Commander, permission: CommandPermission): Boolean {
+                if (permission is Permission) {
+                    return sender.hasPermission(permission)
+                }
+                return super.hasPermission(sender, permission)
+            }
+        }
 
         if (mgr.queryCapability(CloudBukkitCapabilities.BRIGADIER)) {
             mgr.registerBrigadier()
@@ -183,6 +194,7 @@ class PermissionsExPlugin : JavaPlugin(), Listener {
                 .cachedUuidResolver { server.getOfflinePlayer(it)?.uniqueId } // TODO: is this correct?
                 .playerProvider(server::getPlayer)
                 .commands(this::createCommandManager)
+                .messageFormatter(::BukkitMessageFormatter)
                 .build()
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());

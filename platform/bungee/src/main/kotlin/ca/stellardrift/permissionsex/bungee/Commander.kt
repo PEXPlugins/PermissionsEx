@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.bungee
 
+import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon
@@ -33,7 +34,6 @@ internal class BungeeCommander(
     internal val src: CommandSender
 ) : Commander {
     private val audience = pex.adventure.sender(src)
-    private val formatter = BungeePluginMessageFormatter(pex)
 
     override fun audience(): Audience = this.audience
     override fun name(): Component = text(src.name)
@@ -41,11 +41,15 @@ internal class BungeeCommander(
         is ProxiedPlayer -> SubjectRef.subject(pex.users.type(), src.uniqueId)
         else -> IDENT_SERVER_CONSOLE
     }
-    override fun formatter(): MessageFormatter = this.formatter
+    override fun formatter(): MessageFormatter = this.pex.mcManager.messageFormatter()
     override fun hasPermission(permission: String): Boolean = this.src.hasPermission(permission)
 }
 
-internal class BungeePluginMessageFormatter(plugin: PermissionsExPlugin) : MessageFormatter(plugin.mcManager, NamedTextColor.GOLD, NamedTextColor.YELLOW) {
+internal class BungeePluginMessageFormatter(manager: MinecraftPermissionsEx<*>) : MessageFormatter(
+    manager,
+    NamedTextColor.GOLD,
+    NamedTextColor.YELLOW
+) {
 
     override fun <I> friendlyName(reference: SubjectRef<I>): String? {
         return (reference.type().getAssociatedObject(reference.identifier()) as? CommandSender)?.name

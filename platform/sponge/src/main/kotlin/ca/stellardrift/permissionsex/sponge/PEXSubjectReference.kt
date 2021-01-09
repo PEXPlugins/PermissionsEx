@@ -57,8 +57,12 @@ data class PEXSubjectReference<I> internal constructor(
     override fun type(): SubjectType<I> = this.type
     override fun identifier(): I = this.ident
 
-    internal constructor(type: SubjectType<I>, serialized: String, service: PermissionsExService, @Suppress("UNUSED_PARAMETER") resToAvoidAmbiguity: Boolean) :
-            this(type, type.parseIdentifier(serialized), service)
+    internal constructor(
+        type: SubjectType<I>,
+        serialized: String,
+        service: PermissionsExService,
+        @Suppress("UNUSED_PARAMETER") resToAvoidAmbiguity: Boolean
+    ) : this(type, type.parseIdentifier(serialized), service)
 
     override fun getCollectionIdentifier(): String {
         return this.type.name()

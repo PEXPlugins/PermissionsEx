@@ -55,7 +55,7 @@ dependencies {
     modCompileOnly("com.sk89q.worldedit:worldedit-fabric-mc1.16.3:7.2.0") { isTransitive = false }
     modCompileOnly("com.sk89q.worldedit:worldedit-core:7.2.0") { isTransitive = false }
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.25.1+build.416-1.16")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.29.3+1.16")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.4.21+build.1")
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
@@ -78,11 +78,12 @@ tasks.withType(ProcessResources::class).configureEach {
 tasks.withType(net.fabricmc.loom.task.AbstractRunTask::class).configureEach {
     // Midxin debug options
     jvmArgs(
-        "-Dmixin.debug.verbose=true",
+        // "-Dmixin.debug.verbose=true",
         // "-Dmixin.debug.export=true",
         // "-Dmixin.debug.export.decompile.async=false",
         "-Dmixin.dumpTargetOnFailure=true",
-        "-Dmixin.checks.interfaces=true"
+        "-Dmixin.checks.interfaces=true",
+        "-Dpermissionsex.debug.mixinaudit=true"
     )
 
     // Configure mixin agent

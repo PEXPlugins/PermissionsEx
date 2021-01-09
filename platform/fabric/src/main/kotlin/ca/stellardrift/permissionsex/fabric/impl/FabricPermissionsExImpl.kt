@@ -35,13 +35,13 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
-import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
+import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
@@ -74,27 +74,25 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
     private lateinit var container: ModContainer
     private lateinit var dataDir: Path
     internal var server: MinecraftServer? = null
-    internal var formatter: FabricMessageFormatter? = null
 
     val available get() = _manager != null
 
-    private lateinit var _logger: FormattedLogger
+    private lateinit var logger: FormattedLogger
     private val exec = Executors.newCachedThreadPool()
 
     override fun onInitialize() {
         // Load all mixins in development
-        if (FabricLoader.getInstance().isDevelopmentEnvironment) {
+        if (java.lang.Boolean.getBoolean("permissionsex.debug.mixinaudit")) {
             MixinEnvironment.getDefaultEnvironment().audit()
         }
 
-        this._logger = WrappingFormattedLogger.of(LoggerFactory.getLogger(MOD_ID), false)
+        this.logger = WrappingFormattedLogger.of(LoggerFactory.getLogger(MOD_ID), false)
         this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
         logger().prefix("[${container.metadata.name}] ")
 
         this._manager = this.createManager()
-        this.formatter = FabricMessageFormatter(this._manager!!)
         registerEvents()
         logger().info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
     }
@@ -148,6 +146,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
                     val server = this.server ?: return@opProvider false
                     server.userCache.getByUuid(it)?.let(server.playerManager::isOperator) ?: false
                 }
+                .messageFormatter(::FabricMessageFormatter)
                 .build()
         } catch (e: Exception) {
             logger().error(Messages.MOD_ENABLE_ERROR.tr(), e)
@@ -193,12 +192,12 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
         }
     }
 
-    fun handlePlayerJoin(player: ServerPlayerEntity) {
+    private fun handlePlayerJoin(player: ServerPlayerEntity) {
         mcManager.users()[player.uuid].thenAccept {
             // Update name option
             it.data().isRegistered.thenAccept { isReg ->
                 if (isReg) {
-                    it.data().update { it.withSegment(GLOBAL_CONTEXT) { it.withOption("name", player.name.asString()) } }
+                    it.data().update(GLOBAL_CONTEXT) { it.withOption("name", player.name.asString()) }
                 }
             }
 
@@ -216,12 +215,13 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             BaseDirectoryScope.CONFIG -> dataDir
             BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDir.resolve("mods")
             BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDir
-            BaseDirectoryScope.WORLDS -> this.server?.getSavePath(WorldSavePath.ROOT) ?: throw IllegalStateException("Tried to access worlds directory without an active server")
+            BaseDirectoryScope.WORLDS -> this.server?.getSavePath(WorldSavePath.ROOT)
+                ?: throw IllegalStateException("Tried to access worlds directory without an active server")
         }
     }
 
     override fun logger(): FormattedLogger {
-        return _logger
+        return logger
     }
 
     override fun dataSourceForUrl(url: String): DataSource {

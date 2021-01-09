@@ -71,11 +71,7 @@ public interface SubjectRef<I> {
      * @since 2.0.0
      */
     static <I> SubjectRef<I> mapKeySafe(final SubjectRef<I> existing) {
-        if (existing instanceof SubjectRefImpl<?>) { // our own immutable reference
-            return existing;
-        } else {
-            return subject(existing.type(), existing.identifier());
-        }
+        return SubjectRefImpl.copyOf(existing);
     }
 
     /**

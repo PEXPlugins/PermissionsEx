@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinitionProvider;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
+import ca.stellardrift.permissionsex.rank.RankLadderCollection;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
@@ -96,6 +97,17 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
      * @since 2.0.0
      */
     Set<SubjectType<?>> knownSubjectTypes();
+
+    /**
+     * Get a cache for rank ladders known by the engine.
+     *
+     * <p>Rank ladders allow for promotion and demotion of a subject among a
+     * set of ranked parents.</p>
+     *
+     * @return the ladder cache
+     * @since 2.0.0
+     */
+    RankLadderCollection ladders();
 
     /**
      * Perform a low-level bulk operation.
