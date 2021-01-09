@@ -44,7 +44,7 @@ indra {
             }
         }
     }
-    publishAllTo("pex", "https://repo.glaremasters.me/repository/permissionsex/")
+    // publishAllTo("pex", "https://repo.glaremasters.me/repository/permissionsex/")
     publishReleasesTo("stellardrift", "https://repo.stellardrift.ca/repository/releases/")
     publishSnapshotsTo("stellardrift", "https://repo.stellardrift.ca/repository/snapshots/")
 }
