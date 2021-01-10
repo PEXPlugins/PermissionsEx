@@ -52,10 +52,11 @@ pexPlatform {
         "kotlin",
         "kotlinx",
         "org.antlr",
-        "org.apache.logging.slf4j",
+        "org.jdbi",
         "org.jetbrains.annotations",
         "org.slf4j"
     )
+    relocate("org.apache.logging.slf4j", keepElements = 2)
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {

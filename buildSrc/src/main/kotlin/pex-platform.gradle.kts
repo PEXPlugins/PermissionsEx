@@ -5,7 +5,8 @@ plugins {
     id("com.github.johnrengelman.shadow")
 }
 
-if (name != "velocity") {
+if (name != "velocity"
+    && name != "bungee") {
     plugins.apply("ca.stellardrift.opinionated.kotlin")
 }
 

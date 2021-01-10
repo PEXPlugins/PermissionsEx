@@ -77,6 +77,8 @@ public class PermissionsExPlugin {
     private final FormattedLogger logger;
     private final ExecutorService exec = Executors.newCachedThreadPool();
 
+    private @Nullable MinecraftPermissionsEx<?> manager;
+
     @Inject
     PermissionsExPlugin(
         final Logger rawLogger,
@@ -89,9 +91,6 @@ public class PermissionsExPlugin {
         this.dataPath = dataPath;
         this.logger = WrappingFormattedLogger.of(rawLogger, true);
     }
-
-
-    private @Nullable MinecraftPermissionsEx<?> manager;
 
     /**
      * Get the permissions engine active for this proxy.

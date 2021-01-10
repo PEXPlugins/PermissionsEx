@@ -46,12 +46,12 @@ dependencies {
 pexPlatform {
     relocate(
         "cloud.commandframework",
-        "com.github.benmanes",
-        "com.zaxxer",
+        "com.github.benmanes.caffeine",
+        "com.zaxxer.hikari",
         "io.leangen.geantyref",
-        "org.antlr.v4",
-        "org.checkerframework",
-        "org.jetbrains",
-        "org.spongepowered.configurate"
+        "org.antlr",
+        "org.jdbi",
+        "org.spongepowered.configurate",
+        "org.pcollections"
     )
 }

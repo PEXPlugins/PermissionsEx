@@ -104,12 +104,13 @@ tasks.withType(net.fabricmc.loom.task.AbstractRunTask::class).configureEach {
 pexPlatform {
     relocate(
         "cloud.commandframework",
-        "com.github.benmanes",
-        "com.zaxxer",
+        "com.github.benmanes.caffeine",
+        "com.zaxxer.hikari",
         "org.antlr",
-        "org.apache.logging.slf4j",
+        "org.jdbi",
         "org.slf4j"
     )
+    relocate("org.apache.logging.slf4j", keepElements = 2)
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {

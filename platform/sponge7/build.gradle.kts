@@ -55,6 +55,7 @@ pexPlatform {
         "kotlinx",
         "net.kyori",
         "org.antlr",
+        "org.jdbi",
         "org.jetbrains.annotations",
         "org.spongepowered.configurate"
     )

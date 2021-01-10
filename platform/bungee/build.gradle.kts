@@ -67,16 +67,15 @@ bungee {
 pexPlatform {
     relocate(
         "cloud.commandframework",
-        "com.github.benmanes",
-        "com.typesafe",
-        "com.zaxxer",
+        "com.github.benmanes.caffeine",
+        "com.typesafe.config",
+        "com.zaxxer.hikari",
         "io.leangen.geantyref",
-        "kotlin",
-        "kotlinx",
         "net.kyori",
-        "org.antlr.v4.runtime",
-        "org.jetbrains.annotations",
+        "org.antlr",
+        "org.jdbi",
         "org.slf4j",
-        "org.spongepowered.configurate"
+        "org.spongepowered.configurate",
+        "org.pcollections"
     )
 }
