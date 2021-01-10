@@ -15,11 +15,15 @@
  * limitations under the License.
  */
 
-package ca.stellardrift.permissionsex.velocity
+package ca.stellardrift.permissionsex.velocity;
 
-internal object ProjectData {
-    const val ARTIFACT_ID = "${project.rootProject.name.toLowerCase()}"
-    const val NAME = "${project.rootProject.name}"
-    const val VERSION = "${project.version}${project.ext.pexSuffix}"
-    const val DESCRIPTION = "${project.ext.pexDescription}"
+final class ProjectData {
+
+    private ProjectData() {
+    }
+
+    static final String ARTIFACT_ID = "${project.rootProject.name.toLowerCase()}";
+    static final String NAME = "${project.rootProject.name}";
+    static final String VERSION = "${project.version}${project.ext.pexSuffix}";
+    static final String DESCRIPTION = "${project.ext.pexDescription}";
 }

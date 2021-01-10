@@ -18,7 +18,6 @@
 
 plugins {
     id("pex-platform")
-    kotlin("kapt")
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
 }
@@ -41,7 +40,7 @@ dependencies {
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
     implementation("cloud.commandframework:cloud-velocity:$cloudVersion")
 
-    kapt(shadow("com.velocitypowered:velocity-api:1.1.2")!!)
+    annotationProcessor(shadow("com.velocitypowered:velocity-api:1.1.2")!!)
 }
 
 pexPlatform {
@@ -50,8 +49,6 @@ pexPlatform {
         "com.github.benmanes",
         "com.zaxxer",
         "io.leangen.geantyref",
-        "kotlin",
-        "kotlinx",
         "org.antlr.v4",
         "org.checkerframework",
         "org.jetbrains",

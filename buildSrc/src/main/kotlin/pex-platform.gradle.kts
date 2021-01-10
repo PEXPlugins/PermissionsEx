@@ -2,11 +2,16 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("pex-component")
-    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
 }
 
+if (name != "velocity") {
+    plugins.apply("ca.stellardrift.opinionated.kotlin")
+}
+
 tasks.processResources {
+    inputs.property("version", project.version)
+
     expand("project" to project)
 }
 
