@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.impl.config;
 
-import ca.stellardrift.permissionsex.datastore.DataStore;
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
@@ -52,7 +52,7 @@ import java.util.Map;
  * <p>This is designed to be serialized with a Configurate {@link ObjectMapper}.</p>
  */
 @ConfigSerializable
-public class FilePermissionsExConfiguration<T> implements PermissionsExConfiguration<T> {
+public final class FilePermissionsExConfiguration<T> implements PermissionsExConfiguration<T> {
 
     private static final TypeSerializerCollection PEX_SERIALIZERS = populateSerializers(TypeSerializerCollection.defaults().childBuilder()).build();
     public static final ConfigurationOptions PEX_OPTIONS = ConfigurationOptions.defaults()
@@ -75,7 +75,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     @ConfigSerializable
     static class Instance<T> {
         @Setting
-        private Map<String, DataStore> backends;
+        private Map<String, ProtoDataStore<?>> backends;
         @Setting
         private String defaultBackend;
         @Setting
@@ -99,7 +99,7 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
         }
     }
 
-    protected FilePermissionsExConfiguration(ConfigurationLoader<?> loader, ConfigurationNode node, Class<T> platformConfigClass) {
+    FilePermissionsExConfiguration(ConfigurationLoader<?> loader, ConfigurationNode node, Class<T> platformConfigClass) {
         this.loader = loader;
         this.node = node;
         this.platformConfigClass = platformConfigClass;
@@ -122,8 +122,8 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
                 .register(new TypeToken<PSet<?>>() {}, new PCollectionSerializer<>(PCollections::set))
                 .register(new TypeToken<PStack<?>>() {}, new PCollectionSerializer<>(PCollections::stack))
                 .register(PMapSerializer.TYPE, PMapSerializer.INSTANCE)
-                // PEX's own object
-                .register(DataStore.class, new DataStoreSerializer())
+                // PEX's own types
+                .register(new TypeToken<ProtoDataStore<?>>() {}, new ProtoDataStoreSerializer())
                 .register(new TypeToken<CheckedSupplier<?, SerializationException>>() {}, SupplierSerializer.INSTANCE)
                 .registerAnnotatedObjects(ObjectMapper.factoryBuilder()
                         .addNodeResolver(NodeResolver.onlyWithSetting())
@@ -182,12 +182,12 @@ public class FilePermissionsExConfiguration<T> implements PermissionsExConfigura
     }
 
     @Override
-    public DataStore getDataStore(String name) {
+    public ProtoDataStore<?> getDataStore(String name) {
         return this.instance.backends.get(name);
     }
 
     @Override
-    public DataStore getDefaultDataStore() {
+    public ProtoDataStore<?> getDefaultDataStore() {
         return this.instance.backends.get(this.instance.defaultBackend);
     }
 

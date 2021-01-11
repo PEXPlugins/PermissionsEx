@@ -17,7 +17,7 @@
 package ca.stellardrift.permissionsex.impl.backend;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
-import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.impl.util.CacheListenerHolder;
 import ca.stellardrift.permissionsex.exception.PermissionsException;
@@ -25,12 +25,11 @@ import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
-import ca.stellardrift.permissionsex.datastore.StoreProperties;
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.impl.util.Util;
 import net.kyori.adventure.text.Component;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -40,6 +39,7 @@ import org.spongepowered.configurate.util.UnmodifiableCollections;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -53,13 +53,23 @@ import static java.util.Objects.requireNonNull;
  * @param <C> config type
  */
 public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> implements DataStore {
-    private @MonotonicNonNull PermissionsEx<?> manager;
-    private final StoreProperties<C> properties;
+    private final DataStoreContext context;
+    private final ProtoDataStore<C> properties;
+    private boolean firstRun;
     protected final CacheListenerHolder<Map.Entry<String, String>, ImmutableSubjectData> listeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<String, RankLadder> rankLadderListeners = new CacheListenerHolder<>();
     protected final CacheListenerHolder<Boolean, ContextInheritance> contextInheritanceListeners = new CacheListenerHolder<>();
 
-    protected AbstractDataStore(final StoreProperties<C> props) {
+    /**
+     * Create the data store.
+     *
+     * <p>No actual loading or creation of threads should be performed here.</p>
+     *
+     * @param context the data store context
+     * @param props properties defining this data store
+     */
+    protected AbstractDataStore(final DataStoreContext context, final ProtoDataStore<C> props) {
+        this.context = context;
         this.properties = props;
     }
 
@@ -68,21 +78,36 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
         return this.properties.identifier();
     }
 
-    protected PermissionsEngine getManager() {
-        return this.manager;
+    @Override
+    public boolean firstRun() {
+        return this.firstRun;
+    }
+
+    /**
+     * Mark that this is the data store's first run.
+     */
+    protected void markFirstRun() {
+        this.firstRun = true;
+    }
+
+    protected final PermissionsEngine engine() {
+        return this.context.engine();
+    }
+
+    protected final DataStoreContext context() {
+        return this.context;
     }
 
     protected C config() {
         return this.properties.config();
     }
 
-    @Override
-    public final boolean initialize(PermissionsEngine core) throws PermissionsLoadingException {
-        this.manager = (PermissionsEx<?>) core;
-        return initializeInternal();
-    }
-
-    protected abstract boolean initializeInternal() throws PermissionsLoadingException;
+    /**
+     * Load any data necessary to initialize this data store.
+     *
+     * @throws PermissionsLoadingException if unable to load
+     */
+    protected abstract void load() throws PermissionsLoadingException;
 
     @Override
     public final CompletableFuture<ImmutableSubjectData> getData(final String type, final String identifier, final @Nullable Consumer<ImmutableSubjectData> listener) {
@@ -114,11 +139,11 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     protected <V> CompletableFuture<V> runAsync(CheckedSupplier<V, ?> supplier) {
-        return Util.asyncFailableFuture(supplier, getManager().asyncExecutor());
+        return Util.asyncFailableFuture(supplier, engine().asyncExecutor());
     }
 
     protected CompletableFuture<Void> runAsync(Runnable run) {
-        return CompletableFuture.runAsync(run, getManager().asyncExecutor());
+        return CompletableFuture.runAsync(run, engine().asyncExecutor());
     }
 
     /**
@@ -148,7 +173,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
 
     @Override
     public final <V> CompletableFuture<V> performBulkOperation(final Function<DataStore, V> function) {
-        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), getManager().asyncExecutor());
+        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), engine().asyncExecutor());
     }
 
     @Override
@@ -229,27 +254,16 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
         }).thenCompose(future -> future);
     }
 
-    @Override
-    public String serialize(ConfigurationNode node) throws PermissionsLoadingException {
-        requireNonNull(node, "node");
-        try {
-            node.set(this.properties.config());
-        } catch (SerializationException e) {
-            throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_SERIALIZE.tr(node.key()), e);
-        }
-        return this.properties.factory().name();
-    }
-
-    public abstract static class Factory<T extends AbstractDataStore<T, C>, C> implements DataStoreFactory {
+    public abstract static class Factory<T extends AbstractDataStore<T, C>, C> implements DataStoreFactory<C> {
         private final String name;
         private final Class<C> configType;
         /**
          * Function taking the name of a data store instance and its configuration, and creating the appropriate new object.
          */
-        private final Function<StoreProperties<C>, T> newInstanceSupplier;
+        private final BiFunction<DataStoreContext, ProtoDataStore<C>, T> newInstanceSupplier;
         private final Component friendlyName;
 
-        protected Factory(final String name, final Class<C> clazz, final Function<StoreProperties<C>, T> newInstanceSupplier) {
+        protected Factory(final String name, final Class<C> clazz, final BiFunction<DataStoreContext, ProtoDataStore<C>, T> newInstanceSupplier) {
             requireNonNull(name, "name");
             requireNonNull(clazz, "clazz");
             this.name = name;
@@ -269,13 +283,27 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
         }
 
         @Override
-        public final DataStore create(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
+        public final ProtoDataStore<C> create(String identifier, ConfigurationNode config) throws PermissionsLoadingException {
             try {
                 final C dataStoreConfig = config.get(this.configType);
-                return this.newInstanceSupplier.apply(StoreProperties.of(identifier, dataStoreConfig, this));
+                return ProtoDataStore.of(identifier, dataStoreConfig, this);
             } catch (SerializationException e) {
                 throw new PermissionsLoadingException(Messages.DATASTORE_ERROR_DESERIALIZE.tr(identifier), e);
             }
         }
+
+        @Override
+        public DataStore defrost(final DataStoreContext context, final ProtoDataStore<C> properties) throws PermissionsLoadingException {
+            requireNonNull(context, "context");
+            final T store = this.newInstanceSupplier.apply(context, properties);
+            store.load();
+            return store;
+        }
+
+        @Override
+        public void serialize(final ConfigurationNode node, final ProtoDataStore<C> protoStore) throws SerializationException {
+            node.set(protoStore.config());
+        }
+
     }
 }

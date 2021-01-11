@@ -16,15 +16,12 @@
  */
 package ca.stellardrift.permissionsex.datastore;
 
-import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
-import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Map;
@@ -51,18 +48,20 @@ public interface DataStore {
      * <p>This is generally user-defined in the configuration.</p>
      *
      * @return The name of the current data store instance.
+     * @since 2.0.0
      */
     String name();
 
     /**
-     * Activate this data store from the required data.
+     * Get whether or not this is this data store's first run.
      *
-     * @param core manager the data store is attached to
-     * @throws PermissionsLoadingException If the backing data cannot be loaded
-     * @return true if there was pre-existing data to load, false if this is first run
+     * <p>If this is the first run for a data store, PermissionsEx will try to populate
+     * it with default data.</p>
+     *
+     * @return if this is the first run
      * @since 2.0.0
      */
-    boolean initialize(PermissionsEngine core) throws PermissionsLoadingException;
+    boolean firstRun();
 
     /**
      * Free any resources this data store may be using.
@@ -210,16 +209,6 @@ public interface DataStore {
      * @since 2.0.0
      */
     CompletableFuture<Set<String>> getDefinedContextKeys();
-
-    /**
-     * Write this data store's configuration to the provided configuration node.
-     *
-     * @param node rode to write to
-     * @return data store's type name
-     * @throws PermissionsLoadingException if unable to do so
-     * @since 2.0.0
-     */
-     String serialize(ConfigurationNode node) throws PermissionsLoadingException;
 
     /**
      * Returns all subjects present in this data store

@@ -21,6 +21,7 @@ import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 import java.util.List;
 import java.util.Locale;
@@ -36,7 +37,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @since 2.0.0
  */
-public interface DataStoreFactory {
+public interface DataStoreFactory<C> {
 
     /**
      * Get a factory for the type identifier.
@@ -46,11 +47,11 @@ public interface DataStoreFactory {
      * @param type requested type
      * @return a factory, or null if none is available.
      */
-    static @Nullable DataStoreFactory forType(final String type) {
+    static @Nullable DataStoreFactory<?> forType(final String type) {
         return DataStoreFactories.REGISTRY.get(requireNonNull(type, "type").toLowerCase(Locale.ROOT));
     }
 
-    static Map<String, DataStoreFactory> all() {
+    static Map<String, DataStoreFactory<?>> all() {
         return DataStoreFactories.REGISTRY;
     }
 
@@ -70,7 +71,10 @@ public interface DataStoreFactory {
     String name();
 
     /**
-     * Create a new data store.
+     * Create a new proto data-store.
+     *
+     * <p>The returned instance will have its configuration validated, but will not attempt to load any data until it
+     * is defrosted.</p>
      *
      * @param identifier the identifier for this specific data store instance.
      * @param config options used to configure the data store
@@ -78,7 +82,27 @@ public interface DataStoreFactory {
      * @throws PermissionsLoadingException if any of the configuration options are invalid
      * @since 2.0.0
      */
-    DataStore create(String identifier, ConfigurationNode config) throws PermissionsLoadingException;
+    ProtoDataStore<C> create(String identifier, ConfigurationNode config) throws PermissionsLoadingException;
+
+    /**
+     * Performs any loading necessary to resolve a full data store from its definition.
+     *
+     * @param properties the data store definition
+     * @return a full data store
+     * @throws PermissionsLoadingException if the data store has data in an invalid format
+     * @since 2.0.0
+     */
+    DataStore defrost(final DataStoreContext ctx, final ProtoDataStore<C> properties) throws PermissionsLoadingException;
+
+    /**
+     * Write the configuration defined by the proto-store to a node.
+     *
+     * @param node the destination for the configuration
+     * @param protoStore the data store
+     * @throws SerializationException if unable to write data fully
+     * @since 2.0.0
+     */
+    void serialize(final ConfigurationNode node, final ProtoDataStore<C> protoStore) throws SerializationException;
 
     /**
      * A data store type that is used for migration from other permissions systems.
@@ -88,7 +112,7 @@ public interface DataStoreFactory {
      *
      * @since 2.0.0
      */
-    interface Convertable extends DataStoreFactory {
+    interface Convertable<C> extends DataStoreFactory<C> {
 
         /**
          * Return a list of all possible conversion options for this data store.

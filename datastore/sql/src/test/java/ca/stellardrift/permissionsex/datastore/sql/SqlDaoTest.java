@@ -16,22 +16,22 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.test.EmptyTestConfiguration;
 import ca.stellardrift.permissionsex.test.PermissionsExTest;
-import ca.stellardrift.permissionsex.datastore.DataStore;
-import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import com.google.common.collect.ImmutableMap;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.pcollections.HashTreePSet;
 import org.pcollections.PSet;
 import org.pcollections.PVector;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -66,76 +66,51 @@ public class SqlDaoTest extends PermissionsExTest {
         this.jdbcUrl = "jdbc:h2:file:{base}/test.db";
     }
 
-    private static final SqlDataStore sqlStore = SqlDataStore.create("sql-dao");
+    private ProtoDataStore<?> sqlStore;
     private final String jdbcUrl;
+
+    @Override
+    protected SqlDataStore dataStore() {
+        return (SqlDataStore) super.dataStore();
+    }
 
     @BeforeEach
     @Override
     public void setUp(TestInfo info, @TempDir Path tempDir) throws IOException, PEBKACException, PermissionsLoadingException {
         Path testDir = tempDir.resolve(info.getDisplayName() + "-dao");
         final String jdbcUrl = this.jdbcUrl.replaceAll("\\{base}", testDir.toAbsolutePath().toString().replace('\\', '/'));
-        sqlStore.setConnectionUrl(jdbcUrl);
-        sqlStore.setPrefix("pextest" + COUNTER.getAndIncrement());
+        sqlStore = SqlDataStore.create(
+            "sql-dao",
+            jdbcUrl,
+            "pextest" + COUNTER.getAndIncrement(),
+            true
+        );
         super.setUp(info, tempDir);
     }
 
-    @AfterAll
-    public static void tearDownAll() {
+    @AfterEach
+    public void tearDown() {
         // Delete all created tables;
-        try (Connection conn = sqlStore.getDataSource().getConnection()) {
-            ResultSet tables = conn.getMetaData().getTables(null, null, "PEXTEST%", null);
+        try (Connection conn = dataStore().getDataSource().getConnection()) {
+            ResultSet tables = conn.getMetaData().getTables(null, null, dataStore().prefix() + "%", null);
             Statement stmt = conn.createStatement();
             while (tables.next()) {
                 stmt.addBatch("DROP TABLE " + tables.getString("TABLE_NAME"));
             }
             stmt.executeBatch();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        } catch (final SQLException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
     @Override
     protected PermissionsExConfiguration<?> populate() {
-        return new PermissionsExConfiguration<EmptyPlatformConfiguration>() {
-            @Override
-            public DataStore getDataStore(String name) {
-                return null;
-            }
-
-            @Override
-            public DataStore getDefaultDataStore() {
-                return sqlStore;
-            }
-
-            @Override
-            public boolean isDebugEnabled() {
-                return false;
-            }
-
-            @Override
-            public List<String> getServerTags() {
-                return PCollections.vector();
-            }
-
-            @Override
-            public void validate() {
-            }
-
-            @Override
-            public EmptyPlatformConfiguration getPlatformConfig() {
-                return new EmptyPlatformConfiguration();
-            }
-
-            @Override
-            public PermissionsExConfiguration<EmptyPlatformConfiguration> reload() {
-                return this;
-            }
-        };
+        return new EmptyTestConfiguration(sqlStore);
     }
 
     @Test
     public void testGlobalParameters() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             assertFalse(dao.getGlobalParameter("nonexistant").isPresent());
 
             dao.setGlobalParameter("potato", "russet");
@@ -151,7 +126,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testGetSubjectRef() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             assertFalse(dao.getSubjectRef("group", "admin").isPresent());
             assertFalse(dao.getSubjectRef(1).isPresent());
         }
@@ -159,7 +134,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testGetOrCreateSubjectRef() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             assertFalse(dao.getSubjectRef("group", "admin").isPresent());
             SqlSubjectRef<?> created = dao.getOrCreateSubjectRef("group", "admin");
             SqlSubjectRef<?> fetched = dao.getSubjectRef("group", "admin").get();
@@ -176,7 +151,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testRemoveSubject() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             SqlSubjectRef<?> first = dao.getOrCreateSubjectRef("group", "one");
             SqlSubjectRef<?> second = dao.getOrCreateSubjectRef("group", "two");
 
@@ -190,7 +165,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void getRegisteredTypes() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             dao.getOrCreateSubjectRef("group", "one");
             dao.getOrCreateSubjectRef("group", "two");
             dao.getOrCreateSubjectRef("user", UUID.randomUUID().toString());
@@ -202,7 +177,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void getAllIdentifiers() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             dao.getOrCreateSubjectRef("group", "one");
             dao.getOrCreateSubjectRef("group", "two");
             dao.getOrCreateSubjectRef("default", "user");
@@ -216,7 +191,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testAddRemoveSegment() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("group", "one");
             assertTrue(dao.getSegments(subject).isEmpty());
 
@@ -232,7 +207,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testContexts() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             final SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("test", "contexts");
 
             SqlSegment testSeg = dao.addSegment(subject);
@@ -256,7 +231,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testOptions() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("group", "one");
             SqlSegment seg = dao.addSegment(subject);
             assertFalse(seg.options().containsKey("test"));
@@ -316,7 +291,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testPermissions() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("group", "one");
             SqlSegment seg = dao.addSegment(subject);
             assertFalse(seg.permissions().containsKey("test.first"));
@@ -376,7 +351,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testParents() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             final SqlSubjectRef<?> member = dao.getOrCreateSubjectRef("group", "member"),
                     vip = dao.getOrCreateSubjectRef("group", "vip"),
                     potato = dao.getOrCreateSubjectRef("group", "potato"),
@@ -418,7 +393,7 @@ public class SqlDaoTest extends PermissionsExTest {
             assertTrue(vipSeg.parents().contains(potato));
             assertTrue(vipSeg.parents().contains(member));
 
-            final SqlSubjectRef<?> unallocatedGroup = SqlSubjectRef.unresolved(this.getManager(), "group", "unresolved");
+            final SqlSubjectRef<?> unallocatedGroup = SqlSubjectRef.unresolved(this.manager(), "group", "unresolved");
             assertTrue(unallocatedGroup.isUnallocated());
 
             // Test unallocated
@@ -431,7 +406,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testSetDefaultValue() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             final SqlSubjectRef<?> subject = dao.getOrCreateSubjectRef("test", "defvalue");
             SqlSegment newSeg = SqlSegment.unallocated().withFallbackPermission(5);
             dao.allocateSegment(subject, newSeg);
@@ -458,7 +433,7 @@ public class SqlDaoTest extends PermissionsExTest {
         final PVector<ContextValue<?>> worldNetherParents = PCollections.vector(new ContextValue<String>("world", "world")),
                 serverTagMinigamesParents = PCollections.vector(new ContextValue<>("server-tag", "adventure"), new ContextValue<>("world", "minigames"));
 
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             // resolve, set, set to null, add new
             SqlContextInheritance inherit = dao.getContextInheritance();
             assertTrue(inherit.allParents().isEmpty());
@@ -480,7 +455,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testRankLadder() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             final SqlSubjectRef<?> member = dao.getOrCreateSubjectRef("group", "member"),
                     vip = dao.getOrCreateSubjectRef("group", "vip"),
                     potato = dao.getOrCreateSubjectRef("group", "potato"),
@@ -511,7 +486,7 @@ public class SqlDaoTest extends PermissionsExTest {
 
     @Test
     public void testInitializeTables() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             dao.initializeTables(); // Because tables are already initialized, this should do nothing
         }
     }

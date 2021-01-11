@@ -51,7 +51,7 @@ public interface ConversionResult {
      * @return convertible data store
      * @since 2.0.0
      */
-    DataStore store();
+    ProtoDataStore<?> store();
 
     /**
      * Builder for a conversion result.

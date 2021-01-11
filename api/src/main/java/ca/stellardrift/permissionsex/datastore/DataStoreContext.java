@@ -16,7 +16,12 @@
  */
 package ca.stellardrift.permissionsex.datastore;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+
+import javax.sql.DataSource;
+import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * Access to internals exposed for data store use only.
@@ -25,6 +30,30 @@ import ca.stellardrift.permissionsex.subject.SubjectRef;
  */
 public interface DataStoreContext {
 
+    /**
+     * Get the permissions engine this context is attached to.
+     *
+     * @return the engine
+     */
+    PermissionsEngine engine();
+
+    /**
+     * Deserialize a subject reference given a type and identifier.
+     *
+     * @param pair the subject type to identifier pair
+     * @return a resolved subject ref
+     */
+    default SubjectRef<?> deserializeSubjectRef(final Map.Entry<String, String> pair) {
+        return this.deserializeSubjectRef(pair.getKey(), pair.getValue());
+    }
+
+    /**
+     * Deserialize a subject reference given a type and identifier.
+     *
+     * @param type the subject type
+     * @param identifier the subject identifier
+     * @return a resolved subject ref
+     */
     SubjectRef<?> deserializeSubjectRef(final String type, final String identifier);
 
     /**
@@ -35,4 +64,16 @@ public interface DataStoreContext {
      * @return a lazy subject reference
      */
     SubjectRef<?> lazySubjectRef(final String type, final String identifier);
+
+    /**
+     * Temporary -- create a pooled SQL datasource for a certain URL.
+     *
+     * @param url the URL to query
+     * @return a valid data source
+     * @throws SQLException if the connection is invalid
+     * @since 2.0.0
+     * @deprecated need to find a better place to put this
+     */
+    @Deprecated
+    DataSource dataSourceForUrl(String url) throws SQLException;
 }

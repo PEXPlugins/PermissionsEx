@@ -16,10 +16,10 @@
  */
 package ca.stellardrift.permissionsex.test;
 
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.impl.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
-import ca.stellardrift.permissionsex.datastore.DataStore;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collections;
@@ -27,12 +27,20 @@ import java.util.List;
 import java.util.Objects;
 
 public final class EmptyTestConfiguration implements PermissionsExConfiguration<EmptyPlatformConfiguration> {
-    private final DataStore defaultDataStore = MemoryDataStore.create("test");
+    private final ProtoDataStore<?> defaultDataStore;
     private final EmptyPlatformConfiguration platformConfig = new EmptyPlatformConfiguration();
 
+    public EmptyTestConfiguration() {
+        this(MemoryDataStore.create("test"));
+    }
+
+    public EmptyTestConfiguration(final ProtoDataStore<?> dataStore) {
+        this.defaultDataStore = dataStore;
+    }
+
     @Override
-     public DataStore getDataStore(final @Nullable String name) {
-        if (Objects.equals(name, defaultDataStore.name())) {
+     public ProtoDataStore<?> getDataStore(final @Nullable String name) {
+        if (Objects.equals(name, defaultDataStore.identifier())) {
             return this.defaultDataStore;
         } else {
             throw new IllegalArgumentException("Unknown data store " + name);
@@ -40,7 +48,7 @@ public final class EmptyTestConfiguration implements PermissionsExConfiguration<
     }
 
     @Override
-    public DataStore getDefaultDataStore() {
+    public ProtoDataStore<?> getDefaultDataStore() {
         return this.defaultDataStore;
     }
 

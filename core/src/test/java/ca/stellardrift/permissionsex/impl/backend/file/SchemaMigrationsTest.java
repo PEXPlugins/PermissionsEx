@@ -41,17 +41,17 @@ import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 public class SchemaMigrationsTest {
 
     @Test
-    void testThreeToFour(@TempDir Path tempDir) throws IOException, ConfigurateException {
+    void testThreeToFour(@TempDir Path tempDir) throws IOException {
         doTest("test3to4.pre.json", "test3to4.post.json", tempDir, SchemaMigrations.threeToFour());
     }
 
     @Test
-    void testTwoToThree(@TempDir Path tempDir) throws IOException, ConfigurateException {
+    void testTwoToThree(@TempDir Path tempDir) throws IOException {
         doTest("test2to3.pre.json", "test2to3.post.json", tempDir, SchemaMigrations.twoTo3());
     }
 
     @Test
-    void testOneToTwo(@TempDir Path tempFolder) throws ConfigurateException, IOException {
+    void testOneToTwo(@TempDir Path tempFolder) throws IOException {
         final Path testFile = tempFolder.resolve("test1to2.json");
         final YamlConfigurationLoader yamlLoader = YamlConfigurationLoader.builder()
                 .url(getClass().getResource("test1to2.pre.yml"))
@@ -70,7 +70,7 @@ public class SchemaMigrationsTest {
     }
 
     @Test
-    void testInitialToOne(final @TempDir Path tempFolder) throws ConfigurateException, IOException {
+    void testInitialToOne(final @TempDir Path tempFolder) throws IOException {
         final Path testFile = tempFolder.resolve("Test0to1.yml");
         final ConfigurationLoader<CommentedConfigurationNode> yamlLoader = YamlConfigurationLoader.builder()
                 .path(testFile)
@@ -85,7 +85,7 @@ public class SchemaMigrationsTest {
         assertLinesMatch(Resources.readLines(getClass().getResource("test0to1.post.yml"), UTF_8), Files.readAllLines(testFile, UTF_8));
     }
 
-    private void doTest(final String preName, final String postName, final Path tempDir, final ConfigurationTransformation xform) throws ConfigurateException, IOException {
+    private void doTest(final String preName, final String postName, final Path tempDir, final ConfigurationTransformation xform) throws IOException {
         final Path testFile = tempDir.resolve("test.json");
         final ConfigurationLoader<BasicConfigurationNode> jsonLoader = GsonConfigurationLoader.builder()
                 .path(testFile)

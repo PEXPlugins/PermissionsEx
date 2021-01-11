@@ -218,16 +218,4 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
      * @since 2.0.0
      */
     Path baseDirectory();
-
-    /**
-     * Temporary -- create a pooled SQL datasource for a certain URL.
-     *
-     * @param url the URL to query
-     * @return a valid data source
-     * @throws SQLException if the connection is invalid
-     * @since 2.0.0
-     * @deprecated need to find a better place to put this
-     */
-    @Deprecated
-    DataSource dataSourceForUrl(String url) throws SQLException;
 }

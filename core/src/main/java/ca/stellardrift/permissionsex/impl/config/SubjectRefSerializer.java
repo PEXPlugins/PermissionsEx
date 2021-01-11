@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.impl.config;
 
+import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
@@ -33,10 +34,10 @@ import java.util.Objects;
  */
 public final class SubjectRefSerializer implements TypeSerializer<SubjectRef<?>> {
     public static final TypeToken<SubjectRef<?>> TYPE = new TypeToken<SubjectRef<?>>() {};
-    private final PermissionsEx<?> engine;
+    private final DataStoreContext engine;
     private final @Nullable SubjectType<?> defaultType;
 
-    public SubjectRefSerializer(final PermissionsEx<?> engine, final @Nullable SubjectType<?> defaultType) {
+    public SubjectRefSerializer(final DataStoreContext engine, final @Nullable SubjectType<?> defaultType) {
         this.engine = engine;
         this.defaultType = defaultType;
     }

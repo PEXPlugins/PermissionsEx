@@ -16,10 +16,10 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
-import ca.stellardrift.permissionsex.datastore.StoreProperties;
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.datastore.sql.dao.H2SqlDao;
 import ca.stellardrift.permissionsex.datastore.sql.dao.MySqlDao;
 import ca.stellardrift.permissionsex.datastore.sql.dao.SchemaMigration;
@@ -33,6 +33,7 @@ import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import com.google.auto.service.AutoService;
+import com.google.common.annotations.VisibleForTesting;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.PMap;
 import org.pcollections.PSet;
@@ -67,12 +68,8 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     private static final Pattern BRACES_PATTERN = Pattern.compile("\\{\\}");
     private boolean autoInitialize = true;
 
-    SqlDataStore(final StoreProperties<Config> properties) {
-        super(properties);
-    }
-
-    PermissionsEx<?> manager() {
-        return (PermissionsEx<?>) this.getManager();
+    SqlDataStore(final DataStoreContext context, final ProtoDataStore<Config> properties) {
+        super(context, properties);
     }
 
     @AutoService(DataStoreFactory.class)
@@ -95,6 +92,9 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
         @Setting("aliases")
         private Map<String, String> legacyAliases;
 
+        @Setting
+        private @Nullable Boolean autoInitialize = null;
+
         String prefix() {
             if (this.realPrefix == null) {
                 if (this.prefix != null && !this.prefix.isEmpty() && !this.prefix.endsWith("_")) {
@@ -110,9 +110,15 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
     }
 
     // For testing
-    static SqlDataStore create(final String ident) {
+    @VisibleForTesting
+    static ProtoDataStore<?> create(final String ident, final String jdbcUrl, final String tablePrefix, final boolean autoInitialize) {
         try {
-            return (SqlDataStore) DataStoreFactory.forType(Factory.ID).create(ident, BasicConfigurationNode.root(FilePermissionsExConfiguration.PEX_OPTIONS));
+            return DataStoreFactory.forType(Factory.ID)
+                .create(ident, BasicConfigurationNode.root(FilePermissionsExConfiguration.PEX_OPTIONS, n -> {
+                    n.node("url").raw(jdbcUrl);
+                    n.node("prefix").raw(tablePrefix);
+                    n.node("auto-initialize").raw(autoInitialize);
+                }));
         } catch (PermissionsLoadingException e) {
             throw new RuntimeException(e);
         }
@@ -133,10 +139,14 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
         return this.daoFactory.apply(this);
     }
 
+    DataStoreContext ctx() {
+        return super.context();
+    }
+
     @Override
-    protected boolean initializeInternal() throws PermissionsLoadingException {
+    protected void load() throws PermissionsLoadingException {
         try {
-            sql = getManager().dataSourceForUrl(config().connectionUrl);
+            sql = context().dataSourceForUrl(config().connectionUrl);
 
             // Provide database-implementation specific DAO
             try (Connection conn = sql.getConnection()) {
@@ -159,18 +169,16 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
         }*/
 
 
-        if (autoInitialize) {
+        if ((this.config().autoInitialize == null || this.config().autoInitialize) && autoInitialize) {
             try {
-                return initializeTables();
+                initializeTables();
             } catch (SQLException e) {
                 throw new PermissionsLoadingException(Messages.ERROR_INITIALIZE_TABLES.tr(), e);
             }
-        } else {
-            return true;
         }
     }
 
-    public boolean initializeTables() throws SQLException {
+    public void initializeTables() throws SQLException {
         List<SchemaMigration> migrations = SchemaMigrations.getMigrations();
         // Initialize data, perform migrations
         try (SqlDao dao = getDao()) {
@@ -178,7 +186,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
             if (initialVersion == SqlConstants.VERSION_NOT_INITIALIZED) {
                 dao.initializeTables();
                 dao.setSchemaVersion(VERSION_LATEST);
-                return false;
+                markFirstRun();
             } else {
                 int finalVersion = dao.executeInTransaction(() -> {
                     int highestVersion = initialVersion;
@@ -190,9 +198,8 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 });
                 if (initialVersion != finalVersion) {
                     dao.setSchemaVersion(finalVersion);
-                    getManager().logger().info(Messages.SCHEMA_UPDATE_SUCCESS.tr(initialVersion, finalVersion));
+                    engine().logger().info(Messages.SCHEMA_UPDATE_SUCCESS.tr(initialVersion, finalVersion));
                 }
-                return true;
             }
         }
     }
@@ -203,6 +210,10 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
 
     DataSource getDataSource() {
         return this.sql;
+    }
+
+    String prefix() {
+        return this.config().prefix();
     }
 
     public String getTableName(String raw) {
@@ -231,7 +242,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 if (ref.isPresent()) {
                     return getDataForRef(dao, ref.get());
                 } else {
-                    return new SqlSubjectData(SqlSubjectRef.unresolved(this.manager(), type, identifier));
+                    return new SqlSubjectData(SqlSubjectRef.unresolved(this.context(), type, identifier));
                 }
             } catch (SQLException e) {
                 throw new PermissionsLoadingException(Messages.ERROR_LOADING.tr(type, identifier));

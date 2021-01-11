@@ -189,7 +189,7 @@ public final class PermissionsExCommand {
         final CommandArgument<Commander, String> dataStoreArg = StringArgument.<Commander>newBuilder("data store")
             .withSuggestionsProvider((ctx, input) -> {
                 final PermissionsEx<?> engine = ctx.get(PEXCommandPreprocessor.PEX_ENGINE);
-                return PCollections.asVector(engine.getAvailableConversions(), conv -> conv.store().name());
+                return PCollections.asVector(engine.getAvailableConversions(), conv -> conv.store().identifier());
                 // TODO: include data store names here
             })
             .asOptional()
@@ -212,7 +212,7 @@ public final class PermissionsExCommand {
                             source.callback(text()
                                 .append(conv.description())
                                 .append(text(" - /pex import "))
-                                .append(text(conv.store().name())), src -> {
+                                .append(text(conv.store().identifier())), src -> {
                                 src.sendMessage(Messages.IMPORT_ACTION_BEGINNING.tr(conv.description()));
                                 engine.importDataFrom(conv)
                                     .whenComplete(messageSender(src, Messages.IMPORT_ACTION_SUCCESS.tr(conv.description())));
@@ -222,7 +222,7 @@ public final class PermissionsExCommand {
                 } else {
                     /* execute a specific import action */
                     for (final ConversionResult result : engine.getAvailableConversions()) {
-                        if (result.store().name().equalsIgnoreCase(requestedName)) {
+                        if (result.store().identifier().equalsIgnoreCase(requestedName)) {
                             source.sendMessage(Messages.IMPORT_ACTION_BEGINNING.tr(result.description()));
                             engine.importDataFrom(result)
                                 .whenComplete(messageSender(source, Messages.IMPORT_ACTION_SUCCESS.tr(result.description())));

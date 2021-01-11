@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.test;
 
+import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
@@ -45,7 +46,7 @@ public abstract class PermissionsExTest {
 
     private PermissionsEx<?> manager;
     @BeforeEach
-    public void setUp(TestInfo info, @TempDir Path tempFolder) throws PermissionsLoadingException, SerializationException, IOException, PEBKACException {
+    public void setUp(TestInfo info, @TempDir Path tempFolder) throws PermissionsLoadingException, IOException, PEBKACException {
         this.tempFolder = tempFolder;
         PermissionsExConfiguration<?> config = populate();
         config.validate();
@@ -65,7 +66,11 @@ public abstract class PermissionsExTest {
         }
     }
 
-    protected PermissionsEx<?> getManager() {
+    protected DataStore dataStore() {
+        return this.manager.activeDataStore();
+    }
+
+    protected PermissionsEx<?> manager() {
         return manager;
     }
 

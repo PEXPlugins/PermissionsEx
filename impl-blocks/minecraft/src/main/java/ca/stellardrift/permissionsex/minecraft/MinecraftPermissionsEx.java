@@ -190,7 +190,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
             .content("PermissionsEx v")
             .append(text(this.engine.version()))); // highlight? make message formatter a manager thing?
 
-        receiver.sendMessage(Messages.DESCRIBE_RESPONSE_ACTIVE_DATA_STORE.tr(this.engine.config().getDefaultDataStore().name()));
+        receiver.sendMessage(Messages.DESCRIBE_RESPONSE_ACTIVE_DATA_STORE.tr(this.engine.config().getDefaultDataStore().identifier()));
         receiver.sendMessage(Messages.DESCRIBE_RESPONSE_AVAILABLE_DATA_STORES.tr(DataStoreFactory.all().keySet().toString()));
         receiver.sendMessage(Component.empty());
         if (verbose) {

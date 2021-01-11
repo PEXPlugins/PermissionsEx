@@ -25,6 +25,7 @@ import ca.stellardrift.permissionsex.datastore.ConversionResult;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.impl.backend.memory.MemoryDataStore;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
@@ -93,8 +94,7 @@ import static java.util.Objects.requireNonNull;
  * useful to perform changes within {@link #performBulkOperation(Supplier)}, which will reduce
  * unnecessary writes to the backing data store in some cases.</p>
  */
-public class PermissionsEx<P> implements ImplementationInterface,
-        Consumer<ContextInheritance>,
+public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         ContextDefinitionProvider,
         PermissionsEngine,
         DataStoreContext {
@@ -126,8 +126,7 @@ public class PermissionsEx<P> implements ImplementationInterface,
     public PermissionsEx(final PermissionsExConfiguration<P> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
         this.logger = WrappingFormattedLogger.of(impl.logger(), false);
-        this.transientData = MemoryDataStore.create("transient");
-        this.transientData.initialize(this);
+        this.transientData = (MemoryDataStore) MemoryDataStore.create("transient").defrost(this);
         this.debugMode(config.isDebugEnabled());
         this.registerContextDefinitions(
                 ServerTagContextDefinition.INSTANCE,
@@ -193,8 +192,11 @@ public class PermissionsEx<P> implements ImplementationInterface,
         return this.subjectTypeCache.values().stream().map(SubjectTypeCollectionImpl::type).collect(Collectors.toSet());
     }
 
-    public SubjectRef<?> deserializeSubjectRef(final Map.Entry<String, String> serialized) {
-        return deserializeSubjectRef(serialized.getKey(), serialized.getValue());
+    // -- DataStoreContext -- //
+
+    @Override
+    public PermissionsEngine engine() {
+        return this;
     }
 
     @Override
@@ -253,7 +255,7 @@ public class PermissionsEx<P> implements ImplementationInterface,
      */
     public CompletableFuture<?> importDataFrom(String dataStoreIdentifier) {
         final State<P> state = getState();
-        final @Nullable DataStore expected = state.config.getDataStore(dataStoreIdentifier);
+        final @Nullable ProtoDataStore<?> expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
         }
@@ -264,10 +266,11 @@ public class PermissionsEx<P> implements ImplementationInterface,
         return importDataFrom(conversion.store());
     }
 
-    private CompletableFuture<?> importDataFrom(DataStore expected) {
+    private CompletableFuture<?> importDataFrom(final ProtoDataStore<?> request) {
         final State<P> state = getState();
+        final DataStore expected;
         try {
-            expected.initialize(this);
+            expected = request.defrost(this);
         } catch (PermissionsLoadingException e) {
             return Util.failedFuture(e);
         }
@@ -358,9 +361,10 @@ public class PermissionsEx<P> implements ImplementationInterface,
      * @param config The configuration to use in this engine
      * @throws PermissionsLoadingException If an error occurs loading the backend
      */
-    private void initialize(PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
-        State<P> newState = new State<>(config, config.getDefaultDataStore());
-        boolean shouldAnnounceImports = !newState.activeDataStore.initialize(this);
+    private void initialize(final PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
+        final DataStore newStore = config.getDefaultDataStore().defrost(this);
+        State<P> newState = new State<>(config, newStore);
+        boolean shouldAnnounceImports = !newState.activeDataStore.firstRun();
         try {
             newState.config.save();
         } catch (IOException e) {
@@ -372,18 +376,18 @@ public class PermissionsEx<P> implements ImplementationInterface,
         }
 
         PVector<ConversionResult> allResults = TreePVector.empty();
-        for (final DataStoreFactory convertable : DataStoreFactory.all().values()) {
+        for (final DataStoreFactory<?> convertable : DataStoreFactory.all().values()) {
             if (!(convertable instanceof DataStoreFactory.Convertable))  {
                 continue;
             }
-            final DataStoreFactory.Convertable prov = ((DataStoreFactory.Convertable) convertable);
+            final DataStoreFactory.Convertable<?> prov = ((DataStoreFactory.Convertable<?>) convertable);
 
             List<ConversionResult> res = prov.listConversionOptions(this);
             if (!res.isEmpty()) {
                 if (shouldAnnounceImports) {
                     this.logger().info(CONVERSION_PLUGINHEADER.tr(prov.friendlyName()));
                     for (ConversionResult result : res) {
-                        this.logger().info(CONVERSION_INSTANCE.tr(result.description(), result.store().name()));
+                        this.logger().info(CONVERSION_INSTANCE.tr(result.description(), result.store().identifier()));
                     }
                 }
                 allResults = allResults.plusAll(res);
@@ -391,7 +395,7 @@ public class PermissionsEx<P> implements ImplementationInterface,
         }
         newState.availableConversions = allResults;
 
-        State<P> oldState = this.state.getAndSet(newState);
+        final @Nullable State<P> oldState = this.state.getAndSet(newState);
         if (oldState != null) {
             try {
                 oldState.activeDataStore.close();
@@ -433,8 +437,10 @@ public class PermissionsEx<P> implements ImplementationInterface,
      * until the engine is reinitialized with a fresh configuration.
      */
     public void close() {
-        State<P> state = this.state.getAndSet(null);
-        state.activeDataStore.close();
+        final @Nullable State<P> state = this.state.getAndSet(null);
+        if (state != null) {
+            state.activeDataStore.close();
+        }
     }
 
     public List<ConversionResult> getAvailableConversions() {
@@ -453,14 +459,13 @@ public class PermissionsEx<P> implements ImplementationInterface,
         return impl.baseDirectory();
     }
 
-    @Override
     public Path baseDirectory(BaseDirectoryScope scope) {
         return impl.baseDirectory(scope);
     }
 
     @Override
     @Deprecated
-    public DataSource dataSourceForUrl(String url) throws SQLException {
+    public @Nullable DataSource dataSourceForUrl(String url) throws SQLException {
         return impl.dataSourceForUrl(url);
     }
 
@@ -474,7 +479,6 @@ public class PermissionsEx<P> implements ImplementationInterface,
         return impl.asyncExecutor();
     }
 
-    @Override
     public String version() {
         return impl.version();
     }
@@ -486,6 +490,10 @@ public class PermissionsEx<P> implements ImplementationInterface,
      */
     public PermissionsExConfiguration<P> config() {
         return getState().config;
+    }
+
+    public DataStore activeDataStore() {
+        return getState().activeDataStore;
     }
 
     /**

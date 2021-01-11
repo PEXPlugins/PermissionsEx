@@ -16,14 +16,12 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
+import ca.stellardrift.permissionsex.test.EmptyTestConfiguration;
 import ca.stellardrift.permissionsex.test.PermissionsExTest;
-import ca.stellardrift.permissionsex.datastore.DataStore;
-import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
-import com.google.common.collect.ImmutableList;
-import org.spongepowered.configurate.serialize.SerializationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,9 +34,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,24 +73,32 @@ public class SchemaMigrationsTest extends PermissionsExTest {
         this.jdbcUrl = jdbcUrl;
     }*/
 
-    private final SqlDataStore sqlStore = SqlDataStore.create("schema-migrations");
+    private ProtoDataStore<?> sqlStore;
 
     @BeforeEach
     @Override
-    public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException, SerializationException {
+    public void setUp(TestInfo info, @TempDir Path tempFolder) throws IOException, PEBKACException, PermissionsLoadingException {
         Path testDir = tempFolder.resolve("sql");
         String jdbcUrl = this.jdbcUrl.replaceAll("\\{base\\}", testDir.toAbsolutePath().toString().replace('\\', '/'));
-        sqlStore.setConnectionUrl(jdbcUrl);
-        sqlStore.setPrefix("pextest" + COUNTER.getAndIncrement());
-        sqlStore.setAutoInitialize(false);
+        sqlStore = SqlDataStore.create(
+            "schema-migrations",
+            jdbcUrl,
+            "pextest" + COUNTER.getAndIncrement(),
+            false
+        );
         super.setUp(info, tempFolder);
+    }
+
+    @Override
+    protected SqlDataStore dataStore() {
+        return (SqlDataStore) super.dataStore();
     }
 
     @AfterEach
     @Override
     public void tearDown() {
         // Delete all created tables;
-        try (Connection conn = sqlStore.getDataSource().getConnection()) {
+        try (Connection conn = dataStore().getDataSource().getConnection()) {
             ResultSet tables = conn.getMetaData().getTables(null, null, "PEXTEST%", null);
             Statement stmt = conn.createStatement();
             while (tables.next()) {
@@ -104,54 +113,20 @@ public class SchemaMigrationsTest extends PermissionsExTest {
 
     @Override
     protected PermissionsExConfiguration<?> populate() {
-        return new PermissionsExConfiguration<EmptyPlatformConfiguration>() {
-            @Override
-            public DataStore getDataStore(String name) {
-                return null;
-            }
-
-            @Override
-            public DataStore getDefaultDataStore() {
-                return sqlStore;
-            }
-
-            @Override
-            public boolean isDebugEnabled() {
-                return false;
-            }
-
-            @Override
-            public List<String> getServerTags() {
-                return ImmutableList.of();
-            }
-
-            @Override
-            public void validate() throws PEBKACException {
-            }
-
-            @Override
-            public EmptyPlatformConfiguration getPlatformConfig() {
-                return new EmptyPlatformConfiguration();
-            }
-
-            @Override
-            public PermissionsExConfiguration<EmptyPlatformConfiguration> reload() throws IOException {
-                return this;
-            }
-        };
+        return new EmptyTestConfiguration(this.sqlStore);
     }
 
     @Test
     public void testInitialRun() throws SQLException {
-        try (SqlDao dao = sqlStore.getDao()) {
+        try (SqlDao dao = dataStore().getDao()) {
             assertEquals(SqlConstants.VERSION_NOT_INITIALIZED, dao.getSchemaVersion());
         }
     }
 
     @Test
     public void testInitializationSetsLatest() throws SQLException {
-        sqlStore.initializeTables();
-        try (SqlDao dao = sqlStore.getDao()) {
+        dataStore().initializeTables();
+        try (SqlDao dao = dataStore().getDao()) {
             assertEquals(SchemaMigrations.VERSION_LATEST, dao.getSchemaVersion());
         }
     }
@@ -162,19 +137,19 @@ public class SchemaMigrationsTest extends PermissionsExTest {
             System.out.println("Legacy migrations only tested on MySQL");
             return;
         }
-        try (SqlDao dao = sqlStore.getDao()) {
-            try (InputStream str = getClass().getResourceAsStream("2to3.old.sql"); BufferedReader reader = new BufferedReader(new InputStreamReader(str, StandardCharsets.UTF_8))) {
+        try (final SqlDao dao = dataStore().getDao()) {
+            try (final InputStream str = getClass().getResourceAsStream("2to3.old.sql"); BufferedReader reader = new BufferedReader(new InputStreamReader(str, StandardCharsets.UTF_8))) {
                 dao.executeStream(reader);
             }
             SchemaMigrations.twoToThree().migrate(dao);
-            try (PreparedStatement stmt = dao.prepareStatement("SELECT id FROM {}subjects")) {
-                ResultSet rs = stmt.executeQuery();
+            try (final PreparedStatement stmt = dao.prepareStatement("SELECT id FROM {}subjects")) {
+                final ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    SqlSubjectRef ref = dao.getSubjectRef(rs.getInt(1)).get();
+                    final SqlSubjectRef<?> ref = dao.getSubjectRef(rs.getInt(1)).get();
                     final String out = String.format("Subject %s:%s", ref.rawType(), ref.rawIdentifier());
                     System.out.println(out);
                     final char[] outLine = new char[out.length()];
-                    Arrays.fill(outLine, '=');;
+                    Arrays.fill(outLine, '=');
                     System.out.println(outLine);
 
                     for (SqlSegment seg : dao.getSegments(ref)) {

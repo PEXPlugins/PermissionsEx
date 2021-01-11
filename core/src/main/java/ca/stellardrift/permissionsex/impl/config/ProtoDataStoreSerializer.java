@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.impl.config;
 
-import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -26,11 +26,11 @@ import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 
 import java.lang.reflect.Type;
 
-public class DataStoreSerializer implements TypeSerializer<DataStore> {
+public class ProtoDataStoreSerializer implements TypeSerializer<ProtoDataStore<?>> {
     @Override
-    public DataStore deserialize(final Type type, final ConfigurationNode value) throws SerializationException {
+    public ProtoDataStore<?> deserialize(final Type type, final ConfigurationNode value) throws SerializationException {
         final String dataStoreType = value.node("type").getString(value.key().toString());
-        final @Nullable DataStoreFactory factory = DataStoreFactory.forType(dataStoreType);
+        final @Nullable DataStoreFactory<?> factory = DataStoreFactory.forType(dataStoreType);
         if (factory == null) {
             throw new SerializationException("Unknown DataStore type " + dataStoreType);
         }
@@ -42,12 +42,13 @@ public class DataStoreSerializer implements TypeSerializer<DataStore> {
     }
 
     @Override
-    public void serialize(final Type type, final DataStore store, final ConfigurationNode value) throws SerializationException {
-        try {
-            value.node("type").set(store.serialize(value));
-        } catch (PermissionsLoadingException e) {
-            throw new SerializationException(e);
+    public void serialize(final Type type, final @Nullable ProtoDataStore<?> store, final ConfigurationNode value) throws SerializationException {
+        if (store == null) {
+            value.set(null);
+            return;
         }
 
+        store.serialize(value);
+        value.node("type").set(store.factory().name());
     }
 }

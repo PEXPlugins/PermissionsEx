@@ -16,12 +16,12 @@
  */
 package ca.stellardrift.permissionsex.impl.backend.memory;
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.impl.backend.AbstractDataStore;
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
-import ca.stellardrift.permissionsex.datastore.StoreProperties;
+import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
@@ -36,10 +36,8 @@ import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
-import org.spongepowered.configurate.util.UnmodifiableCollections;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -76,22 +74,23 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     private final ConcurrentMap<String, RankLadder> rankLadders = new ConcurrentHashMap<>();
     private volatile ContextInheritance inheritance = new MemoryContextInheritance();
 
-    public static MemoryDataStore create(final String identifier) {
+    public static ProtoDataStore<?> create(final String identifier) {
         try {
-            return (MemoryDataStore) DataStoreFactory.forType(Factory.TYPE).create(identifier, BasicConfigurationNode.root(FilePermissionsExConfiguration.PEX_OPTIONS));
+            return DataStoreFactory.forType(Factory.TYPE)
+                .create(identifier, BasicConfigurationNode.root(FilePermissionsExConfiguration.PEX_OPTIONS));
         } catch (final PermissionsLoadingException ex) {
             // Not possible to have loading errors when we're not loading anything
             throw new RuntimeException(ex);
         }
     }
 
-    public MemoryDataStore(final StoreProperties<Config> properties) {
-        super(properties);
+    public MemoryDataStore(final DataStoreContext context, final ProtoDataStore<Config> properties) {
+        super(context, properties);
     }
 
     @Override
-    protected boolean initializeInternal() {
-        return false; // we never have any starting data
+    protected void load() {
+        this.markFirstRun();
     }
 
     @Override
@@ -138,7 +137,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     private <T> CompletableFuture<T> completedFuture(T i) {
-        return CompletableFuture.supplyAsync(() -> i, getManager().asyncExecutor());
+        return CompletableFuture.supplyAsync(() -> i, engine().asyncExecutor());
     }
 
     @Override
@@ -172,7 +171,7 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     @Override
     public Stream<Map.Entry<SubjectRef<?>, ImmutableSubjectData>> getAll() {
         return this.data.entrySet().stream()
-                .map(entry -> immutableMapEntry(((PermissionsEx<?>) this.getManager()).deserializeSubjectRef(entry.getKey()), entry.getValue()));
+                .map(entry -> immutableMapEntry(this.context().deserializeSubjectRef(entry.getKey()), entry.getValue()));
     }
 
     @Override

@@ -279,7 +279,7 @@ public abstract class SqlDao implements AutoCloseable {
             if (!res.next()) {
                 return Optional.empty();
             }
-            return Optional.of(new SqlSubjectRef<>(this.ds.manager(), id, res.getString(1), res.getString(2)));
+            return Optional.of(new SqlSubjectRef<>(this.ds.ctx(), id, res.getString(1), res.getString(2)));
         }
     }
 
@@ -292,7 +292,7 @@ public abstract class SqlDao implements AutoCloseable {
             if (!res.next()) {
                 return Optional.empty();
             }
-            return Optional.of(new SqlSubjectRef<>(this.ds.manager(), res.getInt(1), type, name));
+            return Optional.of(new SqlSubjectRef<>(this.ds.ctx(), res.getInt(1), type, name));
         }
     }
 
@@ -312,7 +312,7 @@ public abstract class SqlDao implements AutoCloseable {
     }
 
     public SqlSubjectRef<?> getOrCreateSubjectRef(String type, String name) throws SQLException {
-        final SqlSubjectRef<?> ret = SqlSubjectRef.unresolved(this.ds.manager(), type, name);
+        final SqlSubjectRef<?> ret = SqlSubjectRef.unresolved(this.ds.ctx(), type, name);
         allocateSubjectRef(ret);
         return ret;
     }
@@ -399,7 +399,7 @@ public abstract class SqlDao implements AutoCloseable {
 
                     ResultSet segmentRs = inheritStmt.executeQuery();
                     while (segmentRs.next()) {
-                        inheritanceValues = inheritanceValues.plus(new SqlSubjectRef<>(this.ds.manager(), segmentRs.getInt(3), segmentRs.getString(4), segmentRs.getString(5)));
+                        inheritanceValues = inheritanceValues.plus(new SqlSubjectRef<>(this.ds.ctx(), segmentRs.getInt(3), segmentRs.getString(4), segmentRs.getString(5)));
                     }
                 }
 
@@ -735,7 +735,7 @@ public abstract class SqlDao implements AutoCloseable {
             stmt.setString(1, name);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                elements = elements.plus(new SqlSubjectRef<>(this.ds.manager(), rs.getInt(2), rs.getString(3), rs.getString(4)));
+                elements = elements.plus(new SqlSubjectRef<>(this.ds.ctx(), rs.getInt(2), rs.getString(3), rs.getString(4)));
             }
         }
         return new SqlRankLadder(name, elements);
@@ -792,7 +792,7 @@ public abstract class SqlDao implements AutoCloseable {
             PSet<SqlSubjectRef<?>> ret = PCollections.set();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                ret = ret.plus(new SqlSubjectRef<>(this.ds.manager(), rs.getInt(1), rs.getString(2), rs.getString(3)));
+                ret = ret.plus(new SqlSubjectRef<>(this.ds.ctx(), rs.getInt(1), rs.getString(2), rs.getString(3)));
             }
             return ret;
         }

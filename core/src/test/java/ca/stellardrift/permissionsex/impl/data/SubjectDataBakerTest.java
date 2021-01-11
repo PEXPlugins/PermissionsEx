@@ -24,24 +24,18 @@ import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.impl.context.ServerTagContextDefinition;
 import ca.stellardrift.permissionsex.impl.context.TimeContextDefinition;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
+import ca.stellardrift.permissionsex.test.EmptyTestConfiguration;
 import ca.stellardrift.permissionsex.test.PermissionsExTest;
-import ca.stellardrift.permissionsex.datastore.DataStore;
-import ca.stellardrift.permissionsex.impl.backend.memory.MemoryDataStore;
-import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
-import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.impl.subject.SubjectTypeCollectionImpl;
 import ca.stellardrift.permissionsex.util.NodeTree;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -64,7 +58,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
      */
     @Test
     public void testIgnoredInheritancePermissions() throws ExecutionException, InterruptedException {
-        SubjectTypeCollectionImpl<String> groupCache = getManager().subjects(SUBJECTS_GROUP);
+        SubjectTypeCollectionImpl<String> groupCache = manager().subjects(SUBJECTS_GROUP);
         CalculatedSubject parentS = groupCache.get("parent").thenCompose(parent -> parent.data().update(PermissionsEx.GLOBAL_CONTEXT, old -> old.withPermission("#test.permission.parent", 1)).thenApply(data -> parent)).get();
         CalculatedSubject childS = groupCache.get("child").thenCompose(child -> child.data().update(PermissionsEngine.GLOBAL_CONTEXT, old -> old.plusParent(parentS.identifier())
                 .withPermission("#test.permission.child", 1)
@@ -80,9 +74,9 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
     @Test
     public void testFallbackSubject() {
-        getManager().subjects(PermissionsEngine.SUBJECTS_FALLBACK).transientData().update(PermissionsEngine.SUBJECTS_USER, old -> old.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission("messages.welcome", 1))).join();
+        manager().subjects(PermissionsEngine.SUBJECTS_FALLBACK).transientData().update(PermissionsEngine.SUBJECTS_USER, old -> old.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission("messages.welcome", 1))).join();
 
-        CalculatedSubject subject = getManager().subjects(SUBJECTS_USER).get(UUID.randomUUID()).join();
+        CalculatedSubject subject = manager().subjects(SUBJECTS_USER).get(UUID.randomUUID()).join();
 
         assertTrue(subject.hasPermission("messages.welcome")); // we are inheriting from fallback
 
@@ -136,7 +130,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
                     serverTypeCtx = ServerTagContextDefinition.INSTANCE;
         final ContextDefinition<ZonedDateTime> beforeTimeCtx = TimeContextDefinition.BEFORE_TIME;
 
-        CalculatedSubject subject = getManager().subjects(SUBJECTS_GROUP).get("a").get();
+        CalculatedSubject subject = manager().subjects(SUBJECTS_GROUP).get("a").get();
         subject.data().update(data -> data.withSegment(cSet(worldCtx.createValue("nether")), c -> c.withPermissions(ImmutableMap.of("some.perm", 1, "some.meme", -1)))
                 .withSegment(cSet(worldCtx.createValue("nether"), beforeTimeCtx.createValue(nowUtc().plus(2, ChronoUnit.DAYS))), s -> s.withPermissions(ImmutableMap.of("some.meme", 1, "some.cat", 1)))
                 .withSegment(cSet(worldCtx.createValue("nether"), serverTypeCtx.createValue("bad")), s -> s.withPermission("some.day", 1))
@@ -178,41 +172,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
     @Override
     protected PermissionsExConfiguration<?> populate() {
-        return new PermissionsExConfiguration<EmptyPlatformConfiguration>() {
-            @Override
-            public DataStore getDataStore(String name) {
-                return null;
-            }
-
-            @Override
-            public DataStore getDefaultDataStore() {
-                return MemoryDataStore.create("data-baker");
-            }
-
-            @Override
-            public boolean isDebugEnabled() {
-                return false;
-            }
-
-            @Override
-            public List<String> getServerTags() {
-                return ImmutableList.of();
-            }
-
-            @Override
-            public void validate() throws PEBKACException {
-            }
-
-            @Override
-            public EmptyPlatformConfiguration getPlatformConfig() {
-                return new EmptyPlatformConfiguration();
-            }
-
-            @Override
-            public PermissionsExConfiguration<EmptyPlatformConfiguration> reload() throws IOException {
-                return this;
-            }
-        };
+        return new EmptyTestConfiguration();
     }
 
     private static final SimpleContextDefinition WORLD_CONTEXT = SimpleContextDefinition.context("world", (s, a) -> {});

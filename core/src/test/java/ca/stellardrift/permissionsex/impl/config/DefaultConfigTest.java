@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.impl.config;
 
-import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import org.junit.jupiter.api.Test;
 import org.spongepowered.configurate.ConfigurateException;
 

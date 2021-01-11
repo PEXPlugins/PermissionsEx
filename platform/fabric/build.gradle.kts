@@ -108,6 +108,7 @@ pexPlatform {
         "com.zaxxer.hikari",
         "org.antlr",
         "org.jdbi",
+        "org.pcollections",
         "org.slf4j"
     )
     relocate("org.apache.logging.slf4j", keepElements = 2)
@@ -124,6 +125,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("org.jetbrains.kotlinx:.*:.*"))
         exclude(dependency("org.jetbrains:annotations:.*"))
         exclude(dependency("org.checkerframework:checker-qual:.*"))
+        exclude(dependency("io.leangen:geantyref:.*"))
     }
 }
 

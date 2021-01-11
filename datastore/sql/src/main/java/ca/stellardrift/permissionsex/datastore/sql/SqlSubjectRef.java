@@ -16,7 +16,7 @@
  */
 package ca.stellardrift.permissionsex.datastore.sql;
 
-import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.datastore.DataStoreContext;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -26,11 +26,11 @@ import java.util.Objects;
 public class SqlSubjectRef<I> implements SubjectRef<I> {
     private volatile int id;
     private @Nullable volatile SubjectRef<I> resolved = null;
-    private final PermissionsEx<?> pex;
+    private final DataStoreContext context;
     private final String type, identifier;
 
-    SqlSubjectRef(final PermissionsEx<?> pex, final int id, final String type, final String identifier) {
-        this.pex = pex;
+    SqlSubjectRef(final DataStoreContext context, final int id, final String type, final String identifier) {
+        this.context = context;
         this.id = id;
         this.type = type;
         this.identifier = identifier;
@@ -38,14 +38,14 @@ public class SqlSubjectRef<I> implements SubjectRef<I> {
 
     SqlSubjectRef(final SubjectRef<I> existing) {
         this.id = SqlConstants.UNALLOCATED;
-        this.pex = null;
+        this.context = null;
         this.type = existing.type().name();
         this.identifier = null;
         this.resolved = SubjectRef.mapKeySafe(existing);
     }
 
-    public static <I> SqlSubjectRef<I> unresolved(final PermissionsEx<?> pex, final String type, final String name) {
-        return new SqlSubjectRef<>(pex, SqlConstants.UNALLOCATED, type, name);
+    public static <I> SqlSubjectRef<I> unresolved(final DataStoreContext context, final String type, final String name) {
+        return new SqlSubjectRef<>(context, SqlConstants.UNALLOCATED, type, name);
     }
 
     public int id() {
@@ -103,7 +103,7 @@ public class SqlSubjectRef<I> implements SubjectRef<I> {
         if (this.resolved != null) {
             return this.resolved;
         }
-        return this.resolved = (SubjectRef<I>) this.pex.deserializeSubjectRef(this.type, this.identifier);
+        return this.resolved = (SubjectRef<I>) this.context.deserializeSubjectRef(this.type, this.identifier);
     }
 
     @Override

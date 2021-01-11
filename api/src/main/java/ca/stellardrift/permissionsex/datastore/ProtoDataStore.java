@@ -16,19 +16,24 @@
  */
 package ca.stellardrift.permissionsex.datastore;
 
+import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import org.immutables.value.Value;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 /**
- * Options to configure a DataStore
+ * The deserialized configuration options from a data store.
  *
- * @param <C> Type of the store configuration objcet
+ * <p>This can be loaded to a full data store by querying the associated factory.</p>
+ *
+ * @param <C> Type of the store configuration object
  * @since 2.0.0
  */
 @Value.Immutable(builder = false)
-public interface StoreProperties<C> {
+public interface ProtoDataStore<C> {
 
-    static <C> StoreProperties<C> of(final String identifier, final C config, final DataStoreFactory factory) {
-        return new StorePropertiesImpl<>(identifier, config, factory);
+    static <C> ProtoDataStore<C> of(final String identifier, final C config, final DataStoreFactory<C> factory) {
+        return new ProtoDataStoreImpl<>(identifier, config, factory);
     }
 
     /**
@@ -56,6 +61,19 @@ public interface StoreProperties<C> {
      * @since 2.0.0
      */
     @Value.Parameter
-    DataStoreFactory factory();
+    DataStoreFactory<C> factory();
+
+    /**
+     * Given a data store's properties, resolve a full data store.
+     *
+     * @return the full data store
+     */
+    default DataStore defrost(final DataStoreContext context) throws PermissionsLoadingException {
+        return this.factory().defrost(context, this);
+    }
+
+    default void serialize(final ConfigurationNode node) throws SerializationException {
+        this.factory().serialize(node, this);
+    }
 
 }

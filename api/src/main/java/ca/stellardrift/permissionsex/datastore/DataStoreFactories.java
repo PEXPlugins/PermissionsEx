@@ -26,12 +26,14 @@ import static java.util.Objects.requireNonNull;
 
 class DataStoreFactories {
     // service loader, needs explicitly specified ClassLoader as a workaround for Bukkit/Bungee brokenness
+    @SuppressWarnings("rawtypes")
     private static final ServiceLoader<DataStoreFactory> LOADER = ServiceLoader.load(DataStoreFactory.class, DataStoreFactory.class.getClassLoader());
-    static final PMap<String, DataStoreFactory> REGISTRY;
+
+    static final PMap<String, DataStoreFactory<?>> REGISTRY;
 
     static {
-        PMap<String, DataStoreFactory> factories = HashTreePMap.empty();
-        for (final DataStoreFactory factory : LOADER) {
+        PMap<String, DataStoreFactory<?>> factories = HashTreePMap.empty();
+        for (final DataStoreFactory<?> factory : LOADER) {
             factories = factories.plus(requireNonNull(factory.name(),
                     () -> "Factory in class " + factory.getClass() + " had a null name()").toLowerCase(Locale.ROOT), factory);
         }
