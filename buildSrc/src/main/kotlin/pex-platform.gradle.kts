@@ -6,7 +6,8 @@ plugins {
 }
 
 if (name != "velocity"
-    && name != "bungee") {
+    && name != "bungee"
+    && name != "bukkit") {
     plugins.apply("ca.stellardrift.opinionated.kotlin")
 }
 

@@ -21,6 +21,8 @@ import com.google.common.collect.Sets;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.PluginManager;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,12 +41,12 @@ class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Bool
     private static final long serialVersionUID = 4740875815040785091L;
 
     @SuppressWarnings("rawtypes")
-    private static FieldReplacer<PluginManager, Map> INJECTOR;
-    private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<>();
+    private static @MonotonicNonNull FieldReplacer<PluginManager, Map> INJECTOR;
+    private static final AtomicReference<@Nullable PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<>();
     private final PermissionsExPlugin plugin;
     private final PluginManager manager;
 
-    private PEXPermissionSubscriptionMap(PermissionsExPlugin plugin, PluginManager manager, Map<String, Map<Permissible, Boolean>> backing) {
+    private PEXPermissionSubscriptionMap(final PermissionsExPlugin plugin, final PluginManager manager, final Map<String, Map<Permissible, Boolean>> backing) {
         super(backing);
         this.plugin = plugin;
         this.manager = manager;
@@ -59,8 +61,8 @@ class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Bool
      * @return the injected map, or existing map if present
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static PEXPermissionSubscriptionMap inject(PermissionsExPlugin plugin, PluginManager manager) {
-        PEXPermissionSubscriptionMap map = INSTANCE.get();
+    public static PEXPermissionSubscriptionMap inject(final PermissionsExPlugin plugin, final PluginManager manager) {
+        final @Nullable PEXPermissionSubscriptionMap map = INSTANCE.get();
         if (map != null) {
             return map;
         }
@@ -69,11 +71,12 @@ class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Bool
             INJECTOR = new FieldReplacer<>(manager.getClass(), "permSubs", Map.class);
         }
 
-        Map backing = INJECTOR.get(manager);
+        final Map backing = INJECTOR.get(manager);
         if (backing instanceof PEXPermissionSubscriptionMap) {
             return (PEXPermissionSubscriptionMap) backing;
         }
-        PEXPermissionSubscriptionMap wrappedMap = new PEXPermissionSubscriptionMap(plugin, manager, backing);
+
+        final PEXPermissionSubscriptionMap wrappedMap = new PEXPermissionSubscriptionMap(plugin, manager, backing);
         if (INSTANCE.compareAndSet(null, wrappedMap)) {
             INJECTOR.set(manager, wrappedMap);
             return wrappedMap;

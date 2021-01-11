@@ -20,19 +20,40 @@ package ca.stellardrift.permissionsex.bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.PermissibleBase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+
+import static ca.stellardrift.permissionsex.bukkit.CraftBukkitInterface.craftClassName;
 
 /**
  * This class handles injection of {@link Permissible}s into {@link Player}s for various server implementations.
  */
 abstract class PermissibleInjector {
-    protected final String clazzName, fieldName;
+    static final PermissibleInjector[] INJECTORS = {
+        new ClassPresencePermissibleInjector("net.glowstone.entity.GlowHumanEntity", "permissions", true),
+        new ClassPresencePermissibleInjector("org.getspout.server.entity.SpoutHumanEntity", "permissions", true),
+        new ClassNameRegexPermissibleInjector(
+            "org.getspout.spout.player.SpoutCraftPlayer",
+            "perm",
+            false,
+            Pattern.compile("org\\.getspout\\.spout\\.player\\.SpoutCraftPlayer")
+        ),
+        new ClassPresencePermissibleInjector(
+            craftClassName("entity.CraftHumanEntity"),
+            "perm",
+            true
+        )
+    };
+
+    protected final @Nullable String clazzName;
+    protected final String fieldName;
     protected final boolean copyValues;
 
-    PermissibleInjector(String clazzName, String fieldName, boolean copyValues) {
+    PermissibleInjector(final @Nullable String clazzName, String fieldName, boolean copyValues) {
         this.clazzName = clazzName;
         this.fieldName = fieldName;
         this.copyValues = copyValues;
@@ -44,11 +65,11 @@ abstract class PermissibleInjector {
      * @param player      The player to have {@code permissible} injected into
      * @param permissible The permissible to inject into {@code player}
      * @return the old permissible if the injection was successful, otherwise null
-     * @throws NoSuchFieldException   when the permissions field could not be found in the Permissible
+     * @throws NoSuchFieldException when the permissions field could not be found in the Permissible
      * @throws IllegalAccessException when things go very wrong
      */
-    public Permissible inject(Player player, Permissible permissible) throws NoSuchFieldException, IllegalAccessException {
-        Field permField = getPermissibleField(player);
+    public @Nullable Permissible inject(final Player player, final @Nullable Permissible permissible) throws NoSuchFieldException, IllegalAccessException {
+        final @Nullable Field permField = getPermissibleField(player);
         if (permField == null) {
             return null;
         }
@@ -64,12 +85,12 @@ abstract class PermissibleInjector {
         return oldPerm;
     }
 
-    public Permissible getPermissible(Player player) throws NoSuchFieldException, IllegalAccessException {
+    public Permissible getPermissible(final Player player) throws NoSuchFieldException, IllegalAccessException {
         return (Permissible) getPermissibleField(player).get(player);
     }
 
-    private Field getPermissibleField(Player player) throws NoSuchFieldException {
-        Class<?> humanEntity;
+    private @Nullable Field getPermissibleField(final Player player) throws NoSuchFieldException {
+        final Class<?> humanEntity;
         try {
             humanEntity = Class.forName(clazzName);
         } catch (ClassNotFoundException e) {
@@ -82,13 +103,13 @@ abstract class PermissibleInjector {
             return null;
         }
 
-        Field permField = humanEntity.getDeclaredField(fieldName);
+        final Field permField = humanEntity.getDeclaredField(this.fieldName);
         // Make it public for reflection
         permField.setAccessible(true);
         return permField;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void copyValues(PermissibleBase old, PermissibleBase newPerm) throws NoSuchFieldException, IllegalAccessException {
         // Attachments
         Field attachmentField = PermissibleBase.class.getDeclaredField("attachments");
@@ -101,47 +122,51 @@ abstract class PermissibleInjector {
 
     public abstract boolean isApplicable(Player player);
 
-    static class ServerNamePermissibleInjector extends PermissibleInjector {
-        protected final String serverName;
+    static final class ServerNamePermissibleInjector extends PermissibleInjector {
+        private final String serverName;
 
-        public ServerNamePermissibleInjector(String clazz, String field, boolean copyValues, String serverName) {
+        ServerNamePermissibleInjector(final String clazz, final String field, final boolean copyValues, final String serverName) {
             super(clazz, field, copyValues);
             this.serverName = serverName;
         }
 
         @Override
-        public boolean isApplicable(Player player) {
-            return player.getServer().getName().equalsIgnoreCase(serverName);
+        public boolean isApplicable(final Player player) {
+            return player.getServer().getName().equalsIgnoreCase(this.serverName);
         }
     }
 
-    static class ClassPresencePermissibleInjector extends PermissibleInjector {
+    static final class ClassPresencePermissibleInjector extends PermissibleInjector {
 
-        public ClassPresencePermissibleInjector(String clazzName, String fieldName, boolean copyValues) {
+        ClassPresencePermissibleInjector(final @Nullable String clazzName, final String fieldName, final boolean copyValues) {
             super(clazzName, fieldName, copyValues);
         }
 
         @Override
-        public boolean isApplicable(Player player) {
+        public boolean isApplicable(final Player player) {
+            if (this.clazzName == null) {
+                return false;
+            }
+
             try {
-                return Class.forName(clazzName).isInstance(player);
+                return Class.forName(this.clazzName).isInstance(player);
             } catch (ClassNotFoundException e) {
                 return false;
             }
         }
     }
 
-    static class ClassNameRegexPermissibleInjector extends PermissibleInjector {
-        private final String regex;
+    static final class ClassNameRegexPermissibleInjector extends PermissibleInjector {
+        private final Pattern regex;
 
-        public ClassNameRegexPermissibleInjector(String clazz, String field, boolean copyValues, String regex) {
+        ClassNameRegexPermissibleInjector(final String clazz, final String field, final boolean copyValues, final Pattern regex) {
             super(clazz, field, copyValues);
             this.regex = regex;
         }
 
         @Override
         public boolean isApplicable(Player player) {
-            return player.getClass().getName().matches(regex);
+            return this.regex.matcher(player.getClass().getName()).matches();
         }
     }
 }

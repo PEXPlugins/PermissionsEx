@@ -27,22 +27,23 @@ import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.PluginManager;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Make Superperms' querying of all players with a given permission accurately follow PEX permission matching rules
+ * Make Superperms' querying of all players with a given permission accurately follow PEX permission matching rules.
  */
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-class PermissionList extends HashMap<String, Permission> {
+final class PermissionList extends HashMap<String, Permission> {
     private static final long serialVersionUID = 5211930944081173317L;
 
-    private static FieldReplacer<PluginManager, Map> INJECTOR;
+    private static @MonotonicNonNull FieldReplacer<PluginManager, Map> INJECTOR;
 
     private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<>();
     /**
@@ -53,17 +54,12 @@ class PermissionList extends HashMap<String, Permission> {
     private final Multimap<String, Map.Entry<String, Boolean>> childParentMapping = Multimaps.synchronizedMultimap(HashMultimap.<String, Map.Entry<String, Boolean>>create());
     private final PermissionsExPlugin plugin;
 
-    public PermissionList(PermissionsExPlugin plugin) {
-        super();
-        this.plugin = plugin;
-    }
-
-    public PermissionList(Map<? extends String, ? extends Permission> existing, PermissionsExPlugin plugin) {
+    PermissionList(Map<? extends String, ? extends Permission> existing, PermissionsExPlugin plugin) {
         super(existing);
         this.plugin = plugin;
     }
 
-    private FieldReplacer<Permission, Map> getFieldReplacer(Permission perm) {
+    private FieldReplacer<Permission, Map> getFieldReplacer(final Permission perm) {
         FieldReplacer<Permission, Map> ret = CHILDREN_MAPS.get(perm.getClass());
         if (ret == null) {
             ret = new FieldReplacer<>(perm.getClass(), "children", Map.class);
@@ -72,16 +68,12 @@ class PermissionList extends HashMap<String, Permission> {
         return ret;
     }
 
-    private void removeAllChildren(String perm) {
-        for (Iterator<Map.Entry<String, Map.Entry<String, Boolean>>> it = childParentMapping.entries().iterator(); it.hasNext(); ) {
-            if (it.next().getValue().getKey().equals(perm)) {
-                it.remove();
-            }
-        }
+    private void removeAllChildren(final String perm) {
+        this.childParentMapping.entries().removeIf(stringEntryEntry -> stringEntryEntry.getValue().getKey().equals(perm));
     }
 
     public void uninject() {
-        INJECTOR.set(plugin.getServer().getPluginManager(), new HashMap<>(this));
+        INJECTOR.set(this.plugin.getServer().getPluginManager(), new HashMap<>(this));
 
     }
 
@@ -90,35 +82,31 @@ class PermissionList extends HashMap<String, Permission> {
 
         private final Permission perm;
 
-        public NotifyingChildrenMap(Permission perm) {
+        public NotifyingChildrenMap(final Permission perm) {
             super(perm.getChildren());
             this.perm = perm;
         }
 
         @Override
-        public Boolean remove(Object perm) {
+        public Boolean remove(final Object perm) {
             removeFromMapping(String.valueOf(perm));
             return super.remove(perm);
         }
 
-        private void removeFromMapping(String child) {
-            for (Iterator<Map.Entry<String, Boolean>> it = childParentMapping.get(child).iterator(); it.hasNext(); ) {
-                if (it.next().getKey().equals(perm.getName())) {
-                    it.remove();
-                }
-            }
+        private void removeFromMapping(final String child) {
+            childParentMapping.get(child).removeIf(stringBooleanEntry -> stringBooleanEntry.getKey().equals(perm.getName()));
         }
 
         @Override
-        public Boolean put(String perm, Boolean val) {
+        public Boolean put(final String perm, final Boolean val) {
             //removeFromMapping(perm);
-            childParentMapping.put(perm, new SimpleEntry<>(this.perm.getName(), val));
+            PermissionList.this.childParentMapping.put(perm, new SimpleEntry<>(this.perm.getName(), val));
             return super.put(perm, val);
         }
 
         @Override
         public void clear() {
-            removeAllChildren(perm.getName());
+            removeAllChildren(this.perm.getName());
             super.clear();
         }
     }
@@ -128,21 +116,21 @@ class PermissionList extends HashMap<String, Permission> {
         if (INJECTOR == null) {
             INJECTOR = new FieldReplacer<>(manager.getServer().getPluginManager().getClass(), "permissions", Map.class);
         }
-        Map existing = INJECTOR.get(manager.getServer().getPluginManager());
-        PermissionList list = new PermissionList(existing, manager);
+        final Map existing = INJECTOR.get(manager.getServer().getPluginManager());
+        final PermissionList list = new PermissionList(existing, manager);
         INJECTOR.set(manager.getServer().getPluginManager(), list);
         return list;
     }
 
     @Override
     public Permission put(String k, final Permission v) {
-        for (Map.Entry<String, Boolean> ent : v.getChildren().entrySet()) {
+        for (final Map.Entry<String, Boolean> ent : v.getChildren().entrySet()) {
             childParentMapping.put(ent.getKey(), new SimpleEntry<>(v.getName(), ent.getValue()));
         }
-        FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
+        final FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
         repl.set(v, new NotifyingChildrenMap(v));
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
-            plugin.getManager().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
+            this.plugin.engine().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
                     .transientData()
                     .update(LegacyConversions.SUBJECTS_USER, input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1)));
         }
@@ -150,13 +138,13 @@ class PermissionList extends HashMap<String, Permission> {
     }
 
     @Override
-    public Permission remove(Object k) {
+    public @Nullable Permission remove(final Object k) {
         final Permission ret = super.remove(k);
         if (ret != null) {
             removeAllChildren(k.toString());
             getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
-                plugin.getManager().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
+                this.plugin.engine().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
                         .transientData()
                         .update(LegacyConversions.SUBJECTS_USER, input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(ret.getName(), 0)));
             }
@@ -166,11 +154,11 @@ class PermissionList extends HashMap<String, Permission> {
 
     @Override
     public void clear() {
-        childParentMapping.clear();
+        this.childParentMapping.clear();
         super.clear();
     }
 
     public Collection<Map.Entry<String, Boolean>> getParents(String permission) {
-        return ImmutableSet.copyOf(childParentMapping.get(permission.toLowerCase()));
+        return ImmutableSet.copyOf(this.childParentMapping.get(permission.toLowerCase()));
     }
 }

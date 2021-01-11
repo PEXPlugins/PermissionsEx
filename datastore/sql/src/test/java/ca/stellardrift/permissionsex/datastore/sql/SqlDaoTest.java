@@ -89,6 +89,7 @@ public class SqlDaoTest extends PermissionsExTest {
     }
 
     @AfterEach
+    @Override
     public void tearDown() {
         // Delete all created tables;
         try (Connection conn = dataStore().getDataSource().getConnection()) {
@@ -101,6 +102,7 @@ public class SqlDaoTest extends PermissionsExTest {
         } catch (final SQLException ex) {
             throw new RuntimeException(ex);
         }
+        super.tearDown();
     }
 
     @Override

@@ -8,7 +8,6 @@ import kr.entree.spigradle.data.Load
 import kr.entree.spigradle.kotlin.spigot
 
 plugins {
-    id("ca.stellardrift.opinionated.kotlin")
     id("com.github.johnrengelman.shadow")
     id("pex-platform")
     id("ca.stellardrift.localization")
@@ -84,12 +83,9 @@ pexPlatform {
         "com.typesafe.config",
         "com.zaxxer.hikari",
         "io.leangen.geantyref",
-        "kotlinx",
-        "kotlin",
         "net.kyori",
         "org.jdbi",
         "org.antlr",
-        "org.jetbrains.annotations",
         "org.slf4j",
         "org.spongepowered.configurate",
         "org.pcollections"
