@@ -52,7 +52,7 @@ dependencies {
     api("org.slf4j:slf4j-api:$slf4jVersion")
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
-    testImplementation("org.mockito:mockito-core:3.6.28")
+    testImplementation("org.mockito:mockito-core:3.7.0")
 
     testFixturesApi("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testFixturesImplementation("com.h2database:h2:1.4.200")
