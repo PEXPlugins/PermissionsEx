@@ -44,7 +44,7 @@ dependencies {
     testImplementation(kapt(shadow("org.spongepowered:spongeapi:7.3.0")!!)!!)
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
-    testImplementation("org.mockito:mockito-core:3.6.28")
+    testImplementation("org.mockito:mockito-core:3.7.0")
 }
 
 pexPlatform {
