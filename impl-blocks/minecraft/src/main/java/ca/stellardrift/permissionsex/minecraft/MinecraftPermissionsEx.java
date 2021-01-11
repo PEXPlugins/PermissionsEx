@@ -50,7 +50,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import reactor.core.publisher.Mono;
 
 import java.io.Closeable;
 import java.net.InetAddress;
@@ -59,10 +58,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ca.stellardrift.permissionsex.impl.PermissionsEx.GLOBAL_CONTEXT;
 import static ca.stellardrift.permissionsex.minecraft.command.Formats.message;
@@ -288,6 +289,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         } catch (final UnknownHostException ex) {
             engine.logger().warn(Messages.UUIDCONVERSION_ERROR_DNS.tr());
         }
+
         // Low-level operation
         this.engine.doBulkOperation(store -> {
             final Set<String> toConvert = store.getAllIdentifiers(SUBJECTS_USER)
@@ -308,15 +310,21 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                 return CompletableFuture.completedFuture(0L);
             }
 
-            return this.resolver.resolveByName(toConvert)
-                .filterWhen(profile -> {
+            final AtomicInteger successCount = new AtomicInteger();
+            final Stream<CompletableFuture<Void>> results = this.resolver.resolveByName(toConvert)
+                .map(profile -> {
                     final String newIdentifier = profile.uuid().toString();
                     final String lookupName = profile.name();
-                    final Mono<Boolean> newRegistered = Mono.fromCompletionStage(store.isRegistered(SUBJECTS_USER, newIdentifier));
-                    final Mono<Boolean> oldRegistered = Mono.zip(Mono.fromCompletionStage(store.isRegistered(SUBJECTS_USER, lookupName)),
-                        Mono.fromCompletionStage(store.isRegistered(SUBJECTS_USER, lookupName.toLowerCase(Locale.ROOT))), (a, b) -> a || b
+
+                    // newRegistered <- registered(uuid)
+                    final CompletableFuture<Boolean> newRegistered = store.isRegistered(SUBJECTS_USER, newIdentifier);
+                    // oldRegistered <- registered(username || lowercaseUsername)
+                    final CompletableFuture<Boolean> oldRegistered = store.isRegistered(SUBJECTS_USER, lookupName).thenCombine(
+                        store.isRegistered(SUBJECTS_USER, lookupName.toLowerCase(Locale.ROOT)), (a, b) -> a || b
                     );
-                    return Mono.zip(newRegistered, oldRegistered, (n, o) -> {
+
+                    // shouldExecute <- !newRegistered && oldRegistered
+                    final CompletableFuture<Boolean> shouldExecute = newRegistered.thenCombine(oldRegistered, (n, o) -> {
                         if (n) {
                             this.engine.logger().warn(Messages.UUIDCONVERSION_ERROR_DUPLICATE.tr(newIdentifier));
                             return false;
@@ -324,22 +332,37 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                             return o;
                         }
                     });
-                }).flatMap(profile -> {
-                    final String newIdentifier = profile.uuid().toString();
-                    return Mono.fromCompletionStage(store.getData(SUBJECTS_USER, profile.name(), null)
-                        .thenCompose(oldData -> store.setData(
-                            SUBJECTS_USER,
-                            newIdentifier,
-                            oldData.withSegment(GLOBAL_CONTEXT, s -> s.withOption("name", profile.name()))
-                        )
-                            .thenAccept(result -> store.setData(SUBJECTS_USER, profile.name(), null)
-                                .exceptionally(t -> {
-                                    t.printStackTrace();
-                                    return null;
-                                }))));
-                }).count().toFuture();
+
+                    return shouldExecute.thenCompose((execute -> { // execute <- shouldExecute
+                        if (!execute) {
+                            return CompletableFuture.completedFuture(null);
+                        }
+
+                        // Actually move the data
+                        return store.getData(SUBJECTS_USER, profile.name(), null)
+                            .thenCompose(oldData -> store.setData(
+                                SUBJECTS_USER,
+                                newIdentifier,
+                                oldData.withSegment(GLOBAL_CONTEXT, s -> s.withOption("name", profile.name()))
+                            )
+                                .thenAccept(result -> store.setData(SUBJECTS_USER, profile.name(), null)
+                                    .whenComplete((value, err) -> {
+                                        if (err != null) {
+                                            err.printStackTrace();
+                                        } else {
+                                            successCount.getAndIncrement();
+                                        }
+                                    })));
+
+                    }));
+                });
+
+            @SuppressWarnings("unchecked")
+            final CompletableFuture<Void>[] futureArray = results.toArray(CompletableFuture[]::new);
+            return CompletableFuture.allOf(futureArray)
+                .<Number>thenApply($ -> successCount.get());
         }).thenAccept(result -> {
-            if (result != null && result > 0) {
+            if (result != null && result.intValue() > 0) {
                 engine.logger().info(Messages.UUIDCONVERSION_END.tr(result));
             }
         }).exceptionally(t -> {

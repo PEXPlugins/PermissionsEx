@@ -16,8 +16,6 @@
  */
 package ca.stellardrift.permissionsex.minecraft.profile;
 
-import ca.stellardrift.permissionsex.minecraft.profile.MinecraftProfile;
-import ca.stellardrift.permissionsex.minecraft.profile.ProfileApiResolver;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +23,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -33,9 +33,9 @@ public class ProfileTest {
     @Disabled("Makes network requests")
     void integrationTest() {
         final ProfileApiResolver resolver = ProfileApiResolver.resolver(ForkJoinPool.commonPool());
+
         final Map<String, MinecraftProfile> results = resolver.resolveByName(Arrays.asList("zml", "waylon531", "toolongsothiswontmatchanybody"))
-                .collectMap(MinecraftProfile::name)
-                .block();
+                .collect(Collectors.toMap(MinecraftProfile::name, Function.identity()));
 
         assertEquals(2, results.size());
 

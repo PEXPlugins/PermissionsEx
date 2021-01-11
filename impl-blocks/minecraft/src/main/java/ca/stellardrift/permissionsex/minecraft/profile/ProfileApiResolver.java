@@ -16,10 +16,8 @@
  */
 package ca.stellardrift.permissionsex.minecraft.profile;
 
-import reactor.core.publisher.Flux;
-
 import java.util.concurrent.Executor;
-
+import java.util.stream.Stream;
 
 /**
  * An interface to the profile API
@@ -36,5 +34,5 @@ public interface ProfileApiResolver {
      * @param names Names to resolve
      * @return a future providing the total number of profiles resolved.
      */
-    Flux<MinecraftProfile> resolveByName(Iterable<String> names);
+    Stream<MinecraftProfile> resolveByName(Iterable<String> names);
 }

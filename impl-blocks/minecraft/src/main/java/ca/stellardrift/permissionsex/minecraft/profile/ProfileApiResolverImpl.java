@@ -20,11 +20,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
+import io.leangen.geantyref.TypeFactory;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,9 +33,21 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 class ProfileApiResolverImpl implements ProfileApiResolver {
 
@@ -108,36 +119,132 @@ class ProfileApiResolverImpl implements ProfileApiResolver {
     }
 
     @Override
-    public Flux<MinecraftProfile> resolveByName(Iterable<String> names) {
-        return Flux.fromIterable(names)
-                .filter(it -> it.length() <= 16)
-                .buffer(MAX_REQUEST_SIZE)
-                .concatMap(batch -> Flux.<MinecraftProfile>create(sink -> {
-                    try {
-                        final HttpURLConnection conn = openConnection(PROFILE_QUERY_URL);
-                        try (final OutputStreamWriter os = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
-                             final JsonWriter json = GSON.newJsonWriter(os)) {
-                            json.beginArray();
-                            for (final String name : batch) {
-                                json.value(name);
-                            }
-                            json.endArray();
-                        }
+    public Stream<MinecraftProfile> resolveByName(Iterable<String> names) {
+        // Filter any names from `names` that are > 16 characters long
+        // Split `names` into groups of MAX_REQUEST_SIZE
+        final Iterable<Set<String>> batchedNames = batchedAndFiltered(names, MAX_REQUEST_SIZE, it -> it.length() <= 16);
 
-                        if (conn.getResponseCode() != 200) {
-                            try (final InputStreamReader is = new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8)) {
-                                final JsonObject json = GSON.fromJson(is, JsonObject.class);
-                                sink.error(new IOException(json.toString()));
-                            }
-                        }
+        // For each batch, submit a request in a CompletableFuture
+        final Set<CompletableFuture<List<MinecraftProfile>>> requests = new HashSet<>();
+        for (final Set<String> batch : batchedNames) {
+            requests.add(sendProfileRequest(batch));
+        }
 
-                        try (final InputStreamReader is = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)) {
-                            GSON.<List<MinecraftProfile>>fromJson(is, TypeToken.getParameterized(List.class, MinecraftProfile.class).getType()).forEach(sink::next);
-                        }
-                    } catch (final IOException ex) {
-                        sink.error(ex);
+        // Create an stream from an iterator that will unwrap the futures
+        return unwrapToStream(requests)
+            .flatMap(List::stream);
+    }
+
+    /**
+     * Batches an input lazily.
+     *
+     * <p>Lazily computes eagerly resolved sets (so, each individual subset will be fully evaluated, but the outer
+     * Iterable will be lazy)</p>
+     *
+     * @param input input values
+     * @param batchSize the maximum batch size
+     * @param filter the test to filter names
+     * @param <T> element type
+     * @return an iterable of groups. if no entries match, will have no values
+     */
+    private static <T> Iterable<Set<T>> batchedAndFiltered(final Iterable<T> input, final int batchSize, final Predicate<T> filter) {
+        return () -> new Iterator<Set<T>>() {
+            final Iterator<T> base = input.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return this.base.hasNext();
+            }
+
+            @Override
+            public Set<T> next() {
+                if (!this.base.hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                final Set<T> out = new HashSet<>();
+                int counter = 0;
+                while (base.hasNext() && counter < batchSize) {
+                    final T next = this.base.next();
+                    // TODO: handle if no names pass filter
+                    if (filter.test(next)) {
+                        counter++;
+                        out.add(next);
                     }
-                    sink.complete();
-                }).publishOn(Schedulers.fromExecutor(this.executor)));
+                }
+
+                return out;
+            }
+        };
+    }
+
+    private CompletableFuture<List<MinecraftProfile>> sendProfileRequest(final Set<String> names) {
+        final CompletableFuture<List<MinecraftProfile>> result = new CompletableFuture<>();
+        if (names.isEmpty()) {
+            result.complete(Collections.emptyList());
+            return result;
+        }
+
+        this.executor.execute(() -> {
+            try {
+                final HttpURLConnection conn = openConnection(PROFILE_QUERY_URL);
+                try (final OutputStreamWriter os = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
+                     final JsonWriter json = GSON.newJsonWriter(os)) {
+                    json.beginArray();
+                    for (final String name : names) {
+                        json.value(name);
+                    }
+                    json.endArray();
+                }
+
+                if (conn.getResponseCode() != 200) {
+                    try (final InputStreamReader is = new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8)) {
+                        final JsonObject json = GSON.fromJson(is, JsonObject.class);
+                        result.completeExceptionally(new IOException(json.toString()));
+                        return;
+                    }
+                }
+
+                try (final InputStreamReader is = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)) {
+                    result.complete(GSON.fromJson(is, TypeFactory.parameterizedClass(List.class, MinecraftProfile.class)));
+                }
+            } catch (final IOException ex) {
+                result.completeExceptionally(ex);
+            }
+        });
+        return result;
+    }
+
+    private static <T> Stream<T> unwrapToStream(final Collection<CompletableFuture<T>> futures) {
+        return StreamSupport.stream(new MappingSpliterator<>(futures.spliterator()), false);
+    }
+
+    private static class MappingSpliterator<V> implements Spliterator<V> {
+        private final Spliterator<CompletableFuture<V>> base;
+
+        private MappingSpliterator(final Spliterator<CompletableFuture<V>> base) {
+            this.base = base;
+        }
+
+        @Override
+        public boolean tryAdvance(final Consumer<? super V> action) {
+            return this.base.tryAdvance(future -> action.accept(future.join()));
+        }
+
+        @Override
+        public @Nullable Spliterator<V> trySplit() {
+            final @Nullable Spliterator<CompletableFuture<V>> base = this.base.trySplit();
+            return base == null ? null : new MappingSpliterator<>(base);
+        }
+
+        @Override
+        public long estimateSize() {
+            return this.base.estimateSize();
+        }
+
+        @Override
+        public int characteristics() {
+            return (this.base.characteristics() | Spliterator.IMMUTABLE) & ~Spliterator.DISTINCT;
+        }
+
     }
 }

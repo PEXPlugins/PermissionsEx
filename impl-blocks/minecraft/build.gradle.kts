@@ -31,7 +31,6 @@ dependencies {
     api(project(":core"))
     implementation(adventure("text-serializer-plain"))
     compileOnlyApi("org.immutables:gson:$immutablesVersion")
-    implementation("io.projectreactor:reactor-core:3.4.0")
     runtimeOnly(project(":datastore:sql"))
     api("cloud.commandframework:cloud-core:$cloudVersion")
     implementation("cloud.commandframework:cloud-minecraft-extras:$cloudVersion")
