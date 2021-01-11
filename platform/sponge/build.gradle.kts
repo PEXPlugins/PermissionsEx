@@ -54,6 +54,7 @@ pexPlatform {
         "org.antlr",
         "org.jdbi",
         "org.jetbrains.annotations",
+        "org.pcollections",
         "org.slf4j"
     )
     relocate("org.apache.logging.slf4j", keepElements = 2)
@@ -62,6 +63,7 @@ pexPlatform {
 val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("com.google.code.gson:gson:.*"))
+        exclude(dependency("io.leangen:geantyref:.*"))
     }
 
     manifest.attributes(

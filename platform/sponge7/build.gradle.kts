@@ -57,6 +57,7 @@ pexPlatform {
         "org.antlr",
         "org.jdbi",
         "org.jetbrains.annotations",
+        "org.pcollections",
         "org.spongepowered.configurate"
     )
 }
