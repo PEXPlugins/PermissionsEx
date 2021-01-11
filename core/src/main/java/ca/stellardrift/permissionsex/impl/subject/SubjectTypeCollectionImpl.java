@@ -98,7 +98,7 @@ public class SubjectTypeCollectionImpl<I> implements SubjectTypeCollection<I> {
         return this.persistentData;
     }
 
-    PermissionsEx<?> getManager() {
+    PermissionsEx<?> engine() {
         return this.pex;
     }
 

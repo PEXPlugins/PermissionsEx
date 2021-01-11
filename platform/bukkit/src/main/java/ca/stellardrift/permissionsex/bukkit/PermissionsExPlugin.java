@@ -65,7 +65,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-public class PermissionsExPlugin extends JavaPlugin implements Listener {
+public final class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     // -- PEX core -- //
     private @MonotonicNonNull FormattedLogger logger;

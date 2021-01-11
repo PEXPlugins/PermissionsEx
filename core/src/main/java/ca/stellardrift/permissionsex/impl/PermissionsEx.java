@@ -429,7 +429,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         return Util.asyncFailableFuture(() -> {
             reloadSync();
             return null;
-        }, asyncExecutor());
+        }, this.asyncExecutor());
     }
 
     /**

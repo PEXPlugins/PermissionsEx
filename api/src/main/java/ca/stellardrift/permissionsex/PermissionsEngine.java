@@ -19,7 +19,6 @@ package ca.stellardrift.permissionsex;
 import ca.stellardrift.permissionsex.context.ContextDefinitionProvider;
 import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.datastore.DataStore;
-import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.rank.RankLadderCollection;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
@@ -27,13 +26,9 @@ import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.sql.DataSource;
-import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -195,27 +190,4 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
      */
     void debugMode(final boolean enabled, final @Nullable Pattern filter);
 
-    /**
-     * Access the engine's async executor that can be used to schedule tasks
-     *
-     * @return the executor
-     * @since 2.0.0
-     */
-    Executor asyncExecutor();
-
-    /**
-     * Get the logger used to log engine output.
-     *
-     * @return the engine logger
-     * @since 2.0.0
-     */
-    FormattedLogger logger();
-
-    /**
-     * Get the base data directory where the engine will store data and configuration.
-     *
-     * @return the base data directory
-     * @since 2.0.0
-     */
-    Path baseDirectory();
 }

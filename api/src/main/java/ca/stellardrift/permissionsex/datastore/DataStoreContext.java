@@ -17,11 +17,14 @@
 package ca.stellardrift.permissionsex.datastore;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
+import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 
 import javax.sql.DataSource;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 /**
  * Access to internals exposed for data store use only.
@@ -36,6 +39,29 @@ public interface DataStoreContext {
      * @return the engine
      */
     PermissionsEngine engine();
+
+    /**
+     * A logger for logging any necessary messages.
+     *
+     * @return the logger
+     */
+    FormattedLogger logger();
+
+    /**
+     * Get the base data directory where the engine will store data and configuration.
+     *
+     * @return the base data directory
+     * @since 2.0.0
+     */
+    Path baseDirectory();
+
+    /**
+     * Access the engine's async executor that can be used to schedule tasks
+     *
+     * @return the executor
+     * @since 2.0.0
+     */
+    Executor asyncExecutor();
 
     /**
      * Deserialize a subject reference given a type and identifier.

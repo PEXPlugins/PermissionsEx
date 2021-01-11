@@ -198,7 +198,7 @@ public final class SqlDataStore extends AbstractDataStore<SqlDataStore, SqlDataS
                 });
                 if (initialVersion != finalVersion) {
                     dao.setSchemaVersion(finalVersion);
-                    engine().logger().info(Messages.SCHEMA_UPDATE_SUCCESS.tr(initialVersion, finalVersion));
+                    context().logger().info(Messages.SCHEMA_UPDATE_SUCCESS.tr(initialVersion, finalVersion));
                 }
             }
         }

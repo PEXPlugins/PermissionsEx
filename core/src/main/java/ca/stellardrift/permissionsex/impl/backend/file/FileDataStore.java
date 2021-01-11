@@ -119,7 +119,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         ret.updates().subscribe(this::refresh);
 
         ret.errors().subscribe(e ->
-                engine().logger().error(Messages.FILE_ERROR_AUTORELOAD.tr(e.getKey(), e.getValue().getLocalizedMessage())));
+                context().logger().error(Messages.FILE_ERROR_AUTORELOAD.tr(e.getKey(), e.getValue().getLocalizedMessage())));
 
         return ret;
     }
@@ -134,7 +134,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             try {
                 this.listeners.call(key, getDataSync(key.getKey(), key.getValue()));
             } catch (PermissionsLoadingException e) {
-                engine().logger().error(Messages.FILE_ERROR_SUBJECT_AUTORELOAD.tr(key.getKey(), key.getValue()));
+                this.context().logger().error(Messages.FILE_ERROR_SUBJECT_AUTORELOAD.tr(key.getKey(), key.getValue()));
             }
         });
 
@@ -144,13 +144,13 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         this.contextInheritanceListeners.getAllKeys().forEach(key ->
                 this.contextInheritanceListeners.call(key, getContextInheritanceInternal().join()));
 
-        engine().logger().info(Messages.FILE_RELOAD_AUTO.tr(config().file));
+        this.context().logger().info(Messages.FILE_RELOAD_AUTO.tr(config().file));
     }
 
     private Path migrateLegacy(Path permissionsFile, String extension, ConfigurationLoader<?> legacyLoader, String formatName) throws PermissionsLoadingException {
         Path legacyPermissionsFile = permissionsFile;
         config().file = config().file.replace(extension, ".json");
-        permissionsFile = engine().baseDirectory().resolve(config().file);
+        permissionsFile = this.context().baseDirectory().resolve(config().file);
         try {
             permissionsConfig = createLoader(permissionsFile);
             permissionsConfig.save(legacyLoader.load());
@@ -166,7 +166,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         if (config().autoReload) {
             try {
                 reloadService = WatchServiceListener.builder()
-                        .taskExecutor(engine().asyncExecutor())
+                        .taskExecutor(this.context().asyncExecutor())
                         .build();
             } catch (IOException e) {
                 throw new PermissionsLoadingException(e);
@@ -174,7 +174,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
         }
 
         final String rawFile = config().file;
-        Path permissionsFile = engine().baseDirectory().resolve(rawFile);
+        Path permissionsFile = this.context().baseDirectory().resolve(rawFile);
         if (rawFile.endsWith(".yml")) {
             permissionsFile = migrateLegacy(permissionsFile, ".yml", YamlConfigurationLoader.builder().path(permissionsFile).build(), "YML");
         } else if (rawFile.endsWith(".conf")) {
@@ -202,13 +202,13 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             this.markFirstRun();
         } else {
             try {
-                ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(engine().logger());
+                ConfigurationTransformation versionUpdater = SchemaMigrations.versionedMigration(this.context().logger());
                 int startVersion = permissionsConfig.get("schema-version").getInt(-1);
                 ConfigurationNode node = permissionsConfig.node();
                 versionUpdater.apply(node);
                 int endVersion = permissionsConfig.get("schema-version").getInt();
                 if (endVersion > startVersion) {
-                    engine().logger().info(Messages.FILE_SCHEMA_MIGRATION_SUCCESS.tr(permissionsFile, startVersion, endVersion));
+                    this.context().logger().info(Messages.FILE_SCHEMA_MIGRATION_SUCCESS.tr(permissionsFile, startVersion, endVersion));
                     permissionsConfig.save(node);
                 }
             } catch (final ConfigurateException ex) {
@@ -223,7 +223,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             try {
                 this.reloadService.close();
             } catch (IOException e) {
-                engine().logger().error("Unable to shut down FileDataStore watch service", e);
+                this.context().logger().error("Unable to shut down FileDataStore watch service", e);
             }
             this.reloadService = null;
         }
@@ -238,7 +238,7 @@ public final class FileDataStore extends AbstractDataStore<FileDataStore, FileDa
             return Util.asyncFailableFuture(() -> {
                 saveSync();
                 return null;
-            }, engine().asyncExecutor());
+            }, this.context().asyncExecutor());
         } else {
             return completedFuture(null);
         }

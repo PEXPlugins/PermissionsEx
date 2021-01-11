@@ -68,7 +68,7 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
         this.data = Caffeine.newBuilder()
                 .maximumSize(32)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
-                .executor(type.getManager().asyncExecutor())
+                .executor(type.engine().asyncExecutor())
                 .buildAsync((key, executor) -> this.baker.bake(CalculatedSubjectImpl.this, key));
     }
 
@@ -95,7 +95,7 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     }
 
     PermissionsEx<?> getManager() {
-        return this.type.getManager();
+        return this.type.engine();
     }
 
     /**

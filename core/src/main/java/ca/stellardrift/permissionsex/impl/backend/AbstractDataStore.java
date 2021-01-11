@@ -139,11 +139,11 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
     }
 
     protected <V> CompletableFuture<V> runAsync(CheckedSupplier<V, ?> supplier) {
-        return Util.asyncFailableFuture(supplier, engine().asyncExecutor());
+        return Util.asyncFailableFuture(supplier, this.context.asyncExecutor());
     }
 
     protected CompletableFuture<Void> runAsync(Runnable run) {
-        return CompletableFuture.runAsync(run, engine().asyncExecutor());
+        return CompletableFuture.runAsync(run, this.context.asyncExecutor());
     }
 
     /**
@@ -173,7 +173,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
 
     @Override
     public final <V> CompletableFuture<V> performBulkOperation(final Function<DataStore, V> function) {
-        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), engine().asyncExecutor());
+        return Util.asyncFailableFuture(() -> performBulkOperationSync(function), this.context.asyncExecutor());
     }
 
     @Override

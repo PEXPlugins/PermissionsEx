@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 
 import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
-public class PEXPermissible extends PermissibleBase {
+final class PEXPermissible extends PermissibleBase {
 
     private final Player player;
     private final PermissionsExPlugin plugin;
@@ -103,8 +103,8 @@ public class PEXPermissible extends PermissibleBase {
             }
         }
 
-        if (engine.debugMode()) {
-            engine.logger().info(Messages.SUPERPERMS_CHECK_NOTIFY.tr(permission, player.getName(), contexts, ret));
+        if (this.engine.debugMode()) {
+            this.plugin.logger().info(Messages.SUPERPERMS_CHECK_NOTIFY.tr(permission, this.player.getName(), contexts, ret));
         }
         return ret;
     }

@@ -131,13 +131,17 @@ public class MemoryDataStore extends AbstractDataStore<MemoryDataStore, MemoryDa
     }
 
     @Override
-    protected CompletableFuture<RankLadder> setRankLadderInternal(String ladder, RankLadder newLadder) {
-        this.rankLadders.put(ladder, newLadder);
+    protected CompletableFuture<RankLadder> setRankLadderInternal(final String ladder, final @Nullable RankLadder newLadder) {
+        if (newLadder == null) {
+            this.rankLadders.remove(ladder);
+        } else {
+            this.rankLadders.put(ladder, newLadder);
+        }
         return completedFuture(newLadder);
     }
 
     private <T> CompletableFuture<T> completedFuture(T i) {
-        return CompletableFuture.supplyAsync(() -> i, engine().asyncExecutor());
+        return CompletableFuture.supplyAsync(() -> i, this.context().asyncExecutor());
     }
 
     @Override
