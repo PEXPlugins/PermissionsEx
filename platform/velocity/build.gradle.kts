@@ -40,7 +40,7 @@ dependencies {
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
     implementation("cloud.commandframework:cloud-velocity:$cloudVersion")
 
-    annotationProcessor(shadow("com.velocitypowered:velocity-api:1.1.2")!!)
+    annotationProcessor(shadow("com.velocitypowered:velocity-api:1.1.3")!!)
 }
 
 pexPlatform {
