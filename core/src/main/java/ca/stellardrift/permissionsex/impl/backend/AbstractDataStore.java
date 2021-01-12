@@ -29,6 +29,8 @@ import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.rank.RankLadder;
 import ca.stellardrift.permissionsex.impl.util.Util;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -155,9 +157,10 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      * </ul>
      */
     protected final void applyDefaultData() {
-        getData(PermissionsEngine.SUBJECTS_DEFAULTS.name(), PermissionsEngine.SUBJECTS_DEFAULTS.name(), null)
+        final SubjectRef<SubjectType<?>> defaultSubject = SubjectRef.subject(this.engine().defaults(), this.engine().defaults().type());
+        getData(defaultSubject, null)
                 .thenApply(data -> data.withSegment(Collections.singleton(new ContextValue<>("localip", "127.0.0.1")), s -> s.withFallbackPermission(1)))
-                .thenCompose(data -> setData(PermissionsEngine.SUBJECTS_DEFAULTS.name(), PermissionsEngine.SUBJECTS_DEFAULTS.name(), data));
+                .thenCompose(data -> setData(defaultSubject, data));
     }
 
     protected abstract CompletableFuture<ImmutableSubjectData> getDataInternal(String type, String identifier);

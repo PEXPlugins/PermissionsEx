@@ -149,5 +149,5 @@ public interface SubjectDataCache<I> {
      *
      * @return The id for the default subject of this type
      */
-    SubjectRef<String> getDefaultIdentifier();
+    SubjectRef<SubjectType<?>> getDefaultIdentifier();
 }

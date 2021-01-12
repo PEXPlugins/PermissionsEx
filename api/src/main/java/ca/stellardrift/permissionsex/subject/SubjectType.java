@@ -16,6 +16,8 @@
  */
 package ca.stellardrift.permissionsex.subject;
 
+import io.leangen.geantyref.GenericTypeReflector;
+import io.leangen.geantyref.TypeToken;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
@@ -53,6 +55,20 @@ public final class SubjectType<I> {
      */
     public static <V> Builder<V> builder(final String name, final Class<V> identifierType) {
         return new Builder<>(name, identifierType);
+    }
+
+    /**
+     * Create a new builder for subject types.
+     *
+     * @param name the subject type name
+     * @param identifierType explicit type of identifiers
+     * @param <V> the identifier type
+     * @return a builder for a subject type
+     * @since 2.0.0
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <V> Builder<V> builder(final String name, final TypeToken<V> identifierType) {
+        return new Builder(name, GenericTypeReflector.erase(identifierType.getType()));
     }
 
     /**

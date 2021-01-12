@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.datastore;
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
@@ -101,5 +102,5 @@ public interface DataStoreContext {
      * @deprecated need to find a better place to put this
      */
     @Deprecated
-    DataSource dataSourceForUrl(String url) throws SQLException;
+    @Nullable DataSource dataSourceForUrl(String url) throws SQLException;
 }

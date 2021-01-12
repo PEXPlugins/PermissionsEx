@@ -130,9 +130,9 @@ final class PermissionList extends HashMap<String, Permission> {
         final FieldReplacer<Permission, Map> repl = getFieldReplacer(v);
         repl.set(v, new NotifyingChildrenMap(v));
         if (v.getDefault() == PermissionDefault.TRUE || v.getDefault() == PermissionDefault.FALSE) {
-            this.plugin.engine().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
+            this.plugin.engine().defaults()
                     .transientData()
-                    .update(LegacyConversions.SUBJECTS_USER, input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1)));
+                    .update(this.plugin.users().type(), input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(v.getName(), v.getDefault() == PermissionDefault.TRUE ? 1 : -1)));
         }
         return super.put(k, v);
     }
@@ -144,9 +144,9 @@ final class PermissionList extends HashMap<String, Permission> {
             removeAllChildren(k.toString());
             getFieldReplacer(ret).set(ret, new LinkedHashMap<>(ret.getChildren()));
             if (ret.getDefault() == PermissionDefault.TRUE || ret.getDefault() == PermissionDefault.FALSE) {
-                this.plugin.engine().subjects(PermissionsEngine.SUBJECTS_DEFAULTS)
+                this.plugin.engine().defaults()
                         .transientData()
-                        .update(LegacyConversions.SUBJECTS_USER, input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(ret.getName(), 0)));
+                        .update(this.plugin.users().type(), input -> input.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission(ret.getName(), 0)));
             }
         }
         return ret;

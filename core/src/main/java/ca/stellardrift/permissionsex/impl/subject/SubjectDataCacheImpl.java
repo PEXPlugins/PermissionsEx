@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.impl.subject;
 
-import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.impl.util.CacheListenerHolder;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
@@ -55,12 +54,12 @@ public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
      */
     private final Map<I, Consumer<ImmutableSubjectData>> cacheHolders = new ConcurrentHashMap<>();
     private final CacheListenerHolder<I, ImmutableSubjectData> listeners;
-    private final SubjectRef<String> defaultIdentifier;
+    private final SubjectRef<SubjectType<?>> defaultIdentifier;
 
-    public SubjectDataCacheImpl(final SubjectType<I> type, final DataStore dataStore) {
+    public SubjectDataCacheImpl(final SubjectType<I> type, final SubjectRef<SubjectType<?>> defaultIdentifier, final DataStore dataStore) {
         this.type = type;
         update(dataStore);
-        this.defaultIdentifier = SubjectRef.subject(PermissionsEngine.SUBJECTS_DEFAULTS, type.name());
+        this.defaultIdentifier = defaultIdentifier;
         this.listeners = new CacheListenerHolder<>();
     }
 
@@ -205,7 +204,7 @@ public final class SubjectDataCacheImpl<I> implements SubjectDataCache<I> {
     }
 
     @Override
-    public SubjectRef<String> getDefaultIdentifier() {
+    public SubjectRef<SubjectType<?>> getDefaultIdentifier() {
         return this.defaultIdentifier;
     }
 }

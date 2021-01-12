@@ -74,7 +74,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
 
     @Test
     public void testFallbackSubject() {
-        manager().subjects(PermissionsEngine.SUBJECTS_FALLBACK).transientData().update(PermissionsEngine.SUBJECTS_USER, old -> old.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission("messages.welcome", 1))).join();
+        this.manager().fallbacks().transientData().update(SUBJECTS_USER, old -> old.withSegment(PermissionsEx.GLOBAL_CONTEXT, s -> s.withPermission("messages.welcome", 1))).join();
 
         CalculatedSubject subject = manager().subjects(SUBJECTS_USER).get(UUID.randomUUID()).join();
 

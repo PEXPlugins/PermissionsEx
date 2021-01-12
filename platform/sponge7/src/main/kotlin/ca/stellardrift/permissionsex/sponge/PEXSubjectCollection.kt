@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.subject.CalculatedSubject
 import ca.stellardrift.permissionsex.subject.SubjectType
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection
@@ -51,10 +50,10 @@ class PEXSubjectCollection<I> private constructor(private val identifier: Subjec
         fun <I> load(identifier: SubjectType<I>, plugin: PermissionsExPlugin): CompletableFuture<PEXSubjectCollection<I>> {
             val ret = PEXSubjectCollection(identifier, plugin)
             val defaultFuture =
-                if (identifier == PermissionsEngine.SUBJECTS_DEFAULTS) {
-                    ret.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS.name())
+                if (identifier == plugin.manager.defaults()) {
+                    ret.loadSubject(plugin.manager.defaults().type().name())
                 } else {
-                    plugin.loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS.name()).thenCompose { it.loadSubject(identifier.name()) }
+                    plugin.loadCollection(plugin.manager.defaults().type()).thenCompose { it.loadSubject(identifier.name()) }
                 }
             return defaultFuture.thenApply {
                 ret.defaults = it as PEXSubject?

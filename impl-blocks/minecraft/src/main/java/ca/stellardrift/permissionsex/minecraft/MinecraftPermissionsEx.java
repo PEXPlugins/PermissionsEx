@@ -333,7 +333,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                         }
                     });
 
-                    return shouldExecute.thenCompose((execute -> { // execute <- shouldExecute
+                    return shouldExecute.thenCompose(execute -> { // execute <- shouldExecute
                         if (!execute) {
                             return CompletableFuture.completedFuture(null);
                         }
@@ -354,7 +354,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                                         }
                                     })));
 
-                    }));
+                    });
                 });
 
             @SuppressWarnings("unchecked")

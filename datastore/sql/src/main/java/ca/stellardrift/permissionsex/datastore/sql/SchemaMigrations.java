@@ -198,7 +198,7 @@ public class SchemaMigrations {
                     }
 
                     if (!defaultSubjects.isEmpty()) {
-                        final SqlSubjectRef<?> defaultSubj = dao.getOrCreateSubjectRef(PermissionsEngine.SUBJECTS_FALLBACK.name(), LegacyConversions.SUBJECTS_USER);
+                        final SqlSubjectRef<?> defaultSubj = dao.getOrCreateSubjectRef(dao.getDataStore().ctx().engine().fallbacks().type().name(), LegacyConversions.SUBJECTS_USER);
                         final List<SqlSegment> segments = new ArrayList<>(dao.getSegments(defaultSubj));
                         for (Map.Entry<String, List<SqlSubjectRef<?>>> ent : defaultSubjects.entrySet()) {
                             SqlSegment seg = null;

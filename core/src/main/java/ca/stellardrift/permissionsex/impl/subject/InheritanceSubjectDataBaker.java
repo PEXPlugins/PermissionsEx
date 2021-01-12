@@ -16,14 +16,13 @@
  */
 package ca.stellardrift.permissionsex.impl.subject;
 
-import ca.stellardrift.permissionsex.PermissionsEngine;
-import ca.stellardrift.permissionsex.context.ContextInheritance;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.ImmutableSubjectData;
 import ca.stellardrift.permissionsex.subject.Segment;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import ca.stellardrift.permissionsex.impl.util.Util;
 import ca.stellardrift.permissionsex.util.glob.GlobParseException;
@@ -43,7 +42,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * Handles baking of subject data inheritance tree and context tree into a single data set
@@ -101,15 +99,20 @@ class InheritanceSubjectDataBaker implements SubjectDataBaker {
                     final Multiset<SubjectRef<?>> visitedSubjects = HashMultiset.create();
                     CompletableFuture<Void> ret = visitSubject(state, subject, visitedSubjects, 0);
 
-                    if (state.parents.isEmpty() && state.combinedPermissions.isEmpty() && state.options.isEmpty() && state.defaultValue == 0 && !(subject.type().equals(PermissionsEngine.SUBJECTS_FALLBACK)
-                            && subject.identifier().equals(PermissionsEngine.SUBJECTS_FALLBACK.name()))) { // If we have no data, include the fallback subject
-                        ret = ret.thenCompose(none -> visitSubject(state, SubjectRef.subject(PermissionsEngine.SUBJECTS_FALLBACK, subject.type().name()), visitedSubjects, 0));
+                    final SubjectType<SubjectType<?>> fallbackType = data.getManager().fallbacksType();
+                    if (state.parents.isEmpty()
+                        && state.combinedPermissions.isEmpty()
+                        && state.options.isEmpty()
+                        && state.defaultValue == 0
+                        && !(subject.type().equals(fallbackType)
+                            && subject.identifier().equals(fallbackType))) { // If we have no data, include the fallback subject
+                        ret = ret.thenCompose(none -> visitSubject(state, SubjectRef.subject(fallbackType, subject.type()), visitedSubjects, 0));
                     }
 
-                    final SubjectRef<String> defIdentifier = data.data().getCache().getDefaultIdentifier();
+                    final SubjectRef<SubjectType<?>> defIdentifier = data.data().getCache().getDefaultIdentifier();
                     if (!subject.equals(defIdentifier)) {
                         ret = ret.thenCompose(none -> visitSubject(state, defIdentifier, visitedSubjects, 1))
-                            .thenCompose(none -> visitSubject(state, SubjectRef.subject(PermissionsEngine.SUBJECTS_DEFAULTS, PermissionsEngine.SUBJECTS_DEFAULTS.name()), visitedSubjects, 2)); // Force in global defaults
+                            .thenCompose(none -> visitSubject(state, SubjectRef.subject(data.getManager().defaultsType(), data.getManager().defaultsType()), visitedSubjects, 2)); // Force in global defaults
                     }
                     return ret.thenApply(none -> state);
 

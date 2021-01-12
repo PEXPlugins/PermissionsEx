@@ -189,9 +189,9 @@ class PermissionsExPlugin @Inject internal constructor(
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(PomData.NAME), e))
         }
-        defaults = loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS.name())
+        defaults = loadCollection(manager.defaults().type())
             .thenCompose { coll -> coll.loadSubject(
-                PermissionsEngine.SUBJECTS_DEFAULTS.name()
+                manager.defaults().type().name()
             ) }.get() as PEXSubject
         manager.subjects(systemSubjectType)
         manager.subjects(roleTemplateSubjectType)

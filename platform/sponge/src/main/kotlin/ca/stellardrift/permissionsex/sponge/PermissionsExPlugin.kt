@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.sponge
 
-import ca.stellardrift.permissionsex.PermissionsEngine
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
 import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
@@ -341,8 +340,8 @@ class PermissionsExService internal constructor(private val server: Server, priv
         }
 
     private val _defaults: PEXSubject =
-        loadCollection(PermissionsEngine.SUBJECTS_DEFAULTS)
-            .thenCompose { coll -> coll.loadSubject(PermissionsEngine.SUBJECTS_DEFAULTS.name()) }
+        loadCollection(manager.defaults().type())
+            .thenCompose { coll -> coll.loadSubject(manager.defaults().type().name()) }
             .get() as PEXSubject
     private val descriptions: MutableMap<String, PEXPermissionDescription> = ConcurrentHashMap()
 

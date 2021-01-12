@@ -251,7 +251,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    private void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
+    void onPlayerPreLogin(final AsyncPlayerPreLoginEvent event) {
         users().get(event.getUniqueId())
             .exceptionally(e -> {
                 logger.warn(Messages.ERROR_LOAD_PRELOGIN.tr(event.getName(), event.getUniqueId().toString(), e.getMessage()), e);

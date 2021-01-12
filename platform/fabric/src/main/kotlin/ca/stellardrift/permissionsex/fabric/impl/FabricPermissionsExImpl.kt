@@ -16,7 +16,6 @@
  */
 package ca.stellardrift.permissionsex.fabric.impl
 
-import ca.stellardrift.permissionsex.PermissionsEngine.SUBJECTS_DEFAULTS
 import ca.stellardrift.permissionsex.fabric.DimensionContextDefinition
 import ca.stellardrift.permissionsex.fabric.LocalHostContextDefinition
 import ca.stellardrift.permissionsex.fabric.LocalIpContextDefinition
@@ -163,7 +162,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             LocalHostContextDefinition,
             LocalPortContextDefinition,
             FunctionContextDefinition)
-        manager.engine().subjects(SUBJECTS_DEFAULTS).transientData().update(systemSubjectType.name()) {
+        manager.engine().defaults().transientData().update(systemSubjectType) {
             it.withSegment(GLOBAL_CONTEXT) { it.withFallbackPermission(1) }
         }
 

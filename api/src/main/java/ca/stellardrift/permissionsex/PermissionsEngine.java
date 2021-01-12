@@ -40,20 +40,33 @@ import java.util.regex.Pattern;
  */
 public interface PermissionsEngine extends ContextDefinitionProvider {
     @Deprecated
-    String SUBJECTS_USER = "user";
-    @Deprecated
     String SUBJECTS_GROUP = "group";
 
-    // TODO: make these SubjectType<?> values... somehow? will these need to become instance fields of the engine?
+    // -- Internal subject types -- //
+
     /**
-     * A subject type where subjects are
+     * Subjects holding data that will be applied to every subject of a type.
+     *
+     * @return the {@code fallback} subject type
      */
-    SubjectType<String> SUBJECTS_DEFAULTS = SubjectType.stringIdentBuilder("default")
-                        .transientHasPriority(false)
-                        .build();
-    SubjectType<String> SUBJECTS_FALLBACK = SubjectType.stringIdentBuilder("fallback").build();
+    SubjectTypeCollection<SubjectType<?>> defaults();
+
+    /**
+     * Subjects holding data that will be applied to subjects of each type when no other data is available.
+     *
+     * @return the {@code fallback} subject type
+     */
+    SubjectTypeCollection<SubjectType<?>> fallbacks();
 
     // -- Working with subject types -- //
+
+    /**
+     * Register subject types with the engine.
+     *
+     * @param types the types to register
+     * @since 2.0.0
+     */
+    void registerSubjectTypes(final SubjectType<?>... types);
 
     /**
      * Get a subject type by name.

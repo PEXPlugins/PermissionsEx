@@ -50,6 +50,8 @@ import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.impl.subject.SubjectTypeCollectionImpl;
 import ca.stellardrift.permissionsex.impl.util.Util;
+import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
+import io.leangen.geantyref.TypeToken;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.PVector;
@@ -63,7 +65,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,18 +100,24 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         PermissionsEngine,
         DataStoreContext {
 
+    // Mechanics
     private final FormattedLogger logger;
     private final ImplementationInterface impl;
     private final MemoryDataStore transientData;
-    private final RecordingPermissionCheckNotifier baseNotifier = new RecordingPermissionCheckNotifier();
-    private volatile PermissionCheckNotifier notifier = baseNotifier;
-    private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
+    private final SubjectType<SubjectType<?>> defaultsType;
+    private final SubjectType<SubjectType<?>> fallbacksType;
 
-    private final AtomicReference<@Nullable State<P>> state = new AtomicReference<>();
+    // Caches
     private final ConcurrentMap<String, SubjectTypeCollectionImpl<?>> subjectTypeCache = new ConcurrentHashMap<>();
     private @MonotonicNonNull RankLadderCache rankLadderCache;
     private volatile @Nullable CompletableFuture<ContextInheritance> cachedInheritance;
     private final CacheListenerHolder<Boolean, ContextInheritance> cachedInheritanceListeners = new CacheListenerHolder<>();
+
+    // Mutable state
+    private final RecordingPermissionCheckNotifier baseNotifier = new RecordingPermissionCheckNotifier();
+    private volatile PermissionCheckNotifier notifier = baseNotifier;
+    private final ConcurrentMap<String, ContextDefinition<?>> contextTypes = new ConcurrentHashMap<>();
+    private final AtomicReference<@Nullable State<P>> state = new AtomicReference<>();
 
     private static class State<P> {
         private final PermissionsExConfiguration<P> config;
@@ -126,19 +133,32 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
     public PermissionsEx(final PermissionsExConfiguration<P> config, ImplementationInterface impl) throws PermissionsLoadingException {
         this.impl = impl;
         this.logger = WrappingFormattedLogger.of(impl.logger(), false);
-        this.transientData = (MemoryDataStore) MemoryDataStore.create("transient").defrost(this);
-        this.debugMode(config.isDebugEnabled());
         this.registerContextDefinitions(
                 ServerTagContextDefinition.INSTANCE,
                 TimeContextDefinition.BEFORE_TIME,
                 TimeContextDefinition.AFTER_TIME);
+        this.defaultsType = this.subjectTypeBuilder("default")
+            .transientHasPriority(false)
+            .build();
+        this.fallbacksType = this.subjectTypeBuilder("fallback").build();
+        this.transientData = (MemoryDataStore) MemoryDataStore.create("transient").defrost(this);
+        this.debugMode(config.isDebugEnabled());
+
         this.initialize(config);
 
-        this.subjects(SUBJECTS_DEFAULTS);
-        this.subjects(SUBJECTS_FALLBACK);
+        this.registerSubjectTypes(
+            this.defaultsType,
+            this.fallbacksType
+        );
     }
 
-    private State<P> getState() throws IllegalStateException {
+    private SubjectType.Builder<SubjectType<?>> subjectTypeBuilder(final String id) {
+        return  SubjectType.builder(id, new TypeToken<SubjectType<?>>() {})
+            .serializedBy(SubjectType::name)
+            .deserializedBy(name -> this.subjectTypeCache.get(name).type());
+    }
+
+    private State<P> state() throws IllegalStateException {
         final @Nullable State<P> ret = this.state.get();
         if (ret == null) {
             throw new IllegalStateException("Manager has already been closed!");
@@ -146,13 +166,37 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         return ret;
     }
 
+    @Override
+    public SubjectTypeCollection<SubjectType<?>> defaults() {
+        return this.subjects(this.defaultsType);
+    }
+
+    public SubjectType<SubjectType<?>> defaultsType() {
+        return this.defaultsType;
+    }
+
+    @Override
+    public SubjectTypeCollection<SubjectType<?>> fallbacks() {
+        return this.subjects(this.fallbacksType);
+    }
+
+    public SubjectType<SubjectType<?>> fallbacksType() {
+        return this.fallbacksType;
+    }
+
+    @Override
+    public void registerSubjectTypes(final SubjectType<?>... types) {
+        for (final SubjectType<?> type : types) {
+            this.subjects(type);
+        }
+    }
 
     /**
      * Get the collection of subjects of a given type. No data is loaded in this operation.
      * Any string is supported as a subject type, but some common types have been provided as constants
      * in this class for convenience.
      *
-     * @see PermissionsEngine#SUBJECTS_DEFAULTS
+     * @see PermissionsEngine#defaults()
      * @param type The type identifier requested. Can be any string
      * @return The subject type collection
      */
@@ -160,15 +204,23 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
     public <I> SubjectTypeCollectionImpl<I> subjects(final SubjectType<I> type) {
         @SuppressWarnings("unchecked")
         final SubjectTypeCollectionImpl<I> collection = (SubjectTypeCollectionImpl<I>) this.subjectTypeCache.computeIfAbsent(type.name(),
-                key -> new SubjectTypeCollectionImpl<>(
-                        this,
-                        type,
-                        new SubjectDataCacheImpl<>(type, getState().activeDataStore),
-                        new SubjectDataCacheImpl<>(type, transientData)));
+            key -> {
+                final SubjectRef<SubjectType<?>> defaultIdentifier = SubjectRef.subject(this.defaultsType, type);
+                return new SubjectTypeCollectionImpl<>(
+                    this,
+                    type,
+                    new SubjectDataCacheImpl<>(type, defaultIdentifier, state().activeDataStore),
+                    new SubjectDataCacheImpl<>(type, defaultIdentifier, transientData));
+            });
+
         if (!type.equals(collection.type())) {
             throw new IllegalArgumentException("Provided subject type " + type + " is different from registered type " + collection.type());
         }
         return collection;
+    }
+
+    public SubjectType<?> subjectType(final String id) {
+        return this.subjectTypeCache.get(id).type();
     }
 
     /**
@@ -223,7 +275,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
 
     @Override
     public <V> CompletableFuture<V> doBulkOperation(Function<DataStore, CompletableFuture<V>> actor) {
-        return this.getState().activeDataStore.performBulkOperation(actor).thenCompose(it -> it);
+        return this.state().activeDataStore.performBulkOperation(actor).thenCompose(it -> it);
     }
 
     /**
@@ -234,7 +286,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      * @return A future that completes once all data has been written to the store
      */
     public <T> CompletableFuture<T> performBulkOperation(Supplier<CompletableFuture<T>> func) {
-        return getState().activeDataStore.performBulkOperation(store -> func.get().join());
+        return state().activeDataStore.performBulkOperation(store -> func.get().join());
     }
 
     /**
@@ -254,7 +306,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      * @return A future that completes once the import operation is complete
      */
     public CompletableFuture<?> importDataFrom(String dataStoreIdentifier) {
-        final State<P> state = getState();
+        final State<P> state = state();
         final @Nullable ProtoDataStore<?> expected = state.config.getDataStore(dataStoreIdentifier);
         if (expected == null) {
             return Util.failedFuture(new IllegalArgumentException("Data store " + dataStoreIdentifier + " is not present"));
@@ -267,7 +319,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
     }
 
     private CompletableFuture<?> importDataFrom(final ProtoDataStore<?> request) {
-        final State<P> state = getState();
+        final State<P> state = state();
         final DataStore expected;
         try {
             expected = request.defrost(this);
@@ -344,7 +396,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      */
     private void reloadSync() throws PEBKACException, PermissionsLoadingException {
         try {
-            PermissionsExConfiguration<P> config = getState().config.reload();
+            PermissionsExConfiguration<P> config = state().config.reload();
             config.validate();
             initialize(config);
             // TODO: Throw reload event to cache any relevant subject types
@@ -364,7 +416,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
     private void initialize(final PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
         final DataStore newStore = config.getDefaultDataStore().defrost(this);
         State<P> newState = new State<>(config, newStore);
-        boolean shouldAnnounceImports = !newState.activeDataStore.firstRun();
+        boolean shouldAnnounceImports = newState.activeDataStore.firstRun();
         try {
             newState.config.save();
         } catch (IOException e) {
@@ -415,7 +467,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         }
 
         // Migrate over legacy subject data
-        newState.activeDataStore.moveData("system", SUBJECTS_DEFAULTS.name(), SUBJECTS_DEFAULTS.name(), SUBJECTS_DEFAULTS.name()).thenRun(() -> {
+        newState.activeDataStore.moveData("system", this.defaultsType.name(), this.defaultsType.name(), this.defaultsType.name()).thenRun(() -> {
             this.logger().info(CONVERSION_RESULT_SUCCESS.tr());
         });
     }
@@ -444,7 +496,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
     }
 
     public List<ConversionResult> getAvailableConversions() {
-        return getState().availableConversions;
+        return state().availableConversions;
     }
 
     @Override
@@ -476,11 +528,11 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      */
     @Override
     public Executor asyncExecutor() {
-        return impl.asyncExecutor();
+        return this.impl.asyncExecutor();
     }
 
     public String version() {
-        return impl.version();
+        return this.impl.version();
     }
 
     /**
@@ -489,11 +541,11 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      * @return The current configuration object
      */
     public PermissionsExConfiguration<P> config() {
-        return getState().config;
+        return state().config;
     }
 
     public DataStore activeDataStore() {
-        return getState().activeDataStore;
+        return state().activeDataStore;
     }
 
     /**
@@ -510,7 +562,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
     @Override
     public CompletableFuture<ContextInheritance> contextInheritance(final @Nullable Consumer<ContextInheritance> listener) {
         if (this.cachedInheritance == null) {
-            this.cachedInheritance = getState().activeDataStore.getContextInheritance(this);
+            this.cachedInheritance = state().activeDataStore.getContextInheritance(this);
         }
         if (listener != null) {
             this.cachedInheritanceListeners.addListener(true, listener);
@@ -527,7 +579,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      */
     @Override
     public CompletableFuture<ContextInheritance> contextInheritance(ContextInheritance newInheritance) {
-        return getState().activeDataStore.setContextInheritance(newInheritance);
+        return state().activeDataStore.setContextInheritance(newInheritance);
     }
 
     /**
@@ -543,7 +595,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
 
     @Override
     public CompletableFuture<Set<ContextDefinition<?>>> usedContextTypes() {
-        return getState().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
+        return state().activeDataStore.getDefinedContextKeys().thenCombine(transientData.getDefinedContextKeys(), (persist, trans) -> {
             final Set<ContextDefinition<?>> build = new HashSet<>();
             for (final ContextDefinition<?> def : this.contextTypes.values()) {
                 if (persist.contains(def.name()) || trans.contains(def.name())) {
