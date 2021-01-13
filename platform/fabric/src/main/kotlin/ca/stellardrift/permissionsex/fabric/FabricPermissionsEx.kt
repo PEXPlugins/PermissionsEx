@@ -27,6 +27,7 @@ import ca.stellardrift.permissionsex.subject.SubjectType
 import com.google.common.collect.Maps
 import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.builder.ArgumentBuilder
+import java.util.UUID
 import java.util.function.Predicate
 import java.util.function.Supplier
 import net.minecraft.entity.player.PlayerEntity
@@ -40,10 +41,10 @@ val engine: PermissionsEngine get() = FabricPermissionsExImpl.manager
 
 // Subject types
 
-val userSubjectType get() = FabricPermissionsExImpl.mcManager.users().type()
-val groupSubjectType get() = FabricPermissionsExImpl.mcManager.groups().type()
+val userSubjectType: SubjectType<UUID> get() = FabricPermissionsExImpl.mcManager.users().type()
+val groupSubjectType: SubjectType<String> get() = FabricPermissionsExImpl.mcManager.groups().type()
 
-val systemSubjectType = SubjectType.stringIdentBuilder("system")
+val systemSubjectType: SubjectType<String> = SubjectType.stringIdentBuilder("system")
     .fixedEntries(
         Maps.immutableEntry("Server", Supplier { FabricPermissionsExImpl.server }),
         Maps.immutableEntry(IDENTIFIER_RCON, Supplier { null })
@@ -52,11 +53,11 @@ val systemSubjectType = SubjectType.stringIdentBuilder("system")
     .build()
 
 // TODO: How can we represent permission level two for command blocks and functions
-val commandBlockSubjectType = SubjectType.stringIdentBuilder("command-block")
+val commandBlockSubjectType: SubjectType<String> = SubjectType.stringIdentBuilder("command-block")
     .undefinedValues { true }
     .build()
 
-val functionSubjectType = SubjectType.builder("function", Identifier::class.java)
+val functionSubjectType: SubjectType<Identifier> = SubjectType.builder("function", Identifier::class.java)
     .serializedBy(Identifier::toString)
     .deserializedBy {
         try {

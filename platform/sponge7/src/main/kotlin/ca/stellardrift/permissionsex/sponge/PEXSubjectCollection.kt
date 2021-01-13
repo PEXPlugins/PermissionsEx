@@ -50,7 +50,7 @@ class PEXSubjectCollection<I> private constructor(private val identifier: Subjec
         fun <I> load(identifier: SubjectType<I>, plugin: PermissionsExPlugin): CompletableFuture<PEXSubjectCollection<I>> {
             val ret = PEXSubjectCollection(identifier, plugin)
             val defaultFuture =
-                if (identifier == plugin.manager.defaults()) {
+                if (identifier.equals(plugin.manager.defaults().type())) {
                     ret.loadSubject(plugin.manager.defaults().type().name())
                 } else {
                     plugin.loadCollection(plugin.manager.defaults().type()).thenCompose { it.loadSubject(identifier.name()) }

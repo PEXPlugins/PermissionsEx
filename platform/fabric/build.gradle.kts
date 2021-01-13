@@ -112,6 +112,7 @@ pexPlatform {
         "org.slf4j"
     )
     relocate("org.apache.logging.slf4j", keepElements = 2)
+    excludeChecker()
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {

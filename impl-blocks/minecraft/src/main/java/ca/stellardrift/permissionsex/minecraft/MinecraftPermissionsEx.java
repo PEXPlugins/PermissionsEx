@@ -30,21 +30,16 @@ import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter;
 import ca.stellardrift.permissionsex.minecraft.command.PEXCommandPreprocessor;
 import ca.stellardrift.permissionsex.minecraft.command.definition.PermissionsExCommand;
 import ca.stellardrift.permissionsex.minecraft.command.definition.RankingCommands;
-import ca.stellardrift.permissionsex.minecraft.command.argument.PatternParser;
 import ca.stellardrift.permissionsex.minecraft.profile.ProfileApiResolver;
 import ca.stellardrift.permissionsex.subject.InvalidIdentifierException;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import cloud.commandframework.CommandManager;
 import cloud.commandframework.CommandTree;
-import cloud.commandframework.brigadier.BrigadierManagerHolder;
-import cloud.commandframework.brigadier.CloudBrigadierManager;
 import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -234,7 +229,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
 
         // Register custom argument parsers
         if (this.hasBrigadier()) {
-            this.registerBrigadierMappings(this.commands);
+            BrigadierRegistration.registerArgumentTypes(this.commands);
         }
 
         // And register commands
@@ -261,26 +256,6 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         } catch (final ClassNotFoundException ex) {
             return false;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void registerBrigadierMappings(final CommandManager<Commander> manager) {
-        if (!(manager instanceof BrigadierManagerHolder)) {
-            return;
-        }
-
-        final @Nullable CloudBrigadierManager<?, ?> brig = ((BrigadierManagerHolder<?>) manager).brigadierManager();
-        if (brig == null) {
-            return;
-        }
-
-        brig.registerMapping(TypeToken.get(PatternParser.class), true, parser -> {
-            if (parser.greedy()) {
-                return StringArgumentType.greedyString();
-            } else {
-                return StringArgumentType.string();
-            }
-        });
     }
 
     private void convertUuids() {
@@ -456,7 +431,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         public Builder<C> commands(
             final Function<Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>, CommandManager<Commander>> manager
         ) {
-            this.commandManager = manager.apply(CommandExecutionCoordinator.simpleCoordinator());
+            this.commands(manager, "");
             return this;
         }
 

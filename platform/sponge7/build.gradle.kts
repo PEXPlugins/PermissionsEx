@@ -55,6 +55,7 @@ pexPlatform {
         "kotlinx",
         "net.kyori",
         "org.antlr",
+        "org.checkerframework",
         "org.jdbi",
         "org.jetbrains.annotations",
         "org.pcollections",
@@ -63,6 +64,7 @@ pexPlatform {
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {
+    relocate("com.typesafe", "configurate.typesafe")
     dependencies {
         exclude(dependency("com.typesafe:config:.*"))
         exclude(dependency("org.yaml:snakeyaml:.*"))

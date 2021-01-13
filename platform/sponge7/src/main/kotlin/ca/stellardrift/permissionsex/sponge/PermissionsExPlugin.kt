@@ -158,7 +158,7 @@ class PermissionsExPlugin @Inject internal constructor(
             Files.createDirectories(configDir)
             _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
                 .implementationInterface(this)
-                .playerProvider(game.server::getPlayer)
+                .playerProvider { id -> game.server.getPlayer(id).orElse(null) }
                 .cachedUuidResolver resolved@{ name ->
                     val res = game.server.gameProfileManager.cache
                     for (profile in res.match(name)) {
@@ -207,10 +207,9 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     private fun registerFakeOpCommand(ctx: CommandRegistrationContext) {
-        val userArgument = StringArgument.of<Commander>("user")
         fun register(name: String, permission: String) {
             ctx.register(ctx.absoluteBuilder(name)
-                .argument(userArgument)
+                .argument(StringArgument.of("user"))
                 .permission(permission)
                 .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())
                 .handler {

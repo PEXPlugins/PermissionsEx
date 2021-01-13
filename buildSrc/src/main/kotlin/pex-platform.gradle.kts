@@ -32,7 +32,6 @@ val shadowJar = tasks.named("shadowJar", ShadowJar::class) {
     }
 
     // Don't shade compile-only annotations, or other project's module info files
-    exclude("org/checkerframework/**")
     exclude("**/module-info.class")
 
     // Process service files

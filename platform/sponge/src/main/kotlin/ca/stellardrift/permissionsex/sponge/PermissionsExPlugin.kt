@@ -27,7 +27,6 @@ import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.logging.FormattedLogger
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
-import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.sponge.command.SpongeMessageFormatter
 import ca.stellardrift.permissionsex.subject.SubjectType
 import cloud.commandframework.arguments.standard.StringArgument
@@ -167,10 +166,9 @@ class PermissionsExPlugin @Inject internal constructor(
     }
 
     private fun registerFakeOpCommand(ctx: CommandRegistrationContext) {
-        val userArgument = StringArgument.of<Commander>("user")
         fun register(name: String, permission: String) {
             ctx.register(ctx.absoluteBuilder(name)
-                .argument(userArgument)
+                .argument(StringArgument.of("user"))
                 .permission(permission)
                 // .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())
                 .handler {

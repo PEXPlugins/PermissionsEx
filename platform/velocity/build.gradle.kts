@@ -50,6 +50,7 @@ pexPlatform {
         "com.zaxxer.hikari",
         "io.leangen.geantyref",
         "org.antlr",
+        "org.checkerframework",
         "org.jdbi",
         "org.spongepowered.configurate",
         "org.pcollections"

@@ -64,7 +64,8 @@ final class CloudCommandCallable<C> implements CommandCallable {
     @Override
     public CommandResult process(final CommandSource source, final String arguments) {
         final C cloudSender = this.manager.getCommandSourceMapper().apply(source);
-        this.manager.executeCommand(cloudSender, this.command.getName() + " " + arguments)
+
+        this.manager.executeCommand(cloudSender, this.formatCommand(arguments))
             .whenComplete((result, throwable) -> {
                 if (throwable != null) {
                     if (throwable instanceof CompletionException) {
@@ -130,13 +131,20 @@ final class CloudCommandCallable<C> implements CommandCallable {
 
     @Override
     public List<String> getSuggestions(final CommandSource source, final String arguments, final @Nullable Location<World> targetPosition) {
-        return this.manager.suggest(this.manager.getCommandSourceMapper().apply(source), this.command.getName() + " " + arguments);
+        return this.manager.suggest(this.manager.getCommandSourceMapper().apply(source), this.formatCommand(arguments));
+    }
+
+    private String formatCommand(final String arguments) {
+        if (arguments.isEmpty()) {
+            return this.command.getName();
+        } else {
+            return this.command.getName() + " " + arguments;
+        }
     }
 
     @Override
     public boolean testPermission(final CommandSource source) {
-        // TODO: We check if any permissions match, need to have some sort of CommandPermission.test(predicate);
-        return source.hasPermission(cloudCommand.getCommandPermission().toString());
+        return this.manager.hasPermission(this.manager.getCommandSourceMapper().apply(source), this.cloudCommand.getCommandPermission());
     }
 
     @Override

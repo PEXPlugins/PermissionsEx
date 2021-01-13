@@ -13,4 +13,10 @@ open class PexPlatformExtension @Inject constructor(val relocationRoot: String, 
             }
         }
     }
+
+    fun excludeChecker() {
+        this.task.configure {
+            exclude("org/checkerframework/**")
+        }
+    }
 }

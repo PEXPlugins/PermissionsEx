@@ -84,11 +84,12 @@ pexPlatform {
         "com.zaxxer.hikari",
         "io.leangen.geantyref",
         "net.kyori",
+        "org.checkerframework",
         "org.jdbi",
         "org.antlr",
+        "org.pcollections",
         "org.slf4j",
-        "org.spongepowered.configurate",
-        "org.pcollections"
+        "org.spongepowered.configurate"
     )
 }
 

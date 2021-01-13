@@ -56,6 +56,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -183,7 +184,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
 
         try {
             final ImplementationInterface impl = new BukkitImplementationInterface();
-            this.getDataFolder().mkdirs();
+            Files.createDirectories(this.dataPath);
             this.manager = MinecraftPermissionsEx.builder(
                 FilePermissionsExConfiguration.fromLoader(
                     configLoader,
@@ -238,10 +239,16 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
             this.permissionList = null;
         }
         uninjectAllPermissibles();
+
         this.executorService.shutdown();
+        boolean successful;
         try {
-            this.executorService.awaitTermination(20, TimeUnit.SECONDS);
+            successful = this.executorService.awaitTermination(20, TimeUnit.SECONDS);
         } catch (final InterruptedException ex) {
+            successful = false;
+        }
+
+        if (!successful) {
             logger.error(Messages.ERROR_DISABLE_TASK_TIMEOUT.tr());
             executorService.shutdownNow();
         }
@@ -304,7 +311,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR) // Happen last
     void onPlayerQuit(final PlayerQuitEvent event) {
         uninjectPermissible(event.getPlayer());
-        final MinecraftPermissionsEx<?> manager = this.manager;
+        final @Nullable MinecraftPermissionsEx<?> manager = this.manager;
         if (manager != null) {
             manager.callbackController().clearOwnedBy(event.getPlayer().getUniqueId());
             manager.users().uncache(event.getPlayer().getUniqueId());
@@ -365,7 +372,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
             }
             if (!success) {
                 this.logger.warn(Messages.SUPERPERMS_UNINJECT_NO_INJECTOR.tr(player.getName()));
-            } else if (this.manager != null && this.engine().debugMode() == true) {
+            } else if (this.manager != null && this.engine().debugMode()) {
                 this.logger.info(Messages.SUPERPERMS_UNINJECT_SUCCESS.tr(player.getName()));
             }
         } catch (final Throwable ex) {

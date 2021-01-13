@@ -73,6 +73,7 @@ pexPlatform {
         "io.leangen.geantyref",
         "net.kyori",
         "org.antlr",
+        "org.checkerframework",
         "org.jdbi",
         "org.slf4j",
         "org.spongepowered.configurate",
