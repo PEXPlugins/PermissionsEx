@@ -60,7 +60,7 @@ dependencies {
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
     })
-    modImplementation(include("ca.stellardrift:confabricate:2.0.1") {
+    modImplementation(include("ca.stellardrift:confabricate:2.0.2") {
         exclude("com.google.code.gson")
     })
     modImplementation(include("me.lucko:fabric-permissions-api:0.1-SNAPSHOT")!!)
