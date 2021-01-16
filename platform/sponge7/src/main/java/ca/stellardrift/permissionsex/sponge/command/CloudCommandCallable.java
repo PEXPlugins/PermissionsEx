@@ -34,6 +34,7 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
@@ -169,7 +170,7 @@ final class CloudCommandCallable<C> implements CommandCallable {
     @Override
     public Text getUsage(final CommandSource source) {
         return Text.of(this.manager.getCommandSyntaxFormatter().apply(
-            this.cloudCommand.getArguments(),
+            Collections.emptyList(),
             this.manager.getCommandTree().getNamedNode(this.command.getName())
         ));
     }

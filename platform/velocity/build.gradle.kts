@@ -22,8 +22,35 @@ plugins {
     id("ca.stellardrift.templating")
 }
 
+val velocityRunClasspath by configurations.creating {
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class, Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements::class, LibraryElements.JAR))
+    }
+}
+
+repositories {
+    ivy {
+        setUrl("https://versions.velocitypowered.com/download/")
+
+        patternLayout {
+            artifact("[revision].[ext]")
+        }
+
+        metadataSources {
+            artifact()
+        }
+
+        content {
+            includeModule("com.velocitypowered", "velocity-proxy")
+        }
+    }
+}
+
 dependencies {
     val cloudVersion: String by project
+    val velocityVersion: String by project
     api(project(":impl-blocks:minecraft")) {
         exclude("org.slf4j", "slf4j-api")
         exclude("com.google.code.gson")
@@ -40,7 +67,8 @@ dependencies {
     implementation(project(":impl-blocks:minecraft")) { isTransitive = false }
     implementation("cloud.commandframework:cloud-velocity:$cloudVersion")
 
-    annotationProcessor(shadow("com.velocitypowered:velocity-api:1.1.3")!!)
+    annotationProcessor(shadow("com.velocitypowered:velocity-api:$velocityVersion")!!)
+    velocityRunClasspath("com.velocitypowered:velocity-proxy:$velocityVersion")
 }
 
 pexPlatform {
@@ -55,4 +83,33 @@ pexPlatform {
         "org.spongepowered.configurate",
         "org.pcollections"
     )
+}
+
+val pluginJar = tasks.shadowJar.map { it.outputs }
+val spongeRunFiles = velocityRunClasspath.asFileTree
+val runVelocity by tasks.registering(JavaExec::class) {
+    group = "pex"
+    description = "Spin up a Velocity server environment"
+    standardInput = System.`in`
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(11)) })
+
+    inputs.files(pluginJar)
+
+    classpath(spongeRunFiles)
+    workingDir = layout.projectDirectory.dir("run").asFile
+
+    doFirst {
+        // Prepare
+        val modsDir = workingDir.resolve("plugins")
+        if (!modsDir.isDirectory) {
+            modsDir.mkdirs()
+        }
+
+        project.copy {
+            into(modsDir.absolutePath)
+            from(pluginJar) {
+                rename { "${rootProject.name}-${project.name}.jar" }
+            }
+        }
+    }
 }

@@ -157,7 +157,7 @@ public abstract class AbstractDataStore<T extends AbstractDataStore<T, C>, C> im
      * </ul>
      */
     protected final void applyDefaultData() {
-        final SubjectRef<SubjectType<?>> defaultSubject = SubjectRef.subject(this.engine().defaults(), this.engine().defaults().type());
+        final SubjectRef<SubjectType<?>> defaultSubject = SubjectRef.subject(this.context().defaultsType(), this.context().defaultsType());
         getData(defaultSubject, null)
                 .thenApply(data -> data.withSegment(Collections.singleton(new ContextValue<>("localip", "127.0.0.1")), s -> s.withFallbackPermission(1)))
                 .thenCompose(data -> setData(defaultSubject, data));

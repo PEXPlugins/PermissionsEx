@@ -19,6 +19,7 @@ package ca.stellardrift.permissionsex.datastore;
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import ca.stellardrift.permissionsex.subject.SubjectType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.sql.DataSource;
@@ -63,6 +64,10 @@ public interface DataStoreContext {
      * @since 2.0.0
      */
     Executor asyncExecutor();
+
+    SubjectType<SubjectType<?>> defaultsType();
+
+    SubjectType<SubjectType<?>> fallbacksType();
 
     /**
      * Deserialize a subject reference given a type and identifier.

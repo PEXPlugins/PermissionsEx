@@ -27,6 +27,14 @@ plugins {
     kotlin("kapt")
 }
 
+val spongeRunClasspath by configurations.creating {
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class, Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements::class, LibraryElements.JAR))
+    }
+}
+
 dependencies {
     val adventurePlatformVersion: String by project
     val slf4jVersion: String by project
@@ -45,11 +53,14 @@ dependencies {
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.7.0")
+
+    spongeRunClasspath("org.spongepowered:spongevanilla:1.12.2-7.3.0") { isTransitive = false }
 }
 
 pexPlatform {
     relocate(
         "cloud.commandframework",
+        "com.typesafe.config",
         "io.leangen.geantyref",
         "kotlin",
         "kotlinx",
@@ -64,10 +75,38 @@ pexPlatform {
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {
-    relocate("com.typesafe", "configurate.typesafe")
     dependencies {
-        exclude(dependency("com.typesafe:config:.*"))
         exclude(dependency("org.yaml:snakeyaml:.*"))
         exclude(dependency("com.google.code.gson:gson:.*"))
+    }
+}
+
+val pluginJar = shadowJar.outputs
+val spongeRunFiles = spongeRunClasspath.asFileTree
+val runSponge7 by tasks.registering(JavaExec::class) {
+    group = "pex"
+    description = "Spin up a SpongeVanilla server environment"
+    standardInput = System.`in`
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(8)) })
+
+    inputs.files(spongeRunClasspath, pluginJar)
+
+    classpath(spongeRunFiles)
+    mainClass.set("org.spongepowered.server.launch.VersionCheckingMain")
+    workingDir = layout.projectDirectory.dir("run").asFile
+
+    doFirst {
+        // Prepare
+        val modsDir = workingDir.resolve("mods")
+        if (!modsDir.isDirectory) {
+            modsDir.mkdirs()
+        }
+
+        project.copy {
+            into(modsDir.absolutePath)
+            from(pluginJar) {
+                rename { "${rootProject.name}-${project.name}.jar" }
+            }
+        }
     }
 }

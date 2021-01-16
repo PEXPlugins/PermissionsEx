@@ -171,6 +171,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         return this.subjects(this.defaultsType);
     }
 
+    @Override
     public SubjectType<SubjectType<?>> defaultsType() {
         return this.defaultsType;
     }
@@ -180,6 +181,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         return this.subjects(this.fallbacksType);
     }
 
+    @Override
     public SubjectType<SubjectType<?>> fallbacksType() {
         return this.fallbacksType;
     }

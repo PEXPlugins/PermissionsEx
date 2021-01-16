@@ -28,6 +28,22 @@ plugins {
     id("ca.stellardrift.configurate-transformations")
 }
 
+val spongeRunClasspath by configurations.creating {
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class, Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements::class, LibraryElements.JAR))
+    }
+}
+
+repositories {
+    mavenLocal {
+        content {
+            includeGroup("org.spongepowered")
+        }
+    }
+}
+
 dependencies {
     val slf4jVersion: String by project
 
@@ -44,6 +60,9 @@ dependencies {
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.7.0")
+
+    spongeRunClasspath(project(project.path, configuration = "shadow"))
+    spongeRunClasspath("org.spongepowered:spongevanilla:1.16.4-8.0.0-RC0:universal") { isTransitive = false }
 }
 
 pexPlatform {
@@ -77,5 +96,27 @@ tasks.processResources {
     filesMatching("**/*.yml") {
         convertFormat(ConfigFormats.YAML, ConfigFormats.JSON)
         name = name.substringBeforeLast('.') + ".json"
+    }
+}
+
+val pluginJar = shadowJar.outputs
+val spongeRunFiles = spongeRunClasspath.asFileTree
+val runSponge by tasks.registering(JavaExec::class) {
+    group = "pex"
+    description = "Spin up a SpongeVanilla API 8 server environment"
+    standardInput = System.`in`
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(8)) })
+
+    inputs.files(spongeRunClasspath)
+
+    classpath(spongeRunFiles)
+    mainClass.set("org.spongepowered.vanilla.installer.InstallerMain")
+    workingDir = layout.projectDirectory.dir("run").asFile
+
+    doFirst {
+        // Prepare
+        if (!workingDir.isDirectory) {
+            workingDir.mkdirs()
+        }
     }
 }

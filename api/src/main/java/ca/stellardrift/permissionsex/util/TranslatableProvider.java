@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -144,7 +145,16 @@ public final class TranslatableProvider implements ComponentLike {
         // Get all resources from the same code source as the class
         // If the code source is a jar: open the jar, iterate through entries?
         try {
-            final Path codeSource = Paths.get(loaderOf.getProtectionDomain().getCodeSource().getLocation().toURI());
+            URL sourceUrl = loaderOf.getProtectionDomain().getCodeSource().getLocation();
+            // Some class loaders give the full url to the class, some give the URL to its jar.
+            // We want the containing jar, so we will unwrap jar-schema code sources.
+            if (sourceUrl.getProtocol().equals("jar")) {
+                final int exclamationIdx = sourceUrl.getPath().lastIndexOf('!');
+                if (exclamationIdx != -1) {
+                    sourceUrl = new URL(sourceUrl.getPath().substring(0, exclamationIdx));
+                }
+            }
+            final Path codeSource = Paths.get(sourceUrl.toURI());
             final String bundlePathName = bundleName.replace('.', '/');
             final Set<String> paths;
             if (!codeSource.equals(lastCodeSource)) {
