@@ -53,6 +53,7 @@ dependencies {
         exclude(group = "com.github.ben-manes.caffeine", module = "caffeine")
         exclude(group = "org.spongepowered")
         exclude(group = "net.kyori")
+        exclude(group = "io.leangen.geantyref", module = "geantyref")
     }
 
     testImplementation(compileOnly("org.spongepowered:spongeapi:8.0.0-SNAPSHOT")!!)
@@ -83,12 +84,7 @@ pexPlatform {
 val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("com.google.code.gson:gson:.*"))
-        exclude(dependency("io.leangen:geantyref:.*"))
     }
-
-    manifest.attributes(
-        "Loader" to "java_plain" // declare as a Sponge plugin
-    )
 }
 
 tasks.processResources {

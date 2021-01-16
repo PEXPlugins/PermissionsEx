@@ -126,7 +126,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("org.jetbrains.kotlinx:.*:.*"))
         exclude(dependency("org.jetbrains:annotations:.*"))
         exclude(dependency("org.checkerframework:checker-qual:.*"))
-        exclude(dependency("io.leangen:geantyref:.*"))
+        exclude(dependency("io.leangen.geantyref:geantyref:.*"))
     }
 }
 

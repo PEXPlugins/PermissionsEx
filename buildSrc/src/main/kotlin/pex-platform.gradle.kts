@@ -38,6 +38,15 @@ val shadowJar = tasks.named("shadowJar", ShadowJar::class) {
     mergeServiceFiles()
 }
 
+val validateShadowing by tasks.registering(ArchiveAllowedClasses::class) {
+    input.from(shadowJar)
+    allowedPackages.add("ca.stellardrift")
+}
+
+tasks.check {
+    dependsOn(validateShadowing)
+}
+
 tasks.assemble {
     dependsOn(shadowJar)
 }
