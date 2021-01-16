@@ -18,11 +18,9 @@
 package ca.stellardrift.permissionsex.bukkit;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
-import ca.stellardrift.permissionsex.impl.BaseDirectoryScope;
-import ca.stellardrift.permissionsex.impl.ImplementationInterface;
-import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
+import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import ca.stellardrift.permissionsex.minecraft.command.CommandException;
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext;
@@ -35,7 +33,6 @@ import cloud.commandframework.CommandTree;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.bukkit.CloudBukkitCapabilities;
 import cloud.commandframework.bukkit.arguments.selector.SinglePlayerSelector;
-import cloud.commandframework.bukkit.parsers.PlayerArgument;
 import cloud.commandframework.bukkit.parsers.selector.SinglePlayerSelectorArgument;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
@@ -55,19 +52,13 @@ import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.slf4j.Logger;
 import org.slf4j.impl.JDK14LoggerAdapter;
-import org.spongepowered.configurate.yaml.NodeStyle;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -216,28 +207,24 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
         this.dataPath = getDataFolder().toPath();
         this.logger = makeLogger();
         this.adventure = BukkitAudiences.create(this);
-        final YamlConfigurationLoader configLoader = YamlConfigurationLoader.builder()
-            .path(this.dataPath.resolve("config.yml"))
-            .nodeStyle(NodeStyle.BLOCK)
-            .defaultOptions(FilePermissionsExConfiguration::decorateOptions)
-            .build();
 
         try {
-            final ImplementationInterface impl = new BukkitImplementationInterface();
             Files.createDirectories(this.dataPath);
-            this.manager = MinecraftPermissionsEx.builder(
-                FilePermissionsExConfiguration.fromLoader(
-                    configLoader,
-                    BukkitConfiguration.class
-                ))
-                .implementationInterface(impl)
+            this.manager = MinecraftPermissionsEx.<BukkitConfiguration>builder()
+                .configuration(this.dataPath.resolve("config.yml"))
+                .asyncExecutor(this.executorService)
+                .databaseProvider(url -> Hikari.createDataSource(url, this.dataPath))
+                .logger(this.logger)
+                .baseDirectory(BaseDirectoryScope.JAR, Bukkit.getUpdateFolderFile().toPath())
+                .baseDirectory(BaseDirectoryScope.SERVER, this.dataPath.toAbsolutePath().getParent().getParent())
+                .baseDirectory(BaseDirectoryScope.WORLDS, Bukkit.getWorldContainer().toPath())
                 .opProvider(it -> getServer().getOperators().contains(this.getServer().getOfflinePlayer(it)))
                 .cachedUuidResolver(it -> getServer().getOfflinePlayer(it).getUniqueId()) // TODO: is this correct?
                 .playerProvider(getServer()::getPlayer)
                 .commands(this::createCommandManager)
                 .messageFormatter(BukkitMessageFormatter::new)
                 .commandContributor(this::registerBukkitCommands)
-                .build();
+                .create();
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -435,45 +422,6 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
 
     FormattedLogger logger() {
         return this.manager().engine().logger();
-    }
-
-    final class BukkitImplementationInterface  implements ImplementationInterface {
-
-        @Override
-        public Path baseDirectory(final BaseDirectoryScope scope) {
-            switch (scope) {
-                case CONFIG: return PermissionsExPlugin.this.dataPath;
-                case JAR: return Bukkit.getUpdateFolderFile().toPath();
-                case SERVER: return PermissionsExPlugin.this.dataPath.toAbsolutePath().getParent().getParent();
-                case WORLDS: return Bukkit.getWorldContainer().toPath();
-                default: throw new IllegalArgumentException("Unknown directory scope " + scope);
-            }
-        }
-
-        @Override
-        public DataSource dataSourceForUrl(final String url) throws SQLException {
-            return Hikari.createDataSource(url, this.baseDirectory());
-        }
-
-        /**
-         * Get an executor to run tasks asynchronously on.
-         *
-         * @return The async executor
-         */
-        @Override
-        public Executor asyncExecutor() {
-            return executorService;
-        }
-
-        @Override
-        public String version() {
-            return getDescription().getVersion();
-        }
-
-        @Override
-        public Logger logger() {
-            return PermissionsExPlugin.this.logger;
-        }
     }
 
 }

@@ -42,6 +42,10 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
     @Deprecated
     String SUBJECTS_GROUP = "group";
 
+    static PermissionsEngineBuilder builder() {
+        return EngineBuilderService.ACTIVE_BUILDER.newBuilder();
+    }
+
     // -- Internal subject types -- //
 
     /**

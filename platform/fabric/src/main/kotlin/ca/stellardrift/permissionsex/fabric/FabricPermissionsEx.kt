@@ -120,7 +120,7 @@ fun PlayerEntity.hasPermission(perm: String, fallbackOpLevel: Int = 2): Boolean 
  */
 fun GameProfile.hasPermission(perm: String): Boolean {
     if (this.id == null) {
-        FabricPermissionsExImpl.logger().error(Messages.GAMEPROFILE_ERROR_INCOMPLETE.tr(this.name))
+        FabricPermissionsExImpl.logger.error(Messages.GAMEPROFILE_ERROR_INCOMPLETE.tr(this.name))
         return false
     }
     return FabricPermissionsExImpl.mcManager.users()[this.id].join().hasPermission(perm)

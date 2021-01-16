@@ -18,13 +18,10 @@ package ca.stellardrift.permissionsex.sponge
 
 import ca.stellardrift.permissionsex.exception.PEBKACException
 import ca.stellardrift.permissionsex.exception.PermissionsException
-import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
-import ca.stellardrift.permissionsex.impl.ImplementationInterface
 import ca.stellardrift.permissionsex.impl.PermissionsEx
-import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.impl.util.CachingValue
-import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
 import ca.stellardrift.permissionsex.sponge.command.SpongeMessageFormatter
@@ -37,17 +34,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.sql.SQLException
 import java.util.Optional
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.Executor
 import java.util.function.Predicate
 import java.util.function.Supplier
-import javax.sql.DataSource
 import org.apache.logging.log4j.Logger
 import org.apache.logging.log4j.spi.ExtendedLogger
 import org.apache.logging.slf4j.Log4jLogger
@@ -86,7 +80,7 @@ class PermissionsExPlugin @Inject internal constructor(
     internal val game: Game,
     private val sql: SqlManager,
     @ConfigDir(sharedRoot = false) private val configDir: Path
-) : ImplementationInterface {
+) {
     internal val scheduler = game.asyncScheduler.createExecutor(container)
     private val logger = WrappingFormattedLogger.of(Log4jLogger(logger as ExtendedLogger, logger.name), true)
     private var _manager: MinecraftPermissionsEx<*>? = null
@@ -98,10 +92,8 @@ class PermissionsExPlugin @Inject internal constructor(
         return this._manager ?: throw IllegalStateException("Manager is not yet initialized, or there was an error loading the plugin!")
     }
 
-    private val configLoader = HoconConfigurationLoader.builder()
-        .path(this.configDir.resolve("${container.metadata.id}.conf"))
-        .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
-        .build()
+    private val configFile = this.configDir.resolve("${container.metadata.id}.conf")
+
     internal var service: PermissionsExService? = null
         private set
 
@@ -129,8 +121,15 @@ class PermissionsExPlugin @Inject internal constructor(
             convertFromBukkit()
             convertFromLegacySpongeName()
             Files.createDirectories(configDir)
-            _manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
-                .implementationInterface(this)
+            _manager = MinecraftPermissionsEx.builder<Unit>()
+                .configuration(this.configFile)
+                .baseDirectory(this.configDir)
+                .logger(this.logger)
+                .asyncExecutor(this.scheduler)
+                .baseDirectory(BaseDirectoryScope.JAR, game.gameDirectory.resolve("mods"))
+                .baseDirectory(BaseDirectoryScope.SERVER, game.gameDirectory)
+                // .baseDirectory(BaseDirectoryScope.WORLDS, TODO("level container"))
+                .databaseProvider { url -> sql.getDataSource(container, url) }
                 .playerProvider { game.server.getPlayer(it).orElse(null) }
                 .cachedUuidResolver { name ->
                     val player = game.server.getPlayer(name)
@@ -147,7 +146,7 @@ class PermissionsExPlugin @Inject internal constructor(
                 }
                 .commandContributor(this::registerFakeOpCommand)
                 .messageFormatter(::SpongeMessageFormatter)
-                .build()
+                .create()
         } catch (e: Exception) {
             throw RuntimeException(PermissionsException(Messages.PLUGIN_INIT_ERROR_GENERAL.tr(ProjectData.NAME), e))
         }
@@ -248,7 +247,10 @@ class PermissionsExPlugin @Inject internal constructor(
         if (Files.exists(bukkitConfigFile)) {
             val yamlReader = YamlConfigurationLoader.builder().path(bukkitConfigFile).build()
             val bukkitConfig = yamlReader.load()
-            configLoader.save(bukkitConfig)
+            HoconConfigurationLoader.builder()
+                .path(configFile)
+                .build()
+                .save(bukkitConfig)
             Files.move(bukkitConfigFile, configDir.resolve("config.yml.bukkit"))
         }
     }
@@ -274,39 +276,6 @@ class PermissionsExPlugin @Inject internal constructor(
         Files.newDirectoryStream(this).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
 
-    // ImplementationInterface
-
-    override fun baseDirectory(scope: BaseDirectoryScope): Path {
-        return when (scope) {
-            BaseDirectoryScope.CONFIG -> configDir
-            BaseDirectoryScope.JAR -> game.gameDirectory.resolve("mods")
-            BaseDirectoryScope.SERVER -> game.gameDirectory
-            BaseDirectoryScope.WORLDS -> TODO("level container")
-        }
-    }
-
-    override fun logger(): FormattedLogger {
-        return logger
-    }
-
-    override fun dataSourceForUrl(url: String): DataSource? {
-        return try {
-            sql.getDataSource(container, url)
-        } catch (e: SQLException) {
-            logger.error(Messages.PLUGIN_DATA_SOURCE_ERROR.tr(url), e)
-            null
-        }
-    }
-
-    /**
-     * Get an executor to run tasks asynchronously on.
-     *
-     * @return The async executor
-     */
-    override fun asyncExecutor(): Executor {
-        return this.scheduler
-    }
-
     /*override fun lookupMinecraftProfilesByName(
         names: Iterable<String>,
         action: Function<MinecraftProfile, CompletableFuture<Void>>
@@ -319,10 +288,6 @@ class PermissionsExPlugin @Inject internal constructor(
                     .thenApply { profiles.size }
             }
     }*/
-
-    override fun version(): String {
-        return ProjectData.VERSION
-    }
 }
 
 class PermissionsExService internal constructor(private val server: Server, private val plugin: PermissionsExPlugin) : PermissionService {

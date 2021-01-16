@@ -11,14 +11,25 @@ if (name != "velocity"
     plugins.apply("ca.stellardrift.opinionated.kotlin")
 }
 
-tasks.processResources {
-    inputs.property("version", project.version)
+tasks {
+    processResources {
+        inputs.property("version", project.version)
 
-    expand("project" to project)
-}
+        expand("project" to project)
+    }
 
-tasks.javadoc {
-    enabled = false
+    javadoc {
+        enabled = false
+    }
+
+    jar {
+        manifest.attributes(
+            "Specification-Title" to rootProject.name,
+            "Specification-Version" to project.version,
+            "Implementation-Title" to "${rootProject.name} ${project.name.capitalize()}",
+            "Implementation-Version" to "${project.version}${project.findProperty("pexSuffix") ?: ""}"
+        )
+    }
 }
 
 val pexRelocationRoot: String by project

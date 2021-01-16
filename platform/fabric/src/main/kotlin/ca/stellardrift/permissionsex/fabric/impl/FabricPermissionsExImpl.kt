@@ -25,21 +25,17 @@ import ca.stellardrift.permissionsex.fabric.WorldContextDefinition
 import ca.stellardrift.permissionsex.fabric.commandBlockSubjectType
 import ca.stellardrift.permissionsex.fabric.functionSubjectType
 import ca.stellardrift.permissionsex.fabric.systemSubjectType
-import ca.stellardrift.permissionsex.impl.BaseDirectoryScope
-import ca.stellardrift.permissionsex.impl.ImplementationInterface
 import ca.stellardrift.permissionsex.impl.PermissionsEx
 import ca.stellardrift.permissionsex.impl.PermissionsEx.GLOBAL_CONTEXT
-import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger
 import ca.stellardrift.permissionsex.logging.FormattedLogger
+import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.sql.hikari.Hikari
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.sql.DataSource
 import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -50,10 +46,8 @@ import net.fabricmc.loader.api.ModContainer
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.WorldSavePath
 import org.slf4j.LoggerFactory
 import org.spongepowered.asm.mixin.MixinEnvironment
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 
 class PreLaunchInjector : PreLaunchEntrypoint {
     override fun onPreLaunch() {
@@ -62,7 +56,7 @@ class PreLaunchInjector : PreLaunchEntrypoint {
 }
 
 private const val MOD_ID: String = "permissionsex"
-object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
+object FabricPermissionsExImpl : ModInitializer {
 
     val manager: PermissionsEx<*>
         get() = requireNotNull(_manager?.engine()) { "PermissionsEx has not yet been initialized!" }
@@ -76,7 +70,8 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
 
     val available get() = _manager != null
 
-    private lateinit var logger: FormattedLogger
+    internal lateinit var logger: FormattedLogger
+        private set
     private val exec = Executors.newCachedThreadPool()
 
     override fun onInitialize() {
@@ -89,11 +84,11 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
         this.dataDir = FabricLoader.getInstance().configDir.resolve(MOD_ID)
         this.container = FabricLoader.getInstance().getModContainer(MOD_ID)
             .orElseThrow { IllegalStateException("Mod container for PermissionsEx was not available in init!") }
-        logger().prefix("[${container.metadata.name}] ")
+        this.logger.prefix("[${container.metadata.name}] ")
 
         this._manager = this.createManager()
         registerEvents()
-        logger().info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
+        this.logger.info(Messages.MOD_ENABLE_SUCCESS.tr(container.metadata.version))
     }
 
     private fun registerEvents() {
@@ -129,14 +124,16 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
     private fun createManager(): MinecraftPermissionsEx<*> {
         Files.createDirectories(dataDir)
 
-        val loader = HoconConfigurationLoader.builder()
-            .path(dataDir.resolve("$MOD_ID.conf"))
-            .defaultOptions { FilePermissionsExConfiguration.decorateOptions(it) }
-            .build()
-
         val manager = try {
-            MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(loader))
-                .implementationInterface(this)
+            MinecraftPermissionsEx.builder<Unit>()
+                .configuration(this.dataDir.resolve("$MOD_ID.conf"))
+                .asyncExecutor(this.exec)
+                .logger(this.logger)
+                .databaseProvider { Hikari.createDataSource(it, this.dataDir) }
+                .baseDirectory(this.dataDir)
+                .baseDirectory(BaseDirectoryScope.JAR, FabricLoader.getInstance().gameDir.resolve("mods"))
+                .baseDirectory(BaseDirectoryScope.SERVER, FabricLoader.getInstance().gameDir)
+                // .baseDirectory(BaseDirectoryScope.WORLDS, this.server?.getSavePath(WorldSavePath.ROOT)) // TODO: How to implement this
                 .playerProvider { this.server?.playerManager?.getPlayer(it) }
                 .cachedUuidResolver { this.server?.userCache?.findByName(it)?.id }
                 .opProvider {
@@ -144,9 +141,9 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
                     server.userCache.getByUuid(it)?.let(server.playerManager::isOperator) ?: false
                 }
                 .messageFormatter(::FabricMessageFormatter)
-                .build()
+                .create()
         } catch (e: Exception) {
-            logger().error(Messages.MOD_ENABLE_ERROR.tr(), e)
+            this.logger.error(Messages.MOD_ENABLE_ERROR.tr(), e)
             System.exit(1)
             throw IllegalStateException(e)
             // TODO: throw another exception here?
@@ -183,7 +180,7 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
             try {
                 this.exec.awaitTermination(10, TimeUnit.SECONDS)
             } catch (e: InterruptedException) {
-                logger().error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
+                this.logger.error(Messages.MOD_ERROR_SHUTDOWN_TIMEOUT.tr())
                 this.exec.shutdownNow()
             }
         }
@@ -207,35 +204,9 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
         }
     }
 
-    override fun baseDirectory(scope: BaseDirectoryScope): Path {
-        return when (scope) {
-            BaseDirectoryScope.CONFIG -> dataDir
-            BaseDirectoryScope.JAR -> FabricLoader.getInstance().gameDir.resolve("mods")
-            BaseDirectoryScope.SERVER -> FabricLoader.getInstance().gameDir
-            BaseDirectoryScope.WORLDS -> this.server?.getSavePath(WorldSavePath.ROOT)
-                ?: throw IllegalStateException("Tried to access worlds directory without an active server")
-        }
-    }
-
-    override fun logger(): FormattedLogger {
-        return logger
-    }
-
-    override fun dataSourceForUrl(url: String): DataSource {
-        return Hikari.createDataSource(url, this.dataDir)
-    }
-
-    override fun asyncExecutor(): Executor {
-        return exec
-    }
-
-    override fun version(): String {
-        return container.metadata.version.friendlyString
-    }
-
     fun logUnredirectedPermissionsCheck(method: String) {
-        logger().warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK.tr(method))
-        logger().debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK.tr(method), Exception("call chain"))
+        this.logger.warn(Messages.MOD_ERROR_UNREDIRECTED_CHECK.tr(method))
+        this.logger.debug(Messages.MOD_ERROR_UNREDIRECTED_CHECK.tr(method), Exception("call chain"))
     }
 }
 

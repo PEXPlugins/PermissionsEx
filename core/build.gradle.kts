@@ -59,3 +59,12 @@ dependencies {
     testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.1")
     testFixturesImplementation("org.postgresql:postgresql:42.2.18")
 }
+
+tasks.jar {
+    manifest.attributes(
+        "Specification-Title" to rootProject.name,
+        "Specification-Version" to project.version,
+        "Implementation-Title" to "${rootProject.name} ${project.name.capitalize()}",
+        "Implementation-Version" to project.version
+    )
+}

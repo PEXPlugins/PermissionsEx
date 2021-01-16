@@ -17,9 +17,7 @@
 package ca.stellardrift.permissionsex.velocity;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
-import ca.stellardrift.permissionsex.impl.BaseDirectoryScope;
-import ca.stellardrift.permissionsex.impl.ImplementationInterface;
-import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
@@ -47,17 +45,13 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -160,25 +154,26 @@ public class PermissionsExPlugin {
         try {
             Files.createDirectories(dataPath);
         } catch (final IOException ex) {
-            logger.error(Messages.PLUGIN_INIT_ERROR.tr(), ex);
+            this.logger.error(Messages.PLUGIN_INIT_ERROR.tr(), ex);
         }
 
-        final HoconConfigurationLoader configLoader = HoconConfigurationLoader.builder()
-            .path(dataPath.resolve("permissionsex.conf"))
-            .defaultOptions(FilePermissionsExConfiguration::decorateOptions)
-            .build();
-
         try {
-            this.manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
-                .implementationInterface(new VelocityImplementationInterface())
+            this.manager = MinecraftPermissionsEx.builder()
+                .configuration(this.dataPath.resolve("permissionsex.conf"))
+                .logger(this.logger)
+                .asyncExecutor(this.exec)
+                .databaseProvider(url -> Hikari.createDataSource(url, this.dataPath))
+                .baseDirectory(this.dataPath)
+                .baseDirectory(BaseDirectoryScope.JAR, PLUGINS_PATH)
+                .baseDirectory(BaseDirectoryScope.SERVER, SERVER_PATH)
                 .cachedUuidResolver(name -> server.getPlayer(name).map(Player::getUniqueId).orElse(null))
                 .playerProvider(id -> server.getPlayer(id).orElse(null))
                 .commands(this::createCommandManager, ProxyCommon.PROXY_COMMAND_PREFIX)
                 .messageFormatter(VelocityMessageFormatter::new)
-                .build();
+                .create();
 
         } catch (final Exception ex) {
-            logger.error(Messages.PLUGIN_INIT_ERROR.tr(), ex);
+            this.logger.error(Messages.PLUGIN_INIT_ERROR.tr(), ex);
             return;
         }
 
@@ -246,37 +241,4 @@ public class PermissionsExPlugin {
         this.users().uncache(event.getPlayer().getUniqueId());
     }
 
-    class VelocityImplementationInterface implements ImplementationInterface {
-
-        @Override
-        public Path baseDirectory(final BaseDirectoryScope scope) {
-            switch (scope) {
-                case CONFIG: return dataPath;
-                case JAR: return PLUGINS_PATH;
-                case SERVER:
-                case WORLDS: return SERVER_PATH;
-                default: throw new AssertionError("Unknown directory scope " + scope);
-            }
-        }
-
-        @Override
-        public DataSource dataSourceForUrl(final String url) throws SQLException {
-            return Hikari.createDataSource(url, dataPath);
-        }
-
-        @Override
-        public FormattedLogger logger() {
-            return logger;
-        }
-
-        @Override
-        public Executor asyncExecutor() {
-            return exec;
-        }
-
-        @Override
-        public String version() {
-            return ProjectData.VERSION;
-        }
-    }
 }

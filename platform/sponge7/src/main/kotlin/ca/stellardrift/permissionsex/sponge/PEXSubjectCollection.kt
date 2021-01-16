@@ -43,7 +43,7 @@ class PEXSubjectCollection<I> private constructor(private val identifier: Subjec
     val type: SubjectTypeCollection<I> = plugin.manager.subjects(identifier)
     private var defaults: PEXSubject? = null
     private val subjectCache: AsyncLoadingCache<String, PEXSubject> = Caffeine.newBuilder()
-        .executor(plugin.asyncExecutor())
+        .executor(plugin.manager.asyncExecutor())
         .buildAsync { key, _ -> PEXSubject.load(key, this@PEXSubjectCollection) }
 
     companion object {

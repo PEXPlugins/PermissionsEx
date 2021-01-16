@@ -18,9 +18,7 @@ package ca.stellardrift.permissionsex.bungee;
 
 import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.context.ContextDefinitionProvider;
-import ca.stellardrift.permissionsex.impl.BaseDirectoryScope;
-import ca.stellardrift.permissionsex.impl.ImplementationInterface;
-import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
+import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
@@ -50,16 +48,12 @@ import net.md_5.bungee.event.EventPriority;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.impl.JDK14LoggerAdapter;
-import org.spongepowered.configurate.yaml.NodeStyle;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -74,6 +68,7 @@ public class PermissionsExPlugin extends Plugin implements Listener {
     private @MonotonicNonNull BungeeAudiences adventure;
 
     private @Nullable MinecraftPermissionsEx<?> manager;
+    private final Executor exec = task -> getProxy().getScheduler().runAsync(PermissionsExPlugin.this, task);
 
     /**
      * Get the permissions engine active for this proxy.
@@ -148,15 +143,14 @@ public class PermissionsExPlugin extends Plugin implements Listener {
             this.logger.error("Unable to load PermissionsEx!", ex);
         }
 
-        final YamlConfigurationLoader configLoader = YamlConfigurationLoader.builder()
-            .path(this.dataPath.resolve("config.yml"))
-            .defaultOptions(FilePermissionsExConfiguration::decorateOptions)
-            .nodeStyle(NodeStyle.BLOCK)
-        .build();
-
         try {
-            this.manager = MinecraftPermissionsEx.builder(FilePermissionsExConfiguration.fromLoader(configLoader))
-                .implementationInterface(new BungeeImplementationInterface())
+            this.manager = MinecraftPermissionsEx.builder()
+                .configuration(this.dataPath.resolve("config.yml"))
+                .baseDirectory(this.dataPath)
+                .databaseProvider(url -> Hikari.createDataSource(url, this.dataPath))
+                .logger(this.logger)
+                .asyncExecutor(this.exec)
+                .baseDirectory(BaseDirectoryScope.JAR, this.getProxy().getPluginsFolder().toPath())
                 .commands(this::createCommandManager, ProxyCommon.PROXY_COMMAND_PREFIX)
                 .messageFormatter(BungeeMessageFormatter::new)
                 .playerProvider(it -> getProxy().getPlayer(it))
@@ -165,7 +159,7 @@ public class PermissionsExPlugin extends Plugin implements Listener {
                     // bungee only supports online players
                     return player == null ? null: player.getUniqueId();
                 })
-                .build();
+                .create();
         } catch (final Exception ex) {
             this.logger.error("Unable to load PermissionsEx!", ex);
             return;
@@ -223,44 +217,6 @@ public class PermissionsExPlugin extends Plugin implements Listener {
 
     BungeeAudiences adventure() {
         return this.adventure;
-    }
-
-    class BungeeImplementationInterface implements ImplementationInterface {
-        private final Executor exec = task -> getProxy().getScheduler().runAsync(PermissionsExPlugin.this, task);
-
-        @Override
-        public Path baseDirectory(final BaseDirectoryScope scope) {
-            switch (scope) {
-                case CONFIG: return dataPath;
-                case JAR: return getProxy().getPluginsFolder().toPath();
-                case SERVER:
-                case WORLDS:
-                    // proxies don't have worlds... so this will just be the server dir
-                    return getProxy().getPluginsFolder().getParentFile().toPath();
-                default: throw new IllegalArgumentException("Unknown base directory scope: " + scope);
-            }
-        }
-
-        @Override
-        public org.slf4j.Logger logger() {
-            return PermissionsExPlugin.this.logger;
-        }
-
-        @Override
-        public DataSource dataSourceForUrl(final String url) throws SQLException {
-            return Hikari.createDataSource(url, PermissionsExPlugin.this.dataPath);
-        }
-
-        @Override
-        public Executor asyncExecutor() {
-            return this.exec;
-        }
-
-        @Override
-        public String version() {
-            return getDescription().getVersion();
-        }
-
     }
 
     /**

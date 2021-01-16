@@ -56,6 +56,8 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
+import org.slf4j.Logger;
+import org.spongepowered.configurate.util.CheckedFunction;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -102,7 +104,9 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
 
     // Mechanics
     private final FormattedLogger logger;
-    private final ImplementationInterface impl;
+    private final Path baseDirectory;
+    private final Executor asyncExecutor;
+    private final CheckedFunction<String, DataSource, SQLException> dataSourceProvider;
     private final MemoryDataStore transientData;
     private final SubjectType<SubjectType<?>> defaultsType;
     private final SubjectType<SubjectType<?>> fallbacksType;
@@ -130,26 +134,31 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         }
     }
 
-    public PermissionsEx(final PermissionsExConfiguration<P> config, ImplementationInterface impl) throws PermissionsLoadingException {
-        this.impl = impl;
-        this.logger = WrappingFormattedLogger.of(impl.logger(), false);
+    public PermissionsEx(
+        final Logger logger,
+        final Path baseDirectory,
+        final Executor asyncExecutor,
+        final CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider
+    ) {
+        this.logger = WrappingFormattedLogger.of(logger, false);
+        this.baseDirectory = baseDirectory;
+        this.asyncExecutor = asyncExecutor;
+        this.dataSourceProvider = databaseProvider;
         this.registerContextDefinitions(
                 ServerTagContextDefinition.INSTANCE,
                 TimeContextDefinition.BEFORE_TIME,
                 TimeContextDefinition.AFTER_TIME);
+
         this.defaultsType = this.subjectTypeBuilder("default")
             .transientHasPriority(false)
             .build();
         this.fallbacksType = this.subjectTypeBuilder("fallback").build();
-        this.transientData = (MemoryDataStore) MemoryDataStore.create("transient").defrost(this);
-        this.debugMode(config.isDebugEnabled());
 
-        this.initialize(config);
-
-        this.registerSubjectTypes(
-            this.defaultsType,
-            this.fallbacksType
-        );
+        try {
+            this.transientData = (MemoryDataStore) MemoryDataStore.create("transient").defrost(this);
+        } catch (final PermissionsLoadingException ex) {
+            throw new RuntimeException("Failed to create memory data store!", ex);
+        }
     }
 
     private SubjectType.Builder<SubjectType<?>> subjectTypeBuilder(final String id) {
@@ -400,7 +409,7 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         try {
             PermissionsExConfiguration<P> config = state().config.reload();
             config.validate();
-            initialize(config);
+            prepare(config);
             // TODO: Throw reload event to cache any relevant subject types
         } catch (IOException e) {
             throw new PEBKACException(CONFIG_ERROR_LOAD.tr(e.getLocalizedMessage()));
@@ -415,7 +424,8 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      * @param config The configuration to use in this engine
      * @throws PermissionsLoadingException If an error occurs loading the backend
      */
-    private void initialize(final PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
+    private void prepare(final PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
+        this.debugMode(config.isDebugEnabled());
         final DataStore newStore = config.getDefaultDataStore().defrost(this);
         State<P> newState = new State<>(config, newStore);
         boolean shouldAnnounceImports = newState.activeDataStore.firstRun();
@@ -474,6 +484,15 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         });
     }
 
+    public void initialize(final PermissionsExConfiguration<?> config) throws PermissionsLoadingException {
+        this.prepare((PermissionsExConfiguration<P>) config);
+
+        this.registerSubjectTypes(
+            this.defaultsType,
+            this.fallbacksType
+        );
+    }
+
     /**
      * Reload the configuration file in use and refresh backend data
      *
@@ -510,17 +529,13 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
 
     @Override
     public Path baseDirectory() {
-        return impl.baseDirectory();
-    }
-
-    public Path baseDirectory(BaseDirectoryScope scope) {
-        return impl.baseDirectory(scope);
+        return this.baseDirectory;
     }
 
     @Override
     @Deprecated
     public @Nullable DataSource dataSourceForUrl(String url) throws SQLException {
-        return impl.dataSourceForUrl(url);
+        return this.dataSourceProvider.apply(url);
     }
 
     /**
@@ -530,11 +545,11 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
      */
     @Override
     public Executor asyncExecutor() {
-        return this.impl.asyncExecutor();
+        return this.asyncExecutor;
     }
 
     public String version() {
-        return this.impl.version();
+        return PermissionsEx.class.getPackage().getImplementationVersion();
     }
 
     /**

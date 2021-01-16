@@ -16,12 +16,12 @@
  */
 package ca.stellardrift.permissionsex.minecraft;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
+import ca.stellardrift.permissionsex.PermissionsEngineBuilder;
 import ca.stellardrift.permissionsex.datastore.DataStoreFactory;
-import ca.stellardrift.permissionsex.impl.BaseDirectoryScope;
-import ca.stellardrift.permissionsex.impl.ImplementationInterface;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
-import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
+import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.minecraft.command.CallbackController;
 import ca.stellardrift.permissionsex.minecraft.command.CommandException;
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext;
@@ -45,16 +45,23 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.util.ComponentMessageThrowable;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.pcollections.PMap;
+import org.slf4j.Logger;
+import org.spongepowered.configurate.util.CheckedFunction;
 
+import javax.sql.DataSource;
 import java.io.Closeable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -86,23 +93,29 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
     private final String commandPrefix;
     private final @Nullable Consumer<CommandRegistrationContext> commandContributor;
     private final MessageFormatter formatter;
+    private final Map<BaseDirectoryScope, Path> baseDirectories;
 
     /**
      * Create a new builder for a Minecraft permissions engine.
      *
-     * @param config the configuration for the engine
      * @param <V>    platform configuration type
      * @return the builder
      */
-    public static <V> Builder<V> builder(final PermissionsExConfiguration<V> config) {
-        return new Builder<>(config);
+    public static <V> Builder<V> builder() {
+        return new Builder<>();
     }
 
     MinecraftPermissionsEx(final Builder<T> builder) throws PermissionsLoadingException {
-        this.engine = new PermissionsEx<>(builder.config, builder.implementation);
+        this.baseDirectories = builder.baseDirectories;
+        this.engine = (PermissionsEx<T>) builder.buildEngine();
         this.resolver = ProfileApiResolver.resolver(this.engine.asyncExecutor());
         this.callbacks = new CallbackController();
-        this.commands = builder.commandManager;
+        this.commands = builder.commandManagerMaker == null ? null : builder.commandManagerMaker.apply(
+            AsynchronousCommandExecutionCoordinator.<Commander>newBuilder()
+                .withAsynchronousParsing()
+                .withExecutor(this.engine.asyncExecutor())
+                .build()
+        );
         this.commandPrefix = builder.commandPrefix;
         this.commandContributor = builder.commandContributor;
         final Predicate<UUID> opProvider = builder.opProvider;
@@ -192,11 +205,23 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         receiver.sendMessage(Component.empty());
         if (verbose) {
             receiver.sendMessage(this.formatter.header(Messages.DESCRIBE_BASEDIRS_HEADER.bTr()).build());
-            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_CONFIG.tr(this.engine.baseDirectory(BaseDirectoryScope.CONFIG)));
-            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_JAR.tr(this.engine.baseDirectory(BaseDirectoryScope.JAR)));
-            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_SERVER.tr(this.engine.baseDirectory(BaseDirectoryScope.SERVER)));
-            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_WORLDS.tr(this.engine.baseDirectory(BaseDirectoryScope.WORLDS)));
+            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_CONFIG.tr(this.baseDirectory(BaseDirectoryScope.CONFIG)));
+            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_JAR.tr(this.baseDirectory(BaseDirectoryScope.JAR)));
+            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_SERVER.tr(this.baseDirectory(BaseDirectoryScope.SERVER)));
+            receiver.sendMessage(Messages.DESCRIBE_BASEDIRS_WORLDS.tr(this.baseDirectory(BaseDirectoryScope.WORLDS)));
         }
+    }
+
+    /**
+     * Get a game-specific base directory for a certain socpe.
+     *
+     * @param scope the scope
+     * @return a base directory
+     * @since 2.0.0
+     */
+    public Path baseDirectory(final BaseDirectoryScope scope) {
+        final @Nullable Path baseDir = this.baseDirectories.get(scope);
+        return baseDir == null ? this.engine.baseDirectory() : baseDir;
     }
 
     /**
@@ -371,32 +396,20 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
      *
      * @since 2.0.0
      */
-    public static final class Builder<C> {
+    public static final class Builder<C> implements PermissionsEngineBuilder {
 
-        private final PermissionsExConfiguration<C> config;
-        private @MonotonicNonNull ImplementationInterface implementation;
+        private final PermissionsEngineBuilder delegate;
         private Function<String, @Nullable UUID> cachedUuidResolver = $ -> null;
         private Predicate<UUID> opProvider = $ -> false;
         private Function<UUID, @Nullable ?> playerProvider = $ -> null;
-        private @Nullable CommandManager<Commander> commandManager;
+        private @Nullable Function<Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>, CommandManager<Commander>> commandManagerMaker;
         private String commandPrefix = "";
         private @Nullable Consumer<CommandRegistrationContext> commandContributor;
         private Function<MinecraftPermissionsEx<C>, MessageFormatter> formatterProvider = MessageFormatter::new;
+        private PMap<BaseDirectoryScope, Path> baseDirectories = PCollections.map();
 
-        Builder(final PermissionsExConfiguration<C> configInstance) {
-            this.config = requireNonNull(configInstance, "config");
-        }
-
-        /**
-         * Set the implementation interface to be used.
-         *
-         * @param impl the implementation interface
-         * @return this builder
-         * @since 2.0.0
-         */
-        public Builder<C> implementationInterface(final ImplementationInterface impl) {
-            this.implementation = requireNonNull(impl, "impl");
-            return this;
+        Builder() {
+            this.delegate = PermissionsEngine.builder();
         }
 
         /**
@@ -461,10 +474,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
             final Function<Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>>, CommandManager<Commander>> manager,
             final String commandPrefix
         ) {
-            this.commandManager = manager.apply(AsynchronousCommandExecutionCoordinator.<Commander>newBuilder()
-                .withAsynchronousParsing()
-                .withExecutor(this.implementation.asyncExecutor())
-                .build());
+            this.commandManagerMaker = requireNonNull(manager, "manager");
             this.commandPrefix = requireNonNull(commandPrefix, "commandPrefix");
             return this;
         }
@@ -496,6 +506,65 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
             return this;
         }
 
+        @Override
+        public Builder<C> configuration(final Path configFile) {
+            this.delegate.configuration(configFile);
+            return this;
+        }
+
+        @Override
+        public Builder<C> baseDirectory(final Path baseDir) {
+            this.delegate.baseDirectory(baseDir);
+            return this.baseDirectory(BaseDirectoryScope.CONFIG, baseDir);
+        }
+
+        /**
+         * Set the base directory in a certain game-specific scope.
+         *
+         * @param scope the scope to set a base directory in
+         * @param baseDirectory the base directory
+         * @return this builder
+         * @since 2.0.0
+         */
+        public Builder<C> baseDirectory(final BaseDirectoryScope scope, final Path baseDirectory) {
+            this.baseDirectories = this.baseDirectories.plus(scope, baseDirectory);
+            return this;
+        }
+
+        @Override
+        public Builder<C> logger(final Logger logger) {
+            this.delegate.logger(logger);
+            return this;
+        }
+
+        @Override
+        public Builder<C> asyncExecutor(final Executor executor) {
+            this.delegate.asyncExecutor(executor);
+            return this;
+        }
+
+        @Override
+        public Builder<C> databaseProvider(final CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider) {
+            this.delegate.databaseProvider(databaseProvider);
+            return this;
+        }
+
+        /**
+         * This method should not be called directly.
+         *
+         * @return a new permissions engine
+         * @throws PermissionsLoadingException when unable to load
+         */
+        @Override
+        @Deprecated
+        public PermissionsEngine build() throws PermissionsLoadingException {
+            throw new IllegalArgumentException("Call create() instead");
+        }
+
+        PermissionsEngine buildEngine() throws PermissionsLoadingException {
+            return this.delegate.build();
+        }
+
         /**
          * Build an engine.
          *
@@ -505,8 +574,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
          * @throws PermissionsLoadingException if unable to load initial data
          * @since 2.0.0
          */
-        public MinecraftPermissionsEx<C> build() throws PermissionsLoadingException {
-            requireNonNull(this.implementation, "An ImplementationInterface must be provided");
+        public MinecraftPermissionsEx<C> create() throws PermissionsLoadingException {
             return new MinecraftPermissionsEx<>(this);
         }
 

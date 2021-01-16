@@ -22,11 +22,15 @@ import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.subject.SubjectType;
-import org.spongepowered.configurate.serialize.SerializationException;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.io.TempDir;
+import org.mariadb.jdbc.MariaDbDataSource;
+import org.postgresql.ds.PGSimpleDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,6 +40,7 @@ import java.util.UUID;
  * Abstract test for test classes wishing to test in cases requiring a permissions manager
  */
 public abstract class PermissionsExTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger("TestImpl");
     public static final SubjectType<String> SUBJECTS_GROUP = SubjectType.stringIdentBuilder("group").build();
     public static final SubjectType<UUID> SUBJECTS_USER = SubjectType.builder("user", UUID.class)
             .serializedBy(UUID::toString)
@@ -45,17 +50,38 @@ public abstract class PermissionsExTest {
     public Path tempFolder;
 
     private PermissionsEx<?> manager;
+
     @BeforeEach
-    public void setUp(TestInfo info, @TempDir Path tempFolder) throws PermissionsLoadingException, IOException, PEBKACException {
+    public void setUp(final TestInfo info, final @TempDir Path tempFolder) throws PermissionsLoadingException, IOException, PEBKACException {
         this.tempFolder = tempFolder;
-        PermissionsExConfiguration<?> config = populate();
+        final PermissionsExConfiguration<?> config = populate();
         config.validate();
 
-        manager = new PermissionsEx<>(config, new TestImplementationInterface(tempFolder.resolve(info.getDisplayName())));
+        this.manager = new PermissionsEx<>(
+            LOGGER,
+            tempFolder.resolve(info.getDisplayName()),
+            Runnable::run,
+            url -> {
+                if (url.startsWith("jdbc:h2")) {
+                    JdbcDataSource ds = new JdbcDataSource();
+                    ds.setURL(url);
+                    return ds;
+                } else if (url.startsWith("jdbc:mysql")) {
+                    return new MariaDbDataSource(url);
+                } else if (url.startsWith("jdbc:postgresql")) {
+                    PGSimpleDataSource ds = new PGSimpleDataSource();
+                    ds.setUrl(url);
+                    return ds;
+                }
+                throw new IllegalArgumentException("Unsupported database implementation!");
+            }
+        );
+
+        this.manager.initialize(config);
 
         // Register subject types
-        manager.subjects(SUBJECTS_GROUP);
-        manager.subjects(SUBJECTS_USER);
+        this.manager.subjects(SUBJECTS_GROUP);
+        this.manager.subjects(SUBJECTS_USER);
     }
 
     @AfterEach
