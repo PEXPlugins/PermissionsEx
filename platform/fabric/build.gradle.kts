@@ -2,6 +2,7 @@
 import ca.stellardrift.build.configurate.ConfigFormats
 import ca.stellardrift.build.configurate.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import net.fabricmc.loom.task.AbstractRunTask
 import net.fabricmc.loom.task.RemapJarTask
 import org.jetbrains.kotlin.backend.common.atMostOne
 
@@ -75,7 +76,12 @@ tasks.withType(ProcessResources::class).configureEach {
     }
 }
 
-tasks.withType(net.fabricmc.loom.task.AbstractRunTask::class).configureEach {
+loom {
+    // Run directory is part of the subproject, not the root project
+    runDir = projectDir.resolve("run/").relativeTo(rootDir).toString()
+}
+
+tasks.withType(AbstractRunTask::class).configureEach {
     // Midxin debug options
     jvmArgs(
         // "-Dmixin.debug.verbose=true",
@@ -99,6 +105,18 @@ tasks.withType(net.fabricmc.loom.task.AbstractRunTask::class).configureEach {
             emptyList()
         }
     }
+}
+
+tasks.register("runFabricServer") {
+    dependsOn(tasks.runServer)
+    group = "pex"
+    description = "Run a Fabric development server"
+}
+
+tasks.register("runFabricClient") {
+    dependsOn(tasks.runClient)
+    group = "pex"
+    description = "Run a Fabric development client"
 }
 
 pexPlatform {

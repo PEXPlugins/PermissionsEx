@@ -80,3 +80,9 @@ pexPlatform {
         "org.pcollections"
     )
 }
+
+tasks.register("runBungeePex") {
+    dependsOn(tasks.debugBungee)
+    group = "pex"
+    description = "Run a Bungee test environment"
+}

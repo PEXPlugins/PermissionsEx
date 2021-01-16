@@ -72,7 +72,7 @@ spigot {
     softDepends("Vault", "WorldGuard")
 
     debug {
-        buildVersion = "1.16.4"
+        buildVersion = "1.16.5"
     }
 }
 
@@ -98,4 +98,10 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude("org.yaml:snakeyaml")
     }
     exclude("org/checkerframework/**")
+}
+
+tasks.register("runBukkit") {
+    dependsOn(tasks.debugPaper)
+    group = "pex"
+    description = "Run a Bukkit environment"
 }
