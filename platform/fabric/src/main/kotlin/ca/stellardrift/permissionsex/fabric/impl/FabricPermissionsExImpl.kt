@@ -124,8 +124,6 @@ object FabricPermissionsExImpl : ImplementationInterface, ModInitializer {
                 TriState.DEFAULT
             }
         }
-
-        registerWorldEdit()
     }
 
     private fun createManager(): MinecraftPermissionsEx<*> {

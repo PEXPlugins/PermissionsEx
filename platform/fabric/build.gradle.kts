@@ -53,8 +53,6 @@ dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.1:v2")
     modImplementation("net.fabricmc:fabric-loader:0.11.1")
-    modCompileOnly("com.sk89q.worldedit:worldedit-fabric-mc1.16.3:7.2.1") { isTransitive = false }
-    modCompileOnly("com.sk89q.worldedit:worldedit-core:7.2.1") { isTransitive = false }
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.29.3+1.16")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.4.21+build.1")
@@ -143,7 +141,6 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))
         exclude(dependency("org.jetbrains.kotlinx:.*:.*"))
         exclude(dependency("org.jetbrains:annotations:.*"))
-        exclude(dependency("org.checkerframework:checker-qual:.*"))
         exclude(dependency("io.leangen.geantyref:geantyref:.*"))
     }
 }
