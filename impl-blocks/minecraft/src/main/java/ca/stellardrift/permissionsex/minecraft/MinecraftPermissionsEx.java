@@ -36,6 +36,7 @@ import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import cloud.commandframework.CommandManager;
 import cloud.commandframework.CommandTree;
+import cloud.commandframework.exceptions.CommandExecutionException;
 import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
@@ -43,6 +44,7 @@ import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.util.ComponentMessageThrowable;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -223,6 +225,19 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         this.commands.registerExceptionHandler(CommandException.class, (sender, err) -> {
             final @Nullable Component message = err.componentMessage();
             sender.error(message == null ? text("An unknown error occurred in this command") : message, err.getCause());
+        });
+        this.commands.registerExceptionHandler(CommandExecutionException.class, (sender, err) -> {
+            final @Nullable Throwable cause = err.getCause();
+            if (cause instanceof CommandException) {
+                sender.error(((CommandException) cause).componentMessage(), cause.getCause());
+            } else if (cause != null) {
+                sender.error(Messages.COMMAND_ERROR_UNKNOWN.tr(), cause);
+                this.engine.logger().error(Messages.COMMAND_ERROR_UNKNOWN_CONSOLE.tr(
+                    /* sender */ sender.name(),
+                    /* command */ "not yet implemented", // coming cloud 1.4.0
+                    /* message */ ComponentMessageThrowable.getOrConvertMessage(cause)
+                ));
+            }
         });
 
         this.commands.registerCommandPreProcessor(new PEXCommandPreprocessor(this));

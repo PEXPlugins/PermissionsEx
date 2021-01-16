@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -58,6 +59,7 @@ public final class TranslatableProvider implements ComponentLike {
     private static final Logger LOGGER = LoggerFactory.getLogger("PermissionsEx Translations");
     private static final String EXPECTED_EXTENSION = ".properties";
     private static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
+    private static final Pattern SINGLE_QUOTE_PATTERN = Pattern.compile("'");
     private static @Nullable Path lastCodeSource;
     private static @Nullable Set<String> lastKnownResourceBundles;
 
@@ -220,7 +222,11 @@ public final class TranslatableProvider implements ComponentLike {
 
             for (final String key : bundle.keySet()) {
                 try {
-                    registry.register(formatKey(bundleName, key), language, new MessageFormat(bundle.getString(key)));
+                    registry.register(
+                        formatKey(bundleName, key),
+                        language,
+                        new MessageFormat(SINGLE_QUOTE_PATTERN.matcher(bundle.getString(key)).replaceAll("''"))
+                    );
                 } catch (final Exception ex) {
                     LOGGER.warn("Failed to register translation key {} in bundle {}", key, bundleName, ex);
                 }
