@@ -24,14 +24,21 @@ import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
+import ca.stellardrift.permissionsex.minecraft.command.CommandException;
+import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext;
 import ca.stellardrift.permissionsex.minecraft.command.Commander;
 import ca.stellardrift.permissionsex.minecraft.command.Permission;
 import ca.stellardrift.permissionsex.sql.hikari.Hikari;
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import cloud.commandframework.CommandManager;
 import cloud.commandframework.CommandTree;
+import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.bukkit.CloudBukkitCapabilities;
+import cloud.commandframework.bukkit.arguments.selector.SinglePlayerSelector;
+import cloud.commandframework.bukkit.parsers.PlayerArgument;
+import cloud.commandframework.bukkit.parsers.selector.SinglePlayerSelectorArgument;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
+import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.paper.PaperCommandManager;
 import cloud.commandframework.permission.CommandPermission;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -171,6 +178,39 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
         return mgr;
     }
 
+    /**
+     * Register platform-specific commands.
+     *
+     * @param reg the registration context
+     */
+    private void registerBukkitCommands(final CommandRegistrationContext reg) {
+        reg.register(builder -> {
+            final Permission perm = Permission.pex("bukkit.resendtree");
+            final CommandArgument<Commander, SinglePlayerSelector> targetArg = SinglePlayerSelectorArgument.of("target");
+            return builder
+                .literal("resendtree")
+                .argument(targetArg)
+                .permission(perm)
+                .meta(CommandMeta.DESCRIPTION, "Force resend a player's command tree")
+                .meta(CommandMeta.LONG_DESCRIPTION, "Forcibly resend a player's Brigadier command tree\n" +
+                    "This can help resolve issues where the completions on a client\n" +
+                    "do not match what the server thinks a player has permission for.")
+                .handler(ctx -> {
+                    final SinglePlayerSelector target = ctx.get(targetArg);
+                    if (target.getPlayer() == null) {
+                        throw new CommandException(Messages.COMMAND_TREE_NO_TARGET.tr(target.getSelector()));
+                    }
+                    try {
+                        target.getPlayer().updateCommands();
+                        ctx.getSender().sendMessage(Messages.COMMAND_TREE_REFRESHED.tr(target.getPlayer().getName()));
+                    } catch (final NoSuchMethodError ex) {
+                        ctx.getSender().sendMessage(Messages.COMMAND_TREE_UNSUPPORTED.tr(Bukkit.getVersion()));
+                    }
+                });
+        }, "permissionsex");
+
+    }
+
     @Override
     public void onEnable() {
         this.dataPath = getDataFolder().toPath();
@@ -196,6 +236,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
                 .playerProvider(getServer()::getPlayer)
                 .commands(this::createCommandManager)
                 .messageFormatter(BukkitMessageFormatter::new)
+                .commandContributor(this::registerBukkitCommands)
                 .build();
             /*} catch (PEBKACException e) {
             logger.warn(e.getTranslatableMessage());
