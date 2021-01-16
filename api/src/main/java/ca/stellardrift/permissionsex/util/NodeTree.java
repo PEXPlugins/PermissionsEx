@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * An immutable tree structure for determining node data.
  *
@@ -74,7 +76,7 @@ public final class NodeTree {
     public static NodeTree of(final Map<String, Integer> values, final int defaultValue) {
         final NodeTree newTree = new NodeTree(defaultValue);
         for (Map.Entry<String, Integer> value : values.entrySet()) {
-            final String[] parts = SPLIT_REGEX.split(value.getKey().toLowerCase(Locale.ROOT));
+            final String[] parts = splitPerm(value.getKey());
             Node currentNode = newTree.rootNode;
             for (String part : parts) {
                 if (currentNode.children.containsKey(part)) {
@@ -98,7 +100,7 @@ public final class NodeTree {
      * @since 2.0.0
      */
     public int get(final String node) {
-        final String[] parts = SPLIT_REGEX.split(node.toLowerCase(Locale.ROOT));
+        final String[] parts = splitPerm(node);
         Node currentNode = this.rootNode;
         int lastUndefinedVal = this.rootNode.value;
         for (final String part : parts) {
@@ -121,7 +123,7 @@ public final class NodeTree {
      * @return if any values return true
      */
     public boolean anyInPrefixMatching(final String prefix, final IntPredicate test) {
-        final String[] parts = SPLIT_REGEX.split(prefix.toLowerCase(Locale.ROOT));
+        final String[] parts = splitPerm(prefix);
         Node currentNode = this.rootNode;
         int lastUndefinedVal = this.rootNode.value;
 
@@ -190,13 +192,13 @@ public final class NodeTree {
      * @since 2.0.0
      */
     public NodeTree withValue(final String node, final int value) {
-        String[] parts = SPLIT_REGEX.split(node.toLowerCase());
-        Node newRoot = new Node(new HashMap<>(this.rootNode.children));
+        final String[] parts = splitPerm(node);
+        final Node newRoot = new Node(new HashMap<>(this.rootNode.children));
         Node newPtr = newRoot;
         @Nullable Node currentPtr = this.rootNode;
 
         newPtr.value = currentPtr.value;
-        for (String part : parts) {
+        for (final String part : parts) {
             final @Nullable Node oldChild = currentPtr == null ? null : currentPtr.children.get(part);
             final Node newChild = new Node(oldChild != null ? new HashMap<>(oldChild.children) : new HashMap<>());
             newPtr.children.put(part, newChild);
@@ -225,6 +227,11 @@ public final class NodeTree {
     @Override
     public String toString() {
         return "NodeTree{" + this.rootNode + "}";
+    }
+
+    private static String[] splitPerm(final String input) {
+        requireNonNull(input, "input");
+        return SPLIT_REGEX.split(input.toLowerCase(Locale.ROOT), -1);
     }
 
     static class Node {

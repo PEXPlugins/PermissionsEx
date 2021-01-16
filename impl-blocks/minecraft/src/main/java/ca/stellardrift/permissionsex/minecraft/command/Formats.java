@@ -179,7 +179,7 @@ public final class Formats {
         }
     }
 
-    public static TextColor lerp(final double pct, final TextColor from, final TextColor to) {
+    public static TextColor lerp(final float pct, final TextColor from, final TextColor to) {
         // https://github.com/KyoriPowered/adventure/pull/215
         return TextColor.color(
             Math.round(from.red() + pct * (to.red() - from.red())),

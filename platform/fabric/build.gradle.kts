@@ -32,7 +32,7 @@ plugins {
 val shade: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shade)
 
-val minecraftVersion = "1.16.4"
+val minecraftVersion = "1.16.5"
 dependencies {
     val adventurePlatformVersion: String by project
     val cloudVersion: String by project
@@ -50,8 +50,8 @@ dependencies {
     shade("cloud.commandframework:cloud-brigadier:$cloudVersion")
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.7:v2")
-    modImplementation("net.fabricmc:fabric-loader:0.11.0")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.1:v2")
+    modImplementation("net.fabricmc:fabric-loader:0.11.1")
     modCompileOnly("com.sk89q.worldedit:worldedit-fabric-mc1.16.3:7.2.1") { isTransitive = false }
     modCompileOnly("com.sk89q.worldedit:worldedit-core:7.2.1") { isTransitive = false }
 

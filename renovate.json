@@ -1,5 +1,10 @@
 {
   "extends": [
     "config:base"
+  ],
+  "ignoreDeps": [
+    "net.fabricmc.fabric-api:fabric-api",
+    "org.checkerframework:checker-qual",
+    "org.spongepowered:spongevanilla"
   ]
 }

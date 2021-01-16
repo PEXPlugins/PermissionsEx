@@ -146,7 +146,7 @@ public final class PermissionsExCommand {
         help.setHelpColors(MinecraftHelp.HelpColors.of(
             formatter.responseColor(),
             formatter.highlightColor(),
-            Formats.lerp(0.4, formatter.highlightColor(), NamedTextColor.BLACK),
+            Formats.lerp(0.2f, formatter.highlightColor(), NamedTextColor.BLACK),
             NamedTextColor.GRAY,
             NamedTextColor.DARK_GRAY
         ));

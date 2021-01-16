@@ -33,7 +33,7 @@ import static io.leangen.geantyref.GenericTypeReflector.erase;
 
 final class PCollectionsCollectorFactory implements CollectorFactory {
     static final PCollectionsCollectorFactory INSTANCE = new PCollectionsCollectorFactory();
-    private final Map<Class<?>, Collector<?, ?, ?>> collectors = new IdentityHashMap<>();
+    private final IdentityHashMap<Class<?>, Collector<?, ?, ?>> collectors = new IdentityHashMap<>();
     
     private PCollectionsCollectorFactory() {
         this.collectors.put(PSet.class, PCollections.toPSet());
