@@ -105,3 +105,7 @@ tasks.register("runBukkit") {
     group = "pex"
     description = "Run a Bukkit environment"
 }
+
+tasks.runSpigot {
+    javaLauncher.set(pexPlatform.developmentRuntime())
+}

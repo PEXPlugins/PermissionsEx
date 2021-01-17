@@ -63,7 +63,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:3.7.0")
 
     spongeRunClasspath(project(project.path, configuration = "shadow"))
-    spongeRunClasspath("org.spongepowered:spongevanilla:1.16.4-8.0.0-RC0:universal") { isTransitive = false }
+    spongeRunClasspath("org.spongepowered:spongevanilla:1.16.4-8.0.0-RC+:universal") { isTransitive = false }
 }
 
 pexPlatform {
@@ -101,7 +101,7 @@ val runSponge by tasks.registering(JavaExec::class) {
     group = "pex"
     description = "Spin up a SpongeVanilla API 8 server environment"
     standardInput = System.`in`
-    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(8)) })
+    javaLauncher.set(pexPlatform.developmentRuntime())
 
     inputs.files(spongeRunClasspath)
 

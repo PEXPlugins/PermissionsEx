@@ -80,7 +80,9 @@ loom {
 }
 
 tasks.withType(AbstractRunTask::class).configureEach {
-    // Midxin debug options
+    javaLauncher.set(pexPlatform.developmentRuntime())
+
+    // Mixin debug options
     jvmArgs(
         // "-Dmixin.debug.verbose=true",
         // "-Dmixin.debug.export=true",

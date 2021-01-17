@@ -86,3 +86,7 @@ tasks.register("runBungeePex") {
     group = "pex"
     description = "Run a Bungee test environment"
 }
+
+tasks.runBungee {
+    javaLauncher.set(pexPlatform.developmentRuntime())
+}

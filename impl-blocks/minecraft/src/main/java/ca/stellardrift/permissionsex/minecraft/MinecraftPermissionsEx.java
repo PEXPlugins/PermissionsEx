@@ -41,6 +41,7 @@ import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
+import com.google.errorprone.annotations.DoNotCall;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -557,6 +558,7 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
          */
         @Override
         @Deprecated
+        @DoNotCall
         public PermissionsEngine build() throws PermissionsLoadingException {
             throw new IllegalArgumentException("Call create() instead");
         }

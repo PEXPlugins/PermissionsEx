@@ -62,4 +62,4 @@ tasks.assemble {
     dependsOn(shadowJar)
 }
 
-extensions.create("pexPlatform", PexPlatformExtension::class, pexRelocationRoot, shadowJar)
+extensions.create("pexPlatform", PexPlatformExtension::class, pexRelocationRoot, shadowJar, project)

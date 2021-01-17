@@ -31,20 +31,10 @@ val velocityRunClasspath by configurations.creating {
 }
 
 repositories {
-    ivy {
-        setUrl("https://versions.velocitypowered.com/download/")
-
-        patternLayout {
-            artifact("[revision].[ext]")
-        }
-
-        metadataSources {
-            artifact()
-        }
-
-        content {
-            includeModule("com.velocitypowered", "velocity-proxy")
-        }
+    ivy("https://versions.velocitypowered.com/download/") {
+        patternLayout { artifact("[revision].[ext]") }
+        metadataSources { artifact() }
+        content { includeModule("com.velocitypowered", "velocity-proxy") }
     }
 }
 
@@ -91,7 +81,7 @@ val runVelocity by tasks.registering(JavaExec::class) {
     group = "pex"
     description = "Spin up a Velocity server environment"
     standardInput = System.`in`
-    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(11)) })
+    javaLauncher.set(pexPlatform.developmentRuntime())
 
     inputs.files(pluginJar)
 

@@ -87,6 +87,7 @@ val runSponge7 by tasks.registering(JavaExec::class) {
     group = "pex"
     description = "Spin up a SpongeVanilla server environment"
     standardInput = System.`in`
+    // Sponge on 1.12 is stuck on Java 8 because of LaunchWrapper
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(8)) })
 
     inputs.files(spongeRunClasspath, pluginJar)
