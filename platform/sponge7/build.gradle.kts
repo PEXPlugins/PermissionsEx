@@ -54,7 +54,7 @@ dependencies {
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.7.0")
 
-    spongeRunClasspath("org.spongepowered:spongevanilla:1.12.2-7.3.0") { isTransitive = false }
+    spongeRunClasspath("org.spongepowered:spongevanilla:1.16.4-8.0.0-RC377") { isTransitive = false }
 }
 
 pexPlatform {
