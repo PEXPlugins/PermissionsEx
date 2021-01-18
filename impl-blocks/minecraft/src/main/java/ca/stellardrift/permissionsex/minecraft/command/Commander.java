@@ -34,8 +34,10 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.text;
 
@@ -137,10 +139,21 @@ public interface Commander extends ForwardingAudience.Single {
         sendMessage(text.asComponent().colorIfAbsent(NamedTextColor.GRAY));
     }
 
+    /**
+     * Send an error message.
+     *
+     * @param text the error message
+     */
     default void error(final ComponentLike text) {
         this.error(text, null);
     }
 
+    /**
+     * Send an error message to the client.
+     *
+     * @param text the message to send
+     * @param error an exception to optionally expose as a hover event on the message.
+     */
     default void error(final ComponentLike text, final @Nullable Throwable error) {
         if (error != null && hasPermission("permissionsex.show-stacktrace-on-hover")) {
             // We can do a hover stacktrace
@@ -155,15 +168,49 @@ public interface Commander extends ForwardingAudience.Single {
         }
     }
 
+    /**
+     * Send a paginated list to the user.
+     *
+     * @param title a title
+     * @param lines the lines to send
+     */
+    default void sendPaginated(
+        final ComponentLike title,
+        final Collection<? extends ComponentLike> lines
+    ) {
+        this.sendPaginated(title, null, lines.stream());
+    }
+
+    /**
+     * Send a paginated list to the user.
+     *
+     * @param title a title
+     * @param header a header/subtitle
+     * @param lines the lines to send
+     */
+    default void sendPaginated(
+        final ComponentLike title,
+        final @Nullable ComponentLike header,
+        final Collection<? extends ComponentLike> lines
+    ) {
+        this.sendPaginated(title, header, lines.stream());
+    }
+
+    /**
+     * Send a paginated list to the user.
+     *
+     * @param title a title
+     * @param lines the lines to send
+     */
     default void sendPaginated(
             final ComponentLike title,
-            final Iterable<? extends ComponentLike> lines
+            final Stream<? extends ComponentLike> lines
     ) {
         this.sendPaginated(title, null, lines);
     }
 
     /**
-     * Send a paginated list to the user
+     * Send a paginated list to the user.
      *
      * @param title a title
      * @param header a header/subtitle
@@ -172,7 +219,7 @@ public interface Commander extends ForwardingAudience.Single {
     default void sendPaginated(
             final ComponentLike title,
             final @Nullable ComponentLike header,
-            final Iterable<? extends ComponentLike> lines
+            final Stream<? extends ComponentLike> lines
     ) {
         final Component marker = Component.text("#");
         this.sendMessage(Component.join(Component.space(), Arrays.asList(marker, title, marker)));

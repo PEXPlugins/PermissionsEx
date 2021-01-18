@@ -208,7 +208,7 @@ public final class PermissionsExCommand {
                     source.sendPaginated(
                         Messages.IMPORT_LISTING_HEADER.tr(),
                         Messages.IMPORT_LISTING_SUBTITLE.tr(source.formatter().hl(text().content("/pex import [id]"))),
-                        PCollections.asVector(engine.getAvailableConversions(), conv ->
+                        engine.getAvailableConversions().stream().map(conv ->
                             source.callback(text()
                                 .append(conv.description())
                                 .append(text(" - /pex import "))
@@ -311,7 +311,7 @@ public final class PermissionsExCommand {
         source.sendPaginated(
             Messages.PEX_LIST_HEADER.tr(collection.type().name()),
             Messages.PEX_LIST_SUBTITLE.tr(collection.type().name()),
-            identifiers.map(source.formatter()::subject).collect(Collectors.toList())
+            identifiers.map(source.formatter()::subject)
         );
     }
 }

@@ -14,12 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package ca.stellardrift.permissionsex.sponge;
 
-package ca.stellardrift.permissionsex.sponge
+final class ProjectData {
 
-object ProjectData {
-    const val ARTIFACT_ID = "${project.rootProject.name.toLowerCase()}"
-    const val NAME = "${project.rootProject.name}"
-    const val VERSION = "${project.version}${project.ext.pexSuffix}"
-    const val DESCRIPTION = "${project.ext.pexDescription}"
+    private ProjectData() {
+    }
+
+    static final String ARTIFACT_ID = "${project.rootProject.name.toLowerCase()}";
+    static final String NAME = "${project.rootProject.name}";
+    static final String VERSION = "${project.version}${project.ext.pexSuffix}";
+    static final String DESCRIPTION = "${project.ext.pexDescription}";
 }

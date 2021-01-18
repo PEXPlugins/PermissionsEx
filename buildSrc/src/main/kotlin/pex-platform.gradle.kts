@@ -5,12 +5,6 @@ plugins {
     id("com.github.johnrengelman.shadow")
 }
 
-if (name != "velocity"
-    && name != "bungee"
-    && name != "bukkit") {
-    plugins.apply("ca.stellardrift.opinionated.kotlin")
-}
-
 tasks {
     processResources {
         inputs.property("version", project.version)

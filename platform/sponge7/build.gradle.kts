@@ -24,6 +24,7 @@ plugins {
     id("ca.stellardrift.localization")
     id("ca.stellardrift.templating")
     id("pex-platform")
+    id("ca.stellardrift.opinionated.kotlin")
     kotlin("kapt")
 }
 
