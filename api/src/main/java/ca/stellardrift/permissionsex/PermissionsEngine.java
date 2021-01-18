@@ -42,8 +42,24 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
     @Deprecated
     String SUBJECTS_GROUP = "group";
 
-    static PermissionsEngineBuilder builder() {
+    /**
+     * Create a new builder for an engine.
+     *
+     * @return the engine builder
+     * @since 2.0.0
+     */
+    static PermissionsEngineBuilder<Void> builder() {
         return EngineBuilderService.ACTIVE_BUILDER.newBuilder();
+    }
+
+    /**
+     * Create a new builder for an engine.
+     *
+     * @return the engine builder
+     * @since 2.0.0
+     */
+    static <C> PermissionsEngineBuilder<C> builder(final Class<C> configType) {
+        return EngineBuilderService.ACTIVE_BUILDER.newBuilder(configType);
     }
 
     // -- Internal subject types -- //
@@ -52,6 +68,7 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
      * Subjects holding data that will be applied to every subject of a type.
      *
      * @return the {@code fallback} subject type
+     * @since 2.0.0
      */
     SubjectTypeCollection<SubjectType<?>> defaults();
 
@@ -59,6 +76,7 @@ public interface PermissionsEngine extends ContextDefinitionProvider {
      * Subjects holding data that will be applied to subjects of each type when no other data is available.
      *
      * @return the {@code fallback} subject type
+     * @since 2.0.0
      */
     SubjectTypeCollection<SubjectType<?>> fallbacks();
 

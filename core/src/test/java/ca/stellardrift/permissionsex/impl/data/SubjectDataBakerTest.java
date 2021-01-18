@@ -21,6 +21,7 @@ import ca.stellardrift.permissionsex.context.ContextDefinition;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.context.SimpleContextDefinition;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.context.ServerTagContextDefinition;
 import ca.stellardrift.permissionsex.impl.context.TimeContextDefinition;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
@@ -171,7 +172,7 @@ public class SubjectDataBakerTest extends PermissionsExTest {
     }
 
     @Override
-    protected PermissionsExConfiguration<?> populate() {
+    protected PermissionsExConfiguration<EmptyPlatformConfiguration> populate() {
         return new EmptyTestConfiguration();
     }
 

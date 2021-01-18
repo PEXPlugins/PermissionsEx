@@ -145,7 +145,7 @@ class PermissionsExPlugin @Inject internal constructor(
             convertFromBukkit()
             convertFromLegacySpongeName()
             Files.createDirectories(configDir)
-            _manager = MinecraftPermissionsEx.builder<Unit>()
+            _manager = MinecraftPermissionsEx.builder()
                 .configuration(this.configFile)
                 .baseDirectory(this.configDir)
                 .logger(this.logger)

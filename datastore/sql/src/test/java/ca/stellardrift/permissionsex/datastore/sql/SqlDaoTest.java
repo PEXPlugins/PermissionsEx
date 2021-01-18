@@ -17,6 +17,7 @@
 package ca.stellardrift.permissionsex.datastore.sql;
 
 import ca.stellardrift.permissionsex.datastore.ProtoDataStore;
+import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.test.EmptyTestConfiguration;
@@ -106,7 +107,7 @@ public class SqlDaoTest extends PermissionsExTest {
     }
 
     @Override
-    protected PermissionsExConfiguration<?> populate() {
+    protected PermissionsExConfiguration<EmptyPlatformConfiguration> populate() {
         return new EmptyTestConfiguration(sqlStore);
     }
 

@@ -201,7 +201,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
 
         try {
             Files.createDirectories(this.dataPath);
-            this.manager = MinecraftPermissionsEx.<BukkitConfiguration>builder()
+            this.manager = MinecraftPermissionsEx.builder(BukkitConfiguration.class)
                 .configuration(this.dataPath.resolve("config.yml"))
                 .asyncExecutor(this.executorService)
                 .databaseProvider(url -> Hikari.createDataSource(url, this.dataPath))

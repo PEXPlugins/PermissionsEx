@@ -484,8 +484,8 @@ public class PermissionsEx<P> implements Consumer<ContextInheritance>,
         });
     }
 
-    public void initialize(final PermissionsExConfiguration<?> config) throws PermissionsLoadingException {
-        this.prepare((PermissionsExConfiguration<P>) config);
+    public void initialize(final PermissionsExConfiguration<P> config) throws PermissionsLoadingException {
+        this.prepare(config);
 
         this.registerSubjectTypes(
             this.defaultsType,

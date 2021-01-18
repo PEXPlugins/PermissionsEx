@@ -18,6 +18,7 @@ package ca.stellardrift.permissionsex.test;
 
 import ca.stellardrift.permissionsex.datastore.DataStore;
 import ca.stellardrift.permissionsex.impl.PermissionsEx;
+import ca.stellardrift.permissionsex.impl.config.EmptyPlatformConfiguration;
 import ca.stellardrift.permissionsex.impl.config.PermissionsExConfiguration;
 import ca.stellardrift.permissionsex.exception.PEBKACException;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
@@ -54,10 +55,10 @@ public abstract class PermissionsExTest {
     @BeforeEach
     public void setUp(final TestInfo info, final @TempDir Path tempFolder) throws PermissionsLoadingException, IOException, PEBKACException {
         this.tempFolder = tempFolder;
-        final PermissionsExConfiguration<?> config = populate();
+        final PermissionsExConfiguration<EmptyPlatformConfiguration> config = populate();
         config.validate();
 
-        this.manager = new PermissionsEx<>(
+        final PermissionsEx<EmptyPlatformConfiguration> manager = new PermissionsEx<>(
             LOGGER,
             tempFolder.resolve(info.getDisplayName()),
             Runnable::run,
@@ -77,7 +78,8 @@ public abstract class PermissionsExTest {
             }
         );
 
-        this.manager.initialize(config);
+        manager.initialize(config);
+        this.manager = manager;
 
         // Register subject types
         this.manager.subjects(SUBJECTS_GROUP);
@@ -100,5 +102,5 @@ public abstract class PermissionsExTest {
         return manager;
     }
 
-    protected abstract PermissionsExConfiguration<?> populate();
+    protected abstract PermissionsExConfiguration<EmptyPlatformConfiguration> populate();
 }

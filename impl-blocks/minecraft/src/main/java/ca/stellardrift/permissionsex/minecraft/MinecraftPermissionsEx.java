@@ -67,6 +67,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -95,20 +96,36 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
     private final @Nullable Consumer<CommandRegistrationContext> commandContributor;
     private final MessageFormatter formatter;
     private final Map<BaseDirectoryScope, Path> baseDirectories;
+    private final Supplier<T> platformConfigProvider;
 
     /**
      * Create a new builder for a Minecraft permissions engine.
      *
+     * @return the builder
+     * @since 2.0.0
+     */
+    public static Builder<Void> builder() {
+        return new Builder<>(Void.class);
+    }
+
+
+    /**
+     * Create a new builder for a Minecraft permissions engine.
+     *
+     * @param configType class of platform configuration
      * @param <V>    platform configuration type
      * @return the builder
+     * @since 2.0.0
      */
-    public static <V> Builder<V> builder() {
-        return new Builder<>();
+    public static <V> Builder<V> builder(final Class<V> configType) {
+        return new Builder<>(configType);
     }
 
     MinecraftPermissionsEx(final Builder<T> builder) throws PermissionsLoadingException {
         this.baseDirectories = builder.baseDirectories;
-        this.engine = (PermissionsEx<T>) builder.buildEngine();
+        final Map.Entry<PermissionsEngine, Supplier<T>> built = builder.buildEngine();
+        this.engine = (PermissionsEx<T>) built.getKey();
+        this.platformConfigProvider = built.getValue();
         this.resolver = ProfileApiResolver.resolver(this.engine.asyncExecutor());
         this.callbacks = new CallbackController();
         this.commands = builder.commandManagerMaker == null ? null : builder.commandManagerMaker.apply(
@@ -232,6 +249,15 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
      */
     public MessageFormatter messageFormatter() {
         return this.formatter;
+    }
+
+    /**
+     * Get the platform-specific configuration section.
+     *
+     * @return the platform configuration instance
+     */
+    public T platformConfig() {
+        return this.platformConfigProvider.get();
     }
 
     private void configureCommandManager() {
@@ -397,9 +423,9 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
      *
      * @since 2.0.0
      */
-    public static final class Builder<C> implements PermissionsEngineBuilder {
+    public static final class Builder<C> implements PermissionsEngineBuilder<C> {
 
-        private final PermissionsEngineBuilder delegate;
+        private final PermissionsEngineBuilder<C> delegate;
         private Function<String, @Nullable UUID> cachedUuidResolver = $ -> null;
         private Predicate<UUID> opProvider = $ -> false;
         private Function<UUID, @Nullable ?> playerProvider = $ -> null;
@@ -409,8 +435,8 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
         private Function<MinecraftPermissionsEx<C>, MessageFormatter> formatterProvider = MessageFormatter::new;
         private PMap<BaseDirectoryScope, Path> baseDirectories = PCollections.map();
 
-        Builder() {
-            this.delegate = PermissionsEngine.builder();
+        Builder(final Class<C> configType) {
+            this.delegate = PermissionsEngine.builder(configType);
         }
 
         /**
@@ -554,7 +580,6 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
          * This method should not be called directly.
          *
          * @return a new permissions engine
-         * @throws PermissionsLoadingException when unable to load
          */
         @Override
         @Deprecated
@@ -563,8 +588,20 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
             throw new IllegalArgumentException("Call create() instead");
         }
 
-        PermissionsEngine buildEngine() throws PermissionsLoadingException {
-            return this.delegate.build();
+        /**
+         * This method should not be called directly.
+         *
+         * @return a new permissions engine
+         */
+        @Override
+        @Deprecated
+        @DoNotCall
+        public Map.Entry<PermissionsEngine, Supplier<C>> buildWithConfig() {
+            throw new IllegalArgumentException("Call create() instead");
+        }
+
+        Map.Entry<PermissionsEngine, Supplier<C>> buildEngine() throws PermissionsLoadingException {
+            return this.delegate.buildWithConfig();
         }
 
         /**

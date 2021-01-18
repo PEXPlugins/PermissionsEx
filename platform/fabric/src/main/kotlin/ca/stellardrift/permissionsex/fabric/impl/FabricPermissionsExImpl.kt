@@ -125,7 +125,7 @@ object FabricPermissionsExImpl : ModInitializer {
         Files.createDirectories(dataDir)
 
         val manager = try {
-            MinecraftPermissionsEx.builder<Unit>()
+            MinecraftPermissionsEx.builder()
                 .configuration(this.dataDir.resolve("$MOD_ID.conf"))
                 .asyncExecutor(this.exec)
                 .logger(this.logger)

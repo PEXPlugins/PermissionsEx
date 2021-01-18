@@ -24,15 +24,19 @@ import org.spongepowered.configurate.util.CheckedFunction;
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Supplier;
 
 /**
  * A builder for creating permissions engines.
  *
+ * @param <C> The type of an extra platform-specific configuration
+ *           that will be injected into the engine configuration
  * @since 2.0.0
  */
-public interface PermissionsEngineBuilder {
+public interface PermissionsEngineBuilder<C> {
 
     /**
      * Set the file that this engine will load its configuration from.
@@ -41,7 +45,7 @@ public interface PermissionsEngineBuilder {
      * @return this builder
      * @since 2.0.0
      */
-    PermissionsEngineBuilder configuration(final Path configFile);
+    PermissionsEngineBuilder<C> configuration(final Path configFile);
 
     /**
      * Set the base directory for this engine instance.
@@ -50,7 +54,7 @@ public interface PermissionsEngineBuilder {
      * @return this builder
      * @since 2.0.0
      */
-    PermissionsEngineBuilder baseDirectory(Path baseDir);
+    PermissionsEngineBuilder<C> baseDirectory(Path baseDir);
 
     /**
      * Set a logger that will receive messages logged by the engine.
@@ -61,7 +65,7 @@ public interface PermissionsEngineBuilder {
      * @return this builder
      * @since 2.0.0
      */
-    PermissionsEngineBuilder logger(final Logger logger);
+    PermissionsEngineBuilder<C> logger(final Logger logger);
 
     /**
      * Set an executor to use to execute asynchronous tasks.
@@ -72,7 +76,7 @@ public interface PermissionsEngineBuilder {
      * @return this builder
      * @since 2.0.0
      */
-    PermissionsEngineBuilder asyncExecutor(final Executor executor);
+    PermissionsEngineBuilder<C> asyncExecutor(final Executor executor);
 
     /**
      * Set a callback function that will be queried to provide database for a url.
@@ -84,16 +88,25 @@ public interface PermissionsEngineBuilder {
      * @return this builder
      * @since 2.0.0
      */
-    PermissionsEngineBuilder databaseProvider(final CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider);
+    PermissionsEngineBuilder<C> databaseProvider(final CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider);
 
     /**
-     * Create a full engine..
+     * Create a full engine.
      *
      * @return the built engine
      * @throws PermissionsLoadingException if any errors occur while loading the engine or its configuration
      * @since 2.0.0
      */
     PermissionsEngine build() throws PermissionsLoadingException;
+
+    /**
+     * Create a full engine, and return it with a supplier for the implementation configuration
+     *
+     * @return the built engine
+     * @throws PermissionsLoadingException if any errors occur while loading the engine or its configuration
+     * @since 2.0.0
+     */
+    Map.Entry<PermissionsEngine, Supplier<C>> buildWithConfig() throws PermissionsLoadingException;
 
     /**
      * A service interface for creating new engine builders.
@@ -112,6 +125,16 @@ public interface PermissionsEngineBuilder {
          * @return a new builder
          * @since 2.0.0
          */
-        PermissionsEngineBuilder newBuilder();
+        default PermissionsEngineBuilder<Void> newBuilder() {
+            return this.newBuilder(Void.class);
+        }
+
+        /**
+         * Create a new empty builder.
+         *
+         * @return a new builder
+         * @since 2.0.0
+         */
+        <C> PermissionsEngineBuilder<C> newBuilder(final Class<C> configType);
     }
 }

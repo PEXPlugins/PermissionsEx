@@ -16,10 +16,12 @@
  */
 package ca.stellardrift.permissionsex.impl;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.PermissionsEngineBuilder;
 import ca.stellardrift.permissionsex.exception.PermissionsLoadingException;
 import ca.stellardrift.permissionsex.impl.config.FilePermissionsExConfiguration;
 import com.google.auto.service.AutoService;
+import io.leangen.geantyref.TypeToken;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,7 @@ import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.util.CheckedFunction;
+import org.spongepowered.configurate.util.UnmodifiableCollections;
 import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
@@ -35,51 +38,63 @@ import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static net.kyori.adventure.text.Component.text;
 
-public final class PermissionsExBuilder implements PermissionsEngineBuilder {
+public final class PermissionsExBuilder<C> implements PermissionsEngineBuilder<C> {
+    final Class<C> configType;
     @Nullable Path configFile;
     @Nullable Path baseDirectory;
     @Nullable Logger logger;
     @Nullable Executor asyncExecutor;
     CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider = $ -> null;
 
+    PermissionsExBuilder(final Class<C> configType) {
+        this.configType = configType;
+    }
+
     @Override
-    public PermissionsEngineBuilder configuration(final Path configFile) {
+    public PermissionsEngineBuilder<C> configuration(final Path configFile) {
         this.configFile = configFile;
         return this;
     }
 
     @Override
-    public PermissionsEngineBuilder baseDirectory(final Path baseDir) {
+    public PermissionsEngineBuilder<C> baseDirectory(final Path baseDir) {
         this.baseDirectory = baseDir;
         return this;
     }
 
     @Override
-    public PermissionsEngineBuilder logger(final Logger logger) {
+    public PermissionsEngineBuilder<C> logger(final Logger logger) {
         this.logger = requireNonNull(logger, "logger");
         return this;
     }
 
     @Override
-    public PermissionsEngineBuilder asyncExecutor(final Executor executor) {
+    public PermissionsEngineBuilder<C> asyncExecutor(final Executor executor) {
         this.asyncExecutor = requireNonNull(executor, "executor");
         return this;
     }
 
     @Override
-    public PermissionsEngineBuilder databaseProvider(final CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider) {
+    public PermissionsEngineBuilder<C> databaseProvider(final CheckedFunction<String, @Nullable DataSource, SQLException> databaseProvider) {
         this.databaseProvider = requireNonNull(databaseProvider, "databaseProvider");
         return this;
     }
 
     @Override
     public PermissionsEx<?> build() throws PermissionsLoadingException {
+        return (PermissionsEx<?>) this.buildWithConfig().getKey();
+    }
+
+    @Override
+    public Map.Entry<PermissionsEngine, Supplier<C>> buildWithConfig() throws PermissionsLoadingException {
         if (this.logger == null) {
             this.logger = LoggerFactory.getLogger("PermissionsEx");
         }
@@ -96,8 +111,8 @@ public final class PermissionsExBuilder implements PermissionsEngineBuilder {
             this.baseDirectory = Paths.get(".");
         }
 
-        final FilePermissionsExConfiguration<?> config = makeConfiguration(this.configFile);
-        final PermissionsEx<?> engine = new PermissionsEx<>(
+        final FilePermissionsExConfiguration<C> config = makeConfiguration(this.configFile);
+        final PermissionsEx<C> engine = new PermissionsEx<>(
             this.logger,
             this.baseDirectory,
             this.asyncExecutor,
@@ -105,10 +120,10 @@ public final class PermissionsExBuilder implements PermissionsEngineBuilder {
         );
 
         engine.initialize(config);
-        return engine;
+        return UnmodifiableCollections.immutableMapEntry(engine, engine.config()::getPlatformConfig);
     }
 
-    private FilePermissionsExConfiguration<?> makeConfiguration(final Path configFile) throws PermissionsLoadingException {
+    private FilePermissionsExConfiguration<C> makeConfiguration(final Path configFile) throws PermissionsLoadingException {
         final String fileName = configFile.getFileName().toString();
         final ConfigurationLoader<?> loader;
         if (fileName.endsWith(".yml") || fileName.endsWith(".yaml")) {
@@ -132,7 +147,7 @@ public final class PermissionsExBuilder implements PermissionsEngineBuilder {
         }
 
         try {
-            return FilePermissionsExConfiguration.fromLoader(loader);
+            return FilePermissionsExConfiguration.fromLoader(loader, this.configType);
         } catch (final ConfigurateException ex) {
             throw new PermissionsLoadingException(Messages.CONFIG_ERROR_LOAD.tr(ex));
         }
@@ -142,8 +157,8 @@ public final class PermissionsExBuilder implements PermissionsEngineBuilder {
     public static class Factory implements PermissionsEngineBuilder.Factory {
 
         @Override
-        public PermissionsEngineBuilder newBuilder() {
-            return new PermissionsExBuilder();
+        public <C> PermissionsEngineBuilder<C> newBuilder(final Class<C> configType) {
+            return new PermissionsExBuilder<>(configType);
         }
 
     }
