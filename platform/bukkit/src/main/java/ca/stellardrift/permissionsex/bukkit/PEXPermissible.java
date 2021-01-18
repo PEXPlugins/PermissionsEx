@@ -22,8 +22,8 @@ import ca.stellardrift.permissionsex.context.ContextDefinitionProvider;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.impl.context.TimeContextDefinition;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
-import ca.stellardrift.permissionsex.legacy.LegacyConversions;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
+import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.util.NodeTree;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
@@ -49,8 +49,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.spongepowered.configurate.util.UnmodifiableCollections.immutableMapEntry;
 
 final class PEXPermissible extends PermissibleBase {
 
@@ -83,7 +81,7 @@ final class PEXPermissible extends PermissibleBase {
         if (ret == 0) {
             for (final Metapermission meta : METAPERMISSIONS) {
                 final Matcher match = meta.matchAgainst.matcher(permission);
-                if (match.matches() && meta.isMatch(match, pexSubject, contexts)) {
+                if (match.matches() && meta.isMatch(this.plugin, match, pexSubject, contexts)) {
                     ret = 1;
                 }
             }
@@ -226,7 +224,7 @@ final class PEXPermissible extends PermissibleBase {
             .map(ent -> new PermissionAttachmentInfo(player, ent.getKey(), null, ent.getValue() > 0));
 
         final Stream<PermissionAttachmentInfo> metapermissions = Arrays.stream(METAPERMISSIONS)
-            .flatMap(mPerm -> mPerm.getValues(this.pexSubject, activeContexts))
+            .flatMap(mPerm -> mPerm.getValues(plugin, this.pexSubject, activeContexts))
             .map(value -> new PermissionAttachmentInfo(this.player, value, null, true));
 
         return Stream.concat(direct, metapermissions)
@@ -246,28 +244,46 @@ final class PEXPermissible extends PermissibleBase {
          */
         new Metapermission(Pattern.compile("groups?\\.(.+)")) {
             @Override
-            boolean isMatch(final MatchResult result, final CalculatedSubject subj, final Set<ContextValue<?>> contexts) {
+            boolean isMatch(
+                final PermissionsExPlugin plugin,
+                final MatchResult result,
+                final CalculatedSubject subj,
+                final Set<ContextValue<?>> contexts
+            ) {
                 // TODO: This needs to use a SubjectRef
-                return subj.parents(contexts).contains(immutableMapEntry(PermissionsEngine.SUBJECTS_GROUP, result.group(1)));
+                return subj.parents(contexts).contains(SubjectRef.subject(plugin.groups(), result.group(1)));
             }
 
             @Override
-            Stream<String> getValues(final CalculatedSubject subj, final Set<ContextValue<?>> contexts) {
+            Stream<String> getValues(
+                final PermissionsExPlugin plugin,
+                final CalculatedSubject subj,
+                final Set<ContextValue<?>> contexts
+            ) {
                 return subj.parents(contexts).stream()
-                    .filter(ref -> ref.type().name().equals(LegacyConversions.SUBJECTS_GROUP))
+                    .filter(ref -> ref.type().equals(plugin.groups().type()))
                     .flatMap(ref -> Stream.of("group." + ref.serializedIdentifier(), "groups." + ref.serializedIdentifier()));
             }
         },
         new Metapermission(Pattern.compile("options\\.(.*)\\.(.*)")) {
             @Override
-            boolean isMatch(final MatchResult result, final CalculatedSubject subject, final Set<ContextValue<?>> contexts) {
+            boolean isMatch(
+                final PermissionsExPlugin plugin,
+                final MatchResult result,
+                final CalculatedSubject subject,
+                final Set<ContextValue<?>> contexts
+            ) {
                 return subject.option(contexts, result.group(1))
                     .map(it -> it.equals(result.group(2)))
                     .orElse(false);
             }
 
             @Override
-            Stream<String> getValues(final CalculatedSubject subj, final Set<ContextValue<?>> contexts) {
+            Stream<String> getValues(
+                final PermissionsExPlugin plugin,
+                final CalculatedSubject subj,
+                final Set<ContextValue<?>> contexts
+            ) {
                 return subj.options(contexts).entrySet().stream()
                     .map(ent -> "options." + ent.getKey() + "." + ent.getValue());
             }
@@ -286,9 +302,18 @@ final class PEXPermissible extends PermissibleBase {
             this.matchAgainst = matchAgainst;
         }
 
-        abstract boolean isMatch(final MatchResult result, final CalculatedSubject subj, final Set<ContextValue<?>> contexts);
+        abstract boolean isMatch(
+            final PermissionsExPlugin plugin,
+            final MatchResult result,
+            final CalculatedSubject subj,
+            final Set<ContextValue<?>> contexts
+        );
 
-        abstract Stream<String> getValues(final CalculatedSubject subj, final Set<ContextValue<?>> contexts);
+        abstract Stream<String> getValues(
+            final PermissionsExPlugin plugin,
+            final CalculatedSubject subj,
+            final Set<ContextValue<?>> contexts
+        );
 
     }
 
@@ -302,14 +327,23 @@ final class PEXPermissible extends PermissibleBase {
         }
 
         @Override
-        boolean isMatch(final MatchResult result, final CalculatedSubject subject, final Set<ContextValue<?>> contexts) {
+        boolean isMatch(
+            final PermissionsExPlugin plugin,
+            final MatchResult result,
+            final CalculatedSubject subject,
+            final Set<ContextValue<?>> contexts
+        ) {
             return subject.option(contexts, this.option)
                 .map(it -> it.equals(result.group(1)))
                 .orElse(false);
         }
 
         @Override
-        Stream<String> getValues(final CalculatedSubject subj, final Set<ContextValue<?>> contexts) {
+        Stream<String> getValues(
+            final PermissionsExPlugin plugin,
+            final CalculatedSubject subj,
+            final Set<ContextValue<?>> contexts
+        ) {
             final String ret = subj.options(contexts).get(this.option);
             return ret == null ? Stream.of() : Stream.of(this.option + "." + ret);
         }

@@ -38,7 +38,6 @@ import cloud.commandframework.CommandManager;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.flags.CommandFlag;
 import cloud.commandframework.arguments.standard.StringArgument;
-import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
 import cloud.commandframework.minecraft.extras.MinecraftHelp;
 import io.leangen.geantyref.TypeToken;
@@ -162,7 +161,7 @@ public final class PermissionsExCommand {
             .build();
 
         return base
-            .meta(CommandMeta.DESCRIPTION, Messages.DEBUG_DESCRIPTION.key()) // TODO
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.DEBUG_DESCRIPTION.tr())
             .permission(Permission.pex("debug"))
             .argument(filterArg)
             .handler(handler((source, engine, ctx) -> {

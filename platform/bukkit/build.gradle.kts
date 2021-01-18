@@ -107,5 +107,5 @@ tasks.register("runBukkit") {
 }
 
 tasks.runSpigot {
-    javaLauncher.set(pexPlatform.developmentRuntime())
+    // javaLauncher.set(project.javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(11)) })
 }

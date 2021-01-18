@@ -20,11 +20,11 @@ import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.context.ContextValue;
 import ca.stellardrift.permissionsex.impl.util.PCollections;
 import ca.stellardrift.permissionsex.minecraft.command.argument.Parsers;
-import cloud.commandframework.Description;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.flags.CommandFlag;
 import cloud.commandframework.context.CommandContext;
 import cloud.commandframework.execution.CommandExecutionHandler;
+import cloud.commandframework.minecraft.extras.RichDescription;
 import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -46,14 +46,14 @@ public final class Elements {
 
     public static final CommandFlag<Void> FLAG_TRANSIENT = CommandFlag.newBuilder("transient")
         .withAliases("t")
-        .withDescription(Description.of("Whether flags should be stored transiently"))
+        .withDescription(RichDescription.of(Messages.COMMON_TRANSIENT_DESCRIPTION))
         .build();
 
     public static CommandFlag<ContextValue<?>> FLAG_CONTEXT = CommandFlag.newBuilder("contexts")
         .withAliases("c")
         .withArgument(CommandArgument.<Commander, ContextValue<?>>ofType(new TypeToken<ContextValue<?>>() {}, "value")
             .withParser(Parsers.contextValue()))
-        .withDescription(Description.of("Contexts to apply the settings in"))
+        .withDescription(RichDescription.of(Messages.COMMON_CONTEXT_DESCRIPTION))
         .build();
 
     public static Set<ContextValue<?>> contexts(final CommandContext<?> context) {
