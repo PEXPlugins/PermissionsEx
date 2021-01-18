@@ -23,7 +23,6 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import ca.stellardrift.permissionsex.minecraft.command.Commander;
-import ca.stellardrift.permissionsex.minecraft.command.Permission;
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon;
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition;
 import ca.stellardrift.permissionsex.sql.hikari.Hikari;
@@ -32,7 +31,6 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import cloud.commandframework.CommandTree;
 import cloud.commandframework.bungee.BungeeCommandManager;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
-import cloud.commandframework.permission.CommandPermission;
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -116,19 +114,11 @@ public class PermissionsExPlugin extends Plugin implements Listener {
     private BungeeCommandManager<Commander> createCommandManager(
         final Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>> execCoord
     ) {
-        return new BungeeCommandManager<Commander>(this,
+        return new BungeeCommandManager<>(this,
             execCoord,
             sender -> new BungeeCommander(this, sender),
             commander -> ((BungeeCommander) commander).source()
-        ) {
-            @Override
-            public boolean hasPermission(final Commander sender, final CommandPermission permission) {
-                if (permission instanceof Permission) {
-                    return sender.hasPermission((Permission) permission);
-                }
-                return super.hasPermission(sender, permission);
-            }
-        };
+        );
     }
 
     @Override

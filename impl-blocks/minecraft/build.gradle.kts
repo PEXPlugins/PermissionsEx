@@ -33,7 +33,7 @@ dependencies {
     compileOnlyApi("org.immutables:gson:$immutablesVersion")
     runtimeOnly(project(":datastore:sql"))
     api("cloud.commandframework:cloud-core:$cloudVersion")
-    implementation("cloud.commandframework:cloud-minecraft-extras:$cloudVersion")
+    api("cloud.commandframework:cloud-minecraft-extras:$cloudVersion")
     compileOnly("cloud.commandframework:cloud-brigadier:$cloudVersion")
     compileOnly("com.mojang:brigadier:1.0.17")
 

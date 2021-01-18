@@ -27,7 +27,7 @@ import ca.stellardrift.permissionsex.subject.Segment;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.util.TranslatableProvider;
 import cloud.commandframework.Command;
-import cloud.commandframework.meta.CommandMeta;
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
 import net.kyori.adventure.text.BuildableComponent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
@@ -54,7 +54,7 @@ final class InfoSubcommand {
         final Permission perm = Permission.pex("info");
         return builder
             .permission(perm)
-            .meta(CommandMeta.DESCRIPTION, Messages.INFO_DESCRIPTION.key()) // TODO
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.INFO_DESCRIPTION.tr()) // TODO
             .handler(handler((source, engine, ctx) -> {
                 final CalculatedSubject subject = subjectProvider.provideCalculated(ctx, perm);
 

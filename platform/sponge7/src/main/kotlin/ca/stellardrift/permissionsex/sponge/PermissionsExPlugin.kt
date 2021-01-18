@@ -25,13 +25,10 @@ import ca.stellardrift.permissionsex.impl.util.CachingValue
 import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext
-import ca.stellardrift.permissionsex.minecraft.command.Commander
-import ca.stellardrift.permissionsex.minecraft.command.Permission
-import ca.stellardrift.permissionsex.sponge.command.SpongeApi7CommandManager
-import ca.stellardrift.permissionsex.sponge.command.SpongeApi7MetaKeys
 import ca.stellardrift.permissionsex.subject.SubjectType
 import cloud.commandframework.arguments.standard.StringArgument
-import cloud.commandframework.permission.CommandPermission
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys
+import cloud.commandframework.sponge7.SpongeCommandManager
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.inject.Inject
 import java.io.IOException
@@ -172,19 +169,12 @@ class PermissionsExPlugin @Inject internal constructor(
                     }
                     null
                 }.commands { coord ->
-                    object : SpongeApi7CommandManager<Commander>(
+                    SpongeCommandManager(
                         this.container,
                         coord,
                         { SpongeCommander(this, it) },
                         { (it as SpongeCommander).commandSource }
-                    ) {
-                        override fun hasPermission(sender: Commander, permission: CommandPermission): Boolean {
-                            if (permission is Permission) {
-                                return sender.hasPermission(permission)
-                            }
-                            return super.hasPermission(sender, permission)
-                        }
-                    }
+                    )
                 }
                 .messageFormatter(::SpongeMessageFormatter)
                 .commandContributor(this::registerFakeOpCommand)
@@ -214,7 +204,7 @@ class PermissionsExPlugin @Inject internal constructor(
             ctx.register(ctx.absoluteBuilder(name)
                 .argument(StringArgument.of("user"))
                 .permission(permission)
-                .meta(SpongeApi7MetaKeys.RICH_DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr().toSponge())
+                .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.COMMANDS_FAKE_OP_DESCRIPTION.tr())
                 .handler {
                     it.sender.error(Messages.COMMANDS_FAKE_OP_ERROR.tr())
                 })

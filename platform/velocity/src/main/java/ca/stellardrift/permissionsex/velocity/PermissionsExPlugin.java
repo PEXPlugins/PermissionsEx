@@ -22,7 +22,6 @@ import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import ca.stellardrift.permissionsex.minecraft.command.Commander;
-import ca.stellardrift.permissionsex.minecraft.command.Permission;
 import ca.stellardrift.permissionsex.proxycommon.ProxyCommon;
 import ca.stellardrift.permissionsex.proxycommon.ProxyContextDefinition;
 import ca.stellardrift.permissionsex.sql.hikari.Hikari;
@@ -30,7 +29,6 @@ import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import cloud.commandframework.CommandManager;
 import cloud.commandframework.CommandTree;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
-import cloud.commandframework.permission.CommandPermission;
 import cloud.commandframework.velocity.VelocityCommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
@@ -132,21 +130,13 @@ public class PermissionsExPlugin {
     // Internal management
 
     private CommandManager<Commander> createCommandManager(final Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>> execCoord) {
-        return new VelocityCommandManager<Commander>(
+        return new VelocityCommandManager<>(
             this.container,
             this.server,
             execCoord,
             source -> new VelocityCommander(this, source),
             cmd -> ((VelocityCommander) cmd).audience()
-        ) {
-            @Override
-            public boolean hasPermission(final Commander sender, final CommandPermission permission) {
-                if (permission instanceof Permission) {
-                    return sender.hasPermission((Permission) permission);
-                }
-                return super.hasPermission(sender, permission);
-            }
-        };
+        );
     }
 
     @Subscribe

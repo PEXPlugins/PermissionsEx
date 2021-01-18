@@ -36,6 +36,7 @@ import cloud.commandframework.bukkit.arguments.selector.SinglePlayerSelector;
 import cloud.commandframework.bukkit.parsers.selector.SinglePlayerSelectorArgument;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
 import cloud.commandframework.paper.PaperCommandManager;
 import cloud.commandframework.permission.CommandPermission;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -69,7 +70,7 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
     // -- PEX core -- //
     private @MonotonicNonNull FormattedLogger logger;
     private @MonotonicNonNull Path dataPath;
-    private @MonotonicNonNull BukkitAudiences adventure;
+    private @Nullable BukkitAudiences adventure;
     private @Nullable MinecraftPermissionsEx<BukkitConfiguration> manager;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -141,20 +142,12 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
     ) throws RuntimeException {
         final PaperCommandManager<Commander> mgr;
         try {
-            mgr = new PaperCommandManager<Commander>(
+            mgr = new PaperCommandManager<>(
                 this,
                 execCoord,
                 sender -> new BukkitCommander(this, sender),
                 commander -> ((BukkitCommander) commander).source()
-            ) {
-                @Override
-                public boolean hasPermission(final Commander sender, final CommandPermission permission) {
-                    if (permission instanceof Permission) {
-                        return sender.hasPermission((Permission) permission);
-                    }
-                    return super.hasPermission(sender, permission);
-                }
-            };
+            );
         } catch (final Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -182,10 +175,8 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
                 .literal("resendtree")
                 .argument(targetArg)
                 .permission(perm)
-                .meta(CommandMeta.DESCRIPTION, "Force resend a player's command tree")
-                .meta(CommandMeta.LONG_DESCRIPTION, "Forcibly resend a player's Brigadier command tree\n" +
-                    "This can help resolve issues where the completions on a client\n" +
-                    "do not match what the server thinks a player has permission for.")
+                .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.COMMAND_TREE_DESCRIPTION.tr())
+                .meta(MinecraftExtrasMetaKeys.LONG_DESCRIPTION, Messages.COMMAND_TREE_LONG_DESCRIPTION.tr())
                 .handler(ctx -> {
                     final SinglePlayerSelector target = ctx.get(targetArg);
                     if (target.getPlayer() == null) {
@@ -417,6 +408,9 @@ public final class PermissionsExPlugin extends JavaPlugin implements Listener {
     }
 
     BukkitAudiences adventure() {
+        if (this.adventure == null) {
+            throw new IllegalStateException("Tried to access Adventure while the plugin was not enabled");
+        }
         return this.adventure;
     }
 

@@ -27,7 +27,7 @@ import ca.stellardrift.permissionsex.subject.SubjectRef;
 import cloud.commandframework.Command;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
-import cloud.commandframework.meta.CommandMeta;
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -54,7 +54,7 @@ final class PermissionsSubcommands {
         final CommandArgument<Commander, Integer> permissionValueArg = permissionValueArgument();
 
         return builder
-            .meta(CommandMeta.DESCRIPTION, "Set a permission for a subject")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.PERMISSION_DESCRIPTION.tr())
             .argument(permissionArg)
             .argument(permissionValueArg)
             .permission(cmdPerm)
@@ -77,7 +77,7 @@ final class PermissionsSubcommands {
         final Permission cmdPerm = Permission.pex("permission.set-default");
         final CommandArgument<Commander, Integer> permissionValueArg = permissionValueArgument();
         return builder
-            .meta(CommandMeta.DESCRIPTION, "Set the fallback permission for a subject")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.PERMISSION_DEFAULT_DESCRIPTION.tr())
             .argument(permissionValueArg)
             .permission(cmdPerm)
             .handler(ctx -> {

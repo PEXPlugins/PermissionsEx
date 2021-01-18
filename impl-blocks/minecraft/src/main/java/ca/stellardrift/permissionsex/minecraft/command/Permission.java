@@ -17,7 +17,10 @@
 package ca.stellardrift.permissionsex.minecraft.command;
 
 import ca.stellardrift.permissionsex.subject.SubjectRef;
+import cloud.commandframework.keys.CloudKey;
+import cloud.commandframework.keys.SimpleCloudKey;
 import cloud.commandframework.permission.CommandPermission;
+import cloud.commandframework.permission.PredicatePermission;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -36,7 +39,7 @@ import static java.util.Objects.requireNonNull;
  * [default] is the value to resolve this permission to when unset
  */
 @Value.Immutable(builder = false)
-public abstract class Permission implements CommandPermission {
+public abstract class Permission implements PredicatePermission<Commander> {
 
     public static Permission of(final String permission) {
         return of(permission, Component.empty(), 0);
@@ -97,6 +100,16 @@ public abstract class Permission implements CommandPermission {
     public final Permission then(final String other) {
         requireNonNull(other, "other");
         return this.value(this.value() + '.' + other);
+    }
+
+    @Override
+    public final @NonNull CloudKey<Void> getKey() {
+        return SimpleCloudKey.of(this.value());
+    }
+
+    @Override
+    public final boolean hasPermission(final Commander sender) {
+        return sender.hasPermission(this);
     }
 
     @Override

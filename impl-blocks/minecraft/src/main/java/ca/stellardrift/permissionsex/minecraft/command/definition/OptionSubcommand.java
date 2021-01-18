@@ -24,9 +24,9 @@ import ca.stellardrift.permissionsex.minecraft.command.Formats;
 import ca.stellardrift.permissionsex.minecraft.command.Permission;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import cloud.commandframework.Command;
-import cloud.commandframework.Description;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
+import cloud.commandframework.minecraft.extras.RichDescription;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayList;
@@ -43,11 +43,12 @@ final class OptionSubcommand {
         final CommandArgument<Commander, String> optionArg = StringArgument.<Commander>newBuilder("option").single()
             .withSuggestionsProvider(engineCompletions((engine, input) -> new ArrayList<>(((PermissionsEx<?>) engine).getRecordingNotifier().getKnownOptions())))
             .build();
+        // TODO: Use custom parser that stops at a word starting with `-` (start of flags)
         final CommandArgument<Commander, String> optionValueArg = StringArgument.optional("value", StringArgument.StringMode.GREEDY);
 
        return builder
            .permission(permission)
-           .argument(optionArg, Description.of("any option, suggesting from those that have already been checked"))
+           .argument(optionArg, RichDescription.of(Messages.OPTION_ARG_OPTION_DESCRIPTION))
            .argument(optionValueArg)
            .handler(ctx -> {
                final SubjectRef.ToData<?> subject = subjectProvider.provideData(ctx, permission);

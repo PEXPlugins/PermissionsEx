@@ -20,6 +20,8 @@ import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx
 import ca.stellardrift.permissionsex.minecraft.command.Commander
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter
 import ca.stellardrift.permissionsex.subject.SubjectRef
+import java.util.stream.Collectors
+import java.util.stream.Stream
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.text
@@ -44,7 +46,7 @@ internal class SpongeCommander(
     override fun sendPaginated(
         title: ComponentLike,
         header: ComponentLike?,
-        text: Iterable<ComponentLike>
+        text: Stream<out ComponentLike>
     ) {
         val build =
             pex.game.serviceManager.provide(
@@ -55,7 +57,7 @@ internal class SpongeCommander(
             if (header != null) {
                 build.header(header.asComponent().color(NamedTextColor.GRAY).toSponge())
             }
-            build.contents(text.map { it.asComponent().color(this.responseColor()).toSponge() })
+            build.contents(text.map { it.asComponent().color(this.responseColor()).toSponge() }.collect(Collectors.toList()))
                 .sendTo(commandSource)
         }
     }

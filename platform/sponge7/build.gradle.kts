@@ -38,6 +38,7 @@ val spongeRunClasspath by configurations.creating {
 
 dependencies {
     val adventurePlatformVersion: String by project
+    val cloudVersion: String by project
     val slf4jVersion: String by project
 
     api(project(":impl-blocks:minecraft")) {
@@ -49,6 +50,7 @@ dependencies {
     implementation(adventure("platform-spongeapi", adventurePlatformVersion)) {
         exclude("com.google.code.gson")
     }
+    implementation("cloud.commandframework:cloud-sponge7:$cloudVersion")
 
     testImplementation(kapt(shadow("org.spongepowered:spongeapi:7.3.0")!!)!!)
 

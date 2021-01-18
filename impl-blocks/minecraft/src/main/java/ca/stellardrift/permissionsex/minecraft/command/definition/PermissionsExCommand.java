@@ -39,6 +39,7 @@ import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.flags.CommandFlag;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
 import cloud.commandframework.minecraft.extras.MinecraftHelp;
 import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.text.Component;
@@ -47,7 +48,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ca.stellardrift.permissionsex.minecraft.command.Elements.*;
@@ -133,7 +133,7 @@ public final class PermissionsExCommand {
     private static Command.Builder<Commander> help(final Command.Builder<Commander> base, final CommandManager<Commander> mgr, final MessageFormatter formatter) {
         final CommandArgument<Commander, String> query = StringArgument.optional("query", StringArgument.StringMode.GREEDY);
         final Command.Builder<Commander> helpCommand = base
-            .meta(CommandMeta.DESCRIPTION, "Get help for PermissionsEx")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.PEX_HELP_DESCRIPTION.tr())
             .argument(query)
             .permission(Permission.pex("help"));
 
@@ -196,7 +196,7 @@ public final class PermissionsExCommand {
             .build();
 
         return base
-            .meta(CommandMeta.DESCRIPTION, "Import data from another store")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.PEX_IMPORT_DESCRIPTION.tr())
             .argument(dataStoreArg)
             .permission(Permission.pex("import"))
             .handler(ctx -> {
@@ -242,7 +242,7 @@ public final class PermissionsExCommand {
 
     private static Command.Builder<Commander> reload(final Command.Builder<Commander> base) {
         return base
-            .meta(CommandMeta.DESCRIPTION, "Reload PermissionsEx")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.RELOAD_DESCRIPTION.tr())
             .permission(Permission.pex("reload"))
             .handler(ctx -> {
                 ctx.getSender().sendMessage(Messages.RELOAD_ACTION_BEGIN.tr());
@@ -254,7 +254,7 @@ public final class PermissionsExCommand {
     private static Command.Builder<Commander> version(final Command.Builder<Commander> base) {
         final CommandFlag<Void> verboseFlag = CommandFlag.newBuilder("verbose").withAliases("v").build();
         return base
-            .meta(CommandMeta.DESCRIPTION, "Get details about the currently running PermissionsEx version")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.VERSION_DESCRIPTION.tr())
             .permission(Permission.pex("version"))
             .flag(verboseFlag)
             .handler(ctx -> {
@@ -268,7 +268,7 @@ public final class PermissionsExCommand {
         final CommandArgument<Commander, String> filterArg = StringArgument.optional("filter");
         final Permission basePerm = Permission.pex("list");
         return base
-            .meta(CommandMeta.DESCRIPTION, "List all subjects of a certain type")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.PEX_LIST_DESCRIPTION.tr())
             // .permission(basePerm) // TODO: Allow prefix permissions
             .argument(filterArg)
             .flag(Elements.FLAG_TRANSIENT)

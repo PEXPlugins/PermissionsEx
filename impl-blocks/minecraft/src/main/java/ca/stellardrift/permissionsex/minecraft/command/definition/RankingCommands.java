@@ -33,6 +33,8 @@ import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.flags.CommandFlag;
 import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.meta.CommandMeta;
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
+import cloud.commandframework.minecraft.extras.RichDescription;
 import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -63,7 +65,7 @@ public final class RankingCommands {
 
     // Only for subcommands that modify
     private static final CommandFlag<Void> FLAG_RELATIVE = CommandFlag.newBuilder("relative")
-        .withDescription(Description.of("Whether the <index> argument should be relative to the current position of the rank"))
+        .withDescription(RichDescription.of(Messages.RANK_ARG_RELATIVE_DESCRIPTION))
         .withAliases("r")
         .build();
 
@@ -72,7 +74,7 @@ public final class RankingCommands {
 
     static void register(final CommandRegistrationContext ctx) {
         // ctx.register(RankingCommands::list, "")
-        ctx.push(ctx.head().argument(LADDER_ARG, Description.of("the rank ladder to work on")), child -> {
+        ctx.push(ctx.head().argument(LADDER_ARG, RichDescription.of(Messages.RANK_ARG_LADDER_DESCRIPTION)), child -> {
             ctx.register(list(ctx.head()));
             ctx.register(RankingCommands::add, "add", "+");
             ctx.register(RankingCommands::remove, "remove", "rem", "delete", "del", "-");
@@ -82,7 +84,7 @@ public final class RankingCommands {
     static Command.Builder<Commander> list(final Command.Builder<Commander> builder) {
         final Permission listPerm = Permission.pex("ranking.list");
         return builder
-            .meta(CommandMeta.DESCRIPTION, "List information about existing rank ladders")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.RANK_LIST_DESCRIPTION.tr())
             .permission(listPerm)
             .handler(ctx -> {
                 final Commander source = ctx.getSender();
@@ -212,7 +214,7 @@ public final class RankingCommands {
             .argument(rankIdentifierArg)
             .argument(positionArg)
             .permission(perm)
-            .meta(CommandMeta.DESCRIPTION, "Add a rank to a ladder")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.RANK_ADD_DESCRIPTION.tr())
             .handler(handler((source, engine, ctx) -> {
                 final RankLadder ladder = ctx.get(LADDER_ARG);
                 source.checkPermission(perm.then(ladder.name()));
@@ -255,7 +257,7 @@ public final class RankingCommands {
             .argument(rankTypeArg)
             .argument(rankIdentifierArg)
             .permission(perm)
-            .meta(CommandMeta.DESCRIPTION, "Remove a rank from a ladder")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.RANK_REMOVE_DESCRIPTION.tr())
             .handler(handler((source, engine, ctx) -> {
                 final RankLadder ladder = ctx.get(LADDER_ARG);
                 source.checkPermission(perm.then(ladder.name()));
@@ -290,7 +292,7 @@ public final class RankingCommands {
             .argument(rankTypeArg)
             .argument(rankIdentifierArg)
             .argument(ladderArg)
-            .meta(CommandMeta.DESCRIPTION, "Promote a subject along a rank ladder")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.RANK_PROMOTE_DESCRIPTION.tr())
             .permission(promote)
             .handler(handler((source, engine, ctx) -> {
                 final RankLadder ladder = ctx.get(ladderArg);
@@ -324,7 +326,7 @@ public final class RankingCommands {
             .argument(rankTypeArg)
             .argument(rankIdentifierArg)
             .argument(ladderArg)
-            .meta(CommandMeta.DESCRIPTION, "Demote a subject along a rank ladder")
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.RANK_DEMOTE_DESCRIPTION.tr())
             .permission(promote)
             .handler(handler((source, engine, ctx) -> {
                 final RankLadder ladder = ctx.get(ladderArg);
