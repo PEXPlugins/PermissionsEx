@@ -16,15 +16,25 @@
  */
 package ca.stellardrift.permissionsex.minecraft.command;
 
+import ca.stellardrift.permissionsex.PermissionsEngine;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import cloud.commandframework.execution.preprocessor.CommandPreprocessingContext;
 import cloud.commandframework.execution.preprocessor.CommandPreprocessor;
+import cloud.commandframework.keys.CloudKey;
+import cloud.commandframework.keys.SimpleCloudKey;
+import io.leangen.geantyref.TypeToken;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class PEXCommandPreprocessor implements CommandPreprocessor<Commander> {
 
-    public static final String PEX_MANAGER = "permissionsex:manager";
-    public static final String PEX_ENGINE = "permissionsex:engine";
+    public static final CloudKey<MinecraftPermissionsEx<?>> PEX_MANAGER = SimpleCloudKey.of(
+        "permissionsex:manager",
+        new TypeToken<MinecraftPermissionsEx<?>>() {}
+    );
+    public static final CloudKey<PermissionsEngine> PEX_ENGINE = SimpleCloudKey.of(
+        "permissionsex:engine",
+        TypeToken.get(PermissionsEngine.class)
+    );
 
     private final MinecraftPermissionsEx<?> manager;
 

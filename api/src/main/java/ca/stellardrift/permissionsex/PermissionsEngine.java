@@ -39,8 +39,6 @@ import java.util.regex.Pattern;
  * @since 2.0.0
  */
 public interface PermissionsEngine extends ContextDefinitionProvider {
-    @Deprecated
-    String SUBJECTS_GROUP = "group";
 
     /**
      * Create a new builder for an engine.

@@ -187,7 +187,7 @@ public final class PermissionsExCommand {
     private static Command.Builder<Commander> commandImport(final Command.Builder<Commander> base) {
         final CommandArgument<Commander, String> dataStoreArg = StringArgument.<Commander>newBuilder("data store")
             .withSuggestionsProvider((ctx, input) -> {
-                final PermissionsEx<?> engine = ctx.get(PEXCommandPreprocessor.PEX_ENGINE);
+                final PermissionsEx<?> engine = ctx.get(PEXCommandPreprocessor.PEX_MANAGER).engine();
                 return PCollections.asVector(engine.getAvailableConversions(), conv -> conv.store().identifier());
                 // TODO: include data store names here
             })
@@ -200,7 +200,7 @@ public final class PermissionsExCommand {
             .permission(Permission.pex("import"))
             .handler(ctx -> {
                 final Commander source = ctx.getSender();
-                final PermissionsEx<?> engine = ctx.get(PEXCommandPreprocessor.PEX_ENGINE);
+                final PermissionsEx<?> engine = ctx.get(PEXCommandPreprocessor.PEX_MANAGER).engine();
                 final @Nullable String requestedName = ctx.contains(dataStoreArg.getName()) ? ctx.get(dataStoreArg) : null;
                 if (requestedName == null) {
                     /* list available conversion actions */
@@ -245,7 +245,7 @@ public final class PermissionsExCommand {
             .permission(Permission.pex("reload"))
             .handler(ctx -> {
                 ctx.getSender().sendMessage(Messages.RELOAD_ACTION_BEGIN.tr());
-                ctx.<PermissionsEx<?>>get(PEXCommandPreprocessor.PEX_ENGINE).reload()
+                ctx.get(PEXCommandPreprocessor.PEX_MANAGER).engine().reload()
                     .whenComplete(messageSender(ctx.getSender(), Messages.RELOAD_ACTION_SUCCESS.tr()));
             });
     }
