@@ -54,11 +54,6 @@ public class SimpleContextDefinition extends ContextDefinition<String> {
     }
 
     @Override
-    public boolean matches(final String ownVal, final String testVal) {
-        return Objects.equals(ownVal, testVal);
-    }
-
-    @Override
     public String serialize(final String canonicalValue) {
         return canonicalValue;
     }

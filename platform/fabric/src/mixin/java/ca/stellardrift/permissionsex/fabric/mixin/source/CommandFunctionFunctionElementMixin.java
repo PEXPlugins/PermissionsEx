@@ -16,8 +16,7 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
-import ca.stellardrift.permissionsex.fabric.impl.FunctionContextDefinition;
-import ca.stellardrift.permissionsex.fabric.impl.PopExecutingFunctionEntry;
+import ca.stellardrift.permissionsex.fabric.impl.Functions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.function.CommandFunction;
 import net.minecraft.server.function.CommandFunctionManager;
@@ -41,7 +40,7 @@ public class CommandFunctionFunctionElementMixin {
             final ServerCommandSource source,
             final CommandFunction function,
             final CallbackInfo ci) {
-        steps.addFirst(PopExecutingFunctionEntry.INSTANCE);
+        steps.addFirst(Functions.PopExecutingEntry.INSTANCE);
     }
 
     @Inject(method = "method_17914", at = @At("TAIL"), remap = false)
@@ -52,6 +51,6 @@ public class CommandFunctionFunctionElementMixin {
             final ServerCommandSource source,
             final CommandFunction function,
             final CallbackInfo ci) {
-        FunctionContextDefinition.INSTANCE.getCurrentFunctions$fabric().get().add(function.getId());
+        Functions.Context.currentFunctions().add(function.getId());
     }
 }

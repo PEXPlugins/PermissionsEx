@@ -16,8 +16,8 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
-import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
+import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
@@ -55,7 +55,7 @@ public abstract class ArgumentBuilderMixin<S, T extends ArgumentBuilder<S, T>> {
         if ((Object) this instanceof LiteralArgumentBuilder && requirement.getClass().getName().startsWith("net.minecraft")) { // Builtin commands
            final String commandName = getUnaliasedCommandName();
            if (commandName != null) {
-               this.requirement = FabricPermissionsEx.commandPermissionCheck(MinecraftPermissions.forCommand(commandName));
+               this.requirement = FabricPermissionsExImpl.commandPermissionCheck(MinecraftPermissions.forCommand(commandName));
                return getThis();
            }
         }

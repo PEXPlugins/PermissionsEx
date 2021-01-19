@@ -17,8 +17,7 @@
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
 import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
-import ca.stellardrift.permissionsex.fabric.impl.FabricPermissionsExImpl;
-import ca.stellardrift.permissionsex.fabric.impl.FunctionContextDefinition;
+import ca.stellardrift.permissionsex.fabric.impl.Functions;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.function.CommandFunction;
@@ -48,7 +47,7 @@ public abstract class CommandFunctionManagerMixin {
     private void pex$executeFunctionsWithSubject(final Collection<CommandFunction> functions, final Identifier tagName, final CallbackInfo ci) {
         final ServerCommandSource source = FabricPermissionsEx.withSubjectOverride(
                 this.shadow$getTaggedFunctionSource(),
-                SubjectRef.subject(FabricPermissionsEx.getFunctionSubjectType(), tagName));
+                SubjectRef.subject(FabricPermissionsEx.functions(), tagName));
 
         for (final CommandFunction function : functions) {
             this.shadow$execute(function, source);
@@ -68,11 +67,11 @@ public abstract class CommandFunctionManagerMixin {
 
     @Inject(method = "execute", at = @At(value = "INVOKE", target = "Ljava/util/ArrayDeque;clear()V"))
     private void pex$clearExecutingFunctions(final CallbackInfoReturnable<Integer> cir) {
-        FunctionContextDefinition.INSTANCE.getCurrentFunctions$fabric().get().clear();
+        Functions.Context.currentFunctions().clear();
     }
 
     @Inject(method = "execute", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/function/CommandFunction;getElements()[Lnet/minecraft/server/function/CommandFunction$Element;"))
     private void pex$addFunctionContext(final CommandFunction function, final ServerCommandSource source, final CallbackInfoReturnable<Integer> cir) {
-        FunctionContextDefinition.INSTANCE.getCurrentFunctions$fabric().get().add(function.getId());
+        Functions.Context.currentFunctions().add(function.getId());
     }
 }

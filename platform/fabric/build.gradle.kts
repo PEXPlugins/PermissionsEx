@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.backend.common.atMostOne
 plugins {
     id("pex-platform")
     id("ca.stellardrift.opinionated.fabric")
-    id("ca.stellardrift.opinionated.kotlin")
     id("ca.stellardrift.localization")
 }
 
@@ -56,7 +55,6 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:0.11.1")
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.29.3+1.16")
-    modImplementation("net.fabricmc:fabric-language-kotlin:1.4.21+build.1")
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
     })

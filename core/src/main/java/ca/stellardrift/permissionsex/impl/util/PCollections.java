@@ -74,7 +74,7 @@ public final class PCollections {
         }
     }
 
-    public static <I, O> PSet<O> asSet(final Collection<I> list, final Function<? super I, ? extends O> xform) {
+    public static <I, O> PSet<O> asSet(final Iterable<I> list, final Function<? super I, ? extends O> xform) {
         PSet<O> out = HashTreePSet.empty();
         for (final I ent : list) {
             out = out.plus(xform.apply(ent));
@@ -90,7 +90,7 @@ public final class PCollections {
         }
     }
 
-    public static <I, O> PVector<O> asVector(final Collection<I> list, final Function<? super I, ? extends O> xform) {
+    public static <I, O> PVector<O> asVector(final Iterable<I> list, final Function<? super I, ? extends O> xform) {
         PVector<O> out = TreePVector.empty();
         for (final I ent : list) {
             out = out.plus(xform.apply(ent));
@@ -106,7 +106,7 @@ public final class PCollections {
         }
     }
 
-    public static <I, O> PStack<O> asStack(final Collection<I> list, final Function<? super I, ? extends O> xform) {
+    public static <I, O> PStack<O> asStack(final Iterable<I> list, final Function<? super I, ? extends O> xform) {
         PStack<O> out = ConsPStack.empty();
         for (final I ent : list) {
             out = out.plus(xform.apply(ent));

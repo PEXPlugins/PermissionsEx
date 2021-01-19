@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ca.stellardrift.permissionsex.fabric.impl
+package ca.stellardrift.permissionsex.fabric.impl;
 
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
-import java.net.URL
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
 
 /**
  * Via i509VCB, a trick to get Brig onto the Knot classpath in order to properly mix in.
@@ -30,9 +32,18 @@ import java.net.URL
  *
  * Original on GitHub at [i509VCB/Fabric-Junkkyard](https://github.com/i509VCB/Fabric-Junkkyard/blob/ce278daa93804697c745a51af06ec812896ec2ad/src/main/java/me/i509/junkkyard/hacks/PreLaunchHacks.java)
  */
-object PreLaunchHacks {
-    private val KNOT_CLASSLOADER = Thread.currentThread().contextClassLoader
-    private var ADD_URL_METHOD: Method
+final class PreLaunchHacks {
+    private static final ClassLoader KNOT_CLASSLOADER = Thread.currentThread().getContextClassLoader();
+    private static final Method ADD_URL_METHOD;
+
+    static {
+        try {
+            ADD_URL_METHOD = KNOT_CLASSLOADER.getClass().getMethod("addURL", URL.class);
+            ADD_URL_METHOD.setAccessible(true);
+        } catch (final NoSuchMethodException ex) {
+            throw new RuntimeException("Failed to load Classloader fields", ex);
+        }
+    }
 
     /**
      * Hackily load the package which a mixin may exist within.
@@ -44,18 +55,9 @@ object PreLaunchHacks {
      * @throws InvocationTargetException if an error occurs while injecting
      * @throws IllegalAccessException if an error occurs while injecting
      */
-    @Throws(ClassNotFoundException::class, InvocationTargetException::class, IllegalAccessException::class)
-    fun hackilyLoadForMixin(pathOfAClass: String?) {
-        val url = Class.forName(pathOfAClass).protectionDomain.codeSource.location
-        ADD_URL_METHOD.invoke(KNOT_CLASSLOADER, url)
+    static void hackilyLoadForMixin(final @Nullable String pathOfAClass) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException {
+        final URL url = Class.forName(pathOfAClass).getProtectionDomain().getCodeSource().getLocation();
+        ADD_URL_METHOD.invoke(KNOT_CLASSLOADER, url);
     }
 
-    init {
-        try {
-            ADD_URL_METHOD = KNOT_CLASSLOADER.javaClass.getMethod("addURL", URL::class.java)
-            ADD_URL_METHOD.isAccessible = true
-        } catch (e: ReflectiveOperationException) {
-            throw RuntimeException("Failed to load Classloader fields", e)
-        }
-    }
 }

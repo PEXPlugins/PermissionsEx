@@ -30,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static ca.stellardrift.permissionsex.fabric.FabricPermissionsEx.hasPermission;
+import static me.lucko.fabric.api.permissions.v0.Permissions.check;
 
 @Mixin(ServerCommandSource.class)
 public class ServerCommandSourceMixin {
@@ -40,8 +41,8 @@ public class ServerCommandSourceMixin {
         @SuppressWarnings("ConstantConditions")
         final ServerCommandSource source = (ServerCommandSource) (Object) this;
         final ServerPlayerEntity sourcePlayer = source.getEntity() instanceof ServerPlayerEntity ? (ServerPlayerEntity) source.getEntity() : null;
-        boolean sourceCanSend = hasPermission(source, MinecraftPermissions.BROADCAST_SEND + "." + target.getId().toString())
-                || hasPermission(source, MinecraftPermissions.BROADCAST_SEND + "." + target.getName());
+        boolean sourceCanSend = check(source, MinecraftPermissions.BROADCAST_SEND + "." + target.getId().toString())
+                || check(source, MinecraftPermissions.BROADCAST_SEND + "." + target.getName());
         boolean targetCanReceive = hasPermission(target, MinecraftPermissions.BROADCAST_RECEIVE + "." + source.getName())
                 || (sourcePlayer != null && hasPermission(target, MinecraftPermissions.BROADCAST_RECEIVE + "." + sourcePlayer.getGameProfile().getId().toString()));
         return sourceCanSend && targetCanReceive;

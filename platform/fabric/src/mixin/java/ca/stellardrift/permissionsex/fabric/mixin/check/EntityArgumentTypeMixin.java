@@ -16,9 +16,9 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.check;
 
-import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
 import ca.stellardrift.permissionsex.fabric.MinecraftPermissions;
 import ca.stellardrift.permissionsex.fabric.impl.RedirectTargets;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
@@ -33,6 +33,6 @@ public class EntityArgumentTypeMixin {
             target = RedirectTargets.COMMAND_SOURCE_HAS_PERM_LEVEL))
     public boolean commandSourceHasSelectorPermission(CommandSource source, int level) {
         return !(source instanceof ServerCommandSource)
-                || FabricPermissionsEx.hasPermission(((ServerCommandSource) source), MinecraftPermissions.USE_SELECTOR);
+                || Permissions.check(source, MinecraftPermissions.USE_SELECTOR);
     }
 }

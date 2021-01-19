@@ -26,6 +26,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -35,7 +36,7 @@ public abstract class BlockItemMixin {
 
     @Redirect(method = "writeTagToBlockEntity", at = @At(value = "INVOKE", target = RedirectTargets.IS_CREATIVE_LEVEL_TWO_OP))
     private static boolean canCopyData(PlayerEntity player, World world, PlayerEntity unused, BlockPos pos, ItemStack stack) {
-        Identifier block = BlockEntityType.getId(world.getBlockEntity(pos).getType());
+        final @Nullable Identifier block = BlockEntityType.getId(world.getBlockEntity(pos).getType());
         return FabricPermissionsEx.hasPermission(player, MinecraftPermissions.makeSpecific(MinecraftPermissions.LOAD_BLOCK_ITEM_DATA, block));
     }
 }

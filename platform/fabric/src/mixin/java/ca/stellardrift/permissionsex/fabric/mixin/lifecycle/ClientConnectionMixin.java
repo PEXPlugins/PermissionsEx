@@ -16,11 +16,10 @@
  */
 package ca.stellardrift.permissionsex.fabric.mixin.lifecycle;
 
-import ca.stellardrift.permissionsex.fabric.impl.Bridges;
-import ca.stellardrift.permissionsex.fabric.impl.ClientConnectionBridge;
+import ca.stellardrift.permissionsex.fabric.impl.bridge.ClientConnectionBridge;
 import io.netty.channel.Channel;
 import net.minecraft.network.ClientConnection;
-import org.jetbrains.annotations.NotNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -32,28 +31,26 @@ public class ClientConnectionMixin implements ClientConnectionBridge {
     @Shadow
     private Channel channel;
 
-    private InetSocketAddress virtualHost;
+    private @Nullable InetSocketAddress pex$virtualHost;
 
-    @NotNull
     @Override
-    public InetSocketAddress getVirtualHost() {
-        if (this.virtualHost == null) {
+    public @Nullable InetSocketAddress virtualHost() {
+        if (this.pex$virtualHost == null) {
             SocketAddress tempAddress = channel.localAddress();
             if (tempAddress instanceof InetSocketAddress) {
                 return ((InetSocketAddress) tempAddress);
-            } else {
-                return Bridges.LOCAL_HOST;
             }
         } else {
-            return this.virtualHost;
+            return this.pex$virtualHost;
         }
+        return null;
     }
 
     @Override
-    public void setVirtualHost(final @NotNull InetSocketAddress address) {
-        if (this.virtualHost != null) {
+    public void virtualHost(final InetSocketAddress address) {
+        if (this.pex$virtualHost != null) {
             throw new IllegalStateException("Virtual host can only be set once per connection!");
         }
-        this.virtualHost = address;
+        this.pex$virtualHost = address;
     }
 }

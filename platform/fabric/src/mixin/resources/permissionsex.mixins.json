@@ -38,7 +38,7 @@
   "injectors": {
     "defaultRequire": 1,
     "injectionPoints": [
-      "ca.stellardrift.permissionsex.fabric.impl.WitherMutator"
+      "ca.stellardrift.permissionsex.fabric.impl.WitherMutatorInjectionPoint"
     ]
   }
 }

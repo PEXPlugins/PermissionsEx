@@ -42,7 +42,7 @@ public class DedicatedServerMixin {
     @Redirect(method = "isSpawnProtected",
             at = @At(value = "INVOKE", target = RedirectTargets.OPERATOR_LIST_IS_EMPTY))
     public boolean isSpawnProtectionIgnored(OperatorList ops) {
-        return !FabricPermissionsEx.getEngine().subjects(FabricPermissionsEx.getUserSubjectType()).persistentData().getAllIdentifiers().findAny().isPresent();
+        return !FabricPermissionsEx.users().persistentData().getAllIdentifiers().findAny().isPresent();
     }
 
     /*

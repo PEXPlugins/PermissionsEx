@@ -20,6 +20,7 @@ import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.pcollections.HashTreePSet;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -37,6 +38,13 @@ public abstract class ContextDefinition<V> {
         this.name = requireNonNull(name, "name");
     }
 
+    /**
+     * Create a new context value based on this definition.
+     *
+     * @param value the value to associate with this definition
+     * @return a new context value holder
+     * @since 2.0.0
+     */
     public final ContextValue<V> createValue(final V value) {
         return new ContextValue<>(this, value);
     }
@@ -56,6 +64,7 @@ public abstract class ContextDefinition<V> {
      *
      * @param canonicalValue Parsed value
      * @return serialized form of the value
+     * @since 2.0.0
      */
     public abstract String serialize(V canonicalValue);
 
@@ -64,30 +73,50 @@ public abstract class ContextDefinition<V> {
      *
      * @param userValue the value as a string, such as when provided by user input
      * @return V a deserialized value, or {@code null if unsuccessful}
+     * @since 2.0.0
      */
     public abstract @Nullable V deserialize(String userValue);
 
     /**
      * Given a defined context and the active value (provided by {@link #accumulateCurrentValues(CalculatedSubject, Consumer)}),
      * return whether the active value matches the defined value.
+     *
+     * @param ctx a defined context
+     * @param activeValue a value to test for membership in {@code ctx}
+     * @return whether a match was found
+     * @since 2.0.0
      */
     public final boolean matches(final ContextValue<V> ctx, final V activeValue) {
         return matches(ctx.getParsedValue(this), activeValue);
     }
 
-    public abstract boolean matches(V ownVal, V testVal);
+    /**
+     * Get whether two values match.
+     *
+     * @param ownVal the defined value
+     * @param testVal the value being tested against
+     * @return whether {@code testVal} is an element of {@code ownVal}
+     */
+    public boolean matches(V ownVal, V testVal) {
+        return Objects.equals(ownVal, testVal);
+    }
 
     /**
      * Given a player, calculate active context types
      *
      * @param subject  The subject active contexts are being calculated for
      * @param consumer A function that will take the returned value and add it to the active context set
+     * @since 2.0.0
      */
     public abstract void accumulateCurrentValues(CalculatedSubject subject, Consumer<V> consumer);
 
     /**
      * Given a subject, suggest a set of values that may be valid for this context. This need not be an exhaustive list,
      * or could even be an empty list, but allows providing users possible suggestions to what sensible values for a context may be.
+     *
+     * @param subject a subject to query for environment information
+     * @return a set of possible values
+     * @since 2.0.0
      */
     public Set<V> suggestValues(final CalculatedSubject subject) {
         return HashTreePSet.empty();

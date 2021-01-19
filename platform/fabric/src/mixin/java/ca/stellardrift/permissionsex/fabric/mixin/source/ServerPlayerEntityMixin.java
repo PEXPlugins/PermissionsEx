@@ -17,7 +17,7 @@
 package ca.stellardrift.permissionsex.fabric.mixin.source;
 
 import ca.stellardrift.permissionsex.fabric.FabricPermissionsEx;
-import ca.stellardrift.permissionsex.fabric.impl.PermissionCommandSourceBridge;
+import ca.stellardrift.permissionsex.fabric.impl.bridge.PermissionCommandSourceBridge;
 import ca.stellardrift.permissionsex.subject.CalculatedSubject;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import com.mojang.authlib.GameProfile;
@@ -25,6 +25,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 
@@ -33,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(ServerPlayerEntity.class)
 public abstract class ServerPlayerEntityMixin extends PlayerEntity implements PermissionCommandSourceBridge<UUID> {
-    private final AtomicReference<CalculatedSubject> permSubject = new AtomicReference<>();
+    private final AtomicReference<@Nullable CalculatedSubject> permSubject = new AtomicReference<>();
 
     public ServerPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
         super(world, pos,yaw, gameProfile);
@@ -41,24 +42,24 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity implements Pe
 
     @NotNull
     @Override
-    public SubjectType<UUID> getPermType() {
-        return FabricPermissionsEx.getUserSubjectType();
+    public SubjectType<UUID> permType() {
+        return FabricPermissionsEx.users().type();
     }
 
     @NotNull
     @Override
-    public UUID getPermIdentifier() {
+    public UUID permIdentifier() {
         return getUuid();
     }
 
     @NotNull
     @Override
     public CalculatedSubject asCalculatedSubject() {
-        CalculatedSubject ret = permSubject.get();
+        final @Nullable CalculatedSubject ret = permSubject.get();
         if (ret != null) {
             return ret;
         }
-        CalculatedSubject updated = FabricPermissionsEx.getEngine().subjects(getPermType()).get(getPermIdentifier()).join();
+        final CalculatedSubject updated = FabricPermissionsEx.engine().subjects(this.permType()).get(this.permIdentifier()).join();
         permSubject.set(updated);
         return updated;
     }
