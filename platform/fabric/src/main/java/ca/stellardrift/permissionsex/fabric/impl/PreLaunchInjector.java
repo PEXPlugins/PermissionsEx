@@ -30,11 +30,12 @@ public class PreLaunchInjector implements PreLaunchEntrypoint {
 
     @Override
     public void onPreLaunch() {
-        try {
+        /*try {
             PreLaunchHacks.hackilyLoadForMixin("com.mojang.brigadier.Message");
+            PreLaunchHacks.hackilyLoadForMixin("cloud.commandframework.brigadier.BrigadierManagerHolder");
         } catch (final ClassNotFoundException | InvocationTargetException | IllegalAccessException ex) {
             LOGGER.warn("Failed to inject Brigadier into transformation path, Vanilla command permissions may not work.", ex);
-        }
+        }*/
     }
 
 }

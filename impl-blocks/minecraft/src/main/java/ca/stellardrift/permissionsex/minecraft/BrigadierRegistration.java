@@ -16,6 +16,7 @@
  */
 package ca.stellardrift.permissionsex.minecraft;
 
+import ca.stellardrift.permissionsex.minecraft.command.argument.OptionValueParser;
 import ca.stellardrift.permissionsex.minecraft.command.argument.PatternParser;
 import cloud.commandframework.CommandManager;
 import cloud.commandframework.brigadier.BrigadierManagerHolder;
@@ -31,23 +32,29 @@ final class BrigadierRegistration {
     }
 
     @SuppressWarnings("unchecked")
-    static void registerArgumentTypes(final CommandManager<?> manager) {
+    static <C> void registerArgumentTypes(final CommandManager<C> manager) {
         if (!(manager instanceof BrigadierManagerHolder)) {
             return;
         }
 
-        final @Nullable CloudBrigadierManager<?, ?> brig = ((BrigadierManagerHolder<?>) manager).brigadierManager();
+        final @Nullable CloudBrigadierManager<C, ?> brig = ((BrigadierManagerHolder<C>) manager).brigadierManager();
         if (brig == null) {
             return;
         }
 
-        brig.registerMapping(TypeToken.get(PatternParser.class), true, parser -> {
+        brig.registerMapping(new TypeToken<PatternParser<C>>() {}, true, parser -> {
             if (parser.greedy()) {
                 return StringArgumentType.greedyString();
             } else {
                 return StringArgumentType.string();
             }
         });
+
+        brig.registerMapping(
+            new TypeToken<OptionValueParser<C>>() {},
+            false,
+            parser -> StringArgumentType.greedyString()
+        );
     }
 
 }

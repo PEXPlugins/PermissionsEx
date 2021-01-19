@@ -18,12 +18,17 @@ package ca.stellardrift.permissionsex.fabric.impl;
 
 import ca.stellardrift.permissionsex.fabric.FabricContexts;
 import ca.stellardrift.permissionsex.fabric.impl.bridge.PermissionCommandSourceBridge;
+import ca.stellardrift.permissionsex.fabric.impl.commands.FabricServerCommandManager;
 import ca.stellardrift.permissionsex.impl.logging.WrappingFormattedLogger;
 import ca.stellardrift.permissionsex.impl.util.CachingValue;
 import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
+import ca.stellardrift.permissionsex.minecraft.command.Commander;
 import ca.stellardrift.permissionsex.sql.hikari.Hikari;
+import cloud.commandframework.CommandManager;
+import cloud.commandframework.CommandTree;
+import cloud.commandframework.execution.CommandExecutionCoordinator;
 import com.mojang.authlib.GameProfile;
 import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent;
 import net.fabricmc.api.ModInitializer;
@@ -45,6 +50,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -79,12 +85,12 @@ public final class FabricPermissionsExImpl implements ModInitializer {
         );
     }
 
-    public static <S> Predicate<S> commandPermissionCheck(final String permission) {
+    public static <S> Predicate<S> commandPermissionCheck(final String permission, final Predicate<S> original) {
         return subject -> {
             if (subject instanceof PermissionCommandSourceBridge<?>) {
                 return ((PermissionCommandSourceBridge<?>) subject).hasPermission(permission);
             } else {
-                return false;
+                return original.test(subject);
             }
         };
     }
@@ -159,7 +165,14 @@ public final class FabricPermissionsExImpl implements ModInitializer {
             }
             return TriState.DEFAULT;
         });
+    }
 
+    private CommandManager<Commander> createCommandManager(final Function<CommandTree<Commander>, CommandExecutionCoordinator<Commander>> execCoord) {
+        return new FabricServerCommandManager<>(
+            execCoord,
+            FabricCommander::new,
+            commander -> ((FabricCommander) commander).source()
+        );
     }
 
     private MinecraftPermissionsEx<?> createManager() {
@@ -189,6 +202,7 @@ public final class FabricPermissionsExImpl implements ModInitializer {
                     final @Nullable GameProfile profile = server.getUserCache().getByUuid(id);
                     return profile != null && server.getPlayerManager().isOperator(profile);
                 })
+                .commands(this::createCommandManager)
                 .messageFormatter(FabricMessageFormatter::new)
                 .create();
         } catch (final Exception ex) {

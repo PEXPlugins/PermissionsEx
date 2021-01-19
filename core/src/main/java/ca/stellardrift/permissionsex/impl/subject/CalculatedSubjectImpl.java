@@ -158,18 +158,18 @@ public class CalculatedSubjectImpl<I> implements Consumer<ImmutableSubjectData>,
     @Override
     public int permission(Set<ContextValue<?>> contexts, String permission) {
         int ret = permissions(contexts).get(Objects.requireNonNull(permission, "permission"));
+        if (ret == 0) {
+            if (this.containingType().type().undefinedPermissionValue(this.identifier.identifier())) {
+                ret = 1;
+            }
+        }
         getManager().getNotifier().onPermissionCheck(identifier(), contexts, permission, ret);
         return ret;
     }
 
     @Override
     public boolean hasPermission(Set<ContextValue<?>> contexts, String permission) {
-        final int perm = permission(contexts, permission);
-        if (perm == 0) {
-            return containingType().type().undefinedPermissionValue(this.identifier.identifier());
-        } else {
-            return perm > 0;
-        }
+        return this.permission(contexts, permission) > 0;
     }
 
     @Override

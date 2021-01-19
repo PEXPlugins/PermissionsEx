@@ -32,6 +32,7 @@ public final class Parsers {
     private static final SubjectTypeParser<Object> SUBJECT_TYPE = new SubjectTypeParser<>();
     private static final PatternParser<Object> GREEDY_PATTERN = new PatternParser<>(true);
     private static final PatternParser<Object> NON_GREEDY_PATTERN = new PatternParser<>(false);
+    private static final OptionValueParser<Object> OPTION_VALUE = new OptionValueParser<>();
 
     public static ContextValueParser contextValue() {
         return CONTEXT_VALUE;
@@ -81,6 +82,20 @@ public final class Parsers {
     @SuppressWarnings("unchecked")
     public static <C> PatternParser<C> greedyPattern() {
         return (PatternParser<C>) GREEDY_PATTERN;
+    }
+
+
+    /**
+     * Get a parser for an option value.
+     *
+     * <p>This will read a greedy string up until a flag start character is found, or the end of a quoted block is found</p>
+     *
+     * @param <C> the sender type
+     * @return a parser
+     */
+    @SuppressWarnings("unchecked")
+    public static <C> OptionValueParser<C> optionValue() {
+        return (OptionValueParser<C>) OPTION_VALUE;
     }
 
     private Parsers() {

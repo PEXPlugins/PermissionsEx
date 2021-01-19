@@ -55,7 +55,7 @@ public abstract class ArgumentBuilderMixin<S, T extends ArgumentBuilder<S, T>> {
         if ((Object) this instanceof LiteralArgumentBuilder && requirement.getClass().getName().startsWith("net.minecraft")) { // Builtin commands
            final String commandName = getUnaliasedCommandName();
            if (commandName != null) {
-               this.requirement = FabricPermissionsExImpl.commandPermissionCheck(MinecraftPermissions.forCommand(commandName));
+               this.requirement = FabricPermissionsExImpl.commandPermissionCheck(MinecraftPermissions.forCommand(commandName), requirement);
                return getThis();
            }
         }

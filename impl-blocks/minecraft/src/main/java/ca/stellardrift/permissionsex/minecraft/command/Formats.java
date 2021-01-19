@@ -37,6 +37,7 @@ import static net.kyori.adventure.text.Component.text;
  * Message creators for use in command output.
  */
 public final class Formats {
+    public static final Component COMMA = text(",");
     private static final Component BOOL_TRUE = Messages.FORMATTER_BOOLEAN_TRUE.bTr()
         .color(NamedTextColor.GREEN)
         .build();
@@ -102,7 +103,7 @@ public final class Formats {
         if (contexts.isEmpty()) {
             return Messages.COMMON_ARGS_CONTEXT_GLOBAL.tr();
         } else {
-            return text(contexts.toString());
+            return Component.join(COMMA, contexts);
         }
     }
 

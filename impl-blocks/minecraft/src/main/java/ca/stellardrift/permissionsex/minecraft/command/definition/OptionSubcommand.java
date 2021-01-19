@@ -22,6 +22,7 @@ import ca.stellardrift.permissionsex.minecraft.command.Commander;
 import ca.stellardrift.permissionsex.minecraft.command.Elements;
 import ca.stellardrift.permissionsex.minecraft.command.Formats;
 import ca.stellardrift.permissionsex.minecraft.command.Permission;
+import ca.stellardrift.permissionsex.minecraft.command.argument.Parsers;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import cloud.commandframework.Command;
 import cloud.commandframework.arguments.CommandArgument;
@@ -43,8 +44,10 @@ final class OptionSubcommand {
         final CommandArgument<Commander, String> optionArg = StringArgument.<Commander>newBuilder("option").single()
             .withSuggestionsProvider(engineCompletions((engine, input) -> new ArrayList<>(((PermissionsEx<?>) engine).getRecordingNotifier().getKnownOptions())))
             .build();
-        // TODO: Use custom parser that stops at a word starting with `-` (start of flags)
-        final CommandArgument<Commander, String> optionValueArg = StringArgument.optional("value", StringArgument.StringMode.GREEDY);
+        final CommandArgument<Commander, String> optionValueArg = CommandArgument.<Commander, String>ofType(String.class, "value")
+            .withParser(Parsers.optionValue())
+            .asOptional()
+            .build();
 
        return builder
            .permission(permission)

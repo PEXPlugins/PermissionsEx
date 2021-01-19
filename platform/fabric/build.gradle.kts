@@ -57,6 +57,7 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.29.3+1.16")
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
+        exclude("ca.stellardrift", "colonel")
     })
     modImplementation(include("ca.stellardrift:confabricate:2.0.2") {
         exclude("com.google.code.gson")
@@ -79,7 +80,7 @@ loom {
 }
 
 tasks.withType(AbstractRunTask::class).configureEach {
-    javaLauncher.set(pexPlatform.developmentRuntime())
+    // javaLauncher.set(pexPlatform.developmentRuntime())
 
     // Mixin debug options
     jvmArgs(

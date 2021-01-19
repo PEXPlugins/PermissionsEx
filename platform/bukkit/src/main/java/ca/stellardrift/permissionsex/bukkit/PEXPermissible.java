@@ -92,7 +92,7 @@ final class PEXPermissible extends PermissibleBase {
          * This only takes into account the permission directly being checked having a default set to FALSE or NOT_OP, and not any parents.
          * I believe this is incorrect, but the real-world impacts are likely minor -zml
          */
-        if (ret == 0 && this.plugin.manager().engine().config().getPlatformConfig().fallbackOp()) {
+        if (ret == 0 && this.plugin.manager().platformConfig().fallbackOp()) {
             final Permission perm = this.plugin.permissionList().get(permission);
             if (perm == null) {
                 ret = this.isOp() ? 1 : 0;

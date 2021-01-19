@@ -65,7 +65,11 @@ public final class ContextValueParser implements ArgumentParser<Commander, Conte
             return ArgumentParseResult.failure(new CommandException(Messages.CONTEXT_ERROR_TYPE.tr(contexts[0])));
         }
 
-        return toContextValue(definition, contexts[1]);
+        final ArgumentParseResult<ContextValue<?>> result = toContextValue(definition, contexts[1]);
+        if (result.getParsedValue().isPresent()) {
+            queue.remove();
+        }
+        return result;
     }
 
     private <V> ArgumentParseResult<ContextValue<?>> toContextValue(final ContextDefinition<V> definition, final String input) {
@@ -84,7 +88,7 @@ public final class ContextValueParser implements ArgumentParser<Commander, Conte
         final String[] split = CONTEXT_SPLIT.split(input, 2);
         if (split.length < 2) { // before =
             return manager.engine().registeredContextTypes().stream()
-                .map(ContextDefinition::name)
+                .map(def -> def.name() + "=")
                 .collect(Collectors.toList());
         } else { // <fully written type>=<partial value
             final @Nullable ContextDefinition<?> definition = manager.engine().contextDefinition(split[0]);

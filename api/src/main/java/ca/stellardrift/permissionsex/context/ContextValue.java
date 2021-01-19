@@ -16,7 +16,16 @@
  */
 package ca.stellardrift.permissionsex.context;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.Style.style;
 
 /**
  * A (key, value) pair for one specific context entry.
@@ -25,7 +34,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @param <V> value type
  */
-public final class ContextValue<V> {
+public final class ContextValue<V> implements ComponentLike {
+    private static final Component JOINER = text("=");
+
     private final String key;
     private final String rawValue;
     private @Nullable ContextDefinition<V> definition;
@@ -139,4 +150,24 @@ public final class ContextValue<V> {
     public String toString() {
         return this.key + ":" + this.parsedValue + " (raw: " + this.rawValue + ")";
     }
+
+    @Override
+    public @NonNull Component asComponent() {
+        if (this.parsedValue != null) {
+            return text()
+                .content(this.key)
+                .append(JOINER)
+                .append(text(this.parsedValue.toString()))
+                .hoverEvent(text("(raw: " + this.rawValue + ")"))
+                .build();
+        } else {
+            return text()
+                .content(this.key)
+                .append(JOINER)
+                .append(text(this.rawValue))
+                .hoverEvent(text("(unresolved)", style(TextDecoration.BOLD, NamedTextColor.RED)))
+                .build();
+        }
+    }
+
 }

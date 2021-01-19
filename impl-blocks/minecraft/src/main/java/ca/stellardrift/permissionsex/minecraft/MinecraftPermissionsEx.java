@@ -26,6 +26,7 @@ import ca.stellardrift.permissionsex.minecraft.command.CallbackController;
 import ca.stellardrift.permissionsex.minecraft.command.CommandException;
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext;
 import ca.stellardrift.permissionsex.minecraft.command.Commander;
+import ca.stellardrift.permissionsex.minecraft.command.Formats;
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter;
 import ca.stellardrift.permissionsex.minecraft.command.PEXCommandPreprocessor;
 import ca.stellardrift.permissionsex.minecraft.command.definition.PermissionsExCommand;
@@ -286,8 +287,8 @@ public final class MinecraftPermissionsEx<T> implements Closeable {
                 sender.error(Messages.COMMAND_ERROR_UNKNOWN.tr(), cause);
                 this.engine.logger().error(Messages.COMMAND_ERROR_UNKNOWN_CONSOLE.tr(
                     /* sender */ sender.name(),
-                    /* command */ "not yet implemented", // coming cloud 1.4.0
-                    /* message */ ComponentMessageThrowable.getOrConvertMessage(cause)
+                    /* command */ err.getCommandContext().getRawInputJoined(),
+                    /* message */ Formats.message(cause)
                 ));
             }
         });

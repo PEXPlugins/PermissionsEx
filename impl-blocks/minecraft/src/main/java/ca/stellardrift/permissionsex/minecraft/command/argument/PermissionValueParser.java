@@ -30,7 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 
-public class PermissionValueParser<C> implements ArgumentParser<C, Integer> {
+public final class PermissionValueParser<C> implements ArgumentParser<C, Integer> {
     private static final Map<String, Integer> CONSTANTS = PCollections.map("true", 1)
         .plus("yes", 1)
         .plus("false", -1)

@@ -87,8 +87,8 @@ final class InfoSubcommand {
                     echo(hl(Messages.INFO_ASSOCIATED_OBJECT.bTr()).append(text(associatedObject.toString())));
                 }
             }
-            echo(hlKeyValue(Messages.INFO_ACTIVE_CONTEXTS.bTr(), text(subject.activeContexts().toString())));
-            echo(hlKeyValue(Messages.INFO_ACTIVE_USED_CONTEXTS.bTr(), text(subject.usedContextValues().join().toString())));
+            echo(hlKeyValue(Messages.INFO_ACTIVE_CONTEXTS.bTr(), Component.join(Formats.COMMA, subject.activeContexts())));
+            echo(hlKeyValue(Messages.INFO_ACTIVE_USED_CONTEXTS.bTr(), Component.join(Formats.COMMA, subject.usedContextValues().join())));
 
             printPermissions(Messages.INFO_HEADER_PERMISSIONS, persistentData);
             printPermissions(Messages.INFO_HEADER_PERMISSIONS_TRANSIENT, transientData);

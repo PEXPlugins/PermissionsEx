@@ -166,7 +166,7 @@ final class PEXVault extends Permission {
         } else if (value < 0) {
             return false;
         } else {
-            return this.pex.manager().engine().config().getPlatformConfig().fallbackOp() && player.isOp();
+            return this.pex.manager().platformConfig().fallbackOp() && player.isOp();
         }
     }
 

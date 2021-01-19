@@ -18,9 +18,12 @@ package ca.stellardrift.permissionsex.fabric.impl;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * Via i509VCB, a trick to get Brig onto the Knot classpath in order to properly mix in.
@@ -55,9 +58,22 @@ final class PreLaunchHacks {
      * @throws InvocationTargetException if an error occurs while injecting
      * @throws IllegalAccessException if an error occurs while injecting
      */
-    static void hackilyLoadForMixin(final @Nullable String pathOfAClass) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException {
-        final URL url = Class.forName(pathOfAClass).getProtectionDomain().getCodeSource().getLocation();
-        ADD_URL_METHOD.invoke(KNOT_CLASSLOADER, url);
+    static void hackilyLoadForMixin(final String pathOfAClass) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException {
+        final String resourceName = pathOfAClass.replace(".", "/") + ".class";
+        final @Nullable URL fileUrl = PreLaunchHacks.class.getClassLoader().getResource(resourceName);
+        if (fileUrl == null) {
+            throw new IllegalArgumentException("Could not find URL for class " + pathOfAClass);
+        }
+        final URLConnection conn;
+        try {
+            conn = fileUrl.openConnection();
+            if (!(conn instanceof JarURLConnection)) {
+                throw new IllegalStateException("Expected JAR url connection but got " + conn.getClass());
+            }
+            ADD_URL_METHOD.invoke(KNOT_CLASSLOADER, ((JarURLConnection) conn).getJarFileURL());
+        } catch (final IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
 }

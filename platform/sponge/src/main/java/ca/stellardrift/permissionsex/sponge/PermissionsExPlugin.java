@@ -23,11 +23,11 @@ import ca.stellardrift.permissionsex.logging.FormattedLogger;
 import ca.stellardrift.permissionsex.minecraft.BaseDirectoryScope;
 import ca.stellardrift.permissionsex.minecraft.MinecraftPermissionsEx;
 import ca.stellardrift.permissionsex.minecraft.command.CommandRegistrationContext;
+import ca.stellardrift.permissionsex.minecraft.command.Formats;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import ca.stellardrift.permissionsex.subject.SubjectTypeCollection;
 import cloud.commandframework.arguments.standard.StringArgument;
 import com.google.inject.Inject;
-import net.kyori.adventure.util.ComponentMessageThrowable;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.spi.ExtendedLogger;
 import org.apache.logging.slf4j.Log4jLogger;
@@ -295,7 +295,7 @@ public class PermissionsExPlugin {
                 logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.tr(
                     profile.getName(),
                     profile.getUniqueId(),
-                    ComponentMessageThrowable.getOrConvertMessage(err)
+                    Formats.message(err)
                 ), err);
                 return null;
             });
@@ -303,7 +303,7 @@ public class PermissionsExPlugin {
             logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.tr(
                 profile.getName(),
                 profile.getUniqueId(),
-                ComponentMessageThrowable.getOrConvertMessage(ex)
+                Formats.message(ex)
             ), ex);
         }
     }
