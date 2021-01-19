@@ -33,7 +33,7 @@ dependencies {
     val adventurePlatformVersion: String by project
     val cloudVersion: String by project
     val slf4jVersion: String by project
-    val spigotVersion: String = "1.15.1-R0.1-SNAPSHOT"
+    val spigotVersion = "1.15.1-R0.1-SNAPSHOT"
 
     api(project(":impl-blocks:minecraft")) {
         exclude(group = "com.google.guava")
@@ -41,6 +41,7 @@ dependencies {
         exclude("com.google.code.gson", "gson")
     }
 
+    implementation(project(":impl-blocks:hikari-config"))
     implementation(configurate("yaml")) {
         exclude("org.yaml", "snakeyaml")
     }
@@ -48,9 +49,7 @@ dependencies {
         exclude("com.google.code.gson")
     }
     implementation("cloud.commandframework:cloud-paper:$cloudVersion")
-
     implementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
-    implementation(project(":impl-blocks:hikari-config"))
 
     // provided at runtime
     shadow(spigot(spigotVersion))
@@ -91,13 +90,13 @@ pexPlatform {
         "org.slf4j",
         "org.spongepowered.configurate"
     )
+    excludeChecker()
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude("org.yaml:snakeyaml")
     }
-    exclude("org/checkerframework/**")
 }
 
 tasks.register("runBukkit") {
@@ -107,5 +106,5 @@ tasks.register("runBukkit") {
 }
 
 tasks.runSpigot {
-    // javaLauncher.set(project.javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(11)) })
+    javaLauncher.set(pexPlatform.developmentRuntime())
 }
