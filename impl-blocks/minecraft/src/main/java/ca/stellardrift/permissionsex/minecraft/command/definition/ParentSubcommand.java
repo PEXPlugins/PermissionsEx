@@ -24,10 +24,12 @@ import ca.stellardrift.permissionsex.minecraft.command.Formats;
 import ca.stellardrift.permissionsex.minecraft.command.MessageFormatter;
 import ca.stellardrift.permissionsex.minecraft.command.Permission;
 import ca.stellardrift.permissionsex.minecraft.command.argument.Parsers;
+import ca.stellardrift.permissionsex.subject.Segment;
 import ca.stellardrift.permissionsex.subject.SubjectRef;
 import ca.stellardrift.permissionsex.subject.SubjectType;
 import cloud.commandframework.Command;
 import cloud.commandframework.arguments.CommandArgument;
+import cloud.commandframework.minecraft.extras.MinecraftExtrasMetaKeys;
 import io.leangen.geantyref.TypeToken;
 
 import java.util.Set;
@@ -41,6 +43,7 @@ final class ParentSubcommand {
         ctx.register(build -> add(build, provider), "add", "a", "+");
         ctx.register(build -> remove(build, provider), "remove", "rem", "delete", "del", "-");
         ctx.register(build -> set(build, provider), "set", "replace", "=");
+        ctx.register(builder -> clear(builder, provider), "clear", "none");
     }
 
     static Command.Builder<Commander> add(final Command.Builder<Commander> build, final SubjectRefProvider subjectProvider) {
@@ -111,6 +114,25 @@ final class ParentSubcommand {
                 subject.update(contexts, segment -> segment.withoutParents().plusParent(parent))
                     .whenComplete(Elements.messageSender(ctx.getSender(), Messages.PARENT_SET_SUCCESS.tr(
                         fmt.subject(parent),
+                        fmt.subject(subject).style(fmt::hl),
+                        Formats.contexts(contexts)
+                    )));
+            });
+    }
+
+    static Command.Builder<Commander> clear(final Command.Builder<Commander> build, final SubjectRefProvider subjectProvider) {
+        final Permission permission = Permission.pex("parent.clear");
+
+        return build
+            .meta(MinecraftExtrasMetaKeys.DESCRIPTION, Messages.PARENT_CLEAR_DESCRIPTION.tr())
+            .permission(permission)
+            .handler(ctx -> {
+                final SubjectRef.ToData<?> subject = subjectProvider.provideData(ctx, permission);
+                final Set<ContextValue<?>> contexts = Elements.contexts(ctx);
+                final MessageFormatter fmt = ctx.getSender().formatter();
+
+                subject.update(contexts, Segment::withoutParents)
+                    .whenComplete(Elements.messageSender(ctx.getSender(), Messages.PARENT_CLEAR_SUCCESS.tr(
                         fmt.subject(subject).style(fmt::hl),
                         Formats.contexts(contexts)
                     )));
