@@ -56,7 +56,7 @@ dependencies {
 
     testFixturesApi("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testFixturesImplementation("com.h2database:h2:1.4.200")
-    testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.1")
+    testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.2")
     testFixturesImplementation("org.postgresql:postgresql:42.2.18")
 }
 
