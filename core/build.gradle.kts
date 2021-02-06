@@ -54,7 +54,7 @@ dependencies {
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.7.7")
 
-    testFixturesApi("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    testFixturesApi("org.junit.jupiter:junit-jupiter-api:5.7.1")
     testFixturesImplementation("com.h2database:h2:1.4.200")
     testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.1")
     testFixturesImplementation("org.postgresql:postgresql:42.2.18")
