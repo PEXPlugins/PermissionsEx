@@ -59,7 +59,7 @@ dependencies {
         exclude("com.google.code.gson")
         exclude("ca.stellardrift", "colonel")
     })
-    modImplementation(include("ca.stellardrift:confabricate:2.0.2") {
+    modImplementation(include("ca.stellardrift:confabricate:2.0.3") {
         exclude("com.google.code.gson")
     })
     modImplementation(include("me.lucko:fabric-permissions-api:0.1-SNAPSHOT")!!)
