@@ -63,7 +63,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:3.7.7")
 
     spongeRunClasspath(project(project.path, configuration = "shadow"))
-    spongeRunClasspath("org.spongepowered:spongevanilla:1.16.4-8.0.0-RC+:universal") { isTransitive = false }
+    spongeRunClasspath("org.spongepowered:spongevanilla:1.16.5-8.0.0-RC+:universal") { isTransitive = false }
 }
 
 pexPlatform {

@@ -349,7 +349,7 @@ public class PermissionsExPlugin {
                 if (associated instanceof ServerPlayer) {
                     ((ServerPlayer) associated).getWorld().getEngine().getScheduler().submit(Task.builder()
                         .plugin(container)
-                        .execute(() -> game.getCommandManager().updateCommandTreeForPlayer((ServerPlayer) associated))
+                        .execute(() -> this.game.getServer().getCommandManager().updateCommandTreeForPlayer((ServerPlayer) associated))
                         .build());
                 }
             });
