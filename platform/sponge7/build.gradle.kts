@@ -70,6 +70,7 @@ pexPlatform {
         "net.kyori",
         "org.antlr",
         "org.checkerframework",
+        "org.intellij",
         "org.jdbi",
         "org.jetbrains.annotations",
         "org.pcollections",

@@ -31,6 +31,8 @@ useImmutables()
 dependencies {
     val adventureVersion: String by project
     val configurateVersion: String by project
+    val h2Version: String by project
+    val junitVersion: String by project
     val slf4jVersion: String by project
 
     api(project(":api"))
@@ -54,9 +56,9 @@ dependencies {
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     testImplementation("org.mockito:mockito-core:3.7.7")
 
-    testFixturesApi("org.junit.jupiter:junit-jupiter-api:5.7.0")
-    testFixturesImplementation("com.h2database:h2:1.4.200")
-    testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.1")
+    testFixturesApi("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testFixturesImplementation("com.h2database:h2:$h2Version")
+    testFixturesImplementation("org.mariadb.jdbc:mariadb-java-client:2.7.2")
     testFixturesImplementation("org.postgresql:postgresql:42.2.18")
 }
 
