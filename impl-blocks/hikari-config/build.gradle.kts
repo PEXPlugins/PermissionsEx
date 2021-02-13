@@ -23,6 +23,6 @@ useCheckerFramework()
 dependencies {
     val h2Version: String by project
     api("org.pcollections:pcollections:3.1.4")
-    api("com.zaxxer:HikariCP:4.0.1")
+    api("com.zaxxer:HikariCP:4.0.2")
     compileOnly("com.h2database:h2:$h2Version")
 }
