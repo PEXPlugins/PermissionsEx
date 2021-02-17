@@ -42,7 +42,7 @@ dependencies {
     api(configurate("gson"))
     api(configurate("hocon"))
     implementation(configurate("yaml"))
-    implementation("com.github.ben-manes.caffeine:caffeine:2.8.8") {
+    implementation("com.github.ben-manes.caffeine:caffeine:2.9.0") {
         exclude("com.google.errorprone")
     }
     implementation("com.google.guava:guava:21.0")
