@@ -1,3 +1,5 @@
+import ca.stellardrift.build.common.stellardriftReleases
+import ca.stellardrift.build.common.stellardriftSnapshots
 import ca.stellardrift.build.localization.LocalizationExtension
 import ca.stellardrift.build.localization.TemplateType
 import net.ltgt.gradle.errorprone.errorprone
@@ -10,15 +12,8 @@ plugins {
 }
 
 repositories {
-    maven("https://repo.stellardrift.ca/repository/stable/") {
-        name = "stellardrift"
-        mavenContent { releasesOnly() }
-    }
-
-    maven("https://repo.stellardrift.ca/repository/snapshots/") {
-        name = "stellardrift"
-        mavenContent { snapshotsOnly() }
-    }
+    stellardriftSnapshots()
+    stellardriftReleases()
 }
 
 indra {

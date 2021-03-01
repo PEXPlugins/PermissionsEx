@@ -1,28 +1,8 @@
 
-import ca.stellardrift.build.configurate.ConfigFormats
-import ca.stellardrift.build.configurate.transformations.convertFormat
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.AbstractRunTask
 import net.fabricmc.loom.task.RemapJarTask
 import org.jetbrains.kotlin.backend.common.atMostOne
-
-/*
- * PermissionsEx
- * Copyright (C) zml and PermissionsEx contributors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
 
 plugins {
     id("pex-platform")
@@ -67,20 +47,18 @@ dependencies {
     runtimeOnly("net.minecraftforge:forgeflower:1.5.478.19")
 }
 
-tasks.withType(ProcessResources::class).configureEach {
-    filesMatching("*.yml") {
-        convertFormat(ConfigFormats.YAML, ConfigFormats.JSON)
-        name = "${name.removeSuffix(".yml")}.json"
+loom {
+    runs {
+        configureEach {
+            runDir(projectDir.resolve("run/").relativeTo(rootDir).toString())
+        }
     }
 }
 
-loom {
-    // Run directory is part of the subproject, not the root project
-    runDir = projectDir.resolve("run/").relativeTo(rootDir).toString()
-}
-
 tasks.withType(AbstractRunTask::class).configureEach {
-    // javaLauncher.set(pexPlatform.developmentRuntime())
+    javaLauncher.set(pexPlatform.developmentRuntime())
+
+    this.standardInput = System.`in`
 
     // Mixin debug options
     jvmArgs(

@@ -88,6 +88,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
 tasks.processResources {
     inputs.property("version", project.version)
     filesMatching("**/*.yml") {
+        expand("project" to project)
         convertFormat(ConfigFormats.YAML, ConfigFormats.JSON)
         name = name.substringBeforeLast('.') + ".json"
     }

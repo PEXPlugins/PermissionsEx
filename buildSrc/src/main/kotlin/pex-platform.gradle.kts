@@ -6,11 +6,6 @@ plugins {
 }
 
 tasks {
-    processResources {
-        inputs.property("version", project.version)
-
-        expand("project" to project)
-    }
 
     javadoc {
         enabled = false
