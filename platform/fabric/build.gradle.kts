@@ -2,7 +2,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.AbstractRunTask
 import net.fabricmc.loom.task.RemapJarTask
-import org.jetbrains.kotlin.backend.common.atMostOne
 
 plugins {
     id("pex-platform")
@@ -31,10 +30,10 @@ dependencies {
     shade("cloud.commandframework:cloud-brigadier:$cloudVersion")
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$minecraftVersion+build.1:v2")
+    mappings("net.fabricmc:yarn:$minecraftVersion+build.5:v2")
     modImplementation("net.fabricmc:fabric-loader:0.11.2")
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.29.3+1.16")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.31.0+1.16")
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
         exclude("com.google.code.gson")
         exclude("ca.stellardrift", "colonel")
@@ -71,7 +70,7 @@ tasks.withType(AbstractRunTask::class).configureEach {
     )
 
     // Configure mixin agent
-    jvmArgumentProviders += CommandLineArgumentProvider {
+    /*jvmArgumentProviders += CommandLineArgumentProvider {
         // Resolve the Mixin configuration
         // Java agent: the jar file for mixin
         val mixinJar = configurations.runtimeClasspath.get().resolvedConfiguration
@@ -82,7 +81,7 @@ tasks.withType(AbstractRunTask::class).configureEach {
         } else {
             emptyList()
         }
-    }
+    }*/
 }
 
 tasks.register("runFabricServer") {
