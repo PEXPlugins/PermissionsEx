@@ -90,7 +90,6 @@ pexPlatform {
         "org.slf4j",
         "org.spongepowered.configurate"
     )
-    excludeChecker()
 }
 
 val shadowJar by tasks.getting(ShadowJar::class) {
