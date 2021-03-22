@@ -56,17 +56,17 @@ public final class PEXPermissionDescription implements PermissionDescription  {
 
 
     @Override
-    public String getId() {
+    public String id() {
         return this.permId;
     }
 
     @Override
-    public Optional<Component> getDescription() {
+    public Optional<Component> description() {
         return this.description;
     }
 
     @Override
-    public Optional<PluginContainer> getOwner() {
+    public Optional<PluginContainer> owner() {
         return this.owner;
     }
 
@@ -75,13 +75,13 @@ public final class PEXPermissionDescription implements PermissionDescription  {
         final String collectionIdentifier
     ) {
         return this.service.loadCollection(collectionIdentifier)
-            .thenCompose(coll -> coll.getAllWithPermission(this.permId));
+            .thenCompose(coll -> coll.allWithPermission(this.permId));
     }
 
     @Override
-    public Map<Subject, Boolean> getAssignedSubjects(final String collectionIdentifier) {
-        return this.service.getCollection(collectionIdentifier)
-            .map(it -> it.getLoadedWithPermission(this.permId))
+    public Map<Subject, Boolean> assignedSubjects(final String collectionIdentifier) {
+        return this.service.collection(collectionIdentifier)
+            .map(it -> it.loadedWithPermission(this.permId))
             .orElse(Collections.emptyMap());
     }
 

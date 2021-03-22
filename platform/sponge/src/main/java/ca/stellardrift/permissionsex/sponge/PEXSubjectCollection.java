@@ -91,12 +91,12 @@ final class PEXSubjectCollection<I> implements SubjectCollection {
     }
 
     @Override
-    public String getIdentifier() {
+    public String identifier() {
         return this.type.name();
     }
 
     @Override
-    public Predicate<String> getIdentifierValidityPredicate() {
+    public Predicate<String> identifierValidityPredicate() {
         return this.type::isIdentifierValid;
     }
 
@@ -107,7 +107,7 @@ final class PEXSubjectCollection<I> implements SubjectCollection {
     }
 
     @Override
-    public Optional<Subject> getSubject(final String identifier) {
+    public Optional<Subject> subject(final String identifier) {
         final @Nullable CompletableFuture<PEXSubject> future = this.subjectCache.getIfPresent(identifier);
         if (future == null) {
             return Optional.empty();
@@ -135,12 +135,12 @@ final class PEXSubjectCollection<I> implements SubjectCollection {
     }
 
     @Override
-    public Collection<Subject> getLoadedSubjects() {
+    public Collection<Subject> loadedSubjects() {
         return this.activeSubjects().collect(Collectors.toSet());
     }
 
     @Override
-    public CompletableFuture<Set<String>> getAllIdentifiers() {
+    public CompletableFuture<Set<String>> allIdentifiers() {
         return CompletableFuture.completedFuture(this.implCache.allIdentifiers()
                 .map(this.type::serializeIdentifier)
                 .collect(Collectors.toSet()));
@@ -152,12 +152,12 @@ final class PEXSubjectCollection<I> implements SubjectCollection {
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(final String permission) {
-        return getAllWithPermission(null, permission);
+    public CompletableFuture<Map<SubjectReference, Boolean>> allWithPermission(final String permission) {
+        return allWithPermission(null, permission);
     }
 
     @Override
-    public CompletableFuture<Map<SubjectReference, Boolean>> getAllWithPermission(
+    public CompletableFuture<Map<SubjectReference, Boolean>> allWithPermission(
         final @Nullable Set<Context> contexts,
         final String permission
     ) {
@@ -190,17 +190,17 @@ final class PEXSubjectCollection<I> implements SubjectCollection {
     }
 
     @Override
-    public Map<Subject, Boolean> getLoadedWithPermission(final String permission) {
-        return getLoadedWithPermission(null, permission);
+    public Map<Subject, Boolean> loadedWithPermission(final String permission) {
+        return loadedWithPermission(null, permission);
     }
 
     @Override
-    public Map<Subject, Boolean> getLoadedWithPermission(final @Nullable Set<Context> contexts, final String permission) {
+    public Map<Subject, Boolean> loadedWithPermission(final @Nullable Set<Context> contexts, final String permission) {
         requireNonNull(permission, "permission");
         PMap<Subject, Boolean> ret = PCollections.map();
         for (final PEXSubject subject : this.subjectCache.synchronous().asMap().values()) {
             // TODO: Use CalculatedSubject here
-            final Tristate permissionValue = subject.getPermissionValue(contexts == null ? subject.getActiveContexts() : contexts, permission);
+            final Tristate permissionValue = subject.permissionValue(contexts == null ? subject.activeContexts() : contexts, permission);
             if (permissionValue != Tristate.UNDEFINED) {
                 ret = ret.plus(subject, permissionValue.asBoolean());
             }
@@ -209,7 +209,7 @@ final class PEXSubjectCollection<I> implements SubjectCollection {
     }
 
     @Override
-    public Subject getDefaults() {
+    public Subject defaults() {
         return this.defaults;
     }
 

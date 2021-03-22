@@ -101,13 +101,13 @@ public class PermissionsExPlugin {
         this.game = game;
         this.sql = sql;
         this.configDir = configDir;
-        this.scheduler = game.getAsyncScheduler().createExecutor(container);
+        this.scheduler = game.asyncScheduler().createExecutor(container);
         this.configFile = configDir.resolve(container.getMetadata().getId() + ".conf");
 
         // Subject types defined by Sponge
         this.systemSubjects = SubjectType.stringIdentBuilder(PermissionService.SUBJECTS_SYSTEM)
             .fixedEntries(
-                immutableMapEntry("console", this.game::getSystemSubject),
+                immutableMapEntry("console", this.game::systemSubject),
                 immutableMapEntry("Recon", () -> null)
             )
             .undefinedValues($ -> true)
@@ -235,21 +235,21 @@ public class PermissionsExPlugin {
                 .baseDirectory(this.configDir)
                 .logger(this.logger)
                 .asyncExecutor(this.scheduler)
-                .baseDirectory(BaseDirectoryScope.JAR, game.getGameDirectory().resolve("mods"))
-                .baseDirectory(BaseDirectoryScope.SERVER, game.getGameDirectory())
+                .baseDirectory(BaseDirectoryScope.JAR, game.gameDirectory().resolve("mods"))
+                .baseDirectory(BaseDirectoryScope.SERVER, game.gameDirectory())
                 // .baseDirectory(BaseDirectoryScope.WORLDS, TODO("level container"))
-                .databaseProvider(url -> sql.getDataSource(container, url))
-                .playerProvider(id -> game.getServer().getPlayer(id).orElse(null))
+                .databaseProvider(url -> sql.dataSource(container, url))
+                .playerProvider(id -> game.server().player(id).orElse(null))
                 .cachedUuidResolver(name -> {
-                    final Optional<ServerPlayer> player = game.getServer().getPlayer(name);
+                    final Optional<ServerPlayer> player = game.server().player(name);
                     if (player.isPresent()) {
-                        return player.get().getUniqueId();
+                        return player.get().uniqueId();
                     } else {
-                        final GameProfileCache res = game.getServer().getGameProfileManager().getCache();
+                        final GameProfileCache res = game.server().gameProfileManager().cache();
                         return res.streamOfMatches(name)
-                            .filter(it -> it.getName().isPresent() && it.getName().get().equalsIgnoreCase(name))
+                            .filter(it -> it.name().isPresent() && it.name().get().equalsIgnoreCase(name))
                             .findFirst()
-                            .map(Identifiable::getUniqueId)
+                            .map(Identifiable::uniqueId)
                             .orElse(null);
                     }
                 })
@@ -269,7 +269,7 @@ public class PermissionsExPlugin {
 
     @Listener
     public void registerPermissionService(final ProvideServiceEvent.EngineScoped<PermissionService> event) {
-        event.suggest(() -> this.service = new PermissionsExService((Server) event.getEngine(), this));
+        event.suggest(() -> this.service = new PermissionsExService((Server) event.engine(), this));
     }
 
     private void registerFakeOpCommand(final CommandRegistrationContext reg) {
@@ -289,20 +289,20 @@ public class PermissionsExPlugin {
 
     @Listener
     public void cacheUserAsync(final ServerSideConnectionEvent.Auth event) {
-        final GameProfile profile = event.getProfile();
+        final GameProfile profile = event.profile();
         try {
-            this.users().get(profile.getUniqueId()).exceptionally(err -> {
+            this.users().get(profile.uniqueId()).exceptionally(err -> {
                 logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.tr(
-                    profile.getName(),
-                    profile.getUniqueId(),
+                    profile.name(),
+                    profile.uniqueId(),
                     Formats.message(err)
                 ), err);
                 return null;
             });
         } catch (final Exception ex) {
             logger.warn(Messages.EVENT_CLIENT_AUTH_ERROR.tr(
-                profile.getName(),
-                profile.getUniqueId(),
+                profile.name(),
+                profile.uniqueId(),
                 Formats.message(ex)
             ), ex);
         }
@@ -330,7 +330,7 @@ public class PermissionsExPlugin {
 
     @Listener
     public void onPlayerJoin(final ServerSideConnectionEvent.Join event) {
-        final UUID identifier = event.getPlayer().getUniqueId();
+        final UUID identifier = event.player().uniqueId();
         final SubjectTypeCollection<UUID> cache = this.users();
         cache.get(identifier).thenAccept(subj -> {
             // Update name option
@@ -338,7 +338,7 @@ public class PermissionsExPlugin {
                 if (isReg) {
                     subj.data().update(
                         PermissionsEngine.GLOBAL_CONTEXT,
-                        data -> data.withOption("name", event.getPlayer().getName())
+                        data -> data.withOption("name", event.player().name())
                     );
                 }
             });
@@ -347,9 +347,9 @@ public class PermissionsExPlugin {
             subj.registerListener(newSubj -> {
                 final @Nullable Object associated = newSubj.associatedObject();
                 if (associated instanceof ServerPlayer) {
-                    ((ServerPlayer) associated).getWorld().getEngine().getScheduler().submit(Task.builder()
+                    ((ServerPlayer) associated).world().engine().scheduler().submit(Task.builder()
                         .plugin(container)
-                        .execute(() -> this.game.getServer().getCommandManager().updateCommandTreeForPlayer((ServerPlayer) associated))
+                        .execute(() -> this.game.server().commandManager().updateCommandTreeForPlayer((ServerPlayer) associated))
                         .build());
                 }
             });
@@ -360,12 +360,12 @@ public class PermissionsExPlugin {
     public void onPlayerQuit(final ServerSideConnectionEvent.Disconnect event) {
         final @Nullable MinecraftPermissionsEx<?> pex = this.manager;
         if (pex != null) {
-            pex.callbackController().clearOwnedBy(event.getPlayer().getUniqueId());
+            pex.callbackController().clearOwnedBy(event.player().uniqueId());
         }
 
         final @Nullable PermissionsExService service = this.service;
         if (service != null) {
-            service.getUserSubjects().suggestUnload(event.getPlayer().getIdentifier());
+            service.userSubjects().suggestUnload(event.player().identifier());
         }
     }
 

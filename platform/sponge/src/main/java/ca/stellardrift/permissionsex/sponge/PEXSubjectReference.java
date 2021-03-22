@@ -52,9 +52,9 @@ final class PEXSubjectReference<I> implements SubjectReference, SubjectRef<I> {
         if (reference instanceof PEXSubjectReference<?>) {
             return (PEXSubjectReference<?>) reference;
         }
-        final SubjectType<?> type = service.subjectTypeFromIdentifier(reference.getCollectionIdentifier());
+        final SubjectType<?> type = service.subjectTypeFromIdentifier(reference.collectionIdentifier());
 
-        return new PEXSubjectReference<>(type, reference.getSubjectIdentifier(), service);
+        return new PEXSubjectReference<>(type, reference.subjectIdentifier(), service);
     }
 
     PEXSubjectReference(final SubjectType<I> type, final I identifier, final PermissionsExService service) {
@@ -78,19 +78,19 @@ final class PEXSubjectReference<I> implements SubjectReference, SubjectRef<I> {
     }
 
     @Override
-    public String getCollectionIdentifier() {
+    public String collectionIdentifier() {
         return this.type.name();
     }
 
     @Override
-    public String getSubjectIdentifier() {
+    public String subjectIdentifier() {
         return this.type.serializeIdentifier(this.identifier);
     }
 
     @Override
     public CompletableFuture<Subject> resolve() {
         return service.loadCollection(this.type.name())
-            .thenCompose(it -> it.loadSubject(this.getSubjectIdentifier()));
+            .thenCompose(it -> it.loadSubject(this.subjectIdentifier()));
     }
 
     @Override

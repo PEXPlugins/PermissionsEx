@@ -51,7 +51,7 @@ public class PEXSubjectData implements SubjectData {
     }
 
     PermissionsExService service() {
-        return this.subject.getContainingCollection().service();
+        return this.subject.containingCollection().service();
     }
 
     private void clearCache() {
@@ -65,22 +65,22 @@ public class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public Subject getSubject() {
+    public Subject subject() {
         return this.subject;
     }
 
     @Override
     public boolean isTransient() {
-        return this == this.subject.getTransientSubjectData();
+        return this == this.subject.transientSubjectData();
     }
 
     @Override
-    public Map<Set<Context>, Map<String, Boolean>> getAllPermissions() {
+    public Map<Set<Context>, Map<String, Boolean>> allPermissions() {
         return keysToSponge(data.get().mapSegmentValues(it -> Maps.transformValues(it.permissions(), v -> v > 0)));
     }
 
     @Override
-    public Map<String, Boolean> getPermissions(final Set<Context> contexts) {
+    public Map<String, Boolean> permissions(final Set<Context> contexts) {
         return Maps.transformValues(this.data.get().segment(Contexts.toPex(contexts, service().manager()))
             .permissions(), v -> v > 0);
     }
@@ -115,7 +115,7 @@ public class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public Map<Set<Context>, List<SubjectReference>> getAllParents() {
+    public Map<Set<Context>, List<SubjectReference>> allParents() {
         synchronized(parentsCache) {
             this.data.get().activeContexts().forEach(this::getParentsInternal);
             return keysToSponge(this.parentsCache);
@@ -123,7 +123,7 @@ public class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public List<SubjectReference> getParents(final Set<Context> contexts) {
+    public List<SubjectReference> parents(final Set<Context> contexts) {
         return this.getParentsInternal(Contexts.toPex(contexts, service().manager()));
     }
 
@@ -173,12 +173,12 @@ public class PEXSubjectData implements SubjectData {
     }
 
     @Override
-    public Map<Set<Context>, Map<String, String>> getAllOptions() {
+    public Map<Set<Context>, Map<String, String>> allOptions() {
         return keysToSponge(this.data.get().mapSegmentValues(Segment::options));
     }
 
     @Override
-    public Map<String, String> getOptions(final Set<Context> contexts) {
+    public Map<String, String> options(final Set<Context> contexts) {
         return data.get().segment(Contexts.toPex(contexts, service().manager())).options();
     }
 

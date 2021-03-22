@@ -99,26 +99,26 @@ public class PermissionsExService implements PermissionService {
     }
 
     <V> CachingValue<V> tickBasedCachingValue(final long deltaTicks, final Supplier<V> update) {
-        return new CachingValue<>(this.server::getRunningTimeTicks, deltaTicks, update);
+        return new CachingValue<>(this.server::runningTimeTicks, deltaTicks, update);
     }
 
     @Override
-    public SubjectCollection getUserSubjects() {
-        return this.getCollection(plugin.users().type());
+    public SubjectCollection userSubjects() {
+        return this.collection(plugin.users().type());
     }
 
     @Override
-    public SubjectCollection getGroupSubjects() {
-        return this.getCollection(plugin.groups().type());
+    public SubjectCollection groupSubjects() {
+        return this.collection(plugin.groups().type());
     }
 
     @Override
-    public Subject getDefaults() {
+    public Subject defaults() {
         return this.defaults;
     }
 
     @Override
-    public Predicate<String> getIdentifierValidityPredicate() {
+    public Predicate<String> identifierValidityPredicate() {
         return $ -> true;
     }
 
@@ -134,12 +134,12 @@ public class PermissionsExService implements PermissionService {
     }
 
     @SuppressWarnings("unchecked")
-    <I> PEXSubjectCollection<I> getCollection(final SubjectType<I> type) {
+    <I> PEXSubjectCollection<I> collection(final SubjectType<I> type) {
         return (PEXSubjectCollection<I>) this.subjectCollections.get(type).join();
     }
 
     @Override
-    public Optional<SubjectCollection> getCollection(final String identifier) {
+    public Optional<SubjectCollection> collection(final String identifier) {
         final @Nullable CompletableFuture<PEXSubjectCollection<?>> collectionFuture = subjectCollections.getIfPresent(this.subjectTypeFromIdentifier(identifier));
         return collectionFuture == null ? Optional.empty() : Optional.of(collectionFuture.join());
     }
@@ -150,12 +150,12 @@ public class PermissionsExService implements PermissionService {
     }
 
     @Override
-    public Map<String, SubjectCollection> getLoadedCollections() {
+    public Map<String, SubjectCollection> loadedCollections() {
         return PCollections.asMap(subjectCollections.synchronous().asMap(), (k, $) -> k.name(), ($, v) -> v);
     }
 
     @Override
-    public CompletableFuture<Set<String>> getAllIdentifiers() {
+    public CompletableFuture<Set<String>> allIdentifiers() {
         return CompletableFuture.completedFuture(PCollections.asSet(this.manager().knownSubjectTypes(), SubjectType::name));
     }
 
@@ -170,22 +170,22 @@ public class PermissionsExService implements PermissionService {
     }
 
     void registerDescription(final PEXPermissionDescription description, final Map<String, Integer> ranks) {
-        descriptions.put(description.getId(), description);
+        descriptions.put(description.id(), description);
         final SubjectTypeCollection<String> coll = this.plugin.roleTemplates();
         for (Map.Entry<String, Integer> entry : ranks.entrySet()) {
             coll.transientData().update(entry.getKey(),  input ->
-                input.withSegment(PermissionsEngine.GLOBAL_CONTEXT, it -> it.withPermission(description.getId(), entry.getValue()))
+                input.withSegment(PermissionsEngine.GLOBAL_CONTEXT, it -> it.withPermission(description.id(), entry.getValue()))
             );
         }
     }
 
     @Override
-    public Optional<PermissionDescription> getDescription(final String permission) {
+    public Optional<PermissionDescription> description(final String permission) {
         return Optional.ofNullable(this.descriptions.get(permission));
     }
 
     @Override
-    public Collection<PermissionDescription> getDescriptions() {
+    public Collection<PermissionDescription> descriptions() {
         return PCollections.narrow(PCollections.asSet(this.descriptions.values()));
     }
 

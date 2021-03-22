@@ -31,7 +31,7 @@ final class SpongeMessageFormatter extends MessageFormatter {
     @Override
     protected @Nullable <I> String friendlyName(final SubjectRef<I> reference) {
         final @Nullable Object associated = reference.type().getAssociatedObject(reference.identifier());
-        return associated instanceof Nameable ? ((Nameable) associated).getName() : super.friendlyName(reference);
+        return associated instanceof Nameable ? ((Nameable) associated).name() : super.friendlyName(reference);
     }
 
 }

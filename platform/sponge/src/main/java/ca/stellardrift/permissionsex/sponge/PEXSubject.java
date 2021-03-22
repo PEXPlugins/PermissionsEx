@@ -88,7 +88,7 @@ public class PEXSubject implements Subject {
     }
 
     @Override
-    public PEXSubjectCollection<?> getContainingCollection() {
+    public PEXSubjectCollection<?> containingCollection() {
         return this.collection;
     }
 
@@ -103,12 +103,12 @@ public class PEXSubject implements Subject {
     }
 
     @Override
-    public SubjectData getSubjectData() {
+    public SubjectData subjectData() {
         return this.data;
     }
 
     @Override
-    public SubjectData getTransientSubjectData() {
+    public SubjectData transientSubjectData() {
         return transientData;
     }
 
@@ -122,7 +122,7 @@ public class PEXSubject implements Subject {
 
     @Override
     @SuppressWarnings("try")
-    public Tristate getPermissionValue(final Set<Context> contexts, final String permission) {
+    public Tristate permissionValue(final Set<Context> contexts, final String permission) {
         requireNonNull(contexts, "contexts");
         requireNonNull(permission, "permission");
 
@@ -157,29 +157,29 @@ public class PEXSubject implements Subject {
 
     @Override
     @SuppressWarnings("try")
-    public List<SubjectReference> getParents() {
+    public List<SubjectReference> parents() {
         try (final Timings.OnlyIfSyncTiming ignored = this.time().getParents.start()) {
             return PCollections.asVector(
                 baked.parents(this.activePexContexts()),
-                it -> PEXSubjectReference.asSponge(it, this.getContainingCollection().service())
+                it -> PEXSubjectReference.asSponge(it, this.containingCollection().service())
             );
         }
     }
 
     @Override
     @SuppressWarnings("try")
-    public List<SubjectReference> getParents(final Set<Context> contexts) {
+    public List<SubjectReference> parents(final Set<Context> contexts) {
         try (final Timings.OnlyIfSyncTiming ignored = this.time().getParents.start()) {
             return PCollections.asVector(
                 baked.parents(Contexts.toPex(contexts, this.engine())),
-                it -> PEXSubjectReference.asSponge(it, this.getContainingCollection().service())
+                it -> PEXSubjectReference.asSponge(it, this.containingCollection().service())
             );
         }
     }
 
     @Override
     @SuppressWarnings("try")
-    public Optional<String> getOption(final String key) {
+    public Optional<String> option(final String key) {
         requireNonNull(key, "key");
         try (final Timings.OnlyIfSyncTiming ignored = this.time().getOption.start()) {
             return this.baked.option(this.activePexContexts(), key);
@@ -188,24 +188,24 @@ public class PEXSubject implements Subject {
 
     @Override
     @SuppressWarnings("try")
-    public Optional<String> getOption(final Set<Context> contexts, final String key) {
+    public Optional<String> option(final Set<Context> contexts, final String key) {
         try (final Timings.OnlyIfSyncTiming ignored = this.time().getOption.start()) {
             return baked.option(Contexts.toPex(contexts, this.engine()), key);
         }
     }
 
     @Override
-    public String getIdentifier() {
-        return this.ref.getSubjectIdentifier();
+    public String identifier() {
+        return this.ref.subjectIdentifier();
     }
 
     @Override
-    public Optional<String> getFriendlyIdentifier() {
+    public Optional<String> friendlyIdentifier() {
         return Optional.empty();
     }
 
     @Override
-    public Set<Context> getActiveContexts() {
+    public Set<Context> activeContexts() {
         return this.activeContexts.get().spongeContexts;
     }
 

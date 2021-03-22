@@ -44,7 +44,7 @@ final class SpongeCommander implements Commander {
 
     @Override
     public Component name() {
-        return text(cause.getSubject().getFriendlyIdentifier().orElse(cause.getSubject().getIdentifier()));
+        return text(cause.subject().friendlyIdentifier().orElse(cause.subject().identifier()));
     }
 
     @Override
@@ -65,7 +65,7 @@ final class SpongeCommander implements Commander {
 
     @Override
     public @NonNull Audience audience() {
-        return this.cause.getAudience();
+        return this.cause.audience();
     }
 
     @Override
@@ -74,7 +74,7 @@ final class SpongeCommander implements Commander {
         final @Nullable ComponentLike header,
         final Stream<? extends ComponentLike> lines
     ) {
-        final PaginationList.Builder build = pex.game().getServiceProvider().paginationService().builder();
+        final PaginationList.Builder build = pex.game().serviceProvider().paginationService().builder();
 
         build.title(title.asComponent().style(s -> formatter().header(formatter().hl(s))));
         if (header != null) {
