@@ -43,7 +43,7 @@ dependencies {
     })
     modImplementation(include("me.lucko:fabric-permissions-api:0.1-SNAPSHOT")!!)
 
-    runtimeOnly("net.minecraftforge:forgeflower:1.5.478.19")
+    runtimeOnly("net.minecraftforge:forgeflower:1.5.498.2")
 }
 
 loom {
