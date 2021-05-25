@@ -119,7 +119,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))
         exclude(dependency("org.jetbrains.kotlinx:.*:.*"))
-        exclude(dependency("org.jetbrains:annotations:.*"))
+        exclude(dependency("org.jetbrains:annotations:21.0.1"))
         exclude(dependency("io.leangen.geantyref:geantyref:.*"))
     }
 }
