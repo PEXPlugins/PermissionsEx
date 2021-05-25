@@ -81,7 +81,7 @@ pexPlatform {
 
 val shadowJar by tasks.getting(ShadowJar::class) {
     dependencies {
-        exclude(dependency("com.google.code.gson:gson:.*"))
+        exclude(dependency("com.google.code.gson:gson:2.8.7"))
     }
 }
 
