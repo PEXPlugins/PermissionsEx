@@ -60,7 +60,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3") { isTransitive = false }
 
     testImplementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
-    testImplementation("org.mockito:mockito-core:3.8.0")
+    testImplementation("org.mockito:mockito-core:3.11.0")
 
     spongeRunClasspath(project(project.path, configuration = "shadow"))
     spongeRunClasspath("org.spongepowered:spongevanilla:1.16.5-8.0.0-RC+:universal") { isTransitive = false }
