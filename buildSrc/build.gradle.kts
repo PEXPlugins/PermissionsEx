@@ -53,7 +53,7 @@ dependencies {
     implementation("ca.stellardrift:gradle-plugin-configurate:$opinionatedVersion")
     implementation("com.github.jengelman.gradle.plugins:shadow:6.1.0")
     implementation("kr.entree:spigradle:2.2.3")
-    implementation("net.ltgt.gradle:gradle-errorprone-plugin:1.3.0")
+    implementation("net.ltgt.gradle:gradle-errorprone-plugin:1.3.1")
     implementation(kotlin("gradle-plugin", "1.4.21"))
     implementation(kotlin("reflect"))
 }
