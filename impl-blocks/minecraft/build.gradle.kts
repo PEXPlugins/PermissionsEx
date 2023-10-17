@@ -40,5 +40,5 @@ dependencies {
     // Fixed version to line up with MC
     implementation("com.google.code.gson:gson:2.8.0")
 
-    testRuntimeOnly("org.slf4j:slf4j-simple:1.7.30")
+    testRuntimeOnly("org.slf4j:slf4j-simple:1.7.36")
 }
