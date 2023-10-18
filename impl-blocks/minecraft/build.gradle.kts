@@ -38,7 +38,7 @@ dependencies {
     compileOnly("com.mojang:brigadier:1.0.17")
 
     // Fixed version to line up with MC
-    implementation("com.google.code.gson:gson:2.8.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     testRuntimeOnly("org.slf4j:slf4j-simple:1.7.30")
 }
