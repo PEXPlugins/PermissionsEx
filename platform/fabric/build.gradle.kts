@@ -31,7 +31,7 @@ dependencies {
 
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$minecraftVersion+build.5:v2")
-    modImplementation("net.fabricmc:fabric-loader:0.11.2")
+    modImplementation("net.fabricmc:fabric-loader:0.15.6")
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.31.0+1.16")
     modImplementation(include("net.kyori:adventure-platform-fabric:$adventurePlatformVersion") {
